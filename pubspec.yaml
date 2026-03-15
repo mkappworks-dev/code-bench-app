@@ -1,0 +1,113 @@
+name: code_bench_app
+description: "AI-powered code assistant for desktop"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.3.5
+
+  # Navigation
+  go_router: ^14.6.2
+
+  # HTTP & Streaming
+  dio: ^5.7.0
+
+  # Database
+  drift: ^2.21.0
+  sqlite3_flutter_libs: ^0.5.26
+  drift_flutter: ^0.2.1
+
+  # Secure storage
+  flutter_secure_storage: ^9.2.2
+
+  # Code generation annotations
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Code editor
+  re_editor: ^0.4.0
+  re_highlight: ^0.0.2
+
+  # Markdown & code highlighting in chat
+  flutter_highlight: ^0.7.0
+  flutter_markdown: ^0.7.4
+
+  # OAuth
+  flutter_web_auth_2: ^4.0.1
+
+  # File system
+  path_provider: ^2.1.4
+  file_picker: ^8.1.2
+  path: ^1.9.0
+
+  # Window management
+  window_manager: ^0.4.2
+
+  # Utilities
+  uuid: ^4.5.1
+  intl: ^0.19.0
+  rxdart: ^0.28.0
+  url_launcher: ^6.3.1
+
+  # Fonts
+  google_fonts: ^6.2.1
+
+  # Preferences
+  shared_preferences: ^2.3.3
+
+  # Icons
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Code generators
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.4.3
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+  drift_dev: ^2.21.0
+
+  # Testing
+  mockito: ^5.4.4
+
+  flutter_lints: ^6.0.0
+
+  # App icon & splash
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+
+flutter_launcher_icons:
+  image_path: "assets/images/app_icon.png"
+  macos:
+    generate: true
+    image_path: "assets/images/app_icon.png"
+  windows:
+    generate: true
+    image_path: "assets/images/app_icon.png"
+  linux:
+    generate: true
+    image_path: "assets/images/app_icon.png"
+
+flutter_native_splash:
+  color: "#1E1E1E"
+  color_dark: "#1E1E1E"
+  image: "assets/images/app_icon.png"
+  android: false
+  ios: false
+  web: false
