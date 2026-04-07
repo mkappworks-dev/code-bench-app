@@ -106,14 +106,10 @@ class ChatHomeScreen extends ConsumerWidget {
                     return _SessionTile(
                       session: s,
                       onTap: () {
-                        ref
-                            .read(activeSessionIdProvider.notifier)
-                            .set(s.sessionId);
+                        ref.read(activeSessionIdProvider.notifier).set(s.sessionId);
                         context.go('/chat/${s.sessionId}');
                       },
-                      onDelete: () => ref
-                          .read(sessionServiceProvider)
-                          .deleteSession(s.sessionId),
+                      onDelete: () => ref.read(sessionServiceProvider).deleteSession(s.sessionId),
                     );
                   },
                 );
