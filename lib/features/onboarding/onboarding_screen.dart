@@ -212,7 +212,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   colors: [
                     ThemeConstants.sidebarBackground,
                     ThemeConstants.activityBar,
-                    Color(0xFF050505),
+                    ThemeConstants.deepBackground,
                   ],
                 ),
                 border: Border(

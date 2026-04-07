@@ -7,6 +7,7 @@ class ThemeConstants {
   static const Color background = Color(0xFF141414);
   static const Color sidebarBackground = Color(0xFF111111);
   static const Color activityBar = Color(0xFF0A0A0A);
+  static const Color deepBackground = Color(0xFF050505);
   static const Color titleBar = Color(0xFF111111);
   static const Color editorBackground = Color(0xFF141414);
   static const Color editorLineHighlight = Color(0xFF1E1E1E);
