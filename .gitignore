@@ -59,3 +59,6 @@ android/local.properties
 
 # Flutter generated plugins file
 .flutter-plugins
+
+# Git worktrees
+.worktrees/
