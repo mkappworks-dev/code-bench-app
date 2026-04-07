@@ -50,9 +50,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _showProviderPicker() async {
-    final available = AIProvider.values
-        .where((p) => !_addedProviders.contains(p))
-        .toList();
+    final available =
+        AIProvider.values.where((p) => !_addedProviders.contains(p)).toList();
     if (available.isEmpty) return;
 
     final picked = await showDialog<AIProvider>(
@@ -80,7 +79,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             onPressed: () => Navigator.pop(ctx, null),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 13),
+              style:
+                  TextStyle(color: ThemeConstants.textSecondary, fontSize: 13),
             ),
           ),
         ],
@@ -210,7 +210,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   stops: [0.0, 0.5, 1.0],
-                  colors: [Color(0xFF111111), Color(0xFF0A0A0A), Color(0xFF050505)],
+                  colors: [
+                    Color(0xFF111111),
+                    Color(0xFF0A0A0A),
+                    Color(0xFF050505)
+                  ],
                 ),
                 border: Border(
                   right: BorderSide(color: Color(0xFF2A2A2A)),
@@ -363,7 +367,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         child: OutlinedButton(
                           onPressed: _saving ? null : _skip,
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: ThemeConstants.borderColor),
+                            side: const BorderSide(
+                                color: ThemeConstants.borderColor),
                             foregroundColor: ThemeConstants.textSecondary,
                           ),
                           child: const Text('Skip'),
@@ -378,7 +383,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               ? const SizedBox(
                                   height: 16,
                                   width: 16,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Text('Save & Continue'),
                         ),
@@ -501,7 +507,8 @@ class _ProviderRowState extends State<_ProviderRow> {
               fontFamily: ThemeConstants.editorFontFamily,
             ),
             decoration: InputDecoration(
-              hintText: _isUrlProvider ? 'http://localhost:11434' : 'API key...',
+              hintText:
+                  _isUrlProvider ? 'http://localhost:11434' : 'API key...',
             ),
           ),
         ),
