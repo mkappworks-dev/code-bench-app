@@ -18,9 +18,9 @@ An AI-powered code assistant for macOS, Windows, and Linux — built with Flutte
 
 ## Platforms
 
-| Platform | Status |
-|----------|--------|
-| macOS    | ✅ Primary |
+| Platform | Status       |
+| -------- | ------------ |
+| macOS    | ✅ Primary   |
 | Windows  | ✅ Supported |
 | Linux    | ✅ Supported |
 
@@ -38,7 +38,7 @@ An AI-powered code assistant for macOS, Windows, and Linux — built with Flutte
 ### Setup
 
 ```bash
-git clone <repo-url>
+git clone git@github.com:mkappworks-dev/code-bench-app.git
 cd code-bench-app
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
@@ -49,12 +49,12 @@ flutter run -d macos
 
 On first launch, the **Onboarding** screen lets you enter API keys for:
 
-| Provider  | Where to get |
-|-----------|-------------|
+| Provider  | Where to get                 |
+| --------- | ---------------------------- |
 | OpenAI    | platform.openai.com/api-keys |
-| Anthropic | console.anthropic.com |
-| Gemini    | aistudio.google.com/apikey |
-| Ollama    | Local — run `ollama serve` |
+| Anthropic | console.anthropic.com        |
+| Gemini    | aistudio.google.com/apikey   |
+| Ollama    | Local — run `ollama serve`   |
 
 Keys are stored securely in the platform keychain (never in plain text).
 
@@ -68,6 +68,7 @@ static const _clientId = 'YOUR_GITHUB_CLIENT_ID';
 ```
 
 Create a GitHub OAuth App at **Settings → Developer settings → OAuth Apps** with:
+
 - Callback URL: `codebench://oauth/callback`
 
 ## Architecture
