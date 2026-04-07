@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/datasources/local/onboarding_preferences.dart';
+import '../features/chat/chat_home_screen.dart';
 import '../features/chat/chat_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/editor/editor_screen.dart';
@@ -37,6 +38,10 @@ GoRouter appRouter(Ref ref) {
           GoRoute(
             path: '/dashboard',
             builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: '/chat',
+            builder: (context, state) => const ChatHomeScreen(),
           ),
           GoRoute(
             path: '/chat/new',

@@ -208,7 +208,7 @@ class _DirectoryNodeState extends ConsumerState<_DirectoryNode> {
   }
 }
 
-class _FileExplorerItem extends StatefulWidget {
+class _FileExplorerItem extends StatelessWidget {
   const _FileExplorerItem({
     required this.path,
     required this.depth,
@@ -223,61 +223,48 @@ class _FileExplorerItem extends StatefulWidget {
   final VoidCallback onTap;
   final bool isExpanded;
 
-  @override
-  State<_FileExplorerItem> createState() => _FileExplorerItemState();
-}
-
-class _FileExplorerItemState extends State<_FileExplorerItem> {
-  bool _hovered = false;
-
-  String get _name => widget.path.split('/').last;
+  String get _name => path.split('/').last;
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Container(
-          height: 22,
-          color: _hovered
-              ? ThemeConstants.editorLineHighlight
-              : Colors.transparent,
-          padding: EdgeInsets.only(left: widget.depth * 16.0 + 8),
-          child: Row(
-            children: [
-              if (widget.isDirectory)
-                Icon(
-                  widget.isExpanded
-                      ? Icons.keyboard_arrow_down
-                      : Icons.keyboard_arrow_right,
-                  size: 14,
-                  color: ThemeConstants.textMuted,
-                )
-              else
-                const SizedBox(width: 14),
-              const SizedBox(width: 4),
+    return InkWell(
+      onTap: onTap,
+      hoverColor: ThemeConstants.editorLineHighlight,
+      child: Container(
+        height: 22,
+        padding: EdgeInsets.only(left: depth * 16.0 + 8),
+        child: Row(
+          children: [
+            if (isDirectory)
               Icon(
-                widget.isDirectory ? Icons.folder_outlined : _getFileIcon(),
+                isExpanded
+                    ? Icons.keyboard_arrow_down
+                    : Icons.keyboard_arrow_right,
                 size: 14,
-                color: widget.isDirectory
-                    ? ThemeConstants.warning
-                    : ThemeConstants.textMuted,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  _name,
-                  style: const TextStyle(
-                    color: ThemeConstants.textPrimary,
-                    fontSize: 12,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                color: ThemeConstants.textMuted,
+              )
+            else
+              const SizedBox(width: 14),
+            const SizedBox(width: 4),
+            Icon(
+              isDirectory ? Icons.folder_outlined : _getFileIcon(),
+              size: 14,
+              color: isDirectory
+                  ? ThemeConstants.warning
+                  : ThemeConstants.textMuted,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                _name,
+                style: const TextStyle(
+                  color: ThemeConstants.textPrimary,
+                  fontSize: 12,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
