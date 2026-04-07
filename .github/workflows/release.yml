@@ -1,0 +1,103 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: macos
+            artifact: devbench-macos.zip
+          - os: windows-latest
+            target: windows
+            artifact: devbench-windows.zip
+          - os: ubuntu-latest
+            target: linux
+            artifact: devbench-linux.tar.gz
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install Linux system dependencies
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            ninja-build \
+            cmake \
+            pkg-config \
+            libblkid-dev \
+            liblzma-dev \
+            libsecret-1-dev
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build
+        run: flutter build ${{ matrix.target }} --release
+
+      - name: Package (macOS)
+        if: matrix.target == 'macos'
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r "$GITHUB_WORKSPACE/devbench-macos.zip" dev_bench.app
+
+      - name: Package (Windows)
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath devbench-windows.zip
+
+      - name: Package (Linux)
+        if: matrix.target == 'linux'
+        run: |
+          tar -czf devbench-linux.tar.gz -C build/linux/x64/release bundle
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          merge-multiple: true
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/devbench-macos.zip
+            artifacts/devbench-windows.zip
+            artifacts/devbench-linux.tar.gz
+          generate_release_notes: true
