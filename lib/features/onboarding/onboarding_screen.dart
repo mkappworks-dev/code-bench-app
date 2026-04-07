@@ -220,104 +220,84 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
-              child: Stack(
-                fit: StackFit.expand,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Decorative radial highlight at top-left
-                  Positioned(
-                    top: -40,
-                    left: -40,
-                    child: Container(
-                      width: 180,
-                      height: 180,
-                      decoration: const BoxDecoration(
-                        gradient: RadialGradient(
-                          colors: [Color(0x0AFFFFFF), Colors.transparent],
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF007ACC), Color(0xFF004F85)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x99000000),
-                                  blurRadius: 10,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            alignment: Alignment.center,
-                            child: const Text(
-                              'C',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF007ACC), Color(0xFF004F85)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'Code Bench',
-                            style: TextStyle(
-                              color: Color(0xFFF0F0F0),
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x99000000),
+                              blurRadius: 10,
+                              offset: Offset(0, 2),
                             ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'C',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'AI-powered coding workspace',
-                        style: TextStyle(
-                          color: ThemeConstants.textSecondary,
-                          fontSize: 11,
                         ),
                       ),
-                      const SizedBox(height: 28),
-                      _FeatureCard(
-                        icon: '⚡',
-                        title: 'Multi-provider AI',
-                        subtitle: 'OpenAI · Anthropic · Gemini · Ollama',
-                      ),
-                      const SizedBox(height: 8),
-                      _FeatureCard(
-                        icon: '🖊',
-                        title: 'Smart Code Editor',
-                        subtitle: 'AI apply · diff view · file explorer',
-                      ),
-                      const SizedBox(height: 8),
-                      _FeatureCard(
-                        icon: '🐙',
-                        title: 'GitHub Integration',
-                        subtitle: 'PRs · commits · repo browser',
-                      ),
-                      const Spacer(),
+                      const SizedBox(width: 10),
                       const Text(
-                        '🔒 Keys stored in your OS keychain',
+                        'Code Bench',
                         style: TextStyle(
-                          color: Color(0xFF666666),
-                          fontSize: 10,
+                          color: Color(0xFFF0F0F0),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'AI-powered coding workspace',
+                    style: TextStyle(
+                      color: ThemeConstants.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  _FeatureCard(
+                    icon: '⚡',
+                    title: 'Multi-provider AI',
+                    subtitle: 'OpenAI · Anthropic · Gemini · Ollama',
+                  ),
+                  const SizedBox(height: 8),
+                  _FeatureCard(
+                    icon: '🖊',
+                    title: 'Smart Code Editor',
+                    subtitle: 'AI apply · diff view · file explorer',
+                  ),
+                  const SizedBox(height: 8),
+                  _FeatureCard(
+                    icon: '🐙',
+                    title: 'GitHub Integration',
+                    subtitle: 'PRs · commits · repo browser',
+                  ),
+                  const Spacer(),
+                  const Text(
+                    '🔒 Keys stored in your OS keychain',
+                    style: TextStyle(
+                      color: Color(0xFF666666),
+                      fontSize: 10,
+                    ),
                   ),
                 ],
               ),
