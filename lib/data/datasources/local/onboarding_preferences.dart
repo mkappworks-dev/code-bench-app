@@ -19,4 +19,9 @@ class OnboardingPreferences {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_key, true);
   }
+
+  Future<void> reset() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+  }
 }

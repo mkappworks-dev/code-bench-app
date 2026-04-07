@@ -1,9 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../data/datasources/local/onboarding_preferences.dart';
 import '../../data/datasources/local/secure_storage_source.dart';
 import '../../data/models/ai_model.dart';
 import '../../services/ai/ai_service_factory.dart';
@@ -199,6 +202,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: const Text('Save Settings'),
               ),
             ),
+            if (kDebugMode) ...[
+              const SizedBox(height: 48),
+              _SectionHeader(title: 'Developer'),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  await ref.read(onboardingPreferencesProvider).reset();
+                  if (context.mounted) context.go('/onboarding');
+                },
+                icon: const Icon(Icons.refresh, size: 14),
+                label: const Text('Reset Onboarding'),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: ThemeConstants.borderColor),
+                  foregroundColor: ThemeConstants.textSecondary,
+                ),
+              ),
+            ],
           ],
         ),
       ),
