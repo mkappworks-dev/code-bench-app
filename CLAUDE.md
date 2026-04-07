@@ -53,3 +53,35 @@ cd .worktrees/feat/2026-04-07-sign-features-flag
 ```
 
 All implementation work happens inside that worktree.
+
+## Pull Request Template
+
+Use this format both when creating a PR (`gh pr create`) and when asked for a PR summary. When giving a summary (not creating), wrap the output in a markdown code block so it is copyable:
+
+```markdown
+## Summary
+
+Brief description of what this PR does and why.
+
+Closes #<!-- issue number -->
+
+## Changes
+
+-
+-
+
+## Type of change
+
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Refactor / internal improvement
+- [ ] Documentation
+
+## Checklist
+
+- [ ] `flutter analyze` passes with no issues
+- [ ] `dart format lib/` applied
+- [ ] `flutter test` passes
+- [ ] If Drift tables or Riverpod providers were changed, `build_runner` was re-run and generated files are not committed
+- [ ] PR is focused on a single concern
+```
