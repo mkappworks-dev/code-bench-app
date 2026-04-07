@@ -219,85 +219,105 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   right: BorderSide(color: Color(0xFF2A2A2A)),
                 ),
               ),
-              padding: const EdgeInsets.all(36),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF007ACC), Color(0xFF004F85)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x99000000),
-                              blurRadius: 10,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
+                  // Decorative radial highlight at top-left
+                  Positioned(
+                    top: -40,
+                    left: -40,
+                    child: Container(
+                      width: 180,
+                      height: 180,
+                      decoration: const BoxDecoration(
+                        gradient: RadialGradient(
+                          colors: [Color(0x0AFFFFFF), Colors.transparent],
                         ),
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'C',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF007ACC), Color(0xFF004F85)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x99000000),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: const Text(
+                              'C',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                           ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'Code Bench',
+                            style: TextStyle(
+                              color: Color(0xFFF0F0F0),
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'AI-powered coding workspace',
+                        style: TextStyle(
+                          color: ThemeConstants.textSecondary,
+                          fontSize: 10,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(height: 28),
+                      _FeatureCard(
+                        icon: '⚡',
+                        title: 'Multi-provider AI',
+                        subtitle: 'OpenAI · Anthropic · Gemini · Ollama',
+                      ),
+                      const SizedBox(height: 8),
+                      _FeatureCard(
+                        icon: '🖊',
+                        title: 'Smart Code Editor',
+                        subtitle: 'AI apply · diff view · file explorer',
+                      ),
+                      const SizedBox(height: 8),
+                      _FeatureCard(
+                        icon: '🐙',
+                        title: 'GitHub Integration',
+                        subtitle: 'PRs · commits · repo browser',
+                      ),
+                      const Spacer(),
                       const Text(
-                        'Code Bench',
+                        '🔒 Keys stored in your OS keychain',
                         style: TextStyle(
-                          color: Color(0xFFF0F0F0),
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF666666),
+                          fontSize: 8,
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'AI-powered coding workspace',
-                    style: TextStyle(
-                      color: ThemeConstants.textSecondary,
-                      fontSize: 11,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  _FeatureCard(
-                    icon: '⚡',
-                    title: 'Multi-provider AI',
-                    subtitle: 'OpenAI · Anthropic · Gemini · Ollama',
-                  ),
-                  const SizedBox(height: 8),
-                  _FeatureCard(
-                    icon: '🖊',
-                    title: 'Smart Code Editor',
-                    subtitle: 'AI apply · diff view · file explorer',
-                  ),
-                  const SizedBox(height: 8),
-                  _FeatureCard(
-                    icon: '🐙',
-                    title: 'GitHub Integration',
-                    subtitle: 'PRs · commits · repo browser',
-                  ),
-                  const Spacer(),
-                  const Text(
-                    '🔒 Keys stored in your OS keychain',
-                    style: TextStyle(
-                      color: Color(0xFF666666),
-                      fontSize: 10,
-                    ),
                   ),
                 ],
               ),
@@ -309,7 +329,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             flex: 62,
             child: Container(
               color: const Color(0xFF141414),
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 40),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,7 +338,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     'Add API Keys',
                     style: TextStyle(
                       color: ThemeConstants.textPrimary,
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -327,7 +347,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     'Add now or any time in Settings.',
                     style: TextStyle(
                       color: ThemeConstants.textSecondary,
-                      fontSize: 12,
+                      fontSize: 11,
                     ),
                   ),
                   const SizedBox(height: 28),
@@ -428,7 +448,7 @@ class _FeatureCard extends StatelessWidget {
             '$icon  $title',
             style: const TextStyle(
               color: ThemeConstants.textPrimary,
-              fontSize: 11,
+              fontSize: 9,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -437,7 +457,7 @@ class _FeatureCard extends StatelessWidget {
             subtitle,
             style: const TextStyle(
               color: Color(0xFF7A7A7A),
-              fontSize: 10,
+              fontSize: 8,
             ),
           ),
         ],
@@ -486,12 +506,12 @@ class _ProviderRowState extends State<_ProviderRow> {
     return Row(
       children: [
         SizedBox(
-          width: 90,
+          width: 78,
           child: Text(
             widget.provider.displayName.toUpperCase(),
             style: const TextStyle(
               color: ThemeConstants.textSecondary,
-              fontSize: 11,
+              fontSize: 9,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.6,
             ),
