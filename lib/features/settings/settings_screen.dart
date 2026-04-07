@@ -88,6 +88,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.dispose();
   }
 
+  Future<void> _deleteKey(AIProvider provider) async {
+    final storage = ref.read(secureStorageSourceProvider);
+    await storage.deleteApiKey(provider.name);
+    _controllers[provider]!.clear();
+    ref.invalidate(aiServiceProvider);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${provider.displayName} key removed'),
+          backgroundColor: ThemeConstants.success,
+        ),
+      );
+    }
+  }
+
   Future<void> _testOllama() async {
     final url = _ollamaController.text.trim();
     try {
@@ -143,6 +158,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: _ApiKeyField(
                       provider: provider,
                       controller: _controllers[provider]!,
+                      onDelete: () => _deleteKey(provider),
                     ),
                   ),
                 ),
@@ -217,10 +233,15 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _ApiKeyField extends StatefulWidget {
-  const _ApiKeyField({required this.provider, required this.controller});
+  const _ApiKeyField({
+    required this.provider,
+    required this.controller,
+    required this.onDelete,
+  });
 
   final AIProvider provider;
   final TextEditingController controller;
+  final VoidCallback onDelete;
 
   @override
   State<_ApiKeyField> createState() => _ApiKeyFieldState();
@@ -231,18 +252,35 @@ class _ApiKeyFieldState extends State<_ApiKeyField> {
 
   @override
   Widget build(BuildContext context) {
-    return _LabeledField(
-      label: widget.provider.displayName,
-      hint: 'API key',
-      controller: widget.controller,
-      obscureText: _obscure,
-      suffixIcon: IconButton(
-        icon: Icon(
-          _obscure ? Icons.visibility_off : Icons.visibility,
-          size: 16,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: _LabeledField(
+            label: widget.provider.displayName,
+            hint: 'API key',
+            controller: widget.controller,
+            obscureText: _obscure,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscure ? Icons.visibility_off : Icons.visibility,
+                size: 16,
+              ),
+              onPressed: () => setState(() => _obscure = !_obscure),
+            ),
+          ),
         ),
-        onPressed: () => setState(() => _obscure = !_obscure),
-      ),
+        const SizedBox(width: 8),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 2),
+          child: IconButton(
+            icon: const Icon(Icons.close, size: 16),
+            color: ThemeConstants.textSecondary,
+            tooltip: 'Remove key',
+            onPressed: widget.onDelete,
+          ),
+        ),
+      ],
     );
   }
 }
