@@ -201,9 +201,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       body: Row(
         children: [
           // ── Left panel (38%) — branding ──────────────────────────────
-          FractionallySizedBox(
-            widthFactor: 0.38,
-            heightFactor: 1.0,
+          Expanded(
+            flex: 38,
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -307,6 +306,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
           // ── Right panel — form ────────────────────────────────────────
           Expanded(
+            flex: 62,
             child: Container(
               color: const Color(0xFF141414),
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
