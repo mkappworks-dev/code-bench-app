@@ -16,7 +16,7 @@ class AppTitleBar extends StatelessWidget {
         color: ThemeConstants.titleBar,
         child: Row(
           children: [
-            const SizedBox(width: 80), // macOS traffic lights space
+            const SizedBox(width: 80), // space for native traffic lights
             Expanded(
               child: Center(
                 child: Text(
@@ -29,91 +29,8 @@ class AppTitleBar extends StatelessWidget {
                 ),
               ),
             ),
-            // Windows/Linux window controls
-            _WindowControls(),
+            const SizedBox(width: 80), // balance left offset
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _WindowControls extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _TitleBarButton(
-          icon: Icons.remove,
-          onPressed: () => windowManager.minimize(),
-          tooltip: 'Minimize',
-        ),
-        _TitleBarButton(
-          icon: Icons.crop_square,
-          onPressed: () async {
-            if (await windowManager.isMaximized()) {
-              await windowManager.unmaximize();
-            } else {
-              await windowManager.maximize();
-            }
-          },
-          tooltip: 'Maximize',
-        ),
-        _TitleBarButton(
-          icon: Icons.close,
-          onPressed: () => windowManager.close(),
-          tooltip: 'Close',
-          isClose: true,
-        ),
-      ],
-    );
-  }
-}
-
-class _TitleBarButton extends StatefulWidget {
-  const _TitleBarButton({
-    required this.icon,
-    required this.onPressed,
-    required this.tooltip,
-    this.isClose = false,
-  });
-
-  final IconData icon;
-  final VoidCallback onPressed;
-  final String tooltip;
-  final bool isClose;
-
-  @override
-  State<_TitleBarButton> createState() => _TitleBarButtonState();
-}
-
-class _TitleBarButtonState extends State<_TitleBarButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: widget.tooltip,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          onTap: widget.onPressed,
-          child: Container(
-            width: 40,
-            height: 36,
-            color: _hovered
-                ? (widget.isClose
-                    ? Colors.red.withAlpha(200)
-                    : Colors.white.withAlpha(20))
-                : Colors.transparent,
-            child: Icon(
-              widget.icon,
-              size: 14,
-              color: ThemeConstants.textSecondary,
-            ),
-          ),
         ),
       ),
     );
