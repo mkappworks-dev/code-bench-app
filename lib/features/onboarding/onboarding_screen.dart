@@ -210,13 +210,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   end: Alignment.bottomRight,
                   stops: [0.0, 0.5, 1.0],
                   colors: [
-                    Color(0xFF111111),
-                    Color(0xFF0A0A0A),
-                    Color(0xFF050505)
+                    ThemeConstants.sidebarBackground,
+                    ThemeConstants.activityBar,
+                    Color(0xFF050505),
                   ],
                 ),
                 border: Border(
-                  right: BorderSide(color: Color(0xFF2A2A2A)),
+                  right: BorderSide(color: ThemeConstants.borderColor),
                 ),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
@@ -231,7 +231,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         height: 32,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF007ACC), Color(0xFF004F85)],
+                            colors: [
+                              ThemeConstants.accent,
+                              ThemeConstants.accentDark
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -258,7 +261,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       const Text(
                         'Code Bench',
                         style: TextStyle(
-                          color: Color(0xFFF0F0F0),
+                          color: ThemeConstants.textPrimary,
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
                         ),
@@ -295,7 +298,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   const Text(
                     '🔒 Keys stored in your OS keychain',
                     style: TextStyle(
-                      color: Color(0xFF666666),
+                      color: ThemeConstants.textMuted,
                       fontSize: 10,
                     ),
                   ),
@@ -308,7 +311,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           Expanded(
             flex: 62,
             child: Container(
-              color: const Color(0xFF141414),
+              color: ThemeConstants.background,
               padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 40),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -417,8 +420,8 @@ class _FeatureCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0x0AFFFFFF),
-        border: Border.all(color: const Color(0x12FFFFFF)),
+        color: ThemeConstants.frostedBg,
+        border: Border.all(color: ThemeConstants.frostedBorder),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -436,7 +439,7 @@ class _FeatureCard extends StatelessWidget {
           Text(
             subtitle,
             style: const TextStyle(
-              color: Color(0xFF7A7A7A),
+              color: ThemeConstants.textMuted,
               fontSize: 10,
             ),
           ),
