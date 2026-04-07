@@ -10,7 +10,7 @@ class AppTitleBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onPanStart: (_) => windowManager.startDragging(),
+      onPanStart: (_) => Future.microtask(windowManager.startDragging),
       child: Container(
         height: 36,
         color: ThemeConstants.titleBar,
