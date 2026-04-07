@@ -45,7 +45,9 @@ class _MessageListState extends ConsumerState<MessageList> {
 
   Future<void> _loadMore() async {
     if (_loadingMore || !_hasMore) return;
-    final messages = ref.read(chatMessagesProvider(widget.sessionId)).valueOrNull;
+    final messages = ref
+        .read(chatMessagesProvider(widget.sessionId))
+        .valueOrNull;
     if (messages == null) return;
     if (messages.length < _pageSize) {
       setState(() => _hasMore = false);
@@ -59,8 +61,9 @@ class _MessageListState extends ConsumerState<MessageList> {
           .read(chatMessagesProvider(widget.sessionId).notifier)
           .loadMore(widget.sessionId, offset);
       // If fewer than a full page came back, no more to load
-      final updated =
-          ref.read(chatMessagesProvider(widget.sessionId)).valueOrNull;
+      final updated = ref
+          .read(chatMessagesProvider(widget.sessionId))
+          .valueOrNull;
       if (updated != null && updated.length - messages.length < _pageSize) {
         setState(() => _hasMore = false);
       }
@@ -75,13 +78,11 @@ class _MessageListState extends ConsumerState<MessageList> {
 
   @override
   Widget build(BuildContext context) {
-    final messagesAsync =
-        ref.watch(chatMessagesProvider(widget.sessionId));
+    final messagesAsync = ref.watch(chatMessagesProvider(widget.sessionId));
 
     return messagesAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
+      loading: () =>
+          const Center(child: CircularProgressIndicator(strokeWidth: 2)),
       error: (e, _) => _ErrorState(error: e.toString()),
       data: (messages) {
         if (messages.isEmpty) return const _EmptyChat();
@@ -96,8 +97,7 @@ class _MessageListState extends ConsumerState<MessageList> {
             if (index == messages.length) {
               return const Padding(
                 padding: EdgeInsets.all(16),
-                child: Center(
-                    child: CircularProgressIndicator(strokeWidth: 2)),
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
               );
             }
             final msg = messages[messages.length - 1 - index];
@@ -120,13 +120,15 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline,
-              color: ThemeConstants.error, size: 40),
+          const Icon(
+            Icons.error_outline,
+            color: ThemeConstants.error,
+            size: 40,
+          ),
           const SizedBox(height: 8),
           Text(
             error,
-            style:
-                const TextStyle(color: ThemeConstants.textSecondary),
+            style: const TextStyle(color: ThemeConstants.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -152,18 +154,12 @@ class _EmptyChat extends StatelessWidget {
           const SizedBox(height: 16),
           const Text(
             'Start a conversation',
-            style: TextStyle(
-              color: ThemeConstants.textSecondary,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 16),
           ),
           const SizedBox(height: 8),
           const Text(
             'Ask anything about your code',
-            style: TextStyle(
-              color: ThemeConstants.textMuted,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: ThemeConstants.textMuted, fontSize: 13),
           ),
         ],
       ),

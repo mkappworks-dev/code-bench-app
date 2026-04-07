@@ -12,7 +12,8 @@ part of 'workspace_project.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 WorkspaceProject _$WorkspaceProjectFromJson(Map<String, dynamic> json) {
   return _WorkspaceProject.fromJson(json);
@@ -41,17 +42,19 @@ mixin _$WorkspaceProject {
 /// @nodoc
 abstract class $WorkspaceProjectCopyWith<$Res> {
   factory $WorkspaceProjectCopyWith(
-          WorkspaceProject value, $Res Function(WorkspaceProject) then) =
-      _$WorkspaceProjectCopyWithImpl<$Res, WorkspaceProject>;
+    WorkspaceProject value,
+    $Res Function(WorkspaceProject) then,
+  ) = _$WorkspaceProjectCopyWithImpl<$Res, WorkspaceProject>;
   @useResult
-  $Res call(
-      {String id,
-      String name,
-      String? localPath,
-      String? repositoryId,
-      String? activeBranch,
-      List<String> sessionIds,
-      DateTime? lastOpenedAt});
+  $Res call({
+    String id,
+    String name,
+    String? localPath,
+    String? repositoryId,
+    String? activeBranch,
+    List<String> sessionIds,
+    DateTime? lastOpenedAt,
+  });
 }
 
 /// @nodoc
@@ -77,64 +80,70 @@ class _$WorkspaceProjectCopyWithImpl<$Res, $Val extends WorkspaceProject>
     Object? sessionIds = null,
     Object? lastOpenedAt = freezed,
   }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      localPath: freezed == localPath
-          ? _value.localPath
-          : localPath // ignore: cast_nullable_to_non_nullable
-              as String?,
-      repositoryId: freezed == repositoryId
-          ? _value.repositoryId
-          : repositoryId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      activeBranch: freezed == activeBranch
-          ? _value.activeBranch
-          : activeBranch // ignore: cast_nullable_to_non_nullable
-              as String?,
-      sessionIds: null == sessionIds
-          ? _value.sessionIds
-          : sessionIds // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      lastOpenedAt: freezed == lastOpenedAt
-          ? _value.lastOpenedAt
-          : lastOpenedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String,
+            name: null == name
+                ? _value.name
+                : name // ignore: cast_nullable_to_non_nullable
+                      as String,
+            localPath: freezed == localPath
+                ? _value.localPath
+                : localPath // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            repositoryId: freezed == repositoryId
+                ? _value.repositoryId
+                : repositoryId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            activeBranch: freezed == activeBranch
+                ? _value.activeBranch
+                : activeBranch // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            sessionIds: null == sessionIds
+                ? _value.sessionIds
+                : sessionIds // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            lastOpenedAt: freezed == lastOpenedAt
+                ? _value.lastOpenedAt
+                : lastOpenedAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+          )
+          as $Val,
+    );
   }
 }
 
 /// @nodoc
 abstract class _$$WorkspaceProjectImplCopyWith<$Res>
     implements $WorkspaceProjectCopyWith<$Res> {
-  factory _$$WorkspaceProjectImplCopyWith(_$WorkspaceProjectImpl value,
-          $Res Function(_$WorkspaceProjectImpl) then) =
-      __$$WorkspaceProjectImplCopyWithImpl<$Res>;
+  factory _$$WorkspaceProjectImplCopyWith(
+    _$WorkspaceProjectImpl value,
+    $Res Function(_$WorkspaceProjectImpl) then,
+  ) = __$$WorkspaceProjectImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String id,
-      String name,
-      String? localPath,
-      String? repositoryId,
-      String? activeBranch,
-      List<String> sessionIds,
-      DateTime? lastOpenedAt});
+  $Res call({
+    String id,
+    String name,
+    String? localPath,
+    String? repositoryId,
+    String? activeBranch,
+    List<String> sessionIds,
+    DateTime? lastOpenedAt,
+  });
 }
 
 /// @nodoc
 class __$$WorkspaceProjectImplCopyWithImpl<$Res>
     extends _$WorkspaceProjectCopyWithImpl<$Res, _$WorkspaceProjectImpl>
     implements _$$WorkspaceProjectImplCopyWith<$Res> {
-  __$$WorkspaceProjectImplCopyWithImpl(_$WorkspaceProjectImpl _value,
-      $Res Function(_$WorkspaceProjectImpl) _then)
-      : super(_value, _then);
+  __$$WorkspaceProjectImplCopyWithImpl(
+    _$WorkspaceProjectImpl _value,
+    $Res Function(_$WorkspaceProjectImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of WorkspaceProject
   /// with the given fields replaced by the non-null parameter values.
@@ -149,51 +158,53 @@ class __$$WorkspaceProjectImplCopyWithImpl<$Res>
     Object? sessionIds = null,
     Object? lastOpenedAt = freezed,
   }) {
-    return _then(_$WorkspaceProjectImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      localPath: freezed == localPath
-          ? _value.localPath
-          : localPath // ignore: cast_nullable_to_non_nullable
-              as String?,
-      repositoryId: freezed == repositoryId
-          ? _value.repositoryId
-          : repositoryId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      activeBranch: freezed == activeBranch
-          ? _value.activeBranch
-          : activeBranch // ignore: cast_nullable_to_non_nullable
-              as String?,
-      sessionIds: null == sessionIds
-          ? _value._sessionIds
-          : sessionIds // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      lastOpenedAt: freezed == lastOpenedAt
-          ? _value.lastOpenedAt
-          : lastOpenedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-    ));
+    return _then(
+      _$WorkspaceProjectImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String,
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                  as String,
+        localPath: freezed == localPath
+            ? _value.localPath
+            : localPath // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        repositoryId: freezed == repositoryId
+            ? _value.repositoryId
+            : repositoryId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        activeBranch: freezed == activeBranch
+            ? _value.activeBranch
+            : activeBranch // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        sessionIds: null == sessionIds
+            ? _value._sessionIds
+            : sessionIds // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        lastOpenedAt: freezed == lastOpenedAt
+            ? _value.lastOpenedAt
+            : lastOpenedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$WorkspaceProjectImpl implements _WorkspaceProject {
-  const _$WorkspaceProjectImpl(
-      {required this.id,
-      required this.name,
-      this.localPath,
-      this.repositoryId,
-      this.activeBranch,
-      final List<String> sessionIds = const [],
-      this.lastOpenedAt})
-      : _sessionIds = sessionIds;
+  const _$WorkspaceProjectImpl({
+    required this.id,
+    required this.name,
+    this.localPath,
+    this.repositoryId,
+    this.activeBranch,
+    final List<String> sessionIds = const [],
+    this.lastOpenedAt,
+  }) : _sessionIds = sessionIds;
 
   factory _$WorkspaceProjectImpl.fromJson(Map<String, dynamic> json) =>
       _$$WorkspaceProjectImplFromJson(json);
@@ -238,8 +249,10 @@ class _$WorkspaceProjectImpl implements _WorkspaceProject {
                 other.repositoryId == repositoryId) &&
             (identical(other.activeBranch, activeBranch) ||
                 other.activeBranch == activeBranch) &&
-            const DeepCollectionEquality()
-                .equals(other._sessionIds, _sessionIds) &&
+            const DeepCollectionEquality().equals(
+              other._sessionIds,
+              _sessionIds,
+            ) &&
             (identical(other.lastOpenedAt, lastOpenedAt) ||
                 other.lastOpenedAt == lastOpenedAt));
   }
@@ -247,14 +260,15 @@ class _$WorkspaceProjectImpl implements _WorkspaceProject {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      name,
-      localPath,
-      repositoryId,
-      activeBranch,
-      const DeepCollectionEquality().hash(_sessionIds),
-      lastOpenedAt);
+    runtimeType,
+    id,
+    name,
+    localPath,
+    repositoryId,
+    activeBranch,
+    const DeepCollectionEquality().hash(_sessionIds),
+    lastOpenedAt,
+  );
 
   /// Create a copy of WorkspaceProject
   /// with the given fields replaced by the non-null parameter values.
@@ -263,25 +277,26 @@ class _$WorkspaceProjectImpl implements _WorkspaceProject {
   @pragma('vm:prefer-inline')
   _$$WorkspaceProjectImplCopyWith<_$WorkspaceProjectImpl> get copyWith =>
       __$$WorkspaceProjectImplCopyWithImpl<_$WorkspaceProjectImpl>(
-          this, _$identity);
+        this,
+        _$identity,
+      );
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$WorkspaceProjectImplToJson(
-      this,
-    );
+    return _$$WorkspaceProjectImplToJson(this);
   }
 }
 
 abstract class _WorkspaceProject implements WorkspaceProject {
-  const factory _WorkspaceProject(
-      {required final String id,
-      required final String name,
-      final String? localPath,
-      final String? repositoryId,
-      final String? activeBranch,
-      final List<String> sessionIds,
-      final DateTime? lastOpenedAt}) = _$WorkspaceProjectImpl;
+  const factory _WorkspaceProject({
+    required final String id,
+    required final String name,
+    final String? localPath,
+    final String? repositoryId,
+    final String? activeBranch,
+    final List<String> sessionIds,
+    final DateTime? lastOpenedAt,
+  }) = _$WorkspaceProjectImpl;
 
   factory _WorkspaceProject.fromJson(Map<String, dynamic> json) =
       _$WorkspaceProjectImpl.fromJson;

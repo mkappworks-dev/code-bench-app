@@ -37,9 +37,11 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
   Future<void> _loadPaneWidths() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _explorerWidth = prefs.getDouble(AppConstants.prefExplorerWidth) ??
+      _explorerWidth =
+          prefs.getDouble(AppConstants.prefExplorerWidth) ??
           AppConstants.defaultExplorerWidth;
-      _chatWidth = prefs.getDouble(AppConstants.prefChatWidth) ??
+      _chatWidth =
+          prefs.getDouble(AppConstants.prefChatWidth) ??
           AppConstants.defaultChatWidth;
     });
   }
@@ -76,7 +78,8 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    final showEditorPanes = location.startsWith('/editor') ||
+    final showEditorPanes =
+        location.startsWith('/editor') ||
         location.startsWith('/chat') ||
         location.startsWith('/github');
 
@@ -84,10 +87,14 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyN, meta: true): _newChat,
         const SingleActivator(LogicalKeyboardKey.keyN, control: true): _newChat,
-        const SingleActivator(LogicalKeyboardKey.keyS, meta: true): _saveCurrentFile,
-        const SingleActivator(LogicalKeyboardKey.keyS, control: true): _saveCurrentFile,
-        const SingleActivator(LogicalKeyboardKey.keyW, meta: true): _closeCurrentTab,
-        const SingleActivator(LogicalKeyboardKey.keyW, control: true): _closeCurrentTab,
+        const SingleActivator(LogicalKeyboardKey.keyS, meta: true):
+            _saveCurrentFile,
+        const SingleActivator(LogicalKeyboardKey.keyS, control: true):
+            _saveCurrentFile,
+        const SingleActivator(LogicalKeyboardKey.keyW, meta: true):
+            _closeCurrentTab,
+        const SingleActivator(LogicalKeyboardKey.keyW, control: true):
+            _closeCurrentTab,
         const SingleActivator(LogicalKeyboardKey.keyB, meta: true): () =>
             setState(() => _explorerVisible = !_explorerVisible),
         const SingleActivator(LogicalKeyboardKey.keyB, control: true): () =>
@@ -117,8 +124,7 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
                           _ResizableDivider(
                             onDrag: (delta) {
                               setState(() {
-                                _explorerWidth =
-                                    (_explorerWidth + delta).clamp(
+                                _explorerWidth = (_explorerWidth + delta).clamp(
                                   AppConstants.minPaneWidth,
                                   400,
                                 );
@@ -132,8 +138,7 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
                           _ResizableDivider(
                             onDrag: (delta) {
                               setState(() {
-                                _chatWidth =
-                                    (_chatWidth - delta).clamp(
+                                _chatWidth = (_chatWidth - delta).clamp(
                                   AppConstants.minPaneWidth,
                                   600,
                                 );
@@ -141,10 +146,7 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
                               _savePaneWidths();
                             },
                           ),
-                          SizedBox(
-                            width: _chatWidth,
-                            child: const ChatPanel(),
-                          ),
+                          SizedBox(width: _chatWidth, child: const ChatPanel()),
                         ],
                       ],
                     ),
@@ -170,10 +172,7 @@ class _ResizableDivider extends StatelessWidget {
       onHorizontalDragUpdate: (details) => onDrag(details.delta.dx),
       child: MouseRegion(
         cursor: SystemMouseCursors.resizeColumn,
-        child: Container(
-          width: 4,
-          color: ThemeConstants.dividerColor,
-        ),
+        child: Container(width: 4, color: ThemeConstants.dividerColor),
       ),
     );
   }

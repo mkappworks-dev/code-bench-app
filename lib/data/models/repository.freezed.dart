@@ -12,7 +12,8 @@ part of 'repository.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 Repository _$RepositoryFromJson(Map<String, dynamic> json) {
   return _Repository.fromJson(json);
@@ -44,20 +45,22 @@ mixin _$Repository {
 /// @nodoc
 abstract class $RepositoryCopyWith<$Res> {
   factory $RepositoryCopyWith(
-          Repository value, $Res Function(Repository) then) =
-      _$RepositoryCopyWithImpl<$Res, Repository>;
+    Repository value,
+    $Res Function(Repository) then,
+  ) = _$RepositoryCopyWithImpl<$Res, Repository>;
   @useResult
-  $Res call(
-      {int id,
-      String name,
-      String owner,
-      String defaultBranch,
-      bool isPrivate,
-      String? language,
-      int starCount,
-      String? description,
-      String? htmlUrl,
-      DateTime? updatedAt});
+  $Res call({
+    int id,
+    String name,
+    String owner,
+    String defaultBranch,
+    bool isPrivate,
+    String? language,
+    int starCount,
+    String? description,
+    String? htmlUrl,
+    DateTime? updatedAt,
+  });
 }
 
 /// @nodoc
@@ -86,48 +89,51 @@ class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
     Object? htmlUrl = freezed,
     Object? updatedAt = freezed,
   }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      owner: null == owner
-          ? _value.owner
-          : owner // ignore: cast_nullable_to_non_nullable
-              as String,
-      defaultBranch: null == defaultBranch
-          ? _value.defaultBranch
-          : defaultBranch // ignore: cast_nullable_to_non_nullable
-              as String,
-      isPrivate: null == isPrivate
-          ? _value.isPrivate
-          : isPrivate // ignore: cast_nullable_to_non_nullable
-              as bool,
-      language: freezed == language
-          ? _value.language
-          : language // ignore: cast_nullable_to_non_nullable
-              as String?,
-      starCount: null == starCount
-          ? _value.starCount
-          : starCount // ignore: cast_nullable_to_non_nullable
-              as int,
-      description: freezed == description
-          ? _value.description
-          : description // ignore: cast_nullable_to_non_nullable
-              as String?,
-      htmlUrl: freezed == htmlUrl
-          ? _value.htmlUrl
-          : htmlUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      updatedAt: freezed == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as int,
+            name: null == name
+                ? _value.name
+                : name // ignore: cast_nullable_to_non_nullable
+                      as String,
+            owner: null == owner
+                ? _value.owner
+                : owner // ignore: cast_nullable_to_non_nullable
+                      as String,
+            defaultBranch: null == defaultBranch
+                ? _value.defaultBranch
+                : defaultBranch // ignore: cast_nullable_to_non_nullable
+                      as String,
+            isPrivate: null == isPrivate
+                ? _value.isPrivate
+                : isPrivate // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            language: freezed == language
+                ? _value.language
+                : language // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            starCount: null == starCount
+                ? _value.starCount
+                : starCount // ignore: cast_nullable_to_non_nullable
+                      as int,
+            description: freezed == description
+                ? _value.description
+                : description // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            htmlUrl: freezed == htmlUrl
+                ? _value.htmlUrl
+                : htmlUrl // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            updatedAt: freezed == updatedAt
+                ? _value.updatedAt
+                : updatedAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -135,21 +141,23 @@ class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
 abstract class _$$RepositoryImplCopyWith<$Res>
     implements $RepositoryCopyWith<$Res> {
   factory _$$RepositoryImplCopyWith(
-          _$RepositoryImpl value, $Res Function(_$RepositoryImpl) then) =
-      __$$RepositoryImplCopyWithImpl<$Res>;
+    _$RepositoryImpl value,
+    $Res Function(_$RepositoryImpl) then,
+  ) = __$$RepositoryImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {int id,
-      String name,
-      String owner,
-      String defaultBranch,
-      bool isPrivate,
-      String? language,
-      int starCount,
-      String? description,
-      String? htmlUrl,
-      DateTime? updatedAt});
+  $Res call({
+    int id,
+    String name,
+    String owner,
+    String defaultBranch,
+    bool isPrivate,
+    String? language,
+    int starCount,
+    String? description,
+    String? htmlUrl,
+    DateTime? updatedAt,
+  });
 }
 
 /// @nodoc
@@ -157,8 +165,9 @@ class __$$RepositoryImplCopyWithImpl<$Res>
     extends _$RepositoryCopyWithImpl<$Res, _$RepositoryImpl>
     implements _$$RepositoryImplCopyWith<$Res> {
   __$$RepositoryImplCopyWithImpl(
-      _$RepositoryImpl _value, $Res Function(_$RepositoryImpl) _then)
-      : super(_value, _then);
+    _$RepositoryImpl _value,
+    $Res Function(_$RepositoryImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of Repository
   /// with the given fields replaced by the non-null parameter values.
@@ -176,65 +185,68 @@ class __$$RepositoryImplCopyWithImpl<$Res>
     Object? htmlUrl = freezed,
     Object? updatedAt = freezed,
   }) {
-    return _then(_$RepositoryImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      owner: null == owner
-          ? _value.owner
-          : owner // ignore: cast_nullable_to_non_nullable
-              as String,
-      defaultBranch: null == defaultBranch
-          ? _value.defaultBranch
-          : defaultBranch // ignore: cast_nullable_to_non_nullable
-              as String,
-      isPrivate: null == isPrivate
-          ? _value.isPrivate
-          : isPrivate // ignore: cast_nullable_to_non_nullable
-              as bool,
-      language: freezed == language
-          ? _value.language
-          : language // ignore: cast_nullable_to_non_nullable
-              as String?,
-      starCount: null == starCount
-          ? _value.starCount
-          : starCount // ignore: cast_nullable_to_non_nullable
-              as int,
-      description: freezed == description
-          ? _value.description
-          : description // ignore: cast_nullable_to_non_nullable
-              as String?,
-      htmlUrl: freezed == htmlUrl
-          ? _value.htmlUrl
-          : htmlUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      updatedAt: freezed == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-    ));
+    return _then(
+      _$RepositoryImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as int,
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                  as String,
+        owner: null == owner
+            ? _value.owner
+            : owner // ignore: cast_nullable_to_non_nullable
+                  as String,
+        defaultBranch: null == defaultBranch
+            ? _value.defaultBranch
+            : defaultBranch // ignore: cast_nullable_to_non_nullable
+                  as String,
+        isPrivate: null == isPrivate
+            ? _value.isPrivate
+            : isPrivate // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        language: freezed == language
+            ? _value.language
+            : language // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        starCount: null == starCount
+            ? _value.starCount
+            : starCount // ignore: cast_nullable_to_non_nullable
+                  as int,
+        description: freezed == description
+            ? _value.description
+            : description // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        htmlUrl: freezed == htmlUrl
+            ? _value.htmlUrl
+            : htmlUrl // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        updatedAt: freezed == updatedAt
+            ? _value.updatedAt
+            : updatedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$RepositoryImpl implements _Repository {
-  const _$RepositoryImpl(
-      {required this.id,
-      required this.name,
-      required this.owner,
-      required this.defaultBranch,
-      this.isPrivate = false,
-      this.language,
-      this.starCount = 0,
-      this.description,
-      this.htmlUrl,
-      this.updatedAt});
+  const _$RepositoryImpl({
+    required this.id,
+    required this.name,
+    required this.owner,
+    required this.defaultBranch,
+    this.isPrivate = false,
+    this.language,
+    this.starCount = 0,
+    this.description,
+    this.htmlUrl,
+    this.updatedAt,
+  });
 
   factory _$RepositoryImpl.fromJson(Map<String, dynamic> json) =>
       _$$RepositoryImplFromJson(json);
@@ -292,8 +304,19 @@ class _$RepositoryImpl implements _Repository {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, owner, defaultBranch,
-      isPrivate, language, starCount, description, htmlUrl, updatedAt);
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    name,
+    owner,
+    defaultBranch,
+    isPrivate,
+    language,
+    starCount,
+    description,
+    htmlUrl,
+    updatedAt,
+  );
 
   /// Create a copy of Repository
   /// with the given fields replaced by the non-null parameter values.
@@ -305,24 +328,23 @@ class _$RepositoryImpl implements _Repository {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$RepositoryImplToJson(
-      this,
-    );
+    return _$$RepositoryImplToJson(this);
   }
 }
 
 abstract class _Repository implements Repository {
-  const factory _Repository(
-      {required final int id,
-      required final String name,
-      required final String owner,
-      required final String defaultBranch,
-      final bool isPrivate,
-      final String? language,
-      final int starCount,
-      final String? description,
-      final String? htmlUrl,
-      final DateTime? updatedAt}) = _$RepositoryImpl;
+  const factory _Repository({
+    required final int id,
+    required final String name,
+    required final String owner,
+    required final String defaultBranch,
+    final bool isPrivate,
+    final String? language,
+    final int starCount,
+    final String? description,
+    final String? htmlUrl,
+    final DateTime? updatedAt,
+  }) = _$RepositoryImpl;
 
   factory _Repository.fromJson(Map<String, dynamic> json) =
       _$RepositoryImpl.fromJson;
@@ -381,15 +403,17 @@ mixin _$GitHubAccount {
 /// @nodoc
 abstract class $GitHubAccountCopyWith<$Res> {
   factory $GitHubAccountCopyWith(
-          GitHubAccount value, $Res Function(GitHubAccount) then) =
-      _$GitHubAccountCopyWithImpl<$Res, GitHubAccount>;
+    GitHubAccount value,
+    $Res Function(GitHubAccount) then,
+  ) = _$GitHubAccountCopyWithImpl<$Res, GitHubAccount>;
   @useResult
-  $Res call(
-      {String username,
-      String avatarUrl,
-      String? email,
-      List<String> scopes,
-      String? name});
+  $Res call({
+    String username,
+    String avatarUrl,
+    String? email,
+    List<String> scopes,
+    String? name,
+  });
 }
 
 /// @nodoc
@@ -413,28 +437,31 @@ class _$GitHubAccountCopyWithImpl<$Res, $Val extends GitHubAccount>
     Object? scopes = null,
     Object? name = freezed,
   }) {
-    return _then(_value.copyWith(
-      username: null == username
-          ? _value.username
-          : username // ignore: cast_nullable_to_non_nullable
-              as String,
-      avatarUrl: null == avatarUrl
-          ? _value.avatarUrl
-          : avatarUrl // ignore: cast_nullable_to_non_nullable
-              as String,
-      email: freezed == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String?,
-      scopes: null == scopes
-          ? _value.scopes
-          : scopes // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      name: freezed == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            username: null == username
+                ? _value.username
+                : username // ignore: cast_nullable_to_non_nullable
+                      as String,
+            avatarUrl: null == avatarUrl
+                ? _value.avatarUrl
+                : avatarUrl // ignore: cast_nullable_to_non_nullable
+                      as String,
+            email: freezed == email
+                ? _value.email
+                : email // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            scopes: null == scopes
+                ? _value.scopes
+                : scopes // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            name: freezed == name
+                ? _value.name
+                : name // ignore: cast_nullable_to_non_nullable
+                      as String?,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -442,16 +469,18 @@ class _$GitHubAccountCopyWithImpl<$Res, $Val extends GitHubAccount>
 abstract class _$$GitHubAccountImplCopyWith<$Res>
     implements $GitHubAccountCopyWith<$Res> {
   factory _$$GitHubAccountImplCopyWith(
-          _$GitHubAccountImpl value, $Res Function(_$GitHubAccountImpl) then) =
-      __$$GitHubAccountImplCopyWithImpl<$Res>;
+    _$GitHubAccountImpl value,
+    $Res Function(_$GitHubAccountImpl) then,
+  ) = __$$GitHubAccountImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String username,
-      String avatarUrl,
-      String? email,
-      List<String> scopes,
-      String? name});
+  $Res call({
+    String username,
+    String avatarUrl,
+    String? email,
+    List<String> scopes,
+    String? name,
+  });
 }
 
 /// @nodoc
@@ -459,8 +488,9 @@ class __$$GitHubAccountImplCopyWithImpl<$Res>
     extends _$GitHubAccountCopyWithImpl<$Res, _$GitHubAccountImpl>
     implements _$$GitHubAccountImplCopyWith<$Res> {
   __$$GitHubAccountImplCopyWithImpl(
-      _$GitHubAccountImpl _value, $Res Function(_$GitHubAccountImpl) _then)
-      : super(_value, _then);
+    _$GitHubAccountImpl _value,
+    $Res Function(_$GitHubAccountImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of GitHubAccount
   /// with the given fields replaced by the non-null parameter values.
@@ -473,41 +503,43 @@ class __$$GitHubAccountImplCopyWithImpl<$Res>
     Object? scopes = null,
     Object? name = freezed,
   }) {
-    return _then(_$GitHubAccountImpl(
-      username: null == username
-          ? _value.username
-          : username // ignore: cast_nullable_to_non_nullable
-              as String,
-      avatarUrl: null == avatarUrl
-          ? _value.avatarUrl
-          : avatarUrl // ignore: cast_nullable_to_non_nullable
-              as String,
-      email: freezed == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String?,
-      scopes: null == scopes
-          ? _value._scopes
-          : scopes // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      name: freezed == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
+    return _then(
+      _$GitHubAccountImpl(
+        username: null == username
+            ? _value.username
+            : username // ignore: cast_nullable_to_non_nullable
+                  as String,
+        avatarUrl: null == avatarUrl
+            ? _value.avatarUrl
+            : avatarUrl // ignore: cast_nullable_to_non_nullable
+                  as String,
+        email: freezed == email
+            ? _value.email
+            : email // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        scopes: null == scopes
+            ? _value._scopes
+            : scopes // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        name: freezed == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                  as String?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$GitHubAccountImpl implements _GitHubAccount {
-  const _$GitHubAccountImpl(
-      {required this.username,
-      required this.avatarUrl,
-      this.email,
-      final List<String> scopes = const [],
-      this.name})
-      : _scopes = scopes;
+  const _$GitHubAccountImpl({
+    required this.username,
+    required this.avatarUrl,
+    this.email,
+    final List<String> scopes = const [],
+    this.name,
+  }) : _scopes = scopes;
 
   factory _$GitHubAccountImpl.fromJson(Map<String, dynamic> json) =>
       _$$GitHubAccountImplFromJson(json);
@@ -551,8 +583,14 @@ class _$GitHubAccountImpl implements _GitHubAccount {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, username, avatarUrl, email,
-      const DeepCollectionEquality().hash(_scopes), name);
+  int get hashCode => Object.hash(
+    runtimeType,
+    username,
+    avatarUrl,
+    email,
+    const DeepCollectionEquality().hash(_scopes),
+    name,
+  );
 
   /// Create a copy of GitHubAccount
   /// with the given fields replaced by the non-null parameter values.
@@ -564,19 +602,18 @@ class _$GitHubAccountImpl implements _GitHubAccount {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$GitHubAccountImplToJson(
-      this,
-    );
+    return _$$GitHubAccountImplToJson(this);
   }
 }
 
 abstract class _GitHubAccount implements GitHubAccount {
-  const factory _GitHubAccount(
-      {required final String username,
-      required final String avatarUrl,
-      final String? email,
-      final List<String> scopes,
-      final String? name}) = _$GitHubAccountImpl;
+  const factory _GitHubAccount({
+    required final String username,
+    required final String avatarUrl,
+    final String? email,
+    final List<String> scopes,
+    final String? name,
+  }) = _$GitHubAccountImpl;
 
   factory _GitHubAccount.fromJson(Map<String, dynamic> json) =
       _$GitHubAccountImpl.fromJson;
@@ -624,8 +661,9 @@ mixin _$GitTreeItem {
 /// @nodoc
 abstract class $GitTreeItemCopyWith<$Res> {
   factory $GitTreeItemCopyWith(
-          GitTreeItem value, $Res Function(GitTreeItem) then) =
-      _$GitTreeItemCopyWithImpl<$Res, GitTreeItem>;
+    GitTreeItem value,
+    $Res Function(GitTreeItem) then,
+  ) = _$GitTreeItemCopyWithImpl<$Res, GitTreeItem>;
   @useResult
   $Res call({String path, String type, String sha, int? size});
 }
@@ -650,24 +688,27 @@ class _$GitTreeItemCopyWithImpl<$Res, $Val extends GitTreeItem>
     Object? sha = null,
     Object? size = freezed,
   }) {
-    return _then(_value.copyWith(
-      path: null == path
-          ? _value.path
-          : path // ignore: cast_nullable_to_non_nullable
-              as String,
-      type: null == type
-          ? _value.type
-          : type // ignore: cast_nullable_to_non_nullable
-              as String,
-      sha: null == sha
-          ? _value.sha
-          : sha // ignore: cast_nullable_to_non_nullable
-              as String,
-      size: freezed == size
-          ? _value.size
-          : size // ignore: cast_nullable_to_non_nullable
-              as int?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            path: null == path
+                ? _value.path
+                : path // ignore: cast_nullable_to_non_nullable
+                      as String,
+            type: null == type
+                ? _value.type
+                : type // ignore: cast_nullable_to_non_nullable
+                      as String,
+            sha: null == sha
+                ? _value.sha
+                : sha // ignore: cast_nullable_to_non_nullable
+                      as String,
+            size: freezed == size
+                ? _value.size
+                : size // ignore: cast_nullable_to_non_nullable
+                      as int?,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -675,8 +716,9 @@ class _$GitTreeItemCopyWithImpl<$Res, $Val extends GitTreeItem>
 abstract class _$$GitTreeItemImplCopyWith<$Res>
     implements $GitTreeItemCopyWith<$Res> {
   factory _$$GitTreeItemImplCopyWith(
-          _$GitTreeItemImpl value, $Res Function(_$GitTreeItemImpl) then) =
-      __$$GitTreeItemImplCopyWithImpl<$Res>;
+    _$GitTreeItemImpl value,
+    $Res Function(_$GitTreeItemImpl) then,
+  ) = __$$GitTreeItemImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String path, String type, String sha, int? size});
@@ -687,8 +729,9 @@ class __$$GitTreeItemImplCopyWithImpl<$Res>
     extends _$GitTreeItemCopyWithImpl<$Res, _$GitTreeItemImpl>
     implements _$$GitTreeItemImplCopyWith<$Res> {
   __$$GitTreeItemImplCopyWithImpl(
-      _$GitTreeItemImpl _value, $Res Function(_$GitTreeItemImpl) _then)
-      : super(_value, _then);
+    _$GitTreeItemImpl _value,
+    $Res Function(_$GitTreeItemImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of GitTreeItem
   /// with the given fields replaced by the non-null parameter values.
@@ -700,32 +743,38 @@ class __$$GitTreeItemImplCopyWithImpl<$Res>
     Object? sha = null,
     Object? size = freezed,
   }) {
-    return _then(_$GitTreeItemImpl(
-      path: null == path
-          ? _value.path
-          : path // ignore: cast_nullable_to_non_nullable
-              as String,
-      type: null == type
-          ? _value.type
-          : type // ignore: cast_nullable_to_non_nullable
-              as String,
-      sha: null == sha
-          ? _value.sha
-          : sha // ignore: cast_nullable_to_non_nullable
-              as String,
-      size: freezed == size
-          ? _value.size
-          : size // ignore: cast_nullable_to_non_nullable
-              as int?,
-    ));
+    return _then(
+      _$GitTreeItemImpl(
+        path: null == path
+            ? _value.path
+            : path // ignore: cast_nullable_to_non_nullable
+                  as String,
+        type: null == type
+            ? _value.type
+            : type // ignore: cast_nullable_to_non_nullable
+                  as String,
+        sha: null == sha
+            ? _value.sha
+            : sha // ignore: cast_nullable_to_non_nullable
+                  as String,
+        size: freezed == size
+            ? _value.size
+            : size // ignore: cast_nullable_to_non_nullable
+                  as int?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$GitTreeItemImpl implements _GitTreeItem {
-  const _$GitTreeItemImpl(
-      {required this.path, required this.type, required this.sha, this.size});
+  const _$GitTreeItemImpl({
+    required this.path,
+    required this.type,
+    required this.sha,
+    this.size,
+  });
 
   factory _$GitTreeItemImpl.fromJson(Map<String, dynamic> json) =>
       _$$GitTreeItemImplFromJson(json);
@@ -734,7 +783,7 @@ class _$GitTreeItemImpl implements _GitTreeItem {
   final String path;
   @override
   final String type;
-// blob | tree
+  // blob | tree
   @override
   final String sha;
   @override
@@ -770,18 +819,17 @@ class _$GitTreeItemImpl implements _GitTreeItem {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$GitTreeItemImplToJson(
-      this,
-    );
+    return _$$GitTreeItemImplToJson(this);
   }
 }
 
 abstract class _GitTreeItem implements GitTreeItem {
-  const factory _GitTreeItem(
-      {required final String path,
-      required final String type,
-      required final String sha,
-      final int? size}) = _$GitTreeItemImpl;
+  const factory _GitTreeItem({
+    required final String path,
+    required final String type,
+    required final String sha,
+    final int? size,
+  }) = _$GitTreeItemImpl;
 
   factory _GitTreeItem.fromJson(Map<String, dynamic> json) =
       _$GitTreeItemImpl.fromJson;

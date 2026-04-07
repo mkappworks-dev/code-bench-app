@@ -23,12 +23,16 @@ class FileTabBar extends ConsumerWidget {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: tabs
-              .map((tab) => _FileTab(
-                    file: tab,
-                    isActive: tab.path == activeFilePath,
-                    onTap: () => ref.read(activeFilePathProvider.notifier).set(tab.path),
-                    onClose: () => ref.read(editorTabsProvider.notifier).closeFile(tab.path),
-                  ))
+              .map(
+                (tab) => _FileTab(
+                  file: tab,
+                  isActive: tab.path == activeFilePath,
+                  onTap: () =>
+                      ref.read(activeFilePathProvider.notifier).set(tab.path),
+                  onClose: () =>
+                      ref.read(editorTabsProvider.notifier).closeFile(tab.path),
+                ),
+              )
               .toList(),
         ),
       ),
@@ -66,13 +70,20 @@ class _FileTabState extends State<_FileTab> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: widget.isActive ? ThemeConstants.tabActive : ThemeConstants.tabInactive,
+            color: widget.isActive
+                ? ThemeConstants.tabActive
+                : ThemeConstants.tabInactive,
             border: Border(
               top: BorderSide(
-                color: widget.isActive ? ThemeConstants.tabBorder : Colors.transparent,
+                color: widget.isActive
+                    ? ThemeConstants.tabBorder
+                    : Colors.transparent,
                 width: 1,
               ),
-              right: const BorderSide(color: ThemeConstants.borderColor, width: 0.5),
+              right: const BorderSide(
+                color: ThemeConstants.borderColor,
+                width: 0.5,
+              ),
             ),
           ),
           child: Row(
@@ -101,15 +112,15 @@ class _FileTabState extends State<_FileTab> {
                         textAlign: TextAlign.center,
                       )
                     : _hovered
-                        ? GestureDetector(
-                            onTap: widget.onClose,
-                            child: const Icon(
-                              Icons.close,
-                              size: 13,
-                              color: ThemeConstants.textSecondary,
-                            ),
-                          )
-                        : const SizedBox(),
+                    ? GestureDetector(
+                        onTap: widget.onClose,
+                        child: const Icon(
+                          Icons.close,
+                          size: 13,
+                          color: ThemeConstants.textSecondary,
+                        ),
+                      )
+                    : const SizedBox(),
               ),
             ],
           ),

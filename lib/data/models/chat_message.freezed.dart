@@ -12,7 +12,8 @@ part of 'chat_message.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 CodeBlock _$CodeBlockFromJson(Map<String, dynamic> json) {
   return _CodeBlock.fromJson(json);
@@ -61,20 +62,23 @@ class _$CodeBlockCopyWithImpl<$Res, $Val extends CodeBlock>
     Object? language = freezed,
     Object? filename = freezed,
   }) {
-    return _then(_value.copyWith(
-      code: null == code
-          ? _value.code
-          : code // ignore: cast_nullable_to_non_nullable
-              as String,
-      language: freezed == language
-          ? _value.language
-          : language // ignore: cast_nullable_to_non_nullable
-              as String?,
-      filename: freezed == filename
-          ? _value.filename
-          : filename // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            code: null == code
+                ? _value.code
+                : code // ignore: cast_nullable_to_non_nullable
+                      as String,
+            language: freezed == language
+                ? _value.language
+                : language // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            filename: freezed == filename
+                ? _value.filename
+                : filename // ignore: cast_nullable_to_non_nullable
+                      as String?,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -82,8 +86,9 @@ class _$CodeBlockCopyWithImpl<$Res, $Val extends CodeBlock>
 abstract class _$$CodeBlockImplCopyWith<$Res>
     implements $CodeBlockCopyWith<$Res> {
   factory _$$CodeBlockImplCopyWith(
-          _$CodeBlockImpl value, $Res Function(_$CodeBlockImpl) then) =
-      __$$CodeBlockImplCopyWithImpl<$Res>;
+    _$CodeBlockImpl value,
+    $Res Function(_$CodeBlockImpl) then,
+  ) = __$$CodeBlockImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String code, String? language, String? filename});
@@ -94,8 +99,9 @@ class __$$CodeBlockImplCopyWithImpl<$Res>
     extends _$CodeBlockCopyWithImpl<$Res, _$CodeBlockImpl>
     implements _$$CodeBlockImplCopyWith<$Res> {
   __$$CodeBlockImplCopyWithImpl(
-      _$CodeBlockImpl _value, $Res Function(_$CodeBlockImpl) _then)
-      : super(_value, _then);
+    _$CodeBlockImpl _value,
+    $Res Function(_$CodeBlockImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of CodeBlock
   /// with the given fields replaced by the non-null parameter values.
@@ -106,20 +112,22 @@ class __$$CodeBlockImplCopyWithImpl<$Res>
     Object? language = freezed,
     Object? filename = freezed,
   }) {
-    return _then(_$CodeBlockImpl(
-      code: null == code
-          ? _value.code
-          : code // ignore: cast_nullable_to_non_nullable
-              as String,
-      language: freezed == language
-          ? _value.language
-          : language // ignore: cast_nullable_to_non_nullable
-              as String?,
-      filename: freezed == filename
-          ? _value.filename
-          : filename // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
+    return _then(
+      _$CodeBlockImpl(
+        code: null == code
+            ? _value.code
+            : code // ignore: cast_nullable_to_non_nullable
+                  as String,
+        language: freezed == language
+            ? _value.language
+            : language // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        filename: freezed == filename
+            ? _value.filename
+            : filename // ignore: cast_nullable_to_non_nullable
+                  as String?,
+      ),
+    );
   }
 }
 
@@ -169,17 +177,16 @@ class _$CodeBlockImpl implements _CodeBlock {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$CodeBlockImplToJson(
-      this,
-    );
+    return _$$CodeBlockImplToJson(this);
   }
 }
 
 abstract class _CodeBlock implements CodeBlock {
-  const factory _CodeBlock(
-      {required final String code,
-      final String? language,
-      final String? filename}) = _$CodeBlockImpl;
+  const factory _CodeBlock({
+    required final String code,
+    final String? language,
+    final String? filename,
+  }) = _$CodeBlockImpl;
 
   factory _CodeBlock.fromJson(Map<String, dynamic> json) =
       _$CodeBlockImpl.fromJson;
@@ -226,17 +233,19 @@ mixin _$ChatMessage {
 /// @nodoc
 abstract class $ChatMessageCopyWith<$Res> {
   factory $ChatMessageCopyWith(
-          ChatMessage value, $Res Function(ChatMessage) then) =
-      _$ChatMessageCopyWithImpl<$Res, ChatMessage>;
+    ChatMessage value,
+    $Res Function(ChatMessage) then,
+  ) = _$ChatMessageCopyWithImpl<$Res, ChatMessage>;
   @useResult
-  $Res call(
-      {String id,
-      String sessionId,
-      MessageRole role,
-      String content,
-      List<CodeBlock> codeBlocks,
-      DateTime timestamp,
-      bool isStreaming});
+  $Res call({
+    String id,
+    String sessionId,
+    MessageRole role,
+    String content,
+    List<CodeBlock> codeBlocks,
+    DateTime timestamp,
+    bool isStreaming,
+  });
 }
 
 /// @nodoc
@@ -262,36 +271,39 @@ class _$ChatMessageCopyWithImpl<$Res, $Val extends ChatMessage>
     Object? timestamp = null,
     Object? isStreaming = null,
   }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      sessionId: null == sessionId
-          ? _value.sessionId
-          : sessionId // ignore: cast_nullable_to_non_nullable
-              as String,
-      role: null == role
-          ? _value.role
-          : role // ignore: cast_nullable_to_non_nullable
-              as MessageRole,
-      content: null == content
-          ? _value.content
-          : content // ignore: cast_nullable_to_non_nullable
-              as String,
-      codeBlocks: null == codeBlocks
-          ? _value.codeBlocks
-          : codeBlocks // ignore: cast_nullable_to_non_nullable
-              as List<CodeBlock>,
-      timestamp: null == timestamp
-          ? _value.timestamp
-          : timestamp // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      isStreaming: null == isStreaming
-          ? _value.isStreaming
-          : isStreaming // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String,
+            sessionId: null == sessionId
+                ? _value.sessionId
+                : sessionId // ignore: cast_nullable_to_non_nullable
+                      as String,
+            role: null == role
+                ? _value.role
+                : role // ignore: cast_nullable_to_non_nullable
+                      as MessageRole,
+            content: null == content
+                ? _value.content
+                : content // ignore: cast_nullable_to_non_nullable
+                      as String,
+            codeBlocks: null == codeBlocks
+                ? _value.codeBlocks
+                : codeBlocks // ignore: cast_nullable_to_non_nullable
+                      as List<CodeBlock>,
+            timestamp: null == timestamp
+                ? _value.timestamp
+                : timestamp // ignore: cast_nullable_to_non_nullable
+                      as DateTime,
+            isStreaming: null == isStreaming
+                ? _value.isStreaming
+                : isStreaming // ignore: cast_nullable_to_non_nullable
+                      as bool,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -299,18 +311,20 @@ class _$ChatMessageCopyWithImpl<$Res, $Val extends ChatMessage>
 abstract class _$$ChatMessageImplCopyWith<$Res>
     implements $ChatMessageCopyWith<$Res> {
   factory _$$ChatMessageImplCopyWith(
-          _$ChatMessageImpl value, $Res Function(_$ChatMessageImpl) then) =
-      __$$ChatMessageImplCopyWithImpl<$Res>;
+    _$ChatMessageImpl value,
+    $Res Function(_$ChatMessageImpl) then,
+  ) = __$$ChatMessageImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String id,
-      String sessionId,
-      MessageRole role,
-      String content,
-      List<CodeBlock> codeBlocks,
-      DateTime timestamp,
-      bool isStreaming});
+  $Res call({
+    String id,
+    String sessionId,
+    MessageRole role,
+    String content,
+    List<CodeBlock> codeBlocks,
+    DateTime timestamp,
+    bool isStreaming,
+  });
 }
 
 /// @nodoc
@@ -318,8 +332,9 @@ class __$$ChatMessageImplCopyWithImpl<$Res>
     extends _$ChatMessageCopyWithImpl<$Res, _$ChatMessageImpl>
     implements _$$ChatMessageImplCopyWith<$Res> {
   __$$ChatMessageImplCopyWithImpl(
-      _$ChatMessageImpl _value, $Res Function(_$ChatMessageImpl) _then)
-      : super(_value, _then);
+    _$ChatMessageImpl _value,
+    $Res Function(_$ChatMessageImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of ChatMessage
   /// with the given fields replaced by the non-null parameter values.
@@ -334,51 +349,53 @@ class __$$ChatMessageImplCopyWithImpl<$Res>
     Object? timestamp = null,
     Object? isStreaming = null,
   }) {
-    return _then(_$ChatMessageImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      sessionId: null == sessionId
-          ? _value.sessionId
-          : sessionId // ignore: cast_nullable_to_non_nullable
-              as String,
-      role: null == role
-          ? _value.role
-          : role // ignore: cast_nullable_to_non_nullable
-              as MessageRole,
-      content: null == content
-          ? _value.content
-          : content // ignore: cast_nullable_to_non_nullable
-              as String,
-      codeBlocks: null == codeBlocks
-          ? _value._codeBlocks
-          : codeBlocks // ignore: cast_nullable_to_non_nullable
-              as List<CodeBlock>,
-      timestamp: null == timestamp
-          ? _value.timestamp
-          : timestamp // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      isStreaming: null == isStreaming
-          ? _value.isStreaming
-          : isStreaming // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ));
+    return _then(
+      _$ChatMessageImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String,
+        sessionId: null == sessionId
+            ? _value.sessionId
+            : sessionId // ignore: cast_nullable_to_non_nullable
+                  as String,
+        role: null == role
+            ? _value.role
+            : role // ignore: cast_nullable_to_non_nullable
+                  as MessageRole,
+        content: null == content
+            ? _value.content
+            : content // ignore: cast_nullable_to_non_nullable
+                  as String,
+        codeBlocks: null == codeBlocks
+            ? _value._codeBlocks
+            : codeBlocks // ignore: cast_nullable_to_non_nullable
+                  as List<CodeBlock>,
+        timestamp: null == timestamp
+            ? _value.timestamp
+            : timestamp // ignore: cast_nullable_to_non_nullable
+                  as DateTime,
+        isStreaming: null == isStreaming
+            ? _value.isStreaming
+            : isStreaming // ignore: cast_nullable_to_non_nullable
+                  as bool,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$ChatMessageImpl implements _ChatMessage {
-  const _$ChatMessageImpl(
-      {required this.id,
-      required this.sessionId,
-      required this.role,
-      required this.content,
-      final List<CodeBlock> codeBlocks = const [],
-      required this.timestamp,
-      this.isStreaming = false})
-      : _codeBlocks = codeBlocks;
+  const _$ChatMessageImpl({
+    required this.id,
+    required this.sessionId,
+    required this.role,
+    required this.content,
+    final List<CodeBlock> codeBlocks = const [],
+    required this.timestamp,
+    this.isStreaming = false,
+  }) : _codeBlocks = codeBlocks;
 
   factory _$ChatMessageImpl.fromJson(Map<String, dynamic> json) =>
       _$$ChatMessageImplFromJson(json);
@@ -421,8 +438,10 @@ class _$ChatMessageImpl implements _ChatMessage {
                 other.sessionId == sessionId) &&
             (identical(other.role, role) || other.role == role) &&
             (identical(other.content, content) || other.content == content) &&
-            const DeepCollectionEquality()
-                .equals(other._codeBlocks, _codeBlocks) &&
+            const DeepCollectionEquality().equals(
+              other._codeBlocks,
+              _codeBlocks,
+            ) &&
             (identical(other.timestamp, timestamp) ||
                 other.timestamp == timestamp) &&
             (identical(other.isStreaming, isStreaming) ||
@@ -431,8 +450,16 @@ class _$ChatMessageImpl implements _ChatMessage {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, sessionId, role, content,
-      const DeepCollectionEquality().hash(_codeBlocks), timestamp, isStreaming);
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    sessionId,
+    role,
+    content,
+    const DeepCollectionEquality().hash(_codeBlocks),
+    timestamp,
+    isStreaming,
+  );
 
   /// Create a copy of ChatMessage
   /// with the given fields replaced by the non-null parameter values.
@@ -444,21 +471,20 @@ class _$ChatMessageImpl implements _ChatMessage {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$ChatMessageImplToJson(
-      this,
-    );
+    return _$$ChatMessageImplToJson(this);
   }
 }
 
 abstract class _ChatMessage implements ChatMessage {
-  const factory _ChatMessage(
-      {required final String id,
-      required final String sessionId,
-      required final MessageRole role,
-      required final String content,
-      final List<CodeBlock> codeBlocks,
-      required final DateTime timestamp,
-      final bool isStreaming}) = _$ChatMessageImpl;
+  const factory _ChatMessage({
+    required final String id,
+    required final String sessionId,
+    required final MessageRole role,
+    required final String content,
+    final List<CodeBlock> codeBlocks,
+    required final DateTime timestamp,
+    final bool isStreaming,
+  }) = _$ChatMessageImpl;
 
   factory _ChatMessage.fromJson(Map<String, dynamic> json) =
       _$ChatMessageImpl.fromJson;

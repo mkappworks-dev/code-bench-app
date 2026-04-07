@@ -21,27 +21,15 @@ final class NetworkException extends AppException {
 }
 
 final class AuthException extends AppException {
-  const AuthException(
-    super.message, {
-    super.code,
-    super.originalError,
-  });
+  const AuthException(super.message, {super.code, super.originalError});
 }
 
 final class ParseException extends AppException {
-  const ParseException(
-    super.message, {
-    super.code,
-    super.originalError,
-  });
+  const ParseException(super.message, {super.code, super.originalError});
 }
 
 final class StorageException extends AppException {
-  const StorageException(
-    super.message, {
-    super.code,
-    super.originalError,
-  });
+  const StorageException(super.message, {super.code, super.originalError});
 }
 
 final class FileSystemException extends AppException {
@@ -56,9 +44,5 @@ final class FileSystemException extends AppException {
 }
 
 final class ValidationException extends AppException {
-  const ValidationException(
-    super.message, {
-    super.code,
-    super.originalError,
-  });
+  const ValidationException(super.message, {super.code, super.originalError});
 }

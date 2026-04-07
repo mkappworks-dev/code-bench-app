@@ -67,7 +67,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(6),
           borderSide: const BorderSide(color: ThemeConstants.accent),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
         hintStyle: const TextStyle(color: ThemeConstants.textMuted),
         labelStyle: const TextStyle(color: ThemeConstants.textSecondary),
       ),
@@ -100,7 +103,9 @@ class AppTheme {
         contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       ),
       scrollbarTheme: ScrollbarThemeData(
-        thumbColor: WidgetStateProperty.all(ThemeConstants.textMuted.withAlpha(100)),
+        thumbColor: WidgetStateProperty.all(
+          ThemeConstants.textMuted.withAlpha(100),
+        ),
         thickness: WidgetStateProperty.all(6),
         radius: const Radius.circular(3),
       ),
@@ -110,7 +115,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: ThemeConstants.borderColor),
         ),
-        textStyle: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+        textStyle: const TextStyle(
+          color: ThemeConstants.textPrimary,
+          fontSize: 12,
+        ),
         waitDuration: const Duration(milliseconds: 500),
       ),
       cardTheme: CardThemeData(

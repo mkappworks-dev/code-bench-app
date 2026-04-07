@@ -116,21 +116,23 @@ class AnthropicService implements AIService {
   @override
   Future<bool> testConnection(AIModel model, String apiKey) async {
     try {
-      final testDio = Dio(BaseOptions(
-        baseUrl: ApiConstants.anthropicBaseUrl,
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': ApiConstants.anthropicVersion,
-          'content-type': 'application/json',
-        },
-      ));
+      final testDio = Dio(
+        BaseOptions(
+          baseUrl: ApiConstants.anthropicBaseUrl,
+          headers: {
+            'x-api-key': apiKey,
+            'anthropic-version': ApiConstants.anthropicVersion,
+            'content-type': 'application/json',
+          },
+        ),
+      );
       await testDio.post(
         ApiConstants.anthropicChatEndpoint,
         data: {
           'model': model.modelId,
           'max_tokens': 1,
           'messages': [
-            {'role': 'user', 'content': 'hi'}
+            {'role': 'user', 'content': 'hi'},
           ],
         },
       );

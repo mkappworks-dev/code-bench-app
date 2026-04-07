@@ -57,10 +57,9 @@ class _CodeEditorWidgetState extends ConsumerState<CodeEditorWidget> {
 
   Future<void> _saveFile() async {
     if (widget.file.isReadOnly) return;
-    ref.read(editorTabsProvider.notifier).updateContent(
-          widget.file.path,
-          _controller.text,
-        );
+    ref
+        .read(editorTabsProvider.notifier)
+        .updateContent(widget.file.path, _controller.text);
     await ref.read(saveFileProvider(widget.file.path).future);
   }
 
@@ -93,8 +92,9 @@ class _CodeEditorWidgetState extends ConsumerState<CodeEditorWidget> {
     );
     ref.read(activeSessionIdProvider.notifier).set(sessionId);
 
-    final contextLabel =
-        isSelection ? 'selected code from ${widget.file.displayName}' : widget.file.displayName;
+    final contextLabel = isSelection
+        ? 'selected code from ${widget.file.displayName}'
+        : widget.file.displayName;
     final systemPrompt =
         'The user is asking about the following $contextLabel:\n\n```${widget.file.language}\n$contextContent\n```';
 
@@ -207,10 +207,9 @@ class _CodeEditorWidgetState extends ConsumerState<CodeEditorWidget> {
                 controller: _controller,
                 onChanged: (_) {
                   if (!widget.file.isReadOnly) {
-                    ref.read(editorTabsProvider.notifier).updateContent(
-                          widget.file.path,
-                          _controller.text,
-                        );
+                    ref
+                        .read(editorTabsProvider.notifier)
+                        .updateContent(widget.file.path, _controller.text);
                   }
                 },
                 style: CodeEditorStyle(
@@ -225,22 +224,22 @@ class _CodeEditorWidgetState extends ConsumerState<CodeEditorWidget> {
                 wordWrap: false,
                 readOnly: widget.file.isReadOnly,
                 hint: 'Start typing...',
-                indicatorBuilder: (context, editingController, chunkController,
-                    notifier) {
-                  return Row(
-                    children: [
-                      DefaultCodeLineNumber(
-                        controller: editingController,
-                        notifier: notifier,
-                        textStyle: const TextStyle(
-                          color: ThemeConstants.editorGutterForeground,
-                          fontSize: ThemeConstants.editorFontSize,
-                          fontFamily: ThemeConstants.editorFontFamily,
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                indicatorBuilder:
+                    (context, editingController, chunkController, notifier) {
+                      return Row(
+                        children: [
+                          DefaultCodeLineNumber(
+                            controller: editingController,
+                            notifier: notifier,
+                            textStyle: const TextStyle(
+                              color: ThemeConstants.editorGutterForeground,
+                              fontSize: ThemeConstants.editorFontSize,
+                              fontFamily: ThemeConstants.editorFontFamily,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
               ),
             ),
           ),
@@ -295,8 +294,7 @@ class _EditorToolbar extends StatelessWidget {
           if (isReadOnly)
             Container(
               margin: const EdgeInsets.only(left: 8),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: ThemeConstants.inputBackground,
                 borderRadius: BorderRadius.circular(3),
@@ -317,8 +315,7 @@ class _EditorToolbar extends StatelessWidget {
               icon: const Icon(Icons.save_outlined, size: 14),
               label: const Text('Save'),
               style: TextButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),

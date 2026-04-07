@@ -121,7 +121,9 @@ class _SystemPromptBarState extends ConsumerState<_SystemPromptBar> {
                   ),
                 ),
                 const Spacer(),
-                if ((ref.watch(sessionSystemPromptProvider)[widget.sessionId] ?? '').isNotEmpty)
+                if ((ref.watch(sessionSystemPromptProvider)[widget.sessionId] ??
+                        '')
+                    .isNotEmpty)
                   Container(
                     width: 6,
                     height: 6,
@@ -179,7 +181,9 @@ class _SystemPromptBarState extends ConsumerState<_SystemPromptBar> {
                   style: TextButton.styleFrom(
                     minimumSize: Size.zero,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: const Text('Clear', style: TextStyle(fontSize: 11)),
@@ -204,7 +208,8 @@ class _ChatHeader extends ConsumerWidget {
     final model = ref.watch(selectedModelProvider);
     final sessions = ref.watch(chatSessionsProvider);
 
-    final sessionTitle = sessions.whenOrNull(
+    final sessionTitle =
+        sessions.whenOrNull(
           data: (List<ChatSession> list) {
             try {
               return list.firstWhere((s) => s.sessionId == sessionId).title;
@@ -237,8 +242,7 @@ class _ChatHeader extends ConsumerWidget {
             label: const Text('Compare', style: TextStyle(fontSize: 11)),
             style: TextButton.styleFrom(
               foregroundColor: ThemeConstants.textMuted,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
@@ -265,16 +269,18 @@ class _ModelSelector extends ConsumerWidget {
       onSelected: (m) => ref.read(selectedModelProvider.notifier).select(m),
       color: ThemeConstants.sidebarBackground,
       itemBuilder: (_) => models
-          .map((m) => PopupMenuItem(
-                value: m,
-                child: Text(
-                  '${m.provider.displayName} / ${m.name}',
-                  style: const TextStyle(
-                    color: ThemeConstants.textPrimary,
-                    fontSize: 12,
-                  ),
+          .map(
+            (m) => PopupMenuItem(
+              value: m,
+              child: Text(
+                '${m.provider.displayName} / ${m.name}',
+                style: const TextStyle(
+                  color: ThemeConstants.textPrimary,
+                  fontSize: 12,
                 ),
-              ))
+              ),
+            ),
+          )
           .toList(),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -293,8 +299,11 @@ class _ModelSelector extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.expand_more,
-                size: 14, color: ThemeConstants.textMuted),
+            const Icon(
+              Icons.expand_more,
+              size: 14,
+              color: ThemeConstants.textMuted,
+            ),
           ],
         ),
       ),

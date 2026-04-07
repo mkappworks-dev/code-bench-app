@@ -35,11 +35,7 @@ class FilesystemService {
       final nodes = entries.map((e) {
         final name = p.basename(e.path);
         final isDir = e is Directory;
-        return FileNode(
-          path: e.path,
-          name: name,
-          isDirectory: isDir,
-        );
+        return FileNode(path: e.path, name: name, isDirectory: isDir);
       }).toList();
 
       // Sort: directories first, then files, both alphabetically

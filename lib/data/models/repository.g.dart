@@ -41,7 +41,8 @@ _$GitHubAccountImpl _$$GitHubAccountImplFromJson(Map<String, dynamic> json) =>
       username: json['username'] as String,
       avatarUrl: json['avatarUrl'] as String,
       email: json['email'] as String?,
-      scopes: (json['scopes'] as List<dynamic>?)
+      scopes:
+          (json['scopes'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           const [],

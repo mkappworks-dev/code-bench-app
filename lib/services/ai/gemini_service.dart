@@ -38,8 +38,8 @@ class GeminiService implements AIService {
       if (systemPrompt != null)
         'system_instruction': {
           'parts': [
-            {'text': systemPrompt}
-          ]
+            {'text': systemPrompt},
+          ],
         },
     };
 
@@ -64,7 +64,8 @@ class GeminiService implements AIService {
             final data = trimmed.substring(6);
             try {
               final json = jsonDecode(data) as Map<String, dynamic>;
-              final text = json['candidates']?[0]?['content']?['parts']?[0]?['text'];
+              final text =
+                  json['candidates']?[0]?['content']?['parts']?[0]?['text'];
               if (text is String && text.isNotEmpty) {
                 yield text;
               }
@@ -124,15 +125,16 @@ class GeminiService implements AIService {
       final models = (data['models'] as List)
           .where((m) => (m['name'] as String).contains('gemini'))
           .map((m) {
-        final name = m['name'] as String;
-        final id = name.split('/').last;
-        return AIModel(
-          id: id,
-          provider: AIProvider.gemini,
-          name: m['displayName'] as String? ?? id,
-          modelId: id,
-        );
-      }).toList();
+            final name = m['name'] as String;
+            final id = name.split('/').last;
+            return AIModel(
+              id: id,
+              provider: AIProvider.gemini,
+              name: m['displayName'] as String? ?? id,
+              modelId: id,
+            );
+          })
+          .toList();
       return models;
     } catch (_) {
       return AIModels.defaults
@@ -150,14 +152,14 @@ class GeminiService implements AIService {
       contents.add({
         'role': msg.role == MessageRole.user ? 'user' : 'model',
         'parts': [
-          {'text': msg.content}
+          {'text': msg.content},
         ],
       });
     }
     contents.add({
       'role': 'user',
       'parts': [
-        {'text': prompt}
+        {'text': prompt},
       ],
     });
     return contents;

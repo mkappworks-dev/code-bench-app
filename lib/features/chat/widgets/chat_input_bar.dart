@@ -106,11 +106,16 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
                     onTap: () => _selectFile(file, atIndex),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       child: Row(
                         children: [
-                          const Icon(Icons.insert_drive_file_outlined,
-                              size: 13, color: ThemeConstants.textMuted),
+                          const Icon(
+                            Icons.insert_drive_file_outlined,
+                            size: 13,
+                            color: ThemeConstants.textMuted,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -154,7 +159,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     _controller.value = TextEditingValue(
       text: newText,
       selection: TextSelection.collapsed(
-          offset: before.length + fileBlock.length),
+        offset: before.length + fileBlock.length,
+      ),
     );
   }
 
@@ -167,11 +173,16 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     setState(() => _isSending = true);
 
     try {
-      final systemPrompt = ref.read(sessionSystemPromptProvider)[widget.sessionId];
-      await ref.read(chatMessagesProvider(widget.sessionId).notifier).sendMessage(
+      final systemPrompt = ref.read(
+        sessionSystemPromptProvider,
+      )[widget.sessionId];
+      await ref
+          .read(chatMessagesProvider(widget.sessionId).notifier)
+          .sendMessage(
             text,
-            systemPrompt:
-                (systemPrompt != null && systemPrompt.isNotEmpty) ? systemPrompt : null,
+            systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty)
+                ? systemPrompt
+                : null,
           );
     } catch (e) {
       if (mounted) {
@@ -243,8 +254,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
                           enabledBorder: InputBorder.none,
                           focusedBorder: InputBorder.none,
                           filled: false,
-                          contentPadding:
-                              EdgeInsets.symmetric(vertical: 8),
+                          contentPadding: EdgeInsets.symmetric(vertical: 8),
                         ),
                         onSubmitted: (_) => _send(),
                       ),
@@ -328,15 +338,16 @@ class _SendButton extends StatelessWidget {
         onPressed: isSending ? null : onSend,
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.zero,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         ),
         child: isSending
             ? const SizedBox(
                 width: 14,
                 height: 14,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white),
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               )
             : const Icon(Icons.send, size: 16),
       ),

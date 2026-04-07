@@ -38,7 +38,8 @@ class _RepoFileTreeState extends ConsumerState<RepoFileTree> {
   @override
   void didUpdateWidget(RepoFileTree oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.branch != widget.branch || oldWidget.repo.name != widget.repo.name) {
+    if (oldWidget.branch != widget.branch ||
+        oldWidget.repo.name != widget.repo.name) {
       _loadTree();
     }
   }
@@ -75,8 +76,7 @@ class _RepoFileTreeState extends ConsumerState<RepoFileTree> {
         item.path,
         widget.branch,
       );
-      final language =
-          FilesystemService().detectLanguage(item.path);
+      final language = FilesystemService().detectLanguage(item.path);
       widget.onOpenFile(item.path, content, language);
     } catch (e) {
       if (mounted) {
@@ -97,13 +97,18 @@ class _RepoFileTreeState extends ConsumerState<RepoFileTree> {
     }
     if (_error != null) {
       return Center(
-        child: Text(_error!, style: const TextStyle(color: ThemeConstants.error)),
+        child: Text(
+          _error!,
+          style: const TextStyle(color: ThemeConstants.error),
+        ),
       );
     }
     if (_tree == null || _tree!.isEmpty) {
       return const Center(
-        child: Text('Empty repository',
-            style: TextStyle(color: ThemeConstants.textMuted)),
+        child: Text(
+          'Empty repository',
+          style: TextStyle(color: ThemeConstants.textMuted),
+        ),
       );
     }
 
@@ -191,8 +196,7 @@ class _RepoFileTreeState extends ConsumerState<RepoFileTree> {
               }
             }),
           ),
-          if (isExpanded)
-            ...node.children.map(_buildNode),
+          if (isExpanded) ...node.children.map(_buildNode),
         ],
       );
     } else {
@@ -255,7 +259,9 @@ class _TreeItemState extends State<_TreeItem> {
         child: Container(
           height: 22,
           padding: EdgeInsets.only(left: widget.depth * 16.0 + 12),
-          color: _hovered ? ThemeConstants.editorLineHighlight : Colors.transparent,
+          color: _hovered
+              ? ThemeConstants.editorLineHighlight
+              : Colors.transparent,
           child: Row(
             children: [
               if (widget.isDir)

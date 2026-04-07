@@ -119,25 +119,24 @@ class _MessageContent extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
         ),
         h1: const TextStyle(
-            color: ThemeConstants.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold),
+          color: ThemeConstants.textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
         h2: const TextStyle(
-            color: ThemeConstants.textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.bold),
+          color: ThemeConstants.textPrimary,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
         h3: const TextStyle(
-            color: ThemeConstants.textPrimary,
-            fontSize: 14,
-            fontWeight: FontWeight.bold),
-        blockquote:
-            const TextStyle(color: ThemeConstants.textSecondary),
-        listBullet:
-            const TextStyle(color: ThemeConstants.textPrimary),
+          color: ThemeConstants.textPrimary,
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+        ),
+        blockquote: const TextStyle(color: ThemeConstants.textSecondary),
+        listBullet: const TextStyle(color: ThemeConstants.textPrimary),
       ),
-      builders: {
-        'code': _CodeBlockBuilder(ref: ref),
-      },
+      builders: {'code': _CodeBlockBuilder(ref: ref)},
     );
   }
 }
@@ -151,7 +150,7 @@ class _CodeBlockBuilder extends MarkdownElementBuilder {
   Widget? visitElementAfter(element, TextStyle? preferredStyle) {
     final language =
         element.attributes['class']?.replaceFirst('language-', '') ??
-            'plaintext';
+        'plaintext';
     final code = element.textContent;
 
     if (!element.attributes.containsKey('class') && !code.contains('\n')) {

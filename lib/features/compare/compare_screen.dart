@@ -18,22 +18,25 @@ class _ComparePaneId {
   const _ComparePaneId(this.slot);
   final int slot; // 0 = left, 1 = right
   @override
-  bool operator ==(Object other) => other is _ComparePaneId && other.slot == slot;
+  bool operator ==(Object other) =>
+      other is _ComparePaneId && other.slot == slot;
   @override
   int get hashCode => slot.hashCode;
 }
 
-final _comparePaneModelProvider =
-    StateProvider.family<AIModel, _ComparePaneId>((ref, id) {
-  return id.slot == 0 ? AIModels.gpt4o : AIModels.claude35Sonnet;
-});
+final _comparePaneModelProvider = StateProvider.family<AIModel, _ComparePaneId>(
+  (ref, id) {
+    return id.slot == 0 ? AIModels.gpt4o : AIModels.claude35Sonnet;
+  },
+);
 
 final _comparePaneSessionProvider =
     StateProvider.family<String?, _ComparePaneId>((ref, id) => null);
 
 final _comparePaneMessagesProvider =
     StateProvider.family<List<ChatMessage>, _ComparePaneId>(
-        (ref, id) => const []);
+      (ref, id) => const [],
+    );
 
 // ---------------------------------------------------------------------------
 // Compare Screen
@@ -108,7 +111,10 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
   }
 
   Future<void> _streamToPane(
-      _ComparePaneId paneId, String sessionId, String input) async {
+    _ComparePaneId paneId,
+    String sessionId,
+    String input,
+  ) async {
     final model = ref.read(_comparePaneModelProvider(paneId));
     final sessionService = ref.read(sessionServiceProvider);
 
@@ -173,13 +179,9 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
           Expanded(
             child: Row(
               children: [
-                Expanded(
-                  child: _ComparePane(paneId: const _ComparePaneId(0)),
-                ),
+                Expanded(child: _ComparePane(paneId: const _ComparePaneId(0))),
                 const VerticalDivider(width: 1),
-                Expanded(
-                  child: _ComparePane(paneId: const _ComparePaneId(1)),
-                ),
+                Expanded(child: _ComparePane(paneId: const _ComparePaneId(1))),
               ],
             ),
           ),
@@ -212,8 +214,7 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
                         fontSize: 13,
                       ),
                       decoration: const InputDecoration(
-                        hintText:
-                            'Send to both models... (Enter to send)',
+                        hintText: 'Send to both models... (Enter to send)',
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -233,14 +234,17 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6)),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                     ),
                     child: _isSending
                         ? const SizedBox(
                             width: 14,
                             height: 14,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                         : const Icon(Icons.send, size: 16),
                   ),
@@ -288,25 +292,29 @@ class _ComparePane extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               PopupMenuButton<AIModel>(
-                onSelected: (m) => ref
-                    .read(_comparePaneModelProvider(paneId).notifier)
-                    .state = m,
+                onSelected: (m) =>
+                    ref.read(_comparePaneModelProvider(paneId).notifier).state =
+                        m,
                 color: ThemeConstants.sidebarBackground,
                 itemBuilder: (_) => models
-                    .map((m) => PopupMenuItem(
-                          value: m,
-                          child: Text(
-                            '${m.provider.displayName} / ${m.name}',
-                            style: const TextStyle(
-                              color: ThemeConstants.textPrimary,
-                              fontSize: 12,
-                            ),
+                    .map(
+                      (m) => PopupMenuItem(
+                        value: m,
+                        child: Text(
+                          '${m.provider.displayName} / ${m.name}',
+                          style: const TextStyle(
+                            color: ThemeConstants.textPrimary,
+                            fontSize: 12,
                           ),
-                        ))
+                        ),
+                      ),
+                    )
                     .toList(),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     border: Border.all(color: ThemeConstants.borderColor),
                     borderRadius: BorderRadius.circular(4),
@@ -322,9 +330,11 @@ class _ComparePane extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Icon(Icons.expand_more,
-                          size: 12,
-                          color: ThemeConstants.textMuted),
+                      const Icon(
+                        Icons.expand_more,
+                        size: 12,
+                        color: ThemeConstants.textMuted,
+                      ),
                     ],
                   ),
                 ),
@@ -334,22 +344,23 @@ class _ComparePane extends ConsumerWidget {
                 TextButton(
                   onPressed: () {
                     ref
-                        .read(_comparePaneMessagesProvider(paneId).notifier)
-                        .state = [];
+                            .read(_comparePaneMessagesProvider(paneId).notifier)
+                            .state =
+                        [];
                     ref
-                        .read(_comparePaneSessionProvider(paneId).notifier)
-                        .state = null;
+                            .read(_comparePaneSessionProvider(paneId).notifier)
+                            .state =
+                        null;
                   },
                   style: TextButton.styleFrom(
                     minimumSize: Size.zero,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: const Text(
-                    'Clear',
-                    style: TextStyle(fontSize: 10),
-                  ),
+                  child: const Text('Clear', style: TextStyle(fontSize: 10)),
                 ),
             ],
           ),

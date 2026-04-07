@@ -67,7 +67,9 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No AI service configured. Add an API key in Settings.'),
+            content: Text(
+              'No AI service configured. Add an API key in Settings.',
+            ),
             backgroundColor: ThemeConstants.error,
           ),
         );
@@ -170,7 +172,11 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
               // Title
               Row(
                 children: [
-                  const Icon(Icons.commit, size: 18, color: ThemeConstants.accent),
+                  const Icon(
+                    Icons.commit,
+                    size: 18,
+                    color: ThemeConstants.accent,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Commit to ${widget.repo.name}',
@@ -185,7 +191,10 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
                     icon: const Icon(Icons.close, size: 16),
                     onPressed: () => Navigator.of(context).pop(),
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(maxWidth: 24, maxHeight: 24),
+                    constraints: const BoxConstraints(
+                      maxWidth: 24,
+                      maxHeight: 24,
+                    ),
                   ),
                 ],
               ),
@@ -237,7 +246,9 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
                     onTap: () => setState(() => _selectedPrefix = prefix),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: selected
                             ? ThemeConstants.accent
@@ -293,7 +304,9 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
                     style: TextButton.styleFrom(
                       minimumSize: Size.zero,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
@@ -305,7 +318,9 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 10),
+                      horizontal: 10,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: ThemeConstants.inputBackground,
                       borderRadius: const BorderRadius.only(
@@ -342,27 +357,30 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
                             topRight: Radius.circular(6),
                             bottomRight: Radius.circular(6),
                           ),
-                          borderSide:
-                              BorderSide(color: ThemeConstants.borderColor),
+                          borderSide: BorderSide(
+                            color: ThemeConstants.borderColor,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.only(
                             topRight: Radius.circular(6),
                             bottomRight: Radius.circular(6),
                           ),
-                          borderSide:
-                              BorderSide(color: ThemeConstants.borderColor),
+                          borderSide: BorderSide(
+                            color: ThemeConstants.borderColor,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.only(
                             topRight: Radius.circular(6),
                             bottomRight: Radius.circular(6),
                           ),
-                          borderSide:
-                              BorderSide(color: ThemeConstants.accent),
+                          borderSide: BorderSide(color: ThemeConstants.accent),
                         ),
                         contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                       ),
                     ),
                   ),
@@ -387,7 +405,9 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
                             width: 12,
                             height: 12,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                         : const Icon(Icons.commit, size: 14),
                     label: const Text('Commit'),

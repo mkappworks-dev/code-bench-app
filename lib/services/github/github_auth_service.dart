@@ -44,7 +44,8 @@ class GitHubAuthService {
 
       // Extract code from callback
       final code = Uri.parse(result).queryParameters['code'];
-      if (code == null) throw const AuthException('OAuth callback missing code');
+      if (code == null)
+        throw const AuthException('OAuth callback missing code');
 
       // Exchange code for token
       final token = await _exchangeCodeForToken(code);
@@ -68,9 +69,7 @@ class GitHubAuthService {
         'code': code,
         'redirect_uri': AppConstants.oauthCallbackUrl,
       },
-      options: Options(
-        headers: {'Accept': 'application/json'},
-      ),
+      options: Options(headers: {'Accept': 'application/json'}),
     );
     final data = response.data as Map<String, dynamic>;
     final token = data['access_token'] as String?;
@@ -86,10 +85,12 @@ class GitHubAuthService {
     final dio = Dio();
     final response = await dio.get(
       '${ApiConstants.githubApiBaseUrl}/user',
-      options: Options(headers: {
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/vnd.github.v3+json',
-      }),
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      ),
     );
     final data = response.data as Map<String, dynamic>;
     return GitHubAccount(

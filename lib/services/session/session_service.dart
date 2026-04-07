@@ -30,14 +30,11 @@ class SessionService {
 
   Stream<List<session_model.ChatSession>> watchAllSessions() {
     return _db.sessionDao.watchAllSessions().map(
-          (rows) => rows.map(_sessionFromRow).toList(),
-        );
+      (rows) => rows.map(_sessionFromRow).toList(),
+    );
   }
 
-  Future<String> createSession({
-    required AIModel model,
-    String? title,
-  }) async {
+  Future<String> createSession({required AIModel model, String? title}) async {
     final sessionId = _uuid.v4();
     final now = DateTime.now();
     await _db.sessionDao.upsertSession(
@@ -89,22 +86,28 @@ class SessionService {
   }
 
   Future<void> persistMessage(
-      String sessionId, msg_model.ChatMessage message) async {
+    String sessionId,
+    msg_model.ChatMessage message,
+  ) async {
     await _db.sessionDao.insertMessage(
       ChatMessagesCompanion(
         id: Value(message.id),
         sessionId: Value(sessionId),
         role: Value(message.role.value),
         content: Value(message.content),
-        codeBlocksJson: Value(jsonEncode(
-          message.codeBlocks
-              .map((b) => {
+        codeBlocksJson: Value(
+          jsonEncode(
+            message.codeBlocks
+                .map(
+                  (b) => {
                     'code': b.code,
                     'language': b.language,
-                    'filename': b.filename
-                  })
-              .toList(),
-        )),
+                    'filename': b.filename,
+                  },
+                )
+                .toList(),
+          ),
+        ),
         timestamp: Value(message.timestamp),
       ),
     );
@@ -134,16 +137,17 @@ class SessionService {
     await persistMessage(sessionId, userMsg);
     yield userMsg;
 
-    final service =
-        await _ref.read(aiServiceProvider(model.provider).future);
+    final service = await _ref.read(aiServiceProvider(model.provider).future);
     if (service == null) {
       throw Exception(
-          'No API key configured for ${model.provider.displayName}');
+        'No API key configured for ${model.provider.displayName}',
+      );
     }
 
     final history = await loadHistory(sessionId, limit: 20);
-    final historyExcludingCurrent =
-        history.where((m) => m.id != userMsg.id).toList();
+    final historyExcludingCurrent = history
+        .where((m) => m.id != userMsg.id)
+        .toList();
 
     final assistantId = _uuid.v4();
     final buffer = StringBuffer();
@@ -202,11 +206,13 @@ class SessionService {
     try {
       final raw = jsonDecode(row.codeBlocksJson) as List;
       codeBlocks = raw
-          .map((b) => msg_model.CodeBlock(
-                code: b['code'] as String? ?? '',
-                language: b['language'] as String?,
-                filename: b['filename'] as String?,
-              ))
+          .map(
+            (b) => msg_model.CodeBlock(
+              code: b['code'] as String? ?? '',
+              language: b['language'] as String?,
+              filename: b['filename'] as String?,
+            ),
+          )
           .toList();
     } catch (_) {}
 

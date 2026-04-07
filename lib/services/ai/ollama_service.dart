@@ -33,11 +33,7 @@ class OllamaService implements AIService {
     String? systemPrompt,
   }) async* {
     final messages = _buildMessages(history, prompt, systemPrompt);
-    final body = {
-      'model': model.modelId,
-      'messages': messages,
-      'stream': true,
-    };
+    final body = {'model': model.modelId, 'messages': messages, 'stream': true};
 
     try {
       final response = await _dio.post(

@@ -18,7 +18,8 @@ class Repository with _$Repository {
     DateTime? updatedAt,
   }) = _Repository;
 
-  factory Repository.fromJson(Map<String, dynamic> json) => _$RepositoryFromJson(json);
+  factory Repository.fromJson(Map<String, dynamic> json) =>
+      _$RepositoryFromJson(json);
 }
 
 @freezed
@@ -31,7 +32,8 @@ class GitHubAccount with _$GitHubAccount {
     String? name,
   }) = _GitHubAccount;
 
-  factory GitHubAccount.fromJson(Map<String, dynamic> json) => _$GitHubAccountFromJson(json);
+  factory GitHubAccount.fromJson(Map<String, dynamic> json) =>
+      _$GitHubAccountFromJson(json);
 }
 
 @freezed
@@ -43,5 +45,6 @@ class GitTreeItem with _$GitTreeItem {
     int? size,
   }) = _GitTreeItem;
 
-  factory GitTreeItem.fromJson(Map<String, dynamic> json) => _$GitTreeItemFromJson(json);
+  factory GitTreeItem.fromJson(Map<String, dynamic> json) =>
+      _$GitTreeItemFromJson(json);
 }

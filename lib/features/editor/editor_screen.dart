@@ -26,9 +26,7 @@ class EditorScreen extends ConsumerWidget {
     return Column(
       children: [
         FileTabBar(tabs: tabs, activeFilePath: activeFilePath),
-        Expanded(
-          child: CodeEditorWidget(file: activeFile),
-        ),
+        Expanded(child: CodeEditorWidget(file: activeFile)),
       ],
     );
   }
@@ -54,11 +52,7 @@ class _NoFileOpen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.code,
-              size: 48,
-              color: ThemeConstants.textMuted,
-            ),
+            Icon(Icons.code, size: 48, color: ThemeConstants.textMuted),
             SizedBox(height: 16),
             Text(
               'No file open',
@@ -70,10 +64,7 @@ class _NoFileOpen extends StatelessWidget {
             SizedBox(height: 8),
             Text(
               'Open a file from the explorer',
-              style: TextStyle(
-                color: ThemeConstants.textMuted,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: ThemeConstants.textMuted, fontSize: 13),
             ),
           ],
         ),

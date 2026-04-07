@@ -5,11 +5,7 @@ import '../../core/constants/theme_constants.dart';
 /// Wraps a widget and catches any Flutter errors thrown during build,
 /// showing a friendly error UI with an optional retry callback.
 class ErrorBoundary extends StatefulWidget {
-  const ErrorBoundary({
-    super.key,
-    required this.child,
-    this.onRetry,
-  });
+  const ErrorBoundary({super.key, required this.child, this.onRetry});
 
   final Widget child;
   final VoidCallback? onRetry;
@@ -99,11 +95,7 @@ class _ErrorFallback extends StatelessWidget {
 
 /// A Riverpod-aware error view used in `AsyncValue.when` error callbacks.
 class AsyncErrorView extends StatelessWidget {
-  const AsyncErrorView({
-    super.key,
-    required this.error,
-    required this.onRetry,
-  });
+  const AsyncErrorView({super.key, required this.error, required this.onRetry});
 
   final Object error;
   final VoidCallback onRetry;
@@ -116,13 +108,18 @@ class AsyncErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline,
-                size: 40, color: ThemeConstants.error),
+            const Icon(
+              Icons.error_outline,
+              size: 40,
+              color: ThemeConstants.error,
+            ),
             const SizedBox(height: 12),
             Text(
               error.toString(),
               style: const TextStyle(
-                  color: ThemeConstants.textSecondary, fontSize: 13),
+                color: ThemeConstants.textSecondary,
+                fontSize: 13,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),

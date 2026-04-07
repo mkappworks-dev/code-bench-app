@@ -34,7 +34,8 @@ Future<AIService?> aiService(Ref ref, AIProvider aiProvider) async {
       return GeminiService(key);
 
     case AIProvider.ollama:
-      final url = await storage.readOllamaUrl() ?? ApiConstants.ollamaDefaultBaseUrl;
+      final url =
+          await storage.readOllamaUrl() ?? ApiConstants.ollamaDefaultBaseUrl;
       return OllamaService(url);
 
     case AIProvider.custom:

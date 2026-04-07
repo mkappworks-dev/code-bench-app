@@ -21,13 +21,15 @@ Future<GitHubApiService?> githubApiService(Ref ref) async {
 
 class GitHubApiService {
   GitHubApiService(this._token)
-      : _dio = Dio(BaseOptions(
+    : _dio = Dio(
+        BaseOptions(
           baseUrl: ApiConstants.githubApiBaseUrl,
           headers: {
             'Authorization': 'Bearer $_token',
             'Accept': 'application/vnd.github.v3+json',
           },
-        ));
+        ),
+      );
 
   final String _token;
   final Dio _dio;
@@ -36,11 +38,7 @@ class GitHubApiService {
     try {
       final response = await _dio.get(
         '/user/repos',
-        queryParameters: {
-          'sort': 'updated',
-          'per_page': 30,
-          'page': page,
-        },
+        queryParameters: {'sort': 'updated', 'per_page': 30, 'page': page},
       );
       return (response.data as List)
           .map((r) => _repoFromGitHub(r as Map<String, dynamic>))
@@ -140,9 +138,7 @@ class GitHubApiService {
   Future<List<String>> listBranches(String owner, String repo) async {
     try {
       final response = await _dio.get('/repos/$owner/$repo/branches');
-      return (response.data as List)
-          .map((b) => b['name'] as String)
-          .toList();
+      return (response.data as List).map((b) => b['name'] as String).toList();
     } on DioException catch (e) {
       throw NetworkException(
         'Failed to list branches',

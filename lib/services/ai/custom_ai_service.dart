@@ -40,11 +40,7 @@ class CustomAIService implements AIService {
     String? systemPrompt,
   }) async* {
     final messages = _buildMessages(history, prompt, systemPrompt);
-    final body = {
-      'model': model.modelId,
-      'messages': messages,
-      'stream': true,
-    };
+    final body = {'model': model.modelId, 'messages': messages, 'stream': true};
 
     try {
       final response = await _dio.post(
@@ -128,12 +124,14 @@ class CustomAIService implements AIService {
       final response = await _dio.get('/models');
       final data = response.data as Map<String, dynamic>;
       final models = (data['data'] as List)
-          .map((m) => AIModel(
-                id: m['id'] as String,
-                provider: AIProvider.custom,
-                name: m['id'] as String,
-                modelId: m['id'] as String,
-              ))
+          .map(
+            (m) => AIModel(
+              id: m['id'] as String,
+              provider: AIProvider.custom,
+              name: m['id'] as String,
+              modelId: m['id'] as String,
+            ),
+          )
           .toList();
       return models;
     } catch (_) {

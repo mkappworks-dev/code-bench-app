@@ -79,7 +79,11 @@ class ChatMessages extends _$ChatMessages {
 
   Future<void> loadMore(String sessionId, int offset) async {
     final service = ref.read(sessionServiceProvider);
-    final older = await service.loadHistory(sessionId, limit: 50, offset: offset);
+    final older = await service.loadHistory(
+      sessionId,
+      limit: 50,
+      offset: offset,
+    );
     final current = state.valueOrNull ?? [];
     state = AsyncData([...older, ...current]);
   }

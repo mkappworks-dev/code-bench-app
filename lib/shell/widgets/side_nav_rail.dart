@@ -105,10 +105,7 @@ class _NavItemState extends State<_NavItem> {
             decoration: BoxDecoration(
               border: _isActive
                   ? const Border(
-                      left: BorderSide(
-                        color: ThemeConstants.accent,
-                        width: 2,
-                      ),
+                      left: BorderSide(color: ThemeConstants.accent, width: 2),
                     )
                   : null,
             ),
@@ -117,7 +114,9 @@ class _NavItemState extends State<_NavItem> {
               size: 20,
               color: _isActive
                   ? ThemeConstants.textPrimary
-                  : (_hovered ? ThemeConstants.textPrimary : ThemeConstants.textMuted),
+                  : (_hovered
+                        ? ThemeConstants.textPrimary
+                        : ThemeConstants.textMuted),
             ),
           ),
         ),

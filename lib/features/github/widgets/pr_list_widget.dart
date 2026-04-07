@@ -33,7 +33,10 @@ class _PrListWidgetState extends ConsumerState<PrListWidget> {
     try {
       final api = await ref.read(githubApiServiceProvider.future);
       if (api == null) return;
-      final prs = await api.listPullRequests(widget.repo.owner, widget.repo.name);
+      final prs = await api.listPullRequests(
+        widget.repo.owner,
+        widget.repo.name,
+      );
       setState(() => _prs = prs);
     } catch (e) {
       setState(() => _error = e.toString());
@@ -67,7 +70,11 @@ class _PrListWidgetState extends ConsumerState<PrListWidget> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Row(
                 children: [
-                  const Icon(Icons.merge, size: 18, color: ThemeConstants.accent),
+                  const Icon(
+                    Icons.merge,
+                    size: 18,
+                    color: ThemeConstants.accent,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Pull Requests — ${widget.repo.name}',
@@ -86,41 +93,45 @@ class _PrListWidgetState extends ConsumerState<PrListWidget> {
             // List
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : _error != null
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(_error!,
-                                  style: const TextStyle(
-                                      color: ThemeConstants.error)),
-                              const SizedBox(height: 8),
-                              TextButton(
-                                onPressed: _loadPRs,
-                                child: const Text('Retry'),
-                              ),
-                            ],
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _error!,
+                            style: const TextStyle(color: ThemeConstants.error),
                           ),
-                        )
-                      : _prs == null || _prs!.isEmpty
-                          ? const Center(
-                              child: Text(
-                                'No open pull requests',
-                                style: TextStyle(
-                                    color: ThemeConstants.textMuted,
-                                    fontSize: 13),
-                              ),
-                            )
-                          : ListView.separated(
-                              controller: scrollController,
-                              itemCount: _prs!.length,
-                              separatorBuilder: (_, __) => const Divider(height: 1),
-                              itemBuilder: (context, i) {
-                                final pr = _prs![i];
-                                return _PrTile(pr: pr);
-                              },
-                            ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: _loadPRs,
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _prs == null || _prs!.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No open pull requests',
+                        style: TextStyle(
+                          color: ThemeConstants.textMuted,
+                          fontSize: 13,
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      controller: scrollController,
+                      itemCount: _prs!.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (context, i) {
+                        final pr = _prs![i];
+                        return _PrTile(pr: pr);
+                      },
+                    ),
             ),
           ],
         );
@@ -138,11 +149,14 @@ class _PrTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final title = pr['title'] as String? ?? 'Untitled';
     final number = pr['number'] as int? ?? 0;
-    final user = (pr['user'] as Map<String, dynamic>?)?['login'] as String? ?? '';
+    final user =
+        (pr['user'] as Map<String, dynamic>?)?['login'] as String? ?? '';
     final state = pr['state'] as String? ?? 'open';
     final isDraft = pr['draft'] as bool? ?? false;
-    final baseBranch = (pr['base'] as Map<String, dynamic>?)?['ref'] as String? ?? '';
-    final headBranch = (pr['head'] as Map<String, dynamic>?)?['ref'] as String? ?? '';
+    final baseBranch =
+        (pr['base'] as Map<String, dynamic>?)?['ref'] as String? ?? '';
+    final headBranch =
+        (pr['head'] as Map<String, dynamic>?)?['ref'] as String? ?? '';
 
     return ListTile(
       leading: Container(
@@ -154,24 +168,18 @@ class _PrTile extends StatelessWidget {
           color: isDraft
               ? ThemeConstants.textMuted
               : state == 'open'
-                  ? ThemeConstants.success
-                  : ThemeConstants.error,
+              ? ThemeConstants.success
+              : ThemeConstants.error,
         ),
       ),
       title: Text(
         '#$number $title',
-        style: const TextStyle(
-          color: ThemeConstants.textPrimary,
-          fontSize: 13,
-        ),
+        style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 13),
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
         '$headBranch → $baseBranch  ·  $user${isDraft ? '  · Draft' : ''}',
-        style: const TextStyle(
-          color: ThemeConstants.textMuted,
-          fontSize: 11,
-        ),
+        style: const TextStyle(color: ThemeConstants.textMuted, fontSize: 11),
       ),
       hoverColor: ThemeConstants.editorLineHighlight,
     );
@@ -201,9 +209,7 @@ class _CreatePRButtonState extends ConsumerState<_CreatePRButton> {
       onPressed: _showCreateSheet,
       icon: const Icon(Icons.add, size: 14),
       label: const Text('New PR'),
-      style: TextButton.styleFrom(
-        foregroundColor: ThemeConstants.accent,
-      ),
+      style: TextButton.styleFrom(foregroundColor: ThemeConstants.accent),
     );
   }
 }
@@ -243,7 +249,10 @@ class _CreatePRDialogState extends ConsumerState<_CreatePRDialog> {
     try {
       final api = await ref.read(githubApiServiceProvider.future);
       if (api == null) return;
-      final branches = await api.listBranches(widget.repo.owner, widget.repo.name);
+      final branches = await api.listBranches(
+        widget.repo.owner,
+        widget.repo.name,
+      );
       setState(() {
         _branches = branches;
         _baseBranch = widget.repo.defaultBranch;
@@ -328,8 +337,10 @@ class _CreatePRDialogState extends ConsumerState<_CreatePRDialog> {
                           icon: const Icon(Icons.close, size: 16),
                           onPressed: () => Navigator.of(context).pop(),
                           padding: EdgeInsets.zero,
-                          constraints:
-                              const BoxConstraints(maxWidth: 24, maxHeight: 24),
+                          constraints: const BoxConstraints(
+                            maxWidth: 24,
+                            maxHeight: 24,
+                          ),
                         ),
                       ],
                     ),
@@ -341,22 +352,31 @@ class _CreatePRDialogState extends ConsumerState<_CreatePRDialog> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Head branch',
-                                  style: TextStyle(
-                                      color: ThemeConstants.textSecondary,
-                                      fontSize: 12)),
+                              const Text(
+                                'Head branch',
+                                style: TextStyle(
+                                  color: ThemeConstants.textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
                               const SizedBox(height: 4),
                               DropdownButtonFormField<String>(
                                 value: _headBranch,
                                 dropdownColor: ThemeConstants.inputBackground,
                                 style: const TextStyle(
-                                    color: ThemeConstants.textPrimary,
-                                    fontSize: 13),
-                                decoration:
-                                    const InputDecoration(isDense: true),
+                                  color: ThemeConstants.textPrimary,
+                                  fontSize: 13,
+                                ),
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                ),
                                 items: _branches
-                                    .map((b) => DropdownMenuItem(
-                                        value: b, child: Text(b)))
+                                    .map(
+                                      (b) => DropdownMenuItem(
+                                        value: b,
+                                        child: Text(b),
+                                      ),
+                                    )
                                     .toList(),
                                 onChanged: (v) =>
                                     setState(() => _headBranch = v),
@@ -366,29 +386,41 @@ class _CreatePRDialogState extends ConsumerState<_CreatePRDialog> {
                         ),
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 12),
-                          child: Icon(Icons.arrow_forward,
-                              size: 16, color: ThemeConstants.textMuted),
+                          child: Icon(
+                            Icons.arrow_forward,
+                            size: 16,
+                            color: ThemeConstants.textMuted,
+                          ),
                         ),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Base branch',
-                                  style: TextStyle(
-                                      color: ThemeConstants.textSecondary,
-                                      fontSize: 12)),
+                              const Text(
+                                'Base branch',
+                                style: TextStyle(
+                                  color: ThemeConstants.textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
                               const SizedBox(height: 4),
                               DropdownButtonFormField<String>(
                                 value: _baseBranch,
                                 dropdownColor: ThemeConstants.inputBackground,
                                 style: const TextStyle(
-                                    color: ThemeConstants.textPrimary,
-                                    fontSize: 13),
-                                decoration:
-                                    const InputDecoration(isDense: true),
+                                  color: ThemeConstants.textPrimary,
+                                  fontSize: 13,
+                                ),
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                ),
                                 items: _branches
-                                    .map((b) => DropdownMenuItem(
-                                        value: b, child: Text(b)))
+                                    .map(
+                                      (b) => DropdownMenuItem(
+                                        value: b,
+                                        child: Text(b),
+                                      ),
+                                    )
                                     .toList(),
                                 onChanged: (v) {
                                   if (v != null) {
@@ -403,34 +435,46 @@ class _CreatePRDialogState extends ConsumerState<_CreatePRDialog> {
                     ),
                     const SizedBox(height: 16),
                     // Title
-                    const Text('Title',
-                        style: TextStyle(
-                            color: ThemeConstants.textSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500)),
+                    const Text(
+                      'Title',
+                      style: TextStyle(
+                        color: ThemeConstants.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _titleController,
                       style: const TextStyle(
-                          color: ThemeConstants.textPrimary, fontSize: 13),
+                        color: ThemeConstants.textPrimary,
+                        fontSize: 13,
+                      ),
                       decoration: const InputDecoration(
-                          hintText: 'PR title...'),
+                        hintText: 'PR title...',
+                      ),
                     ),
                     const SizedBox(height: 12),
                     // Body
-                    const Text('Description (optional)',
-                        style: TextStyle(
-                            color: ThemeConstants.textSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500)),
+                    const Text(
+                      'Description (optional)',
+                      style: TextStyle(
+                        color: ThemeConstants.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _bodyController,
                       style: const TextStyle(
-                          color: ThemeConstants.textPrimary, fontSize: 13),
+                        color: ThemeConstants.textPrimary,
+                        fontSize: 13,
+                      ),
                       maxLines: 4,
                       decoration: const InputDecoration(
-                          hintText: 'Describe your changes...'),
+                        hintText: 'Describe your changes...',
+                      ),
                     ),
                     const SizedBox(height: 24),
                     Row(
@@ -448,7 +492,9 @@ class _CreatePRDialogState extends ConsumerState<_CreatePRDialog> {
                                   width: 14,
                                   height: 14,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.white),
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
                                 )
                               : const Text('Create PR'),
                         ),

@@ -61,11 +61,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<bool> _testOpenAI(String key) async {
     try {
-      final dio = Dio(BaseOptions(
-        baseUrl: 'https://api.openai.com/v1',
-        connectTimeout: const Duration(seconds: 10),
-        headers: {'Authorization': 'Bearer $key'},
-      ));
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: 'https://api.openai.com/v1',
+          connectTimeout: const Duration(seconds: 10),
+          headers: {'Authorization': 'Bearer $key'},
+        ),
+      );
       await dio.get('/models');
       return true;
     } catch (_) {
@@ -75,22 +77,27 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<bool> _testAnthropic(String key) async {
     try {
-      final dio = Dio(BaseOptions(
-        baseUrl: 'https://api.anthropic.com/v1',
-        connectTimeout: const Duration(seconds: 10),
-        headers: {
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: 'https://api.anthropic.com/v1',
+          connectTimeout: const Duration(seconds: 10),
+          headers: {
+            'x-api-key': key,
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json',
+          },
+        ),
+      );
+      await dio.post(
+        '/messages',
+        data: {
+          'model': 'claude-3-haiku-20240307',
+          'max_tokens': 1,
+          'messages': [
+            {'role': 'user', 'content': 'hi'},
+          ],
         },
-      ));
-      await dio.post('/messages', data: {
-        'model': 'claude-3-haiku-20240307',
-        'max_tokens': 1,
-        'messages': [
-          {'role': 'user', 'content': 'hi'}
-        ],
-      });
+      );
       return true;
     } catch (e) {
       if (e.toString().contains('400')) return true;
@@ -100,10 +107,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<bool> _testGemini(String key) async {
     try {
-      final dio = Dio(BaseOptions(
-        baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-        connectTimeout: const Duration(seconds: 10),
-      ));
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+          connectTimeout: const Duration(seconds: 10),
+        ),
+      );
       await dio.get('/models?key=$key');
       return true;
     } catch (_) {

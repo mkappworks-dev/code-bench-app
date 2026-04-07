@@ -46,7 +46,10 @@ class ChatPanel extends ConsumerWidget {
                   icon: const Icon(Icons.add, size: 16),
                   tooltip: 'New chat',
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(maxWidth: 24, maxHeight: 24),
+                  constraints: const BoxConstraints(
+                    maxWidth: 24,
+                    maxHeight: 24,
+                  ),
                   onPressed: () async {
                     final service = ref.read(sessionServiceProvider);
                     final model = ref.read(selectedModelProvider);

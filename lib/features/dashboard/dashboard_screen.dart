@@ -121,16 +121,22 @@ class DashboardScreen extends ConsumerWidget {
                 return Column(
                   children: sessions
                       .take(10)
-                      .map((s) => _SessionTile(
-                            session: s,
-                            onTap: () {
-                              ref.read(activeSessionIdProvider.notifier).set(s.sessionId);
-                              context.go('/chat/${s.sessionId}');
-                            },
-                            onDelete: () async {
-                              await ref.read(sessionServiceProvider).deleteSession(s.sessionId);
-                            },
-                          ))
+                      .map(
+                        (s) => _SessionTile(
+                          session: s,
+                          onTap: () {
+                            ref
+                                .read(activeSessionIdProvider.notifier)
+                                .set(s.sessionId);
+                            context.go('/chat/${s.sessionId}');
+                          },
+                          onDelete: () async {
+                            await ref
+                                .read(sessionServiceProvider)
+                                .deleteSession(s.sessionId);
+                          },
+                        ),
+                      )
                       .toList(),
                 );
               },
@@ -174,10 +180,14 @@ class _QuickActionState extends State<_QuickAction> {
           width: 180,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _hovered ? ThemeConstants.editorLineHighlight : ThemeConstants.sidebarBackground,
+            color: _hovered
+                ? ThemeConstants.editorLineHighlight
+                : ThemeConstants.sidebarBackground,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: _hovered ? ThemeConstants.accent : ThemeConstants.borderColor,
+              color: _hovered
+                  ? ThemeConstants.accent
+                  : ThemeConstants.borderColor,
             ),
           ),
           child: Column(
@@ -233,10 +243,7 @@ class _SessionTile extends StatelessWidget {
       ),
       title: Text(
         session.title,
-        style: const TextStyle(
-          color: ThemeConstants.textPrimary,
-          fontSize: 13,
-        ),
+        style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 13),
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
@@ -276,4 +283,3 @@ class _EmptySessions extends StatelessWidget {
     );
   }
 }
-

@@ -45,7 +45,10 @@ class _FileExplorerPanelState extends ConsumerState<FileExplorerPanel> {
                   icon: const Icon(Icons.folder_open_outlined, size: 16),
                   tooltip: 'Open folder',
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(maxWidth: 24, maxHeight: 24),
+                  constraints: const BoxConstraints(
+                    maxWidth: 24,
+                    maxHeight: 24,
+                  ),
                   onPressed: _openFolder,
                 ),
               ],
@@ -114,7 +117,9 @@ class _DirectoryNodeState extends ConsumerState<_DirectoryNode> {
   @override
   void initState() {
     super.initState();
-    _childrenFuture = ref.read(filesystemServiceProvider).listDirectory(widget.path);
+    _childrenFuture = ref
+        .read(filesystemServiceProvider)
+        .listDirectory(widget.path);
     if (widget.isRoot) widget.expanded[widget.path] = true;
   }
 
@@ -148,7 +153,8 @@ class _DirectoryNodeState extends ConsumerState<_DirectoryNode> {
                   ),
                 );
               }
-              if (snapshot.hasError || !snapshot.hasData) return const SizedBox();
+              if (snapshot.hasError || !snapshot.hasData)
+                return const SizedBox();
               return Column(
                 children: snapshot.data!.map((node) {
                   if (node.isDirectory) {
@@ -174,17 +180,19 @@ class _DirectoryNodeState extends ConsumerState<_DirectoryNode> {
     );
   }
 
-  Future<void> _openFile(BuildContext context, WidgetRef ref, String path) async {
+  Future<void> _openFile(
+    BuildContext context,
+    WidgetRef ref,
+    String path,
+  ) async {
     try {
       final fs = ref.read(filesystemServiceProvider);
       final content = await fs.readFile(path);
       final language = fs.detectLanguage(path);
 
-      ref.read(editorTabsProvider.notifier).openFile(OpenFile(
-            path: path,
-            content: content,
-            language: language,
-          ));
+      ref
+          .read(editorTabsProvider.notifier)
+          .openFile(OpenFile(path: path, content: content, language: language));
       ref.read(activeFilePathProvider.notifier).set(path);
 
       if (context.mounted) context.go('/editor');
@@ -234,7 +242,9 @@ class _FileExplorerItemState extends State<_FileExplorerItem> {
         onTap: widget.onTap,
         child: Container(
           height: 22,
-          color: _hovered ? ThemeConstants.editorLineHighlight : Colors.transparent,
+          color: _hovered
+              ? ThemeConstants.editorLineHighlight
+              : Colors.transparent,
           padding: EdgeInsets.only(left: widget.depth * 16.0 + 8),
           child: Row(
             children: [
@@ -302,10 +312,7 @@ class _NoFolderOpen extends StatelessWidget {
         padding: EdgeInsets.all(16),
         child: Text(
           'No folder open.\nClick the folder icon to open a directory.',
-          style: TextStyle(
-            color: ThemeConstants.textMuted,
-            fontSize: 12,
-          ),
+          style: TextStyle(color: ThemeConstants.textMuted, fontSize: 12),
           textAlign: TextAlign.center,
         ),
       ),

@@ -27,9 +27,9 @@ Future<void> showApplyCodeDialog(
   }
 
   final activeFile = tabs.cast<OpenFile?>().firstWhere(
-        (f) => f?.path == activePath,
-        orElse: () => null,
-      );
+    (f) => f?.path == activePath,
+    orElse: () => null,
+  );
 
   if (activeFile == null || activeFile.isReadOnly) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -100,8 +100,11 @@ class _ApplyDiffDialog extends StatelessWidget {
               // Title
               Row(
                 children: [
-                  const Icon(Icons.difference_outlined,
-                      size: 18, color: ThemeConstants.accent),
+                  const Icon(
+                    Icons.difference_outlined,
+                    size: 18,
+                    color: ThemeConstants.accent,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -117,8 +120,10 @@ class _ApplyDiffDialog extends StatelessWidget {
                     icon: const Icon(Icons.close, size: 16),
                     onPressed: () => Navigator.of(context).pop(false),
                     padding: EdgeInsets.zero,
-                    constraints:
-                        const BoxConstraints(maxWidth: 24, maxHeight: 24),
+                    constraints: const BoxConstraints(
+                      maxWidth: 24,
+                      maxHeight: 24,
+                    ),
                   ),
                 ],
               ),
@@ -210,8 +215,7 @@ class _CodePanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: headerColor,
               borderRadius: const BorderRadius.only(

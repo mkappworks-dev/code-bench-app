@@ -115,9 +115,9 @@ class _GithubScreenState extends ConsumerState<GithubScreen> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load branches: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load branches: $e')));
       }
     }
   }
@@ -125,7 +125,9 @@ class _GithubScreenState extends ConsumerState<GithubScreen> {
   Future<void> _openFile(String path, String content, String language) async {
     final repo = _selectedRepo!;
     final label = '[GitHub] $path';
-    ref.read(editorTabsProvider.notifier).openFile(
+    ref
+        .read(editorTabsProvider.notifier)
+        .openFile(
           OpenFile(
             path: '${repo.owner}/${repo.name}/$path',
             content: content,
@@ -134,7 +136,9 @@ class _GithubScreenState extends ConsumerState<GithubScreen> {
             label: label,
           ),
         );
-    ref.read(activeFilePathProvider.notifier).set('${repo.owner}/${repo.name}/$path');
+    ref
+        .read(activeFilePathProvider.notifier)
+        .set('${repo.owner}/${repo.name}/$path');
     if (mounted) context.go('/editor');
   }
 
@@ -211,7 +215,11 @@ class _ConnectGitHub extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.source_outlined, size: 64, color: ThemeConstants.textMuted),
+          const Icon(
+            Icons.source_outlined,
+            size: 64,
+            color: ThemeConstants.textMuted,
+          ),
           const SizedBox(height: 24),
           const Text(
             'Connect GitHub',
@@ -267,7 +275,10 @@ class _RepoList extends StatelessWidget {
           child: TextField(
             controller: searchController,
             onChanged: onSearch,
-            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 13),
+            style: const TextStyle(
+              color: ThemeConstants.textPrimary,
+              fontSize: 13,
+            ),
             decoration: const InputDecoration(
               hintText: 'Search repositories...',
               prefixIcon: Icon(Icons.search, size: 16),
@@ -278,24 +289,24 @@ class _RepoList extends StatelessWidget {
           child: loading
               ? const SkeletonLoader(itemCount: 8)
               : error != null
-                  ? _ErrorView(error: error!, onRetry: onRefresh)
-                  : repos == null || repos!.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'No repositories found',
-                            style: TextStyle(color: ThemeConstants.textMuted),
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: repos!.length,
-                          itemBuilder: (context, index) {
-                            final repo = repos![index];
-                            return _RepoTile(
-                              repo: repo,
-                              onTap: () => onSelectRepo(repo),
-                            );
-                          },
-                        ),
+              ? _ErrorView(error: error!, onRetry: onRefresh)
+              : repos == null || repos!.isEmpty
+              ? const Center(
+                  child: Text(
+                    'No repositories found',
+                    style: TextStyle(color: ThemeConstants.textMuted),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: repos!.length,
+                  itemBuilder: (context, index) {
+                    final repo = repos![index];
+                    return _RepoTile(
+                      repo: repo,
+                      onTap: () => onSelectRepo(repo),
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -358,19 +369,24 @@ class _RepoDetail extends ConsumerWidget {
                 color: ThemeConstants.sidebarBackground,
                 tooltip: 'Switch branch',
                 itemBuilder: (_) => branches
-                    .map((b) => PopupMenuItem(
-                          value: b,
-                          child: Text(
-                            b,
-                            style: const TextStyle(
-                              color: ThemeConstants.textPrimary,
-                              fontSize: 12,
-                            ),
+                    .map(
+                      (b) => PopupMenuItem(
+                        value: b,
+                        child: Text(
+                          b,
+                          style: const TextStyle(
+                            color: ThemeConstants.textPrimary,
+                            fontSize: 12,
                           ),
-                        ))
+                        ),
+                      ),
+                    )
                     .toList(),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     border: Border.all(color: ThemeConstants.borderColor),
                     borderRadius: BorderRadius.circular(4),
@@ -378,16 +394,24 @@ class _RepoDetail extends ConsumerWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.account_tree_outlined,
-                          size: 12, color: ThemeConstants.textMuted),
+                      const Icon(
+                        Icons.account_tree_outlined,
+                        size: 12,
+                        color: ThemeConstants.textMuted,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         branch,
                         style: const TextStyle(
-                            color: ThemeConstants.textSecondary, fontSize: 12),
+                          color: ThemeConstants.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
-                      const Icon(Icons.expand_more,
-                          size: 14, color: ThemeConstants.textMuted),
+                      const Icon(
+                        Icons.expand_more,
+                        size: 14,
+                        color: ThemeConstants.textMuted,
+                      ),
                     ],
                   ),
                 ),
@@ -448,7 +472,10 @@ class _RepoTile extends StatelessWidget {
       subtitle: repo.description != null
           ? Text(
               repo.description!,
-              style: const TextStyle(color: ThemeConstants.textMuted, fontSize: 11),
+              style: const TextStyle(
+                color: ThemeConstants.textMuted,
+                fontSize: 11,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             )
@@ -459,15 +486,25 @@ class _RepoTile extends StatelessWidget {
           if (repo.language != null) ...[
             Text(
               repo.language!,
-              style: const TextStyle(color: ThemeConstants.textMuted, fontSize: 11),
+              style: const TextStyle(
+                color: ThemeConstants.textMuted,
+                fontSize: 11,
+              ),
             ),
             const SizedBox(width: 12),
           ],
-          const Icon(Icons.star_outline, size: 13, color: ThemeConstants.textMuted),
+          const Icon(
+            Icons.star_outline,
+            size: 13,
+            color: ThemeConstants.textMuted,
+          ),
           const SizedBox(width: 4),
           Text(
             '${repo.starCount}',
-            style: const TextStyle(color: ThemeConstants.textMuted, fontSize: 11),
+            style: const TextStyle(
+              color: ThemeConstants.textMuted,
+              fontSize: 11,
+            ),
           ),
         ],
       ),
@@ -490,11 +527,18 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 40, color: ThemeConstants.error),
+            const Icon(
+              Icons.error_outline,
+              size: 40,
+              color: ThemeConstants.error,
+            ),
             const SizedBox(height: 12),
             Text(
               error,
-              style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 13),
+              style: const TextStyle(
+                color: ThemeConstants.textSecondary,
+                fontSize: 13,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),

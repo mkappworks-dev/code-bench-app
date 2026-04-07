@@ -12,7 +12,8 @@ class ApiConstants {
   static const String anthropicVersion = '2023-06-01';
 
   // Gemini
-  static const String geminiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta';
+  static const String geminiBaseUrl =
+      'https://generativelanguage.googleapis.com/v1beta';
 
   // Ollama defaults
   static const String ollamaDefaultBaseUrl = 'http://localhost:11434';
@@ -21,8 +22,10 @@ class ApiConstants {
 
   // GitHub
   static const String githubApiBaseUrl = 'https://api.github.com';
-  static const String githubAuthUrl = 'https://github.com/login/oauth/authorize';
-  static const String githubTokenUrl = 'https://github.com/login/oauth/access_token';
+  static const String githubAuthUrl =
+      'https://github.com/login/oauth/authorize';
+  static const String githubTokenUrl =
+      'https://github.com/login/oauth/access_token';
   static const String githubScopes = 'repo,read:user,user:email';
 
   // Timeouts

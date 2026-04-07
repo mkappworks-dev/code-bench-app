@@ -24,12 +24,10 @@ class ChatSessions extends Table {
 @DataClassName('ChatMessageRow')
 class ChatMessages extends Table {
   TextColumn get id => text()();
-  TextColumn get sessionId =>
-      text().references(ChatSessions, #sessionId)();
+  TextColumn get sessionId => text().references(ChatSessions, #sessionId)();
   TextColumn get role => text()();
   TextColumn get content => text()();
-  TextColumn get codeBlocksJson =>
-      text().withDefault(const Constant('[]'))();
+  TextColumn get codeBlocksJson => text().withDefault(const Constant('[]'))();
   DateTimeColumn get timestamp => dateTime()();
 
   @override
@@ -43,8 +41,7 @@ class WorkspaceProjects extends Table {
   TextColumn get localPath => text().nullable()();
   TextColumn get repositoryId => text().nullable()();
   TextColumn get activeBranch => text().nullable()();
-  TextColumn get sessionIdsJson =>
-      text().withDefault(const Constant('[]'))();
+  TextColumn get sessionIdsJson => text().withDefault(const Constant('[]'))();
   DateTimeColumn get lastOpenedAt => dateTime().nullable()();
 
   @override
@@ -57,14 +54,13 @@ class WorkspaceProjects extends Table {
 class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   SessionDao(super.db);
 
-  Stream<List<ChatSessionRow>> watchAllSessions() =>
-      (select(chatSessions)
-            ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
-          .watch();
+  Stream<List<ChatSessionRow>> watchAllSessions() => (select(
+    chatSessions,
+  )..orderBy([(t) => OrderingTerm.desc(t.updatedAt)])).watch();
 
-  Future<ChatSessionRow?> getSession(String sessionId) =>
-      (select(chatSessions)..where((t) => t.sessionId.equals(sessionId)))
-          .getSingleOrNull();
+  Future<ChatSessionRow?> getSession(String sessionId) => (select(
+    chatSessions,
+  )..where((t) => t.sessionId.equals(sessionId))).getSingleOrNull();
 
   Future<void> upsertSession(ChatSessionsCompanion session) =>
       into(chatSessions).insertOnConflictUpdate(session);
@@ -94,10 +90,9 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
 class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
   ProjectDao(super.db);
 
-  Future<List<WorkspaceProjectRow>> getAllProjects() =>
-      (select(workspaceProjects)
-            ..orderBy([(t) => OrderingTerm.desc(t.lastOpenedAt)]))
-          .get();
+  Future<List<WorkspaceProjectRow>> getAllProjects() => (select(
+    workspaceProjects,
+  )..orderBy([(t) => OrderingTerm.desc(t.lastOpenedAt)])).get();
 
   Future<void> upsertProject(WorkspaceProjectsCompanion project) =>
       into(workspaceProjects).insertOnConflictUpdate(project);

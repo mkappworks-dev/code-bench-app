@@ -24,11 +24,7 @@ class OpenFile {
 
   String get displayName => label ?? path.split('/').last;
 
-  OpenFile copyWith({
-    String? content,
-    bool? isDirty,
-    bool? isReadOnly,
-  }) {
+  OpenFile copyWith({String? content, bool? isDirty, bool? isReadOnly}) {
     return OpenFile(
       path: path,
       content: content ?? this.content,

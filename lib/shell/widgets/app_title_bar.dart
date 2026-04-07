@@ -104,7 +104,9 @@ class _TitleBarButtonState extends State<_TitleBarButton> {
             width: 40,
             height: 36,
             color: _hovered
-                ? (widget.isClose ? Colors.red.withAlpha(200) : Colors.white.withAlpha(20))
+                ? (widget.isClose
+                      ? Colors.red.withAlpha(200)
+                      : Colors.white.withAlpha(20))
                 : Colors.transparent,
             child: Icon(
               widget.icon,

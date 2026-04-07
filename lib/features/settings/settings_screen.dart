@@ -91,10 +91,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _testOllama() async {
     final url = _ollamaController.text.trim();
     try {
-      final testDio = Dio(BaseOptions(
-        baseUrl: url,
-        connectTimeout: const Duration(seconds: 5),
-      ));
+      final testDio = Dio(
+        BaseOptions(baseUrl: url, connectTimeout: const Duration(seconds: 5)),
+      );
       await testDio.get('/api/tags');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -140,13 +139,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             ...AIProvider.values
                 .where((p) => p != AIProvider.ollama && p != AIProvider.custom)
-                .map((provider) => Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: _ApiKeyField(
-                        provider: provider,
-                        controller: _controllers[provider]!,
-                      ),
-                    )),
+                .map(
+                  (provider) => Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: _ApiKeyField(
+                      provider: provider,
+                      controller: _controllers[provider]!,
+                    ),
+                  ),
+                ),
 
             const SizedBox(height: 16),
             _SectionHeader(title: 'Ollama (Local)'),
@@ -290,10 +291,7 @@ class _LabeledField extends StatelessWidget {
               fontSize: 13,
               fontFamily: ThemeConstants.editorFontFamily,
             ),
-            decoration: InputDecoration(
-              hintText: hint,
-              suffixIcon: suffixIcon,
-            ),
+            decoration: InputDecoration(hintText: hint, suffixIcon: suffixIcon),
           ),
         ],
       ),

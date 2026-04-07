@@ -45,9 +45,8 @@ GoRouter appRouter(Ref ref) {
           ),
           GoRoute(
             path: '/chat/:sessionId',
-            builder: (context, state) => ChatScreen(
-              sessionId: state.pathParameters['sessionId'],
-            ),
+            builder: (context, state) =>
+                ChatScreen(sessionId: state.pathParameters['sessionId']),
           ),
           GoRoute(
             path: '/editor',

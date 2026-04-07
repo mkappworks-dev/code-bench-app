@@ -19,7 +19,8 @@ class CodeBlock with _$CodeBlock {
     String? filename,
   }) = _CodeBlock;
 
-  factory CodeBlock.fromJson(Map<String, dynamic> json) => _$CodeBlockFromJson(json);
+  factory CodeBlock.fromJson(Map<String, dynamic> json) =>
+      _$CodeBlockFromJson(json);
 }
 
 @freezed
@@ -34,5 +35,6 @@ class ChatMessage with _$ChatMessage {
     @Default(false) bool isStreaming,
   }) = _ChatMessage;
 
-  factory ChatMessage.fromJson(Map<String, dynamic> json) => _$ChatMessageFromJson(json);
+  factory ChatMessage.fromJson(Map<String, dynamic> json) =>
+      _$ChatMessageFromJson(json);
 }

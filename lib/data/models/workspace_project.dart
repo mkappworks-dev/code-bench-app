@@ -15,5 +15,6 @@ class WorkspaceProject with _$WorkspaceProject {
     DateTime? lastOpenedAt,
   }) = _WorkspaceProject;
 
-  factory WorkspaceProject.fromJson(Map<String, dynamic> json) => _$WorkspaceProjectFromJson(json);
+  factory WorkspaceProject.fromJson(Map<String, dynamic> json) =>
+      _$WorkspaceProjectFromJson(json);
 }

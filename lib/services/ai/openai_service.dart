@@ -37,11 +37,7 @@ class OpenAIService implements AIService {
     String? systemPrompt,
   }) async* {
     final messages = _buildMessages(history, prompt, systemPrompt);
-    final body = {
-      'model': model.modelId,
-      'messages': messages,
-      'stream': true,
-    };
+    final body = {'model': model.modelId, 'messages': messages, 'stream': true};
 
     try {
       final response = await _dio.post(
@@ -112,13 +108,15 @@ class OpenAIService implements AIService {
   @override
   Future<bool> testConnection(AIModel model, String apiKey) async {
     try {
-      final testDio = Dio(BaseOptions(
-        baseUrl: ApiConstants.openAiBaseUrl,
-        headers: {
-          'Authorization': 'Bearer $apiKey',
-          'Content-Type': 'application/json',
-        },
-      ));
+      final testDio = Dio(
+        BaseOptions(
+          baseUrl: ApiConstants.openAiBaseUrl,
+          headers: {
+            'Authorization': 'Bearer $apiKey',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
       await testDio.get(ApiConstants.openAiModelsEndpoint);
       return true;
     } catch (_) {
@@ -129,21 +127,25 @@ class OpenAIService implements AIService {
   @override
   Future<List<AIModel>> fetchAvailableModels(String apiKey) async {
     try {
-      final testDio = Dio(BaseOptions(
-        baseUrl: ApiConstants.openAiBaseUrl,
-        headers: {'Authorization': 'Bearer $apiKey'},
-      ));
+      final testDio = Dio(
+        BaseOptions(
+          baseUrl: ApiConstants.openAiBaseUrl,
+          headers: {'Authorization': 'Bearer $apiKey'},
+        ),
+      );
       final response = await testDio.get(ApiConstants.openAiModelsEndpoint);
       final data = response.data as Map<String, dynamic>;
       final models = (data['data'] as List)
           .map((m) => m['id'] as String)
           .where((id) => id.startsWith('gpt-'))
-          .map((id) => AIModel(
-                id: id,
-                provider: AIProvider.openai,
-                name: id,
-                modelId: id,
-              ))
+          .map(
+            (id) => AIModel(
+              id: id,
+              provider: AIProvider.openai,
+              name: id,
+              modelId: id,
+            ),
+          )
           .toList();
       return models;
     } catch (_) {
@@ -163,10 +165,7 @@ class OpenAIService implements AIService {
       messages.add({'role': 'system', 'content': systemPrompt});
     }
     for (final msg in history) {
-      messages.add({
-        'role': msg.role.value,
-        'content': msg.content,
-      });
+      messages.add({'role': msg.role.value, 'content': msg.content});
     }
     messages.add({'role': 'user', 'content': prompt});
     return messages;
