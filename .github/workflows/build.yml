@@ -47,26 +47,42 @@ jobs:
       - name: Generate code
         run: dart run build_runner build --delete-conflicting-outputs
 
+      - name: Format generated code
+        run: dart format lib/ test/
+
+      - name: Check formatting
+        run: dart format --set-exit-if-changed lib/ test/
+
+      - name: Build (macOS)
+        if: matrix.target == 'macos'
+        run: flutter build macos --release
+        env:
+          FLUTTER_XCODE_CODE_SIGN_IDENTITY: ""
+          FLUTTER_XCODE_CODE_SIGNING_REQUIRED: NO
+          FLUTTER_XCODE_CODE_SIGNING_ALLOWED: NO
+
       - name: Build
+        if: matrix.target != 'macos'
         run: flutter build ${{ matrix.target }} --release
 
       - name: Upload artifact (macOS)
         if: matrix.target == 'macos'
         uses: actions/upload-artifact@v4
         with:
-          name: devbench-macos
-          path: build/macos/Build/Products/Release/dev_bench.app
+          name: codebench-macos
+          path: build/macos/Build/Products/Release/code_bench.app
 
       - name: Upload artifact (Windows)
         if: matrix.target == 'windows'
+
         uses: actions/upload-artifact@v4
         with:
-          name: devbench-windows
+          name: codebench-windows
           path: build/windows/x64/runner/Release/
 
       - name: Upload artifact (Linux)
         if: matrix.target == 'linux'
         uses: actions/upload-artifact@v4
         with:
-          name: devbench-linux
+          name: codebench-linux
           path: build/linux/x64/release/bundle/
