@@ -288,7 +288,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         'AI-powered coding workspace',
                         style: TextStyle(
                           color: ThemeConstants.textSecondary,
-                          fontSize: 10,
+                          fontSize: 11,
                         ),
                       ),
                       const SizedBox(height: 28),
@@ -314,7 +314,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         '🔒 Keys stored in your OS keychain',
                         style: TextStyle(
                           color: Color(0xFF666666),
-                          fontSize: 8,
+                          fontSize: 10,
                         ),
                       ),
                     ],
@@ -448,7 +448,7 @@ class _FeatureCard extends StatelessWidget {
             '$icon  $title',
             style: const TextStyle(
               color: ThemeConstants.textPrimary,
-              fontSize: 9,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -457,7 +457,7 @@ class _FeatureCard extends StatelessWidget {
             subtitle,
             style: const TextStyle(
               color: Color(0xFF7A7A7A),
-              fontSize: 8,
+              fontSize: 10,
             ),
           ),
         ],
@@ -506,12 +506,12 @@ class _ProviderRowState extends State<_ProviderRow> {
     return Row(
       children: [
         SizedBox(
-          width: 78,
+          width: 90,
           child: Text(
             widget.provider.displayName.toUpperCase(),
             style: const TextStyle(
               color: ThemeConstants.textSecondary,
-              fontSize: 9,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.6,
             ),
