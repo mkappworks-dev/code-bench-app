@@ -133,10 +133,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 32),
-
             _SectionHeader(title: 'API Keys'),
             const SizedBox(height: 16),
-
             ...AIProvider.values
                 .where((p) => p != AIProvider.ollama && p != AIProvider.custom)
                 .map(
@@ -148,7 +146,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                   ),
                 ),
-
             const SizedBox(height: 16),
             _SectionHeader(title: 'Ollama (Local)'),
             const SizedBox(height: 16),
@@ -163,7 +160,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               icon: const Icon(Icons.play_arrow_outlined, size: 14),
               label: const Text('Test Connection'),
             ),
-
             const SizedBox(height: 16),
             _SectionHeader(title: 'Custom Endpoint (OpenAI-compatible)'),
             const SizedBox(height: 16),
@@ -179,7 +175,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               controller: _customApiKeyController,
               obscureText: true,
             ),
-
             const SizedBox(height: 40),
             SizedBox(
               width: 200,

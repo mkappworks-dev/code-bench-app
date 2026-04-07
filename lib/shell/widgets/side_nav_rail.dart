@@ -115,8 +115,8 @@ class _NavItemState extends State<_NavItem> {
               color: _isActive
                   ? ThemeConstants.textPrimary
                   : (_hovered
-                        ? ThemeConstants.textPrimary
-                        : ThemeConstants.textMuted),
+                      ? ThemeConstants.textPrimary
+                      : ThemeConstants.textMuted),
             ),
           ),
         ),

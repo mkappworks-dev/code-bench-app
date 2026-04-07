@@ -58,9 +58,8 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
             // vary widths so it looks more natural
-            final titleWidth = index % 3 == 0
-                ? 0.6
-                : (index % 3 == 1 ? 0.75 : 0.5);
+            final titleWidth =
+                index % 3 == 0 ? 0.6 : (index % 3 == 1 ? 0.75 : 0.5);
             final subtitleWidth = index % 2 == 0 ? 0.4 : 0.55;
 
             return Padding(

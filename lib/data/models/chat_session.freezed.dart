@@ -82,36 +82,35 @@ class _$ChatSessionCopyWithImpl<$Res, $Val extends ChatSession>
   }) {
     return _then(
       _value.copyWith(
-            sessionId: null == sessionId
-                ? _value.sessionId
-                : sessionId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            title: null == title
-                ? _value.title
-                : title // ignore: cast_nullable_to_non_nullable
-                      as String,
-            modelId: null == modelId
-                ? _value.modelId
-                : modelId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            providerId: null == providerId
-                ? _value.providerId
-                : providerId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            createdAt: null == createdAt
-                ? _value.createdAt
-                : createdAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
-            updatedAt: null == updatedAt
-                ? _value.updatedAt
-                : updatedAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
-            isPinned: null == isPinned
-                ? _value.isPinned
-                : isPinned // ignore: cast_nullable_to_non_nullable
-                      as bool,
-          )
-          as $Val,
+        sessionId: null == sessionId
+            ? _value.sessionId
+            : sessionId // ignore: cast_nullable_to_non_nullable
+                as String,
+        title: null == title
+            ? _value.title
+            : title // ignore: cast_nullable_to_non_nullable
+                as String,
+        modelId: null == modelId
+            ? _value.modelId
+            : modelId // ignore: cast_nullable_to_non_nullable
+                as String,
+        providerId: null == providerId
+            ? _value.providerId
+            : providerId // ignore: cast_nullable_to_non_nullable
+                as String,
+        createdAt: null == createdAt
+            ? _value.createdAt
+            : createdAt // ignore: cast_nullable_to_non_nullable
+                as DateTime,
+        updatedAt: null == updatedAt
+            ? _value.updatedAt
+            : updatedAt // ignore: cast_nullable_to_non_nullable
+                as DateTime,
+        isPinned: null == isPinned
+            ? _value.isPinned
+            : isPinned // ignore: cast_nullable_to_non_nullable
+                as bool,
+      ) as $Val,
     );
   }
 }
@@ -163,31 +162,31 @@ class __$$ChatSessionImplCopyWithImpl<$Res>
         sessionId: null == sessionId
             ? _value.sessionId
             : sessionId // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         title: null == title
             ? _value.title
             : title // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         modelId: null == modelId
             ? _value.modelId
             : modelId // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         providerId: null == providerId
             ? _value.providerId
             : providerId // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         createdAt: null == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
+                as DateTime,
         updatedAt: null == updatedAt
             ? _value.updatedAt
             : updatedAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
+                as DateTime,
         isPinned: null == isPinned
             ? _value.isPinned
             : isPinned // ignore: cast_nullable_to_non_nullable
-                  as bool,
+                as bool,
       ),
     );
   }
@@ -252,15 +251,15 @@ class _$ChatSessionImpl implements _ChatSession {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    sessionId,
-    title,
-    modelId,
-    providerId,
-    createdAt,
-    updatedAt,
-    isPinned,
-  );
+        runtimeType,
+        sessionId,
+        title,
+        modelId,
+        providerId,
+        createdAt,
+        updatedAt,
+        isPinned,
+      );
 
   /// Create a copy of ChatSession
   /// with the given fields replaced by the non-null parameter values.

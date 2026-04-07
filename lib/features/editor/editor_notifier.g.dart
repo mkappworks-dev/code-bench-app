@@ -67,17 +67,18 @@ class SaveFileFamily extends Family<AsyncValue<void>> {
 class SaveFileProvider extends AutoDisposeFutureProvider<void> {
   /// See also [saveFile].
   SaveFileProvider(String path)
-    : this._internal(
-        (ref) => saveFile(ref as SaveFileRef, path),
-        from: saveFileProvider,
-        name: r'saveFileProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$saveFileHash,
-        dependencies: SaveFileFamily._dependencies,
-        allTransitiveDependencies: SaveFileFamily._allTransitiveDependencies,
-        path: path,
-      );
+      : this._internal(
+          (ref) => saveFile(ref as SaveFileRef, path),
+          from: saveFileProvider,
+          name: r'saveFileProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$saveFileHash,
+          dependencies: SaveFileFamily._dependencies,
+          allTransitiveDependencies: SaveFileFamily._allTransitiveDependencies,
+          path: path,
+        );
 
   SaveFileProvider._internal(
     super._createNotifier, {
@@ -147,14 +148,13 @@ String _$editorTabsHash() => r'd68161a0e346e4fc310ef1e5f64415b907594588';
 @ProviderFor(EditorTabs)
 final editorTabsProvider =
     NotifierProvider<EditorTabs, List<OpenFile>>.internal(
-      EditorTabs.new,
-      name: r'editorTabsProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$editorTabsHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  EditorTabs.new,
+  name: r'editorTabsProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$editorTabsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef _$EditorTabs = Notifier<List<OpenFile>>;
 String _$activeFilePathHash() => r'34e1a32aaddebc924cea25abddb9124525151006';
@@ -163,14 +163,14 @@ String _$activeFilePathHash() => r'34e1a32aaddebc924cea25abddb9124525151006';
 @ProviderFor(ActiveFilePath)
 final activeFilePathProvider =
     NotifierProvider<ActiveFilePath, String?>.internal(
-      ActiveFilePath.new,
-      name: r'activeFilePathProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$activeFilePathHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  ActiveFilePath.new,
+  name: r'activeFilePathProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$activeFilePathHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef _$ActiveFilePath = Notifier<String?>;
 String _$workingDirectoryHash() => r'8e1c0b1ca6cf8a662132ce5d9fb8a007b033cfcf';
@@ -179,14 +179,14 @@ String _$workingDirectoryHash() => r'8e1c0b1ca6cf8a662132ce5d9fb8a007b033cfcf';
 @ProviderFor(WorkingDirectory)
 final workingDirectoryProvider =
     NotifierProvider<WorkingDirectory, String?>.internal(
-      WorkingDirectory.new,
-      name: r'workingDirectoryProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$workingDirectoryHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  WorkingDirectory.new,
+  name: r'workingDirectoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$workingDirectoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef _$WorkingDirectory = Notifier<String?>;
 // ignore_for_file: type=lint

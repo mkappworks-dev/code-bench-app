@@ -91,48 +91,47 @@ class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
   }) {
     return _then(
       _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as int,
-            name: null == name
-                ? _value.name
-                : name // ignore: cast_nullable_to_non_nullable
-                      as String,
-            owner: null == owner
-                ? _value.owner
-                : owner // ignore: cast_nullable_to_non_nullable
-                      as String,
-            defaultBranch: null == defaultBranch
-                ? _value.defaultBranch
-                : defaultBranch // ignore: cast_nullable_to_non_nullable
-                      as String,
-            isPrivate: null == isPrivate
-                ? _value.isPrivate
-                : isPrivate // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            language: freezed == language
-                ? _value.language
-                : language // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            starCount: null == starCount
-                ? _value.starCount
-                : starCount // ignore: cast_nullable_to_non_nullable
-                      as int,
-            description: freezed == description
-                ? _value.description
-                : description // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            htmlUrl: freezed == htmlUrl
-                ? _value.htmlUrl
-                : htmlUrl // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            updatedAt: freezed == updatedAt
-                ? _value.updatedAt
-                : updatedAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-          )
-          as $Val,
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                as int,
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                as String,
+        owner: null == owner
+            ? _value.owner
+            : owner // ignore: cast_nullable_to_non_nullable
+                as String,
+        defaultBranch: null == defaultBranch
+            ? _value.defaultBranch
+            : defaultBranch // ignore: cast_nullable_to_non_nullable
+                as String,
+        isPrivate: null == isPrivate
+            ? _value.isPrivate
+            : isPrivate // ignore: cast_nullable_to_non_nullable
+                as bool,
+        language: freezed == language
+            ? _value.language
+            : language // ignore: cast_nullable_to_non_nullable
+                as String?,
+        starCount: null == starCount
+            ? _value.starCount
+            : starCount // ignore: cast_nullable_to_non_nullable
+                as int,
+        description: freezed == description
+            ? _value.description
+            : description // ignore: cast_nullable_to_non_nullable
+                as String?,
+        htmlUrl: freezed == htmlUrl
+            ? _value.htmlUrl
+            : htmlUrl // ignore: cast_nullable_to_non_nullable
+                as String?,
+        updatedAt: freezed == updatedAt
+            ? _value.updatedAt
+            : updatedAt // ignore: cast_nullable_to_non_nullable
+                as DateTime?,
+      ) as $Val,
     );
   }
 }
@@ -190,43 +189,43 @@ class __$$RepositoryImplCopyWithImpl<$Res>
         id: null == id
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
-                  as int,
+                as int,
         name: null == name
             ? _value.name
             : name // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         owner: null == owner
             ? _value.owner
             : owner // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         defaultBranch: null == defaultBranch
             ? _value.defaultBranch
             : defaultBranch // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         isPrivate: null == isPrivate
             ? _value.isPrivate
             : isPrivate // ignore: cast_nullable_to_non_nullable
-                  as bool,
+                as bool,
         language: freezed == language
             ? _value.language
             : language // ignore: cast_nullable_to_non_nullable
-                  as String?,
+                as String?,
         starCount: null == starCount
             ? _value.starCount
             : starCount // ignore: cast_nullable_to_non_nullable
-                  as int,
+                as int,
         description: freezed == description
             ? _value.description
             : description // ignore: cast_nullable_to_non_nullable
-                  as String?,
+                as String?,
         htmlUrl: freezed == htmlUrl
             ? _value.htmlUrl
             : htmlUrl // ignore: cast_nullable_to_non_nullable
-                  as String?,
+                as String?,
         updatedAt: freezed == updatedAt
             ? _value.updatedAt
             : updatedAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
+                as DateTime?,
       ),
     );
   }
@@ -305,18 +304,18 @@ class _$RepositoryImpl implements _Repository {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    name,
-    owner,
-    defaultBranch,
-    isPrivate,
-    language,
-    starCount,
-    description,
-    htmlUrl,
-    updatedAt,
-  );
+        runtimeType,
+        id,
+        name,
+        owner,
+        defaultBranch,
+        isPrivate,
+        language,
+        starCount,
+        description,
+        htmlUrl,
+        updatedAt,
+      );
 
   /// Create a copy of Repository
   /// with the given fields replaced by the non-null parameter values.
@@ -439,28 +438,27 @@ class _$GitHubAccountCopyWithImpl<$Res, $Val extends GitHubAccount>
   }) {
     return _then(
       _value.copyWith(
-            username: null == username
-                ? _value.username
-                : username // ignore: cast_nullable_to_non_nullable
-                      as String,
-            avatarUrl: null == avatarUrl
-                ? _value.avatarUrl
-                : avatarUrl // ignore: cast_nullable_to_non_nullable
-                      as String,
-            email: freezed == email
-                ? _value.email
-                : email // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            scopes: null == scopes
-                ? _value.scopes
-                : scopes // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
-            name: freezed == name
-                ? _value.name
-                : name // ignore: cast_nullable_to_non_nullable
-                      as String?,
-          )
-          as $Val,
+        username: null == username
+            ? _value.username
+            : username // ignore: cast_nullable_to_non_nullable
+                as String,
+        avatarUrl: null == avatarUrl
+            ? _value.avatarUrl
+            : avatarUrl // ignore: cast_nullable_to_non_nullable
+                as String,
+        email: freezed == email
+            ? _value.email
+            : email // ignore: cast_nullable_to_non_nullable
+                as String?,
+        scopes: null == scopes
+            ? _value.scopes
+            : scopes // ignore: cast_nullable_to_non_nullable
+                as List<String>,
+        name: freezed == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                as String?,
+      ) as $Val,
     );
   }
 }
@@ -508,23 +506,23 @@ class __$$GitHubAccountImplCopyWithImpl<$Res>
         username: null == username
             ? _value.username
             : username // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         avatarUrl: null == avatarUrl
             ? _value.avatarUrl
             : avatarUrl // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         email: freezed == email
             ? _value.email
             : email // ignore: cast_nullable_to_non_nullable
-                  as String?,
+                as String?,
         scopes: null == scopes
             ? _value._scopes
             : scopes // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
+                as List<String>,
         name: freezed == name
             ? _value.name
             : name // ignore: cast_nullable_to_non_nullable
-                  as String?,
+                as String?,
       ),
     );
   }
@@ -584,13 +582,13 @@ class _$GitHubAccountImpl implements _GitHubAccount {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    username,
-    avatarUrl,
-    email,
-    const DeepCollectionEquality().hash(_scopes),
-    name,
-  );
+        runtimeType,
+        username,
+        avatarUrl,
+        email,
+        const DeepCollectionEquality().hash(_scopes),
+        name,
+      );
 
   /// Create a copy of GitHubAccount
   /// with the given fields replaced by the non-null parameter values.
@@ -690,24 +688,23 @@ class _$GitTreeItemCopyWithImpl<$Res, $Val extends GitTreeItem>
   }) {
     return _then(
       _value.copyWith(
-            path: null == path
-                ? _value.path
-                : path // ignore: cast_nullable_to_non_nullable
-                      as String,
-            type: null == type
-                ? _value.type
-                : type // ignore: cast_nullable_to_non_nullable
-                      as String,
-            sha: null == sha
-                ? _value.sha
-                : sha // ignore: cast_nullable_to_non_nullable
-                      as String,
-            size: freezed == size
-                ? _value.size
-                : size // ignore: cast_nullable_to_non_nullable
-                      as int?,
-          )
-          as $Val,
+        path: null == path
+            ? _value.path
+            : path // ignore: cast_nullable_to_non_nullable
+                as String,
+        type: null == type
+            ? _value.type
+            : type // ignore: cast_nullable_to_non_nullable
+                as String,
+        sha: null == sha
+            ? _value.sha
+            : sha // ignore: cast_nullable_to_non_nullable
+                as String,
+        size: freezed == size
+            ? _value.size
+            : size // ignore: cast_nullable_to_non_nullable
+                as int?,
+      ) as $Val,
     );
   }
 }
@@ -748,19 +745,19 @@ class __$$GitTreeItemImplCopyWithImpl<$Res>
         path: null == path
             ? _value.path
             : path // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         type: null == type
             ? _value.type
             : type // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         sha: null == sha
             ? _value.sha
             : sha // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         size: freezed == size
             ? _value.size
             : size // ignore: cast_nullable_to_non_nullable
-                  as int?,
+                as int?,
       ),
     );
   }

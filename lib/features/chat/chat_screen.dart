@@ -208,8 +208,7 @@ class _ChatHeader extends ConsumerWidget {
     final model = ref.watch(selectedModelProvider);
     final sessions = ref.watch(chatSessionsProvider);
 
-    final sessionTitle =
-        sessions.whenOrNull(
+    final sessionTitle = sessions.whenOrNull(
           data: (List<ChatSession> list) {
             try {
               return list.firstWhere((s) => s.sessionId == sessionId).title;

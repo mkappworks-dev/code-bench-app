@@ -37,11 +37,9 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
   Future<void> _loadPaneWidths() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _explorerWidth =
-          prefs.getDouble(AppConstants.prefExplorerWidth) ??
+      _explorerWidth = prefs.getDouble(AppConstants.prefExplorerWidth) ??
           AppConstants.defaultExplorerWidth;
-      _chatWidth =
-          prefs.getDouble(AppConstants.prefChatWidth) ??
+      _chatWidth = prefs.getDouble(AppConstants.prefChatWidth) ??
           AppConstants.defaultChatWidth;
     });
   }
@@ -78,8 +76,7 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    final showEditorPanes =
-        location.startsWith('/editor') ||
+    final showEditorPanes = location.startsWith('/editor') ||
         location.startsWith('/chat') ||
         location.startsWith('/github');
 

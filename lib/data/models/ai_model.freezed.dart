@@ -82,40 +82,39 @@ class _$AIModelCopyWithImpl<$Res, $Val extends AIModel>
   }) {
     return _then(
       _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            provider: null == provider
-                ? _value.provider
-                : provider // ignore: cast_nullable_to_non_nullable
-                      as AIProvider,
-            name: null == name
-                ? _value.name
-                : name // ignore: cast_nullable_to_non_nullable
-                      as String,
-            modelId: null == modelId
-                ? _value.modelId
-                : modelId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            endpoint: freezed == endpoint
-                ? _value.endpoint
-                : endpoint // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            contextWindow: null == contextWindow
-                ? _value.contextWindow
-                : contextWindow // ignore: cast_nullable_to_non_nullable
-                      as int,
-            supportsStreaming: null == supportsStreaming
-                ? _value.supportsStreaming
-                : supportsStreaming // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            isDefault: null == isDefault
-                ? _value.isDefault
-                : isDefault // ignore: cast_nullable_to_non_nullable
-                      as bool,
-          )
-          as $Val,
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                as String,
+        provider: null == provider
+            ? _value.provider
+            : provider // ignore: cast_nullable_to_non_nullable
+                as AIProvider,
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                as String,
+        modelId: null == modelId
+            ? _value.modelId
+            : modelId // ignore: cast_nullable_to_non_nullable
+                as String,
+        endpoint: freezed == endpoint
+            ? _value.endpoint
+            : endpoint // ignore: cast_nullable_to_non_nullable
+                as String?,
+        contextWindow: null == contextWindow
+            ? _value.contextWindow
+            : contextWindow // ignore: cast_nullable_to_non_nullable
+                as int,
+        supportsStreaming: null == supportsStreaming
+            ? _value.supportsStreaming
+            : supportsStreaming // ignore: cast_nullable_to_non_nullable
+                as bool,
+        isDefault: null == isDefault
+            ? _value.isDefault
+            : isDefault // ignore: cast_nullable_to_non_nullable
+                as bool,
+      ) as $Val,
     );
   }
 }
@@ -168,35 +167,35 @@ class __$$AIModelImplCopyWithImpl<$Res>
         id: null == id
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         provider: null == provider
             ? _value.provider
             : provider // ignore: cast_nullable_to_non_nullable
-                  as AIProvider,
+                as AIProvider,
         name: null == name
             ? _value.name
             : name // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         modelId: null == modelId
             ? _value.modelId
             : modelId // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         endpoint: freezed == endpoint
             ? _value.endpoint
             : endpoint // ignore: cast_nullable_to_non_nullable
-                  as String?,
+                as String?,
         contextWindow: null == contextWindow
             ? _value.contextWindow
             : contextWindow // ignore: cast_nullable_to_non_nullable
-                  as int,
+                as int,
         supportsStreaming: null == supportsStreaming
             ? _value.supportsStreaming
             : supportsStreaming // ignore: cast_nullable_to_non_nullable
-                  as bool,
+                as bool,
         isDefault: null == isDefault
             ? _value.isDefault
             : isDefault // ignore: cast_nullable_to_non_nullable
-                  as bool,
+                as bool,
       ),
     );
   }
@@ -267,16 +266,16 @@ class _$AIModelImpl implements _AIModel {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    provider,
-    name,
-    modelId,
-    endpoint,
-    contextWindow,
-    supportsStreaming,
-    isDefault,
-  );
+        runtimeType,
+        id,
+        provider,
+        name,
+        modelId,
+        endpoint,
+        contextWindow,
+        supportsStreaming,
+        isDefault,
+      );
 
   /// Create a copy of AIModel
   /// with the given fields replaced by the non-null parameter values.

@@ -13,14 +13,14 @@ String _$sessionSystemPromptHash() =>
 @ProviderFor(SessionSystemPrompt)
 final sessionSystemPromptProvider =
     NotifierProvider<SessionSystemPrompt, Map<String, String>>.internal(
-      SessionSystemPrompt.new,
-      name: r'sessionSystemPromptProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$sessionSystemPromptHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  SessionSystemPrompt.new,
+  name: r'sessionSystemPromptProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$sessionSystemPromptHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef _$SessionSystemPrompt = Notifier<Map<String, String>>;
 String _$chatSessionsHash() => r'bd92b56150cdba1b0318a6538773f19e9755be19';
@@ -29,14 +29,13 @@ String _$chatSessionsHash() => r'bd92b56150cdba1b0318a6538773f19e9755be19';
 @ProviderFor(chatSessions)
 final chatSessionsProvider =
     AutoDisposeStreamProvider<List<ChatSession>>.internal(
-      chatSessions,
-      name: r'chatSessionsProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$chatSessionsHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  chatSessions,
+  name: r'chatSessionsProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$chatSessionsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
@@ -47,14 +46,14 @@ String _$activeSessionIdHash() => r'6bbf5f2b584ffb0f12be4776b38c2f3a6ca6575e';
 @ProviderFor(ActiveSessionId)
 final activeSessionIdProvider =
     NotifierProvider<ActiveSessionId, String?>.internal(
-      ActiveSessionId.new,
-      name: r'activeSessionIdProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$activeSessionIdHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  ActiveSessionId.new,
+  name: r'activeSessionIdProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$activeSessionIdHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 typedef _$ActiveSessionId = Notifier<String?>;
 String _$selectedModelHash() => r'23dfb6790a1851dce12997ba05dd7e1b89da9fcc';
@@ -139,23 +138,23 @@ class ChatMessagesFamily extends Family<AsyncValue<List<ChatMessage>>> {
 }
 
 /// See also [ChatMessages].
-class ChatMessagesProvider
-    extends
-        AutoDisposeAsyncNotifierProviderImpl<ChatMessages, List<ChatMessage>> {
+class ChatMessagesProvider extends AutoDisposeAsyncNotifierProviderImpl<
+    ChatMessages, List<ChatMessage>> {
   /// See also [ChatMessages].
   ChatMessagesProvider(String sessionId)
-    : this._internal(
-        () => ChatMessages()..sessionId = sessionId,
-        from: chatMessagesProvider,
-        name: r'chatMessagesProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$chatMessagesHash,
-        dependencies: ChatMessagesFamily._dependencies,
-        allTransitiveDependencies:
-            ChatMessagesFamily._allTransitiveDependencies,
-        sessionId: sessionId,
-      );
+      : this._internal(
+          () => ChatMessages()..sessionId = sessionId,
+          from: chatMessagesProvider,
+          name: r'chatMessagesProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$chatMessagesHash,
+          dependencies: ChatMessagesFamily._dependencies,
+          allTransitiveDependencies:
+              ChatMessagesFamily._allTransitiveDependencies,
+          sessionId: sessionId,
+        );
 
   ChatMessagesProvider._internal(
     super._createNotifier, {
@@ -194,7 +193,7 @@ class ChatMessagesProvider
 
   @override
   AutoDisposeAsyncNotifierProviderElement<ChatMessages, List<ChatMessage>>
-  createElement() {
+      createElement() {
     return _ChatMessagesProviderElement(this);
   }
 
@@ -221,9 +220,8 @@ mixin ChatMessagesRef
 }
 
 class _ChatMessagesProviderElement
-    extends
-        AutoDisposeAsyncNotifierProviderElement<ChatMessages, List<ChatMessage>>
-    with ChatMessagesRef {
+    extends AutoDisposeAsyncNotifierProviderElement<ChatMessages,
+        List<ChatMessage>> with ChatMessagesRef {
   _ChatMessagesProviderElement(super.provider);
 
   @override

@@ -30,8 +30,8 @@ class SessionService {
 
   Stream<List<session_model.ChatSession>> watchAllSessions() {
     return _db.sessionDao.watchAllSessions().map(
-      (rows) => rows.map(_sessionFromRow).toList(),
-    );
+          (rows) => rows.map(_sessionFromRow).toList(),
+        );
   }
 
   Future<String> createSession({required AIModel model, String? title}) async {
@@ -145,9 +145,8 @@ class SessionService {
     }
 
     final history = await loadHistory(sessionId, limit: 20);
-    final historyExcludingCurrent = history
-        .where((m) => m.id != userMsg.id)
-        .toList();
+    final historyExcludingCurrent =
+        history.where((m) => m.id != userMsg.id).toList();
 
     final assistantId = _uuid.v4();
     final buffer = StringBuffer();

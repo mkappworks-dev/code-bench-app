@@ -125,16 +125,15 @@ class GeminiService implements AIService {
       final models = (data['models'] as List)
           .where((m) => (m['name'] as String).contains('gemini'))
           .map((m) {
-            final name = m['name'] as String;
-            final id = name.split('/').last;
-            return AIModel(
-              id: id,
-              provider: AIProvider.gemini,
-              name: m['displayName'] as String? ?? id,
-              modelId: id,
-            );
-          })
-          .toList();
+        final name = m['name'] as String;
+        final id = name.split('/').last;
+        return AIModel(
+          id: id,
+          provider: AIProvider.gemini,
+          name: m['displayName'] as String? ?? id,
+          modelId: id,
+        );
+      }).toList();
       return models;
     } catch (_) {
       return AIModels.defaults

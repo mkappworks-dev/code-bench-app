@@ -67,17 +67,18 @@ class AiServiceFamily extends Family<AsyncValue<AIService?>> {
 class AiServiceProvider extends AutoDisposeFutureProvider<AIService?> {
   /// See also [aiService].
   AiServiceProvider(AIProvider aiProvider)
-    : this._internal(
-        (ref) => aiService(ref as AiServiceRef, aiProvider),
-        from: aiServiceProvider,
-        name: r'aiServiceProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$aiServiceHash,
-        dependencies: AiServiceFamily._dependencies,
-        allTransitiveDependencies: AiServiceFamily._allTransitiveDependencies,
-        aiProvider: aiProvider,
-      );
+      : this._internal(
+          (ref) => aiService(ref as AiServiceRef, aiProvider),
+          from: aiServiceProvider,
+          name: r'aiServiceProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$aiServiceHash,
+          dependencies: AiServiceFamily._dependencies,
+          allTransitiveDependencies: AiServiceFamily._allTransitiveDependencies,
+          aiProvider: aiProvider,
+        );
 
   AiServiceProvider._internal(
     super._createNotifier, {
@@ -136,8 +137,7 @@ mixin AiServiceRef on AutoDisposeFutureProviderRef<AIService?> {
 }
 
 class _AiServiceProviderElement
-    extends AutoDisposeFutureProviderElement<AIService?>
-    with AiServiceRef {
+    extends AutoDisposeFutureProviderElement<AIService?> with AiServiceRef {
   _AiServiceProviderElement(super.provider);
 
   @override
@@ -150,14 +150,14 @@ String _$availableModelsHash() => r'69eb26eebb8ce7a109cc652cc5abe328c8fe995f';
 @ProviderFor(availableModels)
 final availableModelsProvider =
     AutoDisposeFutureProvider<List<AIModel>>.internal(
-      availableModels,
-      name: r'availableModelsProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$availableModelsHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  availableModels,
+  name: r'availableModelsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$availableModelsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element

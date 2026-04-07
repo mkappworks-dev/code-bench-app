@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../data/models/chat_message.dart';
 import '../chat_notifier.dart';
 import 'message_bubble.dart';
 
@@ -45,9 +44,8 @@ class _MessageListState extends ConsumerState<MessageList> {
 
   Future<void> _loadMore() async {
     if (_loadingMore || !_hasMore) return;
-    final messages = ref
-        .read(chatMessagesProvider(widget.sessionId))
-        .valueOrNull;
+    final messages =
+        ref.read(chatMessagesProvider(widget.sessionId)).valueOrNull;
     if (messages == null) return;
     if (messages.length < _pageSize) {
       setState(() => _hasMore = false);
@@ -61,9 +59,8 @@ class _MessageListState extends ConsumerState<MessageList> {
           .read(chatMessagesProvider(widget.sessionId).notifier)
           .loadMore(widget.sessionId, offset);
       // If fewer than a full page came back, no more to load
-      final updated = ref
-          .read(chatMessagesProvider(widget.sessionId))
-          .valueOrNull;
+      final updated =
+          ref.read(chatMessagesProvider(widget.sessionId)).valueOrNull;
       if (updated != null && updated.length - messages.length < _pageSize) {
         setState(() => _hasMore = false);
       }

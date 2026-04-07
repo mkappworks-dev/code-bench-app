@@ -125,9 +125,7 @@ class _GithubScreenState extends ConsumerState<GithubScreen> {
   Future<void> _openFile(String path, String content, String language) async {
     final repo = _selectedRepo!;
     final label = '[GitHub] $path';
-    ref
-        .read(editorTabsProvider.notifier)
-        .openFile(
+    ref.read(editorTabsProvider.notifier).openFile(
           OpenFile(
             path: '${repo.owner}/${repo.name}/$path',
             content: content,
@@ -289,24 +287,24 @@ class _RepoList extends StatelessWidget {
           child: loading
               ? const SkeletonLoader(itemCount: 8)
               : error != null
-              ? _ErrorView(error: error!, onRetry: onRefresh)
-              : repos == null || repos!.isEmpty
-              ? const Center(
-                  child: Text(
-                    'No repositories found',
-                    style: TextStyle(color: ThemeConstants.textMuted),
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: repos!.length,
-                  itemBuilder: (context, index) {
-                    final repo = repos![index];
-                    return _RepoTile(
-                      repo: repo,
-                      onTap: () => onSelectRepo(repo),
-                    );
-                  },
-                ),
+                  ? _ErrorView(error: error!, onRetry: onRefresh)
+                  : repos == null || repos!.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No repositories found',
+                            style: TextStyle(color: ThemeConstants.textMuted),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: repos!.length,
+                          itemBuilder: (context, index) {
+                            final repo = repos![index];
+                            return _RepoTile(
+                              repo: repo,
+                              onTap: () => onSelectRepo(repo),
+                            );
+                          },
+                        ),
         ),
       ],
     );

@@ -211,7 +211,7 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
               ),
               const SizedBox(height: 6),
               DropdownButtonFormField<String>(
-                value: _selectedBranch,
+                initialValue: _selectedBranch,
                 dropdownColor: ThemeConstants.inputBackground,
                 style: const TextStyle(
                   color: ThemeConstants.textPrimary,

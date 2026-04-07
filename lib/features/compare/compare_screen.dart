@@ -35,8 +35,8 @@ final _comparePaneSessionProvider =
 
 final _comparePaneMessagesProvider =
     StateProvider.family<List<ChatMessage>, _ComparePaneId>(
-      (ref, id) => const [],
-    );
+  (ref, id) => const [],
+);
 
 // ---------------------------------------------------------------------------
 // Compare Screen
@@ -292,9 +292,9 @@ class _ComparePane extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               PopupMenuButton<AIModel>(
-                onSelected: (m) =>
-                    ref.read(_comparePaneModelProvider(paneId).notifier).state =
-                        m,
+                onSelected: (m) => ref
+                    .read(_comparePaneModelProvider(paneId).notifier)
+                    .state = m,
                 color: ThemeConstants.sidebarBackground,
                 itemBuilder: (_) => models
                     .map(
@@ -344,13 +344,11 @@ class _ComparePane extends ConsumerWidget {
                 TextButton(
                   onPressed: () {
                     ref
-                            .read(_comparePaneMessagesProvider(paneId).notifier)
-                            .state =
-                        [];
+                        .read(_comparePaneMessagesProvider(paneId).notifier)
+                        .state = [];
                     ref
-                            .read(_comparePaneSessionProvider(paneId).notifier)
-                            .state =
-                        null;
+                        .read(_comparePaneSessionProvider(paneId).notifier)
+                        .state = null;
                   },
                   style: TextButton.styleFrom(
                     minimumSize: Size.zero,

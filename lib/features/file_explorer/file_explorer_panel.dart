@@ -117,9 +117,8 @@ class _DirectoryNodeState extends ConsumerState<_DirectoryNode> {
   @override
   void initState() {
     super.initState();
-    _childrenFuture = ref
-        .read(filesystemServiceProvider)
-        .listDirectory(widget.path);
+    _childrenFuture =
+        ref.read(filesystemServiceProvider).listDirectory(widget.path);
     if (widget.isRoot) widget.expanded[widget.path] = true;
   }
 

@@ -120,9 +120,7 @@ class _CodeEditorWidgetState extends ConsumerState<CodeEditorWidget> {
         'You are an expert test engineer. Write comprehensive unit tests for the following code. '
         'Use idiomatic testing patterns for the language. Return only test code with no explanation.';
 
-    await ref
-        .read(chatMessagesProvider(sessionId).notifier)
-        .sendMessage(
+    await ref.read(chatMessagesProvider(sessionId).notifier).sendMessage(
           '```${widget.file.language}\n$content\n```',
           systemPrompt: systemPrompt,
         );
@@ -145,9 +143,7 @@ class _CodeEditorWidgetState extends ConsumerState<CodeEditorWidget> {
         'You are a senior code reviewer. Review the following code for: correctness, performance, '
         'security vulnerabilities, and style. Format your response with clear sections and actionable suggestions.';
 
-    await ref
-        .read(chatMessagesProvider(sessionId).notifier)
-        .sendMessage(
+    await ref.read(chatMessagesProvider(sessionId).notifier).sendMessage(
           '```${widget.file.language}\n$content\n```',
           systemPrompt: systemPrompt,
         );
@@ -172,9 +168,8 @@ class _CodeEditorWidgetState extends ConsumerState<CodeEditorWidget> {
     };
 
     return CodeHighlightTheme(
-      languages: mode != null
-          ? {language: CodeHighlightThemeMode(mode: mode)}
-          : {},
+      languages:
+          mode != null ? {language: CodeHighlightThemeMode(mode: mode)} : {},
       theme: vs2015Theme,
     );
   }
@@ -226,20 +221,20 @@ class _CodeEditorWidgetState extends ConsumerState<CodeEditorWidget> {
                 hint: 'Start typing...',
                 indicatorBuilder:
                     (context, editingController, chunkController, notifier) {
-                      return Row(
-                        children: [
-                          DefaultCodeLineNumber(
-                            controller: editingController,
-                            notifier: notifier,
-                            textStyle: const TextStyle(
-                              color: ThemeConstants.editorGutterForeground,
-                              fontSize: ThemeConstants.editorFontSize,
-                              fontFamily: ThemeConstants.editorFontFamily,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
+                  return Row(
+                    children: [
+                      DefaultCodeLineNumber(
+                        controller: editingController,
+                        notifier: notifier,
+                        textStyle: const TextStyle(
+                          color: ThemeConstants.editorGutterForeground,
+                          fontSize: ThemeConstants.editorFontSize,
+                          fontFamily: ThemeConstants.editorFontFamily,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ),

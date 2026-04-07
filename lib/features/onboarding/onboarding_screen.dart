@@ -180,7 +180,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-
                 _ProviderKeyInput(
                   provider: AIProvider.openai,
                   controller: _controllers[AIProvider.openai]!,
@@ -204,7 +203,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   isTesting: _testing[AIProvider.gemini] ?? false,
                   onTest: () => _testConnection(AIProvider.gemini),
                 ),
-
                 const SizedBox(height: 40),
                 SizedBox(
                   width: double.infinity,
@@ -225,8 +223,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     onPressed: () async {
                       // Allow skipping — write a placeholder so guard passes
                       final storage = ref.read(secureStorageSourceProvider);
+                      final router = GoRouter.of(context);
                       await storage.writeApiKey('ollama', 'local');
-                      if (mounted) context.go('/dashboard');
+                      if (!mounted) return;
+                      router.go('/dashboard');
                     },
                     child: const Text('Skip for now (use Ollama)'),
                   ),

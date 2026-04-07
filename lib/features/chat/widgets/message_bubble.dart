@@ -150,7 +150,7 @@ class _CodeBlockBuilder extends MarkdownElementBuilder {
   Widget? visitElementAfter(element, TextStyle? preferredStyle) {
     final language =
         element.attributes['class']?.replaceFirst('language-', '') ??
-        'plaintext';
+            'plaintext';
     final code = element.textContent;
 
     if (!element.attributes.containsKey('class') && !code.contains('\n')) {

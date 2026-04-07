@@ -20,18 +20,17 @@ Future<GitHubApiService?> githubApiService(Ref ref) async {
 }
 
 class GitHubApiService {
-  GitHubApiService(this._token)
-    : _dio = Dio(
-        BaseOptions(
-          baseUrl: ApiConstants.githubApiBaseUrl,
-          headers: {
-            'Authorization': 'Bearer $_token',
-            'Accept': 'application/vnd.github.v3+json',
-          },
-        ),
-      );
+  GitHubApiService(String token)
+      : _dio = Dio(
+          BaseOptions(
+            baseUrl: ApiConstants.githubApiBaseUrl,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Accept': 'application/vnd.github.v3+json',
+            },
+          ),
+        );
 
-  final String _token;
   final Dio _dio;
 
   Future<List<Repository>> listRepositories({int page = 1}) async {

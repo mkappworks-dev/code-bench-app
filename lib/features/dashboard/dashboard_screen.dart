@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../data/models/chat_session.dart';
-import '../../data/models/ai_model.dart';
 import '../../services/session/session_service.dart';
 import '../../shared/widgets/skeleton_loader.dart';
 import '../chat/chat_notifier.dart';
@@ -185,9 +184,8 @@ class _QuickActionState extends State<_QuickAction> {
                 : ThemeConstants.sidebarBackground,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: _hovered
-                  ? ThemeConstants.accent
-                  : ThemeConstants.borderColor,
+              color:
+                  _hovered ? ThemeConstants.accent : ThemeConstants.borderColor,
             ),
           ),
           child: Column(

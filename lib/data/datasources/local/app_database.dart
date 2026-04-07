@@ -55,12 +55,14 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   SessionDao(super.db);
 
   Stream<List<ChatSessionRow>> watchAllSessions() => (select(
-    chatSessions,
-  )..orderBy([(t) => OrderingTerm.desc(t.updatedAt)])).watch();
+        chatSessions,
+      )..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+          .watch();
 
   Future<ChatSessionRow?> getSession(String sessionId) => (select(
-    chatSessions,
-  )..where((t) => t.sessionId.equals(sessionId))).getSingleOrNull();
+        chatSessions,
+      )..where((t) => t.sessionId.equals(sessionId)))
+          .getSingleOrNull();
 
   Future<void> upsertSession(ChatSessionsCompanion session) =>
       into(chatSessions).insertOnConflictUpdate(session);
@@ -91,8 +93,9 @@ class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
   ProjectDao(super.db);
 
   Future<List<WorkspaceProjectRow>> getAllProjects() => (select(
-    workspaceProjects,
-  )..orderBy([(t) => OrderingTerm.desc(t.lastOpenedAt)])).get();
+        workspaceProjects,
+      )..orderBy([(t) => OrderingTerm.desc(t.lastOpenedAt)]))
+          .get();
 
   Future<void> upsertProject(WorkspaceProjectsCompanion project) =>
       into(workspaceProjects).insertOnConflictUpdate(project);

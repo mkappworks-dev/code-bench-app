@@ -103,11 +103,11 @@ class AIModels {
   );
 
   static List<AIModel> get defaults => [
-    gpt4o,
-    gpt4oMini,
-    claude35Sonnet,
-    claude3Haiku,
-    geminiPro,
-    customModel,
-  ];
+        gpt4o,
+        gpt4oMini,
+        claude35Sonnet,
+        claude3Haiku,
+        geminiPro,
+        customModel,
+      ];
 }

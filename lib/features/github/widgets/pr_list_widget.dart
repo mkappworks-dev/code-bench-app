@@ -97,41 +97,43 @@ class _PrListWidgetState extends ConsumerState<PrListWidget> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : _error != null
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _error!,
-                            style: const TextStyle(color: ThemeConstants.error),
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _error!,
+                                style: const TextStyle(
+                                    color: ThemeConstants.error),
+                              ),
+                              const SizedBox(height: 8),
+                              TextButton(
+                                onPressed: _loadPRs,
+                                child: const Text('Retry'),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: _loadPRs,
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    )
-                  : _prs == null || _prs!.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No open pull requests',
-                        style: TextStyle(
-                          color: ThemeConstants.textMuted,
-                          fontSize: 13,
-                        ),
-                      ),
-                    )
-                  : ListView.separated(
-                      controller: scrollController,
-                      itemCount: _prs!.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, i) {
-                        final pr = _prs![i];
-                        return _PrTile(pr: pr);
-                      },
-                    ),
+                        )
+                      : _prs == null || _prs!.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No open pull requests',
+                                style: TextStyle(
+                                  color: ThemeConstants.textMuted,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              controller: scrollController,
+                              itemCount: _prs!.length,
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, i) {
+                                final pr = _prs![i];
+                                return _PrTile(pr: pr);
+                              },
+                            ),
             ),
           ],
         );
@@ -168,8 +170,8 @@ class _PrTile extends StatelessWidget {
           color: isDraft
               ? ThemeConstants.textMuted
               : state == 'open'
-              ? ThemeConstants.success
-              : ThemeConstants.error,
+                  ? ThemeConstants.success
+                  : ThemeConstants.error,
         ),
       ),
       title: Text(
@@ -361,7 +363,7 @@ class _CreatePRDialogState extends ConsumerState<_CreatePRDialog> {
                               ),
                               const SizedBox(height: 4),
                               DropdownButtonFormField<String>(
-                                value: _headBranch,
+                                initialValue: _headBranch,
                                 dropdownColor: ThemeConstants.inputBackground,
                                 style: const TextStyle(
                                   color: ThemeConstants.textPrimary,
@@ -405,7 +407,7 @@ class _CreatePRDialogState extends ConsumerState<_CreatePRDialog> {
                               ),
                               const SizedBox(height: 4),
                               DropdownButtonFormField<String>(
-                                value: _baseBranch,
+                                initialValue: _baseBranch,
                                 dropdownColor: ThemeConstants.inputBackground,
                                 style: const TextStyle(
                                   color: ThemeConstants.textPrimary,

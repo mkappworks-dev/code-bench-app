@@ -27,9 +27,9 @@ Future<void> showApplyCodeDialog(
   }
 
   final activeFile = tabs.cast<OpenFile?>().firstWhere(
-    (f) => f?.path == activePath,
-    orElse: () => null,
-  );
+        (f) => f?.path == activePath,
+        orElse: () => null,
+      );
 
   if (activeFile == null || activeFile.isReadOnly) {
     ScaffoldMessenger.of(context).showSnackBar(

@@ -26,8 +26,7 @@ _$ChatMessageImpl _$$ChatMessageImplFromJson(Map<String, dynamic> json) =>
       sessionId: json['sessionId'] as String,
       role: $enumDecode(_$MessageRoleEnumMap, json['role']),
       content: json['content'] as String,
-      codeBlocks:
-          (json['codeBlocks'] as List<dynamic>?)
+      codeBlocks: (json['codeBlocks'] as List<dynamic>?)
               ?.map((e) => CodeBlock.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],

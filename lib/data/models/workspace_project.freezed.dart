@@ -82,36 +82,35 @@ class _$WorkspaceProjectCopyWithImpl<$Res, $Val extends WorkspaceProject>
   }) {
     return _then(
       _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            name: null == name
-                ? _value.name
-                : name // ignore: cast_nullable_to_non_nullable
-                      as String,
-            localPath: freezed == localPath
-                ? _value.localPath
-                : localPath // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            repositoryId: freezed == repositoryId
-                ? _value.repositoryId
-                : repositoryId // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            activeBranch: freezed == activeBranch
-                ? _value.activeBranch
-                : activeBranch // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            sessionIds: null == sessionIds
-                ? _value.sessionIds
-                : sessionIds // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
-            lastOpenedAt: freezed == lastOpenedAt
-                ? _value.lastOpenedAt
-                : lastOpenedAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-          )
-          as $Val,
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                as String,
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                as String,
+        localPath: freezed == localPath
+            ? _value.localPath
+            : localPath // ignore: cast_nullable_to_non_nullable
+                as String?,
+        repositoryId: freezed == repositoryId
+            ? _value.repositoryId
+            : repositoryId // ignore: cast_nullable_to_non_nullable
+                as String?,
+        activeBranch: freezed == activeBranch
+            ? _value.activeBranch
+            : activeBranch // ignore: cast_nullable_to_non_nullable
+                as String?,
+        sessionIds: null == sessionIds
+            ? _value.sessionIds
+            : sessionIds // ignore: cast_nullable_to_non_nullable
+                as List<String>,
+        lastOpenedAt: freezed == lastOpenedAt
+            ? _value.lastOpenedAt
+            : lastOpenedAt // ignore: cast_nullable_to_non_nullable
+                as DateTime?,
+      ) as $Val,
     );
   }
 }
@@ -163,31 +162,31 @@ class __$$WorkspaceProjectImplCopyWithImpl<$Res>
         id: null == id
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         name: null == name
             ? _value.name
             : name // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         localPath: freezed == localPath
             ? _value.localPath
             : localPath // ignore: cast_nullable_to_non_nullable
-                  as String?,
+                as String?,
         repositoryId: freezed == repositoryId
             ? _value.repositoryId
             : repositoryId // ignore: cast_nullable_to_non_nullable
-                  as String?,
+                as String?,
         activeBranch: freezed == activeBranch
             ? _value.activeBranch
             : activeBranch // ignore: cast_nullable_to_non_nullable
-                  as String?,
+                as String?,
         sessionIds: null == sessionIds
             ? _value._sessionIds
             : sessionIds // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
+                as List<String>,
         lastOpenedAt: freezed == lastOpenedAt
             ? _value.lastOpenedAt
             : lastOpenedAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
+                as DateTime?,
       ),
     );
   }
@@ -260,15 +259,15 @@ class _$WorkspaceProjectImpl implements _WorkspaceProject {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    name,
-    localPath,
-    repositoryId,
-    activeBranch,
-    const DeepCollectionEquality().hash(_sessionIds),
-    lastOpenedAt,
-  );
+        runtimeType,
+        id,
+        name,
+        localPath,
+        repositoryId,
+        activeBranch,
+        const DeepCollectionEquality().hash(_sessionIds),
+        lastOpenedAt,
+      );
 
   /// Create a copy of WorkspaceProject
   /// with the given fields replaced by the non-null parameter values.

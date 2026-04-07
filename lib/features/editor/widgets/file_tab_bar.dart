@@ -112,15 +112,15 @@ class _FileTabState extends State<_FileTab> {
                         textAlign: TextAlign.center,
                       )
                     : _hovered
-                    ? GestureDetector(
-                        onTap: widget.onClose,
-                        child: const Icon(
-                          Icons.close,
-                          size: 13,
-                          color: ThemeConstants.textSecondary,
-                        ),
-                      )
-                    : const SizedBox(),
+                        ? GestureDetector(
+                            onTap: widget.onClose,
+                            child: const Icon(
+                              Icons.close,
+                              size: 13,
+                              color: ThemeConstants.textSecondary,
+                            ),
+                          )
+                        : const SizedBox(),
               ),
             ],
           ),

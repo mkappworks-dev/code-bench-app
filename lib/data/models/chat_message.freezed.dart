@@ -64,20 +64,19 @@ class _$CodeBlockCopyWithImpl<$Res, $Val extends CodeBlock>
   }) {
     return _then(
       _value.copyWith(
-            code: null == code
-                ? _value.code
-                : code // ignore: cast_nullable_to_non_nullable
-                      as String,
-            language: freezed == language
-                ? _value.language
-                : language // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            filename: freezed == filename
-                ? _value.filename
-                : filename // ignore: cast_nullable_to_non_nullable
-                      as String?,
-          )
-          as $Val,
+        code: null == code
+            ? _value.code
+            : code // ignore: cast_nullable_to_non_nullable
+                as String,
+        language: freezed == language
+            ? _value.language
+            : language // ignore: cast_nullable_to_non_nullable
+                as String?,
+        filename: freezed == filename
+            ? _value.filename
+            : filename // ignore: cast_nullable_to_non_nullable
+                as String?,
+      ) as $Val,
     );
   }
 }
@@ -117,15 +116,15 @@ class __$$CodeBlockImplCopyWithImpl<$Res>
         code: null == code
             ? _value.code
             : code // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         language: freezed == language
             ? _value.language
             : language // ignore: cast_nullable_to_non_nullable
-                  as String?,
+                as String?,
         filename: freezed == filename
             ? _value.filename
             : filename // ignore: cast_nullable_to_non_nullable
-                  as String?,
+                as String?,
       ),
     );
   }
@@ -273,36 +272,35 @@ class _$ChatMessageCopyWithImpl<$Res, $Val extends ChatMessage>
   }) {
     return _then(
       _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            sessionId: null == sessionId
-                ? _value.sessionId
-                : sessionId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            role: null == role
-                ? _value.role
-                : role // ignore: cast_nullable_to_non_nullable
-                      as MessageRole,
-            content: null == content
-                ? _value.content
-                : content // ignore: cast_nullable_to_non_nullable
-                      as String,
-            codeBlocks: null == codeBlocks
-                ? _value.codeBlocks
-                : codeBlocks // ignore: cast_nullable_to_non_nullable
-                      as List<CodeBlock>,
-            timestamp: null == timestamp
-                ? _value.timestamp
-                : timestamp // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
-            isStreaming: null == isStreaming
-                ? _value.isStreaming
-                : isStreaming // ignore: cast_nullable_to_non_nullable
-                      as bool,
-          )
-          as $Val,
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                as String,
+        sessionId: null == sessionId
+            ? _value.sessionId
+            : sessionId // ignore: cast_nullable_to_non_nullable
+                as String,
+        role: null == role
+            ? _value.role
+            : role // ignore: cast_nullable_to_non_nullable
+                as MessageRole,
+        content: null == content
+            ? _value.content
+            : content // ignore: cast_nullable_to_non_nullable
+                as String,
+        codeBlocks: null == codeBlocks
+            ? _value.codeBlocks
+            : codeBlocks // ignore: cast_nullable_to_non_nullable
+                as List<CodeBlock>,
+        timestamp: null == timestamp
+            ? _value.timestamp
+            : timestamp // ignore: cast_nullable_to_non_nullable
+                as DateTime,
+        isStreaming: null == isStreaming
+            ? _value.isStreaming
+            : isStreaming // ignore: cast_nullable_to_non_nullable
+                as bool,
+      ) as $Val,
     );
   }
 }
@@ -354,31 +352,31 @@ class __$$ChatMessageImplCopyWithImpl<$Res>
         id: null == id
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         sessionId: null == sessionId
             ? _value.sessionId
             : sessionId // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         role: null == role
             ? _value.role
             : role // ignore: cast_nullable_to_non_nullable
-                  as MessageRole,
+                as MessageRole,
         content: null == content
             ? _value.content
             : content // ignore: cast_nullable_to_non_nullable
-                  as String,
+                as String,
         codeBlocks: null == codeBlocks
             ? _value._codeBlocks
             : codeBlocks // ignore: cast_nullable_to_non_nullable
-                  as List<CodeBlock>,
+                as List<CodeBlock>,
         timestamp: null == timestamp
             ? _value.timestamp
             : timestamp // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
+                as DateTime,
         isStreaming: null == isStreaming
             ? _value.isStreaming
             : isStreaming // ignore: cast_nullable_to_non_nullable
-                  as bool,
+                as bool,
       ),
     );
   }
@@ -451,15 +449,15 @@ class _$ChatMessageImpl implements _ChatMessage {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    sessionId,
-    role,
-    content,
-    const DeepCollectionEquality().hash(_codeBlocks),
-    timestamp,
-    isStreaming,
-  );
+        runtimeType,
+        id,
+        sessionId,
+        role,
+        content,
+        const DeepCollectionEquality().hash(_codeBlocks),
+        timestamp,
+        isStreaming,
+      );
 
   /// Create a copy of ChatMessage
   /// with the given fields replaced by the non-null parameter values.
