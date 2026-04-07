@@ -31,3 +31,25 @@ dart run build_runner build --delete-conflicting-outputs
 # Watch mode for code generation during development
 dart run build_runner watch --delete-conflicting-outputs
 ```
+
+## Implementation Plans & Worktrees
+
+Plans are saved to `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`.
+
+When starting work from a plan, always create a git worktree under `.worktrees/` at the repo root. The worktree directory and branch share the same name, using a conventional prefix based on the type of work:
+
+| Prefix  | When to use                      |
+| ------- | -------------------------------- |
+| `feat/` | New features                     |
+| `fix/`  | Bug fixes                        |
+| `tech/` | Refactors, tooling, dependencies |
+| `doc/`  | Documentation only               |
+
+The name after the prefix is the plan filename stripped of `.md` only — keep the date. For a plan file `2026-04-07-sign-features-flag.md` (a feature):
+
+```bash
+git worktree add .worktrees/feat/2026-04-07-sign-features-flag -b feat/2026-04-07-sign-features-flag
+cd .worktrees/feat/2026-04-07-sign-features-flag
+```
+
+All implementation work happens inside that worktree.
