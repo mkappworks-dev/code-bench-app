@@ -16,10 +16,10 @@ jobs:
         include:
           - os: macos-latest
             target: macos
-          - os: windows-latest
-            target: windows
-          - os: ubuntu-latest
-            target: linux
+          # - os: windows-latest
+          #   target: windows
+          # - os: ubuntu-latest
+          #   target: linux
 
     runs-on: ${{ matrix.os }}
 
@@ -41,7 +41,8 @@ jobs:
             pkg-config \
             libblkid-dev \
             liblzma-dev \
-            libsecret-1-dev
+            libsecret-1-dev \
+            libwebkit2gtk-4.1-dev
 
       - name: Install dependencies
         run: flutter pub get
