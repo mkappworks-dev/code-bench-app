@@ -1,0 +1,107 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../../../core/constants/theme_constants.dart';
+
+class ProjectContextMenu {
+  static Future<String?> show({
+    required BuildContext context,
+    required Offset position,
+    required String projectPath,
+    required bool isGit,
+  }) async {
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    return showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        overlay.size.width - position.dx,
+        overlay.size.height - position.dy,
+      ),
+      color: const Color(0xFF1E1E1E),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(6),
+        side: const BorderSide(color: Color(0xFF333333)),
+      ),
+      items: [
+        _buildItem('open_finder', 'Open in Finder', Icons.folder_open_outlined),
+        _buildItem('copy_path', 'Copy path', Icons.copy_outlined),
+        _buildItem('rename', 'Rename project', Icons.edit_outlined),
+        const PopupMenuDivider(),
+        _buildItem('new_conversation', 'New conversation', Icons.add),
+        const PopupMenuDivider(),
+        _buildDangerItem('remove', 'Remove from Code Bench'),
+      ],
+    );
+  }
+
+  static PopupMenuItem<String> _buildItem(
+    String value,
+    String label,
+    IconData icon,
+  ) {
+    return PopupMenuItem<String>(
+      value: value,
+      height: 32,
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: ThemeConstants.textSecondary),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: ThemeConstants.textPrimary,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static PopupMenuItem<String> _buildDangerItem(String value, String label) {
+    return PopupMenuItem<String>(
+      value: value,
+      height: 32,
+      child: Row(
+        children: [
+          const Icon(Icons.close, size: 14, color: ThemeConstants.error),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: ThemeConstants.error,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Future<void> handleAction({
+    required String action,
+    required String projectId,
+    required String projectPath,
+    required BuildContext context,
+    required Function(String) onRemove,
+    required Function(String) onRename,
+    required Function(String) onNewConversation,
+  }) async {
+    switch (action) {
+      case 'open_finder':
+        Process.run('open', [projectPath]);
+      case 'copy_path':
+        await Clipboard.setData(ClipboardData(text: projectPath));
+      case 'rename':
+        onRename(projectId);
+      case 'new_conversation':
+        onNewConversation(projectId);
+      case 'remove':
+        onRemove(projectId);
+    }
+  }
+}
