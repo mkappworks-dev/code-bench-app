@@ -227,7 +227,7 @@ class _TreeNode {
   final List<_TreeNode> children = [];
 }
 
-class _TreeItem extends StatefulWidget {
+class _TreeItem extends StatelessWidget {
   const _TreeItem({
     required this.name,
     required this.depth,
@@ -243,60 +243,43 @@ class _TreeItem extends StatefulWidget {
   final bool isExpanded;
 
   @override
-  State<_TreeItem> createState() => _TreeItemState();
-}
-
-class _TreeItemState extends State<_TreeItem> {
-  bool _hovered = false;
-
-  @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Container(
-          height: 22,
-          padding: EdgeInsets.only(left: widget.depth * 16.0 + 12),
-          color: _hovered
-              ? ThemeConstants.editorLineHighlight
-              : Colors.transparent,
-          child: Row(
-            children: [
-              if (widget.isDir)
-                Icon(
-                  widget.isExpanded
-                      ? Icons.keyboard_arrow_down
-                      : Icons.keyboard_arrow_right,
-                  size: 14,
-                  color: ThemeConstants.textMuted,
-                )
-              else
-                const SizedBox(width: 14),
-              const SizedBox(width: 4),
+    return InkWell(
+      onTap: onTap,
+      hoverColor: ThemeConstants.editorLineHighlight,
+      child: Container(
+        height: 22,
+        padding: EdgeInsets.only(left: depth * 16.0 + 12),
+        child: Row(
+          children: [
+            if (isDir)
               Icon(
-                widget.isDir
-                    ? Icons.folder_outlined
-                    : Icons.insert_drive_file_outlined,
+                isExpanded
+                    ? Icons.keyboard_arrow_down
+                    : Icons.keyboard_arrow_right,
                 size: 14,
-                color: widget.isDir
-                    ? ThemeConstants.warning
-                    : ThemeConstants.textMuted,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  widget.name,
-                  style: const TextStyle(
-                    color: ThemeConstants.textPrimary,
-                    fontSize: 12,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                color: ThemeConstants.textMuted,
+              )
+            else
+              const SizedBox(width: 14),
+            const SizedBox(width: 4),
+            Icon(
+              isDir ? Icons.folder_outlined : Icons.insert_drive_file_outlined,
+              size: 14,
+              color: isDir ? ThemeConstants.warning : ThemeConstants.textMuted,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                name,
+                style: const TextStyle(
+                  color: ThemeConstants.textPrimary,
+                  fontSize: 12,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

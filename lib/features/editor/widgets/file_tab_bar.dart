@@ -63,8 +63,8 @@ class _FileTabState extends State<_FileTab> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
+      onEnter: (_) => Future.microtask(() => setState(() => _hovered = true)),
+      onExit: (_) => Future.microtask(() => setState(() => _hovered = false)),
       child: GestureDetector(
         onTap: widget.onTap,
         child: Container(

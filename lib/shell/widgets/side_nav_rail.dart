@@ -27,7 +27,7 @@ class SideNavRail extends StatelessWidget {
             icon: Icons.chat_bubble_outline,
             activeIcon: Icons.chat_bubble,
             label: 'Chat',
-            route: '/chat/new',
+            route: '/chat',
             currentLocation: currentLocation,
             matchPrefix: '/chat',
           ),
@@ -60,7 +60,7 @@ class SideNavRail extends StatelessWidget {
   }
 }
 
-class _NavItem extends StatefulWidget {
+class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.icon,
     required this.activeIcon,
@@ -77,47 +77,35 @@ class _NavItem extends StatefulWidget {
   final String currentLocation;
   final String? matchPrefix;
 
-  @override
-  State<_NavItem> createState() => _NavItemState();
-}
-
-class _NavItemState extends State<_NavItem> {
-  bool _hovered = false;
-
   bool get _isActive {
-    final prefix = widget.matchPrefix ?? widget.route;
-    return widget.currentLocation.startsWith(prefix);
+    final prefix = matchPrefix ?? route;
+    return currentLocation.startsWith(prefix);
   }
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: widget.label,
+      message: label,
       preferBelow: false,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          onTap: () => context.go(widget.route),
-          child: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              border: _isActive
-                  ? const Border(
-                      left: BorderSide(color: ThemeConstants.accent, width: 2),
-                    )
-                  : null,
-            ),
-            child: Icon(
-              _isActive ? widget.activeIcon : widget.icon,
-              size: 20,
-              color: _isActive
-                  ? ThemeConstants.textPrimary
-                  : (_hovered
-                      ? ThemeConstants.textPrimary
-                      : ThemeConstants.textMuted),
-            ),
+      child: InkWell(
+        onTap: () => context.go(route),
+        hoverColor: ThemeConstants.textPrimary.withValues(alpha: 0.06),
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            border: _isActive
+                ? const Border(
+                    left: BorderSide(color: ThemeConstants.accent, width: 2),
+                  )
+                : null,
+          ),
+          child: Icon(
+            _isActive ? activeIcon : icon,
+            size: 20,
+            color: _isActive
+                ? ThemeConstants.textPrimary
+                : ThemeConstants.textMuted,
           ),
         ),
       ),

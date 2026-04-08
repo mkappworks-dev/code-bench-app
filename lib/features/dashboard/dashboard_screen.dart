@@ -147,7 +147,7 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
-class _QuickAction extends StatefulWidget {
+class _QuickAction extends StatelessWidget {
   const _QuickAction({
     required this.icon,
     required this.label,
@@ -161,56 +161,41 @@ class _QuickAction extends StatefulWidget {
   final VoidCallback onTap;
 
   @override
-  State<_QuickAction> createState() => _QuickActionState();
-}
-
-class _QuickActionState extends State<_QuickAction> {
-  bool _hovered = false;
-
-  @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          width: 180,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _hovered
-                ? ThemeConstants.editorLineHighlight
-                : ThemeConstants.sidebarBackground,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color:
-                  _hovered ? ThemeConstants.accent : ThemeConstants.borderColor,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      hoverColor: ThemeConstants.editorLineHighlight,
+      child: Container(
+        width: 180,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: ThemeConstants.sidebarBackground,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: ThemeConstants.borderColor),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 22, color: ThemeConstants.accent),
+            const SizedBox(height: 10),
+            Text(
+              label,
+              style: const TextStyle(
+                color: ThemeConstants.textPrimary,
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+              ),
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(widget.icon, size: 22, color: ThemeConstants.accent),
-              const SizedBox(height: 10),
-              Text(
-                widget.label,
-                style: const TextStyle(
-                  color: ThemeConstants.textPrimary,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: const TextStyle(
+                color: ThemeConstants.textMuted,
+                fontSize: 11,
               ),
-              const SizedBox(height: 4),
-              Text(
-                widget.description,
-                style: const TextStyle(
-                  color: ThemeConstants.textMuted,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

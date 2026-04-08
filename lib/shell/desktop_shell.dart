@@ -80,78 +80,84 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
         location.startsWith('/chat') ||
         location.startsWith('/github');
 
-    return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyN, meta: true): _newChat,
-        const SingleActivator(LogicalKeyboardKey.keyN, control: true): _newChat,
-        const SingleActivator(LogicalKeyboardKey.keyS, meta: true):
-            _saveCurrentFile,
-        const SingleActivator(LogicalKeyboardKey.keyS, control: true):
-            _saveCurrentFile,
-        const SingleActivator(LogicalKeyboardKey.keyW, meta: true):
-            _closeCurrentTab,
-        const SingleActivator(LogicalKeyboardKey.keyW, control: true):
-            _closeCurrentTab,
-        const SingleActivator(LogicalKeyboardKey.keyB, meta: true): () =>
-            setState(() => _explorerVisible = !_explorerVisible),
-        const SingleActivator(LogicalKeyboardKey.keyB, control: true): () =>
-            setState(() => _explorerVisible = !_explorerVisible),
-        const SingleActivator(LogicalKeyboardKey.comma, meta: true): () =>
-            context.go('/settings'),
-        const SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
-            context.go('/settings'),
-      },
-      child: Focus(
-        autofocus: true,
-        child: Column(
-          children: [
-            const AppTitleBar(),
-            Expanded(
-              child: Row(
-                children: [
-                  SideNavRail(currentLocation: location),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        if (showEditorPanes && _explorerVisible) ...[
-                          SizedBox(
-                            width: _explorerWidth,
-                            child: const FileExplorerPanel(),
-                          ),
-                          _ResizableDivider(
-                            onDrag: (delta) {
-                              setState(() {
-                                _explorerWidth = (_explorerWidth + delta).clamp(
-                                  AppConstants.minPaneWidth,
-                                  400,
-                                );
-                              });
-                              _savePaneWidths();
-                            },
-                          ),
+    return Material(
+      color: ThemeConstants.background,
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.keyN, meta: true): _newChat,
+          const SingleActivator(LogicalKeyboardKey.keyN, control: true):
+              _newChat,
+          const SingleActivator(LogicalKeyboardKey.keyS, meta: true):
+              _saveCurrentFile,
+          const SingleActivator(LogicalKeyboardKey.keyS, control: true):
+              _saveCurrentFile,
+          const SingleActivator(LogicalKeyboardKey.keyW, meta: true):
+              _closeCurrentTab,
+          const SingleActivator(LogicalKeyboardKey.keyW, control: true):
+              _closeCurrentTab,
+          const SingleActivator(LogicalKeyboardKey.keyB, meta: true): () =>
+              setState(() => _explorerVisible = !_explorerVisible),
+          const SingleActivator(LogicalKeyboardKey.keyB, control: true): () =>
+              setState(() => _explorerVisible = !_explorerVisible),
+          const SingleActivator(LogicalKeyboardKey.comma, meta: true): () =>
+              context.go('/settings'),
+          const SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
+              context.go('/settings'),
+        },
+        child: Focus(
+          autofocus: true,
+          child: Column(
+            children: [
+              const AppTitleBar(),
+              Expanded(
+                child: Row(
+                  children: [
+                    SideNavRail(currentLocation: location),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          if (showEditorPanes && _explorerVisible) ...[
+                            SizedBox(
+                              width: _explorerWidth,
+                              child: const FileExplorerPanel(),
+                            ),
+                            _ResizableDivider(
+                              onDrag: (delta) {
+                                setState(() {
+                                  _explorerWidth =
+                                      (_explorerWidth + delta).clamp(
+                                    AppConstants.minPaneWidth,
+                                    400,
+                                  );
+                                });
+                                _savePaneWidths();
+                              },
+                            ),
+                          ],
+                          Expanded(child: widget.child),
+                          if (showEditorPanes) ...[
+                            _ResizableDivider(
+                              onDrag: (delta) {
+                                setState(() {
+                                  _chatWidth = (_chatWidth - delta).clamp(
+                                    AppConstants.minPaneWidth,
+                                    600,
+                                  );
+                                });
+                                _savePaneWidths();
+                              },
+                            ),
+                            SizedBox(
+                                width: _chatWidth, child: const ChatPanel()),
+                          ],
                         ],
-                        Expanded(child: widget.child),
-                        if (showEditorPanes) ...[
-                          _ResizableDivider(
-                            onDrag: (delta) {
-                              setState(() {
-                                _chatWidth = (_chatWidth - delta).clamp(
-                                  AppConstants.minPaneWidth,
-                                  600,
-                                );
-                              });
-                              _savePaneWidths();
-                            },
-                          ),
-                          SizedBox(width: _chatWidth, child: const ChatPanel()),
-                        ],
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
