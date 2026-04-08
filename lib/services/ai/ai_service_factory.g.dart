@@ -6,7 +6,7 @@ part of 'ai_service_factory.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$aiServiceHash() => r'15bf38451ad95659f4a8b48748e13e899870f558';
+String _$aiServiceHash() => r'b2b6ca1109c747094f80ac976f29ec5bbb98257d';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -39,13 +39,21 @@ class AiServiceFamily extends Family<AsyncValue<AIService?>> {
   const AiServiceFamily();
 
   /// See also [aiService].
-  AiServiceProvider call(AIProvider aiProvider) {
-    return AiServiceProvider(aiProvider);
+  AiServiceProvider call(
+    AIProvider aiProvider,
+  ) {
+    return AiServiceProvider(
+      aiProvider,
+    );
   }
 
   @override
-  AiServiceProvider getProviderOverride(covariant AiServiceProvider provider) {
-    return call(provider.aiProvider);
+  AiServiceProvider getProviderOverride(
+    covariant AiServiceProvider provider,
+  ) {
+    return call(
+      provider.aiProvider,
+    );
   }
 
   static const Iterable<ProviderOrFamily>? _dependencies = null;
@@ -66,9 +74,13 @@ class AiServiceFamily extends Family<AsyncValue<AIService?>> {
 /// See also [aiService].
 class AiServiceProvider extends AutoDisposeFutureProvider<AIService?> {
   /// See also [aiService].
-  AiServiceProvider(AIProvider aiProvider)
-      : this._internal(
-          (ref) => aiService(ref as AiServiceRef, aiProvider),
+  AiServiceProvider(
+    AIProvider aiProvider,
+  ) : this._internal(
+          (ref) => aiService(
+            ref as AiServiceRef,
+            aiProvider,
+          ),
           from: aiServiceProvider,
           name: r'aiServiceProvider',
           debugGetCreateSourceHash:

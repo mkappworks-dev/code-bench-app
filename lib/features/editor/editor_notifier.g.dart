@@ -39,13 +39,21 @@ class SaveFileFamily extends Family<AsyncValue<void>> {
   const SaveFileFamily();
 
   /// See also [saveFile].
-  SaveFileProvider call(String path) {
-    return SaveFileProvider(path);
+  SaveFileProvider call(
+    String path,
+  ) {
+    return SaveFileProvider(
+      path,
+    );
   }
 
   @override
-  SaveFileProvider getProviderOverride(covariant SaveFileProvider provider) {
-    return call(provider.path);
+  SaveFileProvider getProviderOverride(
+    covariant SaveFileProvider provider,
+  ) {
+    return call(
+      provider.path,
+    );
   }
 
   static const Iterable<ProviderOrFamily>? _dependencies = null;
@@ -66,9 +74,13 @@ class SaveFileFamily extends Family<AsyncValue<void>> {
 /// See also [saveFile].
 class SaveFileProvider extends AutoDisposeFutureProvider<void> {
   /// See also [saveFile].
-  SaveFileProvider(String path)
-      : this._internal(
-          (ref) => saveFile(ref as SaveFileRef, path),
+  SaveFileProvider(
+    String path,
+  ) : this._internal(
+          (ref) => saveFile(
+            ref as SaveFileRef,
+            path,
+          ),
           from: saveFileProvider,
           name: r'saveFileProvider',
           debugGetCreateSourceHash:
@@ -93,7 +105,9 @@ class SaveFileProvider extends AutoDisposeFutureProvider<void> {
   final String path;
 
   @override
-  Override overrideWith(FutureOr<void> Function(SaveFileRef provider) create) {
+  Override overrideWith(
+    FutureOr<void> Function(SaveFileRef provider) create,
+  ) {
     return ProviderOverride(
       origin: this,
       override: SaveFileProvider._internal(

@@ -7,8 +7,7 @@ part of 'workspace_project.dart';
 // **************************************************************************
 
 _$WorkspaceProjectImpl _$$WorkspaceProjectImplFromJson(
-  Map<String, dynamic> json,
-) =>
+        Map<String, dynamic> json) =>
     _$WorkspaceProjectImpl(
       id: json['id'] as String,
       name: json['name'] as String,
@@ -25,8 +24,7 @@ _$WorkspaceProjectImpl _$$WorkspaceProjectImplFromJson(
     );
 
 Map<String, dynamic> _$$WorkspaceProjectImplToJson(
-  _$WorkspaceProjectImpl instance,
-) =>
+        _$WorkspaceProjectImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
