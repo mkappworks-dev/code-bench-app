@@ -13,6 +13,7 @@ class ChatSessions extends Table {
   TextColumn get title => text()();
   TextColumn get modelId => text()();
   TextColumn get providerId => text()();
+  TextColumn get projectId => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
@@ -38,11 +39,11 @@ class ChatMessages extends Table {
 class WorkspaceProjects extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
-  TextColumn get localPath => text().nullable()();
-  TextColumn get repositoryId => text().nullable()();
-  TextColumn get activeBranch => text().nullable()();
-  TextColumn get sessionIdsJson => text().withDefault(const Constant('[]'))();
-  DateTimeColumn get lastOpenedAt => dateTime().nullable()();
+  TextColumn get path => text()();
+  BoolColumn get isGit => boolean().withDefault(const Constant(false))();
+  TextColumn get currentBranch => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -86,6 +87,12 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
 
   Future<void> deleteSessionMessages(String sessionId) =>
       (delete(chatMessages)..where((t) => t.sessionId.equals(sessionId))).go();
+
+  Stream<List<ChatSessionRow>> watchSessionsByProject(String projectId) =>
+      (select(chatSessions)
+            ..where((t) => t.projectId.equals(projectId))
+            ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+          .watch();
 }
 
 @DriftAccessor(tables: [WorkspaceProjects])
@@ -94,8 +101,18 @@ class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
 
   Future<List<WorkspaceProjectRow>> getAllProjects() => (select(
         workspaceProjects,
-      )..orderBy([(t) => OrderingTerm.desc(t.lastOpenedAt)]))
+      )..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
           .get();
+
+  Stream<List<WorkspaceProjectRow>> watchAllProjects() => (select(
+        workspaceProjects,
+      )..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+          .watch();
+
+  Future<WorkspaceProjectRow?> getProject(String id) => (select(
+        workspaceProjects,
+      )..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
 
   Future<void> upsertProject(WorkspaceProjectsCompanion project) =>
       into(workspaceProjects).insertOnConflictUpdate(project);
@@ -114,7 +131,20 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (migrator, from, to) async {
+          if (from < 2) {
+            // Add projectId column to chat_sessions
+            await migrator.addColumn(chatSessions, chatSessions.projectId);
+            // Recreate workspace_projects with new schema
+            await migrator.deleteTable('workspace_projects');
+            await migrator.createTable(workspaceProjects);
+          }
+        },
+      );
 }
 
 QueryExecutor _openConnection() {

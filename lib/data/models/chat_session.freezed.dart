@@ -12,8 +12,7 @@ part of 'chat_session.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 ChatSession _$ChatSessionFromJson(Map<String, dynamic> json) {
   return _ChatSession.fromJson(json);
@@ -25,6 +24,7 @@ mixin _$ChatSession {
   String get title => throw _privateConstructorUsedError;
   String get modelId => throw _privateConstructorUsedError;
   String get providerId => throw _privateConstructorUsedError;
+  String? get projectId => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   DateTime get updatedAt => throw _privateConstructorUsedError;
   bool get isPinned => throw _privateConstructorUsedError;
@@ -42,19 +42,18 @@ mixin _$ChatSession {
 /// @nodoc
 abstract class $ChatSessionCopyWith<$Res> {
   factory $ChatSessionCopyWith(
-    ChatSession value,
-    $Res Function(ChatSession) then,
-  ) = _$ChatSessionCopyWithImpl<$Res, ChatSession>;
+          ChatSession value, $Res Function(ChatSession) then) =
+      _$ChatSessionCopyWithImpl<$Res, ChatSession>;
   @useResult
-  $Res call({
-    String sessionId,
-    String title,
-    String modelId,
-    String providerId,
-    DateTime createdAt,
-    DateTime updatedAt,
-    bool isPinned,
-  });
+  $Res call(
+      {String sessionId,
+      String title,
+      String modelId,
+      String providerId,
+      String? projectId,
+      DateTime createdAt,
+      DateTime updatedAt,
+      bool isPinned});
 }
 
 /// @nodoc
@@ -76,42 +75,45 @@ class _$ChatSessionCopyWithImpl<$Res, $Val extends ChatSession>
     Object? title = null,
     Object? modelId = null,
     Object? providerId = null,
+    Object? projectId = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? isPinned = null,
   }) {
-    return _then(
-      _value.copyWith(
-        sessionId: null == sessionId
-            ? _value.sessionId
-            : sessionId // ignore: cast_nullable_to_non_nullable
-                as String,
-        title: null == title
-            ? _value.title
-            : title // ignore: cast_nullable_to_non_nullable
-                as String,
-        modelId: null == modelId
-            ? _value.modelId
-            : modelId // ignore: cast_nullable_to_non_nullable
-                as String,
-        providerId: null == providerId
-            ? _value.providerId
-            : providerId // ignore: cast_nullable_to_non_nullable
-                as String,
-        createdAt: null == createdAt
-            ? _value.createdAt
-            : createdAt // ignore: cast_nullable_to_non_nullable
-                as DateTime,
-        updatedAt: null == updatedAt
-            ? _value.updatedAt
-            : updatedAt // ignore: cast_nullable_to_non_nullable
-                as DateTime,
-        isPinned: null == isPinned
-            ? _value.isPinned
-            : isPinned // ignore: cast_nullable_to_non_nullable
-                as bool,
-      ) as $Val,
-    );
+    return _then(_value.copyWith(
+      sessionId: null == sessionId
+          ? _value.sessionId
+          : sessionId // ignore: cast_nullable_to_non_nullable
+              as String,
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      modelId: null == modelId
+          ? _value.modelId
+          : modelId // ignore: cast_nullable_to_non_nullable
+              as String,
+      providerId: null == providerId
+          ? _value.providerId
+          : providerId // ignore: cast_nullable_to_non_nullable
+              as String,
+      projectId: freezed == projectId
+          ? _value.projectId
+          : projectId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      createdAt: null == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      updatedAt: null == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      isPinned: null == isPinned
+          ? _value.isPinned
+          : isPinned // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ) as $Val);
   }
 }
 
@@ -119,20 +121,19 @@ class _$ChatSessionCopyWithImpl<$Res, $Val extends ChatSession>
 abstract class _$$ChatSessionImplCopyWith<$Res>
     implements $ChatSessionCopyWith<$Res> {
   factory _$$ChatSessionImplCopyWith(
-    _$ChatSessionImpl value,
-    $Res Function(_$ChatSessionImpl) then,
-  ) = __$$ChatSessionImplCopyWithImpl<$Res>;
+          _$ChatSessionImpl value, $Res Function(_$ChatSessionImpl) then) =
+      __$$ChatSessionImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String sessionId,
-    String title,
-    String modelId,
-    String providerId,
-    DateTime createdAt,
-    DateTime updatedAt,
-    bool isPinned,
-  });
+  $Res call(
+      {String sessionId,
+      String title,
+      String modelId,
+      String providerId,
+      String? projectId,
+      DateTime createdAt,
+      DateTime updatedAt,
+      bool isPinned});
 }
 
 /// @nodoc
@@ -140,9 +141,8 @@ class __$$ChatSessionImplCopyWithImpl<$Res>
     extends _$ChatSessionCopyWithImpl<$Res, _$ChatSessionImpl>
     implements _$$ChatSessionImplCopyWith<$Res> {
   __$$ChatSessionImplCopyWithImpl(
-    _$ChatSessionImpl _value,
-    $Res Function(_$ChatSessionImpl) _then,
-  ) : super(_value, _then);
+      _$ChatSessionImpl _value, $Res Function(_$ChatSessionImpl) _then)
+      : super(_value, _then);
 
   /// Create a copy of ChatSession
   /// with the given fields replaced by the non-null parameter values.
@@ -153,57 +153,60 @@ class __$$ChatSessionImplCopyWithImpl<$Res>
     Object? title = null,
     Object? modelId = null,
     Object? providerId = null,
+    Object? projectId = freezed,
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? isPinned = null,
   }) {
-    return _then(
-      _$ChatSessionImpl(
-        sessionId: null == sessionId
-            ? _value.sessionId
-            : sessionId // ignore: cast_nullable_to_non_nullable
-                as String,
-        title: null == title
-            ? _value.title
-            : title // ignore: cast_nullable_to_non_nullable
-                as String,
-        modelId: null == modelId
-            ? _value.modelId
-            : modelId // ignore: cast_nullable_to_non_nullable
-                as String,
-        providerId: null == providerId
-            ? _value.providerId
-            : providerId // ignore: cast_nullable_to_non_nullable
-                as String,
-        createdAt: null == createdAt
-            ? _value.createdAt
-            : createdAt // ignore: cast_nullable_to_non_nullable
-                as DateTime,
-        updatedAt: null == updatedAt
-            ? _value.updatedAt
-            : updatedAt // ignore: cast_nullable_to_non_nullable
-                as DateTime,
-        isPinned: null == isPinned
-            ? _value.isPinned
-            : isPinned // ignore: cast_nullable_to_non_nullable
-                as bool,
-      ),
-    );
+    return _then(_$ChatSessionImpl(
+      sessionId: null == sessionId
+          ? _value.sessionId
+          : sessionId // ignore: cast_nullable_to_non_nullable
+              as String,
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      modelId: null == modelId
+          ? _value.modelId
+          : modelId // ignore: cast_nullable_to_non_nullable
+              as String,
+      providerId: null == providerId
+          ? _value.providerId
+          : providerId // ignore: cast_nullable_to_non_nullable
+              as String,
+      projectId: freezed == projectId
+          ? _value.projectId
+          : projectId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      createdAt: null == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      updatedAt: null == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      isPinned: null == isPinned
+          ? _value.isPinned
+          : isPinned // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$ChatSessionImpl implements _ChatSession {
-  const _$ChatSessionImpl({
-    required this.sessionId,
-    required this.title,
-    required this.modelId,
-    required this.providerId,
-    required this.createdAt,
-    required this.updatedAt,
-    this.isPinned = false,
-  });
+  const _$ChatSessionImpl(
+      {required this.sessionId,
+      required this.title,
+      required this.modelId,
+      required this.providerId,
+      this.projectId,
+      required this.createdAt,
+      required this.updatedAt,
+      this.isPinned = false});
 
   factory _$ChatSessionImpl.fromJson(Map<String, dynamic> json) =>
       _$$ChatSessionImplFromJson(json);
@@ -217,6 +220,8 @@ class _$ChatSessionImpl implements _ChatSession {
   @override
   final String providerId;
   @override
+  final String? projectId;
+  @override
   final DateTime createdAt;
   @override
   final DateTime updatedAt;
@@ -226,7 +231,7 @@ class _$ChatSessionImpl implements _ChatSession {
 
   @override
   String toString() {
-    return 'ChatSession(sessionId: $sessionId, title: $title, modelId: $modelId, providerId: $providerId, createdAt: $createdAt, updatedAt: $updatedAt, isPinned: $isPinned)';
+    return 'ChatSession(sessionId: $sessionId, title: $title, modelId: $modelId, providerId: $providerId, projectId: $projectId, createdAt: $createdAt, updatedAt: $updatedAt, isPinned: $isPinned)';
   }
 
   @override
@@ -240,6 +245,8 @@ class _$ChatSessionImpl implements _ChatSession {
             (identical(other.modelId, modelId) || other.modelId == modelId) &&
             (identical(other.providerId, providerId) ||
                 other.providerId == providerId) &&
+            (identical(other.projectId, projectId) ||
+                other.projectId == projectId) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -250,16 +257,8 @@ class _$ChatSessionImpl implements _ChatSession {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-        runtimeType,
-        sessionId,
-        title,
-        modelId,
-        providerId,
-        createdAt,
-        updatedAt,
-        isPinned,
-      );
+  int get hashCode => Object.hash(runtimeType, sessionId, title, modelId,
+      providerId, projectId, createdAt, updatedAt, isPinned);
 
   /// Create a copy of ChatSession
   /// with the given fields replaced by the non-null parameter values.
@@ -271,20 +270,22 @@ class _$ChatSessionImpl implements _ChatSession {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$ChatSessionImplToJson(this);
+    return _$$ChatSessionImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _ChatSession implements ChatSession {
-  const factory _ChatSession({
-    required final String sessionId,
-    required final String title,
-    required final String modelId,
-    required final String providerId,
-    required final DateTime createdAt,
-    required final DateTime updatedAt,
-    final bool isPinned,
-  }) = _$ChatSessionImpl;
+  const factory _ChatSession(
+      {required final String sessionId,
+      required final String title,
+      required final String modelId,
+      required final String providerId,
+      final String? projectId,
+      required final DateTime createdAt,
+      required final DateTime updatedAt,
+      final bool isPinned}) = _$ChatSessionImpl;
 
   factory _ChatSession.fromJson(Map<String, dynamic> json) =
       _$ChatSessionImpl.fromJson;
@@ -297,6 +298,8 @@ abstract class _ChatSession implements ChatSession {
   String get modelId;
   @override
   String get providerId;
+  @override
+  String? get projectId;
   @override
   DateTime get createdAt;
   @override

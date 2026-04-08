@@ -95,3 +95,10 @@ Stream<List<ChatSession>> chatSessions(Ref ref) {
   final service = ref.watch(sessionServiceProvider);
   return service.watchAllSessions();
 }
+
+// Sessions for a specific project
+@riverpod
+Stream<List<ChatSession>> projectSessions(Ref ref, String projectId) {
+  final service = ref.watch(sessionServiceProvider);
+  return service.watchSessionsByProject(projectId);
+}

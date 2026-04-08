@@ -3,22 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/datasources/local/onboarding_preferences.dart';
-import '../features/chat/chat_home_screen.dart';
 import '../features/chat/chat_screen.dart';
-import '../features/dashboard/dashboard_screen.dart';
-import '../features/editor/editor_screen.dart';
-import '../features/github/github_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
-import '../features/compare/compare_screen.dart';
 import '../features/settings/settings_screen.dart';
-import '../shell/desktop_shell.dart';
+import '../shell/chat_shell.dart';
 
 part 'app_router.g.dart';
 
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
   return GoRouter(
-    initialLocation: '/dashboard',
+    initialLocation: '/chat',
     redirect: (context, state) async {
       final prefs = ref.read(onboardingPreferencesProvider);
       final done = await prefs.isCompleted();
@@ -33,18 +28,10 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state) => const OnboardingScreen(),
       ),
       ShellRoute(
-        builder: (context, state, child) => DesktopShell(child: child),
+        builder: (context, state, child) => ChatShell(child: child),
         routes: [
           GoRoute(
-            path: '/dashboard',
-            builder: (context, state) => const DashboardScreen(),
-          ),
-          GoRoute(
             path: '/chat',
-            builder: (context, state) => const ChatHomeScreen(),
-          ),
-          GoRoute(
-            path: '/chat/new',
             builder: (context, state) => const ChatScreen(),
           ),
           GoRoute(
@@ -53,20 +40,8 @@ GoRouter appRouter(Ref ref) {
                 ChatScreen(sessionId: state.pathParameters['sessionId']),
           ),
           GoRoute(
-            path: '/editor',
-            builder: (context, state) => const EditorScreen(),
-          ),
-          GoRoute(
-            path: '/github',
-            builder: (context, state) => const GithubScreen(),
-          ),
-          GoRoute(
             path: '/settings',
             builder: (context, state) => const SettingsScreen(),
-          ),
-          GoRoute(
-            path: '/compare',
-            builder: (context, state) => const CompareScreen(),
           ),
         ],
       ),

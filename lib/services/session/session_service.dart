@@ -34,7 +34,11 @@ class SessionService {
         );
   }
 
-  Future<String> createSession({required AIModel model, String? title}) async {
+  Future<String> createSession({
+    required AIModel model,
+    String? title,
+    String? projectId,
+  }) async {
     final sessionId = _uuid.v4();
     final now = DateTime.now();
     await _db.sessionDao.upsertSession(
@@ -43,6 +47,7 @@ class SessionService {
         title: Value(title ?? 'New Chat'),
         modelId: Value(model.modelId),
         providerId: Value(model.provider.name),
+        projectId: Value(projectId),
         createdAt: Value(now),
         updatedAt: Value(now),
       ),
@@ -68,6 +73,14 @@ class SessionService {
   Future<session_model.ChatSession?> getSession(String sessionId) async {
     final row = await _db.sessionDao.getSession(sessionId);
     return row != null ? _sessionFromRow(row) : null;
+  }
+
+  Stream<List<session_model.ChatSession>> watchSessionsByProject(
+    String projectId,
+  ) {
+    return _db.sessionDao.watchSessionsByProject(projectId).map(
+          (rows) => rows.map(_sessionFromRow).toList(),
+        );
   }
 
   // ── Messages ───────────────────────────────────────────────────────────────
@@ -194,6 +207,7 @@ class SessionService {
       title: row.title,
       modelId: row.modelId,
       providerId: row.providerId,
+      projectId: row.projectId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       isPinned: row.isPinned,

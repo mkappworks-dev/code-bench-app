@@ -10,6 +10,7 @@ class ChatSession with _$ChatSession {
     required String title,
     required String modelId,
     required String providerId,
+    String? projectId,
     required DateTime createdAt,
     required DateTime updatedAt,
     @Default(false) bool isPinned,

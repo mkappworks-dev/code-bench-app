@@ -12,8 +12,7 @@ part of 'ai_model.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 AIModel _$AIModelFromJson(Map<String, dynamic> json) {
   return _AIModel.fromJson(json);
@@ -44,16 +43,15 @@ abstract class $AIModelCopyWith<$Res> {
   factory $AIModelCopyWith(AIModel value, $Res Function(AIModel) then) =
       _$AIModelCopyWithImpl<$Res, AIModel>;
   @useResult
-  $Res call({
-    String id,
-    AIProvider provider,
-    String name,
-    String modelId,
-    String? endpoint,
-    int contextWindow,
-    bool supportsStreaming,
-    bool isDefault,
-  });
+  $Res call(
+      {String id,
+      AIProvider provider,
+      String name,
+      String modelId,
+      String? endpoint,
+      int contextWindow,
+      bool supportsStreaming,
+      bool isDefault});
 }
 
 /// @nodoc
@@ -80,63 +78,59 @@ class _$AIModelCopyWithImpl<$Res, $Val extends AIModel>
     Object? supportsStreaming = null,
     Object? isDefault = null,
   }) {
-    return _then(
-      _value.copyWith(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                as String,
-        provider: null == provider
-            ? _value.provider
-            : provider // ignore: cast_nullable_to_non_nullable
-                as AIProvider,
-        name: null == name
-            ? _value.name
-            : name // ignore: cast_nullable_to_non_nullable
-                as String,
-        modelId: null == modelId
-            ? _value.modelId
-            : modelId // ignore: cast_nullable_to_non_nullable
-                as String,
-        endpoint: freezed == endpoint
-            ? _value.endpoint
-            : endpoint // ignore: cast_nullable_to_non_nullable
-                as String?,
-        contextWindow: null == contextWindow
-            ? _value.contextWindow
-            : contextWindow // ignore: cast_nullable_to_non_nullable
-                as int,
-        supportsStreaming: null == supportsStreaming
-            ? _value.supportsStreaming
-            : supportsStreaming // ignore: cast_nullable_to_non_nullable
-                as bool,
-        isDefault: null == isDefault
-            ? _value.isDefault
-            : isDefault // ignore: cast_nullable_to_non_nullable
-                as bool,
-      ) as $Val,
-    );
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      provider: null == provider
+          ? _value.provider
+          : provider // ignore: cast_nullable_to_non_nullable
+              as AIProvider,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      modelId: null == modelId
+          ? _value.modelId
+          : modelId // ignore: cast_nullable_to_non_nullable
+              as String,
+      endpoint: freezed == endpoint
+          ? _value.endpoint
+          : endpoint // ignore: cast_nullable_to_non_nullable
+              as String?,
+      contextWindow: null == contextWindow
+          ? _value.contextWindow
+          : contextWindow // ignore: cast_nullable_to_non_nullable
+              as int,
+      supportsStreaming: null == supportsStreaming
+          ? _value.supportsStreaming
+          : supportsStreaming // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isDefault: null == isDefault
+          ? _value.isDefault
+          : isDefault // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ) as $Val);
   }
 }
 
 /// @nodoc
 abstract class _$$AIModelImplCopyWith<$Res> implements $AIModelCopyWith<$Res> {
   factory _$$AIModelImplCopyWith(
-    _$AIModelImpl value,
-    $Res Function(_$AIModelImpl) then,
-  ) = __$$AIModelImplCopyWithImpl<$Res>;
+          _$AIModelImpl value, $Res Function(_$AIModelImpl) then) =
+      __$$AIModelImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    AIProvider provider,
-    String name,
-    String modelId,
-    String? endpoint,
-    int contextWindow,
-    bool supportsStreaming,
-    bool isDefault,
-  });
+  $Res call(
+      {String id,
+      AIProvider provider,
+      String name,
+      String modelId,
+      String? endpoint,
+      int contextWindow,
+      bool supportsStreaming,
+      bool isDefault});
 }
 
 /// @nodoc
@@ -144,9 +138,8 @@ class __$$AIModelImplCopyWithImpl<$Res>
     extends _$AIModelCopyWithImpl<$Res, _$AIModelImpl>
     implements _$$AIModelImplCopyWith<$Res> {
   __$$AIModelImplCopyWithImpl(
-    _$AIModelImpl _value,
-    $Res Function(_$AIModelImpl) _then,
-  ) : super(_value, _then);
+      _$AIModelImpl _value, $Res Function(_$AIModelImpl) _then)
+      : super(_value, _then);
 
   /// Create a copy of AIModel
   /// with the given fields replaced by the non-null parameter values.
@@ -162,58 +155,55 @@ class __$$AIModelImplCopyWithImpl<$Res>
     Object? supportsStreaming = null,
     Object? isDefault = null,
   }) {
-    return _then(
-      _$AIModelImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                as String,
-        provider: null == provider
-            ? _value.provider
-            : provider // ignore: cast_nullable_to_non_nullable
-                as AIProvider,
-        name: null == name
-            ? _value.name
-            : name // ignore: cast_nullable_to_non_nullable
-                as String,
-        modelId: null == modelId
-            ? _value.modelId
-            : modelId // ignore: cast_nullable_to_non_nullable
-                as String,
-        endpoint: freezed == endpoint
-            ? _value.endpoint
-            : endpoint // ignore: cast_nullable_to_non_nullable
-                as String?,
-        contextWindow: null == contextWindow
-            ? _value.contextWindow
-            : contextWindow // ignore: cast_nullable_to_non_nullable
-                as int,
-        supportsStreaming: null == supportsStreaming
-            ? _value.supportsStreaming
-            : supportsStreaming // ignore: cast_nullable_to_non_nullable
-                as bool,
-        isDefault: null == isDefault
-            ? _value.isDefault
-            : isDefault // ignore: cast_nullable_to_non_nullable
-                as bool,
-      ),
-    );
+    return _then(_$AIModelImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      provider: null == provider
+          ? _value.provider
+          : provider // ignore: cast_nullable_to_non_nullable
+              as AIProvider,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      modelId: null == modelId
+          ? _value.modelId
+          : modelId // ignore: cast_nullable_to_non_nullable
+              as String,
+      endpoint: freezed == endpoint
+          ? _value.endpoint
+          : endpoint // ignore: cast_nullable_to_non_nullable
+              as String?,
+      contextWindow: null == contextWindow
+          ? _value.contextWindow
+          : contextWindow // ignore: cast_nullable_to_non_nullable
+              as int,
+      supportsStreaming: null == supportsStreaming
+          ? _value.supportsStreaming
+          : supportsStreaming // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isDefault: null == isDefault
+          ? _value.isDefault
+          : isDefault // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$AIModelImpl implements _AIModel {
-  const _$AIModelImpl({
-    required this.id,
-    required this.provider,
-    required this.name,
-    required this.modelId,
-    this.endpoint,
-    this.contextWindow = 128000,
-    this.supportsStreaming = true,
-    this.isDefault = false,
-  });
+  const _$AIModelImpl(
+      {required this.id,
+      required this.provider,
+      required this.name,
+      required this.modelId,
+      this.endpoint,
+      this.contextWindow = 128000,
+      this.supportsStreaming = true,
+      this.isDefault = false});
 
   factory _$AIModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$AIModelImplFromJson(json);
@@ -265,17 +255,8 @@ class _$AIModelImpl implements _AIModel {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-        runtimeType,
-        id,
-        provider,
-        name,
-        modelId,
-        endpoint,
-        contextWindow,
-        supportsStreaming,
-        isDefault,
-      );
+  int get hashCode => Object.hash(runtimeType, id, provider, name, modelId,
+      endpoint, contextWindow, supportsStreaming, isDefault);
 
   /// Create a copy of AIModel
   /// with the given fields replaced by the non-null parameter values.
@@ -287,21 +268,22 @@ class _$AIModelImpl implements _AIModel {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$AIModelImplToJson(this);
+    return _$$AIModelImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _AIModel implements AIModel {
-  const factory _AIModel({
-    required final String id,
-    required final AIProvider provider,
-    required final String name,
-    required final String modelId,
-    final String? endpoint,
-    final int contextWindow,
-    final bool supportsStreaming,
-    final bool isDefault,
-  }) = _$AIModelImpl;
+  const factory _AIModel(
+      {required final String id,
+      required final AIProvider provider,
+      required final String name,
+      required final String modelId,
+      final String? endpoint,
+      final int contextWindow,
+      final bool supportsStreaming,
+      final bool isDefault}) = _$AIModelImpl;
 
   factory _AIModel.fromJson(Map<String, dynamic> json) = _$AIModelImpl.fromJson;
 
