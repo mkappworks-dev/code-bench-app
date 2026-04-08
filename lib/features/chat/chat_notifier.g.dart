@@ -6,23 +6,6 @@ part of 'chat_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$sessionSystemPromptHash() =>
-    r'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0';
-
-/// See also [SessionSystemPrompt].
-@ProviderFor(SessionSystemPrompt)
-final sessionSystemPromptProvider =
-    NotifierProvider<SessionSystemPrompt, Map<String, String>>.internal(
-  SessionSystemPrompt.new,
-  name: r'sessionSystemPromptProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$sessionSystemPromptHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$SessionSystemPrompt = Notifier<Map<String, String>>;
 String _$chatSessionsHash() => r'bd92b56150cdba1b0318a6538773f19e9755be19';
 
 /// See also [chatSessions].
@@ -40,6 +23,176 @@ final chatSessionsProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ChatSessionsRef = AutoDisposeStreamProviderRef<List<ChatSession>>;
+String _$projectSessionsHash() => r'035aba6e7325f7e246c3dc25c052fcc4cee5a5a0';
+
+/// Copied from Dart SDK
+class _SystemHash {
+  _SystemHash._();
+
+  static int combine(int hash, int value) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + value);
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
+    return hash ^ (hash >> 6);
+  }
+
+  static int finish(int hash) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
+    // ignore: parameter_assignments
+    hash = hash ^ (hash >> 11);
+    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
+  }
+}
+
+/// See also [projectSessions].
+@ProviderFor(projectSessions)
+const projectSessionsProvider = ProjectSessionsFamily();
+
+/// See also [projectSessions].
+class ProjectSessionsFamily extends Family<AsyncValue<List<ChatSession>>> {
+  /// See also [projectSessions].
+  const ProjectSessionsFamily();
+
+  /// See also [projectSessions].
+  ProjectSessionsProvider call(
+    String projectId,
+  ) {
+    return ProjectSessionsProvider(
+      projectId,
+    );
+  }
+
+  @override
+  ProjectSessionsProvider getProviderOverride(
+    covariant ProjectSessionsProvider provider,
+  ) {
+    return call(
+      provider.projectId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'projectSessionsProvider';
+}
+
+/// See also [projectSessions].
+class ProjectSessionsProvider
+    extends AutoDisposeStreamProvider<List<ChatSession>> {
+  /// See also [projectSessions].
+  ProjectSessionsProvider(
+    String projectId,
+  ) : this._internal(
+          (ref) => projectSessions(
+            ref as ProjectSessionsRef,
+            projectId,
+          ),
+          from: projectSessionsProvider,
+          name: r'projectSessionsProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$projectSessionsHash,
+          dependencies: ProjectSessionsFamily._dependencies,
+          allTransitiveDependencies:
+              ProjectSessionsFamily._allTransitiveDependencies,
+          projectId: projectId,
+        );
+
+  ProjectSessionsProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.projectId,
+  }) : super.internal();
+
+  final String projectId;
+
+  @override
+  Override overrideWith(
+    Stream<List<ChatSession>> Function(ProjectSessionsRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: ProjectSessionsProvider._internal(
+        (ref) => create(ref as ProjectSessionsRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        projectId: projectId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeStreamProviderElement<List<ChatSession>> createElement() {
+    return _ProjectSessionsProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ProjectSessionsProvider && other.projectId == projectId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, projectId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin ProjectSessionsRef on AutoDisposeStreamProviderRef<List<ChatSession>> {
+  /// The parameter `projectId` of this provider.
+  String get projectId;
+}
+
+class _ProjectSessionsProviderElement
+    extends AutoDisposeStreamProviderElement<List<ChatSession>>
+    with ProjectSessionsRef {
+  _ProjectSessionsProviderElement(super.provider);
+
+  @override
+  String get projectId => (origin as ProjectSessionsProvider).projectId;
+}
+
+String _$sessionSystemPromptHash() =>
+    r'54342a5fe93c9a7edc16f005fa6089d539e394b9';
+
+/// See also [SessionSystemPrompt].
+@ProviderFor(SessionSystemPrompt)
+final sessionSystemPromptProvider =
+    NotifierProvider<SessionSystemPrompt, Map<String, String>>.internal(
+  SessionSystemPrompt.new,
+  name: r'sessionSystemPromptProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$sessionSystemPromptHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$SessionSystemPrompt = Notifier<Map<String, String>>;
 String _$activeSessionIdHash() => r'6bbf5f2b584ffb0f12be4776b38c2f3a6ca6575e';
 
 /// See also [ActiveSessionId].
@@ -73,32 +226,13 @@ final selectedModelProvider = NotifierProvider<SelectedModel, AIModel>.internal(
 typedef _$SelectedModel = Notifier<AIModel>;
 String _$chatMessagesHash() => r'66b3e0472bac949f586adf0de1c32b8c4bacd15d';
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
 abstract class _$ChatMessages
     extends BuildlessAutoDisposeAsyncNotifier<List<ChatMessage>> {
   late final String sessionId;
 
-  FutureOr<List<ChatMessage>> build(String sessionId);
+  FutureOr<List<ChatMessage>> build(
+    String sessionId,
+  );
 }
 
 /// See also [ChatMessages].
@@ -111,15 +245,21 @@ class ChatMessagesFamily extends Family<AsyncValue<List<ChatMessage>>> {
   const ChatMessagesFamily();
 
   /// See also [ChatMessages].
-  ChatMessagesProvider call(String sessionId) {
-    return ChatMessagesProvider(sessionId);
+  ChatMessagesProvider call(
+    String sessionId,
+  ) {
+    return ChatMessagesProvider(
+      sessionId,
+    );
   }
 
   @override
   ChatMessagesProvider getProviderOverride(
     covariant ChatMessagesProvider provider,
   ) {
-    return call(provider.sessionId);
+    return call(
+      provider.sessionId,
+    );
   }
 
   static const Iterable<ProviderOrFamily>? _dependencies = null;
@@ -141,8 +281,9 @@ class ChatMessagesFamily extends Family<AsyncValue<List<ChatMessage>>> {
 class ChatMessagesProvider extends AutoDisposeAsyncNotifierProviderImpl<
     ChatMessages, List<ChatMessage>> {
   /// See also [ChatMessages].
-  ChatMessagesProvider(String sessionId)
-      : this._internal(
+  ChatMessagesProvider(
+    String sessionId,
+  ) : this._internal(
           () => ChatMessages()..sessionId = sessionId,
           from: chatMessagesProvider,
           name: r'chatMessagesProvider',
@@ -172,7 +313,9 @@ class ChatMessagesProvider extends AutoDisposeAsyncNotifierProviderImpl<
   FutureOr<List<ChatMessage>> runNotifierBuild(
     covariant ChatMessages notifier,
   ) {
-    return notifier.build(sessionId);
+    return notifier.build(
+      sessionId,
+    );
   }
 
   @override
@@ -227,6 +370,5 @@ class _ChatMessagesProviderElement
   @override
   String get sessionId => (origin as ChatMessagesProvider).sessionId;
 }
-
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
