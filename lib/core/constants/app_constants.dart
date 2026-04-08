@@ -7,21 +7,17 @@ class AppConstants {
   static const String oauthCallbackUrl = 'codebench://oauth/callback';
 
   // Window
-  static const double minWindowWidth = 1000;
-  static const double minWindowHeight = 650;
+  static const double minWindowWidth = 900;
+  static const double minWindowHeight = 600;
 
-  // Pane defaults
-  static const double defaultExplorerWidth = 220;
-  static const double defaultChatWidth = 360;
-  static const double minPaneWidth = 150;
+  // Sidebar
+  static const double sidebarWidth = 224;
 
   // Chat
   static const int maxInMemoryMessages = 100;
   static const int messagePaginationLimit = 50;
 
   // SharedPreferences keys
-  static const String prefExplorerWidth = 'explorer_pane_width';
-  static const String prefChatWidth = 'chat_pane_width';
   static const String prefWindowX = 'window_x';
   static const String prefWindowY = 'window_y';
   static const String prefWindowWidth = 'window_width';
