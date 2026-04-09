@@ -54,6 +54,12 @@ cd .worktrees/feat/2026-04-07-sign-features-flag
 
 All implementation work happens inside that worktree.
 
+## Brainstorming Options
+
+When presenting multiple-choice options (A/B/C etc.) during brainstorming:
+- Always include a short concrete example for each option
+- Always mark the recommended option with a ★ symbol
+
 ## Pull Request Template
 
 Use this format both when creating a PR (`gh pr create`) and when asked for a PR summary. When giving a summary (not creating), wrap the output in a markdown code block so it is copyable:
