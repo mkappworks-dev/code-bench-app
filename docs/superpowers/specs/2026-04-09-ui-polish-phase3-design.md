@@ -2,7 +2,7 @@
 
 ## Overview
 
-Phase 3 makes the stub buttons from Phase 1 functional. Covers: VS Code/Cursor/Finder launch, Rename project dialog, Add action (register + run with floating output panel), Commit (AI-generated message with dialog and auto-commit toggle), Push, and Create PR (AI-generated title/body).
+Phase 3 makes the stub buttons from Phase 1 functional. Covers: VS Code/Cursor/Finder launch, Rename project dialog, Add action (register + run with floating output panel), Commit (AI-generated message with dialog and auto-commit toggle), Push, Pull (with behind-upstream detection), and Create PR (AI-generated title/body).
 
 All git operations shell out via `Process.run`/`Process.start` using the project path. The existing `GitHubApiService` handles PR creation. The existing `GitDetector` handles git detection — a new `GitService` handles git operations.
 
@@ -90,7 +90,7 @@ Triggered from the left side of the "Commit & Push" split button.
 
 **Auto-commit mode** (toggle on): skips dialog — AI generates message, commit runs immediately, toast appears.
 
-### 5. Push
+### 6. Push
 
 Triggered from "Push" in the Commit & Push dropdown. No confirmation dialog — one-tap.
 
@@ -103,7 +103,23 @@ Triggered from "Push" in the Commit & Push dropdown. No confirmation dialog — 
    - Auth failure → *"Push failed — check your git credentials."*
    - Other → raw git error output
 
-### 6. Create PR
+### 7. Pull
+
+**Detection:**
+On project load, `GitService.fetchStatus()` runs `git fetch` then `git rev-list HEAD..origin/<branch> --count` asynchronously. If the behind count is > 0, a `↓ N` badge appears on the Commit & Push split button (e.g., `Commit & Push ↓3`). Rechecked every time the project becomes active.
+
+**Trigger:** "Pull ↓" option in the Commit & Push dropdown. Also shown as a standalone highlighted row in the dropdown when behind count > 0, to make it easy to spot.
+
+**Flow:**
+1. Shows `● Pulling…` in status bar while in progress
+2. Runs `git pull` via `GitService`
+3. Success: toast *"Pulled — [N] new commit(s) from origin/[branch]"*, badge clears
+4. Failure: friendly error toasts for common cases:
+   - Merge conflict → *"Pull failed — merge conflict detected. Resolve conflicts in your editor."*
+   - No upstream → *"No upstream branch set."*
+   - Other → raw git error output
+
+### 8. Create PR
 
 Triggered from "Create PR" in the Commit & Push dropdown.
 
@@ -124,7 +140,7 @@ Triggered from "Create PR" in the Commit & Push dropdown.
 | Service | Responsibility |
 |---|---|
 | `IdeLaunchService` | VS Code / Cursor / Finder `Process.run` calls |
-| `GitService` | Async git operations: `commit`, `push`, `status`, `currentBranch` |
+| `GitService` | Async git operations: `commit`, `push`, `pull`, `fetchStatus`, `status`, `currentBranch` |
 | `ActionRunnerService` | `Process.start` wrapper, streams output to `ActionOutputNotifier` |
 
 `GitDetector` is unchanged — it handles sync detection only.
