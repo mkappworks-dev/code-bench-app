@@ -75,15 +75,17 @@ class ProjectSort extends _$ProjectSort {
   }
 
   Future<void> setProjectSort(ProjectSortOrder order) async {
+    final current = state.valueOrNull ?? await future;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_projectKey, order.name);
-    state = AsyncData((await future).copyWith(projectSort: order));
+    state = AsyncData(current.copyWith(projectSort: order));
   }
 
   Future<void> setThreadSort(ThreadSortOrder order) async {
+    final current = state.valueOrNull ?? await future;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_threadKey, order.name);
-    state = AsyncData((await future).copyWith(threadSort: order));
+    state = AsyncData(current.copyWith(threadSort: order));
   }
 }
 

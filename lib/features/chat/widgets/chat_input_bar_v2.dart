@@ -49,6 +49,7 @@ class ChatInputBarV2 extends ConsumerStatefulWidget {
 class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
+  final _keyboardFocusNode = FocusNode();
   bool _isSending = false;
   _Effort _effort = _Effort.high;
   _Mode _mode = _Mode.chat;
@@ -58,6 +59,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
+    _keyboardFocusNode.dispose();
     super.dispose();
   }
 
@@ -86,8 +88,10 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isSending = false);
-      _focusNode.requestFocus();
+      if (mounted) {
+        setState(() => _isSending = false);
+        _focusNode.requestFocus();
+      }
     }
   }
 
@@ -98,7 +102,8 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     String Function(T) label,
     void Function(T) onSelect,
   ) {
-    final box = context.findRenderObject() as RenderBox;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return;
     final offset = box.localToGlobal(Offset.zero);
     final size = box.size;
     showMenu<T>(
@@ -146,7 +151,8 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
   void _showModelPicker(BuildContext context) {
     final models = AIModels.defaults;
     final selected = ref.read(selectedModelProvider);
-    final box = context.findRenderObject() as RenderBox;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return;
     final offset = box.localToGlobal(Offset.zero);
     final size = box.size;
     showMenu<AIModel>(
@@ -201,7 +207,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
           mainAxisSize: MainAxisSize.min,
           children: [
             KeyboardListener(
-              focusNode: FocusNode(),
+              focusNode: _keyboardFocusNode,
               onKeyEvent: (event) {
                 if (event is KeyDownEvent &&
                     event.logicalKey == LogicalKeyboardKey.enter &&

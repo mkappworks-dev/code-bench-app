@@ -45,7 +45,8 @@ class ProjectSidebar extends ConsumerWidget {
   void _showSortMenu(BuildContext context, WidgetRef ref) {
     final sortAsync = ref.read(projectSortProvider);
     final current = sortAsync.valueOrNull;
-    final box = context.findRenderObject() as RenderBox;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return;
     final offset = box.localToGlobal(Offset.zero);
     final size = box.size;
 
