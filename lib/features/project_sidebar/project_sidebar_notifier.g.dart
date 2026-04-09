@@ -61,5 +61,20 @@ final expandedProjectIdsProvider =
 );
 
 typedef _$ExpandedProjectIds = Notifier<Set<String>>;
+String _$projectSortHash() => r'96c125632ac63ff6aed54145305d655c6a91ce68';
+
+/// See also [ProjectSort].
+@ProviderFor(ProjectSort)
+final projectSortProvider =
+    AsyncNotifierProvider<ProjectSort, ProjectSortState>.internal(
+  ProjectSort.new,
+  name: r'projectSortProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$projectSortHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ProjectSort = AsyncNotifier<ProjectSortState>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
