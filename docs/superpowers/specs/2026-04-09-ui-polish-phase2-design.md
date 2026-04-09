@@ -4,7 +4,7 @@
 
 Phase 2 introduces two connected features: inline code change cards (diff view triggered from code blocks) and a session-level changes panel that tracks every file the user has applied during a conversation.
 
-The data model is designed so agentic tool calls (Phase 2B, future) slot in as a first-class message type without restructuring anything built here.
+The data model is designed so agentic tool calls (Phase 5, future) slot in as a first-class message type without restructuring anything built here.
 
 This is Phase 2 of a three-phase UI improvement queue. Phase 1 (icon/token/layout polish) and Phase 3 (stub button functionality) are separate specs.
 
@@ -83,7 +83,7 @@ class AppliedChange with _$AppliedChange {
 - `applyChange({filePath, newContent, sessionId, messageId})` → snapshots, writes file, notifies notifier
 - `revertChange(AppliedChange change, {required bool isGit})` → branches on git/non-git, removes entry
 
-### 5. Future Agentic Hook (Phase 2B)
+### 5. Future Agentic Hook (Phase 5)
 
 When real tool-use API calls arrive, `ChatMessage` gains:
 
@@ -112,7 +112,7 @@ A `ToolEvent` carries `{type, toolName, input, output, filePath?}`. Tool-driven 
 
 ## Out of Scope for This Phase
 
-- Agentic tool-use API calls (Phase 2B — future spec)
+- Agentic tool-use API calls (Phase 5)
 - Functional Commit & Push from the panel footer (Phase 3)
 - Diff view for files not referenced by filename in the code fence
 - Conflict resolution if the file was edited externally between Apply and revert
