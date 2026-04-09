@@ -59,6 +59,7 @@ All implementation work happens inside that worktree.
 When presenting multiple-choice options (A/B/C etc.) during brainstorming:
 - Always include a short concrete example for each option
 - Always mark the recommended option with a ★ symbol
+- If the options involve UI (layouts, components, interactions), always show a visual mockup in the browser companion without waiting to be asked
 
 ## Pull Request Template
 
