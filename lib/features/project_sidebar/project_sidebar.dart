@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../features/chat/chat_notifier.dart';
@@ -41,6 +42,59 @@ class ProjectSidebar extends ConsumerWidget {
     if (context.mounted) context.go('/chat/$sessionId');
   }
 
+  void _showSortMenu(BuildContext context, WidgetRef ref) {
+    final sortAsync = ref.read(projectSortProvider);
+    final current = sortAsync.valueOrNull;
+    final box = context.findRenderObject() as RenderBox;
+    final offset = box.localToGlobal(Offset.zero);
+    final size = box.size;
+
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        offset.dx,
+        offset.dy + size.height + 4,
+        offset.dx + size.width,
+        0,
+      ),
+      color: ThemeConstants.panelBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(7),
+        side: const BorderSide(color: Color(0xFF333333)),
+      ),
+      items: [
+        _sortHeader('SORT PROJECTS'),
+        _sortItem('proj_lastMessage', 'Last user message',
+            current?.projectSort == ProjectSortOrder.lastMessage),
+        _sortItem('proj_createdAt', 'Created at',
+            current?.projectSort == ProjectSortOrder.createdAt),
+        _sortItem('proj_manual', 'Manual',
+            current?.projectSort == ProjectSortOrder.manual),
+        const PopupMenuDivider(),
+        _sortHeader('SORT THREADS'),
+        _sortItem('thread_lastMessage', 'Last user message',
+            current?.threadSort == ThreadSortOrder.lastMessage),
+        _sortItem('thread_createdAt', 'Created at',
+            current?.threadSort == ThreadSortOrder.createdAt),
+      ],
+    ).then((value) {
+      if (value == null) return;
+      final notifier = ref.read(projectSortProvider.notifier);
+      switch (value) {
+        case 'proj_lastMessage':
+          notifier.setProjectSort(ProjectSortOrder.lastMessage);
+        case 'proj_createdAt':
+          notifier.setProjectSort(ProjectSortOrder.createdAt);
+        case 'proj_manual':
+          notifier.setProjectSort(ProjectSortOrder.manual);
+        case 'thread_lastMessage':
+          notifier.setThreadSort(ThreadSortOrder.lastMessage);
+        case 'thread_createdAt':
+          notifier.setThreadSort(ThreadSortOrder.createdAt);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final projectsAsync = ref.watch(projectsProvider);
@@ -58,28 +112,39 @@ class ProjectSidebar extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: Color(0xFF1E1E1E)),
-              ),
+              border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
             ),
             child: Row(
               children: [
                 const Text(
                   'PROJECTS',
                   style: TextStyle(
-                    color: Color(0xFF555555),
-                    fontSize: 10,
+                    color: ThemeConstants.mutedFg,
+                    fontSize: ThemeConstants.uiFontSizeLabel,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.8,
                   ),
                 ),
                 const Spacer(),
+                // Sort icon
+                Builder(
+                  builder: (ctx) => InkWell(
+                    onTap: () => _showSortMenu(ctx, ref),
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.all(3),
+                      child: Icon(LucideIcons.arrowUpDown, size: 13, color: ThemeConstants.mutedFg),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                // Add project icon
                 InkWell(
                   onTap: () => _addProject(context, ref),
-                  child: const Icon(
-                    Icons.add,
-                    size: 14,
-                    color: Color(0xFF555555),
+                  borderRadius: BorderRadius.circular(4),
+                  child: Padding(
+                    padding: const EdgeInsets.all(3),
+                    child: Icon(LucideIcons.plus, size: 13, color: ThemeConstants.mutedFg),
                   ),
                 ),
               ],
@@ -96,7 +161,7 @@ class ProjectSidebar extends ConsumerWidget {
                   'Error: $e',
                   style: const TextStyle(
                     color: ThemeConstants.error,
-                    fontSize: 11,
+                    fontSize: ThemeConstants.uiFontSizeSmall,
                   ),
                 ),
               ),
@@ -106,26 +171,26 @@ class ProjectSidebar extends ConsumerWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.folder_outlined,
+                        Icon(
+                          LucideIcons.folder,
                           size: 32,
-                          color: Color(0xFF333333),
+                          color: ThemeConstants.faintFg,
                         ),
                         const SizedBox(height: 12),
                         const Text(
                           'No projects yet',
                           style: TextStyle(
-                            color: Color(0xFF555555),
-                            fontSize: 12,
+                            color: ThemeConstants.mutedFg,
+                            fontSize: ThemeConstants.uiFontSize,
                           ),
                         ),
                         const SizedBox(height: 12),
                         TextButton.icon(
                           onPressed: () => _addProject(context, ref),
-                          icon: const Icon(Icons.add, size: 12),
+                          icon: Icon(LucideIcons.plus, size: 12),
                           label: const Text(
                             'Open folder',
-                            style: TextStyle(fontSize: 11),
+                            style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall),
                           ),
                         ),
                       ],
@@ -145,7 +210,7 @@ class ProjectSidebar extends ConsumerWidget {
                     return Container(
                       decoration: const BoxDecoration(
                         border: Border(
-                          bottom: BorderSide(color: Color(0xFF141414)),
+                          bottom: BorderSide(color: ThemeConstants.deepBackground),
                         ),
                       ),
                       child: ProjectTile(
@@ -185,21 +250,21 @@ class ProjectSidebar extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFF1E1E1E))),
+                border: Border(top: BorderSide(color: ThemeConstants.borderColor)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(
-                    Icons.settings_outlined,
+                    LucideIcons.settings,
                     size: 14,
-                    color: Color(0xFF555555),
+                    color: ThemeConstants.mutedFg,
                   ),
-                  SizedBox(width: 7),
+                  const SizedBox(width: 7),
                   Text(
                     'Settings',
-                    style: TextStyle(
-                      color: Color(0xFF555555),
-                      fontSize: 12,
+                    style: const TextStyle(
+                      color: ThemeConstants.mutedFg,
+                      fontSize: ThemeConstants.uiFontSize,
                     ),
                   ),
                 ],
@@ -211,3 +276,38 @@ class ProjectSidebar extends ConsumerWidget {
     );
   }
 }
+
+PopupMenuItem<String> _sortHeader(String label) => PopupMenuItem<String>(
+      enabled: false,
+      height: 24,
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: ThemeConstants.mutedFg,
+          fontSize: ThemeConstants.uiFontSizeLabel,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.6,
+        ),
+      ),
+    );
+
+PopupMenuItem<String> _sortItem(String value, String label, bool selected) =>
+    PopupMenuItem<String>(
+      value: value,
+      height: 32,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
+                fontSize: ThemeConstants.uiFontSizeSmall,
+              ),
+            ),
+          ),
+          if (selected)
+            const Icon(LucideIcons.check, size: 11, color: ThemeConstants.accent),
+        ],
+      ),
+    );

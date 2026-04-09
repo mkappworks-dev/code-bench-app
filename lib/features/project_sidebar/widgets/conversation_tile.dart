@@ -30,7 +30,7 @@ class ConversationTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF1A1A1A) : null,
+          color: isActive ? ThemeConstants.inputSurface : null,
           borderRadius: BorderRadius.circular(5),
         ),
         child: Row(
@@ -50,10 +50,8 @@ class ConversationTile extends StatelessWidget {
               child: Text(
                 session.title,
                 style: TextStyle(
-                  color: isActive
-                      ? ThemeConstants.textPrimary
-                      : const Color(0xFF555555),
-                  fontSize: 11,
+                  color: isActive ? ThemeConstants.textPrimary : ThemeConstants.mutedFg,
+                  fontSize: ThemeConstants.uiFontSizeSmall,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -62,8 +60,8 @@ class ConversationTile extends StatelessWidget {
             Text(
               _relativeTime(session.updatedAt),
               style: const TextStyle(
-                color: Color(0xFF333333),
-                fontSize: 9,
+                color: ThemeConstants.faintFg,
+                fontSize: ThemeConstants.uiFontSizeBadge,
               ),
             ),
           ],
