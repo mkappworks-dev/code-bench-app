@@ -74,7 +74,7 @@ Triggered from the left side of the "Commit & Push" split button.
 1. Collect changed files from `AppliedChangesNotifier` (Phase 2) + last 10 messages from the active session
 2. Send short prompt to active AI model: *"Write a conventional commit message (subject line only, max 72 chars) summarising these changes: [file list + conversation summary]"*
 3. Commit dialog opens with AI-generated message pre-filled in an editable text field
-4. **⚡ Auto-commit** toggle in dialog footer — persisted via `SharedPreferences`. When on, future commits skip the dialog entirely
+4. **⚡ Auto-commit** toggle in dialog footer — persisted via `SharedPreferences`. When on, future commits skip the dialog entirely. Also exposed as a row in Settings → General (same `SharedPreferences` key — both controls stay in sync)
 5. User edits if needed → clicks **Commit**
 6. Runs `git add -A && git commit -m "<message>"` via `GitService`
 7. Success: toast *"Committed — [short sha]"*. Failure: toast with git error output

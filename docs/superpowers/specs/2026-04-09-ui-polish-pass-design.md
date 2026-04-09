@@ -193,6 +193,7 @@ Content is grouped into sections. Each section has:
 | Theme | How Code Bench looks | Dropdown: Dark / Light / System |
 | Ollama base URL | Base URL for local Ollama | Editable text field |
 | Delete confirmation | Ask before deleting a session | Toggle |
+| Auto-commit | Skip commit dialog and commit immediately with AI-generated message | Toggle (synced with the toggle in the Commit dialog — same `SharedPreferences` key) |
 
 **Providers section rows:**
 
