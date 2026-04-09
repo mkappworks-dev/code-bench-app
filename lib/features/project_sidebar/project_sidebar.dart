@@ -47,17 +47,15 @@ class ProjectSidebar extends ConsumerWidget {
     final current = sortAsync.valueOrNull;
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
-    final offset = box.localToGlobal(Offset.zero);
-    final size = box.size;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final position = RelativeRect.fromRect(
+      box.localToGlobal(Offset.zero, ancestor: overlay) & box.size,
+      Offset.zero & overlay.size,
+    );
 
     showMenu<String>(
       context: context,
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy + size.height + 4,
-        offset.dx + size.width,
-        0,
-      ),
+      position: position,
       color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),

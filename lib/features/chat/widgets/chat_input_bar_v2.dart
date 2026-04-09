@@ -95,6 +95,14 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     }
   }
 
+  RelativeRect _menuPosition(BuildContext context, RenderBox box) {
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    return RelativeRect.fromRect(
+      box.localToGlobal(Offset.zero, ancestor: overlay) & box.size,
+      Offset.zero & overlay.size,
+    );
+  }
+
   void _showDropdown<T>(
     BuildContext context,
     List<T> items,
@@ -104,16 +112,9 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
   ) {
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
-    final offset = box.localToGlobal(Offset.zero);
-    final size = box.size;
     showMenu<T>(
       context: context,
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy + size.height + 4,
-        offset.dx + size.width,
-        0,
-      ),
+      position: _menuPosition(context, box),
       color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
@@ -153,16 +154,9 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     final selected = ref.read(selectedModelProvider);
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
-    final offset = box.localToGlobal(Offset.zero);
-    final size = box.size;
     showMenu<AIModel>(
       context: context,
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy + size.height + 4,
-        offset.dx + size.width,
-        0,
-      ),
+      position: _menuPosition(context, box),
       color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
