@@ -66,7 +66,16 @@ A floating output panel anchors below the top bar:
 
 **New service: `ActionRunnerService`** — wraps `Process.start`, streams output chunks to a `keepAlive` Riverpod `StateNotifier` (`ActionOutputNotifier`).
 
-### 4. Commit
+### 4. Initialize Git
+
+Shown in the top action bar when `WorkspaceProjects.isGit = false` (replacing the Commit & Push split button).
+
+**Flow:**
+1. Tap "Initialize Git" → runs `git init` via `GitService` in the project directory
+2. On success: updates `WorkspaceProjects.isGit = true` and `currentBranch = 'main'` in the DB → top action bar immediately swaps to the full "Commit & Push ↓" split button, "No Git" badge disappears, sidebar git icon turns green
+3. On failure: toast with the git error output
+
+### 5. Commit
 
 Triggered from the left side of the "Commit & Push" split button.
 

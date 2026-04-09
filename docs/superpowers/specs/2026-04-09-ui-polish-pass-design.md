@@ -76,7 +76,9 @@ Disable slide animations on all GoRouter routes. Set `customTransitionPage` with
 
 Height: 38px. Background: `ThemeConstants.inputBackground` (`#111111`). Bottom border: `ThemeConstants.borderColor`.
 
-**Left side:** Conversation title (12px, `textPrimary`) + project name badge (10px, `mutedFg`, bg `inputSurface`, `border-radius: 4px`).
+**Left side:** Conversation title (12px, `textPrimary`) + project name badge (10px, `mutedFg`, bg `inputSurface`, `border-radius: 4px`) + git status badge:
+- Git repo: omitted (git status communicated by the sidebar icon only)
+- Not a git repo: amber `No Git` badge (10px, `#E8A228`, bg `#2A1F0A`, `border-radius: 4px`)
 
 **Right side (left to right):**
 
@@ -88,10 +90,9 @@ Height: 38px. Background: `ThemeConstants.inputBackground` (`#111111`). Bottom b
    - *(separator)*
    - Open in Finder (with Lucide `folder-open` icon) — reveals folder in Finder (shortcut: `⌘O`)
 
-3. **`Commit & Push ↓`** — split button. Left side: Lucide `git-commit` icon + "Commit & Push" label, blue accent background. Right side: dropdown caret (same blue background, separated by a 1px darker border). Dropdown contains:
-   - Commit
-   - Push
-   - Create PR
+3. **Git action button — two states:**
+   - **Git repo:** `Commit & Push ↓` split button. Left side: Lucide `git-commit` icon + "Commit & Push" label, blue accent background. Right side: dropdown caret (same blue background, separated by a 1px darker border). Dropdown contains: Commit / Push / Create PR.
+   - **Not a git repo:** `Initialize Git` button (same size/style as a plain action button, `inputSurface` background). Tapping runs `git init` and swaps this button to the full Commit & Push split button immediately (Phase 3).
 
 4. **Terminal toggle icon** — Lucide `terminal` icon, icon-only button (28×28px, `border-radius: 5px`). Stub — `onTap: () {}` for now. Toggles a future terminal pane.
 
