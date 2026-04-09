@@ -50,7 +50,9 @@ class ConversationTile extends StatelessWidget {
               child: Text(
                 session.title,
                 style: TextStyle(
-                  color: isActive ? ThemeConstants.textPrimary : ThemeConstants.mutedFg,
+                  color: isActive
+                      ? ThemeConstants.textPrimary
+                      : ThemeConstants.mutedFg,
                   fontSize: ThemeConstants.uiFontSizeSmall,
                 ),
                 overflow: TextOverflow.ellipsis,

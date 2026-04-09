@@ -40,13 +40,15 @@ class ExpandedProjectIds extends _$ExpandedProjectIds {
 }
 
 enum ProjectSortOrder { lastMessage, createdAt, manual }
+
 enum ThreadSortOrder { lastMessage, createdAt }
 
 class ProjectSortState {
   const ProjectSortState({required this.projectSort, required this.threadSort});
   final ProjectSortOrder projectSort;
   final ThreadSortOrder threadSort;
-  ProjectSortState copyWith({ProjectSortOrder? projectSort, ThreadSortOrder? threadSort}) =>
+  ProjectSortState copyWith(
+          {ProjectSortOrder? projectSort, ThreadSortOrder? threadSort}) =>
       ProjectSortState(
         projectSort: projectSort ?? this.projectSort,
         threadSort: threadSort ?? this.threadSort,

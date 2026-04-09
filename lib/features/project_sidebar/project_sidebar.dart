@@ -112,7 +112,8 @@ class ProjectSidebar extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+              border:
+                  Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
             ),
             child: Row(
               children: [
@@ -133,7 +134,8 @@ class ProjectSidebar extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
                       padding: const EdgeInsets.all(3),
-                      child: Icon(LucideIcons.arrowUpDown, size: 13, color: ThemeConstants.mutedFg),
+                      child: Icon(LucideIcons.arrowUpDown,
+                          size: 13, color: ThemeConstants.mutedFg),
                     ),
                   ),
                 ),
@@ -144,7 +146,8 @@ class ProjectSidebar extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: Padding(
                     padding: const EdgeInsets.all(3),
-                    child: Icon(LucideIcons.plus, size: 13, color: ThemeConstants.mutedFg),
+                    child: Icon(LucideIcons.plus,
+                        size: 13, color: ThemeConstants.mutedFg),
                   ),
                 ),
               ],
@@ -190,7 +193,8 @@ class ProjectSidebar extends ConsumerWidget {
                           icon: Icon(LucideIcons.plus, size: 12),
                           label: const Text(
                             'Open folder',
-                            style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall),
+                            style: TextStyle(
+                                fontSize: ThemeConstants.uiFontSizeSmall),
                           ),
                         ),
                       ],
@@ -210,7 +214,8 @@ class ProjectSidebar extends ConsumerWidget {
                     return Container(
                       decoration: const BoxDecoration(
                         border: Border(
-                          bottom: BorderSide(color: ThemeConstants.deepBackground),
+                          bottom:
+                              BorderSide(color: ThemeConstants.deepBackground),
                         ),
                       ),
                       child: ProjectTile(
@@ -250,7 +255,8 @@ class ProjectSidebar extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: ThemeConstants.borderColor)),
+                border:
+                    Border(top: BorderSide(color: ThemeConstants.borderColor)),
               ),
               child: Row(
                 children: [
@@ -301,13 +307,16 @@ PopupMenuItem<String> _sortItem(String value, String label, bool selected) =>
             child: Text(
               label,
               style: TextStyle(
-                color: selected ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
+                color: selected
+                    ? ThemeConstants.textPrimary
+                    : ThemeConstants.textSecondary,
                 fontSize: ThemeConstants.uiFontSizeSmall,
               ),
             ),
           ),
           if (selected)
-            const Icon(LucideIcons.check, size: 11, color: ThemeConstants.accent),
+            const Icon(LucideIcons.check,
+                size: 11, color: ThemeConstants.accent),
         ],
       ),
     );

@@ -72,9 +72,10 @@ class ThemeConstants {
   // Font
   static const String editorFontFamily = 'JetBrains Mono';
   static const double editorFontSize = 13;
-  static const double uiFontSize = 12;        // body: messages, sidebar titles
-  static const double uiFontSizeSmall = 11;   // secondary: chips, button labels
-  static const double uiFontSizeLabel = 10;   // labels: section headers, timestamps
-  static const double uiFontSizeBadge = 9;    // badges: git tag, provider badge
+  static const double uiFontSize = 12; // body: messages, sidebar titles
+  static const double uiFontSizeSmall = 11; // secondary: chips, button labels
+  static const double uiFontSizeLabel =
+      10; // labels: section headers, timestamps
+  static const double uiFontSizeBadge = 9; // badges: git tag, provider badge
   static const double uiFontSizeLarge = 15;
 }

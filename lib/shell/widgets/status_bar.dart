@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../data/models/project.dart';
@@ -30,21 +31,24 @@ class StatusBar extends ConsumerWidget {
       height: 22,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: const BoxDecoration(
-        color: Color(0xFF0A0A0A),
-        border: Border(top: BorderSide(color: Color(0xFF1E1E1E))),
+        color: ThemeConstants.activityBar,
+        border: Border(top: BorderSide(color: ThemeConstants.borderColor)),
       ),
       child: Row(
         children: [
           // Left: Local indicator
-          const Icon(
-            Icons.folder_outlined,
+          Icon(
+            LucideIcons.hardDrive,
             size: 10,
-            color: Color(0xFF444444),
+            color: ThemeConstants.faintFg,
           ),
           const SizedBox(width: 5),
-          const Text(
+          Text(
             'Local',
-            style: TextStyle(color: Color(0xFF444444), fontSize: 10),
+            style: const TextStyle(
+              color: ThemeConstants.faintFg,
+              fontSize: ThemeConstants.uiFontSizeLabel,
+            ),
           ),
           const Spacer(),
           // Right: Git branch
@@ -62,13 +66,16 @@ class StatusBar extends ConsumerWidget {
               activeProject.currentBranch ?? 'unknown',
               style: const TextStyle(
                 color: ThemeConstants.success,
-                fontSize: 10,
+                fontSize: ThemeConstants.uiFontSizeLabel,
               ),
             ),
           ] else if (activeProject != null) ...[
-            const Text(
+            Text(
               'Not git',
-              style: TextStyle(color: Color(0xFF444444), fontSize: 10),
+              style: const TextStyle(
+                color: ThemeConstants.faintFg,
+                fontSize: ThemeConstants.uiFontSizeLabel,
+              ),
             ),
           ],
         ],

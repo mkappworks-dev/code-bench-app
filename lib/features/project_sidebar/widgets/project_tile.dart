@@ -70,18 +70,22 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
             child: InkWell(
               onTap: widget.onToggleExpand,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 child: Row(
                   children: [
                     // Chevron
                     Icon(
-                      widget.isExpanded ? LucideIcons.chevronDown : LucideIcons.chevronRight,
+                      widget.isExpanded
+                          ? LucideIcons.chevronDown
+                          : LucideIcons.chevronRight,
                       size: 14,
                       color: ThemeConstants.faintFg,
                     ),
                     const SizedBox(width: 4),
                     // Folder icon
-                    Icon(LucideIcons.folder, size: 13, color: ThemeConstants.textSecondary),
+                    Icon(LucideIcons.folder,
+                        size: 13, color: ThemeConstants.textSecondary),
                     const SizedBox(width: 6),
                     // Project name
                     Expanded(
@@ -100,7 +104,8 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                       opacity: _hovered ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 120),
                       child: InkWell(
-                        onTap: () => widget.onNewConversation(widget.project.id),
+                        onTap: () =>
+                            widget.onNewConversation(widget.project.id),
                         borderRadius: BorderRadius.circular(4),
                         child: Padding(
                           padding: const EdgeInsets.all(3),

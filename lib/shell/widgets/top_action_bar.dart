@@ -156,16 +156,20 @@ class _CommitPushButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: ThemeConstants.accent,
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
+              borderRadius:
+                  const BorderRadius.horizontal(left: Radius.circular(5)),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(LucideIcons.gitCommitHorizontal, size: 12, color: Colors.white),
+                Icon(LucideIcons.gitCommitHorizontal,
+                    size: 12, color: Colors.white),
                 SizedBox(width: 5),
                 Text(
                   'Commit & Push',
-                  style: TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeSmall),
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: ThemeConstants.uiFontSizeSmall),
                 ),
               ],
             ),
@@ -178,10 +182,13 @@ class _CommitPushButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
             decoration: BoxDecoration(
               color: ThemeConstants.accentLight,
-              border: const Border(left: BorderSide(color: ThemeConstants.accentDark)),
-              borderRadius: const BorderRadius.horizontal(right: Radius.circular(5)),
+              border: const Border(
+                  left: BorderSide(color: ThemeConstants.accentDark)),
+              borderRadius:
+                  const BorderRadius.horizontal(right: Radius.circular(5)),
             ),
-            child: const Icon(LucideIcons.chevronDown, size: 11, color: Colors.white),
+            child: const Icon(LucideIcons.chevronDown,
+                size: 11, color: Colors.white),
           ),
         ),
       ],
@@ -230,7 +237,8 @@ class _ActionButton extends StatelessWidget {
             ),
             if (trailingCaret) ...[
               const SizedBox(width: 4),
-              const Icon(LucideIcons.chevronDown, size: 10, color: ThemeConstants.faintFg),
+              const Icon(LucideIcons.chevronDown,
+                  size: 10, color: ThemeConstants.faintFg),
             ],
           ],
         ),
