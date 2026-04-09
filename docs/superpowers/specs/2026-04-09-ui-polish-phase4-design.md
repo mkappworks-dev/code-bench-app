@@ -125,7 +125,7 @@ Zone is replaced by a project preview row:
 
 ## Out of Scope for This Phase
 
-- Cloning a repo from GitHub during onboarding — Phase 5
-- Multi-account GitHub support — Phase 5+
-- Re-running onboarding from Settings
-- Importing existing projects from a GitHub org list
+- Cloning a repo from GitHub during onboarding — Phase 4 follow-up
+- Re-running onboarding from Settings — Phase 4 follow-up
+- Importing existing projects from a GitHub org list — Phase 4 follow-up
+- Multi-account GitHub support — future (no phase assigned)
