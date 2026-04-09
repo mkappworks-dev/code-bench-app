@@ -94,7 +94,7 @@ Height: 38px. Background: `ThemeConstants.inputBackground` (`#111111`). Bottom b
    - **Git repo:** `Commit & Push ↓` split button. Left side: Lucide `git-commit` icon + "Commit & Push" label, blue accent background. Right side: dropdown caret (same blue background, separated by a 1px darker border). Dropdown contains: Commit / Push / Create PR.
    - **Not a git repo:** `Initialize Git` button (same size/style as a plain action button, `inputSurface` background). Tapping runs `git init` and swaps this button to the full Commit & Push split button immediately (Phase 3).
 
-4. **Terminal toggle icon** — Lucide `terminal` icon, icon-only button (28×28px, `border-radius: 5px`). Stub — `onTap: () {}` for now. Toggles a future terminal pane.
+4. ~~Terminal toggle icon~~ — removed. Terminal access is via "Open Terminal" in the "VS Code ↓" IDE dropdown (Phase 3). No icon in the top bar.
 
 ---
 
@@ -195,6 +195,7 @@ Content is grouped into sections. Each section has:
 | Ollama base URL | Base URL for local Ollama | Editable text field |
 | Delete confirmation | Ask before deleting a session | Toggle |
 | Auto-commit | Skip commit dialog and commit immediately with AI-generated message | Toggle (synced with the toggle in the Commit dialog — same `SharedPreferences` key) |
+| Terminal app | App to open when "Open Terminal" is tapped in the IDE dropdown | Editable text field, default `"Terminal"` (e.g. `"iTerm"`, `"Warp"`) |
 
 **Providers section rows:**
 
@@ -250,7 +251,7 @@ Archiving a session is triggered from the conversation tile context menu (right-
 | `lib/features/chat/widgets/message_bubble.dart` | Full redesign — right-align user, flat assistant, pulsing dot, Lucide icons |
 | `lib/features/chat/widgets/chat_input_bar_v2.dart` | Lucide icons, anchored dropdowns for all 4 chips, token cleanup |
 | `lib/features/chat/widgets/message_list.dart` | Typography token cleanup |
-| `lib/shell/widgets/top_action_bar.dart` | New button order, VS Code + Cursor dropdown, Commit split button, terminal stub |
+| `lib/shell/widgets/top_action_bar.dart` | New button order, VS Code + Cursor + Finder + Terminal dropdown, Commit split button |
 | `lib/shell/widgets/status_bar.dart` | Lucide icons, token cleanup |
 | `lib/features/project_sidebar/project_sidebar.dart` | Lucide icons, token cleanup |
 | `lib/features/project_sidebar/widgets/project_tile.dart` | Icon-only git badge, new-chat icon, Lucide icons, typography |

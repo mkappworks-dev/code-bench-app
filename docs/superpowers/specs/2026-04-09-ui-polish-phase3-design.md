@@ -16,17 +16,18 @@ This is Phase 3 of a three-phase UI improvement queue. Phases 1 and 2 are separa
 
 ### 1. VS Code / Cursor / Finder Launch
 
-Three `Process.run` calls from the top bar "VS Code ↓" dropdown:
+Four `Process.run` calls from the top bar "VS Code ↓" dropdown:
 
 | Action | Command |
 |---|---|
 | VS Code | `Process.run('code', [projectPath])` |
 | Cursor | `Process.run('cursor', [projectPath])` — falls back to `open -a Cursor <path>` if `cursor` CLI not on PATH |
 | Open in Finder | `Process.run('open', [projectPath])` |
+| Open Terminal | `Process.run('open', ['-a', terminalApp, projectPath])` — `terminalApp` defaults to `"Terminal"` (Terminal.app), configurable in Settings → General |
 
-If the CLI is not found: toast — *"VS Code CLI not found — install it from the Command Palette (Shell Command: Install 'code' in PATH)"*.
+If the VS Code/Cursor CLI is not found: toast — *"VS Code CLI not found — install it from the Command Palette (Shell Command: Install 'code' in PATH)"*.
 
-**New service: `IdeLaunchService`** — thin Riverpod-injected wrapper around the three launch calls.
+**New service: `IdeLaunchService`** — thin Riverpod-injected wrapper around the four launch calls.
 
 ### 2. Rename Project Dialog
 
