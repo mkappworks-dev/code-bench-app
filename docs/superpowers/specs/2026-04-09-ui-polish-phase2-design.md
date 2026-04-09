@@ -114,5 +114,5 @@ A `ToolEvent` carries `{type, toolName, input, output, filePath?}`. Tool-driven 
 
 - Agentic tool-use API calls (Phase 5)
 - Functional Commit & Push from the panel footer (Phase 3)
-- Diff view for files not referenced by filename in the code fence
-- Conflict resolution if the file was edited externally between Apply and revert
+- Diff view for files not referenced by filename in the code fence (Phase 5)
+- Conflict resolution if the file was edited externally between Apply and revert (Phase 5)
