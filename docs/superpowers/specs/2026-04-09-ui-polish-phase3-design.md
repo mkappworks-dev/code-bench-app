@@ -6,9 +6,7 @@ Phase 3 makes the stub buttons from Phase 1 functional. Covers: VS Code/Cursor/F
 
 All git operations shell out via `Process.run`/`Process.start` using the project path. The existing `GitHubApiService` handles PR creation. The existing `GitDetector` handles git detection — a new `GitService` handles git operations.
 
-The terminal pane is out of scope for this phase — deferred to Phase 7.
-
-This is Phase 3 of a three-phase UI improvement queue. Phases 1 and 2 are separate specs.
+This is Phase 3 of the UI improvement queue. Phases 1 and 2 are separate specs.
 
 ---
 
@@ -168,7 +166,5 @@ Triggered from "Create PR" in the Commit & Push dropdown.
 
 ## Out of Scope for This Phase
 
-- Terminal pane (Phase 7 — deferred, needs its own design pass)
 - Pushing to non-origin remotes or multiple remotes (Phase 5)
 - PR review or merge flows (Phase 5)
-- Running Add actions in the terminal pane (Phase 7 integration)
