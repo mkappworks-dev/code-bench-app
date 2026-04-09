@@ -58,6 +58,12 @@ class ThemeConstants {
   static const Color frostedBg = Color(0x0AFFFFFF);
   static const Color frostedBorder = Color(0x12FFFFFF);
 
+  // Input / surface tokens (for input boxes, card surfaces, button backgrounds)
+  static const Color inputSurface = Color(0xFF1A1A1A);
+  static const Color deepBorder = Color(0xFF222222);
+  static const Color mutedFg = Color(0xFF555555);
+  static const Color faintFg = Color(0xFF333333);
+
   // Icon sizes
   static const double iconSizeSmall = 14;
   static const double iconSizeMedium = 18;
@@ -66,7 +72,9 @@ class ThemeConstants {
   // Font
   static const String editorFontFamily = 'JetBrains Mono';
   static const double editorFontSize = 13;
-  static const double uiFontSize = 13;
-  static const double uiFontSizeSmall = 11;
+  static const double uiFontSize = 12;        // body: messages, sidebar titles
+  static const double uiFontSizeSmall = 11;   // secondary: chips, button labels
+  static const double uiFontSizeLabel = 10;   // labels: section headers, timestamps
+  static const double uiFontSizeBadge = 9;    // badges: git tag, provider badge
   static const double uiFontSizeLarge = 15;
 }
