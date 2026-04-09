@@ -265,7 +265,7 @@ Archiving a session is triggered from the conversation tile context menu (right-
 - Tool-call cards and changes summary block (Phase 2)
 - Functional implementations of Add action dialog, VS Code/Cursor launch, Commit/Push/Create PR, terminal pane (Phase 3)
 - Rename project dialog (Phase 3)
-- Onboarding screen changes
+- Onboarding screen changes (Phase 4)
 
 ---
 
