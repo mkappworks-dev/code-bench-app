@@ -143,6 +143,6 @@ Triggered from "Create PR" in the Commit & Push dropdown.
 ## Out of Scope for This Phase
 
 - Terminal pane (Phase 4 — deferred, needs its own design pass)
-- Pushing to non-origin remotes or multiple remotes
-- PR review or merge flows
+- Pushing to non-origin remotes or multiple remotes (Phase 5)
+- PR review or merge flows (Phase 5)
 - Running Add actions in the terminal pane (Phase 4 integration)
