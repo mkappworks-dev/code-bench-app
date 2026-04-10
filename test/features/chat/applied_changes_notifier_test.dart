@@ -56,12 +56,31 @@ void main() {
     expect(notifier.changesForSession('nobody'), isEmpty);
   });
 
+  test('revert does not affect other sessions', () {
+    final notifier = container.read(appliedChangesProvider.notifier);
+    notifier.apply(_change(sessionId: 'sid', id: 'c1'));
+    notifier.apply(_change(sessionId: 'other', id: 'c2'));
+    notifier.revert('c1');
+
+    // 'other' must still have c2 intact
+    expect(container.read(appliedChangesProvider)['other']!.map((c) => c.id), ['c2']);
+    // 'sid' should now be removed from map entirely after the fix
+    expect(container.read(appliedChangesProvider)['sid'], isNull);
+  });
+
   test('ChangesPanelVisible toggles', () {
     final notifier = container.read(changesPanelVisibleProvider.notifier);
     expect(container.read(changesPanelVisibleProvider), false);
     notifier.toggle();
     expect(container.read(changesPanelVisibleProvider), true);
     notifier.toggle();
+    expect(container.read(changesPanelVisibleProvider), false);
+  });
+
+  test('ChangesPanelVisible hide() sets to false', () {
+    final notifier = container.read(changesPanelVisibleProvider.notifier);
+    notifier.toggle(); // now true
+    notifier.hide();
     expect(container.read(changesPanelVisibleProvider), false);
   });
 }

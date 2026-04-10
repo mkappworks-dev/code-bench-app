@@ -123,9 +123,10 @@ class AppliedChanges extends _$AppliedChanges {
   }
 
   void revert(String id) {
-    state = {
+    final next = {
       for (final entry in state.entries) entry.key: entry.value.where((c) => c.id != id).toList(),
     };
+    state = Map.fromEntries(next.entries.where((e) => e.value.isNotEmpty));
   }
 
   List<AppliedChange> changesForSession(String sessionId) => state[sessionId] ?? [];
