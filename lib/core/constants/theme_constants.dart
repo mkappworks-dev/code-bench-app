@@ -69,6 +69,13 @@ class ThemeConstants {
   static const double iconSizeMedium = 18;
   static const double iconSizeLarge = 24;
 
+  // Top action bar: exact height of the small action buttons in the right-hand
+  // cluster. Applied via BoxConstraints.tightFor(height: ...) to the _ActionButton
+  // helper and both halves of the Commit/Push split button, so every button in
+  // that row lines up exactly (minHeight alone leaves a 1px gap when one half's
+  // content renders naturally taller than the other).
+  static const double actionButtonHeight = 22;
+
   // Font
   static const String editorFontFamily = 'JetBrains Mono';
   static const double editorFontSize = 13;

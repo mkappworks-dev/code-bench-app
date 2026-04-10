@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/utils/instant_menu.dart';
 import '../../data/models/chat_session.dart';
 import '../../data/models/project.dart';
 import '../../data/models/project_action.dart';
@@ -136,43 +137,48 @@ class _VsCodeDropdown extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final svc = ref.watch(ideLaunchServiceProvider);
-    return PopupMenuButton<String>(
-      tooltip: 'Open in…',
-      color: ThemeConstants.inputSurface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(6),
-        side: const BorderSide(color: ThemeConstants.deepBorder),
-      ),
-      itemBuilder: (_) => [
-        _menuItem('vscode', LucideIcons.code, 'VS Code'),
-        _menuItem('cursor', LucideIcons.zap, 'Cursor'),
-        const PopupMenuDivider(),
-        _menuItem('finder', LucideIcons.folderOpen, 'Open in Finder'),
-        _menuItem('terminal', LucideIcons.terminal, 'Open in Terminal'),
-      ],
-      onSelected: (action) async {
-        String? error;
-        switch (action) {
-          case 'vscode':
-            error = await svc.openVsCode(projectPath);
-          case 'cursor':
-            error = await svc.openCursor(projectPath);
-          case 'finder':
-            await svc.openInFinder(projectPath);
-          case 'terminal':
-            await svc.openInTerminal(projectPath);
-        }
-        if (error != null && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error), duration: const Duration(seconds: 4)),
-          );
-        }
-      },
-      child: _ActionButton(
-        icon: LucideIcons.code,
-        label: 'VS Code',
-        trailingCaret: true,
-        // tap handled by the enclosing PopupMenuButton
+    return Tooltip(
+      message: 'Open in…',
+      child: Builder(
+        builder: (btnContext) => _ActionButton(
+          icon: LucideIcons.code,
+          label: 'VS Code',
+          trailingCaret: true,
+          onTap: () async {
+            final action = await showInstantMenuAnchoredTo<String>(
+              buttonContext: btnContext,
+              color: ThemeConstants.panelBackground,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(7),
+                side: const BorderSide(color: Color(0xFF333333)),
+              ),
+              items: [
+                _menuItem('vscode', LucideIcons.code, 'VS Code'),
+                _menuItem('cursor', LucideIcons.zap, 'Cursor'),
+                const PopupMenuDivider(),
+                _menuItem('finder', LucideIcons.folderOpen, 'Open in Finder'),
+                _menuItem('terminal', LucideIcons.terminal, 'Open in Terminal'),
+              ],
+            );
+            if (action == null) return;
+            String? error;
+            switch (action) {
+              case 'vscode':
+                error = await svc.openVsCode(projectPath);
+              case 'cursor':
+                error = await svc.openCursor(projectPath);
+              case 'finder':
+                await svc.openInFinder(projectPath);
+              case 'terminal':
+                await svc.openInTerminal(projectPath);
+            }
+            if (error != null && btnContext.mounted) {
+              ScaffoldMessenger.of(btnContext).showSnackBar(
+                SnackBar(content: Text(error), duration: const Duration(seconds: 4)),
+              );
+            }
+          },
+        ),
       ),
     );
   }
@@ -180,6 +186,7 @@ class _VsCodeDropdown extends ConsumerWidget {
   PopupMenuItem<String> _menuItem(String value, IconData icon, String label) {
     return PopupMenuItem(
       value: value,
+      height: 32,
       child: Row(
         children: [
           Icon(icon, size: 12, color: ThemeConstants.textSecondary),
@@ -386,87 +393,113 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         GestureDetector(
           onTap: busy ? null : _doCommit,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
             decoration: BoxDecoration(
               color: busy ? ThemeConstants.accentDark : ThemeConstants.accent,
               borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(LucideIcons.gitCommitHorizontal, size: 12, color: Colors.white),
-                const SizedBox(width: 5),
-                Text(
-                  _pushing
-                      ? '● Pushing…'
-                      : _pulling
-                          ? '● Pulling…'
-                          : 'Commit',
-                  style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeSmall),
-                ),
-              ],
+            child: Center(
+              widthFactor: 1,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(LucideIcons.gitCommitHorizontal, size: 12, color: Colors.white),
+                  const SizedBox(width: 5),
+                  Text(
+                    _pushing
+                        ? '● Pushing…'
+                        : _pulling
+                            ? '● Pulling…'
+                            : 'Commit',
+                    style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeSmall),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         // Right: dropdown
-        PopupMenuButton<String>(
-          tooltip: 'Git actions',
-          color: ThemeConstants.inputSurface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-            side: const BorderSide(color: ThemeConstants.deepBorder),
-          ),
-          itemBuilder: (_) => [
-            PopupMenuItem(
-              value: 'push',
-              child: Text(
-                _pushing ? '● Pushing…' : 'Push ↑',
-                style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-              ),
-            ),
-            PopupMenuItem(
-              value: 'pull',
-              child: Text(
-                _behindCount > 0 ? 'Pull ↓$_behindCount' : 'Pull',
-                style: TextStyle(
-                  color: _behindCount > 0 ? ThemeConstants.accent : ThemeConstants.textSecondary,
-                  fontSize: ThemeConstants.uiFontSizeSmall,
+        Tooltip(
+          message: 'Git actions',
+          child: Builder(
+            builder: (btnContext) => GestureDetector(
+              onTap: () async {
+                final action = await showInstantMenuAnchoredTo<String>(
+                  buttonContext: btnContext,
+                  color: ThemeConstants.panelBackground,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(7),
+                    side: const BorderSide(color: Color(0xFF333333)),
+                  ),
+                  items: [
+                    PopupMenuItem(
+                      value: 'push',
+                      height: 32,
+                      child: Text(
+                        _pushing ? '● Pushing…' : 'Push ↑',
+                        style: const TextStyle(
+                          color: ThemeConstants.textSecondary,
+                          fontSize: ThemeConstants.uiFontSizeSmall,
+                        ),
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'pull',
+                      height: 32,
+                      child: Text(
+                        _behindCount > 0 ? 'Pull ↓$_behindCount' : 'Pull',
+                        style: TextStyle(
+                          color: _behindCount > 0 ? ThemeConstants.accent : ThemeConstants.textSecondary,
+                          fontSize: ThemeConstants.uiFontSizeSmall,
+                        ),
+                      ),
+                    ),
+                    const PopupMenuDivider(),
+                    const PopupMenuItem(
+                      value: 'create_pr',
+                      height: 32,
+                      child: Text(
+                        'Create PR',
+                        style: TextStyle(
+                          color: ThemeConstants.textSecondary,
+                          fontSize: ThemeConstants.uiFontSizeSmall,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+                if (action == null) return;
+                switch (action) {
+                  case 'push':
+                    _doPush();
+                  case 'pull':
+                    _doPull();
+                  case 'create_pr':
+                    _showCreatePrDialog();
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7),
+                constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
+                decoration: BoxDecoration(
+                  color: ThemeConstants.accentLight,
+                  border: const Border(left: BorderSide(color: ThemeConstants.accentDark)),
+                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(5)),
+                ),
+                child: Center(
+                  widthFactor: 1,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (badgeLabel.isNotEmpty)
+                        Text(badgeLabel,
+                            style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeLabel)),
+                      const Icon(LucideIcons.chevronDown, size: 11, color: Colors.white),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const PopupMenuDivider(),
-            const PopupMenuItem(
-              value: 'create_pr',
-              child: Text(
-                'Create PR',
-                style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-              ),
-            ),
-          ],
-          onSelected: (action) {
-            switch (action) {
-              case 'push':
-                _doPush();
-              case 'pull':
-                _doPull();
-              case 'create_pr':
-                _showCreatePrDialog();
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-            decoration: BoxDecoration(
-              color: ThemeConstants.accentLight,
-              border: const Border(left: BorderSide(color: ThemeConstants.accentDark)),
-              borderRadius: const BorderRadius.horizontal(right: Radius.circular(5)),
-            ),
-            child: Row(
-              children: [
-                if (badgeLabel.isNotEmpty)
-                  Text(badgeLabel,
-                      style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeLabel)),
-                const Icon(LucideIcons.chevronDown, size: 11, color: Colors.white),
-              ],
             ),
           ),
         ),
@@ -612,29 +645,33 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
       decoration: BoxDecoration(
         color: ThemeConstants.inputSurface,
         border: Border.all(color: ThemeConstants.deepBorder),
         borderRadius: BorderRadius.circular(5),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: ThemeConstants.textSecondary),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: const TextStyle(
-              color: ThemeConstants.textSecondary,
-              fontSize: ThemeConstants.uiFontSizeSmall,
+      child: Center(
+        widthFactor: 1,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12, color: ThemeConstants.textSecondary),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: const TextStyle(
+                color: ThemeConstants.textSecondary,
+                fontSize: ThemeConstants.uiFontSizeSmall,
+              ),
             ),
-          ),
-          if (trailingCaret) ...[
-            const SizedBox(width: 4),
-            const Icon(LucideIcons.chevronDown, size: 10, color: ThemeConstants.faintFg),
+            if (trailingCaret) ...[
+              const SizedBox(width: 4),
+              const Icon(LucideIcons.chevronDown, size: 10, color: ThemeConstants.faintFg),
+            ],
           ],
-        ],
+        ),
       ),
     );
 
@@ -659,56 +696,73 @@ class _ActionsDropdown extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return PopupMenuButton<Object>(
-      tooltip: 'Actions',
-      color: ThemeConstants.inputSurface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(6),
-        side: const BorderSide(color: ThemeConstants.deepBorder),
-      ),
-      itemBuilder: (_) => [
-        for (final action in project.actions)
-          PopupMenuItem<Object>(
-            value: action,
-            child: Row(
-              children: [
-                const Icon(LucideIcons.play, size: 12, color: ThemeConstants.textSecondary),
-                const SizedBox(width: 6),
-                Text(action.name,
-                    style:
-                        const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall)),
+    return Tooltip(
+      message: 'Actions',
+      child: Builder(
+        builder: (btnContext) => _ActionButton(
+          icon: LucideIcons.plus,
+          label: 'Actions',
+          trailingCaret: true,
+          onTap: () async {
+            final value = await showInstantMenuAnchoredTo<Object>(
+              buttonContext: btnContext,
+              color: ThemeConstants.panelBackground,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(7),
+                side: const BorderSide(color: Color(0xFF333333)),
+              ),
+              items: [
+                for (final action in project.actions)
+                  PopupMenuItem<Object>(
+                    value: action,
+                    height: 32,
+                    child: Row(
+                      children: [
+                        const Icon(LucideIcons.play, size: 12, color: ThemeConstants.textSecondary),
+                        const SizedBox(width: 6),
+                        Text(
+                          action.name,
+                          style: const TextStyle(
+                            color: ThemeConstants.textSecondary,
+                            fontSize: ThemeConstants.uiFontSizeSmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (project.actions.isNotEmpty) const PopupMenuDivider(),
+                PopupMenuItem<Object>(
+                  value: '__add__',
+                  height: 32,
+                  child: Row(
+                    children: const [
+                      Icon(LucideIcons.plus, size: 12, color: ThemeConstants.textSecondary),
+                      SizedBox(width: 6),
+                      Text(
+                        'Add action',
+                        style: TextStyle(
+                          color: ThemeConstants.textSecondary,
+                          fontSize: ThemeConstants.uiFontSizeSmall,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-            ),
-          ),
-        if (project.actions.isNotEmpty) const PopupMenuDivider(),
-        PopupMenuItem<Object>(
-          value: '__add__',
-          child: Row(
-            children: const [
-              Icon(LucideIcons.plus, size: 12, color: ThemeConstants.textSecondary),
-              SizedBox(width: 6),
-              Text('+ Add action',
-                  style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall)),
-            ],
-          ),
+            );
+            if (value == null) return;
+            if (value == '__add__') {
+              if (!btnContext.mounted) return;
+              final action = await _showAddActionDialog(btnContext);
+              if (action != null) {
+                final newActions = [...project.actions, action];
+                await ref.read(projectServiceProvider).updateProjectActions(project.id, newActions);
+              }
+            } else if (value is ProjectAction) {
+              await ref.read(actionOutputNotifierProvider.notifier).run(value, project.path);
+            }
+          },
         ),
-      ],
-      onSelected: (value) async {
-        if (value == '__add__') {
-          final action = await _showAddActionDialog(context);
-          if (action != null) {
-            final newActions = [...project.actions, action];
-            await ref.read(projectServiceProvider).updateProjectActions(project.id, newActions);
-          }
-        } else if (value is ProjectAction) {
-          await ref.read(actionOutputNotifierProvider.notifier).run(value, project.path);
-        }
-      },
-      child: _ActionButton(
-        icon: LucideIcons.plus,
-        label: 'Actions',
-        trailingCaret: true,
-        // tap handled by the enclosing PopupMenuButton
       ),
     );
   }
