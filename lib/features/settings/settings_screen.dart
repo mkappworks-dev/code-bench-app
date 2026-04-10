@@ -132,29 +132,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ThemeConstants.background,
-      body: Column(
+      body: Row(
         children: [
-          // Traffic-light clearance on macOS (TitleBarStyle.hidden)
-          if (PlatformUtils.isMacOS) const SizedBox(height: 28),
+          // Left nav (200px) — extends to y=0, macOS spacer inside nav
+          _SettingsLeftNav(
+            activeNav: _activeNav,
+            onSelect: (nav) => setState(() => _activeNav = nav),
+            onBack: () => context.go('/chat'),
+            onRestoreDefaults: _restoreDefaults,
+          ),
+          // Content area — top: 48 (macOS) / 20 keeps label aligned with "Settings" title
           Expanded(
-            child: Row(
-              children: [
-                // Left nav (200px)
-                _SettingsLeftNav(
-                  activeNav: _activeNav,
-                  onSelect: (nav) => setState(() => _activeNav = nav),
-                  onBack: () => context.go('/chat'),
-                  onRestoreDefaults: _restoreDefaults,
-                ),
-                // Content area — top: 20 aligns section label with "Settings" title
-                Expanded(
-                  child: Container(
-                    color: ThemeConstants.sidebarBackground,
-                    padding: const EdgeInsets.only(left: 24, right: 24, top: 20),
-                    child: _buildContent(),
-                  ),
-                ),
-              ],
+            child: Container(
+              color: ThemeConstants.sidebarBackground,
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: PlatformUtils.isMacOS ? 48 : 20,
+              ),
+              child: _buildContent(),
             ),
           ),
         ],
@@ -245,6 +241,8 @@ class _SettingsLeftNav extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Traffic-light clearance — nav background fills to y=0
+          if (PlatformUtils.isMacOS) const SizedBox(height: 28),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 20, 16, 16),
             child: Text(
