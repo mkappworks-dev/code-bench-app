@@ -9,6 +9,7 @@ import '../../data/models/project_action.dart';
 import '../../features/chat/chat_notifier.dart';
 import '../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../../services/actions/action_runner_service.dart';
+import '../../services/git/git_service.dart';
 import '../../services/ide/ide_launch_service.dart';
 import '../../services/project/project_service.dart';
 
@@ -110,11 +111,7 @@ class TopActionBar extends ConsumerWidget {
           if (project != null && project.isGit)
             _CommitPushButton(onCommit: () {}, onDropdown: () {})
           else if (project != null && !project.isGit)
-            _ActionButton(
-              icon: LucideIcons.gitMerge,
-              label: 'Initialize Git',
-              onTap: () {}, // wired in Phase 3
-            ),
+            _InitGitButton(project: project),
         ],
       ),
     );
@@ -181,6 +178,39 @@ class _VsCodeDropdown extends ConsumerWidget {
           Text(label, style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11)),
         ],
       ),
+    );
+  }
+}
+
+// ── Initialize Git button ─────────────────────────────────────────────────────
+
+class _InitGitButton extends ConsumerWidget {
+  const _InitGitButton({required this.project});
+  final Project project;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return _ActionButton(
+      icon: LucideIcons.gitMerge,
+      label: 'Initialize Git',
+      onTap: () async {
+        try {
+          final gitSvc = GitService(project.path);
+          await gitSvc.initGit();
+          await ref.read(projectServiceProvider).refreshGitStatus(project.id);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Git repository initialized')),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to initialize git: $e')),
+            );
+          }
+        }
+      },
     );
   }
 }
