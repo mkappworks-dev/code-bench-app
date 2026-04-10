@@ -42,11 +42,11 @@ GoRouter appRouter(Ref ref) {
               ),
             ),
           ),
-          GoRoute(
-            path: '/settings',
-            pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
-          ),
         ],
+      ),
+      GoRoute(
+        path: '/settings',
+        pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
       ),
     ],
   );
