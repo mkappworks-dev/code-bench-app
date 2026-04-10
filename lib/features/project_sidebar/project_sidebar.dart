@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -228,7 +230,7 @@ class ProjectSidebar extends ConsumerWidget {
                         },
                         onRemove: (id) => ref.read(projectServiceProvider).removeProject(id),
                         onNewConversation: (id) => _newConversation(context, ref, id),
-                        onArchive: (sessionId) => ref.read(sessionServiceProvider).archiveSession(sessionId),
+                        onArchive: (sessionId) => unawaited(ref.read(sessionServiceProvider).archiveSession(sessionId)),
                       ),
                     );
                   },

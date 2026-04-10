@@ -28,6 +28,7 @@ mixin _$ChatSession {
   DateTime get createdAt => throw _privateConstructorUsedError;
   DateTime get updatedAt => throw _privateConstructorUsedError;
   bool get isPinned => throw _privateConstructorUsedError;
+  bool get isArchived => throw _privateConstructorUsedError;
 
   /// Serializes this ChatSession to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -51,7 +52,8 @@ abstract class $ChatSessionCopyWith<$Res> {
       String? projectId,
       DateTime createdAt,
       DateTime updatedAt,
-      bool isPinned});
+      bool isPinned,
+      bool isArchived});
 }
 
 /// @nodoc
@@ -76,6 +78,7 @@ class _$ChatSessionCopyWithImpl<$Res, $Val extends ChatSession> implements $Chat
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? isPinned = null,
+    Object? isArchived = null,
   }) {
     return _then(_value.copyWith(
       sessionId: null == sessionId
@@ -110,6 +113,10 @@ class _$ChatSessionCopyWithImpl<$Res, $Val extends ChatSession> implements $Chat
           ? _value.isPinned
           : isPinned // ignore: cast_nullable_to_non_nullable
               as bool,
+      isArchived: null == isArchived
+          ? _value.isArchived
+          : isArchived // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -128,7 +135,8 @@ abstract class _$$ChatSessionImplCopyWith<$Res> implements $ChatSessionCopyWith<
       String? projectId,
       DateTime createdAt,
       DateTime updatedAt,
-      bool isPinned});
+      bool isPinned,
+      bool isArchived});
 }
 
 /// @nodoc
@@ -150,6 +158,7 @@ class __$$ChatSessionImplCopyWithImpl<$Res> extends _$ChatSessionCopyWithImpl<$R
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? isPinned = null,
+    Object? isArchived = null,
   }) {
     return _then(_$ChatSessionImpl(
       sessionId: null == sessionId
@@ -184,6 +193,10 @@ class __$$ChatSessionImplCopyWithImpl<$Res> extends _$ChatSessionCopyWithImpl<$R
           ? _value.isPinned
           : isPinned // ignore: cast_nullable_to_non_nullable
               as bool,
+      isArchived: null == isArchived
+          ? _value.isArchived
+          : isArchived // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -199,7 +212,8 @@ class _$ChatSessionImpl implements _ChatSession {
       this.projectId,
       required this.createdAt,
       required this.updatedAt,
-      this.isPinned = false});
+      this.isPinned = false,
+      this.isArchived = false});
 
   factory _$ChatSessionImpl.fromJson(Map<String, dynamic> json) => _$$ChatSessionImplFromJson(json);
 
@@ -220,10 +234,13 @@ class _$ChatSessionImpl implements _ChatSession {
   @override
   @JsonKey()
   final bool isPinned;
+  @override
+  @JsonKey()
+  final bool isArchived;
 
   @override
   String toString() {
-    return 'ChatSession(sessionId: $sessionId, title: $title, modelId: $modelId, providerId: $providerId, projectId: $projectId, createdAt: $createdAt, updatedAt: $updatedAt, isPinned: $isPinned)';
+    return 'ChatSession(sessionId: $sessionId, title: $title, modelId: $modelId, providerId: $providerId, projectId: $projectId, createdAt: $createdAt, updatedAt: $updatedAt, isPinned: $isPinned, isArchived: $isArchived)';
   }
 
   @override
@@ -238,13 +255,14 @@ class _$ChatSessionImpl implements _ChatSession {
             (identical(other.projectId, projectId) || other.projectId == projectId) &&
             (identical(other.createdAt, createdAt) || other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt) &&
-            (identical(other.isPinned, isPinned) || other.isPinned == isPinned));
+            (identical(other.isPinned, isPinned) || other.isPinned == isPinned) &&
+            (identical(other.isArchived, isArchived) || other.isArchived == isArchived));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, sessionId, title, modelId, providerId, projectId, createdAt, updatedAt, isPinned);
+  int get hashCode => Object.hash(
+      runtimeType, sessionId, title, modelId, providerId, projectId, createdAt, updatedAt, isPinned, isArchived);
 
   /// Create a copy of ChatSession
   /// with the given fields replaced by the non-null parameter values.
@@ -271,7 +289,8 @@ abstract class _ChatSession implements ChatSession {
       final String? projectId,
       required final DateTime createdAt,
       required final DateTime updatedAt,
-      final bool isPinned}) = _$ChatSessionImpl;
+      final bool isPinned,
+      final bool isArchived}) = _$ChatSessionImpl;
 
   factory _ChatSession.fromJson(Map<String, dynamic> json) = _$ChatSessionImpl.fromJson;
 
@@ -291,6 +310,8 @@ abstract class _ChatSession implements ChatSession {
   DateTime get updatedAt;
   @override
   bool get isPinned;
+  @override
+  bool get isArchived;
 
   /// Create a copy of ChatSession
   /// with the given fields replaced by the non-null parameter values.

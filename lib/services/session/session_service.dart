@@ -222,6 +222,7 @@ class SessionService {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       isPinned: row.isPinned,
+      isArchived: row.isArchived,
     );
   }
 

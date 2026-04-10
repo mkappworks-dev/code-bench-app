@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -176,7 +178,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         );
       case _SettingsNav.archive:
         return ArchiveScreen(
-          onUnarchive: (id) => ref.read(sessionServiceProvider).unarchiveSession(id),
+          onUnarchive: (id) => unawaited(ref.read(sessionServiceProvider).unarchiveSession(id)),
         );
     }
   }
@@ -364,6 +366,9 @@ class _GeneralSectionState extends State<_GeneralSection> {
   void initState() {
     super.initState();
     _load();
+    _terminalAppController.addListener(
+      () => widget.generalPrefs.setTerminalApp(_terminalAppController.text),
+    );
   }
 
   Future<void> _load() async {
