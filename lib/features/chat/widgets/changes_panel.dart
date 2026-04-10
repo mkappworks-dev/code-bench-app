@@ -87,7 +87,7 @@ class ChangesPanel extends ConsumerWidget {
                             change: change,
                             project: project,
                             onRevert: () async {
-                              if (project == null) return;
+                              if (project == null) throw StateError('No active project');
                               await ref.read(applyServiceProvider).revertChange(
                                     change: change,
                                     isGit: project.isGit,

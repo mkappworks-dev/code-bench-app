@@ -51,6 +51,15 @@ void main() {
     expect(changes.map((c) => c.id), ['c2']);
   });
 
+  test('revert removes session key when last change is reverted', () {
+    final notifier = container.read(appliedChangesProvider.notifier);
+    notifier.apply(_change(sessionId: 'sid', id: 'c1'));
+    notifier.revert('c1');
+
+    // Session key must be pruned entirely — not left as an empty list
+    expect(container.read(appliedChangesProvider)['sid'], isNull);
+  });
+
   test('changesForSession returns empty list when no changes', () {
     final notifier = container.read(appliedChangesProvider.notifier);
     expect(notifier.changesForSession('nobody'), isEmpty);
