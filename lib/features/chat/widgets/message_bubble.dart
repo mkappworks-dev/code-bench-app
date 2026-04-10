@@ -20,13 +20,35 @@ import '../chat_notifier.dart';
 
 // ── Public helper (also used by tests) ───────────────────────────────────────
 
+/// Maximum filename length accepted from a code fence info string.
+/// Prevents DoS via megabyte-long filename headers and matches the
+/// common POSIX/Windows PATH_MAX ballpark.
+const int _kMaxFilenameLength = 260;
+
 /// Splits a code fence info string (e.g. "dart lib/main.dart") into
 /// (language, filename?). Filename is null if no second word is present.
+///
+/// The filename is **untrusted AI input** and is validated here:
+/// rejects empty, absolute paths, null bytes, control characters,
+/// line breaks, and paths longer than [_kMaxFilenameLength]. Invalid
+/// filenames are dropped (treated as no filename) rather than raising,
+/// so the Diff button simply does not appear.
 (String language, String? filename) parseCodeFenceInfo(String info) {
-  final parts = info.split(' ');
+  final parts = info.trim().split(RegExp(r'\s+'));
   final language = parts.first;
-  final filename = parts.length > 1 ? parts.sublist(1).join(' ') : null;
-  return (language, filename);
+  if (parts.length < 2) return (language, null);
+
+  // Whitespace (including \n, \r, \t) is stripped by the \s+ split, so we
+  // only need to guard against null-byte injection, over-length, and
+  // absolute paths that would bypass the project-root join.
+  final candidate = parts.sublist(1).join(' ');
+  if (candidate.isEmpty ||
+      candidate.length > _kMaxFilenameLength ||
+      candidate.contains('\u0000') ||
+      p.isAbsolute(candidate)) {
+    return (language, null);
+  }
+  return (language, candidate);
 }
 
 // ── MessageBubble ─────────────────────────────────────────────────────────────

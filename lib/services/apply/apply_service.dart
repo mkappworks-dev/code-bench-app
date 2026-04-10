@@ -42,13 +42,46 @@ class ApplyService {
   final ProcessRunner _processRunner;
 
   /// Throws [StateError] if [filePath] is not inside [projectPath].
+  ///
   /// Guards against path-traversal attacks from AI-controlled filenames.
+  /// Performs **two** checks:
+  ///   1. Lexical — `p.normalize` strips `..` / `.` / duplicate separators
+  ///      and verifies the result starts with the project root.
+  ///   2. Physical — resolves symlinks on the deepest existing ancestor
+  ///      and verifies the real path is still inside the real project root.
+  ///      This blocks symlink-escape attacks where a link inside the
+  ///      project tree points to somewhere outside (e.g. `lib/x -> /etc`).
   static void assertWithinProject(String filePath, String projectPath) {
-    final normalized = p.normalize(filePath);
-    final root = p.normalize(projectPath) + p.separator;
-    if (!normalized.startsWith(root)) {
+    // Lexical check — cheap, blocks obvious ../ before any I/O
+    final lexFile = p.normalize(p.absolute(filePath));
+    final lexRoot = p.normalize(p.absolute(projectPath));
+    final lexRootWithSep = lexRoot + p.separator;
+    if (!lexFile.startsWith(lexRootWithSep)) {
       throw StateError(
-        'Path "$normalized" is outside project root "$projectPath"',
+        'Path "$filePath" is outside project root "$projectPath"',
+      );
+    }
+
+    // Physical check — resolve symlinks on both root and deepest existing
+    // ancestor of the target. We cannot resolve the target itself because
+    // the file may not exist yet (creating a new file is a normal case).
+    final rootDir = Directory(lexRoot);
+    if (!rootDir.existsSync()) {
+      throw StateError('Project root does not exist: "$projectPath"');
+    }
+    final rootReal = rootDir.resolveSymbolicLinksSync();
+
+    var probe = Directory(p.dirname(lexFile));
+    while (!probe.existsSync()) {
+      final parent = probe.parent;
+      if (parent.path == probe.path) break; // reached filesystem root
+      probe = parent;
+    }
+    final probeReal = probe.resolveSymbolicLinksSync();
+    final rootRealWithSep = rootReal + p.separator;
+    if (probeReal != rootReal && !probeReal.startsWith(rootRealWithSep)) {
+      throw StateError(
+        'Path "$filePath" resolves outside project root via a symlink',
       );
     }
   }

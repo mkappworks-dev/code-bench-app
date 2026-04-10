@@ -59,5 +59,24 @@ void main() {
       expect(result.$1, 'dart');
       expect(result.$2, 'path with spaces/file.dart');
     });
+
+    test('rejects absolute POSIX paths', () {
+      final result = parseCodeFenceInfo('dart /etc/passwd');
+      expect(result.$1, 'dart');
+      expect(result.$2, isNull);
+    });
+
+    test('rejects null-byte injection', () {
+      final result = parseCodeFenceInfo('dart foo\u0000.dart');
+      expect(result.$1, 'dart');
+      expect(result.$2, isNull);
+    });
+
+    test('rejects filename longer than max length', () {
+      final longName = 'a' * 300;
+      final result = parseCodeFenceInfo('dart $longName');
+      expect(result.$1, 'dart');
+      expect(result.$2, isNull);
+    });
   });
 }

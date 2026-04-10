@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:code_bench_app/features/chat/chat_notifier.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
 import 'package:code_bench_app/services/filesystem/filesystem_service.dart';
@@ -208,6 +209,37 @@ void main() {
         tmpDir.path,
       ),
       returnsNormally,
+    );
+  });
+
+  test('assertWithinProject blocks symlink escape', () async {
+    // Create a sibling directory OUTSIDE the project
+    final outside = await Directory.systemTemp.createTemp('apply_outside_');
+    try {
+      // Create a symlink INSIDE the project pointing OUT
+      final linkPath = p.join(tmpDir.path, 'escape');
+      await Link(linkPath).create(outside.path);
+
+      // Attempting to write through the symlink must be blocked even though
+      // the lexical path "<project>/escape/evil.txt" starts with the project root
+      expect(
+        () => ApplyService.assertWithinProject(
+          p.join(linkPath, 'evil.txt'),
+          tmpDir.path,
+        ),
+        throwsA(isA<StateError>()),
+      );
+    } finally {
+      await outside.delete(recursive: true);
+    }
+  });
+
+  test('assertWithinProject blocks sibling-prefix attack', () {
+    // Project is /tmp/foo, attacker tries /tmp/foo-evil/x.dart
+    final siblingPath = '${tmpDir.path}-evil/x.dart';
+    expect(
+      () => ApplyService.assertWithinProject(siblingPath, tmpDir.path),
+      throwsA(isA<StateError>()),
     );
   });
 }
