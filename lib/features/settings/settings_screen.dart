@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../core/utils/instant_menu.dart';
+import '../../core/utils/platform_utils.dart';
 import '../../data/datasources/local/general_preferences.dart';
 import '../../data/datasources/local/secure_storage_source.dart';
 import '../../data/models/ai_model.dart';
@@ -133,10 +134,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       backgroundColor: ThemeConstants.background,
       body: Column(
         children: [
-          // Header bar
-          _SettingsHeaderBar(
-            onRestoreDefaults: _restoreDefaults,
-          ),
+          // Traffic-light clearance on macOS (TitleBarStyle.hidden)
+          if (PlatformUtils.isMacOS) const SizedBox(height: 28),
           Expanded(
             child: Row(
               children: [
@@ -145,15 +144,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   activeNav: _activeNav,
                   onSelect: (nav) => setState(() => _activeNav = nav),
                   onBack: () => context.go('/chat'),
+                  onRestoreDefaults: _restoreDefaults,
                 ),
-                // Content area
+                // Content area — top: 20 aligns section label with "Settings" title
                 Expanded(
                   child: Container(
                     color: ThemeConstants.sidebarBackground,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
+                    padding: const EdgeInsets.only(left: 24, right: 24, top: 20),
                     child: _buildContent(),
                   ),
                 ),
@@ -222,41 +219,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-// ── Header bar ────────────────────────────────────────────────────────────────
-
-class _SettingsHeaderBar extends StatelessWidget {
-  const _SettingsHeaderBar({required this.onRestoreDefaults});
-
-  final VoidCallback onRestoreDefaults;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 38,
-      decoration: const BoxDecoration(
-        color: ThemeConstants.inputBackground,
-        border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          const Spacer(),
-          TextButton(
-            onPressed: onRestoreDefaults,
-            child: const Text(
-              '↺ Restore defaults',
-              style: TextStyle(
-                color: ThemeConstants.textSecondary,
-                fontSize: 11,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ── Left nav ──────────────────────────────────────────────────────────────────
 
 class _SettingsLeftNav extends StatelessWidget {
@@ -264,11 +226,13 @@ class _SettingsLeftNav extends StatelessWidget {
     required this.activeNav,
     required this.onSelect,
     required this.onBack,
+    required this.onRestoreDefaults,
   });
 
   final _SettingsNav activeNav;
   final ValueChanged<_SettingsNav> onSelect;
   final VoidCallback onBack;
+  final VoidCallback onRestoreDefaults;
 
   @override
   Widget build(BuildContext context) {
@@ -311,6 +275,19 @@ class _SettingsLeftNav extends StatelessWidget {
             onTap: () => onSelect(_SettingsNav.archive),
           ),
           const Spacer(),
+          InkWell(
+            onTap: onRestoreDefaults,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                '↺ Restore defaults',
+                style: TextStyle(
+                  color: ThemeConstants.mutedFg,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ),
           _NavItem(
             icon: LucideIcons.arrowLeft,
             label: 'Back',
