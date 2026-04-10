@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/models/ai_model.dart';
+import '../../data/models/applied_change.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/models/chat_session.dart';
 import '../../services/session/session_service.dart';
@@ -107,4 +108,36 @@ Stream<List<ChatSession>> projectSessions(Ref ref, String projectId) {
 @riverpod
 Stream<List<ChatSession>> archivedSessions(Ref ref) {
   return ref.watch(sessionServiceProvider).watchArchivedSessions();
+}
+
+// ── Applied changes (in-memory, keyed by sessionId) ─────────────────────────
+
+@Riverpod(keepAlive: true)
+class AppliedChanges extends _$AppliedChanges {
+  @override
+  Map<String, List<AppliedChange>> build() => {};
+
+  void apply(AppliedChange change) {
+    final list = <AppliedChange>[...(state[change.sessionId] ?? []), change];
+    state = {...state, change.sessionId: list};
+  }
+
+  void revert(String id) {
+    state = {
+      for (final entry in state.entries) entry.key: entry.value.where((c) => c.id != id).toList(),
+    };
+  }
+
+  List<AppliedChange> changesForSession(String sessionId) => state[sessionId] ?? [];
+}
+
+// ── Changes panel visibility ─────────────────────────────────────────────────
+
+@Riverpod(keepAlive: true)
+class ChangesPanelVisible extends _$ChangesPanelVisible {
+  @override
+  bool build() => false;
+
+  void toggle() => state = !state;
+  void hide() => state = false;
 }

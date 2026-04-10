@@ -357,5 +357,32 @@ class _ChatMessagesProviderElement extends AutoDisposeAsyncNotifierProviderEleme
   @override
   String get sessionId => (origin as ChatMessagesProvider).sessionId;
 }
+
+String _$appliedChangesHash() => r'74ef502b923552c950587dc27d4ac6c1a4f65bcd';
+
+/// See also [AppliedChanges].
+@ProviderFor(AppliedChanges)
+final appliedChangesProvider = NotifierProvider<AppliedChanges, Map<String, List<AppliedChange>>>.internal(
+  AppliedChanges.new,
+  name: r'appliedChangesProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$appliedChangesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$AppliedChanges = Notifier<Map<String, List<AppliedChange>>>;
+String _$changesPanelVisibleHash() => r'eff3a5e9901e430955b5f80c2824460a5064158b';
+
+/// See also [ChangesPanelVisible].
+@ProviderFor(ChangesPanelVisible)
+final changesPanelVisibleProvider = NotifierProvider<ChangesPanelVisible, bool>.internal(
+  ChangesPanelVisible.new,
+  name: r'changesPanelVisibleProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$changesPanelVisibleHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ChangesPanelVisible = Notifier<bool>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
