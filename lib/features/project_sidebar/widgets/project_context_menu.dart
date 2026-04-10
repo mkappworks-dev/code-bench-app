@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/utils/instant_menu.dart';
 
 class ProjectContextMenu {
   static Future<String?> show({
@@ -13,7 +14,7 @@ class ProjectContextMenu {
     required bool isGit,
   }) async {
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-    return showMenu<String>(
+    return showInstantMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
         position.dx,
