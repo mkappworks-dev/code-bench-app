@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -14,6 +16,9 @@ import '../../services/ai/ai_service_factory.dart';
 import '../../services/git/git_service.dart';
 import '../../services/ide/ide_launch_service.dart';
 import '../../data/datasources/local/general_preferences.dart';
+import '../../data/datasources/local/secure_storage_source.dart';
+import '../../features/chat/widgets/create_pr_dialog.dart';
+import '../../services/github/github_api_service.dart';
 import '../../services/project/project_service.dart';
 
 class TopActionBar extends ConsumerWidget {
@@ -468,7 +473,118 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   }
 
   Future<void> _showCreatePrDialog() async {
-    // Implemented in Task 9
+    // 1. Check GitHub token.
+    final storage = ref.read(secureStorageSourceProvider);
+    final token = await storage.readGitHubToken();
+    if (token == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Connect GitHub in Settings → Providers')),
+        );
+      }
+      return;
+    }
+
+    // 2. Ensure we're not on the default branch.
+    final branchResult = await Process.run(
+      'git',
+      ['rev-parse', '--abbrev-ref', 'HEAD'],
+      workingDirectory: widget.project.path,
+    );
+    final currentBranch = (branchResult.stdout as String).trim();
+    if (currentBranch == 'main' || currentBranch == 'master') {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("You're on the default branch — create a feature branch first.")),
+        );
+      }
+      return;
+    }
+
+    // 3. Generate PR title + body via AI.
+    final sessionId = ref.read(activeSessionIdProvider);
+    final changedFiles = sessionId != null
+        ? ref.read(appliedChangesProvider.notifier).changesForSession(sessionId).map((c) => c.filePath).toList()
+        : <String>[];
+    final model = ref.read(selectedModelProvider);
+    final aiSvc = await ref.read(aiServiceProvider(model.provider).future);
+
+    String prTitle = currentBranch.replaceAll('-', ' ');
+    String prBody = '';
+    if (aiSvc != null) {
+      try {
+        final prompt = 'Generate a PR title (max 70 chars) and bullet-point body for these '
+            'changes: ${changedFiles.isEmpty ? "general changes" : changedFiles.join(", ")}. '
+            'Reply in this format:\nTITLE: <title>\nBODY:\n<bullets>';
+        final response = await aiSvc.sendMessage(history: const [], prompt: prompt, model: model);
+        final text = response.content;
+        final titleMatch = RegExp(r'TITLE:\s*(.+)').firstMatch(text);
+        final bodyMatch = RegExp(r'BODY:\n([\s\S]+)').firstMatch(text);
+        if (titleMatch != null) prTitle = titleMatch.group(1)!.trim();
+        if (bodyMatch != null) prBody = bodyMatch.group(1)!.trim();
+      } catch (_) {}
+    }
+
+    // 4. Parse owner/repo from git remote URL.
+    final remoteResult = await Process.run(
+      'git',
+      ['remote', 'get-url', 'origin'],
+      workingDirectory: widget.project.path,
+    );
+    final remoteUrl = (remoteResult.stdout as String).trim();
+    final repoMatch = RegExp(r'github\.com[:/]([^/]+)/([^/\.]+)').firstMatch(remoteUrl);
+    if (repoMatch == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not detect GitHub owner/repo from remote')),
+        );
+      }
+      return;
+    }
+    final owner = repoMatch.group(1)!;
+    final repo = repoMatch.group(2)!;
+
+    // 5. Fetch branches from GitHub.
+    List<String> branches = ['main', 'master'];
+    try {
+      branches = await GitHubApiService(token).listRepoBranches(owner, repo);
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    // 6. Show dialog.
+    final result = await CreatePrDialog.show(
+      context,
+      initialTitle: prTitle,
+      initialBody: prBody,
+      branches: branches,
+    );
+    if (result == null) return;
+
+    // 7. Create PR and open in browser.
+    try {
+      final prUrl = await GitHubApiService(token).createPullRequest(
+        owner: owner,
+        repo: repo,
+        title: result.title,
+        body: result.body,
+        head: currentBranch,
+        base: result.base,
+        draft: result.draft,
+      );
+      await Process.run('open', [prUrl]);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pull request created')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create PR: $e')),
+        );
+      }
+    }
   }
 }
 

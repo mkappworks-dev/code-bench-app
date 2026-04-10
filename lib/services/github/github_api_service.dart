@@ -66,6 +66,17 @@ class GitHubApiService {
     }
   }
 
+  /// Returns the GitHub username if the token is valid, null otherwise.
+  Future<String?> validateToken() async {
+    try {
+      final response = await _dio.get('/user');
+      final data = response.data as Map<String, dynamic>;
+      return data['login'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Repository _repoFromGitHub(Map<String, dynamic> r) {
     final ownerData = r['owner'] as Map<String, dynamic>?;
     return Repository(
@@ -159,7 +170,8 @@ class GitHubApiService {
     }
   }
 
-  Future<Map<String, dynamic>> createPullRequest({
+  /// Creates a pull request. Returns the HTML URL of the created PR.
+  Future<String> createPullRequest({
     required String owner,
     required String repo,
     required String title,
@@ -179,10 +191,27 @@ class GitHubApiService {
           'draft': draft,
         },
       );
-      return response.data as Map<String, dynamic>;
+      final data = response.data as Map<String, dynamic>;
+      return data['html_url'] as String;
     } on DioException catch (e) {
       throw NetworkException(
         'Failed to create pull request',
+        statusCode: e.response?.statusCode,
+        originalError: e,
+      );
+    }
+  }
+
+  Future<List<String>> listRepoBranches(String owner, String repo) async {
+    try {
+      final response = await _dio.get(
+        '/repos/$owner/$repo/branches',
+        queryParameters: {'per_page': 50},
+      );
+      return (response.data as List).map((b) => b['name'] as String).toList();
+    } on DioException catch (e) {
+      throw NetworkException(
+        'Failed to list branches',
         statusCode: e.response?.statusCode,
         originalError: e,
       );
