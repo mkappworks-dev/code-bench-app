@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -72,7 +73,8 @@ class GitHubApiService {
       final response = await _dio.get('/user');
       final data = response.data as Map<String, dynamic>;
       return data['login'] as String?;
-    } catch (_) {
+    } catch (e, st) {
+      if (kDebugMode) debugPrint('[GitHubApiService] validateToken failed: $e\n$st');
       return null;
     }
   }

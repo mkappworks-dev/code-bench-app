@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
@@ -122,8 +123,8 @@ class ProjectService {
     try {
       final decoded = jsonDecode(row.actionsJson) as List<dynamic>;
       actions = decoded.map((e) => ProjectAction.fromJson(e as Map<String, dynamic>)).toList();
-    } catch (_) {
-      // Corrupt actionsJson — fall back to empty list rather than crashing.
+    } catch (e, st) {
+      if (kDebugMode) debugPrint('[ProjectService] Failed to decode actionsJson: $e\n$st');
     }
     return Project(
       id: row.id,

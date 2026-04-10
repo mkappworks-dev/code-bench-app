@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -278,8 +279,8 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         if (text.isNotEmpty) {
           message = text.trim().replaceAll('"', '').split('\n').first.trim();
         }
-      } catch (_) {
-        // Fall back to generic message.
+      } catch (e, st) {
+        if (kDebugMode) debugPrint('[_CommitPushButton] AI commit message failed: $e\n$st');
       }
     }
 
@@ -522,7 +523,9 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         final bodyMatch = RegExp(r'BODY:\n([\s\S]+)').firstMatch(text);
         if (titleMatch != null) prTitle = titleMatch.group(1)!.trim();
         if (bodyMatch != null) prBody = bodyMatch.group(1)!.trim();
-      } catch (_) {}
+      } catch (e, st) {
+        if (kDebugMode) debugPrint('[_CommitPushButton] AI PR title/body failed: $e\n$st');
+      }
     }
 
     // 4. Parse owner/repo from git remote URL.
@@ -548,7 +551,9 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     List<String> branches = ['main', 'master'];
     try {
       branches = await GitHubApiService(token).listRepoBranches(owner, repo);
-    } catch (_) {}
+    } catch (e, st) {
+      if (kDebugMode) debugPrint('[_CommitPushButton] listRepoBranches failed: $e\n$st');
+    }
 
     if (!mounted) return;
 
