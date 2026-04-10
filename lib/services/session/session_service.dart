@@ -83,6 +83,20 @@ class SessionService {
         );
   }
 
+  Stream<List<session_model.ChatSession>> watchArchivedSessions() {
+    return _db.sessionDao.watchArchivedSessions().map(
+          (rows) => rows.map(_sessionFromRow).toList(),
+        );
+  }
+
+  Future<void> archiveSession(String sessionId) async {
+    await _db.sessionDao.archiveSession(sessionId);
+  }
+
+  Future<void> unarchiveSession(String sessionId) async {
+    await _db.sessionDao.unarchiveSession(sessionId);
+  }
+
   // ── Messages ───────────────────────────────────────────────────────────────
 
   Future<List<msg_model.ChatMessage>> loadHistory(
@@ -208,6 +222,7 @@ class SessionService {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       isPinned: row.isPinned,
+      isArchived: row.isArchived,
     );
   }
 

@@ -12,6 +12,7 @@ class ConversationTile extends StatelessWidget {
     required this.isActive,
     required this.onTap,
     this.onRename,
+    this.onArchive,
     this.onDelete,
   });
 
@@ -19,6 +20,7 @@ class ConversationTile extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
   final VoidCallback? onRename;
+  final VoidCallback? onArchive;
   final VoidCallback? onDelete;
 
   String _relativeTime(DateTime dt) {
@@ -58,6 +60,20 @@ class ConversationTile extends StatelessWidget {
             ],
           ),
         ),
+        PopupMenuItem<String>(
+          value: 'archive',
+          height: 32,
+          child: Row(
+            children: [
+              Icon(LucideIcons.archive, size: 13, color: ThemeConstants.textSecondary),
+              const SizedBox(width: 8),
+              const Text(
+                'Archive',
+                style: TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+              ),
+            ],
+          ),
+        ),
         const PopupMenuDivider(),
         PopupMenuItem<String>(
           value: 'delete',
@@ -77,6 +93,7 @@ class ConversationTile extends StatelessWidget {
     );
 
     if (action == 'rename') onRename?.call();
+    if (action == 'archive') onArchive?.call();
     if (action == 'delete') onDelete?.call();
   }
 

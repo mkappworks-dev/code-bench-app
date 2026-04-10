@@ -1,5 +1,5 @@
-import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/datasources/local/onboarding_preferences.dart';
@@ -28,7 +28,7 @@ GoRouter appRouter(Ref ref) {
         pageBuilder: (context, state) => const NoTransitionPage(child: OnboardingScreen()),
       ),
       ShellRoute(
-        builder: (context, state, child) => ChatShell(child: child),
+        pageBuilder: (context, state, child) => NoTransitionPage(child: ChatShell(child: child)),
         routes: [
           GoRoute(
             path: '/chat',
@@ -42,11 +42,11 @@ GoRouter appRouter(Ref ref) {
               ),
             ),
           ),
-          GoRoute(
-            path: '/settings',
-            pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
-          ),
         ],
+      ),
+      GoRoute(
+        path: '/settings',
+        pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
       ),
     ],
   );

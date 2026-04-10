@@ -167,6 +167,21 @@ class _ProjectSessionsProviderElement extends AutoDisposeStreamProviderElement<L
   String get projectId => (origin as ProjectSessionsProvider).projectId;
 }
 
+String _$archivedSessionsHash() => r'ac4a8fe2f5367fe1e8d70a0b1ccde35be9c98173';
+
+/// See also [archivedSessions].
+@ProviderFor(archivedSessions)
+final archivedSessionsProvider = AutoDisposeStreamProvider<List<ChatSession>>.internal(
+  archivedSessions,
+  name: r'archivedSessionsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$archivedSessionsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ArchivedSessionsRef = AutoDisposeStreamProviderRef<List<ChatSession>>;
 String _$sessionSystemPromptHash() => r'54342a5fe93c9a7edc16f005fa6089d539e394b9';
 
 /// See also [SessionSystemPrompt].

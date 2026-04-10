@@ -51,9 +51,16 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_pinned" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _isArchivedMeta = const VerificationMeta('isArchived');
+  @override
+  late final GeneratedColumn<bool> isArchived = GeneratedColumn<bool>('is_archived', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_archived" IN (0, 1))'),
+      defaultValue: const Constant(false));
   @override
   List<GeneratedColumn> get $columns =>
-      [sessionId, title, modelId, providerId, projectId, createdAt, updatedAt, isPinned];
+      [sessionId, title, modelId, providerId, projectId, createdAt, updatedAt, isPinned, isArchived];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -99,6 +106,9 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
     if (data.containsKey('is_pinned')) {
       context.handle(_isPinnedMeta, isPinned.isAcceptableOrUnknown(data['is_pinned']!, _isPinnedMeta));
     }
+    if (data.containsKey('is_archived')) {
+      context.handle(_isArchivedMeta, isArchived.isAcceptableOrUnknown(data['is_archived']!, _isArchivedMeta));
+    }
     return context;
   }
 
@@ -116,6 +126,7 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
       createdAt: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
       isPinned: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}is_pinned'])!,
+      isArchived: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}is_archived'])!,
     );
   }
 
@@ -134,6 +145,7 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isPinned;
+  final bool isArchived;
   const ChatSessionRow(
       {required this.sessionId,
       required this.title,
@@ -142,7 +154,8 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
       this.projectId,
       required this.createdAt,
       required this.updatedAt,
-      required this.isPinned});
+      required this.isPinned,
+      required this.isArchived});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -156,6 +169,7 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['is_pinned'] = Variable<bool>(isPinned);
+    map['is_archived'] = Variable<bool>(isArchived);
     return map;
   }
 
@@ -169,6 +183,7 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       isPinned: Value(isPinned),
+      isArchived: Value(isArchived),
     );
   }
 
@@ -183,6 +198,7 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       isPinned: serializer.fromJson<bool>(json['isPinned']),
+      isArchived: serializer.fromJson<bool>(json['isArchived']),
     );
   }
   @override
@@ -197,6 +213,7 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'isPinned': serializer.toJson<bool>(isPinned),
+      'isArchived': serializer.toJson<bool>(isArchived),
     };
   }
 
@@ -208,7 +225,8 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
           Value<String?> projectId = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt,
-          bool? isPinned}) =>
+          bool? isPinned,
+          bool? isArchived}) =>
       ChatSessionRow(
         sessionId: sessionId ?? this.sessionId,
         title: title ?? this.title,
@@ -218,6 +236,7 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         isPinned: isPinned ?? this.isPinned,
+        isArchived: isArchived ?? this.isArchived,
       );
   ChatSessionRow copyWithCompanion(ChatSessionsCompanion data) {
     return ChatSessionRow(
@@ -229,6 +248,7 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isPinned: data.isPinned.present ? data.isPinned.value : this.isPinned,
+      isArchived: data.isArchived.present ? data.isArchived.value : this.isArchived,
     );
   }
 
@@ -242,13 +262,15 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
           ..write('projectId: $projectId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('isPinned: $isPinned')
+          ..write('isPinned: $isPinned, ')
+          ..write('isArchived: $isArchived')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(sessionId, title, modelId, providerId, projectId, createdAt, updatedAt, isPinned);
+  int get hashCode =>
+      Object.hash(sessionId, title, modelId, providerId, projectId, createdAt, updatedAt, isPinned, isArchived);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -260,7 +282,8 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
           other.projectId == this.projectId &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.isPinned == this.isPinned);
+          other.isPinned == this.isPinned &&
+          other.isArchived == this.isArchived);
 }
 
 class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
@@ -272,6 +295,7 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<bool> isPinned;
+  final Value<bool> isArchived;
   final Value<int> rowid;
   const ChatSessionsCompanion({
     this.sessionId = const Value.absent(),
@@ -282,6 +306,7 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isPinned = const Value.absent(),
+    this.isArchived = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ChatSessionsCompanion.insert({
@@ -293,6 +318,7 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
     required DateTime createdAt,
     required DateTime updatedAt,
     this.isPinned = const Value.absent(),
+    this.isArchived = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : sessionId = Value(sessionId),
         title = Value(title),
@@ -309,6 +335,7 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<bool>? isPinned,
+    Expression<bool>? isArchived,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -320,6 +347,7 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (isPinned != null) 'is_pinned': isPinned,
+      if (isArchived != null) 'is_archived': isArchived,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -333,6 +361,7 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<bool>? isPinned,
+      Value<bool>? isArchived,
       Value<int>? rowid}) {
     return ChatSessionsCompanion(
       sessionId: sessionId ?? this.sessionId,
@@ -343,6 +372,7 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isPinned: isPinned ?? this.isPinned,
+      isArchived: isArchived ?? this.isArchived,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -374,6 +404,9 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
     if (isPinned.present) {
       map['is_pinned'] = Variable<bool>(isPinned.value);
     }
+    if (isArchived.present) {
+      map['is_archived'] = Variable<bool>(isArchived.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -391,6 +424,7 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isPinned: $isPinned, ')
+          ..write('isArchived: $isArchived, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1093,6 +1127,7 @@ typedef $$ChatSessionsTableCreateCompanionBuilder = ChatSessionsCompanion Functi
   required DateTime createdAt,
   required DateTime updatedAt,
   Value<bool> isPinned,
+  Value<bool> isArchived,
   Value<int> rowid,
 });
 typedef $$ChatSessionsTableUpdateCompanionBuilder = ChatSessionsCompanion Function({
@@ -1104,6 +1139,7 @@ typedef $$ChatSessionsTableUpdateCompanionBuilder = ChatSessionsCompanion Functi
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<bool> isPinned,
+  Value<bool> isArchived,
   Value<int> rowid,
 });
 
@@ -1155,6 +1191,9 @@ class $$ChatSessionsTableFilterComposer extends Composer<_$AppDatabase, $ChatSes
   ColumnFilters<bool> get isPinned =>
       $composableBuilder(column: $table.isPinned, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<bool> get isArchived =>
+      $composableBuilder(column: $table.isArchived, builder: (column) => ColumnFilters(column));
+
   Expression<bool> chatMessagesRefs(Expression<bool> Function($$ChatMessagesTableFilterComposer f) f) {
     final $$ChatMessagesTableFilterComposer composer = $composerBuilder(
         composer: this,
@@ -1204,6 +1243,9 @@ class $$ChatSessionsTableOrderingComposer extends Composer<_$AppDatabase, $ChatS
 
   ColumnOrderings<bool> get isPinned =>
       $composableBuilder(column: $table.isPinned, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isArchived =>
+      $composableBuilder(column: $table.isArchived, builder: (column) => ColumnOrderings(column));
 }
 
 class $$ChatSessionsTableAnnotationComposer extends Composer<_$AppDatabase, $ChatSessionsTable> {
@@ -1229,6 +1271,8 @@ class $$ChatSessionsTableAnnotationComposer extends Composer<_$AppDatabase, $Cha
   GeneratedColumn<DateTime> get updatedAt => $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
   GeneratedColumn<bool> get isPinned => $composableBuilder(column: $table.isPinned, builder: (column) => column);
+
+  GeneratedColumn<bool> get isArchived => $composableBuilder(column: $table.isArchived, builder: (column) => column);
 
   Expression<T> chatMessagesRefs<T extends Object>(Expression<T> Function($$ChatMessagesTableAnnotationComposer a) f) {
     final $$ChatMessagesTableAnnotationComposer composer = $composerBuilder(
@@ -1276,6 +1320,7 @@ class $$ChatSessionsTableTableManager extends RootTableManager<
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<bool> isPinned = const Value.absent(),
+            Value<bool> isArchived = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               ChatSessionsCompanion(
@@ -1287,6 +1332,7 @@ class $$ChatSessionsTableTableManager extends RootTableManager<
             createdAt: createdAt,
             updatedAt: updatedAt,
             isPinned: isPinned,
+            isArchived: isArchived,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -1298,6 +1344,7 @@ class $$ChatSessionsTableTableManager extends RootTableManager<
             required DateTime createdAt,
             required DateTime updatedAt,
             Value<bool> isPinned = const Value.absent(),
+            Value<bool> isArchived = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               ChatSessionsCompanion.insert(
@@ -1309,6 +1356,7 @@ class $$ChatSessionsTableTableManager extends RootTableManager<
             createdAt: createdAt,
             updatedAt: updatedAt,
             isPinned: isPinned,
+            isArchived: isArchived,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) =>

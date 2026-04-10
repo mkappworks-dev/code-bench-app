@@ -15,6 +15,7 @@ _$ChatSessionImpl _$$ChatSessionImplFromJson(Map<String, dynamic> json) => _$Cha
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       isPinned: json['isPinned'] as bool? ?? false,
+      isArchived: json['isArchived'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$ChatSessionImplToJson(_$ChatSessionImpl instance) => <String, dynamic>{
@@ -26,4 +27,5 @@ Map<String, dynamic> _$$ChatSessionImplToJson(_$ChatSessionImpl instance) => <St
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt.toIso8601String(),
       'isPinned': instance.isPinned,
+      'isArchived': instance.isArchived,
     };

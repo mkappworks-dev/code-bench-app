@@ -14,6 +14,7 @@ class ChatSession with _$ChatSession {
     required DateTime createdAt,
     required DateTime updatedAt,
     @Default(false) bool isPinned,
+    @Default(false) bool isArchived,
   }) = _ChatSession;
 
   factory ChatSession.fromJson(Map<String, dynamic> json) => _$ChatSessionFromJson(json);

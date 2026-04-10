@@ -17,6 +17,7 @@ class ChatSessions extends Table {
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
+  BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {sessionId};
@@ -55,10 +56,10 @@ class WorkspaceProjects extends Table {
 class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   SessionDao(super.db);
 
-  Stream<List<ChatSessionRow>> watchAllSessions() => (select(
-        chatSessions,
-      )..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
-          .watch();
+  Stream<List<ChatSessionRow>> watchAllSessions() => (select(chatSessions)
+        ..where((t) => t.isArchived.equals(false))
+        ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+      .watch();
 
   Future<ChatSessionRow?> getSession(String sessionId) => (select(
         chatSessions,
@@ -87,9 +88,22 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
       (delete(chatMessages)..where((t) => t.sessionId.equals(sessionId))).go();
 
   Stream<List<ChatSessionRow>> watchSessionsByProject(String projectId) => (select(chatSessions)
-        ..where((t) => t.projectId.equals(projectId))
+        ..where(
+          (t) => t.projectId.equals(projectId) & t.isArchived.equals(false),
+        )
         ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
       .watch();
+
+  Stream<List<ChatSessionRow>> watchArchivedSessions() => (select(chatSessions)
+        ..where((t) => t.isArchived.equals(true))
+        ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+      .watch();
+
+  Future<void> archiveSession(String id) => (update(chatSessions)..where((t) => t.sessionId.equals(id)))
+      .write(const ChatSessionsCompanion(isArchived: Value(true)));
+
+  Future<void> unarchiveSession(String id) => (update(chatSessions)..where((t) => t.sessionId.equals(id)))
+      .write(const ChatSessionsCompanion(isArchived: Value(false)));
 }
 
 @DriftAccessor(tables: [WorkspaceProjects])
@@ -127,17 +141,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onUpgrade: (migrator, from, to) async {
           if (from < 2) {
-            // Add projectId column to chat_sessions
             await migrator.addColumn(chatSessions, chatSessions.projectId);
-            // Recreate workspace_projects with new schema
             await migrator.deleteTable('workspace_projects');
             await migrator.createTable(workspaceProjects);
+          }
+          if (from < 3) {
+            await migrator.addColumn(chatSessions, chatSessions.isArchived);
           }
         },
       );

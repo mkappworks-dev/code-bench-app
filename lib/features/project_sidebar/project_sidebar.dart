@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../core/utils/instant_menu.dart';
+import '../../core/utils/platform_utils.dart';
 import '../../features/chat/chat_notifier.dart';
 import '../../services/project/project_service.dart';
 import '../../services/session/session_service.dart';
@@ -107,6 +110,8 @@ class ProjectSidebar extends ConsumerWidget {
       color: const Color(0xFF0A0A0A),
       child: Column(
         children: [
+          // Traffic-light clearance on macOS (TitleBarStyle.hidden)
+          if (PlatformUtils.isMacOS) const SizedBox(height: 28),
           // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -225,6 +230,7 @@ class ProjectSidebar extends ConsumerWidget {
                         },
                         onRemove: (id) => ref.read(projectServiceProvider).removeProject(id),
                         onNewConversation: (id) => _newConversation(context, ref, id),
+                        onArchive: (sessionId) => unawaited(ref.read(sessionServiceProvider).archiveSession(sessionId)),
                       ),
                     );
                   },
@@ -237,9 +243,6 @@ class ProjectSidebar extends ConsumerWidget {
             onTap: () => context.go('/settings'),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: ThemeConstants.borderColor)),
-              ),
               child: Row(
                 children: [
                   Icon(

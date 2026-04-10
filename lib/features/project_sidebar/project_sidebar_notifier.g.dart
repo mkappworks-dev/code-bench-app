@@ -53,7 +53,7 @@ final expandedProjectIdsProvider = NotifierProvider<ExpandedProjectIds, Set<Stri
 );
 
 typedef _$ExpandedProjectIds = Notifier<Set<String>>;
-String _$projectSortHash() => r'96c125632ac63ff6aed54145305d655c6a91ce68';
+String _$projectSortHash() => r'b4fd5fbc44ad448ba62978dc91636fce8aa67b68';
 
 /// See also [ProjectSort].
 @ProviderFor(ProjectSort)
