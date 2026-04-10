@@ -121,9 +121,7 @@ class ProjectService {
     List<ProjectAction> actions = const [];
     try {
       final decoded = jsonDecode(row.actionsJson) as List<dynamic>;
-      actions = decoded
-          .map((e) => ProjectAction.fromJson(e as Map<String, dynamic>))
-          .toList();
+      actions = decoded.map((e) => ProjectAction.fromJson(e as Map<String, dynamic>)).toList();
     } catch (_) {
       // Corrupt actionsJson — fall back to empty list rather than crashing.
     }

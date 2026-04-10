@@ -15,11 +15,9 @@ class IdeLaunchService {
 
   final GeneralPreferences _prefs;
 
-  static const _vsCodeNotFoundMessage =
-      "VS Code CLI not found — install it from the Command Palette "
+  static const _vsCodeNotFoundMessage = "VS Code CLI not found — install it from the Command Palette "
       "(Shell Command: Install 'code' in PATH)";
-  static const _cursorNotFoundMessage =
-      "Cursor CLI not found — install it from the Command Palette "
+  static const _cursorNotFoundMessage = "Cursor CLI not found — install it from the Command Palette "
       "(Shell Command: Install 'cursor' in PATH)";
 
   static List<String> buildVsCodeArgs(String path) => [path];
