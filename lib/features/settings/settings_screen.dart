@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/utils/instant_menu.dart';
 import '../../data/datasources/local/general_preferences.dart';
 import '../../data/datasources/local/secure_storage_source.dart';
 import '../../data/models/ai_model.dart';
@@ -151,7 +152,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     color: ThemeConstants.sidebarBackground,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
-                      vertical: 20,
+                      vertical: 12,
                     ),
                     child: _buildContent(),
                   ),
@@ -312,7 +313,7 @@ class _SettingsLeftNav extends StatelessWidget {
           const Spacer(),
           _NavItem(
             icon: LucideIcons.arrowLeft,
-            label: '← Back',
+            label: 'Back',
             isActive: false,
             onTap: onBack,
           ),
@@ -423,10 +424,14 @@ class _GeneralSectionState extends State<_GeneralSection> {
             _SettingsRow(
               label: 'Theme',
               description: 'How Code Bench looks',
-              trailing: _DropdownField(
-                value: 'Dark',
-                items: const ['Dark', 'Light', 'System'],
-                onChanged: (_) {},
+              trailing: Builder(
+                builder: (ctx) => _AppDropdown<String>(
+                  value: 'Dark',
+                  items: const ['Dark', 'Light', 'System'],
+                  label: (s) => s,
+                  onChanged: (_) {},
+                  context: ctx,
+                ),
               ),
             ),
             _SettingsRow(
@@ -440,23 +445,33 @@ class _GeneralSectionState extends State<_GeneralSection> {
             _SettingsRow(
               label: 'Delete confirmation',
               description: 'Ask before deleting a session',
-              trailing: Switch(
-                value: _deleteConfirmation,
-                onChanged: (v) async {
-                  await widget.generalPrefs.setDeleteConfirmation(v);
-                  setState(() => _deleteConfirmation = v);
-                },
+              trailing: Builder(
+                builder: (ctx) => _AppDropdown<bool>(
+                  value: _deleteConfirmation,
+                  items: const [true, false],
+                  label: (v) => v ? 'Enabled' : 'Disabled',
+                  onChanged: (v) async {
+                    await widget.generalPrefs.setDeleteConfirmation(v);
+                    setState(() => _deleteConfirmation = v);
+                  },
+                  context: ctx,
+                ),
               ),
             ),
             _SettingsRow(
               label: 'Auto-commit',
               description: 'Skip commit dialog; commit immediately with AI-generated message',
-              trailing: Switch(
-                value: _autoCommit,
-                onChanged: (v) async {
-                  await widget.generalPrefs.setAutoCommit(v);
-                  setState(() => _autoCommit = v);
-                },
+              trailing: Builder(
+                builder: (ctx) => _AppDropdown<bool>(
+                  value: _autoCommit,
+                  items: const [true, false],
+                  label: (v) => v ? 'Enabled' : 'Disabled',
+                  onChanged: (v) async {
+                    await widget.generalPrefs.setAutoCommit(v);
+                    setState(() => _autoCommit = v);
+                  },
+                  context: ctx,
+                ),
               ),
             ),
             _SettingsRow(
@@ -836,29 +851,91 @@ class _InlineTextField extends StatelessWidget {
   }
 }
 
-class _DropdownField extends StatelessWidget {
-  const _DropdownField({
+class _AppDropdown<T> extends StatelessWidget {
+  const _AppDropdown({
     required this.value,
     required this.items,
+    required this.label,
     required this.onChanged,
+    required this.context,
   });
 
-  final String value;
-  final List<String> items;
-  final ValueChanged<String?> onChanged;
+  final T value;
+  final List<T> items;
+  final String Function(T) label;
+  final void Function(T) onChanged;
+  final BuildContext context;
+
+  void _open() {
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final origin = box.localToGlobal(Offset.zero, ancestor: overlay);
+    showInstantMenu<T>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        origin.dx,
+        origin.dy + box.size.height + 4,
+        overlay.size.width - origin.dx - box.size.width,
+        0,
+      ),
+      color: ThemeConstants.panelBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(6),
+        side: const BorderSide(color: Color(0xFF333333)),
+      ),
+      items: items
+          .map((item) => PopupMenuItem<T>(
+                value: item,
+                height: 30,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        label(item),
+                        style: TextStyle(
+                          color: item == value ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
+                          fontSize: ThemeConstants.uiFontSizeSmall,
+                        ),
+                      ),
+                    ),
+                    if (item == value) const Icon(LucideIcons.check, size: 11, color: ThemeConstants.accent),
+                  ],
+                ),
+              ))
+          .toList(),
+    ).then((picked) {
+      if (picked != null) onChanged(picked);
+    });
+  }
 
   @override
-  Widget build(BuildContext context) {
-    return DropdownButton<String>(
-      value: value,
-      items: items.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-      onChanged: onChanged,
-      style: const TextStyle(
-        color: ThemeConstants.textPrimary,
-        fontSize: 12,
+  Widget build(BuildContext _) {
+    return InkWell(
+      onTap: _open,
+      borderRadius: BorderRadius.circular(5),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          border: Border.all(color: ThemeConstants.deepBorder),
+          borderRadius: BorderRadius.circular(5),
+          color: ThemeConstants.inputSurface,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label(value),
+              style: const TextStyle(
+                color: ThemeConstants.textPrimary,
+                fontSize: ThemeConstants.uiFontSizeSmall,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(LucideIcons.chevronDown, size: 10, color: ThemeConstants.mutedFg),
+          ],
+        ),
       ),
-      dropdownColor: ThemeConstants.panelBackground,
-      underline: const SizedBox.shrink(),
     );
   }
 }
