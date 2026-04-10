@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/utils/instant_menu.dart';
 import '../../../data/models/ai_model.dart';
 import '../chat_notifier.dart';
 
@@ -111,7 +112,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
   ) {
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
-    showMenu<T>(
+    showInstantMenu<T>(
       context: context,
       position: _menuAbove(context, box),
       color: ThemeConstants.panelBackground,
@@ -149,7 +150,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     final selected = ref.read(selectedModelProvider);
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
-    showMenu<AIModel>(
+    showInstantMenu<AIModel>(
       context: context,
       position: _menuAbove(context, box),
       color: ThemeConstants.panelBackground,

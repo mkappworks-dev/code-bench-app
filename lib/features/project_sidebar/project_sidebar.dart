@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/utils/instant_menu.dart';
 import '../../features/chat/chat_notifier.dart';
 import '../../services/project/project_service.dart';
 import '../../services/session/session_service.dart';
@@ -57,7 +58,7 @@ class ProjectSidebar extends ConsumerWidget {
       0,
     );
 
-    showMenu<String>(
+    showInstantMenu<String>(
       context: context,
       position: position,
       color: ThemeConstants.panelBackground,
