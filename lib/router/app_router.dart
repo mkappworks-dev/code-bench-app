@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -47,11 +46,7 @@ GoRouter appRouter(Ref ref) {
       ),
       GoRoute(
         path: '/settings',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          child: const SettingsScreen(),
-          transitionsBuilder: (context, animation, _, child) => FadeTransition(opacity: animation, child: child),
-          transitionDuration: const Duration(milliseconds: 150),
-        ),
+        pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
       ),
     ],
   );
