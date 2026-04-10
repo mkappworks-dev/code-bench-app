@@ -18,27 +18,21 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$AppliedChange {
   String get id => throw _privateConstructorUsedError; // uuid
   String get sessionId => throw _privateConstructorUsedError;
-  String get messageId =>
-      throw _privateConstructorUsedError; // ChatMessage that contained the code block
-  String get filePath =>
-      throw _privateConstructorUsedError; // absolute path on disk
-  String? get originalContent =>
-      throw _privateConstructorUsedError; // null = file didn't exist before Apply
-  String get newContent =>
-      throw _privateConstructorUsedError; // content that was written to disk
+  String get messageId => throw _privateConstructorUsedError; // ChatMessage that contained the code block
+  String get filePath => throw _privateConstructorUsedError; // absolute path on disk
+  String? get originalContent => throw _privateConstructorUsedError; // null = file didn't exist before Apply
+  String get newContent => throw _privateConstructorUsedError; // content that was written to disk
   DateTime get appliedAt => throw _privateConstructorUsedError;
 
   /// Create a copy of AppliedChange
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $AppliedChangeCopyWith<AppliedChange> get copyWith =>
-      throw _privateConstructorUsedError;
+  $AppliedChangeCopyWith<AppliedChange> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class $AppliedChangeCopyWith<$Res> {
-  factory $AppliedChangeCopyWith(
-          AppliedChange value, $Res Function(AppliedChange) then) =
+  factory $AppliedChangeCopyWith(AppliedChange value, $Res Function(AppliedChange) then) =
       _$AppliedChangeCopyWithImpl<$Res, AppliedChange>;
   @useResult
   $Res call(
@@ -52,8 +46,7 @@ abstract class $AppliedChangeCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$AppliedChangeCopyWithImpl<$Res, $Val extends AppliedChange>
-    implements $AppliedChangeCopyWith<$Res> {
+class _$AppliedChangeCopyWithImpl<$Res, $Val extends AppliedChange> implements $AppliedChangeCopyWith<$Res> {
   _$AppliedChangeCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -108,10 +101,8 @@ class _$AppliedChangeCopyWithImpl<$Res, $Val extends AppliedChange>
 }
 
 /// @nodoc
-abstract class _$$AppliedChangeImplCopyWith<$Res>
-    implements $AppliedChangeCopyWith<$Res> {
-  factory _$$AppliedChangeImplCopyWith(
-          _$AppliedChangeImpl value, $Res Function(_$AppliedChangeImpl) then) =
+abstract class _$$AppliedChangeImplCopyWith<$Res> implements $AppliedChangeCopyWith<$Res> {
+  factory _$$AppliedChangeImplCopyWith(_$AppliedChangeImpl value, $Res Function(_$AppliedChangeImpl) then) =
       __$$AppliedChangeImplCopyWithImpl<$Res>;
   @override
   @useResult
@@ -126,11 +117,9 @@ abstract class _$$AppliedChangeImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$AppliedChangeImplCopyWithImpl<$Res>
-    extends _$AppliedChangeCopyWithImpl<$Res, _$AppliedChangeImpl>
+class __$$AppliedChangeImplCopyWithImpl<$Res> extends _$AppliedChangeCopyWithImpl<$Res, _$AppliedChangeImpl>
     implements _$$AppliedChangeImplCopyWith<$Res> {
-  __$$AppliedChangeImplCopyWithImpl(
-      _$AppliedChangeImpl _value, $Res Function(_$AppliedChangeImpl) _then)
+  __$$AppliedChangeImplCopyWithImpl(_$AppliedChangeImpl _value, $Res Function(_$AppliedChangeImpl) _then)
       : super(_value, _then);
 
   /// Create a copy of AppliedChange
@@ -222,23 +211,17 @@ class _$AppliedChangeImpl implements _AppliedChange {
         (other.runtimeType == runtimeType &&
             other is _$AppliedChangeImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.sessionId, sessionId) ||
-                other.sessionId == sessionId) &&
-            (identical(other.messageId, messageId) ||
-                other.messageId == messageId) &&
-            (identical(other.filePath, filePath) ||
-                other.filePath == filePath) &&
-            (identical(other.originalContent, originalContent) ||
-                other.originalContent == originalContent) &&
-            (identical(other.newContent, newContent) ||
-                other.newContent == newContent) &&
-            (identical(other.appliedAt, appliedAt) ||
-                other.appliedAt == appliedAt));
+            (identical(other.sessionId, sessionId) || other.sessionId == sessionId) &&
+            (identical(other.messageId, messageId) || other.messageId == messageId) &&
+            (identical(other.filePath, filePath) || other.filePath == filePath) &&
+            (identical(other.originalContent, originalContent) || other.originalContent == originalContent) &&
+            (identical(other.newContent, newContent) || other.newContent == newContent) &&
+            (identical(other.appliedAt, appliedAt) || other.appliedAt == appliedAt));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, id, sessionId, messageId,
-      filePath, originalContent, newContent, appliedAt);
+  int get hashCode =>
+      Object.hash(runtimeType, id, sessionId, messageId, filePath, originalContent, newContent, appliedAt);
 
   /// Create a copy of AppliedChange
   /// with the given fields replaced by the non-null parameter values.
@@ -278,6 +261,5 @@ abstract class _AppliedChange implements AppliedChange {
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$AppliedChangeImplCopyWith<_$AppliedChangeImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$AppliedChangeImplCopyWith<_$AppliedChangeImpl> get copyWith => throw _privateConstructorUsedError;
 }

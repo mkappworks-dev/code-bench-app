@@ -358,7 +358,7 @@ class _ChatMessagesProviderElement extends AutoDisposeAsyncNotifierProviderEleme
   String get sessionId => (origin as ChatMessagesProvider).sessionId;
 }
 
-String _$appliedChangesHash() => r'74ef502b923552c950587dc27d4ac6c1a4f65bcd';
+String _$appliedChangesHash() => r'2f1446537e686532ec607fd36b2475b2adf7d9f9';
 
 /// See also [AppliedChanges].
 @ProviderFor(AppliedChanges)

@@ -13,8 +13,7 @@ String _$applyServiceHash() => r'0540adcd9bdb518688d5cc74f8cf37dda152111c';
 final applyServiceProvider = Provider<ApplyService>.internal(
   applyService,
   name: r'applyServiceProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$applyServiceHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$applyServiceHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
