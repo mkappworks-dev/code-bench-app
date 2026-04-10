@@ -30,7 +30,6 @@ class ProjectContextMenu {
       items: [
         _buildItem('open_finder', 'Open in Finder', Icons.folder_open_outlined),
         _buildItem('copy_path', 'Copy path', Icons.copy_outlined),
-        _buildItem('rename', 'Rename project', Icons.edit_outlined),
         const PopupMenuDivider(),
         _buildItem('new_conversation', 'New conversation', Icons.add),
         const PopupMenuDivider(),
@@ -89,7 +88,6 @@ class ProjectContextMenu {
     required String projectPath,
     required BuildContext context,
     required Function(String) onRemove,
-    required Function(String) onRename,
     required Function(String) onNewConversation,
   }) async {
     switch (action) {
@@ -97,8 +95,6 @@ class ProjectContextMenu {
         Process.run('open', [projectPath]);
       case 'copy_path':
         await Clipboard.setData(ClipboardData(text: projectPath));
-      case 'rename':
-        onRename(projectId);
       case 'new_conversation':
         onNewConversation(projectId);
       case 'remove':

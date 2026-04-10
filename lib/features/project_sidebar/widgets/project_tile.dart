@@ -18,7 +18,6 @@ class ProjectTile extends ConsumerStatefulWidget {
     required this.onToggleExpand,
     required this.onSessionTap,
     required this.onRemove,
-    required this.onRename,
     required this.onNewConversation,
   });
 
@@ -29,7 +28,6 @@ class ProjectTile extends ConsumerStatefulWidget {
   final VoidCallback onToggleExpand;
   final ValueChanged<String> onSessionTap;
   final ValueChanged<String> onRemove;
-  final ValueChanged<String> onRename;
   final ValueChanged<String> onNewConversation;
 
   @override
@@ -59,7 +57,6 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                 projectPath: widget.project.path,
                 context: context,
                 onRemove: widget.onRemove,
-                onRename: widget.onRename,
                 onNewConversation: widget.onNewConversation,
               );
             }

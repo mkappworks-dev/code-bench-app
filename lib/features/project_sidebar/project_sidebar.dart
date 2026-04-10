@@ -224,9 +224,6 @@ class ProjectSidebar extends ConsumerWidget {
                           context.go('/chat/$sessionId');
                         },
                         onRemove: (id) => ref.read(projectServiceProvider).removeProject(id),
-                        onRename: (_) {
-                          // TODO: show rename dialog
-                        },
                         onNewConversation: (id) => _newConversation(context, ref, id),
                       ),
                     );
