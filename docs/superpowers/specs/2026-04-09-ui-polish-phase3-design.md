@@ -21,7 +21,7 @@ Four `Process.run` calls from the top bar "VS Code ↓" dropdown:
 | VS Code | `Process.run('code', [projectPath])` |
 | Cursor | `Process.run('cursor', [projectPath])` — falls back to `open -a Cursor <path>` if `cursor` CLI not on PATH |
 | Open in Finder | `Process.run('open', [projectPath])` |
-| Open Terminal | `Process.run('open', ['-a', terminalApp, projectPath])` — `terminalApp` defaults to `"Terminal"` (Terminal.app), configurable in Settings → General |
+| Open Terminal | `Process.run('open', ['-a', terminalApp, projectPath])` — `terminalApp` read from `generalPreferencesProvider.getTerminalApp()` (defaults to `"Terminal"`, already configurable in Settings → General since Phase 1b) |
 
 If the VS Code/Cursor CLI is not found: toast — *"VS Code CLI not found — install it from the Command Palette (Shell Command: Install 'code' in PATH)"*.
 
@@ -50,7 +50,7 @@ No new service needed — uses existing `ProjectDao`.
 
 Actions are persisted per project as a JSON column (`actionsJson`) on `WorkspaceProjects`. Stored as `List<{name: String, command: String}>`. No new table — actions are small enough to live in the existing row.
 
-Schema change: add `actionsJson` text column (default `'[]'`) to `WorkspaceProjects`. This migration must be combined with Phase 1's `isArchived` migration into a single `schemaVersion` bump (both land in the same implementation PR).
+Schema change: add `actionsJson` text column (default `'[]'`) to `WorkspaceProjects`. Phase 1b already landed `isArchived` as schema v3. Phase 3 bumps to **schema v4** with this column; no need to combine migrations.
 
 Saved actions appear as chips in the top bar "+" dropdown. Tapping a chip runs the command.
 
@@ -82,7 +82,7 @@ Triggered from the left side of the "Commit & Push" split button.
 1. Collect changed files from `AppliedChangesNotifier` (Phase 2) + last 10 messages from the active session
 2. Send short prompt to active AI model: *"Write a conventional commit message (subject line only, max 72 chars) summarising these changes: [file list + conversation summary]"*
 3. Commit dialog opens with AI-generated message pre-filled in an editable text field
-4. **⚡ Auto-commit** toggle in dialog footer — persisted via `SharedPreferences`. When on, future commits skip the dialog entirely. Also exposed as a row in Settings → General (same `SharedPreferences` key — both controls stay in sync)
+4. **⚡ Auto-commit** toggle in dialog footer — persisted via `generalPreferencesProvider` (`auto_commit_enabled` key, implemented in Phase 1b). When on, future commits skip the dialog entirely. Settings → General already exposes this toggle; both controls read/write the same `GeneralPreferences` instance — no new SharedPreferences logic needed here.
 5. User edits if needed → clicks **Commit**
 6. Runs `git add -A && git commit -m "<message>"` via `GitService`
 7. Success: toast *"Committed — [short sha]"*. Failure: toast with git error output
@@ -159,7 +159,7 @@ Triggered from "Create PR" in the Commit & Push dropdown.
 | `lib/shell/widgets/action_output_panel.dart` | New — floating output panel widget |
 | `lib/features/project_sidebar/widgets/project_context_menu.dart` | Re-add "Rename project" item (was removed in Phase 1a; wire to dialog below) |
 | `lib/features/project_sidebar/widgets/rename_project_dialog.dart` | New — rename project dialog widget |
-| `lib/features/project_sidebar/widgets/rename_conversation_dialog.dart` | New — rename conversation dialog; `ConversationTile.onRename` hook already wired in Phase 1a |
+| `lib/features/project_sidebar/widgets/rename_conversation_dialog.dart` | New — rename conversation dialog; `ConversationTile.onRename` callback exists but is **not yet wired** in `ProjectTile` (was left null in Phase 1a/1b) — Phase 3 must pass it through from `ProjectSidebar` |
 | `lib/features/chat/widgets/commit_dialog.dart` | New — commit message dialog with auto-commit toggle |
 | `lib/features/chat/widgets/create_pr_dialog.dart` | New — PR title/body/base-branch/draft dialog |
 

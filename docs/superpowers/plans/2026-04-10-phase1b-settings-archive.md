@@ -10,6 +10,54 @@
 
 ---
 
+## As Implemented — Deviations from Plan
+
+The following changes were made during implementation that differ from or extend the original plan.
+
+### `ChatSession` domain model — `isArchived` field added (code-review fix)
+
+The plan only added `isArchived` as a DB column. A post-implementation code review identified that the `ChatSession` Freezed model and `_sessionFromRow` mapper did not expose the field to the domain layer.
+
+- `lib/data/models/chat_session.dart` — added `@Default(false) bool isArchived`
+- `lib/services/session/session_service.dart` `_sessionFromRow` — maps `row.isArchived`
+- `build_runner` regenerated `chat_session.freezed.dart` and `chat_session.g.dart`
+
+### Settings screen — implementation choices differed from spec
+
+| Spec said | What was built | Reason |
+|---|---|---|
+| `_SettingsHeaderBar` with Back button (chevron-left icon + `← Back` label) | Header bar removed entirely; Back is a `_NavItem` at the bottom of the left nav | Cleaner two-pane layout; no redundant chrome |
+| Material `DropdownButton` / `Switch` widgets | `_AppDropdown<T>` — generic `showInstantMenu`-based chip, matching the existing `_ControlChip` pattern in `chat_input_bar_v2.dart` | Consistent with the zero-animation, app-native dropdown pattern established in Phase 1a |
+| Restore defaults in header bar | Moved to the bottom of `_SettingsLeftNav`, above the Back nav item | Header bar was removed |
+| Ollama Base URL row in General section | Removed (duplicate of Providers section) | User request during implementation |
+| Archive menu order: Rename → divider → Archive → Delete | Rename → Archive → divider → Delete | Archive is a recoverable action; placed with Rename above the destructive-action divider |
+
+### macOS traffic-light clearance — inside left nav
+
+The plan omitted macOS traffic-light handling for the settings screen. The `TitleBarStyle.hidden` window (set in Phase 1a) means the traffic lights overlay the top of any full-screen route.
+
+Implementation:
+- The `_SettingsLeftNav` Column gets `if (PlatformUtils.isMacOS) const SizedBox(height: 28)` at the very top so the nav background fills y=0 while the "Settings" title clears the traffic lights.
+- The content area uses `padding: EdgeInsets.only(top: PlatformUtils.isMacOS ? 48 : 20)` (28 clearance + 20 alignment) to keep the section label aligned with the "Settings" title.
+- The `Scaffold.body` is a bare `Row(...)` — no outer `Column` wrapper — so the left nav background fills the full height including the traffic-light zone.
+
+### Router changes (not in plan)
+
+| Change | Reason |
+|---|---|
+| `/settings` moved outside `ShellRoute` | Settings is a full-screen route; inside the shell it shared the sidebar chrome |
+| `ShellRoute` changed from `builder:` to `pageBuilder:` with `NoTransitionPage` | `builder:` wraps children in a `MaterialPage`, which uses a platform slide animation; `pageBuilder` with `NoTransitionPage` makes all shell navigation instant |
+
+### Async archive/unarchive — `unawaited()` wrappers (code-review fix)
+
+`onArchive` in `project_sidebar.dart` and `onUnarchive` in `settings_screen.dart` both discard the returned `Future<void>`. Post-review: wrapped with `unawaited()` from `dart:async` to signal intent explicitly. `dart:async` import added to both files.
+
+### Terminal app text field — persistence listener (code-review fix)
+
+The `_terminalAppController` had no save path. Post-review: `addListener(() => widget.generalPrefs.setTerminalApp(...))` added in `_GeneralSectionState.initState` so changes are persisted immediately on every keystroke.
+
+---
+
 ## File Map
 
 | File | Action | Responsibility |
