@@ -33,8 +33,8 @@ const Duration kGitCheckoutTimeout = Duration(seconds: 15);
 @Riverpod(keepAlive: true)
 ApplyService applyService(Ref ref) {
   return ApplyService(
-    fs: ref.read(filesystemServiceProvider),
-    notifier: ref.read(appliedChangesProvider.notifier),
+    fs: ref.watch(filesystemServiceProvider),
+    notifier: ref.watch(appliedChangesProvider.notifier),
   );
 }
 
@@ -90,7 +90,12 @@ class ApplyService {
       if (parent.path == probe.path) break; // reached filesystem root
       probe = parent;
     }
-    final probeReal = probe.resolveSymbolicLinksSync();
+    String probeReal;
+    try {
+      probeReal = probe.resolveSymbolicLinksSync();
+    } on FileSystemException {
+      throw StateError('Could not resolve real path for "$filePath"');
+    }
     final rootRealWithSep = rootReal + p.separator;
     if (probeReal != rootReal && !probeReal.startsWith(rootRealWithSep)) {
       throw StateError(

@@ -121,8 +121,8 @@ void main() {
       _wrap(const ChangesPanel(sessionId: 'sid'), container),
     );
 
-    // One "Message" header for the grouped m1 bundle
-    expect(find.text('Message'), findsOneWidget);
+    // One "Message 1" header for the grouped m1 bundle
+    expect(find.text('Message 1'), findsOneWidget);
     // Both file basenames render
     expect(find.text('main.dart'), findsOneWidget);
     expect(find.text('other.dart'), findsOneWidget);

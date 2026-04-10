@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -16,7 +17,7 @@ class SessionSystemPrompt extends _$SessionSystemPrompt {
   Map<String, String> build() => {};
 
   void setPrompt(String sessionId, String prompt) {
-    state = {...state, sessionId: prompt};
+    state = Map.of(state)..[sessionId] = prompt;
   }
 
   String? getPrompt(String sessionId) => state[sessionId];
@@ -51,7 +52,9 @@ class ChatMessages extends _$ChatMessages {
 
   Future<void> sendMessage(String input, {String? systemPrompt}) async {
     final sessionId = ref.read(activeSessionIdProvider);
-    if (sessionId == null) return;
+    if (sessionId == null) {
+      throw StateError('No active session — cannot send message.');
+    }
 
     final model = ref.read(selectedModelProvider);
     final service = ref.read(sessionServiceProvider);
@@ -60,21 +63,26 @@ class ChatMessages extends _$ChatMessages {
     final currentMessages = state.valueOrNull ?? [];
     state = AsyncData([...currentMessages]);
 
-    await for (final msg in service.sendAndStream(
-      sessionId: sessionId,
-      userInput: input,
-      model: model,
-      systemPrompt: systemPrompt,
-    )) {
-      final current = state.valueOrNull ?? [];
-      final idx = current.indexWhere((m) => m.id == msg.id);
-      if (idx >= 0) {
-        final updated = List<ChatMessage>.from(current);
-        updated[idx] = msg;
-        state = AsyncData(updated);
-      } else {
-        state = AsyncData([...current, msg]);
+    try {
+      await for (final msg in service.sendAndStream(
+        sessionId: sessionId,
+        userInput: input,
+        model: model,
+        systemPrompt: systemPrompt,
+      )) {
+        final current = state.valueOrNull ?? [];
+        final idx = current.indexWhere((m) => m.id == msg.id);
+        if (idx >= 0) {
+          final updated = List<ChatMessage>.from(current);
+          updated[idx] = msg;
+          state = AsyncData(updated);
+        } else {
+          state = AsyncData([...current, msg]);
+        }
       }
+    } catch (e, st) {
+      debugPrint('[sendMessage] stream error: $e\n$st');
+      state = AsyncError(e, st);
     }
   }
 

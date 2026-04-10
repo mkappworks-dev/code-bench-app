@@ -6,7 +6,7 @@ part of 'apply_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$applyServiceHash() => r'8e1d752fbc61f5f4250aa64788aeb19b370acb9e';
+String _$applyServiceHash() => r'd91854a613337f4d79a303912182afdc1aa41f62';
 
 /// See also [applyService].
 @ProviderFor(applyService)

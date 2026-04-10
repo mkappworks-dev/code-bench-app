@@ -182,7 +182,7 @@ final archivedSessionsProvider = AutoDisposeStreamProvider<List<ChatSession>>.in
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ArchivedSessionsRef = AutoDisposeStreamProviderRef<List<ChatSession>>;
-String _$sessionSystemPromptHash() => r'54342a5fe93c9a7edc16f005fa6089d539e394b9';
+String _$sessionSystemPromptHash() => r'cbf00e1c70fcc8c90707dd1122dea62958d5be1e';
 
 /// See also [SessionSystemPrompt].
 @ProviderFor(SessionSystemPrompt)
@@ -221,7 +221,7 @@ final selectedModelProvider = NotifierProvider<SelectedModel, AIModel>.internal(
 );
 
 typedef _$SelectedModel = Notifier<AIModel>;
-String _$chatMessagesHash() => r'66b3e0472bac949f586adf0de1c32b8c4bacd15d';
+String _$chatMessagesHash() => r'7ccfb448579afde3abc33f89cd80da99ef9b51f4';
 
 abstract class _$ChatMessages extends BuildlessAutoDisposeAsyncNotifier<List<ChatMessage>> {
   late final String sessionId;

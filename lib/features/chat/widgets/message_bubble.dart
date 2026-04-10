@@ -633,7 +633,10 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
             return Container(
               color: bg,
               child: Text(
-                diff.text.split('\n').map((line) => '$prefix $line').join('\n'),
+                (diff.text.endsWith('\n') ? diff.text.substring(0, diff.text.length - 1) : diff.text)
+                    .split('\n')
+                    .map((line) => '$prefix $line')
+                    .join('\n'),
                 style: const TextStyle(
                   fontFamily: ThemeConstants.editorFontFamily,
                   fontSize: ThemeConstants.editorFontSize,
@@ -741,10 +744,14 @@ class _CopyButtonState extends State<_CopyButton> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        await Clipboard.setData(ClipboardData(text: widget.code));
-        setState(() => _copied = true);
-        await Future.delayed(const Duration(seconds: 2));
-        if (mounted) setState(() => _copied = false);
+        try {
+          await Clipboard.setData(ClipboardData(text: widget.code));
+          setState(() => _copied = true);
+          await Future.delayed(const Duration(seconds: 2));
+          if (mounted) setState(() => _copied = false);
+        } catch (e) {
+          debugPrint('[clipboard] copy failed: $e');
+        }
       },
       child: Row(
         mainAxisSize: MainAxisSize.min,

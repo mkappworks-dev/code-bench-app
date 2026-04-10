@@ -70,12 +70,14 @@ class ChangesPanel extends ConsumerWidget {
                   )
                 : ListView(
                     padding: EdgeInsets.zero,
-                    children: grouped.entries.expand((entry) {
+                    children: grouped.entries.toList().asMap().entries.expand((indexed) {
+                      final entry = indexed.value;
+                      final groupIndex = indexed.key + 1;
                       return [
                         Padding(
                           padding: const EdgeInsets.fromLTRB(10, 8, 10, 2),
                           child: Text(
-                            'Message',
+                            'Message $groupIndex',
                             style: const TextStyle(
                               color: ThemeConstants.faintFg,
                               fontSize: ThemeConstants.uiFontSizeLabel,
@@ -218,7 +220,18 @@ class _ChangeEntry extends StatelessWidget {
             onTap: () async {
               try {
                 await onRevert();
-              } catch (e) {
+              } on StateError catch (e) {
+                debugPrint('[revert] state error: $e');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Revert failed: ${e.message}'),
+                      backgroundColor: ThemeConstants.error,
+                    ),
+                  );
+                }
+              } catch (e, st) {
+                debugPrint('[revert] error: $e\n$st');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
