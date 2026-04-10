@@ -1,9 +1,11 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../data/models/project.dart';
+import '../../features/chat/chat_notifier.dart';
 import '../../features/project_sidebar/project_sidebar_notifier.dart';
 
 class StatusBar extends ConsumerWidget {
@@ -13,19 +15,19 @@ class StatusBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final projectId = ref.watch(activeProjectIdProvider);
     final projectsAsync = ref.watch(projectsProvider);
+    final activeSessionId = ref.watch(activeSessionIdProvider);
+    final panelVisible = ref.watch(changesPanelVisibleProvider);
 
     Project? activeProject;
     if (projectId != null) {
       activeProject = projectsAsync.whenOrNull(
-        data: (list) {
-          try {
-            return list.firstWhere((p) => p.id == projectId);
-          } catch (_) {
-            return null;
-          }
-        },
+        data: (list) => list.firstWhereOrNull((p) => p.id == projectId),
       );
     }
+
+    // Count changes for the current session (watch unconditionally — Riverpod rule)
+    final allChanges = ref.watch(appliedChangesProvider);
+    final changeCount = activeSessionId != null ? (allChanges[activeSessionId]?.length ?? 0) : 0;
 
     return Container(
       height: 22,
@@ -51,6 +53,34 @@ class StatusBar extends ConsumerWidget {
             ),
           ),
           const Spacer(),
+          // Centre-right: N changes indicator (hidden when 0)
+          if (changeCount > 0) ...[
+            GestureDetector(
+              onTap: () => ref.read(changesPanelVisibleProvider.notifier).toggle(),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: panelVisible ? ThemeConstants.accent : ThemeConstants.warning,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    '$changeCount ${changeCount == 1 ? 'change' : 'changes'}',
+                    style: TextStyle(
+                      color: panelVisible ? ThemeConstants.accent : ThemeConstants.warning,
+                      fontSize: ThemeConstants.uiFontSizeLabel,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+          ],
           // Right: Git branch
           if (activeProject != null && activeProject.isGit) ...[
             Container(

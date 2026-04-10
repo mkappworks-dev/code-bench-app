@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/models/ai_model.dart';
+import '../../data/models/applied_change.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/models/chat_session.dart';
 import '../../services/session/session_service.dart';
@@ -15,7 +17,7 @@ class SessionSystemPrompt extends _$SessionSystemPrompt {
   Map<String, String> build() => {};
 
   void setPrompt(String sessionId, String prompt) {
-    state = {...state, sessionId: prompt};
+    state = Map.of(state)..[sessionId] = prompt;
   }
 
   String? getPrompt(String sessionId) => state[sessionId];
@@ -50,7 +52,9 @@ class ChatMessages extends _$ChatMessages {
 
   Future<void> sendMessage(String input, {String? systemPrompt}) async {
     final sessionId = ref.read(activeSessionIdProvider);
-    if (sessionId == null) return;
+    if (sessionId == null) {
+      throw StateError('No active session — cannot send message.');
+    }
 
     final model = ref.read(selectedModelProvider);
     final service = ref.read(sessionServiceProvider);
@@ -59,21 +63,26 @@ class ChatMessages extends _$ChatMessages {
     final currentMessages = state.valueOrNull ?? [];
     state = AsyncData([...currentMessages]);
 
-    await for (final msg in service.sendAndStream(
-      sessionId: sessionId,
-      userInput: input,
-      model: model,
-      systemPrompt: systemPrompt,
-    )) {
-      final current = state.valueOrNull ?? [];
-      final idx = current.indexWhere((m) => m.id == msg.id);
-      if (idx >= 0) {
-        final updated = List<ChatMessage>.from(current);
-        updated[idx] = msg;
-        state = AsyncData(updated);
-      } else {
-        state = AsyncData([...current, msg]);
+    try {
+      await for (final msg in service.sendAndStream(
+        sessionId: sessionId,
+        userInput: input,
+        model: model,
+        systemPrompt: systemPrompt,
+      )) {
+        final current = state.valueOrNull ?? [];
+        final idx = current.indexWhere((m) => m.id == msg.id);
+        if (idx >= 0) {
+          final updated = List<ChatMessage>.from(current);
+          updated[idx] = msg;
+          state = AsyncData(updated);
+        } else {
+          state = AsyncData([...current, msg]);
+        }
       }
+    } catch (e, st) {
+      debugPrint('[sendMessage] stream error: $e\n$st');
+      state = AsyncError(e, st);
     }
   }
 
@@ -107,4 +116,38 @@ Stream<List<ChatSession>> projectSessions(Ref ref, String projectId) {
 @riverpod
 Stream<List<ChatSession>> archivedSessions(Ref ref) {
   return ref.watch(sessionServiceProvider).watchArchivedSessions();
+}
+
+// ── Applied changes (in-memory, keyed by sessionId) ─────────────────────────
+
+@Riverpod(keepAlive: true)
+class AppliedChanges extends _$AppliedChanges {
+  @override
+  Map<String, List<AppliedChange>> build() => {};
+
+  void apply(AppliedChange change) {
+    final list = <AppliedChange>[...(state[change.sessionId] ?? []), change];
+    state = {...state, change.sessionId: list};
+  }
+
+  void revert(String id) {
+    final next = {
+      for (final entry in state.entries) entry.key: entry.value.where((c) => c.id != id).toList(),
+    };
+    state = Map.fromEntries(next.entries.where((e) => e.value.isNotEmpty));
+  }
+
+  List<AppliedChange> changesForSession(String sessionId) => state[sessionId] ?? [];
+}
+
+// ── Changes panel visibility ─────────────────────────────────────────────────
+
+@Riverpod(keepAlive: true)
+class ChangesPanelVisible extends _$ChangesPanelVisible {
+  @override
+  bool build() => false;
+
+  void toggle() => state = !state;
+  void show() => state = true;
+  void hide() => state = false;
 }

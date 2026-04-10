@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/constants/theme_constants.dart';
 import '../features/chat/chat_notifier.dart';
+import '../features/chat/widgets/changes_panel.dart';
 import '../features/project_sidebar/project_sidebar.dart';
 import '../features/project_sidebar/project_sidebar_notifier.dart';
 import '../services/session/session_service.dart';
@@ -31,12 +32,20 @@ class ChatShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final panelVisible = ref.watch(changesPanelVisibleProvider);
+    final activeSessionId = ref.watch(activeSessionIdProvider);
+
     return Material(
       color: ThemeConstants.background,
       child: CallbackShortcuts(
         bindings: {
-          const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () => _newChat(ref, context),
-          const SingleActivator(LogicalKeyboardKey.keyN, control: true): () => _newChat(ref, context),
+          const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () => _newChat(ref, context).catchError((e, st) {
+                debugPrint('[_newChat] error: $e\n$st');
+              }),
+          const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
+              _newChat(ref, context).catchError((e, st) {
+                debugPrint('[_newChat] error: $e\n$st');
+              }),
           const SingleActivator(LogicalKeyboardKey.comma, meta: true): () => context.go('/settings'),
           const SingleActivator(LogicalKeyboardKey.comma, control: true): () => context.go('/settings'),
         },
@@ -44,14 +53,25 @@ class ChatShell extends ConsumerWidget {
           autofocus: true,
           child: Row(
             children: [
-              // Sidebar
+              // Left sidebar
               const ProjectSidebar(),
-              // Right panel
+              // Right: chat column + optional changes panel
               Expanded(
                 child: Column(
                   children: [
                     const TopActionBar(),
-                    Expanded(child: child),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Expanded(child: child),
+                          if (panelVisible && activeSessionId != null)
+                            SizedBox(
+                              width: 190,
+                              child: ChangesPanel(sessionId: activeSessionId),
+                            ),
+                        ],
+                      ),
+                    ),
                     const StatusBar(),
                   ],
                 ),

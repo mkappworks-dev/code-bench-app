@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:collection/collection.dart';
+import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_highlight/flutter_highlight.dart';
@@ -5,12 +9,63 @@ import 'package:flutter_highlight/themes/vs2015.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/chat_message.dart';
-import 'apply_code_dialog.dart';
+import '../../../data/models/project.dart';
+import '../../../features/project_sidebar/project_sidebar_notifier.dart';
+import '../../../services/apply/apply_service.dart';
+import '../chat_notifier.dart';
 
-class MessageBubble extends ConsumerWidget {
+// ── Public helper (also used by tests) ───────────────────────────────────────
+
+/// Maximum filename length accepted from a code fence info string.
+/// Prevents DoS via megabyte-long filename headers and matches the
+/// common POSIX/Windows PATH_MAX ballpark.
+const int _kMaxFilenameLength = 260;
+
+/// Regex matching Windows drive-letter paths (e.g. `C:\...`) and UNC
+/// paths (`\\server\...`). Needed because `p.isAbsolute` on POSIX hosts
+/// only recognises `/`-rooted paths.
+final RegExp _windowsAbsoluteRe = RegExp(r'^([A-Za-z]:[/\\]|\\\\)');
+
+bool _isWindowsAbsolute(String path) => _windowsAbsoluteRe.hasMatch(path);
+
+/// Splits a code fence info string (e.g. "dart lib/main.dart") into
+/// (language, filename?). Filename is null if no second word is present.
+///
+/// The filename is **untrusted AI input** and is validated here:
+/// rejects empty, absolute paths, null bytes, control characters,
+/// line breaks, and paths longer than [_kMaxFilenameLength]. Invalid
+/// filenames are dropped (treated as no filename) rather than raising,
+/// so the Diff button simply does not appear.
+(String language, String? filename) parseCodeFenceInfo(String info) {
+  final parts = info.trim().split(RegExp(r'\s+'));
+  final language = parts.first;
+  if (parts.length < 2) return (language, null);
+
+  // Whitespace (including \n, \r, \t) is stripped by the \s+ split, so we
+  // only need to guard against null-byte injection, over-length, and
+  // absolute paths that would bypass the project-root join.
+  //
+  // p.isAbsolute uses the host platform's context, so on macOS it misses
+  // Windows drive-letter (C:\...) and UNC (\\server\...) paths. We check
+  // those explicitly since AI-generated filenames can contain any syntax.
+  final candidate = parts.sublist(1).join(' ');
+  if (candidate.isEmpty ||
+      candidate.length > _kMaxFilenameLength ||
+      candidate.contains('\u0000') ||
+      p.isAbsolute(candidate) ||
+      _isWindowsAbsolute(candidate)) {
+    return (language, null);
+  }
+  return (language, candidate);
+}
+
+// ── MessageBubble ─────────────────────────────────────────────────────────────
+
+class MessageBubble extends StatelessWidget {
   const MessageBubble({super.key, required this.message});
 
   final ChatMessage message;
@@ -18,10 +73,10 @@ class MessageBubble extends ConsumerWidget {
   bool get _isUser => message.role == MessageRole.user;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: _isUser ? _UserBubble(message: message) : _AssistantBubble(message: message, ref: ref),
+      child: _isUser ? _UserBubble(message: message) : _AssistantBubble(message: message),
     );
   }
 }
@@ -63,16 +118,14 @@ class _UserBubble extends StatelessWidget {
 // ── Assistant bubble ─────────────────────────────────────────────────────────
 
 class _AssistantBubble extends StatelessWidget {
-  const _AssistantBubble({required this.message, required this.ref});
+  const _AssistantBubble({required this.message});
   final ChatMessage message;
-  final WidgetRef ref;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Left accent border
         Container(
           width: 2,
           margin: const EdgeInsets.only(top: 3, bottom: 3),
@@ -84,7 +137,7 @@ class _AssistantBubble extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (message.isStreaming) const StreamingDot(),
-              _MessageContent(message: message, ref: ref),
+              _MessageContent(message: message),
             ],
           ),
         ),
@@ -141,12 +194,11 @@ class _StreamingDotState extends State<StreamingDot> with SingleTickerProviderSt
   }
 }
 
-// ── Message content (shared markdown renderer) ───────────────────────────────
+// ── Message content ───────────────────────────────────────────────────────────
 
 class _MessageContent extends StatelessWidget {
-  const _MessageContent({required this.message, required this.ref});
+  const _MessageContent({required this.message});
   final ChatMessage message;
-  final WidgetRef ref;
 
   @override
   Widget build(BuildContext context) {
@@ -196,7 +248,12 @@ class _MessageContent extends StatelessWidget {
         blockquote: const TextStyle(color: ThemeConstants.textSecondary),
         listBullet: const TextStyle(color: ThemeConstants.textPrimary),
       ),
-      builders: {'code': _CodeBlockBuilder(ref: ref)},
+      builders: {
+        'code': _CodeBlockBuilder(
+          messageId: message.id,
+          sessionId: message.sessionId,
+        ),
+      },
     );
   }
 }
@@ -204,12 +261,16 @@ class _MessageContent extends StatelessWidget {
 // ── Code block builder ───────────────────────────────────────────────────────
 
 class _CodeBlockBuilder extends MarkdownElementBuilder {
-  _CodeBlockBuilder({required this.ref});
-  final WidgetRef ref;
+  _CodeBlockBuilder({
+    required this.messageId,
+    required this.sessionId,
+  });
+  final String messageId;
+  final String sessionId;
 
   @override
   Widget? visitElementAfter(element, TextStyle? preferredStyle) {
-    final language = element.attributes['class']?.replaceFirst('language-', '') ?? 'plaintext';
+    final fullInfo = element.attributes['class']?.replaceFirst('language-', '') ?? 'plaintext';
     final code = element.textContent;
 
     if (!element.attributes.containsKey('class') && !code.contains('\n')) {
@@ -229,22 +290,160 @@ class _CodeBlockBuilder extends MarkdownElementBuilder {
         ),
       );
     }
-    return _CodeBlockWidget(code: code, language: language, ref: ref);
+
+    final (language, filename) = parseCodeFenceInfo(fullInfo);
+    return _CodeBlockWidget(
+      code: code,
+      language: language,
+      filename: filename,
+      messageId: messageId,
+      sessionId: sessionId,
+    );
   }
 }
 
-class _CodeBlockWidget extends StatefulWidget {
-  const _CodeBlockWidget({required this.code, required this.language, required this.ref});
+// ── Code block widget ─────────────────────────────────────────────────────────
+
+enum _DiffCardState { hidden, loading, loaded, error }
+
+class _CodeBlockWidget extends ConsumerStatefulWidget {
+  const _CodeBlockWidget({
+    required this.code,
+    required this.language,
+    this.filename,
+    required this.messageId,
+    required this.sessionId,
+  });
   final String code;
   final String language;
-  final WidgetRef ref;
+  final String? filename;
+  final String messageId;
+  final String sessionId;
 
   @override
-  State<_CodeBlockWidget> createState() => _CodeBlockWidgetState();
+  ConsumerState<_CodeBlockWidget> createState() => _CodeBlockWidgetState();
 }
 
-class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
+class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
+  _DiffCardState _diffState = _DiffCardState.hidden;
+  String? _originalContent;
+  List<Diff>? _diffs;
+  String? _diffError;
+  int _activeTab = 1; // 0=Before, 1=Diff, 2=After
   bool _applying = false;
+
+  Project? _resolveActiveProject() {
+    final projectId = ref.read(activeProjectIdProvider);
+    final projects = ref.read(projectsProvider).valueOrNull ?? <Project>[];
+    return projects.firstWhereOrNull((p) => p.id == projectId);
+  }
+
+  Future<void> _loadDiff() async {
+    final project = _resolveActiveProject();
+    if (project == null) {
+      setState(() {
+        _diffError = 'No active project.';
+        _diffState = _DiffCardState.error;
+      });
+      return;
+    }
+
+    setState(() => _diffState = _DiffCardState.loading);
+    try {
+      final absolutePath = p.join(project.path, widget.filename!);
+      ApplyService.assertWithinProject(absolutePath, project.path);
+
+      // TOCTOU-safe read: attempt the read directly and treat a missing
+      // file as "new file" instead of stat-then-read.
+      String? original;
+      try {
+        original = await File(absolutePath).readAsString();
+      } on PathNotFoundException {
+        original = null;
+      }
+
+      final dmp = DiffMatchPatch();
+      final diffs = dmp.diff(original ?? '', widget.code);
+      dmp.diffCleanupSemantic(diffs);
+
+      if (!mounted) return;
+      setState(() {
+        _originalContent = original;
+        _diffs = diffs;
+        _diffState = _DiffCardState.loaded;
+      });
+    } on StateError catch (e) {
+      // assertWithinProject rejection — a path-traversal attempt or a
+      // guard-layer failure. Log with a security marker so it's grep-able.
+      debugPrint('[security] _loadDiff path rejected: $e');
+      if (!mounted) return;
+      setState(() {
+        _diffError = 'This file is outside the current project.';
+        _diffState = _DiffCardState.error;
+      });
+    } on FileSystemException catch (e) {
+      debugPrint('[_loadDiff] filesystem: $e');
+      if (!mounted) return;
+      setState(() {
+        _diffError = 'Could not read file from disk.';
+        _diffState = _DiffCardState.error;
+      });
+    } catch (e, st) {
+      debugPrint('[_loadDiff] unexpected: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _diffError = 'Unable to compute diff.';
+        _diffState = _DiffCardState.error;
+      });
+    }
+  }
+
+  Future<void> _applyChange() async {
+    final project = _resolveActiveProject();
+    if (project == null) {
+      _showApplyError('No active project.');
+      return;
+    }
+
+    setState(() => _applying = true);
+    try {
+      final absolutePath = p.join(project.path, widget.filename!);
+      ApplyService.assertWithinProject(absolutePath, project.path);
+      await ref.read(applyServiceProvider).applyChange(
+            filePath: absolutePath,
+            projectPath: project.path,
+            newContent: widget.code,
+            sessionId: widget.sessionId,
+            messageId: widget.messageId,
+          );
+
+      if (!mounted) return;
+      // Auto-open the changes panel on first apply
+      ref.read(changesPanelVisibleProvider.notifier).show();
+      setState(() => _diffState = _DiffCardState.hidden);
+    } on StateError catch (e) {
+      debugPrint('[security] _applyChange path rejected: $e');
+      _showApplyError('This file is outside the current project.');
+    } on FileSystemException catch (e) {
+      debugPrint('[_applyChange] filesystem: $e');
+      _showApplyError('Could not write file to disk.');
+    } catch (e, st) {
+      debugPrint('[_applyChange] unexpected: $e\n$st');
+      _showApplyError('Unable to apply change.');
+    } finally {
+      if (mounted) setState(() => _applying = false);
+    }
+  }
+
+  void _showApplyError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: ThemeConstants.error,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -258,74 +457,227 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+          _buildHeader(),
+          if (_diffState == _DiffCardState.loading)
+            const Padding(
+              padding: EdgeInsets.all(12),
+              child: Center(
+                child: SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                ),
+              ),
+            )
+          else if (_diffState == _DiffCardState.loaded)
+            _buildDiffCard()
+          else if (_diffState == _DiffCardState.error)
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                _diffError ?? 'Error computing diff',
+                style: const TextStyle(
+                  color: ThemeConstants.error,
+                  fontSize: ThemeConstants.uiFontSizeSmall,
+                ),
+              ),
+            )
+          else
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: HighlightView(
+                widget.code,
+                language: widget.language,
+                theme: vs2015Theme,
+                padding: const EdgeInsets.all(12),
+                textStyle: const TextStyle(
+                  fontFamily: ThemeConstants.editorFontFamily,
+                  fontSize: ThemeConstants.editorFontSize,
+                  height: 1.5,
+                ),
+              ),
             ),
-            child: Row(
-              children: [
-                Text(
-                  widget.language,
-                  style: const TextStyle(
-                    color: ThemeConstants.mutedFg,
-                    fontSize: ThemeConstants.uiFontSizeSmall,
-                    fontFamily: ThemeConstants.editorFontFamily,
-                  ),
-                ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: _applying
-                      ? null
-                      : () async {
-                          setState(() => _applying = true);
-                          try {
-                            await showApplyCodeDialog(
-                              context,
-                              widget.ref,
-                              widget.code,
-                              widget.language,
-                            );
-                          } finally {
-                            if (mounted) setState(() => _applying = false);
-                          }
-                        },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _applying ? LucideIcons.hourglass : LucideIcons.download,
-                        size: 12,
-                        color: ThemeConstants.mutedFg,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _applying ? 'Applying...' : 'Apply',
-                        style: const TextStyle(
-                          color: ThemeConstants.mutedFg,
-                          fontSize: ThemeConstants.uiFontSizeSmall,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                _CopyButton(code: widget.code),
-              ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            widget.language,
+            style: const TextStyle(
+              color: ThemeConstants.mutedFg,
+              fontSize: ThemeConstants.uiFontSizeSmall,
+              fontFamily: ThemeConstants.editorFontFamily,
             ),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: HighlightView(
-              widget.code,
-              language: widget.language,
-              theme: vs2015Theme,
-              padding: const EdgeInsets.all(12),
-              textStyle: const TextStyle(
-                fontFamily: ThemeConstants.editorFontFamily,
-                fontSize: ThemeConstants.editorFontSize,
-                height: 1.5,
+          if (widget.filename != null) ...[
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                widget.filename!,
+                style: const TextStyle(
+                  color: ThemeConstants.textSecondary,
+                  fontSize: ThemeConstants.uiFontSizeSmall,
+                  fontFamily: ThemeConstants.editorFontFamily,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
+            ),
+          ] else
+            const Spacer(),
+          if (widget.filename != null && _diffState == _DiffCardState.hidden)
+            _HeaderButton(
+              label: 'Diff',
+              icon: LucideIcons.gitCompare,
+              onTap: _loadDiff,
+            ),
+          if (_diffState == _DiffCardState.loaded) ...[
+            _HeaderButton(
+              label: _applying ? 'Applying...' : 'Apply',
+              icon: _applying ? LucideIcons.hourglass : LucideIcons.download,
+              onTap: _applying ? null : _applyChange,
+            ),
+            const SizedBox(width: 8),
+            _HeaderButton(
+              label: 'Collapse',
+              icon: LucideIcons.chevronUp,
+              onTap: () => setState(() {
+                _diffState = _DiffCardState.hidden;
+                _activeTab = 1;
+              }),
+            ),
+          ],
+          const SizedBox(width: 12),
+          _CopyButton(code: widget.code),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiffCard() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Tab bar
+        Container(
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+          ),
+          child: Row(
+            children: [
+              _Tab(label: 'Before', index: 0, activeIndex: _activeTab, onTap: (i) => setState(() => _activeTab = i)),
+              _Tab(label: 'Diff', index: 1, activeIndex: _activeTab, onTap: (i) => setState(() => _activeTab = i)),
+              _Tab(label: 'After', index: 2, activeIndex: _activeTab, onTap: (i) => setState(() => _activeTab = i)),
+            ],
+          ),
+        ),
+        // Tab content
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 320),
+          child: SingleChildScrollView(
+            child: _activeTab == 0
+                ? _buildPlainContent(_originalContent ?? '(new file)')
+                : _activeTab == 2
+                    ? _buildPlainContent(widget.code)
+                    : _buildDiffContent(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlainContent(String content) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: HighlightView(
+        content,
+        language: widget.language,
+        theme: vs2015Theme,
+        padding: const EdgeInsets.all(12),
+        textStyle: const TextStyle(
+          fontFamily: ThemeConstants.editorFontFamily,
+          fontSize: ThemeConstants.editorFontSize,
+          height: 1.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiffContent() {
+    final diffs = _diffs ?? [];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: diffs.map((diff) {
+            final bg = diff.operation == DIFF_INSERT
+                ? const Color(0x3300CC66)
+                : diff.operation == DIFF_DELETE
+                    ? const Color(0x33FF4444)
+                    : Colors.transparent;
+            final prefix = diff.operation == DIFF_INSERT
+                ? '+'
+                : diff.operation == DIFF_DELETE
+                    ? '−'
+                    : ' ';
+            return Container(
+              color: bg,
+              child: Text(
+                (diff.text.endsWith('\n') ? diff.text.substring(0, diff.text.length - 1) : diff.text)
+                    .split('\n')
+                    .map((line) => '$prefix $line')
+                    .join('\n'),
+                style: const TextStyle(
+                  fontFamily: ThemeConstants.editorFontFamily,
+                  fontSize: ThemeConstants.editorFontSize,
+                  color: ThemeConstants.textPrimary,
+                  height: 1.5,
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Small reusable header button ─────────────────────────────────────────────
+
+class _HeaderButton extends StatelessWidget {
+  const _HeaderButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+  final String label;
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: ThemeConstants.mutedFg),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: ThemeConstants.mutedFg,
+              fontSize: ThemeConstants.uiFontSizeSmall,
             ),
           ),
         ],
@@ -333,6 +685,49 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
     );
   }
 }
+
+// ── Tab ───────────────────────────────────────────────────────────────────────
+
+class _Tab extends StatelessWidget {
+  const _Tab({
+    required this.label,
+    required this.index,
+    required this.activeIndex,
+    required this.onTap,
+  });
+  final String label;
+  final int index;
+  final int activeIndex;
+  final void Function(int) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = index == activeIndex;
+    return GestureDetector(
+      onTap: () => onTap(index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: isActive ? ThemeConstants.accent : Colors.transparent,
+              width: 2,
+            ),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: ThemeConstants.uiFontSizeSmall,
+            color: isActive ? ThemeConstants.textPrimary : ThemeConstants.mutedFg,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Copy button ───────────────────────────────────────────────────────────────
 
 class _CopyButton extends StatefulWidget {
   const _CopyButton({required this.code});
@@ -349,10 +744,14 @@ class _CopyButtonState extends State<_CopyButton> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        await Clipboard.setData(ClipboardData(text: widget.code));
-        setState(() => _copied = true);
-        await Future.delayed(const Duration(seconds: 2));
-        if (mounted) setState(() => _copied = false);
+        try {
+          await Clipboard.setData(ClipboardData(text: widget.code));
+          setState(() => _copied = true);
+          await Future.delayed(const Duration(seconds: 2));
+          if (mounted) setState(() => _copied = false);
+        } catch (e) {
+          debugPrint('[clipboard] copy failed: $e');
+        }
       },
       child: Row(
         mainAxisSize: MainAxisSize.min,

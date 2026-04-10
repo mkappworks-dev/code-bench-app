@@ -182,7 +182,7 @@ final archivedSessionsProvider = AutoDisposeStreamProvider<List<ChatSession>>.in
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ArchivedSessionsRef = AutoDisposeStreamProviderRef<List<ChatSession>>;
-String _$sessionSystemPromptHash() => r'54342a5fe93c9a7edc16f005fa6089d539e394b9';
+String _$sessionSystemPromptHash() => r'cbf00e1c70fcc8c90707dd1122dea62958d5be1e';
 
 /// See also [SessionSystemPrompt].
 @ProviderFor(SessionSystemPrompt)
@@ -221,7 +221,7 @@ final selectedModelProvider = NotifierProvider<SelectedModel, AIModel>.internal(
 );
 
 typedef _$SelectedModel = Notifier<AIModel>;
-String _$chatMessagesHash() => r'66b3e0472bac949f586adf0de1c32b8c4bacd15d';
+String _$chatMessagesHash() => r'7ccfb448579afde3abc33f89cd80da99ef9b51f4';
 
 abstract class _$ChatMessages extends BuildlessAutoDisposeAsyncNotifier<List<ChatMessage>> {
   late final String sessionId;
@@ -357,5 +357,32 @@ class _ChatMessagesProviderElement extends AutoDisposeAsyncNotifierProviderEleme
   @override
   String get sessionId => (origin as ChatMessagesProvider).sessionId;
 }
+
+String _$appliedChangesHash() => r'2f1446537e686532ec607fd36b2475b2adf7d9f9';
+
+/// See also [AppliedChanges].
+@ProviderFor(AppliedChanges)
+final appliedChangesProvider = NotifierProvider<AppliedChanges, Map<String, List<AppliedChange>>>.internal(
+  AppliedChanges.new,
+  name: r'appliedChangesProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$appliedChangesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$AppliedChanges = Notifier<Map<String, List<AppliedChange>>>;
+String _$changesPanelVisibleHash() => r'f81f3dbb0aeb38ffb87bbd472846a33f732504e3';
+
+/// See also [ChangesPanelVisible].
+@ProviderFor(ChangesPanelVisible)
+final changesPanelVisibleProvider = NotifierProvider<ChangesPanelVisible, bool>.internal(
+  ChangesPanelVisible.new,
+  name: r'changesPanelVisibleProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$changesPanelVisibleHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ChangesPanelVisible = Notifier<bool>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
