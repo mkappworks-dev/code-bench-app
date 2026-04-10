@@ -96,7 +96,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     final origin = box.localToGlobal(Offset.zero, ancestor: overlay);
     return RelativeRect.fromLTRB(
       origin.dx,
-      origin.dy,
+      origin.dy + box.size.height, // anchor to button bottom → menu opens above button
       overlay.size.width - origin.dx - box.size.width,
       0,
     );

@@ -129,6 +129,9 @@ class AppTheme {
           side: const BorderSide(color: ThemeConstants.borderColor),
         ),
       ),
+      popupMenuTheme: const PopupMenuThemeData(
+        popUpAnimationStyle: AnimationStyle(duration: Duration.zero, reverseDuration: Duration.zero),
+      ),
     );
   }
 }
