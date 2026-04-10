@@ -7,10 +7,13 @@ import '../../data/models/chat_session.dart';
 import '../../data/models/project.dart';
 import '../../data/models/project_action.dart';
 import '../../features/chat/chat_notifier.dart';
+import '../../features/chat/widgets/commit_dialog.dart';
 import '../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../../services/actions/action_runner_service.dart';
+import '../../services/ai/ai_service_factory.dart';
 import '../../services/git/git_service.dart';
 import '../../services/ide/ide_launch_service.dart';
+import '../../data/datasources/local/general_preferences.dart';
 import '../../services/project/project_service.dart';
 
 class TopActionBar extends ConsumerWidget {
@@ -109,7 +112,7 @@ class TopActionBar extends ConsumerWidget {
           const SizedBox(width: 5),
           // Git action: Commit & Push (git) or Initialize Git (no git)
           if (project != null && project.isGit)
-            _CommitPushButton(onCommit: () {}, onDropdown: () {})
+            _CommitPushButton(project: project)
           else if (project != null && !project.isGit)
             _InitGitButton(project: project),
         ],
@@ -217,41 +220,232 @@ class _InitGitButton extends ConsumerWidget {
 
 // ── Commit & Push split button ───────────────────────────────────────────────
 
-class _CommitPushButton extends StatelessWidget {
-  const _CommitPushButton({required this.onCommit, required this.onDropdown});
-  final VoidCallback onCommit;
-  final VoidCallback onDropdown;
+class _CommitPushButton extends ConsumerStatefulWidget {
+  const _CommitPushButton({required this.project});
+  final Project project;
+
+  @override
+  ConsumerState<_CommitPushButton> createState() => _CommitPushButtonState();
+}
+
+class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
+  bool _pushing = false;
+  bool _pulling = false;
+  int _behindCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBehindCount();
+  }
+
+  Future<void> _checkBehindCount() async {
+    final count = await GitService(widget.project.path).fetchBehindCount();
+    if (mounted) setState(() => _behindCount = count);
+  }
+
+  Future<void> _doCommit() async {
+    final prefs = ref.read(generalPreferencesProvider);
+    final autoCommit = await prefs.getAutoCommit();
+
+    // Collect file paths from applied changes for the active session.
+    final sessionId = ref.read(activeSessionIdProvider);
+    final changedFiles = sessionId != null
+        ? ref.read(appliedChangesProvider.notifier).changesForSession(sessionId).map((c) => c.filePath).toList()
+        : <String>[];
+
+    // Generate commit message via AI.
+    final model = ref.read(selectedModelProvider);
+    final aiSvc = await ref.read(aiServiceProvider(model.provider).future);
+    final prompt = 'Write a conventional commit message (subject line only, max 72 chars) '
+        'summarising these file changes: ${changedFiles.isEmpty ? "general changes" : changedFiles.join(", ")}. '
+        'Reply with only the commit message, no explanation.';
+
+    String message = 'chore: update files';
+    if (aiSvc != null) {
+      try {
+        final response = await aiSvc.sendMessage(
+          history: const [],
+          prompt: prompt,
+          model: model,
+        );
+        final text = response.content;
+        if (text.isNotEmpty) {
+          message = text.trim().replaceAll('"', '').split('\n').first.trim();
+        }
+      } catch (_) {
+        // Fall back to generic message.
+      }
+    }
+
+    if (autoCommit) {
+      await _runCommit(message);
+      return;
+    }
+
+    if (!mounted) return;
+    final confirmed = await CommitDialog.show(context, message);
+    if (confirmed != null) {
+      await _runCommit(confirmed);
+    }
+  }
+
+  Future<void> _runCommit(String message) async {
+    try {
+      final sha = await GitService(widget.project.path).commit(message);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Committed — $sha')),
+        );
+      }
+    } on GitException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Commit failed: ${e.message}')));
+      }
+    }
+  }
+
+  Future<void> _doPush() async {
+    setState(() => _pushing = true);
+    try {
+      final branch = await GitService(widget.project.path).push();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pushed to origin/$branch')));
+      }
+    } on GitNoUpstreamException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No upstream branch. Run `git push -u origin <branch>` in your terminal.'),
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    } on GitAuthException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Push failed — check your git credentials.')),
+        );
+      }
+    } on GitException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Push failed: ${e.message}')));
+      }
+    } finally {
+      if (mounted) setState(() => _pushing = false);
+    }
+  }
+
+  Future<void> _doPull() async {
+    setState(() => _pulling = true);
+    try {
+      final n = await GitService(widget.project.path).pull();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Pulled — $n new commit(s) from origin')),
+        );
+        setState(() => _behindCount = 0);
+      }
+    } on GitConflictException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pull failed — merge conflict detected. Resolve conflicts in your editor.'),
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    } on GitNoUpstreamException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No upstream branch set.')));
+      }
+    } on GitException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pull failed: ${e.message}')));
+      }
+    } finally {
+      if (mounted) setState(() => _pulling = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final badgeLabel = _behindCount > 0 ? ' ↓$_behindCount' : '';
+    final busy = _pushing || _pulling;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Left: Commit & Push
+        // Left: Commit
         GestureDetector(
-          onTap: onCommit,
+          onTap: busy ? null : _doCommit,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: ThemeConstants.accent,
+              color: busy ? ThemeConstants.accentDark : ThemeConstants.accent,
               borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(LucideIcons.gitCommitHorizontal, size: 12, color: Colors.white),
-                SizedBox(width: 5),
+                const Icon(LucideIcons.gitCommitHorizontal, size: 12, color: Colors.white),
+                const SizedBox(width: 5),
                 Text(
-                  'Commit & Push',
-                  style: TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeSmall),
+                  _pushing
+                      ? '● Pushing…'
+                      : _pulling
+                          ? '● Pulling…'
+                          : 'Commit',
+                  style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeSmall),
                 ),
               ],
             ),
           ),
         ),
-        // Right: dropdown caret
-        GestureDetector(
-          onTap: onDropdown,
+        // Right: dropdown
+        PopupMenuButton<String>(
+          tooltip: 'Git actions',
+          color: ThemeConstants.inputSurface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6),
+            side: const BorderSide(color: ThemeConstants.deepBorder),
+          ),
+          itemBuilder: (_) => [
+            PopupMenuItem(
+              value: 'push',
+              child: Text(
+                _pushing ? '● Pushing…' : 'Push ↑',
+                style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+              ),
+            ),
+            PopupMenuItem(
+              value: 'pull',
+              child: Text(
+                _behindCount > 0 ? 'Pull ↓$_behindCount' : 'Pull',
+                style: TextStyle(
+                  color: _behindCount > 0 ? ThemeConstants.accent : ThemeConstants.textSecondary,
+                  fontSize: ThemeConstants.uiFontSizeSmall,
+                ),
+              ),
+            ),
+            const PopupMenuDivider(),
+            const PopupMenuItem(
+              value: 'create_pr',
+              child: Text(
+                'Create PR',
+                style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+              ),
+            ),
+          ],
+          onSelected: (action) {
+            switch (action) {
+              case 'push':
+                _doPush();
+              case 'pull':
+                _doPull();
+              case 'create_pr':
+                _showCreatePrDialog();
+            }
+          },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
             decoration: BoxDecoration(
@@ -259,11 +453,22 @@ class _CommitPushButton extends StatelessWidget {
               border: const Border(left: BorderSide(color: ThemeConstants.accentDark)),
               borderRadius: const BorderRadius.horizontal(right: Radius.circular(5)),
             ),
-            child: const Icon(LucideIcons.chevronDown, size: 11, color: Colors.white),
+            child: Row(
+              children: [
+                if (badgeLabel.isNotEmpty)
+                  Text(badgeLabel,
+                      style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeLabel)),
+                const Icon(LucideIcons.chevronDown, size: 11, color: Colors.white),
+              ],
+            ),
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _showCreatePrDialog() async {
+    // Implemented in Task 9
   }
 }
 
@@ -341,7 +546,8 @@ class _ActionsDropdown extends ConsumerWidget {
                 const Icon(LucideIcons.play, size: 12, color: ThemeConstants.textSecondary),
                 const SizedBox(width: 6),
                 Text(action.name,
-                    style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall)),
+                    style:
+                        const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall)),
               ],
             ),
           ),
