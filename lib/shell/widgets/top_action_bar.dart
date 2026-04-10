@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/errors/app_exception.dart';
 import '../../core/utils/instant_menu.dart';
 import '../../data/models/chat_session.dart';
 import '../../data/models/project.dart';
@@ -228,15 +229,23 @@ class _InitGitButton extends ConsumerWidget {
 
         // Refresh git status separately so a db/refresh error doesn't get
         // reported as "init failed" — init really did succeed.
+        var refreshFailed = false;
         try {
           await ref.read(projectServiceProvider).refreshGitStatus(project.id);
         } on Exception catch (e) {
+          refreshFailed = true;
           if (kDebugMode) debugPrint('[_InitGitButton] refreshGitStatus failed: $e');
         }
 
         if (context.mounted) {
+          // In release builds, a silent refresh failure would leave the
+          // sidebar showing "Not a git repo" with no explanation, making
+          // the button look broken on the user's next click. Tell them.
+          final message = refreshFailed
+              ? 'Git repository initialized — reopen the project to refresh the sidebar.'
+              : 'Git repository initialized';
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Git repository initialized')),
+            SnackBar(content: Text(message)),
           );
         }
       },
@@ -268,7 +277,20 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   }
 
   Future<void> _checkBehindCount() async {
-    final count = await GitService(widget.project.path).fetchBehindCount();
+    // `fetchBehindCount` is documented to return `null` on soft failures
+    // (no upstream, offline), but `Process.run` can still throw synchronously
+    // if the git binary is missing or the working directory was deleted
+    // between mount and this call. This runs from `unawaited(...)` in
+    // initState, so an escaped throw would hit Flutter's uncaught-error
+    // handler instead of updating the UI — explicitly fall through to
+    // "unknown" (the `↓?` badge) so the user at least sees an honest state.
+    int? count;
+    try {
+      count = await GitService(widget.project.path).fetchBehindCount();
+    } on Exception catch (e) {
+      if (kDebugMode) debugPrint('[_CommitPushButton] fetchBehindCount threw: $e');
+      count = null;
+    }
     if (mounted) setState(() => _behindCount = count);
   }
 
@@ -301,8 +323,12 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         if (text.isNotEmpty) {
           message = text.trim().replaceAll('"', '').split('\n').first.trim();
         }
-      } catch (e, st) {
-        if (kDebugMode) debugPrint('[_CommitPushButton] AI commit message failed: $e\n$st');
+      } on NetworkException catch (e) {
+        // Only swallow provider-side failures (offline, bad key, rate limit).
+        // A TypeError from malformed provider JSON, or any other
+        // `Error`/`Exception`, is a real bug and should propagate so we
+        // see it instead of masking it as "provider unavailable".
+        if (kDebugMode) debugPrint('[_CommitPushButton] AI commit message failed: ${e.message}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -588,8 +614,11 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         final bodyMatch = RegExp(r'BODY:\n([\s\S]+)').firstMatch(text);
         if (titleMatch != null) prTitle = titleMatch.group(1)!.trim();
         if (bodyMatch != null) prBody = bodyMatch.group(1)!.trim();
-      } catch (e, st) {
-        if (kDebugMode) debugPrint('[_CommitPushButton] AI PR title/body failed: $e\n$st');
+      } on NetworkException catch (e) {
+        // As in `_doCommit`: narrow to provider-side failures so a real
+        // bug in the regex / response shape propagates instead of being
+        // explained away as "AI unavailable".
+        if (kDebugMode) debugPrint('[_CommitPushButton] AI PR title/body failed: ${e.message}');
         _snack('AI title/body unavailable — using a default. Check your model provider.');
       }
     }
@@ -633,7 +662,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     );
     if (result == null) return;
 
-    // 7. Create PR and open in browser.
+    // 7. Create PR and surface the URL to the user.
     try {
       final prUrl = await api.createPullRequest(
         owner: owner,
@@ -644,23 +673,47 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         base: result.base,
         draft: result.draft,
       );
+      // Defence-in-depth on the GitHub API response: `prUrl` comes from
+      // `data['html_url']` and is sent to `open`. The `--` separator
+      // already blocks flag parsing, but it does NOT constrain URL
+      // schemes (`file://`, `x-apple-…://`, etc.). Only offer the
+      // "Open" action for canonical github.com URLs; otherwise just
+      // show the text so the user can copy it manually.
+      final canAutoOpen = prUrl.startsWith('https://github.com/');
       // Always surface the URL so the user can reach their PR even if
       // `open` fails (browser misconfigured, headless CI, etc).
       _snack(
         'Pull request created: $prUrl',
         duration: const Duration(seconds: 8),
-        action: SnackBarAction(
-          label: 'Open',
-          onPressed: () {
-            // Fire-and-forget; failure just means nothing happens — the
-            // URL is already visible in the snackbar text.
-            unawaited(Process.run('open', ['--', prUrl]));
-          },
-        ),
+        action: canAutoOpen
+            ? SnackBarAction(
+                label: 'Open',
+                onPressed: () {
+                  // Fire-and-forget. `.catchError` prevents a
+                  // `ProcessException` (e.g. no `open` binary on
+                  // non-macOS) from escaping as an unhandled future —
+                  // the URL is already visible in the snackbar.
+                  unawaited(
+                    Process.run('open', ['--', prUrl]).catchError(
+                      (Object _) => ProcessResult(0, -1, '', ''),
+                    ),
+                  );
+                },
+              )
+            : null,
       );
-      unawaited(Process.run('open', ['--', prUrl]));
-    } catch (e) {
-      _snack('Failed to create PR: $e');
+      // Note: no eager auto-open. The SnackBarAction is the single
+      // source of truth so the user isn't surprised by a browser launch,
+      // and we don't double-fire `open` on a successful create.
+    } on NetworkException catch (e) {
+      // `NetworkException.toString()` only renders `message`
+      // (see `AppException.toString()`), but use `e.message` directly
+      // so that a future subclass which leaks `originalError` in its
+      // `toString()` cannot expose the request `Authorization` header.
+      // A non-`NetworkException` (TypeError, StateError, etc.) is a real
+      // bug and is intentionally left to propagate as an uncaught future
+      // so it's visible in logs rather than masked as "failed to create".
+      _snack('Failed to create PR: ${e.message}');
     }
   }
 }

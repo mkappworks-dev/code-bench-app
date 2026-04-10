@@ -11,11 +11,33 @@ class GitService {
 
   final String projectPath;
 
+  /// Strips GitHub tokens and embedded basic-auth credentials from [input]
+  /// so git stderr can be safely rendered in the UI and logs.
+  ///
+  /// The app never injects PATs into git remote URLs, but a user's global
+  /// git credential helper could echo one back in an error message (e.g.
+  /// "fatal: Authentication failed for https://x-access-token:ghp_…@github.com/…").
+  /// This is defence-in-depth so no UI path can accidentally leak a token.
+  static String _sanitizeGitStderr(String input) {
+    // 1. Classic + fine-grained GitHub PATs.
+    var out = input.replaceAll(
+      RegExp(r'(ghp|gho|ghu|ghs|ghr|github_pat)_[A-Za-z0-9_]{20,}'),
+      '[redacted-token]',
+    );
+    // 2. Basic auth embedded in https URLs
+    //    (e.g. https://user:pat@github.com/… → https://[redacted]@github.com/…).
+    out = out.replaceAllMapped(
+      RegExp(r'(https?://)([^/@\s]+)@'),
+      (m) => '${m[1]}[redacted]@',
+    );
+    return out;
+  }
+
   /// Runs `git init` in [projectPath]. Throws [GitException] on failure.
   Future<void> initGit() async {
     final result = await Process.run('git', ['init'], workingDirectory: projectPath);
     if (result.exitCode != 0) {
-      throw GitException('git init failed: ${result.stderr}');
+      throw GitException('git init failed: ${_sanitizeGitStderr(result.stderr as String)}');
     }
   }
 
@@ -24,7 +46,7 @@ class GitService {
   Future<String> commit(String message) async {
     final addResult = await Process.run('git', ['add', '-A'], workingDirectory: projectPath);
     if (addResult.exitCode != 0) {
-      throw GitException('git add failed: ${addResult.stderr}');
+      throw GitException('git add failed: ${_sanitizeGitStderr(addResult.stderr as String)}');
     }
     final commitResult = await Process.run(
       'git',
@@ -32,7 +54,7 @@ class GitService {
       workingDirectory: projectPath,
     );
     if (commitResult.exitCode != 0) {
-      throw GitException('git commit failed: ${commitResult.stderr}');
+      throw GitException('git commit failed: ${_sanitizeGitStderr(commitResult.stderr as String)}');
     }
     // Extract short SHA from output like "[main abc1234] message" or
     // "[feat/2026-04-10-foo abc1234] message" or "[main (root-commit) abc1234]".
@@ -65,7 +87,7 @@ class GitService {
       if (stderr.contains('Authentication') || stderr.contains('could not read Username')) {
         throw GitAuthException();
       }
-      throw GitException(stderr.trim());
+      throw GitException(_sanitizeGitStderr(stderr.trim()));
     }
     return branch;
   }
@@ -86,7 +108,7 @@ class GitService {
       if (stderr.contains('no tracking information') || stderr.contains('no upstream')) {
         throw GitNoUpstreamException('');
       }
-      throw GitException(stderr.trim());
+      throw GitException(_sanitizeGitStderr(stderr.trim()));
     }
 
     if (preSha == null) return 0;
@@ -107,6 +129,11 @@ class GitService {
   Future<int?> fetchBehindCount() async {
     final branch = await _currentBranch();
     if (branch == null) return null;
+    // Defence-in-depth: if the current branch name starts with `-` (a
+    // hostile ref name baked into a cloned-from-attacker .git), refuse to
+    // interpolate it into the rev-list range. `git check-ref-format`
+    // normally rejects these, but don't rely on that guarantee.
+    if (branch.startsWith('-')) return null;
 
     final fetchResult = await Process.run(
       'git',
@@ -189,6 +216,11 @@ class GitService {
       throw GitException('Invalid remote name: $remote');
     }
     final branch = await _currentBranch() ?? '';
+    // Same reasoning for the branch name — a hostile ref baked into
+    // `.git/HEAD` could otherwise reach `git push <remote> <branch>` argv.
+    if (branch.startsWith('-')) {
+      throw GitException('Invalid branch name: $branch');
+    }
 
     final result = await Process.run(
       'git',
@@ -196,7 +228,7 @@ class GitService {
       workingDirectory: projectPath,
     );
     if (result.exitCode != 0) {
-      throw GitException((result.stderr as String).trim());
+      throw GitException(_sanitizeGitStderr((result.stderr as String).trim()));
     }
   }
 }

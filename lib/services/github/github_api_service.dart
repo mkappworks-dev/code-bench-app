@@ -152,13 +152,24 @@ class GitHubApiService {
     }
   }
 
+  // Branch/ref names that are safe to render in UI and (future-proofing)
+  // feed to `git` argv. Matches the loose subset of git check-ref-format:
+  // ASCII word chars, `.`, `/`, `-`, no leading `-`, bounded length.
+  // A hostile fork that returns an exotic ref name will be silently
+  // dropped from the picker rather than risking a shell-injection bug
+  // the next time a caller wires these into a Process.run call.
+  static final _safeBranchName = RegExp(r'^[A-Za-z0-9._/-]{1,255}$');
+
   Future<List<String>> listBranches(String owner, String repo) async {
     try {
       final response = await _dio.get(
         '/repos/$owner/$repo/branches',
         queryParameters: {'per_page': 50},
       );
-      return (response.data as List).map((b) => b['name'] as String).toList();
+      return (response.data as List)
+          .map((b) => b['name'] as String)
+          .where((name) => !name.startsWith('-') && _safeBranchName.hasMatch(name))
+          .toList();
     } on DioException catch (e) {
       throw NetworkException(
         'Failed to list branches',
