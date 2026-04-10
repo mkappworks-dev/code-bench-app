@@ -7,6 +7,7 @@ import '../../data/models/chat_session.dart';
 import '../../data/models/project.dart';
 import '../../features/chat/chat_notifier.dart';
 import '../../features/project_sidebar/project_sidebar_notifier.dart';
+import '../../services/ide/ide_launch_service.dart';
 
 class TopActionBar extends ConsumerWidget {
   const TopActionBar({super.key});
@@ -101,10 +102,10 @@ class TopActionBar extends ConsumerWidget {
           _ActionButton(
             icon: LucideIcons.plus,
             label: 'Add action',
-            onTap: () {}, // wired in Phase 3
+            onTap: () {}, // wired in Task 5
           ),
           const SizedBox(width: 5),
-          _VsCodeDropdown(),
+          if (project != null) _VsCodeDropdown(projectPath: project.path),
           const SizedBox(width: 5),
           // Git action: Commit & Push (git) or Initialize Git (no git)
           if (project != null && project.isGit)
@@ -123,16 +124,64 @@ class TopActionBar extends ConsumerWidget {
 
 // ── VS Code dropdown ─────────────────────────────────────────────────────────
 
-class _VsCodeDropdown extends StatelessWidget {
+class _VsCodeDropdown extends ConsumerWidget {
+  const _VsCodeDropdown({required this.projectPath});
+  final String projectPath;
+
   @override
-  Widget build(BuildContext context) {
-    return _ActionButton(
-      icon: LucideIcons.code,
-      label: 'VS Code',
-      trailingCaret: true,
-      onTap: () {
-        // Stub — wired in Phase 3
+  Widget build(BuildContext context, WidgetRef ref) {
+    final svc = ref.watch(ideLaunchServiceProvider);
+    return PopupMenuButton<String>(
+      tooltip: 'Open in…',
+      color: ThemeConstants.inputSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(6),
+        side: const BorderSide(color: ThemeConstants.deepBorder),
+      ),
+      itemBuilder: (_) => [
+        _menuItem('vscode', LucideIcons.code, 'VS Code'),
+        _menuItem('cursor', LucideIcons.zap, 'Cursor'),
+        const PopupMenuDivider(),
+        _menuItem('finder', LucideIcons.folderOpen, 'Open in Finder'),
+        _menuItem('terminal', LucideIcons.terminal, 'Open in Terminal'),
+      ],
+      onSelected: (action) async {
+        String? error;
+        switch (action) {
+          case 'vscode':
+            error = await svc.openVsCode(projectPath);
+          case 'cursor':
+            error = await svc.openCursor(projectPath);
+          case 'finder':
+            await svc.openInFinder(projectPath);
+          case 'terminal':
+            await svc.openInTerminal(projectPath);
+        }
+        if (error != null && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error), duration: const Duration(seconds: 4)),
+          );
+        }
       },
+      child: _ActionButton(
+        icon: LucideIcons.code,
+        label: 'VS Code',
+        trailingCaret: true,
+        onTap: () {}, // tap handled by PopupMenuButton
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String label) {
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 12, color: ThemeConstants.textSecondary),
+          const SizedBox(width: 8),
+          Text(label, style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11)),
+        ],
+      ),
     );
   }
 }
