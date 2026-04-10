@@ -5,9 +5,12 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../data/models/chat_session.dart';
 import '../../data/models/project.dart';
+import '../../data/models/project_action.dart';
 import '../../features/chat/chat_notifier.dart';
 import '../../features/project_sidebar/project_sidebar_notifier.dart';
+import '../../services/actions/action_runner_service.dart';
 import '../../services/ide/ide_launch_service.dart';
+import '../../services/project/project_service.dart';
 
 class TopActionBar extends ConsumerWidget {
   const TopActionBar({super.key});
@@ -99,11 +102,7 @@ class TopActionBar extends ConsumerWidget {
           ],
           const Spacer(),
           // ── Right: action buttons ─────────────────────────────────────────
-          _ActionButton(
-            icon: LucideIcons.plus,
-            label: 'Add action',
-            onTap: () {}, // wired in Task 5
-          ),
+          if (project != null) _ActionsDropdown(project: project),
           const SizedBox(width: 5),
           if (project != null) _VsCodeDropdown(projectPath: project.path),
           const SizedBox(width: 5),
@@ -284,6 +283,141 @@ class _ActionButton extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── Actions dropdown ─────────────────────────────────────────────────────────
+
+class _ActionsDropdown extends ConsumerWidget {
+  const _ActionsDropdown({required this.project});
+  final Project project;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return PopupMenuButton<Object>(
+      tooltip: 'Actions',
+      color: ThemeConstants.inputSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(6),
+        side: const BorderSide(color: ThemeConstants.deepBorder),
+      ),
+      itemBuilder: (_) => [
+        for (final action in project.actions)
+          PopupMenuItem<Object>(
+            value: action,
+            child: Row(
+              children: [
+                const Icon(LucideIcons.play, size: 12, color: ThemeConstants.textSecondary),
+                const SizedBox(width: 6),
+                Text(action.name,
+                    style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall)),
+              ],
+            ),
+          ),
+        if (project.actions.isNotEmpty) const PopupMenuDivider(),
+        PopupMenuItem<Object>(
+          value: '__add__',
+          child: Row(
+            children: const [
+              Icon(LucideIcons.plus, size: 12, color: ThemeConstants.textSecondary),
+              SizedBox(width: 6),
+              Text('+ Add action',
+                  style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall)),
+            ],
+          ),
+        ),
+      ],
+      onSelected: (value) async {
+        if (value == '__add__') {
+          final action = await _showAddActionDialog(context);
+          if (action != null) {
+            final newActions = [...project.actions, action];
+            await ref.read(projectServiceProvider).updateProjectActions(project.id, newActions);
+          }
+        } else if (value is ProjectAction) {
+          await ref.read(actionOutputNotifierProvider.notifier).run(value, project.path);
+        }
+      },
+      child: _ActionButton(
+        icon: LucideIcons.plus,
+        label: 'Actions',
+        trailingCaret: true,
+        onTap: () {},
+      ),
+    );
+  }
+
+  Future<ProjectAction?> _showAddActionDialog(BuildContext context) {
+    return showDialog<ProjectAction>(context: context, builder: (_) => const _AddActionDialog());
+  }
+}
+
+class _AddActionDialog extends StatefulWidget {
+  const _AddActionDialog();
+
+  @override
+  State<_AddActionDialog> createState() => _AddActionDialogState();
+}
+
+class _AddActionDialogState extends State<_AddActionDialog> {
+  final _nameController = TextEditingController();
+  final _commandController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _commandController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: ThemeConstants.inputSurface,
+      title: const Text('Add Action', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _nameController,
+            maxLength: 40,
+            decoration: const InputDecoration(
+              labelText: 'Name (e.g. Run tests)',
+              labelStyle: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+            ),
+            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _commandController,
+            decoration: const InputDecoration(
+              labelText: 'Command (e.g. flutter test)',
+              labelStyle: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+            ),
+            style: TextStyle(
+              color: ThemeConstants.textPrimary,
+              fontSize: ThemeConstants.uiFontSize,
+              fontFamily: ThemeConstants.editorFontFamily,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel', style: TextStyle(color: ThemeConstants.textSecondary)),
+        ),
+        TextButton(
+          onPressed: () {
+            final name = _nameController.text.trim();
+            final command = _commandController.text.trim();
+            if (name.isEmpty || command.isEmpty) return;
+            Navigator.of(context).pop(ProjectAction(name: name, command: command));
+          },
+          child: const Text('Save', style: TextStyle(color: ThemeConstants.accent)),
+        ),
+      ],
     );
   }
 }
