@@ -172,7 +172,7 @@ class _VsCodeDropdown extends ConsumerWidget {
         icon: LucideIcons.code,
         label: 'VS Code',
         trailingCaret: true,
-        onTap: () {}, // tap handled by PopupMenuButton
+        // tap handled by the enclosing PopupMenuButton
       ),
     );
   }
@@ -600,46 +600,53 @@ class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.icon,
     required this.label,
-    required this.onTap,
+    this.onTap,
     this.trailingCaret = false,
   });
 
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool trailingCaret;
 
   @override
   Widget build(BuildContext context) {
+    final content = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: ThemeConstants.inputSurface,
+        border: Border.all(color: ThemeConstants.deepBorder),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: ThemeConstants.textSecondary),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: ThemeConstants.textSecondary,
+              fontSize: ThemeConstants.uiFontSizeSmall,
+            ),
+          ),
+          if (trailingCaret) ...[
+            const SizedBox(width: 4),
+            const Icon(LucideIcons.chevronDown, size: 10, color: ThemeConstants.faintFg),
+          ],
+        ],
+      ),
+    );
+
+    // When used as a PopupMenuButton child, onTap is null and the outer
+    // PopupMenuButton wraps us in its own InkWell — don't double-wrap,
+    // or the inner InkWell swallows the tap before the menu can open.
+    if (onTap == null) return content;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(5),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: ThemeConstants.inputSurface,
-          border: Border.all(color: ThemeConstants.deepBorder),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 12, color: ThemeConstants.textSecondary),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: const TextStyle(
-                color: ThemeConstants.textSecondary,
-                fontSize: ThemeConstants.uiFontSizeSmall,
-              ),
-            ),
-            if (trailingCaret) ...[
-              const SizedBox(width: 4),
-              const Icon(LucideIcons.chevronDown, size: 10, color: ThemeConstants.faintFg),
-            ],
-          ],
-        ),
-      ),
+      child: content,
     );
   }
 }
@@ -701,7 +708,7 @@ class _ActionsDropdown extends ConsumerWidget {
         icon: LucideIcons.plus,
         label: 'Actions',
         trailingCaret: true,
-        onTap: () {},
+        // tap handled by the enclosing PopupMenuButton
       ),
     );
   }

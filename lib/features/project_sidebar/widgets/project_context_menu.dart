@@ -32,7 +32,6 @@ class ProjectContextMenu {
         _buildItem('copy_path', 'Copy path', Icons.copy_outlined),
         const PopupMenuDivider(),
         _buildItem('new_conversation', 'New conversation', Icons.add),
-        _buildItem('rename_project', 'Rename project', Icons.edit_outlined),
         const PopupMenuDivider(),
         _buildDangerItem('remove', 'Remove from Code Bench'),
       ],
@@ -90,7 +89,6 @@ class ProjectContextMenu {
     required BuildContext context,
     required Function(String) onRemove,
     required Function(String) onNewConversation,
-    Function(String)? onRename,
   }) async {
     switch (action) {
       case 'open_finder':
@@ -99,8 +97,6 @@ class ProjectContextMenu {
         await Clipboard.setData(ClipboardData(text: projectPath));
       case 'new_conversation':
         onNewConversation(projectId);
-      case 'rename_project':
-        onRename?.call(projectId);
       case 'remove':
         onRemove(projectId);
     }

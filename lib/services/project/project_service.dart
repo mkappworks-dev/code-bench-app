@@ -80,13 +80,6 @@ class ProjectService {
     await _db.projectDao.deleteProject(projectId);
   }
 
-  Future<void> renameProject(String projectId, String newName) async {
-    await _db.projectDao.updateProject(
-      projectId,
-      WorkspaceProjectsCompanion(name: Value(newName)),
-    );
-  }
-
   Future<void> updateProjectActions(
     String projectId,
     List<ProjectAction> actions,
