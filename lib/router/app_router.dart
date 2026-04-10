@@ -28,7 +28,7 @@ GoRouter appRouter(Ref ref) {
         pageBuilder: (context, state) => const NoTransitionPage(child: OnboardingScreen()),
       ),
       ShellRoute(
-        builder: (context, state, child) => ChatShell(child: child),
+        pageBuilder: (context, state, child) => NoTransitionPage(child: ChatShell(child: child)),
         routes: [
           GoRoute(
             path: '/chat',
