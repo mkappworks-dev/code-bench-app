@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../data/models/project.dart';
+import '../../features/chat/chat_notifier.dart';
 import '../../features/project_sidebar/project_sidebar_notifier.dart';
 
 class StatusBar extends ConsumerWidget {
@@ -13,6 +14,8 @@ class StatusBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final projectId = ref.watch(activeProjectIdProvider);
     final projectsAsync = ref.watch(projectsProvider);
+    final activeSessionId = ref.watch(activeSessionIdProvider);
+    final panelVisible = ref.watch(changesPanelVisibleProvider);
 
     Project? activeProject;
     if (projectId != null) {
@@ -25,6 +28,13 @@ class StatusBar extends ConsumerWidget {
           }
         },
       );
+    }
+
+    // Count changes for the current session
+    int changeCount = 0;
+    if (activeSessionId != null) {
+      final allChanges = ref.watch(appliedChangesProvider);
+      changeCount = allChanges[activeSessionId]?.length ?? 0;
     }
 
     return Container(
@@ -51,6 +61,34 @@ class StatusBar extends ConsumerWidget {
             ),
           ),
           const Spacer(),
+          // Centre-right: N changes indicator (hidden when 0)
+          if (changeCount > 0) ...[
+            GestureDetector(
+              onTap: () => ref.read(changesPanelVisibleProvider.notifier).toggle(),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: panelVisible ? ThemeConstants.accent : ThemeConstants.warning,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    '$changeCount ${changeCount == 1 ? 'change' : 'changes'}',
+                    style: TextStyle(
+                      color: panelVisible ? ThemeConstants.accent : ThemeConstants.warning,
+                      fontSize: ThemeConstants.uiFontSizeLabel,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+          ],
           // Right: Git branch
           if (activeProject != null && activeProject.isGit) ...[
             Container(
