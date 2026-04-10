@@ -29,7 +29,7 @@ If the VS Code/Cursor CLI is not found: toast — *"VS Code CLI not found — in
 
 ### 2. Rename Project Dialog
 
-Triggered from the project tile right-click context menu (same menu as Delete and Archive).
+Triggered from the project tile right-click context menu. Note: Delete and Archive live on the *conversation* right-click menu, not the project menu.
 
 - Small dialog anchored near the project tile
 - Single text field pre-filled with the current project name
