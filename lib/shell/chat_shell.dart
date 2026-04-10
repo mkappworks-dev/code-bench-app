@@ -9,6 +9,7 @@ import '../features/chat/widgets/changes_panel.dart';
 import '../features/project_sidebar/project_sidebar.dart';
 import '../features/project_sidebar/project_sidebar_notifier.dart';
 import '../services/session/session_service.dart';
+import 'widgets/action_output_panel.dart';
 import 'widgets/status_bar.dart';
 import 'widgets/top_action_bar.dart';
 
@@ -60,6 +61,7 @@ class ChatShell extends ConsumerWidget {
                 child: Column(
                   children: [
                     const TopActionBar(),
+                    const ActionOutputPanel(),
                     Expanded(
                       child: Row(
                         children: [
