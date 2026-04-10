@@ -129,6 +129,9 @@ class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
   Future<void> upsertProject(WorkspaceProjectsCompanion project) =>
       into(workspaceProjects).insertOnConflictUpdate(project);
 
+  Future<void> updateProject(String id, WorkspaceProjectsCompanion companion) =>
+      (update(workspaceProjects)..where((t) => t.id.equals(id))).write(companion);
+
   Future<void> deleteProject(String id) => (delete(workspaceProjects)..where((t) => t.id.equals(id))).go();
 }
 

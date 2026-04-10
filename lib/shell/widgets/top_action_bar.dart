@@ -216,7 +216,7 @@ class _InitGitButton extends ConsumerWidget {
           if (kDebugMode) debugPrint('[_InitGitButton] initGit failed: $e\n$st');
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to initialize git: $e')),
+              SnackBar(content: Text('Failed to initialize git')),
             );
           }
         }

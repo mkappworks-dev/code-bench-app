@@ -81,11 +81,9 @@ class ProjectService {
   }
 
   Future<void> renameProject(String projectId, String newName) async {
-    await _db.projectDao.upsertProject(
-      WorkspaceProjectsCompanion(
-        id: Value(projectId),
-        name: Value(newName),
-      ),
+    await _db.projectDao.updateProject(
+      projectId,
+      WorkspaceProjectsCompanion(name: Value(newName)),
     );
   }
 
@@ -94,11 +92,9 @@ class ProjectService {
     List<ProjectAction> actions,
   ) async {
     final json = jsonEncode(actions.map((a) => a.toJson()).toList());
-    await _db.projectDao.upsertProject(
-      WorkspaceProjectsCompanion(
-        id: Value(projectId),
-        actionsJson: Value(json),
-      ),
+    await _db.projectDao.updateProject(
+      projectId,
+      WorkspaceProjectsCompanion(actionsJson: Value(json)),
     );
   }
 
@@ -109,12 +105,9 @@ class ProjectService {
     final isGit = GitDetector.isGitRepo(row.path);
     final branch = isGit ? GitDetector.getCurrentBranch(row.path) : null;
 
-    await _db.projectDao.upsertProject(
-      WorkspaceProjectsCompanion(
-        id: Value(projectId),
-        isGit: Value(isGit),
-        currentBranch: Value(branch),
-      ),
+    await _db.projectDao.updateProject(
+      projectId,
+      WorkspaceProjectsCompanion(isGit: Value(isGit), currentBranch: Value(branch)),
     );
   }
 
