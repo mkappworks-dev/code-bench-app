@@ -107,4 +107,75 @@ void main() {
 
     expect(File(filePath).existsSync(), false);
   });
+
+  test('revert (git) calls git checkout and removes notifier entry on success', () async {
+    final filePath = '${tmpDir.path}/file.dart';
+    File(filePath).writeAsStringSync('original');
+
+    var capturedArgs = <String>[];
+    String? capturedWorkingDir;
+    final gitService = ApplyService(
+      fs: FilesystemService(),
+      notifier: container.read(appliedChangesProvider.notifier),
+      uuidGen: () => 'git-uuid',
+      processRunner: (exe, args, {workingDirectory}) async {
+        capturedArgs = [exe, ...args];
+        capturedWorkingDir = workingDirectory;
+        return ProcessResult(0, 0, '', '');
+      },
+    );
+
+    await gitService.applyChange(
+      filePath: filePath,
+      newContent: 'changed',
+      sessionId: 'sid',
+      messageId: 'mid',
+    );
+
+    final change = container.read(appliedChangesProvider)['sid']!.first;
+    await gitService.revertChange(
+      change: change,
+      isGit: true,
+      projectPath: tmpDir.path,
+    );
+
+    expect(capturedArgs, ['git', 'checkout', '--', filePath]);
+    expect(capturedWorkingDir, tmpDir.path);
+    // Notifier entry removed
+    expect(container.read(appliedChangesProvider)['sid'], isNull);
+  });
+
+  test('revert (git) throws and does NOT remove notifier entry when git fails', () async {
+    final filePath = '${tmpDir.path}/file.dart';
+    File(filePath).writeAsStringSync('original');
+
+    final gitService = ApplyService(
+      fs: FilesystemService(),
+      notifier: container.read(appliedChangesProvider.notifier),
+      uuidGen: () => 'git-fail-uuid',
+      processRunner: (exe, args, {workingDirectory}) async => ProcessResult(0, 1, '', 'error: pathspec did not match'),
+    );
+
+    await gitService.applyChange(
+      filePath: filePath,
+      newContent: 'changed',
+      sessionId: 'sid',
+      messageId: 'mid',
+    );
+
+    final change = container.read(appliedChangesProvider)['sid']!.first;
+
+    expect(
+      () => gitService.revertChange(
+        change: change,
+        isGit: true,
+        projectPath: tmpDir.path,
+      ),
+      throwsA(isA<StateError>()),
+    );
+
+    // Notifier entry should still be there (revert did not complete)
+    await Future.delayed(Duration.zero);
+    expect(container.read(appliedChangesProvider)['sid'], isNotNull);
+  });
 }

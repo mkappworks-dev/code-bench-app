@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -10,10 +11,16 @@ import '../filesystem/filesystem_service.dart';
 
 part 'apply_service.g.dart';
 
+typedef ProcessRunner = Future<ProcessResult> Function(
+  String executable,
+  List<String> arguments, {
+  String? workingDirectory,
+});
+
 @Riverpod(keepAlive: true)
 ApplyService applyService(Ref ref) {
   return ApplyService(
-    fs: ref.watch(filesystemServiceProvider),
+    fs: ref.read(filesystemServiceProvider),
     notifier: ref.read(appliedChangesProvider.notifier),
   );
 }
@@ -23,13 +30,16 @@ class ApplyService {
     required FilesystemService fs,
     required AppliedChanges notifier,
     String Function()? uuidGen,
+    ProcessRunner? processRunner,
   })  : _fs = fs,
         _notifier = notifier,
-        _uuidGen = uuidGen ?? (() => const Uuid().v4());
+        _uuidGen = uuidGen ?? (() => const Uuid().v4()),
+        _processRunner = processRunner ?? Process.run;
 
   final FilesystemService _fs;
   final AppliedChanges _notifier;
   final String Function() _uuidGen;
+  final ProcessRunner _processRunner;
 
   Future<void> applyChange({
     required String filePath,
@@ -37,13 +47,15 @@ class ApplyService {
     required String sessionId,
     required String messageId,
   }) async {
+    final file = File(filePath);
     String? originalContent;
-    try {
+    if (file.existsSync()) {
       originalContent = await _fs.readFile(filePath);
-    } catch (_) {
-      // File doesn't exist — originalContent stays null
     }
 
+    if (originalContent == null) {
+      await _fs.createDirectory(p.dirname(filePath));
+    }
     await _fs.writeFile(filePath, newContent);
 
     _notifier.apply(AppliedChange(
@@ -66,11 +78,16 @@ class ApplyService {
       // File was created by Apply — delete it
       await _fs.deleteFile(change.filePath);
     } else if (isGit) {
-      await Process.run(
+      final result = await _processRunner(
         'git',
         ['checkout', '--', change.filePath],
         workingDirectory: projectPath,
       );
+      if (result.exitCode != 0) {
+        throw StateError(
+          'git checkout failed (exit ${result.exitCode}): ${result.stderr}',
+        );
+      }
     } else {
       await _fs.writeFile(change.filePath, change.originalContent!);
     }
