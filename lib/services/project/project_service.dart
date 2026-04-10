@@ -106,11 +106,17 @@ class ProjectService {
 
   Project _projectFromRow(WorkspaceProjectRow row) {
     List<ProjectAction> actions = const [];
+    // We write this column ourselves as jsonEncode(...) in
+    // updateProjectActions, so a decode failure here means either manual
+    // DB tampering or a schema bug — log it and fall back to an empty
+    // list so the UI still functions.
     try {
       final decoded = jsonDecode(row.actionsJson) as List<dynamic>;
       actions = decoded.map((e) => ProjectAction.fromJson(e as Map<String, dynamic>)).toList();
-    } catch (e, st) {
-      if (kDebugMode) debugPrint('[ProjectService] Failed to decode actionsJson: $e\n$st');
+    } on FormatException catch (e) {
+      if (kDebugMode) debugPrint('[ProjectService] actionsJson FormatException for ${row.id}: $e');
+    } on TypeError catch (e) {
+      if (kDebugMode) debugPrint('[ProjectService] actionsJson TypeError for ${row.id}: $e');
     }
     return Project(
       id: row.id,

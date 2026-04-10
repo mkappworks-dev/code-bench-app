@@ -57,6 +57,9 @@ class ActionOutputNotifier extends _$ActionOutputNotifier {
     final args = parts.skip(1).toList();
 
     try {
+      // SECURITY: NEVER set runInShell: true here. Arguments are passed as
+      // a literal argv list; enabling shell mode would turn any user-defined
+      // command into a shell-injection vector once variables get interpolated.
       final process = await Process.start(
         executable,
         args,
@@ -64,7 +67,11 @@ class ActionOutputNotifier extends _$ActionOutputNotifier {
       );
       _currentProcess = process;
 
-      process.stdout.transform(const SystemEncoding().decoder).listen((chunk) {
+      // Drain both streams to completion. We must await the stream futures
+      // alongside exitCode — otherwise late-arriving lines would fire their
+      // listeners AFTER we set the terminal status, and copyWith(lines: …)
+      // would silently revert `status` from done/failed back to running.
+      final stdoutDone = process.stdout.transform(const SystemEncoding().decoder).forEach((chunk) {
         for (final line in chunk.split('\n')) {
           if (line.isNotEmpty) {
             state = state.copyWith(lines: [...state.lines, line]);
@@ -72,7 +79,7 @@ class ActionOutputNotifier extends _$ActionOutputNotifier {
         }
       });
 
-      process.stderr.transform(const SystemEncoding().decoder).listen((chunk) {
+      final stderrDone = process.stderr.transform(const SystemEncoding().decoder).forEach((chunk) {
         for (final line in chunk.split('\n')) {
           if (line.isNotEmpty) {
             state = state.copyWith(lines: [...state.lines, line]);
@@ -80,16 +87,28 @@ class ActionOutputNotifier extends _$ActionOutputNotifier {
         }
       });
 
-      final code = await process.exitCode;
+      final results = await Future.wait([
+        stdoutDone,
+        stderrDone,
+        process.exitCode,
+      ]);
       _currentProcess = null;
+      final code = results[2] as int;
       state = state.copyWith(
         status: code == 0 ? ActionStatus.done : ActionStatus.failed,
         exitCode: code,
       );
-    } catch (e) {
+    } on ProcessException catch (e) {
+      // Distinguish "command not found" from other failures so the user gets
+      // actionable guidance instead of a cryptic stack trace.
+      _currentProcess = null;
       state = state.copyWith(
         status: ActionStatus.failed,
-        lines: [...state.lines, 'Error: $e'],
+        lines: [
+          ...state.lines,
+          'Command not found or failed to start: ${e.executable}',
+          'Check the action in the Actions dropdown → Add action.',
+        ],
         exitCode: -1,
       );
     }

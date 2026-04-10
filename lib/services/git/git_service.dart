@@ -34,21 +34,27 @@ class GitService {
     if (commitResult.exitCode != 0) {
       throw GitException('git commit failed: ${commitResult.stderr}');
     }
-    // Extract short SHA from output like "[main abc1234] message"
-    // or "[main (root-commit) abc1234] message" for initial commits.
+    // Extract short SHA from output like "[main abc1234] message" or
+    // "[feat/2026-04-10-foo abc1234] message" or "[main (root-commit) abc1234]".
+    // Branch refs can contain `-` and `/`, so accept any non-space, non-`]`.
     final out = commitResult.stdout as String;
-    final match = RegExp(r'\[[\w/]+(?:\s+\([^)]+\))?\s+([a-f0-9]+)\]').firstMatch(out);
-    return match?.group(1) ?? '';
+    final match = RegExp(r'\[[^\s\]]+(?:\s+\([^)]+\))?\s+([a-f0-9]+)\]').firstMatch(out);
+    if (match == null) {
+      // Fall back to `git rev-parse HEAD` if parsing fails — never return ''.
+      final rev = await Process.run(
+        'git',
+        ['rev-parse', '--short', 'HEAD'],
+        workingDirectory: projectPath,
+      );
+      if (rev.exitCode == 0) return (rev.stdout as String).trim();
+      throw GitException('Commit succeeded but could not parse SHA');
+    }
+    return match.group(1)!;
   }
 
   /// Runs `git push`. Returns the branch name pushed to.
   Future<String> push() async {
-    final branchResult = await Process.run(
-      'git',
-      ['rev-parse', '--abbrev-ref', 'HEAD'],
-      workingDirectory: projectPath,
-    );
-    final branch = (branchResult.stdout as String).trim();
+    final branch = await _currentBranch() ?? '';
 
     final result = await Process.run('git', ['push'], workingDirectory: projectPath);
     if (result.exitCode != 0) {
@@ -64,8 +70,13 @@ class GitService {
     return branch;
   }
 
-  /// Runs `git pull`. Returns number of new commits pulled.
+  /// Runs `git pull`. Returns number of new commits pulled (computed by
+  /// diffing HEAD before and after).
   Future<int> pull() async {
+    // Capture HEAD before the pull so we can count commits accurately.
+    // (git pull's summary line reports *files* changed, not *commits*.)
+    final preSha = await _headSha();
+
     final result = await Process.run('git', ['pull'], workingDirectory: projectPath);
     if (result.exitCode != 0) {
       final stderr = result.stderr as String;
@@ -77,36 +88,77 @@ class GitService {
       }
       throw GitException(stderr.trim());
     }
-    // Count new commits from stdout pattern like "2 files changed"
-    final match = RegExp(r'(\d+) file').firstMatch(result.stdout as String);
-    return match != null ? int.tryParse(match.group(1) ?? '0') ?? 0 : 0;
+
+    if (preSha == null) return 0;
+    final countResult = await Process.run(
+      'git',
+      // `--` separates the revision range from any accidental pathspec.
+      ['rev-list', '--count', '$preSha..HEAD', '--'],
+      workingDirectory: projectPath,
+    );
+    if (countResult.exitCode != 0) return 0;
+    return int.tryParse((countResult.stdout as String).trim()) ?? 0;
   }
 
   /// Fetches and returns how many commits HEAD is behind origin/[branch].
-  /// Returns 0 if no remote is configured or fetch fails.
-  Future<int> fetchBehindCount() async {
-    final branchResult = await Process.run(
-      'git',
-      ['rev-parse', '--abbrev-ref', 'HEAD'],
-      workingDirectory: projectPath,
-    );
-    if (branchResult.exitCode != 0) return 0;
-    final branch = (branchResult.stdout as String).trim();
+  /// Returns `null` if the count could not be determined (no remote, no
+  /// upstream, offline, or any other failure). Callers should render this
+  /// as an unknown/unavailable state rather than as "up to date".
+  Future<int?> fetchBehindCount() async {
+    final branch = await _currentBranch();
+    if (branch == null) return null;
 
     final fetchResult = await Process.run(
       'git',
       ['fetch', '--quiet'],
       workingDirectory: projectPath,
     );
-    if (fetchResult.exitCode != 0) return 0;
+    if (fetchResult.exitCode != 0) return null;
 
     final countResult = await Process.run(
       'git',
-      ['rev-list', 'HEAD..origin/$branch', '--count'],
+      // `--` guards against a branch literally named `-x` being parsed as a flag.
+      ['rev-list', '--count', 'HEAD..origin/$branch', '--'],
       workingDirectory: projectPath,
     );
-    if (countResult.exitCode != 0) return 0;
-    return int.tryParse((countResult.stdout as String).trim()) ?? 0;
+    if (countResult.exitCode != 0) return null;
+    return int.tryParse((countResult.stdout as String).trim());
+  }
+
+  /// Returns the current branch name, or `null` if it cannot be determined.
+  Future<String?> currentBranch() => _currentBranch();
+
+  Future<String?> _currentBranch() async {
+    final result = await Process.run(
+      'git',
+      ['rev-parse', '--abbrev-ref', 'HEAD'],
+      workingDirectory: projectPath,
+    );
+    if (result.exitCode != 0) return null;
+    final branch = (result.stdout as String).trim();
+    return branch.isEmpty ? null : branch;
+  }
+
+  Future<String?> _headSha() async {
+    final result = await Process.run(
+      'git',
+      ['rev-parse', 'HEAD'],
+      workingDirectory: projectPath,
+    );
+    if (result.exitCode != 0) return null;
+    return (result.stdout as String).trim();
+  }
+
+  /// Returns the URL of the configured `origin` remote, or `null` if unset.
+  Future<String?> getOriginUrl() async {
+    final result = await Process.run(
+      'git',
+      ['remote', 'get-url', 'origin'],
+      workingDirectory: projectPath,
+    );
+    if (result.exitCode != 0) return null;
+    final url = (result.stdout as String).trim();
+    return url.isEmpty ? null : url;
   }
 
   /// Returns list of configured git remotes.
@@ -131,12 +183,12 @@ class GitService {
 
   /// Pushes current branch to a named [remote].
   Future<void> pushToRemote(String remote) async {
-    final branchResult = await Process.run(
-      'git',
-      ['rev-parse', '--abbrev-ref', 'HEAD'],
-      workingDirectory: projectPath,
-    );
-    final branch = (branchResult.stdout as String).trim();
+    // Defense-in-depth: reject remotes that look like flags so a remote
+    // literally named `-d` or `--delete` cannot alter `git push` semantics.
+    if (remote.startsWith('-')) {
+      throw GitException('Invalid remote name: $remote');
+    }
+    final branch = await _currentBranch() ?? '';
 
     final result = await Process.run(
       'git',

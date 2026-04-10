@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -168,9 +169,9 @@ class _VsCodeDropdown extends ConsumerWidget {
               case 'cursor':
                 error = await svc.openCursor(projectPath);
               case 'finder':
-                await svc.openInFinder(projectPath);
+                error = await svc.openInFinder(projectPath);
               case 'terminal':
-                await svc.openInTerminal(projectPath);
+                error = await svc.openInTerminal(projectPath);
             }
             if (error != null && btnContext.mounted) {
               ScaffoldMessenger.of(btnContext).showSnackBar(
@@ -210,22 +211,33 @@ class _InitGitButton extends ConsumerWidget {
       icon: LucideIcons.gitMerge,
       label: 'Initialize Git',
       onTap: () async {
+        final gitSvc = GitService(project.path);
         try {
-          final gitSvc = GitService(project.path);
           await gitSvc.initGit();
+        } on GitException catch (e) {
+          if (kDebugMode) debugPrint('[_InitGitButton] initGit failed: $e');
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              // Include the underlying reason (git stderr) so the user
+              // sees "fatal: ..." instead of a generic "Failed to ...".
+              SnackBar(content: Text('Failed to initialize git: ${e.message}')),
+            );
+          }
+          return;
+        }
+
+        // Refresh git status separately so a db/refresh error doesn't get
+        // reported as "init failed" — init really did succeed.
+        try {
           await ref.read(projectServiceProvider).refreshGitStatus(project.id);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Git repository initialized')),
-            );
-          }
-        } catch (e, st) {
-          if (kDebugMode) debugPrint('[_InitGitButton] initGit failed: $e\n$st');
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to initialize git')),
-            );
-          }
+        } on Exception catch (e) {
+          if (kDebugMode) debugPrint('[_InitGitButton] refreshGitStatus failed: $e');
+        }
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Git repository initialized')),
+          );
         }
       },
     );
@@ -245,12 +257,14 @@ class _CommitPushButton extends ConsumerStatefulWidget {
 class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   bool _pushing = false;
   bool _pulling = false;
-  int _behindCount = 0;
+  // `null` means "unknown" (offline, no upstream, fetch failed) —
+  // rendered as a "?" badge instead of silently claiming "up to date".
+  int? _behindCount;
 
   @override
   void initState() {
     super.initState();
-    _checkBehindCount();
+    unawaited(_checkBehindCount());
   }
 
   Future<void> _checkBehindCount() async {
@@ -289,6 +303,13 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         }
       } catch (e, st) {
         if (kDebugMode) debugPrint('[_CommitPushButton] AI commit message failed: $e\n$st');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('AI commit message unavailable — using default.'),
+            ),
+          );
+        }
       }
     }
 
@@ -384,7 +405,15 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
 
   @override
   Widget build(BuildContext context) {
-    final badgeLabel = _behindCount > 0 ? ' ↓$_behindCount' : '';
+    final behind = _behindCount;
+    final String badgeLabel;
+    if (behind == null) {
+      badgeLabel = ' ↓?';
+    } else if (behind > 0) {
+      badgeLabel = ' ↓$behind';
+    } else {
+      badgeLabel = '';
+    }
     final busy = _pushing || _pulling;
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -448,9 +477,9 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                       value: 'pull',
                       height: 32,
                       child: Text(
-                        _behindCount > 0 ? 'Pull ↓$_behindCount' : 'Pull',
+                        (behind != null && behind > 0) ? 'Pull ↓$behind' : 'Pull',
                         style: TextStyle(
-                          color: _behindCount > 0 ? ThemeConstants.accent : ThemeConstants.textSecondary,
+                          color: (behind != null && behind > 0) ? ThemeConstants.accent : ThemeConstants.textSecondary,
                           fontSize: ThemeConstants.uiFontSizeSmall,
                         ),
                       ),
@@ -472,11 +501,11 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                 if (action == null) return;
                 switch (action) {
                   case 'push':
-                    _doPush();
+                    unawaited(_doPush());
                   case 'pull':
-                    _doPull();
+                    unawaited(_doPull());
                   case 'create_pr':
-                    _showCreatePrDialog();
+                    unawaited(_showCreatePrDialog());
                 }
               },
               child: Container(
@@ -507,32 +536,34 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     );
   }
 
+  void _snack(String message, {Duration duration = const Duration(seconds: 4), SnackBarAction? action}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: duration, action: action),
+    );
+  }
+
   Future<void> _showCreatePrDialog() async {
+    final gitSvc = GitService(widget.project.path);
+
     // 1. Check GitHub token.
     final storage = ref.read(secureStorageSourceProvider);
     final token = await storage.readGitHubToken();
     if (token == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Connect GitHub in Settings → Providers')),
-        );
-      }
+      _snack('Connect GitHub in Settings → Providers');
       return;
     }
 
-    // 2. Ensure we're not on the default branch.
-    final branchResult = await Process.run(
-      'git',
-      ['rev-parse', '--abbrev-ref', 'HEAD'],
-      workingDirectory: widget.project.path,
-    );
-    final currentBranch = (branchResult.stdout as String).trim();
+    // 2. Ensure we're not on the default branch. Use GitService so the
+    //    error path (git missing, corrupt repo) is surfaced rather than
+    //    defaulting to an empty branch name.
+    final currentBranch = await gitSvc.currentBranch();
+    if (currentBranch == null) {
+      _snack('Could not read current branch — is this a valid git repo?');
+      return;
+    }
     if (currentBranch == 'main' || currentBranch == 'master') {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("You're on the default branch — create a feature branch first.")),
-        );
-      }
+      _snack("You're on the default branch — create a feature branch first.");
       return;
     }
 
@@ -559,34 +590,36 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         if (bodyMatch != null) prBody = bodyMatch.group(1)!.trim();
       } catch (e, st) {
         if (kDebugMode) debugPrint('[_CommitPushButton] AI PR title/body failed: $e\n$st');
+        _snack('AI title/body unavailable — using a default. Check your model provider.');
       }
     }
 
     // 4. Parse owner/repo from git remote URL.
-    final remoteResult = await Process.run(
-      'git',
-      ['remote', 'get-url', 'origin'],
-      workingDirectory: widget.project.path,
-    );
-    final remoteUrl = (remoteResult.stdout as String).trim();
+    final remoteUrl = await gitSvc.getOriginUrl();
+    if (remoteUrl == null) {
+      _snack("No `origin` remote configured — run `git remote add origin <url>` first.");
+      return;
+    }
     final repoMatch = RegExp(r'github\.com[:/]([^/]+)/([^/\.]+)').firstMatch(remoteUrl);
     if (repoMatch == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not detect GitHub owner/repo from remote')),
-        );
-      }
+      _snack('Could not detect GitHub owner/repo from remote');
       return;
     }
     final owner = repoMatch.group(1)!;
     final repo = repoMatch.group(2)!;
 
-    // 5. Fetch branches from GitHub.
-    List<String> branches = ['main', 'master'];
+    // 5. Fetch branches from GitHub. If this fails, surface the failure
+    //    instead of silently defaulting to ['main', 'master'] — otherwise
+    //    the user's real problem (bad token, 404, offline) is masked until
+    //    the PR submission fails with an opaque error.
+    final api = GitHubApiService(token);
+    List<String> branches;
     try {
-      branches = await GitHubApiService(token).listRepoBranches(owner, repo);
+      branches = await api.listBranches(owner, repo);
     } catch (e, st) {
-      if (kDebugMode) debugPrint('[_CommitPushButton] listRepoBranches failed: $e\n$st');
+      if (kDebugMode) debugPrint('[_CommitPushButton] listBranches failed: $e\n$st');
+      _snack('Could not list branches for $owner/$repo — check your GitHub token and repo access.');
+      return;
     }
 
     if (!mounted) return;
@@ -602,7 +635,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
 
     // 7. Create PR and open in browser.
     try {
-      final prUrl = await GitHubApiService(token).createPullRequest(
+      final prUrl = await api.createPullRequest(
         owner: owner,
         repo: repo,
         title: result.title,
@@ -611,18 +644,23 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         base: result.base,
         draft: result.draft,
       );
-      await Process.run('open', [prUrl]);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pull request created')),
-        );
-      }
+      // Always surface the URL so the user can reach their PR even if
+      // `open` fails (browser misconfigured, headless CI, etc).
+      _snack(
+        'Pull request created: $prUrl',
+        duration: const Duration(seconds: 8),
+        action: SnackBarAction(
+          label: 'Open',
+          onPressed: () {
+            // Fire-and-forget; failure just means nothing happens — the
+            // URL is already visible in the snackbar text.
+            unawaited(Process.run('open', ['--', prUrl]));
+          },
+        ),
+      );
+      unawaited(Process.run('open', ['--', prUrl]));
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create PR: $e')),
-        );
-      }
+      _snack('Failed to create PR: $e');
     }
   }
 }
@@ -797,6 +835,7 @@ class _AddActionDialogState extends State<_AddActionDialog> {
       title: const Text('Add Action', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TextField(
             controller: _nameController,
@@ -813,12 +852,35 @@ class _AddActionDialogState extends State<_AddActionDialog> {
             decoration: const InputDecoration(
               labelText: 'Command (e.g. flutter test)',
               labelStyle: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+              helperText: 'Arguments are split on whitespace. Quoted args are not supported.',
+              helperStyle: TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSizeLabel),
             ),
             style: TextStyle(
               color: ThemeConstants.textPrimary,
               fontSize: ThemeConstants.uiFontSize,
               fontFamily: ThemeConstants.editorFontFamily,
             ),
+          ),
+          const SizedBox(height: 10),
+          // Security: the app runs without macOS App Sandbox (see
+          // macos/Runner/README.md), so user-defined actions execute
+          // with the user's full privileges. Make that visible.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Icon(LucideIcons.triangleAlert, size: 12, color: Color(0xFFE8A228)),
+              SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Commands run with your full user privileges. Only add actions '
+                  'you would run in a terminal yourself.',
+                  style: TextStyle(
+                    color: Color(0xFFE8A228),
+                    fontSize: ThemeConstants.uiFontSizeLabel,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

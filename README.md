@@ -172,6 +172,12 @@ for macos:
 flutter build macos --release   # → build/macos/Build/Products/Release/
 ```
 
+> **macOS App Sandbox is intentionally disabled.** Code Bench shells out to
+> `git`, `code`, `cursor`, and user-defined action commands, which cannot
+> work under sandbox. See [macos/Runner/README.md](macos/Runner/README.md)
+> for the rationale, contributor rules, and distribution implications
+> (Mac App Store eligibility, hardened runtime, notarization).
+
 for windows:
 
 ```bash

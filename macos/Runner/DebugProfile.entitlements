@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  App Sandbox is INTENTIONALLY disabled. See macos/Runner/README.md for
+  the rationale and contributor rules (no runInShell: true, no PAT
+  logging, etc). Do not re-enable without removing ActionRunnerService,
+  GitService, and IdeLaunchService.
+-->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>

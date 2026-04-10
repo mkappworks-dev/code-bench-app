@@ -21,8 +21,16 @@ class IdeLaunchService {
       "(Shell Command: Install 'cursor' in PATH)";
 
   static List<String> buildVsCodeArgs(String path) => [path];
-  static List<String> buildFinderArgs(String path) => [path];
-  static List<String> buildTerminalArgs(String path, String terminalApp) => ['-a', terminalApp, path];
+  // The `--` separator prevents a path that begins with `-` from being
+  // interpreted as an `open` flag (defense-in-depth; path is a user-chosen
+  // project folder and not attacker-controlled).
+  static List<String> buildFinderArgs(String path) => ['--', path];
+  static List<String> buildTerminalArgs(String path, String terminalApp) => [
+        '-a',
+        terminalApp,
+        '--',
+        path,
+      ];
 
   /// Opens [path] in VS Code. Returns an error message if the CLI is not
   /// found, or null on success.
@@ -46,7 +54,7 @@ class IdeLaunchService {
       // CLI not found — try open -a Cursor fallback below.
     }
     try {
-      final fallback = await Process.run('open', ['-a', 'Cursor', path]);
+      final fallback = await Process.run('open', ['-a', 'Cursor', '--', path]);
       if (fallback.exitCode != 0) return _cursorNotFoundMessage;
       return null;
     } on ProcessException {
@@ -54,14 +62,38 @@ class IdeLaunchService {
     }
   }
 
-  /// Opens [path] in Finder.
-  Future<void> openInFinder(String path) async {
-    await Process.run('open', buildFinderArgs(path));
+  /// Opens [path] in Finder. Returns an error message on failure, or null
+  /// on success. (Previously this returned `Future<void>` and silently
+  /// swallowed any `ProcessException` — callers had no way to report the
+  /// failure to the user.)
+  Future<String?> openInFinder(String path) async {
+    try {
+      final result = await Process.run('open', buildFinderArgs(path));
+      if (result.exitCode != 0) {
+        return 'Could not open Finder for $path';
+      }
+      return null;
+    } on ProcessException {
+      return 'Could not open Finder — `open` command unavailable.';
+    }
   }
 
-  /// Opens [path] in the configured terminal app.
-  Future<void> openInTerminal(String path) async {
+  /// Opens [path] in the configured terminal app. Returns an error message
+  /// on failure, or null on success.
+  Future<String?> openInTerminal(String path) async {
     final app = await _prefs.getTerminalApp();
-    await Process.run('open', buildTerminalArgs(path, app));
+    // Defense-in-depth: reject a terminal app name that looks like a flag.
+    if (app.startsWith('-')) {
+      return 'Invalid terminal app configured: $app';
+    }
+    try {
+      final result = await Process.run('open', buildTerminalArgs(path, app));
+      if (result.exitCode != 0) {
+        return 'Could not open terminal app "$app" — check Settings → General.';
+      }
+      return null;
+    } on ProcessException {
+      return 'Could not open terminal — `open` command unavailable.';
+    }
   }
 }
