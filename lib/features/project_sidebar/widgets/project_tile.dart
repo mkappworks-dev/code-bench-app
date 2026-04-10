@@ -19,6 +19,7 @@ class ProjectTile extends ConsumerStatefulWidget {
     required this.onSessionTap,
     required this.onRemove,
     required this.onNewConversation,
+    required this.onArchive,
   });
 
   final Project project;
@@ -29,6 +30,7 @@ class ProjectTile extends ConsumerStatefulWidget {
   final ValueChanged<String> onSessionTap;
   final ValueChanged<String> onRemove;
   final ValueChanged<String> onNewConversation;
+  final ValueChanged<String> onArchive;
 
   @override
   ConsumerState<ProjectTile> createState() => _ProjectTileState();
@@ -134,6 +136,7 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                         session: s,
                         isActive: s.sessionId == widget.activeSessionId,
                         onTap: () => widget.onSessionTap(s.sessionId),
+                        onArchive: () => widget.onArchive(s.sessionId),
                       ))
                   .toList(),
             ),
