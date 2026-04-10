@@ -48,9 +48,13 @@ class ProjectSidebar extends ConsumerWidget {
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-    final position = RelativeRect.fromRect(
-      box.localToGlobal(Offset.zero, ancestor: overlay) & box.size,
-      Offset.zero & overlay.size,
+    // Sidebar header is at the top — open downward by using full overlay rect.
+    final origin = box.localToGlobal(Offset.zero, ancestor: overlay);
+    final position = RelativeRect.fromLTRB(
+      origin.dx,
+      origin.dy + box.size.height,
+      overlay.size.width - origin.dx - box.size.width,
+      0,
     );
 
     showMenu<String>(
@@ -63,18 +67,13 @@ class ProjectSidebar extends ConsumerWidget {
       ),
       items: [
         _sortHeader('SORT PROJECTS'),
-        _sortItem('proj_lastMessage', 'Last user message',
-            current?.projectSort == ProjectSortOrder.lastMessage),
-        _sortItem('proj_createdAt', 'Created at',
-            current?.projectSort == ProjectSortOrder.createdAt),
-        _sortItem('proj_manual', 'Manual',
-            current?.projectSort == ProjectSortOrder.manual),
+        _sortItem('proj_lastMessage', 'Last user message', current?.projectSort == ProjectSortOrder.lastMessage),
+        _sortItem('proj_createdAt', 'Created at', current?.projectSort == ProjectSortOrder.createdAt),
+        _sortItem('proj_manual', 'Manual', current?.projectSort == ProjectSortOrder.manual),
         const PopupMenuDivider(),
         _sortHeader('SORT THREADS'),
-        _sortItem('thread_lastMessage', 'Last user message',
-            current?.threadSort == ThreadSortOrder.lastMessage),
-        _sortItem('thread_createdAt', 'Created at',
-            current?.threadSort == ThreadSortOrder.createdAt),
+        _sortItem('thread_lastMessage', 'Last user message', current?.threadSort == ThreadSortOrder.lastMessage),
+        _sortItem('thread_createdAt', 'Created at', current?.threadSort == ThreadSortOrder.createdAt),
       ],
     ).then((value) {
       if (value == null) return;
@@ -111,8 +110,7 @@ class ProjectSidebar extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: const BoxDecoration(
-              border:
-                  Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+              border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
             ),
             child: Row(
               children: [
@@ -133,8 +131,7 @@ class ProjectSidebar extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
                       padding: const EdgeInsets.all(3),
-                      child: Icon(LucideIcons.arrowUpDown,
-                          size: 13, color: ThemeConstants.mutedFg),
+                      child: Icon(LucideIcons.arrowUpDown, size: 13, color: ThemeConstants.mutedFg),
                     ),
                   ),
                 ),
@@ -145,8 +142,7 @@ class ProjectSidebar extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: Padding(
                     padding: const EdgeInsets.all(3),
-                    child: Icon(LucideIcons.plus,
-                        size: 13, color: ThemeConstants.mutedFg),
+                    child: Icon(LucideIcons.plus, size: 13, color: ThemeConstants.mutedFg),
                   ),
                 ),
               ],
@@ -192,8 +188,7 @@ class ProjectSidebar extends ConsumerWidget {
                           icon: Icon(LucideIcons.plus, size: 12),
                           label: const Text(
                             'Open folder',
-                            style: TextStyle(
-                                fontSize: ThemeConstants.uiFontSizeSmall),
+                            style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall),
                           ),
                         ),
                       ],
@@ -213,8 +208,7 @@ class ProjectSidebar extends ConsumerWidget {
                     return Container(
                       decoration: const BoxDecoration(
                         border: Border(
-                          bottom:
-                              BorderSide(color: ThemeConstants.deepBackground),
+                          bottom: BorderSide(color: ThemeConstants.deepBackground),
                         ),
                       ),
                       child: ProjectTile(
@@ -222,25 +216,17 @@ class ProjectSidebar extends ConsumerWidget {
                         sessions: sessions,
                         isExpanded: expandedIds.contains(project.id),
                         activeSessionId: activeSessionId,
-                        onToggleExpand: () => ref
-                            .read(expandedProjectIdsProvider.notifier)
-                            .toggle(project.id),
+                        onToggleExpand: () => ref.read(expandedProjectIdsProvider.notifier).toggle(project.id),
                         onSessionTap: (sessionId) {
-                          ref
-                              .read(activeSessionIdProvider.notifier)
-                              .set(sessionId);
-                          ref
-                              .read(activeProjectIdProvider.notifier)
-                              .set(project.id);
+                          ref.read(activeSessionIdProvider.notifier).set(sessionId);
+                          ref.read(activeProjectIdProvider.notifier).set(project.id);
                           context.go('/chat/$sessionId');
                         },
-                        onRemove: (id) =>
-                            ref.read(projectServiceProvider).removeProject(id),
+                        onRemove: (id) => ref.read(projectServiceProvider).removeProject(id),
                         onRename: (_) {
                           // TODO: show rename dialog
                         },
-                        onNewConversation: (id) =>
-                            _newConversation(context, ref, id),
+                        onNewConversation: (id) => _newConversation(context, ref, id),
                       ),
                     );
                   },
@@ -254,8 +240,7 @@ class ProjectSidebar extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: const BoxDecoration(
-                border:
-                    Border(top: BorderSide(color: ThemeConstants.borderColor)),
+                border: Border(top: BorderSide(color: ThemeConstants.borderColor)),
               ),
               child: Row(
                 children: [
@@ -296,8 +281,7 @@ PopupMenuItem<String> _sortHeader(String label) => PopupMenuItem<String>(
       ),
     );
 
-PopupMenuItem<String> _sortItem(String value, String label, bool selected) =>
-    PopupMenuItem<String>(
+PopupMenuItem<String> _sortItem(String value, String label, bool selected) => PopupMenuItem<String>(
       value: value,
       height: 32,
       child: Row(
@@ -306,16 +290,12 @@ PopupMenuItem<String> _sortItem(String value, String label, bool selected) =>
             child: Text(
               label,
               style: TextStyle(
-                color: selected
-                    ? ThemeConstants.textPrimary
-                    : ThemeConstants.textSecondary,
+                color: selected ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
                 fontSize: ThemeConstants.uiFontSizeSmall,
               ),
             ),
           ),
-          if (selected)
-            const Icon(LucideIcons.check,
-                size: 11, color: ThemeConstants.accent),
+          if (selected) const Icon(LucideIcons.check, size: 11, color: ThemeConstants.accent),
         ],
       ),
     );

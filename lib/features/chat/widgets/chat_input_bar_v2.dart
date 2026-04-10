@@ -69,22 +69,15 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     _controller.clear();
     setState(() => _isSending = true);
     try {
-      final systemPrompt =
-          ref.read(sessionSystemPromptProvider)[widget.sessionId];
-      await ref
-          .read(chatMessagesProvider(widget.sessionId).notifier)
-          .sendMessage(
+      final systemPrompt = ref.read(sessionSystemPromptProvider)[widget.sessionId];
+      await ref.read(chatMessagesProvider(widget.sessionId).notifier).sendMessage(
             text,
-            systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty)
-                ? systemPrompt
-                : null,
+            systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty) ? systemPrompt : null,
           );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Error: $e'),
-              backgroundColor: ThemeConstants.error),
+          SnackBar(content: Text('Error: $e'), backgroundColor: ThemeConstants.error),
         );
       }
     } finally {
@@ -95,11 +88,17 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     }
   }
 
-  RelativeRect _menuPosition(BuildContext context, RenderBox box) {
+  /// Positions a showMenu popup above the tapped widget.
+  /// Setting bottom:0 tells Flutter the avoid-rect extends to the screen bottom,
+  /// leaving no space below and forcing the menu to open upward.
+  RelativeRect _menuAbove(BuildContext context, RenderBox box) {
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-    return RelativeRect.fromRect(
-      box.localToGlobal(Offset.zero, ancestor: overlay) & box.size,
-      Offset.zero & overlay.size,
+    final origin = box.localToGlobal(Offset.zero, ancestor: overlay);
+    return RelativeRect.fromLTRB(
+      origin.dx,
+      origin.dy,
+      overlay.size.width - origin.dx - box.size.width,
+      0,
     );
   }
 
@@ -114,7 +113,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     if (box is! RenderBox || !box.hasSize) return;
     showMenu<T>(
       context: context,
-      position: _menuPosition(context, box),
+      position: _menuAbove(context, box),
       color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
@@ -130,16 +129,12 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
                       child: Text(
                         label(item),
                         style: TextStyle(
-                          color: item == selected
-                              ? ThemeConstants.textPrimary
-                              : ThemeConstants.textSecondary,
+                          color: item == selected ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
                           fontSize: ThemeConstants.uiFontSizeSmall,
                         ),
                       ),
                     ),
-                    if (item == selected)
-                      const Icon(LucideIcons.check,
-                          size: 11, color: ThemeConstants.accent),
+                    if (item == selected) const Icon(LucideIcons.check, size: 11, color: ThemeConstants.accent),
                   ],
                 ),
               ))
@@ -156,7 +151,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     if (box is! RenderBox || !box.hasSize) return;
     showMenu<AIModel>(
       context: context,
-      position: _menuPosition(context, box),
+      position: _menuAbove(context, box),
       color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
@@ -169,9 +164,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
                 child: Text(
                   '${m.provider.displayName} / ${m.name}',
                   style: TextStyle(
-                    color: m == selected
-                        ? ThemeConstants.textPrimary
-                        : ThemeConstants.textSecondary,
+                    color: m == selected ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
                     fontSize: ThemeConstants.uiFontSizeSmall,
                   ),
                 ),
@@ -220,9 +213,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
                 ),
                 decoration: const InputDecoration(
                   hintText: 'Ask anything, @tag files/folders, or use /command',
-                  hintStyle: TextStyle(
-                      color: ThemeConstants.faintFg,
-                      fontSize: ThemeConstants.uiFontSize),
+                  hintStyle: TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSize),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -236,8 +227,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
             Container(
               padding: const EdgeInsets.only(top: 7),
               decoration: const BoxDecoration(
-                border:
-                    Border(top: BorderSide(color: ThemeConstants.deepBorder)),
+                border: Border(top: BorderSide(color: ThemeConstants.deepBorder)),
               ),
               child: Row(
                 children: [
@@ -302,11 +292,9 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
                       child: _isSending
                           ? const Padding(
                               padding: EdgeInsets.all(6),
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : const Icon(LucideIcons.arrowUp,
-                              size: 14, color: Colors.white),
+                          : const Icon(LucideIcons.arrowUp, size: 14, color: Colors.white),
                     ),
                   ),
                 ],
@@ -340,12 +328,9 @@ class _ControlChip extends StatelessWidget {
               const SizedBox(width: 4),
             ],
             Text(label,
-                style: const TextStyle(
-                    color: ThemeConstants.textSecondary,
-                    fontSize: ThemeConstants.uiFontSizeSmall)),
+                style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall)),
             const SizedBox(width: 3),
-            const Icon(LucideIcons.chevronDown,
-                size: 10, color: ThemeConstants.faintFg),
+            const Icon(LucideIcons.chevronDown, size: 10, color: ThemeConstants.faintFg),
           ],
         ),
       ),
@@ -360,10 +345,7 @@ class _Separator extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 1),
-      child: Text('|',
-          style: TextStyle(
-              color: ThemeConstants.deepBorder,
-              fontSize: ThemeConstants.uiFontSizeSmall)),
+      child: Text('|', style: TextStyle(color: ThemeConstants.deepBorder, fontSize: ThemeConstants.uiFontSizeSmall)),
     );
   }
 }
