@@ -157,8 +157,9 @@ Triggered from "Create PR" in the Commit & Push dropdown.
 | `lib/services/actions/action_runner_service.dart` | New — `Process.start` wrapper + `ActionOutputNotifier` |
 | `lib/shell/widgets/top_action_bar.dart` | Wire VS Code/Cursor/Finder dropdown, Add action dialog + chips, Commit & Push split button flows |
 | `lib/shell/widgets/action_output_panel.dart` | New — floating output panel widget |
-| `lib/features/project_sidebar/widgets/project_tile.dart` | Add Rename item to right-click context menu |
-| `lib/features/project_sidebar/widgets/rename_project_dialog.dart` | New — rename dialog widget |
+| `lib/features/project_sidebar/widgets/project_context_menu.dart` | Re-add "Rename project" item (was removed in Phase 1a; wire to dialog below) |
+| `lib/features/project_sidebar/widgets/rename_project_dialog.dart` | New — rename project dialog widget |
+| `lib/features/project_sidebar/widgets/rename_conversation_dialog.dart` | New — rename conversation dialog; `ConversationTile.onRename` hook already wired in Phase 1a |
 | `lib/features/chat/widgets/commit_dialog.dart` | New — commit message dialog with auto-commit toggle |
 | `lib/features/chat/widgets/create_pr_dialog.dart` | New — PR title/body/base-branch/draft dialog |
 
