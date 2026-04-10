@@ -383,7 +383,6 @@ class _GeneralSection extends StatefulWidget {
 class _GeneralSectionState extends State<_GeneralSection> {
   bool _autoCommit = false;
   bool _deleteConfirmation = true;
-  final _ollamaUrlController = TextEditingController();
   final _terminalAppController = TextEditingController();
 
   @override
@@ -396,18 +395,15 @@ class _GeneralSectionState extends State<_GeneralSection> {
     final autoCommit = await widget.generalPrefs.getAutoCommit();
     final deleteConfirm = await widget.generalPrefs.getDeleteConfirmation();
     final terminalApp = await widget.generalPrefs.getTerminalApp();
-    const ollamaUrl = ApiConstants.ollamaDefaultBaseUrl;
     setState(() {
       _autoCommit = autoCommit;
       _deleteConfirmation = deleteConfirm;
       _terminalAppController.text = terminalApp;
-      _ollamaUrlController.text = ollamaUrl;
     });
   }
 
   @override
   void dispose() {
-    _ollamaUrlController.dispose();
     _terminalAppController.dispose();
     super.dispose();
   }
@@ -432,14 +428,6 @@ class _GeneralSectionState extends State<_GeneralSection> {
                   onChanged: (_) {},
                   context: ctx,
                 ),
-              ),
-            ),
-            _SettingsRow(
-              label: 'Ollama base URL',
-              description: 'Base URL for local Ollama',
-              trailing: SizedBox(
-                width: 200,
-                child: _InlineTextField(controller: _ollamaUrlController),
               ),
             ),
             _SettingsRow(
