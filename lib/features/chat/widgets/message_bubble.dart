@@ -25,6 +25,13 @@ import '../chat_notifier.dart';
 /// common POSIX/Windows PATH_MAX ballpark.
 const int _kMaxFilenameLength = 260;
 
+/// Regex matching Windows drive-letter paths (e.g. `C:\...`) and UNC
+/// paths (`\\server\...`). Needed because `p.isAbsolute` on POSIX hosts
+/// only recognises `/`-rooted paths.
+final RegExp _windowsAbsoluteRe = RegExp(r'^([A-Za-z]:[/\\]|\\\\)');
+
+bool _isWindowsAbsolute(String path) => _windowsAbsoluteRe.hasMatch(path);
+
 /// Splits a code fence info string (e.g. "dart lib/main.dart") into
 /// (language, filename?). Filename is null if no second word is present.
 ///
@@ -41,11 +48,16 @@ const int _kMaxFilenameLength = 260;
   // Whitespace (including \n, \r, \t) is stripped by the \s+ split, so we
   // only need to guard against null-byte injection, over-length, and
   // absolute paths that would bypass the project-root join.
+  //
+  // p.isAbsolute uses the host platform's context, so on macOS it misses
+  // Windows drive-letter (C:\...) and UNC (\\server\...) paths. We check
+  // those explicitly since AI-generated filenames can contain any syntax.
   final candidate = parts.sublist(1).join(' ');
   if (candidate.isEmpty ||
       candidate.length > _kMaxFilenameLength ||
       candidate.contains('\u0000') ||
-      p.isAbsolute(candidate)) {
+      p.isAbsolute(candidate) ||
+      _isWindowsAbsolute(candidate)) {
     return (language, null);
   }
   return (language, candidate);
@@ -53,7 +65,7 @@ const int _kMaxFilenameLength = 260;
 
 // ── MessageBubble ─────────────────────────────────────────────────────────────
 
-class MessageBubble extends ConsumerWidget {
+class MessageBubble extends StatelessWidget {
   const MessageBubble({super.key, required this.message});
 
   final ChatMessage message;
@@ -61,10 +73,10 @@ class MessageBubble extends ConsumerWidget {
   bool get _isUser => message.role == MessageRole.user;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: _isUser ? _UserBubble(message: message) : _AssistantBubble(message: message, ref: ref),
+      child: _isUser ? _UserBubble(message: message) : _AssistantBubble(message: message),
     );
   }
 }
@@ -106,9 +118,8 @@ class _UserBubble extends StatelessWidget {
 // ── Assistant bubble ─────────────────────────────────────────────────────────
 
 class _AssistantBubble extends StatelessWidget {
-  const _AssistantBubble({required this.message, required this.ref});
+  const _AssistantBubble({required this.message});
   final ChatMessage message;
-  final WidgetRef ref;
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +137,7 @@ class _AssistantBubble extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (message.isStreaming) const StreamingDot(),
-              _MessageContent(message: message, ref: ref),
+              _MessageContent(message: message),
             ],
           ),
         ),
@@ -186,9 +197,8 @@ class _StreamingDotState extends State<StreamingDot> with SingleTickerProviderSt
 // ── Message content ───────────────────────────────────────────────────────────
 
 class _MessageContent extends StatelessWidget {
-  const _MessageContent({required this.message, required this.ref});
+  const _MessageContent({required this.message});
   final ChatMessage message;
-  final WidgetRef ref;
 
   @override
   Widget build(BuildContext context) {
@@ -240,7 +250,6 @@ class _MessageContent extends StatelessWidget {
       ),
       builders: {
         'code': _CodeBlockBuilder(
-          ref: ref,
           messageId: message.id,
           sessionId: message.sessionId,
         ),
@@ -253,11 +262,9 @@ class _MessageContent extends StatelessWidget {
 
 class _CodeBlockBuilder extends MarkdownElementBuilder {
   _CodeBlockBuilder({
-    required this.ref,
     required this.messageId,
     required this.sessionId,
   });
-  final WidgetRef ref;
   final String messageId;
   final String sessionId;
 
@@ -332,43 +339,74 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
   }
 
   Future<void> _loadDiff() async {
+    final project = _resolveActiveProject();
+    if (project == null) {
+      setState(() {
+        _diffError = 'No active project.';
+        _diffState = _DiffCardState.error;
+      });
+      return;
+    }
+
     setState(() => _diffState = _DiffCardState.loading);
     try {
-      final project = _resolveActiveProject();
-      if (project == null) throw Exception('No active project');
-
       final absolutePath = p.join(project.path, widget.filename!);
       ApplyService.assertWithinProject(absolutePath, project.path);
 
+      // TOCTOU-safe read: attempt the read directly and treat a missing
+      // file as "new file" instead of stat-then-read.
       String? original;
-      final file = File(absolutePath);
-      if (file.existsSync()) {
-        original = await file.readAsString();
+      try {
+        original = await File(absolutePath).readAsString();
+      } on PathNotFoundException {
+        original = null;
       }
 
       final dmp = DiffMatchPatch();
       final diffs = dmp.diff(original ?? '', widget.code);
       dmp.diffCleanupSemantic(diffs);
 
+      if (!mounted) return;
       setState(() {
         _originalContent = original;
         _diffs = diffs;
         _diffState = _DiffCardState.loaded;
       });
-    } catch (e) {
+    } on StateError catch (e) {
+      // assertWithinProject rejection — a path-traversal attempt or a
+      // guard-layer failure. Log with a security marker so it's grep-able.
+      debugPrint('[security] _loadDiff path rejected: $e');
+      if (!mounted) return;
       setState(() {
-        _diffError = e.toString();
+        _diffError = 'This file is outside the current project.';
+        _diffState = _DiffCardState.error;
+      });
+    } on FileSystemException catch (e) {
+      debugPrint('[_loadDiff] filesystem: $e');
+      if (!mounted) return;
+      setState(() {
+        _diffError = 'Could not read file from disk.';
+        _diffState = _DiffCardState.error;
+      });
+    } catch (e, st) {
+      debugPrint('[_loadDiff] unexpected: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _diffError = 'Unable to compute diff.';
         _diffState = _DiffCardState.error;
       });
     }
   }
 
   Future<void> _applyChange() async {
+    final project = _resolveActiveProject();
+    if (project == null) {
+      _showApplyError('No active project.');
+      return;
+    }
+
     setState(() => _applying = true);
     try {
-      final project = _resolveActiveProject();
-      if (project == null) throw Exception('Active project not found');
-
       final absolutePath = p.join(project.path, widget.filename!);
       ApplyService.assertWithinProject(absolutePath, project.path);
       await ref.read(applyServiceProvider).applyChange(
@@ -379,22 +417,32 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
             messageId: widget.messageId,
           );
 
+      if (!mounted) return;
       // Auto-open the changes panel on first apply
       ref.read(changesPanelVisibleProvider.notifier).show();
-
       setState(() => _diffState = _DiffCardState.hidden);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Apply failed: $e'),
-            backgroundColor: ThemeConstants.error,
-          ),
-        );
-      }
+    } on StateError catch (e) {
+      debugPrint('[security] _applyChange path rejected: $e');
+      _showApplyError('This file is outside the current project.');
+    } on FileSystemException catch (e) {
+      debugPrint('[_applyChange] filesystem: $e');
+      _showApplyError('Could not write file to disk.');
+    } catch (e, st) {
+      debugPrint('[_applyChange] unexpected: $e\n$st');
+      _showApplyError('Unable to apply change.');
     } finally {
       if (mounted) setState(() => _applying = false);
     }
+  }
+
+  void _showApplyError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: ThemeConstants.error,
+      ),
+    );
   }
 
   @override

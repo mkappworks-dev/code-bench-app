@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:code_bench_app/data/models/applied_change.dart';
 import 'package:code_bench_app/features/chat/chat_notifier.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
 import 'package:code_bench_app/services/filesystem/filesystem_service.dart';
@@ -48,6 +50,95 @@ void main() {
     expect(changes.first.newContent, 'void main() {}');
     expect(changes.first.filePath, filePath);
     expect(changes.first.id, 'test-uuid');
+    // New file: all lines count as additions, none as deletions.
+    expect(changes.first.additions, 1);
+    expect(changes.first.deletions, 0);
+  });
+
+  test('apply records line counts when replacing content line-for-line', () async {
+    final filePath = '${tmpDir.path}/swap.dart';
+    File(filePath).writeAsStringSync('a\nb\nc\n');
+
+    await service.applyChange(
+      filePath: filePath,
+      projectPath: tmpDir.path,
+      newContent: 'x\ny\nz\n',
+      sessionId: 'sid',
+      messageId: 'mid',
+    );
+
+    final change = container.read(appliedChangesProvider)['sid']!.first;
+    // Swapping 3 lines for 3 different lines must NOT report 0/0 — that
+    // was the old signed-delta bug. We expect non-zero on both sides.
+    expect(change.additions, greaterThan(0));
+    expect(change.deletions, greaterThan(0));
+  });
+
+  test('apply rejects content larger than kMaxApplyContentBytes', () async {
+    final filePath = '${tmpDir.path}/huge.dart';
+    final oversized = 'a' * (kMaxApplyContentBytes + 1);
+
+    await expectLater(
+      () => service.applyChange(
+        filePath: filePath,
+        projectPath: tmpDir.path,
+        newContent: oversized,
+        sessionId: 'sid',
+        messageId: 'mid',
+      ),
+      throwsA(isA<StateError>()),
+    );
+
+    // Nothing written, nothing tracked
+    expect(File(filePath).existsSync(), false);
+    expect(container.read(appliedChangesProvider)['sid'], isNull);
+  });
+
+  test('apply rejects oversized original file snapshot', () async {
+    final filePath = '${tmpDir.path}/legacy_huge.dart';
+    // Write an over-cap file directly to disk to simulate a pre-existing
+    // huge file the user tries to apply a small change to.
+    File(filePath).writeAsStringSync('a' * (kMaxApplyContentBytes + 1));
+
+    await expectLater(
+      () => service.applyChange(
+        filePath: filePath,
+        projectPath: tmpDir.path,
+        newContent: 'small',
+        sessionId: 'sid',
+        messageId: 'mid',
+      ),
+      throwsA(isA<StateError>()),
+    );
+
+    // Original content must NOT have been overwritten
+    expect(File(filePath).readAsStringSync().length, kMaxApplyContentBytes + 1);
+    expect(container.read(appliedChangesProvider)['sid'], isNull);
+  });
+
+  test('apply treats a deleted-between-check-and-read file as new', () async {
+    // This is the TOCTOU scenario: in a pre-fix world, applyChange used
+    // `existsSync` + `readFile`. If the file vanished in that window, the
+    // read would throw a confusing wrapped FileSystemException instead of
+    // falling through to "new file" handling. After the fix, applyChange
+    // reads directly and catches PathNotFoundException, so a non-existent
+    // file is correctly treated as a new-file creation.
+    final filePath = '${tmpDir.path}/vanished.dart';
+    // File does NOT exist on disk.
+    expect(File(filePath).existsSync(), false);
+
+    await service.applyChange(
+      filePath: filePath,
+      projectPath: tmpDir.path,
+      newContent: 'void main() {}',
+      sessionId: 'sid',
+      messageId: 'mid',
+    );
+
+    // File is created, change tracked as new-file (null originalContent).
+    expect(File(filePath).existsSync(), true);
+    final change = container.read(appliedChangesProvider)['sid']!.first;
+    expect(change.originalContent, isNull);
   });
 
   test('apply snapshots original content when file exists', () async {
@@ -151,6 +242,50 @@ void main() {
     expect(container.read(appliedChangesProvider)['sid'], isNull);
   });
 
+  test('revert (git) wraps TimeoutException as StateError', () async {
+    final filePath = '${tmpDir.path}/file.dart';
+    File(filePath).writeAsStringSync('original');
+
+    final timeoutService = ApplyService(
+      fs: FilesystemService(),
+      notifier: container.read(appliedChangesProvider.notifier),
+      uuidGen: () => 'timeout-direct-uuid',
+      // Throw TimeoutException directly to exercise the catch branch
+      // without actually waiting the 15s timer.
+      processRunner: (exe, args, {workingDirectory}) => Future.delayed(const Duration(milliseconds: 1)).then(
+        (_) => throw TimeoutException('simulated hang'),
+      ),
+    );
+
+    await timeoutService.applyChange(
+      filePath: filePath,
+      projectPath: tmpDir.path,
+      newContent: 'changed',
+      sessionId: 'sid',
+      messageId: 'mid',
+    );
+
+    final change = container.read(appliedChangesProvider)['sid']!.first;
+
+    await expectLater(
+      () => timeoutService.revertChange(
+        change: change,
+        isGit: true,
+        projectPath: tmpDir.path,
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (e) => e.message,
+          'message',
+          contains('timed out'),
+        ),
+      ),
+    );
+
+    // Notifier entry preserved on failure
+    expect(container.read(appliedChangesProvider)['sid'], isNotNull);
+  });
+
   test('revert (git) throws and does NOT remove notifier entry when git fails', () async {
     final filePath = '${tmpDir.path}/file.dart';
     File(filePath).writeAsStringSync('original');
@@ -200,6 +335,60 @@ void main() {
 
     // Nothing written, nothing tracked
     expect(container.read(appliedChangesProvider)['sid'], isNull);
+  });
+
+  test('revertChange throws StateError for path outside project root', () async {
+    // Manually construct an AppliedChange whose filePath escapes the project
+    // root. This simulates an attacker who tampers with in-memory state to
+    // trick revertChange into writing outside the sandbox.
+    final maliciousChange = AppliedChange(
+      id: 'evil',
+      sessionId: 'sid',
+      messageId: 'mid',
+      filePath: '${tmpDir.path}/../../etc/passwd',
+      originalContent: 'hacked',
+      newContent: 'owned',
+      appliedAt: DateTime.now(),
+    );
+
+    await expectLater(
+      () => service.revertChange(
+        change: maliciousChange,
+        isGit: false,
+        projectPath: tmpDir.path,
+      ),
+      throwsA(isA<StateError>()),
+    );
+  });
+
+  test('revertChange rejects symlink-escaped path', () async {
+    final outside = await Directory.systemTemp.createTemp('revert_outside_');
+    try {
+      // Symlink inside project → outside directory
+      final linkPath = p.join(tmpDir.path, 'escape');
+      await Link(linkPath).create(outside.path);
+
+      final maliciousChange = AppliedChange(
+        id: 'sym-evil',
+        sessionId: 'sid',
+        messageId: 'mid',
+        filePath: p.join(linkPath, 'evil.txt'),
+        originalContent: 'hacked',
+        newContent: 'owned',
+        appliedAt: DateTime.now(),
+      );
+
+      await expectLater(
+        () => service.revertChange(
+          change: maliciousChange,
+          isGit: false,
+          projectPath: tmpDir.path,
+        ),
+        throwsA(isA<StateError>()),
+      );
+    } finally {
+      await outside.delete(recursive: true);
+    }
   });
 
   test('assertWithinProject allows paths inside project root', () {

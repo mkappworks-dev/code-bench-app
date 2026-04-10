@@ -151,20 +151,17 @@ class _ChangeEntry extends StatelessWidget {
   final Project? project;
   final Future<void> Function() onRevert;
 
-  /// Compute +N −N from original vs new content (line-count delta).
-  (int additions, int deletions) get _lineCounts {
-    final originalLines = change.originalContent == null ? 0 : change.originalContent!.split('\n').length;
-    final newLines = change.newContent.split('\n').length;
-    final delta = newLines - originalLines;
-    return delta >= 0 ? (delta, 0) : (0, -delta);
-  }
-
   @override
   Widget build(BuildContext context) {
     final filename = p.basename(change.filePath);
     final relativePath = project != null ? p.relative(change.filePath, from: project!.path) : change.filePath;
 
-    final (additions, deletions) = _lineCounts;
+    // Use persisted line counts computed from a char-level diff at
+    // apply-time — see ApplyService._computeLineCounts. This is strictly
+    // more accurate than a signed line-delta (which reports 0/0 when you
+    // swap 10 lines for 10 different lines).
+    final additions = change.additions;
+    final deletions = change.deletions;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

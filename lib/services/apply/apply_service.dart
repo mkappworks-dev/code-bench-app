@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -16,6 +18,17 @@ typedef ProcessRunner = Future<ProcessResult> Function(
   List<String> arguments, {
   String? workingDirectory,
 });
+
+/// Hard cap on the size of content that can be applied in a single operation.
+/// Prevents an AI-generated multi-megabyte blob from pinning memory inside
+/// the [AppliedChange] snapshot (which keeps both original and new content
+/// for revert). 1 MiB is ~30k lines of source — comfortably above any
+/// realistic single-file code change.
+const int kMaxApplyContentBytes = 1024 * 1024;
+
+/// Timeout for `git checkout --` during revert. Keeps the UI responsive if
+/// the git process hangs (lock contention, dead credential helper, etc.).
+const Duration kGitCheckoutTimeout = Duration(seconds: 15);
 
 @Riverpod(keepAlive: true)
 ApplyService applyService(Ref ref) {
@@ -94,16 +107,45 @@ class ApplyService {
     required String messageId,
   }) async {
     assertWithinProject(filePath, projectPath);
-    final file = File(filePath);
+
+    // Reject oversized content before we touch disk. We count UTF-16 code
+    // units (String.length) as a cheap proxy for byte size — worst case
+    // for multi-byte encodings, real byte size is ≤ 3× this, and the cap
+    // is generous enough (1 MiB ≈ 30k lines) to never hit legitimate code.
+    if (newContent.length > kMaxApplyContentBytes) {
+      throw StateError(
+        'Content too large to apply: ${newContent.length} bytes exceeds '
+        'limit of $kMaxApplyContentBytes bytes',
+      );
+    }
+
+    // TOCTOU-safe read: attempt the read directly and fall back to "new
+    // file" on PathNotFoundException. A plain `existsSync` + `readFile`
+    // races the filesystem between the stat and the read; a file that
+    // vanishes in between would surface as a confusing error. We bypass
+    // [FilesystemService.readFile] here because its wrapping hides the
+    // native exception type we need to discriminate on.
     String? originalContent;
-    if (file.existsSync()) {
-      originalContent = await _fs.readFile(filePath);
+    try {
+      originalContent = await File(filePath).readAsString();
+    } on PathNotFoundException {
+      originalContent = null;
+    }
+
+    if (originalContent != null && originalContent.length > kMaxApplyContentBytes) {
+      throw StateError(
+        'Original file too large to snapshot for revert: '
+        '${originalContent.length} bytes exceeds limit of '
+        '$kMaxApplyContentBytes bytes',
+      );
     }
 
     if (originalContent == null) {
       await _fs.createDirectory(p.dirname(filePath));
     }
     await _fs.writeFile(filePath, newContent);
+
+    final (additions, deletions) = _computeLineCounts(originalContent, newContent);
 
     _notifier.apply(AppliedChange(
       id: _uuidGen(),
@@ -113,6 +155,8 @@ class ApplyService {
       originalContent: originalContent,
       newContent: newContent,
       appliedAt: DateTime.now(),
+      additions: additions,
+      deletions: deletions,
     ));
   }
 
@@ -126,11 +170,18 @@ class ApplyService {
       // File was created by Apply — delete it
       await _fs.deleteFile(change.filePath);
     } else if (isGit) {
-      final result = await _processRunner(
-        'git',
-        ['checkout', '--', change.filePath],
-        workingDirectory: projectPath,
-      );
+      final ProcessResult result;
+      try {
+        result = await _processRunner(
+          'git',
+          ['checkout', '--', change.filePath],
+          workingDirectory: projectPath,
+        ).timeout(kGitCheckoutTimeout);
+      } on TimeoutException {
+        throw StateError(
+          'git checkout timed out after ${kGitCheckoutTimeout.inSeconds}s',
+        );
+      }
       if (result.exitCode != 0) {
         throw StateError(
           'git checkout failed (exit ${result.exitCode}): ${result.stderr}',
@@ -141,5 +192,37 @@ class ApplyService {
     }
 
     _notifier.revert(change.id);
+  }
+
+  /// Counts line-level additions and deletions from a char-level diff.
+  ///
+  /// Uses `diff_match_patch`'s char-level diff and tallies newlines in each
+  /// insert/delete chunk. This is an approximation — a pure line-based LCS
+  /// would be more precise for inline edits — but it is strictly better
+  /// than a signed line-delta (which reports 0/0 when you swap 10 lines
+  /// for 10 different ones) and fast enough for the 1 MiB content cap.
+  static (int additions, int deletions) _computeLineCounts(
+    String? original,
+    String newContent,
+  ) {
+    final dmp = DiffMatchPatch();
+    final diffs = dmp.diff(original ?? '', newContent);
+    dmp.diffCleanupSemantic(diffs);
+
+    var additions = 0;
+    var deletions = 0;
+    for (final d in diffs) {
+      if (d.text.isEmpty) continue;
+      final newlines = '\n'.allMatches(d.text).length;
+      // A chunk's line count is its newline count plus one for the trailing
+      // partial line, unless the chunk ends exactly at a newline.
+      final lineCount = d.text.endsWith('\n') ? newlines : newlines + 1;
+      if (d.operation == DIFF_INSERT) {
+        additions += lineCount;
+      } else if (d.operation == DIFF_DELETE) {
+        deletions += lineCount;
+      }
+    }
+    return (additions, deletions);
   }
 }

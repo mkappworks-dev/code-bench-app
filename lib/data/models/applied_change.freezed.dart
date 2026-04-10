@@ -22,7 +22,12 @@ mixin _$AppliedChange {
   String get filePath => throw _privateConstructorUsedError; // absolute path on disk
   String? get originalContent => throw _privateConstructorUsedError; // null = file didn't exist before Apply
   String get newContent => throw _privateConstructorUsedError; // content that was written to disk
-  DateTime get appliedAt => throw _privateConstructorUsedError;
+  DateTime get appliedAt =>
+      throw _privateConstructorUsedError; // Line counts derived at apply-time from a char-level diff so the
+// changes-panel indicator reflects real additions/deletions instead of
+// a signed line delta. 0 when no diff was computed (e.g. legacy rows).
+  int get additions => throw _privateConstructorUsedError;
+  int get deletions => throw _privateConstructorUsedError;
 
   /// Create a copy of AppliedChange
   /// with the given fields replaced by the non-null parameter values.
@@ -42,7 +47,9 @@ abstract class $AppliedChangeCopyWith<$Res> {
       String filePath,
       String? originalContent,
       String newContent,
-      DateTime appliedAt});
+      DateTime appliedAt,
+      int additions,
+      int deletions});
 }
 
 /// @nodoc
@@ -66,6 +73,8 @@ class _$AppliedChangeCopyWithImpl<$Res, $Val extends AppliedChange> implements $
     Object? originalContent = freezed,
     Object? newContent = null,
     Object? appliedAt = null,
+    Object? additions = null,
+    Object? deletions = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -96,6 +105,14 @@ class _$AppliedChangeCopyWithImpl<$Res, $Val extends AppliedChange> implements $
           ? _value.appliedAt
           : appliedAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      additions: null == additions
+          ? _value.additions
+          : additions // ignore: cast_nullable_to_non_nullable
+              as int,
+      deletions: null == deletions
+          ? _value.deletions
+          : deletions // ignore: cast_nullable_to_non_nullable
+              as int,
     ) as $Val);
   }
 }
@@ -113,7 +130,9 @@ abstract class _$$AppliedChangeImplCopyWith<$Res> implements $AppliedChangeCopyW
       String filePath,
       String? originalContent,
       String newContent,
-      DateTime appliedAt});
+      DateTime appliedAt,
+      int additions,
+      int deletions});
 }
 
 /// @nodoc
@@ -134,6 +153,8 @@ class __$$AppliedChangeImplCopyWithImpl<$Res> extends _$AppliedChangeCopyWithImp
     Object? originalContent = freezed,
     Object? newContent = null,
     Object? appliedAt = null,
+    Object? additions = null,
+    Object? deletions = null,
   }) {
     return _then(_$AppliedChangeImpl(
       id: null == id
@@ -164,6 +185,14 @@ class __$$AppliedChangeImplCopyWithImpl<$Res> extends _$AppliedChangeCopyWithImp
           ? _value.appliedAt
           : appliedAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      additions: null == additions
+          ? _value.additions
+          : additions // ignore: cast_nullable_to_non_nullable
+              as int,
+      deletions: null == deletions
+          ? _value.deletions
+          : deletions // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -178,7 +207,9 @@ class _$AppliedChangeImpl implements _AppliedChange {
       required this.filePath,
       this.originalContent,
       required this.newContent,
-      required this.appliedAt});
+      required this.appliedAt,
+      this.additions = 0,
+      this.deletions = 0});
 
   @override
   final String id;
@@ -199,10 +230,19 @@ class _$AppliedChangeImpl implements _AppliedChange {
 // content that was written to disk
   @override
   final DateTime appliedAt;
+// Line counts derived at apply-time from a char-level diff so the
+// changes-panel indicator reflects real additions/deletions instead of
+// a signed line delta. 0 when no diff was computed (e.g. legacy rows).
+  @override
+  @JsonKey()
+  final int additions;
+  @override
+  @JsonKey()
+  final int deletions;
 
   @override
   String toString() {
-    return 'AppliedChange(id: $id, sessionId: $sessionId, messageId: $messageId, filePath: $filePath, originalContent: $originalContent, newContent: $newContent, appliedAt: $appliedAt)';
+    return 'AppliedChange(id: $id, sessionId: $sessionId, messageId: $messageId, filePath: $filePath, originalContent: $originalContent, newContent: $newContent, appliedAt: $appliedAt, additions: $additions, deletions: $deletions)';
   }
 
   @override
@@ -216,12 +256,14 @@ class _$AppliedChangeImpl implements _AppliedChange {
             (identical(other.filePath, filePath) || other.filePath == filePath) &&
             (identical(other.originalContent, originalContent) || other.originalContent == originalContent) &&
             (identical(other.newContent, newContent) || other.newContent == newContent) &&
-            (identical(other.appliedAt, appliedAt) || other.appliedAt == appliedAt));
+            (identical(other.appliedAt, appliedAt) || other.appliedAt == appliedAt) &&
+            (identical(other.additions, additions) || other.additions == additions) &&
+            (identical(other.deletions, deletions) || other.deletions == deletions));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, sessionId, messageId, filePath, originalContent, newContent, appliedAt);
+  int get hashCode => Object.hash(
+      runtimeType, id, sessionId, messageId, filePath, originalContent, newContent, appliedAt, additions, deletions);
 
   /// Create a copy of AppliedChange
   /// with the given fields replaced by the non-null parameter values.
@@ -240,7 +282,9 @@ abstract class _AppliedChange implements AppliedChange {
       required final String filePath,
       final String? originalContent,
       required final String newContent,
-      required final DateTime appliedAt}) = _$AppliedChangeImpl;
+      required final DateTime appliedAt,
+      final int additions,
+      final int deletions}) = _$AppliedChangeImpl;
 
   @override
   String get id; // uuid
@@ -255,7 +299,13 @@ abstract class _AppliedChange implements AppliedChange {
   @override
   String get newContent; // content that was written to disk
   @override
-  DateTime get appliedAt;
+  DateTime get appliedAt; // Line counts derived at apply-time from a char-level diff so the
+// changes-panel indicator reflects real additions/deletions instead of
+// a signed line delta. 0 when no diff was computed (e.g. legacy rows).
+  @override
+  int get additions;
+  @override
+  int get deletions;
 
   /// Create a copy of AppliedChange
   /// with the given fields replaced by the non-null parameter values.

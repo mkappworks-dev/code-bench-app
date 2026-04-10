@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -20,13 +21,7 @@ class StatusBar extends ConsumerWidget {
     Project? activeProject;
     if (projectId != null) {
       activeProject = projectsAsync.whenOrNull(
-        data: (list) {
-          try {
-            return list.firstWhere((p) => p.id == projectId);
-          } catch (_) {
-            return null;
-          }
-        },
+        data: (list) => list.firstWhereOrNull((p) => p.id == projectId),
       );
     }
 

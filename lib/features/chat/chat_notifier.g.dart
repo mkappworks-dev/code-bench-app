@@ -371,7 +371,7 @@ final appliedChangesProvider = NotifierProvider<AppliedChanges, Map<String, List
 );
 
 typedef _$AppliedChanges = Notifier<Map<String, List<AppliedChange>>>;
-String _$changesPanelVisibleHash() => r'eff3a5e9901e430955b5f80c2824460a5064158b';
+String _$changesPanelVisibleHash() => r'f81f3dbb0aeb38ffb87bbd472846a33f732504e3';
 
 /// See also [ChangesPanelVisible].
 @ProviderFor(ChangesPanelVisible)
