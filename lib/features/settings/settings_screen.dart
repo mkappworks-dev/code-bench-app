@@ -1,15 +1,19 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/theme_constants.dart';
-import '../../data/datasources/local/onboarding_preferences.dart';
+import '../../data/datasources/local/general_preferences.dart';
 import '../../data/datasources/local/secure_storage_source.dart';
 import '../../data/models/ai_model.dart';
 import '../../services/ai/ai_service_factory.dart';
+import '../../services/session/session_service.dart';
+import 'archive_screen.dart';
+
+enum _SettingsNav { general, providers, archive }
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -19,6 +23,9 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  _SettingsNav _activeNav = _SettingsNav.general;
+
+  // Provider API key controllers
   final _controllers = <AIProvider, TextEditingController>{
     AIProvider.openai: TextEditingController(),
     AIProvider.anthropic: TextEditingController(),
@@ -60,16 +67,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
     }
     final ollamaUrl = _ollamaController.text.trim();
-    if (ollamaUrl.isNotEmpty) {
-      await storage.writeOllamaUrl(ollamaUrl);
-    }
-    final customEndpoint = _customEndpointController.text.trim();
-    await storage.writeCustomEndpoint(customEndpoint);
-    final customApiKey = _customApiKeyController.text.trim();
-    await storage.writeCustomApiKey(customApiKey);
-
+    if (ollamaUrl.isNotEmpty) await storage.writeOllamaUrl(ollamaUrl);
+    await storage.writeCustomEndpoint(_customEndpointController.text.trim());
+    await storage.writeCustomApiKey(_customApiKeyController.text.trim());
     ref.invalidate(aiServiceProvider);
-
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -80,30 +81,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    for (final c in _controllers.values) {
-      c.dispose();
-    }
-    _ollamaController.dispose();
-    _customEndpointController.dispose();
-    _customApiKeyController.dispose();
-    super.dispose();
-  }
-
   Future<void> _deleteKey(AIProvider provider) async {
     final storage = ref.read(secureStorageSourceProvider);
     await storage.deleteApiKey(provider.name);
     _controllers[provider]!.clear();
     ref.invalidate(aiServiceProvider);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${provider.displayName} key removed'),
-          backgroundColor: ThemeConstants.success,
-        ),
-      );
-    }
   }
 
   Future<void> _testOllama() async {
@@ -125,7 +107,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Cannot connect to Ollama. Make sure it is running.'),
+            content: Text('Cannot connect to Ollama.'),
             backgroundColor: ThemeConstants.error,
           ),
         );
@@ -134,89 +116,256 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   @override
+  void dispose() {
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
+    _ollamaController.dispose();
+    _customEndpointController.dispose();
+    _customApiKeyController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ThemeConstants.background,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
+      body: Column(
+        children: [
+          // Header bar
+          _SettingsHeaderBar(
+            onRestoreDefaults: _restoreDefaults,
+          ),
+          Expanded(
+            child: Row(
+              children: [
+                // Left nav (200px)
+                _SettingsLeftNav(
+                  activeNav: _activeNav,
+                  onSelect: (nav) => setState(() => _activeNav = nav),
+                  onBack: () => context.go('/chat'),
+                ),
+                // Content area
+                Expanded(
+                  child: Container(
+                    color: ThemeConstants.sidebarBackground,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 20,
+                    ),
+                    child: _buildContent(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    switch (_activeNav) {
+      case _SettingsNav.general:
+        return _GeneralSection(
+          generalPrefs: ref.read(generalPreferencesProvider),
+        );
+      case _SettingsNav.providers:
+        return _ProvidersSection(
+          controllers: _controllers,
+          ollamaController: _ollamaController,
+          customEndpointController: _customEndpointController,
+          customApiKeyController: _customApiKeyController,
+          onSave: _saveKeys,
+          onDeleteKey: _deleteKey,
+          onTestOllama: _testOllama,
+        );
+      case _SettingsNav.archive:
+        return ArchiveScreen(
+          onUnarchive: (id) =>
+              ref.read(sessionServiceProvider).unarchiveSession(id),
+        );
+    }
+  }
+
+  Future<void> _restoreDefaults() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: ThemeConstants.panelBackground,
+        title: const Text(
+          'Restore defaults?',
+          style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14),
+        ),
+        content: const Text(
+          'All settings will be reset to their default values.',
+          style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 12),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Restore'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final prefs = ref.read(generalPreferencesProvider);
+    await prefs.setAutoCommit(false);
+    await prefs.setTerminalApp('Terminal');
+    await prefs.setDeleteConfirmation(true);
+    if (mounted) setState(() {});
+  }
+}
+
+// ── Header bar ────────────────────────────────────────────────────────────────
+
+class _SettingsHeaderBar extends StatelessWidget {
+  const _SettingsHeaderBar({required this.onRestoreDefaults});
+
+  final VoidCallback onRestoreDefaults;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 38,
+      decoration: const BoxDecoration(
+        color: ThemeConstants.inputBackground,
+        border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          const Spacer(),
+          TextButton(
+            onPressed: onRestoreDefaults,
+            child: const Text(
+              '↺ Restore defaults',
+              style: TextStyle(
+                color: ThemeConstants.textSecondary,
+                fontSize: 11,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Left nav ──────────────────────────────────────────────────────────────────
+
+class _SettingsLeftNav extends StatelessWidget {
+  const _SettingsLeftNav({
+    required this.activeNav,
+    required this.onSelect,
+    required this.onBack,
+  });
+
+  final _SettingsNav activeNav;
+  final ValueChanged<_SettingsNav> onSelect;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 200,
+      decoration: const BoxDecoration(
+        color: ThemeConstants.activityBar,
+        border: Border(right: BorderSide(color: ThemeConstants.borderColor)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 20, 16, 16),
+            child: Text(
               'Settings',
               style: TextStyle(
                 color: ThemeConstants.textPrimary,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 32),
-            _SectionHeader(title: 'API Keys'),
-            const SizedBox(height: 16),
-            ...AIProvider.values.where((p) => p != AIProvider.ollama && p != AIProvider.custom).map(
-                  (provider) => Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: _ApiKeyField(
-                      provider: provider,
-                      controller: _controllers[provider]!,
-                      onDelete: () => _deleteKey(provider),
-                    ),
-                  ),
-                ),
-            const SizedBox(height: 16),
-            _SectionHeader(title: 'Ollama (Local)'),
-            const SizedBox(height: 16),
-            _LabeledField(
-              label: 'Base URL',
-              hint: ApiConstants.ollamaDefaultBaseUrl,
-              controller: _ollamaController,
+          ),
+          _NavItem(
+            icon: LucideIcons.settings,
+            label: 'General',
+            isActive: activeNav == _SettingsNav.general,
+            onTap: () => onSelect(_SettingsNav.general),
+          ),
+          _NavItem(
+            icon: LucideIcons.messageSquare,
+            label: 'Providers',
+            isActive: activeNav == _SettingsNav.providers,
+            onTap: () => onSelect(_SettingsNav.providers),
+          ),
+          _NavItem(
+            icon: LucideIcons.archive,
+            label: 'Archive',
+            isActive: activeNav == _SettingsNav.archive,
+            onTap: () => onSelect(_SettingsNav.archive),
+          ),
+          const Spacer(),
+          _NavItem(
+            icon: LucideIcons.arrowLeft,
+            label: '← Back',
+            isActive: false,
+            onTap: onBack,
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? ThemeConstants.inputSurface : null,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isActive
+                  ? ThemeConstants.textPrimary
+                  : ThemeConstants.textSecondary,
             ),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: _testOllama,
-              icon: const Icon(Icons.play_arrow_outlined, size: 14),
-              label: const Text('Test Connection'),
-            ),
-            const SizedBox(height: 16),
-            _SectionHeader(title: 'Custom Endpoint (OpenAI-compatible)'),
-            const SizedBox(height: 16),
-            _LabeledField(
-              label: 'Base URL',
-              hint: 'http://localhost:1234/v1',
-              controller: _customEndpointController,
-            ),
-            const SizedBox(height: 12),
-            _LabeledField(
-              label: 'API Key (optional)',
-              hint: 'sk-... or leave blank',
-              controller: _customApiKeyController,
-              obscureText: true,
-            ),
-            const SizedBox(height: 40),
-            SizedBox(
-              width: 200,
-              child: ElevatedButton(
-                onPressed: _saveKeys,
-                child: const Text('Save Settings'),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive
+                    ? ThemeConstants.textPrimary
+                    : ThemeConstants.textSecondary,
+                fontSize: 12,
               ),
             ),
-            if (kDebugMode) ...[
-              const SizedBox(height: 48),
-              _SectionHeader(title: 'Developer'),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  await ref.read(onboardingPreferencesProvider).reset();
-                  if (context.mounted) context.go('/onboarding');
-                },
-                icon: const Icon(Icons.refresh, size: 14),
-                label: const Text('Reset Onboarding'),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: ThemeConstants.borderColor),
-                  foregroundColor: ThemeConstants.textSecondary,
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -224,34 +373,241 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title});
+// ── General section ───────────────────────────────────────────────────────────
 
-  final String title;
+class _GeneralSection extends StatefulWidget {
+  const _GeneralSection({required this.generalPrefs});
+
+  final GeneralPreferences generalPrefs;
+
+  @override
+  State<_GeneralSection> createState() => _GeneralSectionState();
+}
+
+class _GeneralSectionState extends State<_GeneralSection> {
+  bool _autoCommit = false;
+  bool _deleteConfirmation = true;
+  final _ollamaUrlController = TextEditingController();
+  final _terminalAppController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final autoCommit = await widget.generalPrefs.getAutoCommit();
+    final deleteConfirm = await widget.generalPrefs.getDeleteConfirmation();
+    final terminalApp = await widget.generalPrefs.getTerminalApp();
+    const ollamaUrl = ApiConstants.ollamaDefaultBaseUrl;
+    setState(() {
+      _autoCommit = autoCommit;
+      _deleteConfirmation = deleteConfirm;
+      _terminalAppController.text = terminalApp;
+      _ollamaUrlController.text = ollamaUrl;
+    });
+  }
+
+  @override
+  void dispose() {
+    _ollamaUrlController.dispose();
+    _terminalAppController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title.toUpperCase(),
-          style: const TextStyle(
-            color: ThemeConstants.textSecondary,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.8,
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Divider(height: 1),
-      ],
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionLabel('General'),
+          const SizedBox(height: 8),
+          _SettingsGroup(rows: [
+            _SettingsRow(
+              label: 'Theme',
+              description: 'How Code Bench looks',
+              trailing: _DropdownField(
+                value: 'Dark',
+                items: const ['Dark', 'Light', 'System'],
+                onChanged: (_) {},
+              ),
+            ),
+            _SettingsRow(
+              label: 'Ollama base URL',
+              description: 'Base URL for local Ollama',
+              trailing: SizedBox(
+                width: 200,
+                child: _InlineTextField(controller: _ollamaUrlController),
+              ),
+            ),
+            _SettingsRow(
+              label: 'Delete confirmation',
+              description: 'Ask before deleting a session',
+              trailing: Switch(
+                value: _deleteConfirmation,
+                onChanged: (v) async {
+                  await widget.generalPrefs.setDeleteConfirmation(v);
+                  setState(() => _deleteConfirmation = v);
+                },
+              ),
+            ),
+            _SettingsRow(
+              label: 'Auto-commit',
+              description: 'Skip commit dialog; commit immediately with AI-generated message',
+              trailing: Switch(
+                value: _autoCommit,
+                onChanged: (v) async {
+                  await widget.generalPrefs.setAutoCommit(v);
+                  setState(() => _autoCommit = v);
+                },
+              ),
+            ),
+            _SettingsRow(
+              label: 'Terminal app',
+              description: 'App to open when "Open Terminal" is tapped',
+              trailing: SizedBox(
+                width: 140,
+                child: _InlineTextField(controller: _terminalAppController),
+              ),
+              isLast: true,
+            ),
+          ]),
+          const SizedBox(height: 24),
+          _SectionLabel('About'),
+          const SizedBox(height: 8),
+          _SettingsGroup(rows: [
+            _SettingsRow(
+              label: 'Version',
+              description: 'Current app version',
+              trailing: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: ThemeConstants.success.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'Up to Date',
+                  style: TextStyle(
+                    color: ThemeConstants.success,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+              isLast: true,
+            ),
+          ]),
+        ],
+      ),
     );
   }
 }
 
-class _ApiKeyField extends StatefulWidget {
-  const _ApiKeyField({
+// ── Providers section ─────────────────────────────────────────────────────────
+
+class _ProvidersSection extends StatelessWidget {
+  const _ProvidersSection({
+    required this.controllers,
+    required this.ollamaController,
+    required this.customEndpointController,
+    required this.customApiKeyController,
+    required this.onSave,
+    required this.onDeleteKey,
+    required this.onTestOllama,
+  });
+
+  final Map<AIProvider, TextEditingController> controllers;
+  final TextEditingController ollamaController;
+  final TextEditingController customEndpointController;
+  final TextEditingController customApiKeyController;
+  final VoidCallback onSave;
+  final void Function(AIProvider) onDeleteKey;
+  final VoidCallback onTestOllama;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionLabel('API Keys'),
+          const SizedBox(height: 8),
+          ...AIProvider.values
+              .where((p) => p != AIProvider.ollama && p != AIProvider.custom)
+              .map(
+                (provider) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _ProviderKeyCard(
+                    provider: provider,
+                    controller: controllers[provider]!,
+                    onDelete: () => onDeleteKey(provider),
+                  ),
+                ),
+              ),
+          const SizedBox(height: 16),
+          _SectionLabel('Ollama (Local)'),
+          const SizedBox(height: 8),
+          _SettingsGroup(rows: [
+            _SettingsRow(
+              label: 'Base URL',
+              description: ApiConstants.ollamaDefaultBaseUrl,
+              trailing: SizedBox(
+                width: 200,
+                child: _InlineTextField(controller: ollamaController),
+              ),
+              isLast: true,
+            ),
+          ]),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: onTestOllama,
+            icon: const Icon(LucideIcons.play, size: 12),
+            label: const Text('Test Connection',
+                style: TextStyle(fontSize: 11)),
+          ),
+          const SizedBox(height: 16),
+          _SectionLabel('Custom Endpoint (OpenAI-compatible)'),
+          const SizedBox(height: 8),
+          _SettingsGroup(rows: [
+            _SettingsRow(
+              label: 'Base URL',
+              description: 'http://localhost:1234/v1',
+              trailing: SizedBox(
+                width: 200,
+                child: _InlineTextField(controller: customEndpointController),
+              ),
+            ),
+            _SettingsRow(
+              label: 'API Key',
+              description: 'sk-... or leave blank',
+              trailing: SizedBox(
+                width: 200,
+                child: _InlineTextField(
+                  controller: customApiKeyController,
+                  obscureText: true,
+                ),
+              ),
+              isLast: true,
+            ),
+          ]),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: 160,
+            child: ElevatedButton(
+              onPressed: onSave,
+              child: const Text('Save', style: TextStyle(fontSize: 12)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProviderKeyCard extends StatefulWidget {
+  const _ProviderKeyCard({
     required this.provider,
     required this.controller,
     required this.onDelete,
@@ -262,90 +618,267 @@ class _ApiKeyField extends StatefulWidget {
   final VoidCallback onDelete;
 
   @override
-  State<_ApiKeyField> createState() => _ApiKeyFieldState();
+  State<_ProviderKeyCard> createState() => _ProviderKeyCardState();
 }
 
-class _ApiKeyFieldState extends State<_ApiKeyField> {
+class _ProviderKeyCardState extends State<_ProviderKeyCard> {
   bool _obscure = true;
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: _LabeledField(
-            label: widget.provider.displayName,
-            hint: 'API key',
-            controller: widget.controller,
-            obscureText: _obscure,
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscure ? Icons.visibility_off : Icons.visibility,
-                size: 16,
+    final hasKey = widget.controller.text.isNotEmpty;
+    return Container(
+      decoration: BoxDecoration(
+        color: ThemeConstants.inputSurface,
+        border: Border.all(color: ThemeConstants.deepBorder),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: hasKey
+                          ? ThemeConstants.success
+                          : ThemeConstants.error,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    widget.provider.displayName,
+                    style: const TextStyle(
+                      color: ThemeConstants.textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    hasKey ? 'Configured' : 'Not configured',
+                    style: const TextStyle(
+                      color: ThemeConstants.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    _expanded
+                        ? LucideIcons.chevronUp
+                        : LucideIcons.chevronDown,
+                    size: 14,
+                    color: ThemeConstants.mutedFg,
+                  ),
+                ],
               ),
-              onPressed: () => setState(() => _obscure = !_obscure),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 2),
-          child: IconButton(
-            icon: const Icon(Icons.close, size: 16),
-            color: ThemeConstants.textSecondary,
-            tooltip: 'Remove key',
-            onPressed: widget.onDelete,
-          ),
-        ),
-      ],
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: widget.controller,
+                      obscureText: _obscure,
+                      style: const TextStyle(
+                        color: ThemeConstants.textPrimary,
+                        fontSize: 12,
+                        fontFamily: ThemeConstants.editorFontFamily,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'API key',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscure
+                                ? LucideIcons.eyeOff
+                                : LucideIcons.eye,
+                            size: 14,
+                          ),
+                          onPressed: () =>
+                              setState(() => _obscure = !_obscure),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(LucideIcons.x,
+                        size: 14, color: ThemeConstants.error),
+                    tooltip: 'Remove key',
+                    onPressed: widget.onDelete,
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
 
-class _LabeledField extends StatelessWidget {
-  const _LabeledField({
-    required this.label,
-    required this.hint,
-    required this.controller,
-    this.obscureText = false,
-    this.suffixIcon,
-  });
+// ── Shared row/group components ───────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.label);
 
   final String label;
-  final String hint;
-  final TextEditingController controller;
-  final bool obscureText;
-  final Widget? suffixIcon;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 480,
+    return Text(
+      label.toUpperCase(),
+      style: const TextStyle(
+        color: ThemeConstants.mutedFg,
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.8,
+      ),
+    );
+  }
+}
+
+class _SettingsGroup extends StatelessWidget {
+  const _SettingsGroup({required this.rows});
+
+  final List<_SettingsRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: ThemeConstants.deepBorder),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: ThemeConstants.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: controller,
-            obscureText: obscureText,
-            style: const TextStyle(
-              color: ThemeConstants.textPrimary,
-              fontSize: 13,
-              fontFamily: ThemeConstants.editorFontFamily,
-            ),
-            decoration: InputDecoration(hintText: hint, suffixIcon: suffixIcon),
-          ),
+          for (int i = 0; i < rows.length; i++) ...[
+            if (i > 0)
+              const Divider(
+                height: 1,
+                color: ThemeConstants.deepBorder,
+              ),
+            rows[i],
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _SettingsRow extends StatelessWidget {
+  const _SettingsRow({
+    required this.label,
+    required this.description,
+    required this.trailing,
+    this.isLast = false,
+  });
+
+  final String label;
+  final String description;
+  final Widget trailing;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: ThemeConstants.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    color: ThemeConstants.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          trailing,
+        ],
+      ),
+    );
+  }
+}
+
+class _InlineTextField extends StatelessWidget {
+  const _InlineTextField({
+    required this.controller,
+    this.obscureText = false,
+  });
+
+  final TextEditingController controller;
+  final bool obscureText;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      style: const TextStyle(
+        color: ThemeConstants.textPrimary,
+        fontSize: 12,
+        fontFamily: ThemeConstants.editorFontFamily,
+      ),
+      decoration: const InputDecoration(
+        isDense: true,
+        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      ),
+    );
+  }
+}
+
+class _DropdownField extends StatelessWidget {
+  const _DropdownField({
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  final String value;
+  final List<String> items;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButton<String>(
+      value: value,
+      items: items
+          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+          .toList(),
+      onChanged: onChanged,
+      style: const TextStyle(
+        color: ThemeConstants.textPrimary,
+        fontSize: 12,
+      ),
+      dropdownColor: ThemeConstants.panelBackground,
+      underline: const SizedBox.shrink(),
     );
   }
 }

@@ -4,7 +4,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../data/models/chat_session.dart';
-import '../../data/models/project.dart';
 import '../chat/chat_notifier.dart';
 import '../project_sidebar/project_sidebar_notifier.dart';
 
