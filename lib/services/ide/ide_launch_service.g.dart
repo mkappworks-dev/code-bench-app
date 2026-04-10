@@ -13,9 +13,7 @@ String _$ideLaunchServiceHash() => r'e67da7abe82da79b9282509a6fd317d8f89754ee';
 final ideLaunchServiceProvider = Provider<IdeLaunchService>.internal(
   ideLaunchService,
   name: r'ideLaunchServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$ideLaunchServiceHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$ideLaunchServiceHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );

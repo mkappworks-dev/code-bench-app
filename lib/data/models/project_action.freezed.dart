@@ -29,22 +29,19 @@ mixin _$ProjectAction {
   /// Create a copy of ProjectAction
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $ProjectActionCopyWith<ProjectAction> get copyWith =>
-      throw _privateConstructorUsedError;
+  $ProjectActionCopyWith<ProjectAction> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class $ProjectActionCopyWith<$Res> {
-  factory $ProjectActionCopyWith(
-          ProjectAction value, $Res Function(ProjectAction) then) =
+  factory $ProjectActionCopyWith(ProjectAction value, $Res Function(ProjectAction) then) =
       _$ProjectActionCopyWithImpl<$Res, ProjectAction>;
   @useResult
   $Res call({String name, String command});
 }
 
 /// @nodoc
-class _$ProjectActionCopyWithImpl<$Res, $Val extends ProjectAction>
-    implements $ProjectActionCopyWith<$Res> {
+class _$ProjectActionCopyWithImpl<$Res, $Val extends ProjectAction> implements $ProjectActionCopyWith<$Res> {
   _$ProjectActionCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -74,10 +71,8 @@ class _$ProjectActionCopyWithImpl<$Res, $Val extends ProjectAction>
 }
 
 /// @nodoc
-abstract class _$$ProjectActionImplCopyWith<$Res>
-    implements $ProjectActionCopyWith<$Res> {
-  factory _$$ProjectActionImplCopyWith(
-          _$ProjectActionImpl value, $Res Function(_$ProjectActionImpl) then) =
+abstract class _$$ProjectActionImplCopyWith<$Res> implements $ProjectActionCopyWith<$Res> {
+  factory _$$ProjectActionImplCopyWith(_$ProjectActionImpl value, $Res Function(_$ProjectActionImpl) then) =
       __$$ProjectActionImplCopyWithImpl<$Res>;
   @override
   @useResult
@@ -85,11 +80,9 @@ abstract class _$$ProjectActionImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$ProjectActionImplCopyWithImpl<$Res>
-    extends _$ProjectActionCopyWithImpl<$Res, _$ProjectActionImpl>
+class __$$ProjectActionImplCopyWithImpl<$Res> extends _$ProjectActionCopyWithImpl<$Res, _$ProjectActionImpl>
     implements _$$ProjectActionImplCopyWith<$Res> {
-  __$$ProjectActionImplCopyWithImpl(
-      _$ProjectActionImpl _value, $Res Function(_$ProjectActionImpl) _then)
+  __$$ProjectActionImplCopyWithImpl(_$ProjectActionImpl _value, $Res Function(_$ProjectActionImpl) _then)
       : super(_value, _then);
 
   /// Create a copy of ProjectAction
@@ -118,8 +111,7 @@ class __$$ProjectActionImplCopyWithImpl<$Res>
 class _$ProjectActionImpl implements _ProjectAction {
   const _$ProjectActionImpl({required this.name, required this.command});
 
-  factory _$ProjectActionImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ProjectActionImplFromJson(json);
+  factory _$ProjectActionImpl.fromJson(Map<String, dynamic> json) => _$$ProjectActionImplFromJson(json);
 
   @override
   final String name;
@@ -161,12 +153,9 @@ class _$ProjectActionImpl implements _ProjectAction {
 }
 
 abstract class _ProjectAction implements ProjectAction {
-  const factory _ProjectAction(
-      {required final String name,
-      required final String command}) = _$ProjectActionImpl;
+  const factory _ProjectAction({required final String name, required final String command}) = _$ProjectActionImpl;
 
-  factory _ProjectAction.fromJson(Map<String, dynamic> json) =
-      _$ProjectActionImpl.fromJson;
+  factory _ProjectAction.fromJson(Map<String, dynamic> json) = _$ProjectActionImpl.fromJson;
 
   @override
   String get name;
@@ -177,6 +166,5 @@ abstract class _ProjectAction implements ProjectAction {
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ProjectActionImplCopyWith<_$ProjectActionImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$ProjectActionImplCopyWith<_$ProjectActionImpl> get copyWith => throw _privateConstructorUsedError;
 }

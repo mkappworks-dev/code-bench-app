@@ -6,26 +6,17 @@ part of 'workspace_project.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$WorkspaceProjectImpl _$$WorkspaceProjectImplFromJson(
-        Map<String, dynamic> json) =>
-    _$WorkspaceProjectImpl(
+_$WorkspaceProjectImpl _$$WorkspaceProjectImplFromJson(Map<String, dynamic> json) => _$WorkspaceProjectImpl(
       id: json['id'] as String,
       name: json['name'] as String,
       localPath: json['localPath'] as String?,
       repositoryId: json['repositoryId'] as String?,
       activeBranch: json['activeBranch'] as String?,
-      sessionIds: (json['sessionIds'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const [],
-      lastOpenedAt: json['lastOpenedAt'] == null
-          ? null
-          : DateTime.parse(json['lastOpenedAt'] as String),
+      sessionIds: (json['sessionIds'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
+      lastOpenedAt: json['lastOpenedAt'] == null ? null : DateTime.parse(json['lastOpenedAt'] as String),
     );
 
-Map<String, dynamic> _$$WorkspaceProjectImplToJson(
-        _$WorkspaceProjectImpl instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$$WorkspaceProjectImplToJson(_$WorkspaceProjectImpl instance) => <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
       'localPath': instance.localPath,

@@ -40,8 +40,7 @@ mixin _$Project {
 
 /// @nodoc
 abstract class $ProjectCopyWith<$Res> {
-  factory $ProjectCopyWith(Project value, $Res Function(Project) then) =
-      _$ProjectCopyWithImpl<$Res, Project>;
+  factory $ProjectCopyWith(Project value, $Res Function(Project) then) = _$ProjectCopyWithImpl<$Res, Project>;
   @useResult
   $Res call(
       {String id,
@@ -55,8 +54,7 @@ abstract class $ProjectCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$ProjectCopyWithImpl<$Res, $Val extends Project>
-    implements $ProjectCopyWith<$Res> {
+class _$ProjectCopyWithImpl<$Res, $Val extends Project> implements $ProjectCopyWith<$Res> {
   _$ProjectCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -117,8 +115,7 @@ class _$ProjectCopyWithImpl<$Res, $Val extends Project>
 
 /// @nodoc
 abstract class _$$ProjectImplCopyWith<$Res> implements $ProjectCopyWith<$Res> {
-  factory _$$ProjectImplCopyWith(
-          _$ProjectImpl value, $Res Function(_$ProjectImpl) then) =
+  factory _$$ProjectImplCopyWith(_$ProjectImpl value, $Res Function(_$ProjectImpl) then) =
       __$$ProjectImplCopyWithImpl<$Res>;
   @override
   @useResult
@@ -134,12 +131,9 @@ abstract class _$$ProjectImplCopyWith<$Res> implements $ProjectCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$ProjectImplCopyWithImpl<$Res>
-    extends _$ProjectCopyWithImpl<$Res, _$ProjectImpl>
+class __$$ProjectImplCopyWithImpl<$Res> extends _$ProjectCopyWithImpl<$Res, _$ProjectImpl>
     implements _$$ProjectImplCopyWith<$Res> {
-  __$$ProjectImplCopyWithImpl(
-      _$ProjectImpl _value, $Res Function(_$ProjectImpl) _then)
-      : super(_value, _then);
+  __$$ProjectImplCopyWithImpl(_$ProjectImpl _value, $Res Function(_$ProjectImpl) _then) : super(_value, _then);
 
   /// Create a copy of Project
   /// with the given fields replaced by the non-null parameter values.
@@ -206,8 +200,7 @@ class _$ProjectImpl implements _Project {
       final List<ProjectAction> actions = const []})
       : _actions = actions;
 
-  factory _$ProjectImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ProjectImplFromJson(json);
+  factory _$ProjectImpl.fromJson(Map<String, dynamic> json) => _$$ProjectImplFromJson(json);
 
   @override
   final String id;
@@ -248,26 +241,15 @@ class _$ProjectImpl implements _Project {
             (identical(other.name, name) || other.name == name) &&
             (identical(other.path, path) || other.path == path) &&
             (identical(other.isGit, isGit) || other.isGit == isGit) &&
-            (identical(other.currentBranch, currentBranch) ||
-                other.currentBranch == currentBranch) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.sortOrder, sortOrder) ||
-                other.sortOrder == sortOrder) &&
+            (identical(other.currentBranch, currentBranch) || other.currentBranch == currentBranch) &&
+            (identical(other.createdAt, createdAt) || other.createdAt == createdAt) &&
+            (identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder) &&
             const DeepCollectionEquality().equals(other._actions, _actions));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      name,
-      path,
-      isGit,
-      currentBranch,
-      createdAt,
-      sortOrder,
+  int get hashCode => Object.hash(runtimeType, id, name, path, isGit, currentBranch, createdAt, sortOrder,
       const DeepCollectionEquality().hash(_actions));
 
   /// Create a copy of Project
@@ -275,8 +257,7 @@ class _$ProjectImpl implements _Project {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$ProjectImplCopyWith<_$ProjectImpl> get copyWith =>
-      __$$ProjectImplCopyWithImpl<_$ProjectImpl>(this, _$identity);
+  _$$ProjectImplCopyWith<_$ProjectImpl> get copyWith => __$$ProjectImplCopyWithImpl<_$ProjectImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
@@ -320,6 +301,5 @@ abstract class _Project implements Project {
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ProjectImplCopyWith<_$ProjectImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$ProjectImplCopyWith<_$ProjectImpl> get copyWith => throw _privateConstructorUsedError;
 }

@@ -24,21 +24,15 @@ mixin _$ActionOutputState {
   /// Create a copy of ActionOutputState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $ActionOutputStateCopyWith<ActionOutputState> get copyWith =>
-      throw _privateConstructorUsedError;
+  $ActionOutputStateCopyWith<ActionOutputState> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class $ActionOutputStateCopyWith<$Res> {
-  factory $ActionOutputStateCopyWith(
-          ActionOutputState value, $Res Function(ActionOutputState) then) =
+  factory $ActionOutputStateCopyWith(ActionOutputState value, $Res Function(ActionOutputState) then) =
       _$ActionOutputStateCopyWithImpl<$Res, ActionOutputState>;
   @useResult
-  $Res call(
-      {ActionStatus status,
-      List<String> lines,
-      String? actionName,
-      int? exitCode});
+  $Res call({ActionStatus status, List<String> lines, String? actionName, int? exitCode});
 }
 
 /// @nodoc
@@ -83,26 +77,18 @@ class _$ActionOutputStateCopyWithImpl<$Res, $Val extends ActionOutputState>
 }
 
 /// @nodoc
-abstract class _$$ActionOutputStateImplCopyWith<$Res>
-    implements $ActionOutputStateCopyWith<$Res> {
-  factory _$$ActionOutputStateImplCopyWith(_$ActionOutputStateImpl value,
-          $Res Function(_$ActionOutputStateImpl) then) =
+abstract class _$$ActionOutputStateImplCopyWith<$Res> implements $ActionOutputStateCopyWith<$Res> {
+  factory _$$ActionOutputStateImplCopyWith(_$ActionOutputStateImpl value, $Res Function(_$ActionOutputStateImpl) then) =
       __$$ActionOutputStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {ActionStatus status,
-      List<String> lines,
-      String? actionName,
-      int? exitCode});
+  $Res call({ActionStatus status, List<String> lines, String? actionName, int? exitCode});
 }
 
 /// @nodoc
-class __$$ActionOutputStateImplCopyWithImpl<$Res>
-    extends _$ActionOutputStateCopyWithImpl<$Res, _$ActionOutputStateImpl>
+class __$$ActionOutputStateImplCopyWithImpl<$Res> extends _$ActionOutputStateCopyWithImpl<$Res, _$ActionOutputStateImpl>
     implements _$$ActionOutputStateImplCopyWith<$Res> {
-  __$$ActionOutputStateImplCopyWithImpl(_$ActionOutputStateImpl _value,
-      $Res Function(_$ActionOutputStateImpl) _then)
+  __$$ActionOutputStateImplCopyWithImpl(_$ActionOutputStateImpl _value, $Res Function(_$ActionOutputStateImpl) _then)
       : super(_value, _then);
 
   /// Create a copy of ActionOutputState
@@ -140,10 +126,7 @@ class __$$ActionOutputStateImplCopyWithImpl<$Res>
 
 class _$ActionOutputStateImpl implements _ActionOutputState {
   const _$ActionOutputStateImpl(
-      {this.status = ActionStatus.idle,
-      final List<String> lines = const [],
-      this.actionName,
-      this.exitCode})
+      {this.status = ActionStatus.idle, final List<String> lines = const [], this.actionName, this.exitCode})
       : _lines = lines;
 
   @override
@@ -175,15 +158,13 @@ class _$ActionOutputStateImpl implements _ActionOutputState {
             other is _$ActionOutputStateImpl &&
             (identical(other.status, status) || other.status == status) &&
             const DeepCollectionEquality().equals(other._lines, _lines) &&
-            (identical(other.actionName, actionName) ||
-                other.actionName == actionName) &&
-            (identical(other.exitCode, exitCode) ||
-                other.exitCode == exitCode));
+            (identical(other.actionName, actionName) || other.actionName == actionName) &&
+            (identical(other.exitCode, exitCode) || other.exitCode == exitCode));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, status,
-      const DeepCollectionEquality().hash(_lines), actionName, exitCode);
+  int get hashCode =>
+      Object.hash(runtimeType, status, const DeepCollectionEquality().hash(_lines), actionName, exitCode);
 
   /// Create a copy of ActionOutputState
   /// with the given fields replaced by the non-null parameter values.
@@ -191,8 +172,7 @@ class _$ActionOutputStateImpl implements _ActionOutputState {
   @override
   @pragma('vm:prefer-inline')
   _$$ActionOutputStateImplCopyWith<_$ActionOutputStateImpl> get copyWith =>
-      __$$ActionOutputStateImplCopyWithImpl<_$ActionOutputStateImpl>(
-          this, _$identity);
+      __$$ActionOutputStateImplCopyWithImpl<_$ActionOutputStateImpl>(this, _$identity);
 }
 
 abstract class _ActionOutputState implements ActionOutputState {
@@ -215,6 +195,5 @@ abstract class _ActionOutputState implements ActionOutputState {
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ActionOutputStateImplCopyWith<_$ActionOutputStateImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$ActionOutputStateImplCopyWith<_$ActionOutputStateImpl> get copyWith => throw _privateConstructorUsedError;
 }

@@ -37,14 +37,12 @@ mixin _$Repository {
   /// Create a copy of Repository
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $RepositoryCopyWith<Repository> get copyWith =>
-      throw _privateConstructorUsedError;
+  $RepositoryCopyWith<Repository> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class $RepositoryCopyWith<$Res> {
-  factory $RepositoryCopyWith(
-          Repository value, $Res Function(Repository) then) =
+  factory $RepositoryCopyWith(Repository value, $Res Function(Repository) then) =
       _$RepositoryCopyWithImpl<$Res, Repository>;
   @useResult
   $Res call(
@@ -61,8 +59,7 @@ abstract class $RepositoryCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
-    implements $RepositoryCopyWith<$Res> {
+class _$RepositoryCopyWithImpl<$Res, $Val extends Repository> implements $RepositoryCopyWith<$Res> {
   _$RepositoryCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -132,10 +129,8 @@ class _$RepositoryCopyWithImpl<$Res, $Val extends Repository>
 }
 
 /// @nodoc
-abstract class _$$RepositoryImplCopyWith<$Res>
-    implements $RepositoryCopyWith<$Res> {
-  factory _$$RepositoryImplCopyWith(
-          _$RepositoryImpl value, $Res Function(_$RepositoryImpl) then) =
+abstract class _$$RepositoryImplCopyWith<$Res> implements $RepositoryCopyWith<$Res> {
+  factory _$$RepositoryImplCopyWith(_$RepositoryImpl value, $Res Function(_$RepositoryImpl) then) =
       __$$RepositoryImplCopyWithImpl<$Res>;
   @override
   @useResult
@@ -153,12 +148,9 @@ abstract class _$$RepositoryImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$RepositoryImplCopyWithImpl<$Res>
-    extends _$RepositoryCopyWithImpl<$Res, _$RepositoryImpl>
+class __$$RepositoryImplCopyWithImpl<$Res> extends _$RepositoryCopyWithImpl<$Res, _$RepositoryImpl>
     implements _$$RepositoryImplCopyWith<$Res> {
-  __$$RepositoryImplCopyWithImpl(
-      _$RepositoryImpl _value, $Res Function(_$RepositoryImpl) _then)
-      : super(_value, _then);
+  __$$RepositoryImplCopyWithImpl(_$RepositoryImpl _value, $Res Function(_$RepositoryImpl) _then) : super(_value, _then);
 
   /// Create a copy of Repository
   /// with the given fields replaced by the non-null parameter values.
@@ -236,8 +228,7 @@ class _$RepositoryImpl implements _Repository {
       this.htmlUrl,
       this.updatedAt});
 
-  factory _$RepositoryImpl.fromJson(Map<String, dynamic> json) =>
-      _$$RepositoryImplFromJson(json);
+  factory _$RepositoryImpl.fromJson(Map<String, dynamic> json) => _$$RepositoryImplFromJson(json);
 
   @override
   final int id;
@@ -275,25 +266,19 @@ class _$RepositoryImpl implements _Repository {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.owner, owner) || other.owner == owner) &&
-            (identical(other.defaultBranch, defaultBranch) ||
-                other.defaultBranch == defaultBranch) &&
-            (identical(other.isPrivate, isPrivate) ||
-                other.isPrivate == isPrivate) &&
-            (identical(other.language, language) ||
-                other.language == language) &&
-            (identical(other.starCount, starCount) ||
-                other.starCount == starCount) &&
-            (identical(other.description, description) ||
-                other.description == description) &&
+            (identical(other.defaultBranch, defaultBranch) || other.defaultBranch == defaultBranch) &&
+            (identical(other.isPrivate, isPrivate) || other.isPrivate == isPrivate) &&
+            (identical(other.language, language) || other.language == language) &&
+            (identical(other.starCount, starCount) || other.starCount == starCount) &&
+            (identical(other.description, description) || other.description == description) &&
             (identical(other.htmlUrl, htmlUrl) || other.htmlUrl == htmlUrl) &&
-            (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+            (identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, owner, defaultBranch,
-      isPrivate, language, starCount, description, htmlUrl, updatedAt);
+  int get hashCode => Object.hash(
+      runtimeType, id, name, owner, defaultBranch, isPrivate, language, starCount, description, htmlUrl, updatedAt);
 
   /// Create a copy of Repository
   /// with the given fields replaced by the non-null parameter values.
@@ -324,8 +309,7 @@ abstract class _Repository implements Repository {
       final String? htmlUrl,
       final DateTime? updatedAt}) = _$RepositoryImpl;
 
-  factory _Repository.fromJson(Map<String, dynamic> json) =
-      _$RepositoryImpl.fromJson;
+  factory _Repository.fromJson(Map<String, dynamic> json) = _$RepositoryImpl.fromJson;
 
   @override
   int get id;
@@ -352,8 +336,7 @@ abstract class _Repository implements Repository {
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$RepositoryImplCopyWith<_$RepositoryImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$RepositoryImplCopyWith<_$RepositoryImpl> get copyWith => throw _privateConstructorUsedError;
 }
 
 GitHubAccount _$GitHubAccountFromJson(Map<String, dynamic> json) {
@@ -374,27 +357,19 @@ mixin _$GitHubAccount {
   /// Create a copy of GitHubAccount
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $GitHubAccountCopyWith<GitHubAccount> get copyWith =>
-      throw _privateConstructorUsedError;
+  $GitHubAccountCopyWith<GitHubAccount> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class $GitHubAccountCopyWith<$Res> {
-  factory $GitHubAccountCopyWith(
-          GitHubAccount value, $Res Function(GitHubAccount) then) =
+  factory $GitHubAccountCopyWith(GitHubAccount value, $Res Function(GitHubAccount) then) =
       _$GitHubAccountCopyWithImpl<$Res, GitHubAccount>;
   @useResult
-  $Res call(
-      {String username,
-      String avatarUrl,
-      String? email,
-      List<String> scopes,
-      String? name});
+  $Res call({String username, String avatarUrl, String? email, List<String> scopes, String? name});
 }
 
 /// @nodoc
-class _$GitHubAccountCopyWithImpl<$Res, $Val extends GitHubAccount>
-    implements $GitHubAccountCopyWith<$Res> {
+class _$GitHubAccountCopyWithImpl<$Res, $Val extends GitHubAccount> implements $GitHubAccountCopyWith<$Res> {
   _$GitHubAccountCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -439,27 +414,18 @@ class _$GitHubAccountCopyWithImpl<$Res, $Val extends GitHubAccount>
 }
 
 /// @nodoc
-abstract class _$$GitHubAccountImplCopyWith<$Res>
-    implements $GitHubAccountCopyWith<$Res> {
-  factory _$$GitHubAccountImplCopyWith(
-          _$GitHubAccountImpl value, $Res Function(_$GitHubAccountImpl) then) =
+abstract class _$$GitHubAccountImplCopyWith<$Res> implements $GitHubAccountCopyWith<$Res> {
+  factory _$$GitHubAccountImplCopyWith(_$GitHubAccountImpl value, $Res Function(_$GitHubAccountImpl) then) =
       __$$GitHubAccountImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String username,
-      String avatarUrl,
-      String? email,
-      List<String> scopes,
-      String? name});
+  $Res call({String username, String avatarUrl, String? email, List<String> scopes, String? name});
 }
 
 /// @nodoc
-class __$$GitHubAccountImplCopyWithImpl<$Res>
-    extends _$GitHubAccountCopyWithImpl<$Res, _$GitHubAccountImpl>
+class __$$GitHubAccountImplCopyWithImpl<$Res> extends _$GitHubAccountCopyWithImpl<$Res, _$GitHubAccountImpl>
     implements _$$GitHubAccountImplCopyWith<$Res> {
-  __$$GitHubAccountImplCopyWithImpl(
-      _$GitHubAccountImpl _value, $Res Function(_$GitHubAccountImpl) _then)
+  __$$GitHubAccountImplCopyWithImpl(_$GitHubAccountImpl _value, $Res Function(_$GitHubAccountImpl) _then)
       : super(_value, _then);
 
   /// Create a copy of GitHubAccount
@@ -502,15 +468,10 @@ class __$$GitHubAccountImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$GitHubAccountImpl implements _GitHubAccount {
   const _$GitHubAccountImpl(
-      {required this.username,
-      required this.avatarUrl,
-      this.email,
-      final List<String> scopes = const [],
-      this.name})
+      {required this.username, required this.avatarUrl, this.email, final List<String> scopes = const [], this.name})
       : _scopes = scopes;
 
-  factory _$GitHubAccountImpl.fromJson(Map<String, dynamic> json) =>
-      _$$GitHubAccountImplFromJson(json);
+  factory _$GitHubAccountImpl.fromJson(Map<String, dynamic> json) => _$$GitHubAccountImplFromJson(json);
 
   @override
   final String username;
@@ -540,10 +501,8 @@ class _$GitHubAccountImpl implements _GitHubAccount {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$GitHubAccountImpl &&
-            (identical(other.username, username) ||
-                other.username == username) &&
-            (identical(other.avatarUrl, avatarUrl) ||
-                other.avatarUrl == avatarUrl) &&
+            (identical(other.username, username) || other.username == username) &&
+            (identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl) &&
             (identical(other.email, email) || other.email == email) &&
             const DeepCollectionEquality().equals(other._scopes, _scopes) &&
             (identical(other.name, name) || other.name == name));
@@ -551,8 +510,8 @@ class _$GitHubAccountImpl implements _GitHubAccount {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, username, avatarUrl, email,
-      const DeepCollectionEquality().hash(_scopes), name);
+  int get hashCode =>
+      Object.hash(runtimeType, username, avatarUrl, email, const DeepCollectionEquality().hash(_scopes), name);
 
   /// Create a copy of GitHubAccount
   /// with the given fields replaced by the non-null parameter values.
@@ -578,8 +537,7 @@ abstract class _GitHubAccount implements GitHubAccount {
       final List<String> scopes,
       final String? name}) = _$GitHubAccountImpl;
 
-  factory _GitHubAccount.fromJson(Map<String, dynamic> json) =
-      _$GitHubAccountImpl.fromJson;
+  factory _GitHubAccount.fromJson(Map<String, dynamic> json) = _$GitHubAccountImpl.fromJson;
 
   @override
   String get username;
@@ -596,8 +554,7 @@ abstract class _GitHubAccount implements GitHubAccount {
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$GitHubAccountImplCopyWith<_$GitHubAccountImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$GitHubAccountImplCopyWith<_$GitHubAccountImpl> get copyWith => throw _privateConstructorUsedError;
 }
 
 GitTreeItem _$GitTreeItemFromJson(Map<String, dynamic> json) {
@@ -617,22 +574,19 @@ mixin _$GitTreeItem {
   /// Create a copy of GitTreeItem
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $GitTreeItemCopyWith<GitTreeItem> get copyWith =>
-      throw _privateConstructorUsedError;
+  $GitTreeItemCopyWith<GitTreeItem> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class $GitTreeItemCopyWith<$Res> {
-  factory $GitTreeItemCopyWith(
-          GitTreeItem value, $Res Function(GitTreeItem) then) =
+  factory $GitTreeItemCopyWith(GitTreeItem value, $Res Function(GitTreeItem) then) =
       _$GitTreeItemCopyWithImpl<$Res, GitTreeItem>;
   @useResult
   $Res call({String path, String type, String sha, int? size});
 }
 
 /// @nodoc
-class _$GitTreeItemCopyWithImpl<$Res, $Val extends GitTreeItem>
-    implements $GitTreeItemCopyWith<$Res> {
+class _$GitTreeItemCopyWithImpl<$Res, $Val extends GitTreeItem> implements $GitTreeItemCopyWith<$Res> {
   _$GitTreeItemCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -672,10 +626,8 @@ class _$GitTreeItemCopyWithImpl<$Res, $Val extends GitTreeItem>
 }
 
 /// @nodoc
-abstract class _$$GitTreeItemImplCopyWith<$Res>
-    implements $GitTreeItemCopyWith<$Res> {
-  factory _$$GitTreeItemImplCopyWith(
-          _$GitTreeItemImpl value, $Res Function(_$GitTreeItemImpl) then) =
+abstract class _$$GitTreeItemImplCopyWith<$Res> implements $GitTreeItemCopyWith<$Res> {
+  factory _$$GitTreeItemImplCopyWith(_$GitTreeItemImpl value, $Res Function(_$GitTreeItemImpl) then) =
       __$$GitTreeItemImplCopyWithImpl<$Res>;
   @override
   @useResult
@@ -683,11 +635,9 @@ abstract class _$$GitTreeItemImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$GitTreeItemImplCopyWithImpl<$Res>
-    extends _$GitTreeItemCopyWithImpl<$Res, _$GitTreeItemImpl>
+class __$$GitTreeItemImplCopyWithImpl<$Res> extends _$GitTreeItemCopyWithImpl<$Res, _$GitTreeItemImpl>
     implements _$$GitTreeItemImplCopyWith<$Res> {
-  __$$GitTreeItemImplCopyWithImpl(
-      _$GitTreeItemImpl _value, $Res Function(_$GitTreeItemImpl) _then)
+  __$$GitTreeItemImplCopyWithImpl(_$GitTreeItemImpl _value, $Res Function(_$GitTreeItemImpl) _then)
       : super(_value, _then);
 
   /// Create a copy of GitTreeItem
@@ -724,11 +674,9 @@ class __$$GitTreeItemImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$GitTreeItemImpl implements _GitTreeItem {
-  const _$GitTreeItemImpl(
-      {required this.path, required this.type, required this.sha, this.size});
+  const _$GitTreeItemImpl({required this.path, required this.type, required this.sha, this.size});
 
-  factory _$GitTreeItemImpl.fromJson(Map<String, dynamic> json) =>
-      _$$GitTreeItemImplFromJson(json);
+  factory _$GitTreeItemImpl.fromJson(Map<String, dynamic> json) => _$$GitTreeItemImplFromJson(json);
 
   @override
   final String path;
@@ -783,8 +731,7 @@ abstract class _GitTreeItem implements GitTreeItem {
       required final String sha,
       final int? size}) = _$GitTreeItemImpl;
 
-  factory _GitTreeItem.fromJson(Map<String, dynamic> json) =
-      _$GitTreeItemImpl.fromJson;
+  factory _GitTreeItem.fromJson(Map<String, dynamic> json) = _$GitTreeItemImpl.fromJson;
 
   @override
   String get path;
@@ -799,6 +746,5 @@ abstract class _GitTreeItem implements GitTreeItem {
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$GitTreeItemImplCopyWith<_$GitTreeItemImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$GitTreeItemImplCopyWith<_$GitTreeItemImpl> get copyWith => throw _privateConstructorUsedError;
 }

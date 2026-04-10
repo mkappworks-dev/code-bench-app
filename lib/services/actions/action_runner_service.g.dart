@@ -6,18 +6,14 @@ part of 'action_runner_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$actionOutputNotifierHash() =>
-    r'54b18468ca722426edc7f1dc143c650b3d46fd8a';
+String _$actionOutputNotifierHash() => r'54b18468ca722426edc7f1dc143c650b3d46fd8a';
 
 /// See also [ActionOutputNotifier].
 @ProviderFor(ActionOutputNotifier)
-final actionOutputNotifierProvider =
-    NotifierProvider<ActionOutputNotifier, ActionOutputState>.internal(
+final actionOutputNotifierProvider = NotifierProvider<ActionOutputNotifier, ActionOutputState>.internal(
   ActionOutputNotifier.new,
   name: r'actionOutputNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$actionOutputNotifierHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$actionOutputNotifierHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
