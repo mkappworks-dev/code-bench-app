@@ -199,33 +199,51 @@ class ApplyService {
     _notifier.revert(change.id);
   }
 
-  /// Counts line-level additions and deletions from a char-level diff.
+  /// Counts line-level additions and deletions using a true line diff.
   ///
-  /// Uses `diff_match_patch`'s char-level diff and tallies newlines in each
-  /// insert/delete chunk. This is an approximation — a pure line-based LCS
-  /// would be more precise for inline edits — but it is strictly better
-  /// than a signed line-delta (which reports 0/0 when you swap 10 lines
-  /// for 10 different ones) and fast enough for the 1 MiB content cap.
+  /// Encodes each unique line as a single character, diffs the encoded
+  /// strings (giving line-granularity results), then counts inserted and
+  /// deleted characters (each representing one line). This avoids the
+  /// double-counting that a char-level diff produces when inline edits
+  /// straddle line boundaries.
   static (int additions, int deletions) _computeLineCounts(
     String? original,
     String newContent,
   ) {
+    final a = original ?? '';
+    final aLines = a.isEmpty ? <String>[] : a.split('\n');
+    final bLines = newContent.isEmpty ? <String>[] : newContent.split('\n');
+
+    // Map each unique line to a single code-unit so DiffMatchPatch operates
+    // at line granularity. Start at code-unit 1 to avoid null-byte issues.
+    final lineToChar = <String, String>{};
+    final charArray = <String>['']; // index 0 unused
+    String encode(List<String> lines) {
+      final buf = StringBuffer();
+      for (final line in lines) {
+        if (!lineToChar.containsKey(line)) {
+          charArray.add(line);
+          lineToChar[line] = String.fromCharCode(charArray.length - 1);
+        }
+        buf.write(lineToChar[line]);
+      }
+      return buf.toString();
+    }
+
+    final encA = encode(aLines);
+    final encB = encode(bLines);
+
     final dmp = DiffMatchPatch();
-    final diffs = dmp.diff(original ?? '', newContent);
+    final diffs = dmp.diff(encA, encB, false);
     dmp.diffCleanupSemantic(diffs);
 
     var additions = 0;
     var deletions = 0;
     for (final d in diffs) {
-      if (d.text.isEmpty) continue;
-      final newlines = '\n'.allMatches(d.text).length;
-      // A chunk's line count is its newline count plus one for the trailing
-      // partial line, unless the chunk ends exactly at a newline.
-      final lineCount = d.text.endsWith('\n') ? newlines : newlines + 1;
       if (d.operation == DIFF_INSERT) {
-        additions += lineCount;
+        additions += d.text.length;
       } else if (d.operation == DIFF_DELETE) {
-        deletions += lineCount;
+        deletions += d.text.length;
       }
     }
     return (additions, deletions);

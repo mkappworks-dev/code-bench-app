@@ -68,10 +68,28 @@ void main() {
     );
 
     final change = container.read(appliedChangesProvider)['sid']!.first;
-    // Swapping 3 lines for 3 different lines must NOT report 0/0 — that
-    // was the old signed-delta bug. We expect non-zero on both sides.
-    expect(change.additions, greaterThan(0));
-    expect(change.deletions, greaterThan(0));
+    // Line-level diff: 3 old lines deleted, 3 new lines added.
+    expect(change.additions, 3);
+    expect(change.deletions, 3);
+  });
+
+  test('apply counts inline edits as single-line changes', () async {
+    // Renaming a token mid-line should report +1 −1, not inflate via
+    // char-level partial-line double-counting.
+    final filePath = '${tmpDir.path}/rename.dart';
+    File(filePath).writeAsStringSync('final foo = 42;\n');
+
+    await service.applyChange(
+      filePath: filePath,
+      projectPath: tmpDir.path,
+      newContent: 'final bar = 42;\n',
+      sessionId: 'sid',
+      messageId: 'mid',
+    );
+
+    final change = container.read(appliedChangesProvider)['sid']!.first;
+    expect(change.additions, 1);
+    expect(change.deletions, 1);
   });
 
   test('apply rejects content larger than kMaxApplyContentBytes', () async {
