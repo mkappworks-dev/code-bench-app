@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -268,7 +269,6 @@ class _CodeBlockBuilder extends MarkdownElementBuilder {
       filename: filename,
       messageId: messageId,
       sessionId: sessionId,
-      ref: ref,
     );
   }
 }
@@ -277,27 +277,25 @@ class _CodeBlockBuilder extends MarkdownElementBuilder {
 
 enum _DiffCardState { hidden, loading, loaded, error }
 
-class _CodeBlockWidget extends StatefulWidget {
+class _CodeBlockWidget extends ConsumerStatefulWidget {
   const _CodeBlockWidget({
     required this.code,
     required this.language,
     this.filename,
     required this.messageId,
     required this.sessionId,
-    required this.ref,
   });
   final String code;
   final String language;
   final String? filename;
   final String messageId;
   final String sessionId;
-  final WidgetRef ref;
 
   @override
-  State<_CodeBlockWidget> createState() => _CodeBlockWidgetState();
+  ConsumerState<_CodeBlockWidget> createState() => _CodeBlockWidgetState();
 }
 
-class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
+class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
   _DiffCardState _diffState = _DiffCardState.hidden;
   String? _originalContent;
   List<Diff>? _diffs;
@@ -305,17 +303,16 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
   int _activeTab = 1; // 0=Before, 1=Diff, 2=After
   bool _applying = false;
 
+  Project? _resolveActiveProject() {
+    final projectId = ref.read(activeProjectIdProvider);
+    final projects = ref.read(projectsProvider).valueOrNull ?? <Project>[];
+    return projects.firstWhereOrNull((p) => p.id == projectId);
+  }
+
   Future<void> _loadDiff() async {
     setState(() => _diffState = _DiffCardState.loading);
     try {
-      final projectId = widget.ref.read(activeProjectIdProvider);
-      final projects = widget.ref.read(projectsProvider).valueOrNull ?? <Project>[];
-      Project? project;
-      try {
-        project = projects.firstWhere((proj) => proj.id == projectId);
-      } catch (_) {
-        project = null;
-      }
+      final project = _resolveActiveProject();
       if (project == null) throw Exception('No active project');
 
       final absolutePath = p.join(project.path, widget.filename!);
@@ -346,18 +343,11 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
   Future<void> _applyChange() async {
     setState(() => _applying = true);
     try {
-      final projectId = widget.ref.read(activeProjectIdProvider);
-      final projects = widget.ref.read(projectsProvider).valueOrNull ?? <Project>[];
-      Project? project;
-      try {
-        project = projects.firstWhere((proj) => proj.id == projectId);
-      } catch (_) {
-        project = null;
-      }
-      if (project == null) return;
+      final project = _resolveActiveProject();
+      if (project == null) throw Exception('Active project not found');
 
       final absolutePath = p.join(project.path, widget.filename!);
-      await widget.ref.read(applyServiceProvider).applyChange(
+      await ref.read(applyServiceProvider).applyChange(
             filePath: absolutePath,
             newContent: widget.code,
             sessionId: widget.sessionId,
@@ -365,9 +355,18 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
           );
 
       // Auto-open the changes panel on first apply
-      widget.ref.read(changesPanelVisibleProvider.notifier).show();
+      ref.read(changesPanelVisibleProvider.notifier).show();
 
       setState(() => _diffState = _DiffCardState.hidden);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Apply failed: $e'),
+            backgroundColor: ThemeConstants.error,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _applying = false);
     }
@@ -477,7 +476,10 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
             _HeaderButton(
               label: 'Collapse',
               icon: LucideIcons.chevronUp,
-              onTap: () => setState(() => _diffState = _DiffCardState.hidden),
+              onTap: () => setState(() {
+                _diffState = _DiffCardState.hidden;
+                _activeTab = 1;
+              }),
             ),
           ],
           const SizedBox(width: 12),
@@ -538,35 +540,37 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
 
   Widget _buildDiffContent() {
     final diffs = _diffs ?? [];
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: diffs.map((diff) {
-          final bg = diff.operation == DIFF_INSERT
-              ? const Color(0x3300CC66)
-              : diff.operation == DIFF_DELETE
-                  ? const Color(0x33FF4444)
-                  : Colors.transparent;
-          final prefix = diff.operation == DIFF_INSERT
-              ? '+'
-              : diff.operation == DIFF_DELETE
-                  ? '−'
-                  : ' ';
-          return Container(
-            color: bg,
-            width: double.infinity,
-            child: Text(
-              diff.text.split('\n').map((line) => '$prefix $line').join('\n'),
-              style: const TextStyle(
-                fontFamily: ThemeConstants.editorFontFamily,
-                fontSize: ThemeConstants.editorFontSize,
-                color: ThemeConstants.textPrimary,
-                height: 1.5,
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: diffs.map((diff) {
+            final bg = diff.operation == DIFF_INSERT
+                ? const Color(0x3300CC66)
+                : diff.operation == DIFF_DELETE
+                    ? const Color(0x33FF4444)
+                    : Colors.transparent;
+            final prefix = diff.operation == DIFF_INSERT
+                ? '+'
+                : diff.operation == DIFF_DELETE
+                    ? '−'
+                    : ' ';
+            return Container(
+              color: bg,
+              child: Text(
+                diff.text.split('\n').map((line) => '$prefix $line').join('\n'),
+                style: const TextStyle(
+                  fontFamily: ThemeConstants.editorFontFamily,
+                  fontSize: ThemeConstants.editorFontSize,
+                  color: ThemeConstants.textPrimary,
+                  height: 1.5,
+                ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }

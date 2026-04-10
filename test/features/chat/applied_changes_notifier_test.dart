@@ -83,4 +83,11 @@ void main() {
     notifier.hide();
     expect(container.read(changesPanelVisibleProvider), false);
   });
+
+  test('ChangesPanelVisible show() sets to true', () {
+    final notifier = container.read(changesPanelVisibleProvider.notifier);
+    expect(container.read(changesPanelVisibleProvider), false);
+    notifier.show();
+    expect(container.read(changesPanelVisibleProvider), true);
+  });
 }
