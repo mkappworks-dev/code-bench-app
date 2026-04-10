@@ -16,6 +16,5 @@ class ChatSession with _$ChatSession {
     @Default(false) bool isPinned,
   }) = _ChatSession;
 
-  factory ChatSession.fromJson(Map<String, dynamic> json) =>
-      _$ChatSessionFromJson(json);
+  factory ChatSession.fromJson(Map<String, dynamic> json) => _$ChatSessionFromJson(json);
 }

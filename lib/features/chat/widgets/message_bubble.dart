@@ -4,6 +4,7 @@ import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/vs2015.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/chat_message.dart';
@@ -18,71 +19,132 @@ class MessageBubble extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 2),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      color: _isUser
-          ? ThemeConstants.userMessageBg
-          : ThemeConstants.assistantMessageBg,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Avatar
-          Container(
-            width: 28,
-            height: 28,
-            margin: const EdgeInsets.only(right: 12, top: 2),
-            decoration: BoxDecoration(
-              color: _isUser
-                  ? ThemeConstants.accent.withAlpha(180)
-                  : ThemeConstants.success.withAlpha(180),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Icon(
-              _isUser ? Icons.person : Icons.smart_toy,
-              size: 16,
-              color: Colors.white,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: _isUser ? _UserBubble(message: message) : _AssistantBubble(message: message, ref: ref),
+    );
+  }
+}
+
+// ── User bubble ──────────────────────────────────────────────────────────────
+
+class _UserBubble extends StatelessWidget {
+  const _UserBubble({required this.message});
+  final ChatMessage message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.82,
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+          decoration: BoxDecoration(
+            color: ThemeConstants.userMessageBg,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: SelectableText(
+            message.content,
+            style: const TextStyle(
+              color: ThemeConstants.textPrimary,
+              fontSize: ThemeConstants.uiFontSize,
+              height: 1.5,
             ),
           ),
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      _isUser ? 'You' : 'Assistant',
-                      style: const TextStyle(
-                        color: ThemeConstants.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    if (message.isStreaming) ...[
-                      const SizedBox(width: 8),
-                      const SizedBox(
-                        width: 10,
-                        height: 10,
-                        child: CircularProgressIndicator(strokeWidth: 1.5),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 6),
-                _MessageContent(message: message, ref: ref),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
+// ── Assistant bubble ─────────────────────────────────────────────────────────
+
+class _AssistantBubble extends StatelessWidget {
+  const _AssistantBubble({required this.message, required this.ref});
+  final ChatMessage message;
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Left accent border
+        Container(
+          width: 2,
+          margin: const EdgeInsets.only(top: 3, bottom: 3),
+          color: ThemeConstants.borderColor,
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (message.isStreaming) const StreamingDot(),
+              _MessageContent(message: message, ref: ref),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Streaming dot ────────────────────────────────────────────────────────────
+
+class StreamingDot extends StatefulWidget {
+  const StreamingDot({super.key});
+
+  @override
+  State<StreamingDot> createState() => _StreamingDotState();
+}
+
+class _StreamingDotState extends State<StreamingDot> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    )..repeat(reverse: true);
+    _opacity = Tween<double>(begin: 0.3, end: 1.0).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: FadeTransition(
+        opacity: _opacity,
+        child: Container(
+          width: 6,
+          height: 6,
+          decoration: const BoxDecoration(
+            color: ThemeConstants.success,
+            shape: BoxShape.circle,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Message content (shared markdown renderer) ───────────────────────────────
+
 class _MessageContent extends StatelessWidget {
   const _MessageContent({required this.message, required this.ref});
-
   final ChatMessage message;
   final WidgetRef ref;
 
@@ -93,26 +155,24 @@ class _MessageContent extends StatelessWidget {
         message.content,
         style: const TextStyle(
           color: ThemeConstants.textPrimary,
-          fontSize: 13,
+          fontSize: ThemeConstants.uiFontSize,
           height: 1.5,
         ),
       );
     }
-
-    // Assistant messages: render as markdown
     return MarkdownBody(
       data: message.content,
       styleSheet: MarkdownStyleSheet(
         p: const TextStyle(
           color: ThemeConstants.textPrimary,
-          fontSize: 13,
-          height: 1.5,
+          fontSize: ThemeConstants.uiFontSize,
+          height: 1.65,
         ),
         code: const TextStyle(
           fontFamily: ThemeConstants.editorFontFamily,
           backgroundColor: ThemeConstants.codeBlockBg,
           color: ThemeConstants.syntaxString,
-          fontSize: 12,
+          fontSize: ThemeConstants.uiFontSizeSmall,
         ),
         codeblockDecoration: BoxDecoration(
           color: ThemeConstants.codeBlockBg,
@@ -141,20 +201,18 @@ class _MessageContent extends StatelessWidget {
   }
 }
 
+// ── Code block builder ───────────────────────────────────────────────────────
+
 class _CodeBlockBuilder extends MarkdownElementBuilder {
   _CodeBlockBuilder({required this.ref});
-
   final WidgetRef ref;
 
   @override
   Widget? visitElementAfter(element, TextStyle? preferredStyle) {
-    final language =
-        element.attributes['class']?.replaceFirst('language-', '') ??
-            'plaintext';
+    final language = element.attributes['class']?.replaceFirst('language-', '') ?? 'plaintext';
     final code = element.textContent;
 
     if (!element.attributes.containsKey('class') && !code.contains('\n')) {
-      // Inline code
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
         decoration: BoxDecoration(
@@ -166,23 +224,17 @@ class _CodeBlockBuilder extends MarkdownElementBuilder {
           style: const TextStyle(
             fontFamily: ThemeConstants.editorFontFamily,
             color: ThemeConstants.syntaxString,
-            fontSize: 12,
+            fontSize: ThemeConstants.uiFontSize,
           ),
         ),
       );
     }
-
     return _CodeBlockWidget(code: code, language: language, ref: ref);
   }
 }
 
 class _CodeBlockWidget extends StatefulWidget {
-  const _CodeBlockWidget({
-    required this.code,
-    required this.language,
-    required this.ref,
-  });
-
+  const _CodeBlockWidget({required this.code, required this.language, required this.ref});
   final String code;
   final String language;
   final WidgetRef ref;
@@ -206,26 +258,22 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: ThemeConstants.borderColor),
-              ),
+              border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
             ),
             child: Row(
               children: [
                 Text(
                   widget.language,
                   style: const TextStyle(
-                    color: ThemeConstants.textMuted,
-                    fontSize: 11,
+                    color: ThemeConstants.mutedFg,
+                    fontSize: ThemeConstants.uiFontSizeSmall,
                     fontFamily: ThemeConstants.editorFontFamily,
                   ),
                 ),
                 const Spacer(),
-                // Apply button
                 GestureDetector(
                   onTap: _applying
                       ? null
@@ -246,18 +294,16 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        _applying
-                            ? Icons.hourglass_empty
-                            : Icons.file_download_outlined,
-                        size: 13,
-                        color: ThemeConstants.textMuted,
+                        _applying ? LucideIcons.hourglass : LucideIcons.download,
+                        size: 12,
+                        color: ThemeConstants.mutedFg,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _applying ? 'Applying...' : 'Apply',
                         style: const TextStyle(
-                          color: ThemeConstants.textMuted,
-                          fontSize: 11,
+                          color: ThemeConstants.mutedFg,
+                          fontSize: ThemeConstants.uiFontSizeSmall,
                         ),
                       ),
                     ],
@@ -268,7 +314,6 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
               ],
             ),
           ),
-          // Code
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: HighlightView(
@@ -291,7 +336,6 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
 
 class _CopyButton extends StatefulWidget {
   const _CopyButton({required this.code});
-
   final String code;
 
   @override
@@ -314,16 +358,16 @@ class _CopyButtonState extends State<_CopyButton> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            _copied ? Icons.check : Icons.copy,
-            size: 13,
-            color: ThemeConstants.textMuted,
+            _copied ? LucideIcons.check : LucideIcons.copy,
+            size: 12,
+            color: ThemeConstants.mutedFg,
           ),
           const SizedBox(width: 4),
           Text(
             _copied ? 'Copied' : 'Copy',
             style: const TextStyle(
-              color: ThemeConstants.textMuted,
-              fontSize: 11,
+              color: ThemeConstants.mutedFg,
+              fontSize: ThemeConstants.uiFontSizeSmall,
             ),
           ),
         ],

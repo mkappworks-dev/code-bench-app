@@ -158,8 +158,7 @@ class SessionService {
     }
 
     final history = await loadHistory(sessionId, limit: 20);
-    final historyExcludingCurrent =
-        history.where((m) => m.id != userMsg.id).toList();
+    final historyExcludingCurrent = history.where((m) => m.id != userMsg.id).toList();
 
     final assistantId = _uuid.v4();
     final buffer = StringBuffer();
@@ -192,9 +191,7 @@ class SessionService {
     yield finalMsg;
 
     if (history.isEmpty) {
-      final shortTitle = userInput.length > 50
-          ? '${userInput.substring(0, 47)}...'
-          : userInput;
+      final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
       await updateSessionTitle(sessionId, shortTitle);
     }
   }

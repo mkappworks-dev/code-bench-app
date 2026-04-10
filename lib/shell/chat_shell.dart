@@ -35,14 +35,10 @@ class ChatShell extends ConsumerWidget {
       color: ThemeConstants.background,
       child: CallbackShortcuts(
         bindings: {
-          const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () =>
-              _newChat(ref, context),
-          const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
-              _newChat(ref, context),
-          const SingleActivator(LogicalKeyboardKey.comma, meta: true): () =>
-              context.go('/settings'),
-          const SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
-              context.go('/settings'),
+          const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () => _newChat(ref, context),
+          const SingleActivator(LogicalKeyboardKey.keyN, control: true): () => _newChat(ref, context),
+          const SingleActivator(LogicalKeyboardKey.comma, meta: true): () => context.go('/settings'),
+          const SingleActivator(LogicalKeyboardKey.comma, control: true): () => context.go('/settings'),
         },
         child: Focus(
           autofocus: true,

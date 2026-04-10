@@ -65,8 +65,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
       )..where((t) => t.sessionId.equals(sessionId)))
           .getSingleOrNull();
 
-  Future<void> upsertSession(ChatSessionsCompanion session) =>
-      into(chatSessions).insertOnConflictUpdate(session);
+  Future<void> upsertSession(ChatSessionsCompanion session) => into(chatSessions).insertOnConflictUpdate(session);
 
   Future<void> deleteSession(String sessionId) =>
       (delete(chatSessions)..where((t) => t.sessionId.equals(sessionId))).go();
@@ -82,17 +81,15 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
             ..limit(limit, offset: offset))
           .get();
 
-  Future<void> insertMessage(ChatMessagesCompanion message) =>
-      into(chatMessages).insert(message);
+  Future<void> insertMessage(ChatMessagesCompanion message) => into(chatMessages).insert(message);
 
   Future<void> deleteSessionMessages(String sessionId) =>
       (delete(chatMessages)..where((t) => t.sessionId.equals(sessionId))).go();
 
-  Stream<List<ChatSessionRow>> watchSessionsByProject(String projectId) =>
-      (select(chatSessions)
-            ..where((t) => t.projectId.equals(projectId))
-            ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
-          .watch();
+  Stream<List<ChatSessionRow>> watchSessionsByProject(String projectId) => (select(chatSessions)
+        ..where((t) => t.projectId.equals(projectId))
+        ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+      .watch();
 }
 
 @DriftAccessor(tables: [WorkspaceProjects])
@@ -117,8 +114,7 @@ class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
   Future<void> upsertProject(WorkspaceProjectsCompanion project) =>
       into(workspaceProjects).insertOnConflictUpdate(project);
 
-  Future<void> deleteProject(String id) =>
-      (delete(workspaceProjects)..where((t) => t.id.equals(id))).go();
+  Future<void> deleteProject(String id) => (delete(workspaceProjects)..where((t) => t.id.equals(id))).go();
 }
 
 // ── Database ─────────────────────────────────────────────────────────────────

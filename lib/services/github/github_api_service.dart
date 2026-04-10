@@ -39,9 +39,7 @@ class GitHubApiService {
         '/user/repos',
         queryParameters: {'sort': 'updated', 'per_page': 30, 'page': page},
       );
-      return (response.data as List)
-          .map((r) => _repoFromGitHub(r as Map<String, dynamic>))
-          .toList();
+      return (response.data as List).map((r) => _repoFromGitHub(r as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
       throw NetworkException(
         'Failed to list repositories',
@@ -58,9 +56,7 @@ class GitHubApiService {
         queryParameters: {'q': query, 'per_page': 20},
       );
       final data = response.data as Map<String, dynamic>;
-      return (data['items'] as List)
-          .map((r) => _repoFromGitHub(r as Map<String, dynamic>))
-          .toList();
+      return (data['items'] as List).map((r) => _repoFromGitHub(r as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
       throw NetworkException(
         'Search failed',
@@ -82,9 +78,7 @@ class GitHubApiService {
       starCount: r['stargazers_count'] as int? ?? 0,
       description: r['description'] as String?,
       htmlUrl: r['html_url'] as String?,
-      updatedAt: r['updated_at'] != null
-          ? DateTime.tryParse(r['updated_at'] as String)
-          : null,
+      updatedAt: r['updated_at'] != null ? DateTime.tryParse(r['updated_at'] as String) : null,
     );
   }
 
@@ -99,9 +93,7 @@ class GitHubApiService {
         queryParameters: {'recursive': '1'},
       );
       final data = response.data as Map<String, dynamic>;
-      return (data['tree'] as List)
-          .map((t) => GitTreeItem.fromJson(t as Map<String, dynamic>))
-          .toList();
+      return (data['tree'] as List).map((t) => GitTreeItem.fromJson(t as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
       throw NetworkException(
         'Failed to get repository tree',

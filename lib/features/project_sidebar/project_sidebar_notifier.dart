@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/models/project.dart';
 import '../../services/project/project_service.dart';
@@ -35,6 +36,54 @@ class ExpandedProjectIds extends _$ExpandedProjectIds {
 
   void collapse(String projectId) {
     state = {...state}..remove(projectId);
+  }
+}
+
+enum ProjectSortOrder { lastMessage, createdAt, manual }
+
+enum ThreadSortOrder { lastMessage, createdAt }
+
+class ProjectSortState {
+  const ProjectSortState({required this.projectSort, required this.threadSort});
+  final ProjectSortOrder projectSort;
+  final ThreadSortOrder threadSort;
+  ProjectSortState copyWith({ProjectSortOrder? projectSort, ThreadSortOrder? threadSort}) => ProjectSortState(
+        projectSort: projectSort ?? this.projectSort,
+        threadSort: threadSort ?? this.threadSort,
+      );
+}
+
+@Riverpod(keepAlive: true)
+class ProjectSort extends _$ProjectSort {
+  static const _projectKey = 'project_sort_order';
+  static const _threadKey = 'thread_sort_order';
+
+  @override
+  Future<ProjectSortState> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    final projectSort = ProjectSortOrder.values.firstWhere(
+      (e) => e.name == prefs.getString(_projectKey),
+      orElse: () => ProjectSortOrder.lastMessage,
+    );
+    final threadSort = ThreadSortOrder.values.firstWhere(
+      (e) => e.name == prefs.getString(_threadKey),
+      orElse: () => ThreadSortOrder.lastMessage,
+    );
+    return ProjectSortState(projectSort: projectSort, threadSort: threadSort);
+  }
+
+  Future<void> setProjectSort(ProjectSortOrder order) async {
+    final current = state.valueOrNull ?? await future;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_projectKey, order.name);
+    state = AsyncData(current.copyWith(projectSort: order));
+  }
+
+  Future<void> setThreadSort(ThreadSortOrder order) async {
+    final current = state.valueOrNull ?? await future;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_threadKey, order.name);
+    state = AsyncData(current.copyWith(threadSort: order));
   }
 }
 

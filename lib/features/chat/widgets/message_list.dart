@@ -36,16 +36,14 @@ class _MessageListState extends ConsumerState<MessageList> {
 
   void _onScroll() {
     // ListView is reversed so scroll position at maxExtent = top of chat = oldest messages
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
       _loadMore();
     }
   }
 
   Future<void> _loadMore() async {
     if (_loadingMore || !_hasMore) return;
-    final messages =
-        ref.read(chatMessagesProvider(widget.sessionId)).valueOrNull;
+    final messages = ref.read(chatMessagesProvider(widget.sessionId)).valueOrNull;
     if (messages == null) return;
     if (messages.length < _pageSize) {
       setState(() => _hasMore = false);
@@ -55,12 +53,9 @@ class _MessageListState extends ConsumerState<MessageList> {
     setState(() => _loadingMore = true);
     try {
       final offset = messages.length;
-      await ref
-          .read(chatMessagesProvider(widget.sessionId).notifier)
-          .loadMore(widget.sessionId, offset);
+      await ref.read(chatMessagesProvider(widget.sessionId).notifier).loadMore(widget.sessionId, offset);
       // If fewer than a full page came back, no more to load
-      final updated =
-          ref.read(chatMessagesProvider(widget.sessionId)).valueOrNull;
+      final updated = ref.read(chatMessagesProvider(widget.sessionId)).valueOrNull;
       if (updated != null && updated.length - messages.length < _pageSize) {
         setState(() => _hasMore = false);
       }
@@ -78,8 +73,7 @@ class _MessageListState extends ConsumerState<MessageList> {
     final messagesAsync = ref.watch(chatMessagesProvider(widget.sessionId));
 
     return messagesAsync.when(
-      loading: () =>
-          const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
       error: (e, _) => _ErrorState(error: e.toString()),
       data: (messages) {
         if (messages.isEmpty) return const _EmptyChat();

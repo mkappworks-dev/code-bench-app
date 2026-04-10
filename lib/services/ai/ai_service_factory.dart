@@ -34,8 +34,7 @@ Future<AIService?> aiService(Ref ref, AIProvider aiProvider) async {
       return GeminiService(key);
 
     case AIProvider.ollama:
-      final url =
-          await storage.readOllamaUrl() ?? ApiConstants.ollamaDefaultBaseUrl;
+      final url = await storage.readOllamaUrl() ?? ApiConstants.ollamaDefaultBaseUrl;
       return OllamaService(url);
 
     case AIProvider.custom:
@@ -55,8 +54,7 @@ Future<List<AIModel>> availableModels(Ref ref) async {
   models.addAll(AIModels.defaults);
 
   // Try to fetch Ollama models
-  final ollamaUrl =
-      await storage.readOllamaUrl() ?? ApiConstants.ollamaDefaultBaseUrl;
+  final ollamaUrl = await storage.readOllamaUrl() ?? ApiConstants.ollamaDefaultBaseUrl;
   final ollamaService = OllamaService(ollamaUrl);
   try {
     final ollamaModels = await ollamaService.fetchAvailableModels('');

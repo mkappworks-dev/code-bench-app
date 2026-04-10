@@ -44,8 +44,7 @@ class GitHubAuthService {
 
       // Extract code from callback
       final code = Uri.parse(result).queryParameters['code'];
-      if (code == null)
-        throw const AuthException('OAuth callback missing code');
+      if (code == null) throw const AuthException('OAuth callback missing code');
 
       // Exchange code for token
       final token = await _exchangeCodeForToken(code);

@@ -28,8 +28,7 @@ class PlatformUtils {
       return Platform.environment['HOME'] ?? '/';
     } else if (isWindows) {
       return Platform.environment['USERPROFILE'] ??
-          Platform.environment['HOMEDRIVE']! +
-              Platform.environment['HOMEPATH']!;
+          Platform.environment['HOMEDRIVE']! + Platform.environment['HOMEPATH']!;
     }
     return '/';
   }

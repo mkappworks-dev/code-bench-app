@@ -153,9 +153,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 32),
             _SectionHeader(title: 'API Keys'),
             const SizedBox(height: 16),
-            ...AIProvider.values
-                .where((p) => p != AIProvider.ollama && p != AIProvider.custom)
-                .map(
+            ...AIProvider.values.where((p) => p != AIProvider.ollama && p != AIProvider.custom).map(
                   (provider) => Padding(
                     padding: const EdgeInsets.only(bottom: 20),
                     child: _ApiKeyField(

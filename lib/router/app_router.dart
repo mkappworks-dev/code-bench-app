@@ -25,23 +25,26 @@ GoRouter appRouter(Ref ref) {
     routes: [
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const OnboardingScreen(),
+        pageBuilder: (context, state) => const NoTransitionPage(child: OnboardingScreen()),
       ),
       ShellRoute(
         builder: (context, state, child) => ChatShell(child: child),
         routes: [
           GoRoute(
             path: '/chat',
-            builder: (context, state) => const ChatScreen(),
+            pageBuilder: (context, state) => const NoTransitionPage(child: ChatScreen()),
           ),
           GoRoute(
             path: '/chat/:sessionId',
-            builder: (context, state) =>
-                ChatScreen(sessionId: state.pathParameters['sessionId']),
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: ChatScreen(
+                sessionId: state.pathParameters['sessionId'],
+              ),
+            ),
           ),
           GoRoute(
             path: '/settings',
-            builder: (context, state) => const SettingsScreen(),
+            pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
           ),
         ],
       ),
