@@ -6,8 +6,7 @@ part of 'ai_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$AIModelImpl _$$AIModelImplFromJson(Map<String, dynamic> json) =>
-    _$AIModelImpl(
+_$AIModelImpl _$$AIModelImplFromJson(Map<String, dynamic> json) => _$AIModelImpl(
       id: json['id'] as String,
       provider: $enumDecode(_$AIProviderEnumMap, json['provider']),
       name: json['name'] as String,
@@ -18,8 +17,7 @@ _$AIModelImpl _$$AIModelImplFromJson(Map<String, dynamic> json) =>
       isDefault: json['isDefault'] as bool? ?? false,
     );
 
-Map<String, dynamic> _$$AIModelImplToJson(_$AIModelImpl instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$$AIModelImplToJson(_$AIModelImpl instance) => <String, dynamic>{
       'id': instance.id,
       'provider': _$AIProviderEnumMap[instance.provider]!,
       'name': instance.name,

@@ -149,9 +149,7 @@ class OpenAIService implements AIService {
           .toList();
       return models;
     } catch (_) {
-      return AIModels.defaults
-          .where((m) => m.provider == AIProvider.openai)
-          .toList();
+      return AIModels.defaults.where((m) => m.provider == AIProvider.openai).toList();
     }
   }
 

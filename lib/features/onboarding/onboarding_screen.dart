@@ -50,8 +50,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _showProviderPicker() async {
-    final available =
-        AIProvider.values.where((p) => !_addedProviders.contains(p)).toList();
+    final available = AIProvider.values.where((p) => !_addedProviders.contains(p)).toList();
     if (available.isEmpty) return;
 
     final picked = await showDialog<AIProvider>(
@@ -79,8 +78,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             onPressed: () => Navigator.pop(ctx, null),
             child: const Text(
               'Cancel',
-              style:
-                  TextStyle(color: ThemeConstants.textSecondary, fontSize: 13),
+              style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 13),
             ),
           ),
         ],
@@ -231,10 +229,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         height: 32,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [
-                              ThemeConstants.accent,
-                              ThemeConstants.accentDark
-                            ],
+                            colors: [ThemeConstants.accent, ThemeConstants.accentDark],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -370,8 +365,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         child: OutlinedButton(
                           onPressed: _saving ? null : _skip,
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(
-                                color: ThemeConstants.borderColor),
+                            side: const BorderSide(color: ThemeConstants.borderColor),
                             foregroundColor: ThemeConstants.textSecondary,
                           ),
                           child: const Text('Skip'),
@@ -386,8 +380,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               ? const SizedBox(
                                   height: 16,
                                   width: 16,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Text('Save & Continue'),
                         ),
@@ -475,9 +468,7 @@ class _ProviderRow extends StatefulWidget {
 class _ProviderRowState extends State<_ProviderRow> {
   bool _obscure = true;
 
-  bool get _isUrlProvider =>
-      widget.provider == AIProvider.ollama ||
-      widget.provider == AIProvider.custom;
+  bool get _isUrlProvider => widget.provider == AIProvider.ollama || widget.provider == AIProvider.custom;
 
   bool get _supportsTest =>
       widget.provider == AIProvider.openai ||
@@ -510,8 +501,7 @@ class _ProviderRowState extends State<_ProviderRow> {
               fontFamily: ThemeConstants.editorFontFamily,
             ),
             decoration: InputDecoration(
-              hintText:
-                  _isUrlProvider ? 'http://localhost:11434' : 'API key...',
+              hintText: _isUrlProvider ? 'http://localhost:11434' : 'API key...',
             ),
           ),
         ),
@@ -534,13 +524,9 @@ class _ProviderRowState extends State<_ProviderRow> {
             onPressed: widget.isTesting ? null : widget.onTest,
             style: OutlinedButton.styleFrom(
               side: BorderSide(
-                color: widget.testResult == true
-                    ? ThemeConstants.success
-                    : ThemeConstants.borderColor,
+                color: widget.testResult == true ? ThemeConstants.success : ThemeConstants.borderColor,
               ),
-              foregroundColor: widget.testResult == true
-                  ? ThemeConstants.success
-                  : ThemeConstants.textSecondary,
+              foregroundColor: widget.testResult == true ? ThemeConstants.success : ThemeConstants.textSecondary,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -562,9 +548,7 @@ class _ProviderRowState extends State<_ProviderRow> {
           icon: Icon(
             Icons.close,
             size: 14,
-            color: widget.canRemove
-                ? ThemeConstants.textSecondary
-                : ThemeConstants.borderColor,
+            color: widget.canRemove ? ThemeConstants.textSecondary : ThemeConstants.borderColor,
           ),
           onPressed: widget.canRemove ? widget.onRemove : null,
           padding: EdgeInsets.zero,

@@ -146,9 +146,7 @@ class AnthropicService implements AIService {
   @override
   Future<List<AIModel>> fetchAvailableModels(String apiKey) {
     return Future.value(
-      AIModels.defaults
-          .where((m) => m.provider == AIProvider.anthropic)
-          .toList(),
+      AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList(),
     );
   }
 

@@ -6,8 +6,7 @@ part of 'project.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$ProjectImpl _$$ProjectImplFromJson(Map<String, dynamic> json) =>
-    _$ProjectImpl(
+_$ProjectImpl _$$ProjectImplFromJson(Map<String, dynamic> json) => _$ProjectImpl(
       id: json['id'] as String,
       name: json['name'] as String,
       path: json['path'] as String,
@@ -17,8 +16,7 @@ _$ProjectImpl _$$ProjectImplFromJson(Map<String, dynamic> json) =>
       sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
     );
 
-Map<String, dynamic> _$$ProjectImplToJson(_$ProjectImpl instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$$ProjectImplToJson(_$ProjectImpl instance) => <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
       'path': instance.path,

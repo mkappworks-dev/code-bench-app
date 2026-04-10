@@ -15,8 +15,7 @@ String _$projectsHash() => r'0be3045c68894954fca99a743e530ae28a245a27';
 final projectsProvider = AutoDisposeStreamProvider<List<Project>>.internal(
   projects,
   name: r'projectsProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$projectsHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$projectsHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
@@ -30,32 +29,25 @@ String _$activeProjectIdHash() => r'9166eb23f2a190859c51c0f097b8e07b131ecd9c';
 ///
 /// Copied from [ActiveProjectId].
 @ProviderFor(ActiveProjectId)
-final activeProjectIdProvider =
-    NotifierProvider<ActiveProjectId, String?>.internal(
+final activeProjectIdProvider = NotifierProvider<ActiveProjectId, String?>.internal(
   ActiveProjectId.new,
   name: r'activeProjectIdProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$activeProjectIdHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$activeProjectIdHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
 typedef _$ActiveProjectId = Notifier<String?>;
-String _$expandedProjectIdsHash() =>
-    r'ba128c593215ffa366e3ced754f30b3551a7d111';
+String _$expandedProjectIdsHash() => r'ba128c593215ffa366e3ced754f30b3551a7d111';
 
 /// Set of expanded project IDs in the sidebar
 ///
 /// Copied from [ExpandedProjectIds].
 @ProviderFor(ExpandedProjectIds)
-final expandedProjectIdsProvider =
-    NotifierProvider<ExpandedProjectIds, Set<String>>.internal(
+final expandedProjectIdsProvider = NotifierProvider<ExpandedProjectIds, Set<String>>.internal(
   ExpandedProjectIds.new,
   name: r'expandedProjectIdsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$expandedProjectIdsHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$expandedProjectIdsHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
@@ -65,12 +57,10 @@ String _$projectSortHash() => r'96c125632ac63ff6aed54145305d655c6a91ce68';
 
 /// See also [ProjectSort].
 @ProviderFor(ProjectSort)
-final projectSortProvider =
-    AsyncNotifierProvider<ProjectSort, ProjectSortState>.internal(
+final projectSortProvider = AsyncNotifierProvider<ProjectSort, ProjectSortState>.internal(
   ProjectSort.new,
   name: r'projectSortProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$projectSortHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$projectSortHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );

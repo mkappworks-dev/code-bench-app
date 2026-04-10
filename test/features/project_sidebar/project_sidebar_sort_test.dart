@@ -19,9 +19,7 @@ void main() {
   test('setProjectSort persists to SharedPreferences', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    await container
-        .read(projectSortProvider.notifier)
-        .setProjectSort(ProjectSortOrder.createdAt);
+    await container.read(projectSortProvider.notifier).setProjectSort(ProjectSortOrder.createdAt);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('project_sort_order'), 'createdAt');
   });
@@ -29,9 +27,7 @@ void main() {
   test('setThreadSort updates state', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    await container
-        .read(projectSortProvider.notifier)
-        .setThreadSort(ThreadSortOrder.createdAt);
+    await container.read(projectSortProvider.notifier).setThreadSort(ThreadSortOrder.createdAt);
     final state = await container.read(projectSortProvider.future);
     expect(state.threadSort, ThreadSortOrder.createdAt);
   });

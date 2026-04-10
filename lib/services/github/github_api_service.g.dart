@@ -13,9 +13,7 @@ String _$githubApiServiceHash() => r'2b37df873d040c8731c9cd247e0b66988603ee26';
 final githubApiServiceProvider = FutureProvider<GitHubApiService?>.internal(
   githubApiService,
   name: r'githubApiServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$githubApiServiceHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$githubApiServiceHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );

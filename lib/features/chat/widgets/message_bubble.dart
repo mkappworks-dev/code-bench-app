@@ -21,9 +21,7 @@ class MessageBubble extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: _isUser
-          ? _UserBubble(message: message)
-          : _AssistantBubble(message: message, ref: ref),
+      child: _isUser ? _UserBubble(message: message) : _AssistantBubble(message: message, ref: ref),
     );
   }
 }
@@ -104,8 +102,7 @@ class StreamingDot extends StatefulWidget {
   State<StreamingDot> createState() => _StreamingDotState();
 }
 
-class _StreamingDotState extends State<StreamingDot>
-    with SingleTickerProviderStateMixin {
+class _StreamingDotState extends State<StreamingDot> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacity;
 
@@ -212,9 +209,7 @@ class _CodeBlockBuilder extends MarkdownElementBuilder {
 
   @override
   Widget? visitElementAfter(element, TextStyle? preferredStyle) {
-    final language =
-        element.attributes['class']?.replaceFirst('language-', '') ??
-            'plaintext';
+    final language = element.attributes['class']?.replaceFirst('language-', '') ?? 'plaintext';
     final code = element.textContent;
 
     if (!element.attributes.containsKey('class') && !code.contains('\n')) {
@@ -239,8 +234,7 @@ class _CodeBlockBuilder extends MarkdownElementBuilder {
 }
 
 class _CodeBlockWidget extends StatefulWidget {
-  const _CodeBlockWidget(
-      {required this.code, required this.language, required this.ref});
+  const _CodeBlockWidget({required this.code, required this.language, required this.ref});
   final String code;
   final String language;
   final WidgetRef ref;
@@ -267,8 +261,7 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: const BoxDecoration(
-              border:
-                  Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+              border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
             ),
             child: Row(
               children: [
@@ -301,9 +294,7 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        _applying
-                            ? LucideIcons.hourglass
-                            : LucideIcons.download,
+                        _applying ? LucideIcons.hourglass : LucideIcons.download,
                         size: 12,
                         color: ThemeConstants.mutedFg,
                       ),

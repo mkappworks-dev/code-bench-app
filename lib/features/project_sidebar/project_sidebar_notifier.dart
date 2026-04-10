@@ -47,9 +47,7 @@ class ProjectSortState {
   const ProjectSortState({required this.projectSort, required this.threadSort});
   final ProjectSortOrder projectSort;
   final ThreadSortOrder threadSort;
-  ProjectSortState copyWith(
-          {ProjectSortOrder? projectSort, ThreadSortOrder? threadSort}) =>
-      ProjectSortState(
+  ProjectSortState copyWith({ProjectSortOrder? projectSort, ThreadSortOrder? threadSort}) => ProjectSortState(
         projectSort: projectSort ?? this.projectSort,
         threadSort: threadSort ?? this.threadSort,
       );

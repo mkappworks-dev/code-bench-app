@@ -13,8 +13,7 @@ void main() {
     expect(find.text('High'), findsOneWidget);
   });
 
-  testWidgets('tapping effort chip opens dropdown with all options',
-      (tester) async {
+  testWidgets('tapping effort chip opens dropdown with all options', (tester) async {
     await tester.pumpWidget(_wrap(const ChatInputBarV2(sessionId: 'sid')));
     await tester.tap(find.text('High'));
     await tester.pumpAndSettle();

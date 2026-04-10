@@ -39,8 +39,7 @@ class AIModel with _$AIModel {
     @Default(false) bool isDefault,
   }) = _AIModel;
 
-  factory AIModel.fromJson(Map<String, dynamic> json) =>
-      _$AIModelFromJson(json);
+  factory AIModel.fromJson(Map<String, dynamic> json) => _$AIModelFromJson(json);
 }
 
 // Predefined models

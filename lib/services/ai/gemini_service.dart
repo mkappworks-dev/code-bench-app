@@ -64,8 +64,7 @@ class GeminiService implements AIService {
             final data = trimmed.substring(6);
             try {
               final json = jsonDecode(data) as Map<String, dynamic>;
-              final text =
-                  json['candidates']?[0]?['content']?['parts']?[0]?['text'];
+              final text = json['candidates']?[0]?['content']?['parts']?[0]?['text'];
               if (text is String && text.isNotEmpty) {
                 yield text;
               }
@@ -122,9 +121,7 @@ class GeminiService implements AIService {
     try {
       final response = await _dio.get('/models?key=$apiKey');
       final data = response.data as Map<String, dynamic>;
-      final models = (data['models'] as List)
-          .where((m) => (m['name'] as String).contains('gemini'))
-          .map((m) {
+      final models = (data['models'] as List).where((m) => (m['name'] as String).contains('gemini')).map((m) {
         final name = m['name'] as String;
         final id = name.split('/').last;
         return AIModel(
@@ -136,9 +133,7 @@ class GeminiService implements AIService {
       }).toList();
       return models;
     } catch (_) {
-      return AIModels.defaults
-          .where((m) => m.provider == AIProvider.gemini)
-          .toList();
+      return AIModels.defaults.where((m) => m.provider == AIProvider.gemini).toList();
     }
   }
 

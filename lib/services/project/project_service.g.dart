@@ -13,9 +13,7 @@ String _$projectServiceHash() => r'4ec3d9f922bcfb90b47426d04d8f7881948a9327';
 final projectServiceProvider = Provider<ProjectService>.internal(
   projectService,
   name: r'projectServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$projectServiceHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$projectServiceHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );

@@ -19,26 +19,22 @@ ChatMessage _msg(MessageRole role, {bool streaming = false}) => ChatMessage(
 
 void main() {
   testWidgets('user message is right-aligned', (tester) async {
-    await tester
-        .pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.user))));
+    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.user))));
     final align = tester.widget<Align>(find.byType(Align).first);
     expect(align.alignment, Alignment.centerRight);
   });
 
   testWidgets('assistant message has no background container', (tester) async {
-    await tester
-        .pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.assistant))));
+    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.assistant))));
     // No avatar icon
     expect(find.byIcon(Icons.smart_toy), findsNothing);
     // No role label text
     expect(find.text('Assistant'), findsNothing);
   });
 
-  testWidgets('streaming shows pulsing dot, not CircularProgressIndicator',
-      (tester) async {
+  testWidgets('streaming shows pulsing dot, not CircularProgressIndicator', (tester) async {
     await tester.pumpWidget(
-      _wrap(
-          MessageBubble(message: _msg(MessageRole.assistant, streaming: true))),
+      _wrap(MessageBubble(message: _msg(MessageRole.assistant, streaming: true))),
     );
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.byType(StreamingDot), findsOneWidget);

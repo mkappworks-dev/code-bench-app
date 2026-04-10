@@ -37,8 +37,7 @@ class ProjectService {
     }
 
     final id = _uuid.v4();
-    final name = dir.uri.pathSegments
-        .lastWhere((s) => s.isNotEmpty, orElse: () => directoryPath);
+    final name = dir.uri.pathSegments.lastWhere((s) => s.isNotEmpty, orElse: () => directoryPath);
     final isGit = GitDetector.isGitRepo(directoryPath);
     final branch = isGit ? GitDetector.getCurrentBranch(directoryPath) : null;
 
