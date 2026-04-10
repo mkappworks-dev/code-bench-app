@@ -165,7 +165,7 @@ void main() {
 
     final change = container.read(appliedChangesProvider)['sid']!.first;
 
-    expect(
+    await expectLater(
       () => gitService.revertChange(
         change: change,
         isGit: true,
