@@ -238,9 +238,6 @@ class ProjectSidebar extends ConsumerWidget {
             onTap: () => context.go('/settings'),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: ThemeConstants.borderColor)),
-              ),
               child: Row(
                 children: [
                   Icon(
