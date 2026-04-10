@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_highlight/flutter_highlight.dart';
@@ -5,10 +8,27 @@ import 'package:flutter_highlight/themes/vs2015.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/chat_message.dart';
-import 'apply_code_dialog.dart';
+import '../../../data/models/project.dart';
+import '../../../features/project_sidebar/project_sidebar_notifier.dart';
+import '../../../services/apply/apply_service.dart';
+import '../chat_notifier.dart';
+
+// ── Public helper (also used by tests) ───────────────────────────────────────
+
+/// Splits a code fence info string (e.g. "dart lib/main.dart") into
+/// (language, filename?). Filename is null if no second word is present.
+(String language, String? filename) parseCodeFenceInfo(String info) {
+  final parts = info.split(' ');
+  final language = parts.first;
+  final filename = parts.length > 1 ? parts.sublist(1).join(' ') : null;
+  return (language, filename);
+}
+
+// ── MessageBubble ─────────────────────────────────────────────────────────────
 
 class MessageBubble extends ConsumerWidget {
   const MessageBubble({super.key, required this.message});
@@ -72,7 +92,6 @@ class _AssistantBubble extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Left accent border
         Container(
           width: 2,
           margin: const EdgeInsets.only(top: 3, bottom: 3),
@@ -141,7 +160,7 @@ class _StreamingDotState extends State<StreamingDot> with SingleTickerProviderSt
   }
 }
 
-// ── Message content (shared markdown renderer) ───────────────────────────────
+// ── Message content ───────────────────────────────────────────────────────────
 
 class _MessageContent extends StatelessWidget {
   const _MessageContent({required this.message, required this.ref});
@@ -196,7 +215,13 @@ class _MessageContent extends StatelessWidget {
         blockquote: const TextStyle(color: ThemeConstants.textSecondary),
         listBullet: const TextStyle(color: ThemeConstants.textPrimary),
       ),
-      builders: {'code': _CodeBlockBuilder(ref: ref)},
+      builders: {
+        'code': _CodeBlockBuilder(
+          ref: ref,
+          messageId: message.id,
+          sessionId: message.sessionId,
+        ),
+      },
     );
   }
 }
@@ -204,12 +229,18 @@ class _MessageContent extends StatelessWidget {
 // ── Code block builder ───────────────────────────────────────────────────────
 
 class _CodeBlockBuilder extends MarkdownElementBuilder {
-  _CodeBlockBuilder({required this.ref});
+  _CodeBlockBuilder({
+    required this.ref,
+    required this.messageId,
+    required this.sessionId,
+  });
   final WidgetRef ref;
+  final String messageId;
+  final String sessionId;
 
   @override
   Widget? visitElementAfter(element, TextStyle? preferredStyle) {
-    final language = element.attributes['class']?.replaceFirst('language-', '') ?? 'plaintext';
+    final fullInfo = element.attributes['class']?.replaceFirst('language-', '') ?? 'plaintext';
     final code = element.textContent;
 
     if (!element.attributes.containsKey('class') && !code.contains('\n')) {
@@ -229,14 +260,37 @@ class _CodeBlockBuilder extends MarkdownElementBuilder {
         ),
       );
     }
-    return _CodeBlockWidget(code: code, language: language, ref: ref);
+
+    final (language, filename) = parseCodeFenceInfo(fullInfo);
+    return _CodeBlockWidget(
+      code: code,
+      language: language,
+      filename: filename,
+      messageId: messageId,
+      sessionId: sessionId,
+      ref: ref,
+    );
   }
 }
 
+// ── Code block widget ─────────────────────────────────────────────────────────
+
+enum _DiffCardState { hidden, loading, loaded, error }
+
 class _CodeBlockWidget extends StatefulWidget {
-  const _CodeBlockWidget({required this.code, required this.language, required this.ref});
+  const _CodeBlockWidget({
+    required this.code,
+    required this.language,
+    this.filename,
+    required this.messageId,
+    required this.sessionId,
+    required this.ref,
+  });
   final String code;
   final String language;
+  final String? filename;
+  final String messageId;
+  final String sessionId;
   final WidgetRef ref;
 
   @override
@@ -244,7 +298,80 @@ class _CodeBlockWidget extends StatefulWidget {
 }
 
 class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
+  _DiffCardState _diffState = _DiffCardState.hidden;
+  String? _originalContent;
+  List<Diff>? _diffs;
+  String? _diffError;
+  int _activeTab = 1; // 0=Before, 1=Diff, 2=After
   bool _applying = false;
+
+  Future<void> _loadDiff() async {
+    setState(() => _diffState = _DiffCardState.loading);
+    try {
+      final projectId = widget.ref.read(activeProjectIdProvider);
+      final projects = widget.ref.read(projectsProvider).valueOrNull ?? <Project>[];
+      Project? project;
+      try {
+        project = projects.firstWhere((proj) => proj.id == projectId);
+      } catch (_) {
+        project = null;
+      }
+      if (project == null) throw Exception('No active project');
+
+      final absolutePath = p.join(project.path, widget.filename!);
+
+      String? original;
+      final file = File(absolutePath);
+      if (file.existsSync()) {
+        original = await file.readAsString();
+      }
+
+      final dmp = DiffMatchPatch();
+      final diffs = dmp.diff(original ?? '', widget.code);
+      dmp.diffCleanupSemantic(diffs);
+
+      setState(() {
+        _originalContent = original;
+        _diffs = diffs;
+        _diffState = _DiffCardState.loaded;
+      });
+    } catch (e) {
+      setState(() {
+        _diffError = e.toString();
+        _diffState = _DiffCardState.error;
+      });
+    }
+  }
+
+  Future<void> _applyChange() async {
+    setState(() => _applying = true);
+    try {
+      final projectId = widget.ref.read(activeProjectIdProvider);
+      final projects = widget.ref.read(projectsProvider).valueOrNull ?? <Project>[];
+      Project? project;
+      try {
+        project = projects.firstWhere((proj) => proj.id == projectId);
+      } catch (_) {
+        project = null;
+      }
+      if (project == null) return;
+
+      final absolutePath = p.join(project.path, widget.filename!);
+      await widget.ref.read(applyServiceProvider).applyChange(
+            filePath: absolutePath,
+            newContent: widget.code,
+            sessionId: widget.sessionId,
+            messageId: widget.messageId,
+          );
+
+      // Auto-open the changes panel on first apply
+      widget.ref.read(changesPanelVisibleProvider.notifier).show();
+
+      setState(() => _diffState = _DiffCardState.hidden);
+    } finally {
+      if (mounted) setState(() => _applying = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -258,74 +385,219 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+          _buildHeader(),
+          if (_diffState == _DiffCardState.loading)
+            const Padding(
+              padding: EdgeInsets.all(12),
+              child: Center(
+                child: SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                ),
+              ),
+            )
+          else if (_diffState == _DiffCardState.loaded)
+            _buildDiffCard()
+          else if (_diffState == _DiffCardState.error)
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                _diffError ?? 'Error computing diff',
+                style: const TextStyle(
+                  color: ThemeConstants.error,
+                  fontSize: ThemeConstants.uiFontSizeSmall,
+                ),
+              ),
+            )
+          else
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: HighlightView(
+                widget.code,
+                language: widget.language,
+                theme: vs2015Theme,
+                padding: const EdgeInsets.all(12),
+                textStyle: const TextStyle(
+                  fontFamily: ThemeConstants.editorFontFamily,
+                  fontSize: ThemeConstants.editorFontSize,
+                  height: 1.5,
+                ),
+              ),
             ),
-            child: Row(
-              children: [
-                Text(
-                  widget.language,
-                  style: const TextStyle(
-                    color: ThemeConstants.mutedFg,
-                    fontSize: ThemeConstants.uiFontSizeSmall,
-                    fontFamily: ThemeConstants.editorFontFamily,
-                  ),
-                ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: _applying
-                      ? null
-                      : () async {
-                          setState(() => _applying = true);
-                          try {
-                            await showApplyCodeDialog(
-                              context,
-                              widget.ref,
-                              widget.code,
-                              widget.language,
-                            );
-                          } finally {
-                            if (mounted) setState(() => _applying = false);
-                          }
-                        },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _applying ? LucideIcons.hourglass : LucideIcons.download,
-                        size: 12,
-                        color: ThemeConstants.mutedFg,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _applying ? 'Applying...' : 'Apply',
-                        style: const TextStyle(
-                          color: ThemeConstants.mutedFg,
-                          fontSize: ThemeConstants.uiFontSizeSmall,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                _CopyButton(code: widget.code),
-              ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            widget.language,
+            style: const TextStyle(
+              color: ThemeConstants.mutedFg,
+              fontSize: ThemeConstants.uiFontSizeSmall,
+              fontFamily: ThemeConstants.editorFontFamily,
             ),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: HighlightView(
-              widget.code,
-              language: widget.language,
-              theme: vs2015Theme,
-              padding: const EdgeInsets.all(12),
-              textStyle: const TextStyle(
+          if (widget.filename != null) ...[
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                widget.filename!,
+                style: const TextStyle(
+                  color: ThemeConstants.textSecondary,
+                  fontSize: ThemeConstants.uiFontSizeSmall,
+                  fontFamily: ThemeConstants.editorFontFamily,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ] else
+            const Spacer(),
+          if (widget.filename != null && _diffState == _DiffCardState.hidden)
+            _HeaderButton(
+              label: 'Diff',
+              icon: LucideIcons.gitCompare,
+              onTap: _loadDiff,
+            ),
+          if (_diffState == _DiffCardState.loaded) ...[
+            _HeaderButton(
+              label: _applying ? 'Applying...' : 'Apply',
+              icon: _applying ? LucideIcons.hourglass : LucideIcons.download,
+              onTap: _applying ? null : _applyChange,
+            ),
+            const SizedBox(width: 8),
+            _HeaderButton(
+              label: 'Collapse',
+              icon: LucideIcons.chevronUp,
+              onTap: () => setState(() => _diffState = _DiffCardState.hidden),
+            ),
+          ],
+          const SizedBox(width: 12),
+          _CopyButton(code: widget.code),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiffCard() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Tab bar
+        Container(
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+          ),
+          child: Row(
+            children: [
+              _Tab(label: 'Before', index: 0, activeIndex: _activeTab, onTap: (i) => setState(() => _activeTab = i)),
+              _Tab(label: 'Diff', index: 1, activeIndex: _activeTab, onTap: (i) => setState(() => _activeTab = i)),
+              _Tab(label: 'After', index: 2, activeIndex: _activeTab, onTap: (i) => setState(() => _activeTab = i)),
+            ],
+          ),
+        ),
+        // Tab content
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 320),
+          child: SingleChildScrollView(
+            child: _activeTab == 0
+                ? _buildPlainContent(_originalContent ?? '(new file)')
+                : _activeTab == 2
+                    ? _buildPlainContent(widget.code)
+                    : _buildDiffContent(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlainContent(String content) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: HighlightView(
+        content,
+        language: widget.language,
+        theme: vs2015Theme,
+        padding: const EdgeInsets.all(12),
+        textStyle: const TextStyle(
+          fontFamily: ThemeConstants.editorFontFamily,
+          fontSize: ThemeConstants.editorFontSize,
+          height: 1.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiffContent() {
+    final diffs = _diffs ?? [];
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: diffs.map((diff) {
+          final bg = diff.operation == DIFF_INSERT
+              ? const Color(0x3300CC66)
+              : diff.operation == DIFF_DELETE
+                  ? const Color(0x33FF4444)
+                  : Colors.transparent;
+          final prefix = diff.operation == DIFF_INSERT
+              ? '+'
+              : diff.operation == DIFF_DELETE
+                  ? '−'
+                  : ' ';
+          return Container(
+            color: bg,
+            width: double.infinity,
+            child: Text(
+              diff.text.split('\n').map((line) => '$prefix $line').join('\n'),
+              style: const TextStyle(
                 fontFamily: ThemeConstants.editorFontFamily,
                 fontSize: ThemeConstants.editorFontSize,
+                color: ThemeConstants.textPrimary,
                 height: 1.5,
               ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ── Small reusable header button ─────────────────────────────────────────────
+
+class _HeaderButton extends StatelessWidget {
+  const _HeaderButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+  final String label;
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: ThemeConstants.mutedFg),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: ThemeConstants.mutedFg,
+              fontSize: ThemeConstants.uiFontSizeSmall,
             ),
           ),
         ],
@@ -333,6 +605,49 @@ class _CodeBlockWidgetState extends State<_CodeBlockWidget> {
     );
   }
 }
+
+// ── Tab ───────────────────────────────────────────────────────────────────────
+
+class _Tab extends StatelessWidget {
+  const _Tab({
+    required this.label,
+    required this.index,
+    required this.activeIndex,
+    required this.onTap,
+  });
+  final String label;
+  final int index;
+  final int activeIndex;
+  final void Function(int) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = index == activeIndex;
+    return GestureDetector(
+      onTap: () => onTap(index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: isActive ? ThemeConstants.accent : Colors.transparent,
+              width: 2,
+            ),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: ThemeConstants.uiFontSizeSmall,
+            color: isActive ? ThemeConstants.textPrimary : ThemeConstants.mutedFg,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Copy button ───────────────────────────────────────────────────────────────
 
 class _CopyButton extends StatefulWidget {
   const _CopyButton({required this.code});

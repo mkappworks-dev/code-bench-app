@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/models/chat_message.dart';
-import 'package:code_bench_app/features/chat/widgets/message_bubble.dart';
+import 'package:code_bench_app/features/chat/widgets/message_bubble.dart'
+    show MessageBubble, StreamingDot, parseCodeFenceInfo;
 
 Widget _wrap(Widget child) => ProviderScope(
       child: MaterialApp(home: Scaffold(body: child)),
@@ -38,5 +39,25 @@ void main() {
     );
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.byType(StreamingDot), findsOneWidget);
+  });
+
+  group('parseCodeFenceInfo', () {
+    test('returns language only when no filename', () {
+      final result = parseCodeFenceInfo('dart');
+      expect(result.$1, 'dart');
+      expect(result.$2, isNull);
+    });
+
+    test('returns language and filename when both present', () {
+      final result = parseCodeFenceInfo('dart lib/auth/middleware.dart');
+      expect(result.$1, 'dart');
+      expect(result.$2, 'lib/auth/middleware.dart');
+    });
+
+    test('handles filename with spaces via second+ word join', () {
+      final result = parseCodeFenceInfo('dart path with spaces/file.dart');
+      expect(result.$1, 'dart');
+      expect(result.$2, 'path with spaces/file.dart');
+    });
   });
 }

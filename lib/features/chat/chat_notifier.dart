@@ -140,5 +140,6 @@ class ChangesPanelVisible extends _$ChangesPanelVisible {
   bool build() => false;
 
   void toggle() => state = !state;
+  void show() => state = true;
   void hide() => state = false;
 }
