@@ -18,7 +18,7 @@
 | `lib/data/datasources/local/general_preferences.dart` | Create | `GeneralPreferences` — SharedPreferences wrapper for `auto_commit_enabled`, `terminal_app`, `delete_confirmation_enabled` |
 | `lib/services/session/session_service.dart` | Modify | Add `archiveSession(String)` and `unarchiveSession(String)` + `watchArchivedSessions()` |
 | `lib/features/chat/chat_notifier.dart` | Modify | Add `archivedSessionsProvider` stream |
-| `lib/features/project_sidebar/widgets/conversation_tile.dart` | Modify | Add `onArchive` callback + right-click context menu (Archive / Delete) |
+| `lib/features/project_sidebar/widgets/conversation_tile.dart` | Modify | Add `onArchive` callback + **Archive** item to existing right-click menu (Phase 1a already added the menu with Rename / Delete) |
 | `lib/features/project_sidebar/widgets/project_tile.dart` | Modify | Add `onArchive: ValueChanged<String>` parameter, pass to each `ConversationTile` |
 | `lib/features/project_sidebar/project_sidebar.dart` | Modify | Wire `onArchive` to `sessionService.archiveSession` |
 | `lib/features/settings/archive_screen.dart` | Create | Archived sessions grouped by project; Unarchive button; empty state |
@@ -428,134 +428,16 @@
   ```
   Expected: FAIL — `ConversationTile` missing `onArchive` parameter.
 
-- [ ] **Step 3: Update `ConversationTile` with `onArchive` callback and right-click menu**
+- [ ] **Step 3: Add `onArchive` to `ConversationTile` and insert Archive item into existing menu**
 
-  Replace the full content of `lib/features/project_sidebar/widgets/conversation_tile.dart`:
+  > **Phase 1a note:** `ConversationTile` already has a right-click context menu (added in Phase 1a) with **Rename** and **Delete** items using `showInstantMenu`. Do NOT replace the file. Instead make targeted edits:
+  >
+  > 1. Add `this.onArchive` as an optional `VoidCallback?` parameter (keep `onRename` and `onDelete`)
+  > 2. Insert an **Archive** `PopupMenuItem` (with `LucideIcons.archive`) between Rename and the divider before Delete, or before Delete
+  > 3. Add `if (action == 'archive') onArchive?.call();` in the action handler
+  > 4. Use `showInstantMenu` (already imported as `'../../../core/utils/instant_menu.dart'`) — **do not use `showMenu`**
 
-  ```dart
-  import 'package:flutter/material.dart';
-  import 'package:lucide_icons_flutter/lucide_icons.dart';
-
-  import '../../../core/constants/theme_constants.dart';
-  import '../../../data/models/chat_session.dart';
-
-  class ConversationTile extends StatelessWidget {
-    const ConversationTile({
-      super.key,
-      required this.session,
-      required this.isActive,
-      required this.onTap,
-      required this.onArchive,
-    });
-
-    final ChatSession session;
-    final bool isActive;
-    final VoidCallback onTap;
-    final VoidCallback onArchive;
-
-    String _relativeTime(DateTime dt) {
-      final diff = DateTime.now().difference(dt);
-      if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-      if (diff.inHours < 24) return '${diff.inHours}h';
-      return '${diff.inDays}d';
-    }
-
-    Future<void> _showContextMenu(
-      BuildContext context,
-      Offset position,
-    ) async {
-      final overlay =
-          Overlay.of(context).context.findRenderObject() as RenderBox;
-      final result = await showMenu<String>(
-        context: context,
-        position: RelativeRect.fromLTRB(
-          position.dx,
-          position.dy,
-          overlay.size.width - position.dx,
-          overlay.size.height - position.dy,
-        ),
-        color: ThemeConstants.panelBackground,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
-          side: const BorderSide(color: ThemeConstants.faintFg),
-        ),
-        items: [
-          PopupMenuItem<String>(
-            value: 'archive',
-            height: 32,
-            child: Row(
-              children: const [
-                Icon(LucideIcons.archive, size: 13, color: ThemeConstants.textSecondary),
-                SizedBox(width: 8),
-                Text(
-                  'Archive',
-                  style: TextStyle(
-                    color: ThemeConstants.textPrimary,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-      if (result == 'archive') onArchive();
-    }
-
-    @override
-    Widget build(BuildContext context) {
-      return GestureDetector(
-        onSecondaryTapUp: (details) =>
-            _showContextMenu(context, details.globalPosition),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(5),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            decoration: BoxDecoration(
-              color: isActive ? ThemeConstants.inputSurface : null,
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 5,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: isActive ? ThemeConstants.accent : Colors.transparent,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    session.title,
-                    style: TextStyle(
-                      color: isActive
-                          ? ThemeConstants.textPrimary
-                          : ThemeConstants.mutedFg,
-                      fontSize: 11,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Text(
-                  _relativeTime(session.updatedAt),
-                  style: const TextStyle(
-                    color: ThemeConstants.faintFg,
-                    fontSize: 9,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-  }
-  ```
-
-  Note: This uses `ThemeConstants.inputSurface`, `ThemeConstants.mutedFg`, and `ThemeConstants.faintFg` — all added in Phase 1a Task 1.
+  The resulting menu order should be: **Rename** → *(divider)* → **Archive** → **Delete**.
 
 - [ ] **Step 4: Update `ProjectTile` to accept and pass `onArchive`**
 
