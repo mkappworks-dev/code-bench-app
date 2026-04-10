@@ -20,8 +20,8 @@
 | **Create** | `lib/features/chat/notifiers/work_log_notifier.dart` | keepAlive family notifier keyed by `messageId`; appended to by tool pipeline |
 | **Create** | `lib/features/chat/widgets/ask_user_question_card.dart` | Numbered rows, step counter, progress dots, free-text, Back/Next/Submit |
 | **Create** | `lib/features/chat/widgets/work_log_section.dart` | Collapsible toggle row + live log entries + elapsed timer |
-| Modify | `lib/features/chat/widgets/message_bubble.dart` | Render `AskUserQuestionCard` and `WorkLogSection` when present |
-| Modify | `lib/shell/widgets/status_bar.dart` | Add "Working for Xs" timer-driven pill; tap scrolls to active message |
+| Modify | `lib/features/chat/widgets/message_bubble.dart` | Render `AskUserQuestionCard` and `WorkLogSection` when present (Phase 2 added Diff/Apply/Revert buttons ~600+ lines; Phase 5 adds tool-call rows — read first) |
+| Modify | `lib/shell/widgets/status_bar.dart` | Add "Working for Xs" timer-driven pill; tap scrolls to active message (Phase 2 added "N changes" indicator + `changesPanelVisibleProvider` toggle — preserve it) |
 | **Create** | `test/data/models/ask_user_question_test.dart` | Model serialization tests |
 | **Create** | `test/features/chat/notifiers/ask_question_notifier_test.dart` | Answer storage + back navigation tests |
 | **Create** | `test/features/chat/notifiers/work_log_notifier_test.dart` | Append + status transition tests |
@@ -1128,7 +1128,10 @@
 
 - [ ] **Step 6.1: Read `message_bubble.dart`**
 
-  Read `lib/features/chat/widgets/message_bubble.dart` to understand its current structure and where to inject the new widgets.
+  Read `lib/features/chat/widgets/message_bubble.dart` to understand its current structure. **Note:** This file is large after Phase 2 (~600+ lines) and Phase 5 (tool-call rows). Key landmarks:
+  - `_CodeBlockWidget` — code fence rendering with Diff/Apply buttons (Phase 2) and Diff… picker (Phase 5)
+  - Tool-call rows rendered after markdown content (Phase 5)
+  - The assistant bubble content `Column` is where `AskUserQuestionCard` and `WorkLogSection` should be added
 
 - [ ] **Step 6.2: Wire `AskUserQuestionCard` and `WorkLogSection` into `message_bubble.dart`**
 
@@ -1142,7 +1145,7 @@
   import '../notifiers/work_log_notifier.dart';
   ```
 
-  In the assistant bubble Column (after markdown content and tool-call rows from Phase 5):
+  In the assistant bubble `Column` (after markdown content and tool-call rows from Phase 5). Insert **after** the `ToolCallRow` loop added in Phase 5:
 
   ```dart
   // Render AskUserQuestion card if the message has one
@@ -1206,7 +1209,13 @@
 
 - [ ] **Step 6.4: Add `"Working for Xs"` pill to `status_bar.dart`**
 
-  In `lib/shell/widgets/status_bar.dart`, read the file first to understand its current layout from Phase 1a.
+  In `lib/shell/widgets/status_bar.dart`, read the file first. **Note:** Phase 2 changed the status bar layout — it now has:
+  - Left: "Local" indicator with `hardDrive` icon
+  - Centre-right: "N changes" indicator (conditionally shown when `changeCount > 0`, toggles `ChangesPanel`)
+  - Right: Git branch indicator
+  - `Spacer()` between left and centre-right sections
+
+  The `_WorkingPill` should be inserted **between the Spacer and the changes indicator**, so it appears in the centre area:
 
   Add a `_WorkingPill` widget that subscribes to any `WorkLogNotifier` for the active message. The simplest approach: watch the `activeSessionId`, then check if there is a `WorkLogNotifier` for the last message ID in that session that `isRunning`.
 
@@ -1279,25 +1288,32 @@
   }
   ```
 
-  Wire the pill into the status bar build method. Read `status_bar.dart` to find the right injection point and add:
+  Wire the pill into the status bar `build` method. The Phase 2 Row layout is:
+
+  ```
+  [hardDrive icon] [Local] [Spacer] [N changes indicator] [git branch]
+  ```
+
+  Insert the pill **after the `Spacer()` and before the changes indicator**:
 
   ```dart
-  // Inside the status bar Row, near the left side:
-  // The activeMessageId concept: track the ID of the last assistant message
-  // for the active session. Expose it via a new provider in chat_notifier.dart.
-  //
-  // Simplest wiring:
+  // Inside the status bar Row children, after const Spacer():
+  const Spacer(),
+  // ← Insert working pill here, before the changeCount check
   Consumer(
     builder: (_, ref, __) {
       final sessionId = ref.watch(activeSessionIdProvider);
       if (sessionId == null) return const SizedBox.shrink();
-      // Use a provider that gives the last message ID for the session
-      // (add activeMessageIdProvider to chat_notifier.dart)
       final messageId = ref.watch(activeMessageIdProvider);
       if (messageId == null) return const SizedBox.shrink();
-      return _WorkingPill(messageId: messageId);
+      return Padding(
+        padding: const EdgeInsets.only(right: 10),
+        child: _WorkingPill(messageId: messageId),
+      );
     },
   ),
+  // Centre-right: N changes indicator (existing Phase 2 code)
+  if (changeCount > 0) ...[
   ```
 
   Add `activeMessageIdProvider` to `lib/features/chat/chat_notifier.dart`:

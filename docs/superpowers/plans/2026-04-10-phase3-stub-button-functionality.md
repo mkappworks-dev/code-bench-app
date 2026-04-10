@@ -1037,16 +1037,28 @@
 
 - [ ] **Step 4.7: Add `ActionOutputPanel` slot in `ChatShell`**
 
-  In `lib/shell/chat_shell.dart`, read the file first, then add the panel below the `TopActionBar`. Find the `Column` that contains `TopActionBar()` and insert the panel after it:
+  In `lib/shell/chat_shell.dart`, read the file first. **Note:** Phase 2 changed the layout — there is now a `Row` wrapping the chat `child` and a conditional `ChangesPanel`. Insert `ActionOutputPanel` between `TopActionBar` and the `Expanded(child: Row(...))`:
 
   ```dart
   // Add import
   import 'widgets/action_output_panel.dart';
 
-  // In the Column children, after TopActionBar():
+  // In the Column children, after TopActionBar() and BEFORE the Expanded Row:
   const TopActionBar(),
-  const ActionOutputPanel(),   // ← new
-  // ... rest of children
+  const ActionOutputPanel(),   // ← new — sits between top bar and content row
+  Expanded(
+    child: Row(
+      children: [
+        Expanded(child: child),
+        if (panelVisible && activeSessionId != null)
+          SizedBox(
+            width: 190,
+            child: ChangesPanel(sessionId: activeSessionId),
+          ),
+      ],
+    ),
+  ),
+  const StatusBar(),
   ```
 
 - [ ] **Step 4.8: Verify analyze**

@@ -17,12 +17,12 @@
 | Modify | `pubspec.yaml` | Add `crypto: ^3.0.3` |
 | **Create** | `lib/data/models/tool_event.dart` | `@freezed` `ToolEvent` model |
 | Modify | `lib/data/models/chat_message.dart` | Add `@Default([]) List<ToolEvent> toolEvents` |
-| Modify | `lib/data/models/applied_change.dart` | Add `String? contentChecksum` field |
-| Modify | `lib/services/apply/apply_service.dart` | Capture checksum at apply time; conflict detection + three-way revert |
+| Modify | `lib/data/models/applied_change.dart` | Add `String? contentChecksum` field (Phase 2 already has `additions`/`deletions`) |
+| Modify | `lib/services/apply/apply_service.dart` | Capture checksum at apply time; conflict detection + three-way revert (Phase 2 already has `ProcessRunner`, `assertWithinProject`, `kMaxApplyContentBytes`, `kGitCheckoutTimeout`, `_computeLineCounts`) |
 | **Create** | `lib/features/chat/widgets/tool_call_row.dart` | Collapsed/expanded tool-call card with metrics |
-| Modify | `lib/features/chat/widgets/message_bubble.dart` | Render tool-call rows; Diff… button + inline path picker for nameless fences |
+| Modify | `lib/features/chat/widgets/message_bubble.dart` | Render tool-call rows; Diff… button + inline path picker for nameless fences (Phase 2 already has Diff/Apply buttons for named fences, ~600+ lines) |
 | **Create** | `lib/features/chat/widgets/conflict_merge_view.dart` | Three-tab merge view (Original / Applied / Current) |
-| Modify | `lib/features/chat/widgets/changes_panel.dart` | Show `edited` badge; trigger `ConflictMergeView` |
+| Modify | `lib/features/chat/widgets/changes_panel.dart` | Show `edited` badge; trigger `ConflictMergeView` (Phase 2 already has ~255-line panel with file rows, add/del counts, Revert button) |
 | Modify | `lib/services/git/git_service.dart` | Add `listRemotes` (already in Phase 3) — verify it exists |
 | Modify | `lib/services/github/github_api_service.dart` | Add `getPullRequest`, `getCheckRuns`, `approvePullRequest`, `mergePullRequest` |
 | **Create** | `lib/features/chat/widgets/pr_card.dart` | PR status card — CI chips, comments, Approve/Merge/Open |
@@ -247,7 +247,7 @@
 
 - [ ] **Step 2.3: Add `contentChecksum` to `AppliedChange`**
 
-  In `lib/data/models/applied_change.dart`, add the field:
+  In `lib/data/models/applied_change.dart`, add the field. **Note:** Phase 2 already added `additions` and `deletions` fields — preserve them:
 
   ```dart
   @freezed
@@ -260,6 +260,9 @@
       String? originalContent,
       required String newContent,
       required DateTime appliedAt,
+      // Phase 2 fields — line counts from char-level diff:
+      @Default(0) int additions,
+      @Default(0) int deletions,
       String? contentChecksum,      // ← new: SHA-256 of newContent at apply time
     }) = _AppliedChange;
   }
@@ -300,24 +303,34 @@
   }
   ```
 
-  Also update the `apply` method in `ApplyService` to capture the checksum when writing:
+  Also update the `applyChange` method in `ApplyService` to capture the checksum when writing. **Note:** Phase 2's `ApplyService` already has:
+  - `ProcessRunner` typedef and injection via constructor
+  - `kMaxApplyContentBytes` content size guard
+  - `kGitCheckoutTimeout` for revert
+  - `assertWithinProject` path-traversal guard (lexical + symlink)
+  - `_computeLineCounts` for line-level diff stats
+  - `_uuidGen` factory injected via constructor (not raw `Uuid().v4()`)
+
+  Find the `_notifier.apply(AppliedChange(...))` call inside `applyChange` (after `_fs.writeFile`) and add the checksum:
 
   ```dart
-  // Inside applyChange or equivalent apply method, after writing content to disk:
-  final checksum = ApplyService.sha256OfString(newContent);
-  final change = AppliedChange(
-    id: const Uuid().v4(),
+  // Inside applyChange, after writing content to disk and computing line counts:
+  final (additions, deletions) = _computeLineCounts(originalContent, newContent);
+  final checksum = ApplyService.sha256OfString(newContent);  // ← new
+
+  _notifier.apply(AppliedChange(
+    id: _uuidGen(),                // Phase 2 uses injected _uuidGen, not const Uuid().v4()
     sessionId: sessionId,
     messageId: messageId,
     filePath: filePath,
     originalContent: originalContent,
     newContent: newContent,
     appliedAt: DateTime.now(),
-    contentChecksum: checksum,      // ← record at apply time
-  );
+    additions: additions,          // Phase 2 field
+    deletions: deletions,          // Phase 2 field
+    contentChecksum: checksum,     // ← new: record at apply time
+  ));
   ```
-
-  (Locate the exact apply method in the Phase 2 implementation and update it accordingly.)
 
 - [ ] **Step 2.5: Run build_runner**
 
@@ -653,9 +666,17 @@
 **Files:**
 - Modify: `lib/features/chat/widgets/message_bubble.dart`
 
+> **Phase 2 context:** `message_bubble.dart` was significantly expanded in Phase 2 (~575 lines of changes). It already has:
+> - A Diff button and inline change card for code blocks **with** a detected filename
+> - Apply/Revert buttons wired to `ApplyService`
+> - `_CodeBlockWidget` with filename parsing from code fence headers
+> - Horizontal scrolling for diff display
+>
+> This task adds: (1) tool-call row rendering (new), (2) a "Diff…" button with path picker for code fences **without** a filename (gap-closing).
+
 - [ ] **Step 4.1: Read `message_bubble.dart`**
 
-  Read `lib/features/chat/widgets/message_bubble.dart` to understand its current structure — specifically how `_CodeBlockWidget` is built and where the Diff button exists from Phase 2.
+  Read `lib/features/chat/widgets/message_bubble.dart` to understand its current structure — specifically how `_CodeBlockWidget` is built, where the existing Diff/Apply buttons are rendered, and how the filename detection works. The file is large (~600+ lines after Phase 2).
 
 - [ ] **Step 4.2: Add tool-call rows to the assistant message bubble**
 
@@ -678,13 +699,13 @@
 
 - [ ] **Step 4.3: Add `Diff…` button for nameless code fences**
 
-  In `_CodeBlockWidget` (or wherever Diff/Apply buttons are built from Phase 2), find the condition that checks for a filename. For the case where no filename was detected, show a "Diff…" button that expands an inline path picker:
+  **Phase 2 already renders a Diff button when a filename is detected.** This step only handles the `else` branch — when no filename was parsed from the code fence header. Find the condition in `_CodeBlockWidget` that checks for a filename and add the picker fallback:
 
   ```dart
-  // Replace or add alongside the existing 'Diff' button logic:
+  // In _CodeBlockWidget, extend the existing filename check:
   if (filename != null)
-    // existing Diff button
-    _DiffButton(filename: filename, code: code)
+    // ← Phase 2 already handles this case (Diff + Apply buttons)
+    ...existingDiffApplyButtons
   else
     _DiffWithPickerButton(code: code, projectId: projectId),
   ```
@@ -840,6 +861,14 @@
 **Files:**
 - Create: `lib/features/chat/widgets/conflict_merge_view.dart`
 - Modify: `lib/features/chat/widgets/changes_panel.dart`
+
+> **Phase 2 context:** `changes_panel.dart` already exists (~255 lines) with:
+> - File rows showing filename, additions/deletions counts, and a Revert button
+> - Session-grouped change list from `appliedChangesProvider`
+> - Visibility toggling via `changesPanelVisibleProvider`
+> - Integration with `ApplyService.revertChange`
+>
+> This task extends the existing panel with an `edited` badge (via `FutureBuilder` + checksum check) and a `ConflictMergeView` dialog on revert when a file was externally modified. Read the file first to find the exact row widget to extend.
 
 - [ ] **Step 5.1: Create `ConflictMergeView`**
 
@@ -1018,7 +1047,7 @@
                         .writeAsString(change.originalContent ?? '');
                     // Remove entry from AppliedChangesNotifier
                     ref
-                        .read(appliedChangesNotifierProvider.notifier)
+                        .read(appliedChangesProvider.notifier)
                         .remove(change.id);
                   },
                   onKeepCurrent: () => Navigator.of(context).pop(),
@@ -1030,7 +1059,7 @@
             await File(change.filePath)
                 .writeAsString(change.originalContent ?? '');
             ref
-                .read(appliedChangesNotifierProvider.notifier)
+                .read(appliedChangesProvider.notifier)
                 .remove(change.id);
           }
         },
