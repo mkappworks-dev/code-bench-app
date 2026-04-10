@@ -30,12 +30,9 @@ class StatusBar extends ConsumerWidget {
       );
     }
 
-    // Count changes for the current session
-    int changeCount = 0;
-    if (activeSessionId != null) {
-      final allChanges = ref.watch(appliedChangesProvider);
-      changeCount = allChanges[activeSessionId]?.length ?? 0;
-    }
+    // Count changes for the current session (watch unconditionally — Riverpod rule)
+    final allChanges = ref.watch(appliedChangesProvider);
+    final changeCount = activeSessionId != null ? (allChanges[activeSessionId]?.length ?? 0) : 0;
 
     return Container(
       height: 22,
