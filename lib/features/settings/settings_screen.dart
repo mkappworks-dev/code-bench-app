@@ -182,8 +182,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         );
       case _SettingsNav.archive:
         return ArchiveScreen(
-          onUnarchive: (id) =>
-              ref.read(sessionServiceProvider).unarchiveSession(id),
+          onUnarchive: (id) => ref.read(sessionServiceProvider).unarchiveSession(id),
         );
     }
   }
@@ -352,17 +351,13 @@ class _NavItem extends StatelessWidget {
             Icon(
               icon,
               size: 14,
-              color: isActive
-                  ? ThemeConstants.textPrimary
-                  : ThemeConstants.textSecondary,
+              color: isActive ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
             ),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
-                color: isActive
-                    ? ThemeConstants.textPrimary
-                    : ThemeConstants.textSecondary,
+                color: isActive ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
                 fontSize: 12,
               ),
             ),
@@ -482,8 +477,7 @@ class _GeneralSectionState extends State<_GeneralSection> {
               label: 'Version',
               description: 'Current app version',
               trailing: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: ThemeConstants.success.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
@@ -534,9 +528,7 @@ class _ProvidersSection extends StatelessWidget {
         children: [
           _SectionLabel('API Keys'),
           const SizedBox(height: 8),
-          ...AIProvider.values
-              .where((p) => p != AIProvider.ollama && p != AIProvider.custom)
-              .map(
+          ...AIProvider.values.where((p) => p != AIProvider.ollama && p != AIProvider.custom).map(
                 (provider) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _ProviderKeyCard(
@@ -564,8 +556,7 @@ class _ProvidersSection extends StatelessWidget {
           TextButton.icon(
             onPressed: onTestOllama,
             icon: const Icon(LucideIcons.play, size: 12),
-            label: const Text('Test Connection',
-                style: TextStyle(fontSize: 11)),
+            label: const Text('Test Connection', style: TextStyle(fontSize: 11)),
           ),
           const SizedBox(height: 16),
           _SectionLabel('Custom Endpoint (OpenAI-compatible)'),
@@ -640,17 +631,14 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
             onTap: () => setState(() => _expanded = !_expanded),
             borderRadius: BorderRadius.circular(8),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Row(
                 children: [
                   Container(
                     width: 5,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: hasKey
-                          ? ThemeConstants.success
-                          : ThemeConstants.error,
+                      color: hasKey ? ThemeConstants.success : ThemeConstants.error,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -673,9 +661,7 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
                   ),
                   const Spacer(),
                   Icon(
-                    _expanded
-                        ? LucideIcons.chevronUp
-                        : LucideIcons.chevronDown,
+                    _expanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
                     size: 14,
                     color: ThemeConstants.mutedFg,
                   ),
@@ -701,21 +687,17 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
                         hintText: 'API key',
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscure
-                                ? LucideIcons.eyeOff
-                                : LucideIcons.eye,
+                            _obscure ? LucideIcons.eyeOff : LucideIcons.eye,
                             size: 14,
                           ),
-                          onPressed: () =>
-                              setState(() => _obscure = !_obscure),
+                          onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(LucideIcons.x,
-                        size: 14, color: ThemeConstants.error),
+                    icon: const Icon(LucideIcons.x, size: 14, color: ThemeConstants.error),
                     tooltip: 'Remove key',
                     onPressed: widget.onDelete,
                   ),
@@ -869,9 +851,7 @@ class _DropdownField extends StatelessWidget {
   Widget build(BuildContext context) {
     return DropdownButton<String>(
       value: value,
-      items: items
-          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-          .toList(),
+      items: items.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
       onChanged: onChanged,
       style: const TextStyle(
         color: ThemeConstants.textPrimary,

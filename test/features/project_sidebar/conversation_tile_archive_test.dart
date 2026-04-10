@@ -28,8 +28,7 @@ void main() {
     ));
 
     await tester.sendEventToBinding(
-      TestPointer(1, PointerDeviceKind.mouse)
-          .hover(tester.getCenter(find.text('My session'))),
+      TestPointer(1, PointerDeviceKind.mouse).hover(tester.getCenter(find.text('My session'))),
     );
     final gesture = await tester.startGesture(
       tester.getCenter(find.text('My session')),

@@ -20,8 +20,7 @@ class ArchiveScreen extends ConsumerWidget {
     return sessionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
       error: (e, _) => Center(
-        child: Text('Error: $e',
-            style: const TextStyle(color: ThemeConstants.error, fontSize: 11)),
+        child: Text('Error: $e', style: const TextStyle(color: ThemeConstants.error, fontSize: 11)),
       ),
       data: (sessions) {
         if (sessions.isEmpty) {

@@ -225,8 +225,7 @@ class ProjectSidebar extends ConsumerWidget {
                         },
                         onRemove: (id) => ref.read(projectServiceProvider).removeProject(id),
                         onNewConversation: (id) => _newConversation(context, ref, id),
-                        onArchive: (sessionId) =>
-                            ref.read(sessionServiceProvider).archiveSession(sessionId),
+                        onArchive: (sessionId) => ref.read(sessionServiceProvider).archiveSession(sessionId),
                       ),
                     );
                   },
