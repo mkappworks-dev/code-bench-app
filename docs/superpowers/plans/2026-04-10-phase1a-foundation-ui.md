@@ -10,6 +10,65 @@
 
 ---
 
+## As Implemented — Deviations from Plan
+
+The following changes were made during implementation that differ from or extend the original plan.
+
+### Additional files created / changed
+
+| File | Reason |
+|---|---|
+| `analysis_options.yaml` | Added `formatter: page_width: 120` — Dart 3.4+ reads this automatically, no CI or flag changes needed |
+| `CLAUDE.md` | Added rule: never manually edit generated files (`*.g.dart`, `*.freezed.dart`); always use `build_runner` |
+| `lib/core/utils/instant_menu.dart` | New utility: `showInstantMenu<T>` — zero-animation drop-in for `showMenu` (see below) |
+| `lib/features/project_sidebar/widgets/project_context_menu.dart` | Switched from `showMenu` to `showInstantMenu`; removed "Rename project" item |
+
+### Zero-animation popup menus (`showInstantMenu`)
+
+The plan said to fix the model picker anchor. During implementation, the user also requested that all popup menus appear and disappear instantly (no scale/fade animation).
+
+`PopupMenuThemeData.popUpAnimationStyle` (Flutter 3.16+) was the first attempt but didn't compile on the project's Flutter version. Instead, a custom `PopupRoute` subclass was created at `lib/core/utils/instant_menu.dart`:
+
+- `_InstantMenuRoute<T>` — `transitionDuration: Duration.zero`, `reverseTransitionDuration: Duration.zero`
+- `_MenuLayout` (`SingleChildLayoutDelegate`) — opens above or below the anchor based on available space; placing the menu bottom at `position.top` (button top) when opening upward so the chip is never obscured
+- `ExcludeSemantics` wrapper — suppresses the `SemanticsRole.menuItem` assertion that fires when `PopupMenuItem` is rendered outside Flutter's own `_PopupMenu` route
+
+All `showMenu` calls in the app now use `showInstantMenu`:
+- `chat_input_bar_v2.dart` — effort, mode, permission, model picker chips
+- `project_sidebar.dart` — sort menu
+- `project_context_menu.dart` — project right-click menu
+
+### Popup anchor calculation
+
+The plan's Task 4 showed a `RelativeRect` using `offset.dx + size.width` as the `right` value — this is an x-coordinate, not a screen-edge inset. The correct value is `overlayWidth - offset.dx - chipWidth`.
+
+The final `_menuAbove` helper in `chat_input_bar_v2.dart` uses `position.top = origin.dy` (button top). `_MenuLayout` then places the menu at `y = origin.dy - menuHeight`, so the menu bottom aligns with the button top — the chip remains fully visible.
+
+The sidebar sort icon uses `position.top = origin.dy + box.size.height` (button bottom) so the menu opens downward.
+
+### Conversation tile — right-click context menu
+
+The plan scoped `conversation_tile.dart` to "font size and token cleanup only." During implementation, the user also requested:
+
+- **Remove "Rename project"** from the project right-click menu
+- **Add "Rename" and "Delete"** to a new right-click context menu on conversation tiles
+
+`ConversationTile` now accepts optional `onRename` and `onDelete` callbacks and shows a `showInstantMenu` popup on right-click. `ProjectTile.onRename` and `ProjectContextMenu.handleAction`'s `onRename` parameter were removed entirely.
+
+### Code review fixes in `chat_input_bar_v2.dart`
+
+Applied during a post-implementation review — not in the original plan:
+
+- `_keyboardFocusNode` added as a field and disposed in `dispose()` — the original plan's snippet created `FocusNode()` inline in `KeyboardListener`, leaking one instance per rebuild
+- `_focusNode.requestFocus()` moved inside the `if (mounted)` guard in the `finally` block
+- `if (box is! RenderBox || !box.hasSize) return` guard added to `_showDropdown` and `_showModelPicker` — the plan used an unchecked `as RenderBox` cast
+
+### Sort notifier — safe async state read
+
+`ProjectSort.setProjectSort` and `setThreadSort` use `state.valueOrNull ?? await future`. The plan's original snippet re-awaited `future` unconditionally, which could read a stale in-flight state under certain race conditions.
+
+---
+
 ## File Map
 
 | File | Action | Responsibility |
