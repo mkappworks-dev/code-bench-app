@@ -86,11 +86,14 @@ class ChangesPanel extends ConsumerWidget {
                           (change) => _ChangeEntry(
                             change: change,
                             project: project,
-                            onRevert: () => ref.read(applyServiceProvider).revertChange(
-                                  change: change,
-                                  isGit: project?.isGit ?? false,
-                                  projectPath: project?.path ?? '',
-                                ),
+                            onRevert: () async {
+                              if (project == null) return;
+                              await ref.read(applyServiceProvider).revertChange(
+                                    change: change,
+                                    isGit: project.isGit,
+                                    projectPath: project.path,
+                                  );
+                            },
                           ),
                         ),
                       ];
@@ -146,11 +149,11 @@ class _ChangeEntry extends StatelessWidget {
 
   final AppliedChange change;
   final Project? project;
-  final VoidCallback onRevert;
+  final Future<void> Function() onRevert;
 
   /// Compute +N −N from original vs new content (line-count delta).
   (int additions, int deletions) get _lineCounts {
-    final originalLines = (change.originalContent ?? '').split('\n').length;
+    final originalLines = change.originalContent == null ? 0 : change.originalContent!.split('\n').length;
     final newLines = change.newContent.split('\n').length;
     final delta = newLines - originalLines;
     return delta >= 0 ? (delta, 0) : (0, -delta);
@@ -215,7 +218,20 @@ class _ChangeEntry extends StatelessWidget {
           const SizedBox(width: 6),
           // Revert button
           GestureDetector(
-            onTap: onRevert,
+            onTap: () async {
+              try {
+                await onRevert();
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Revert failed: $e'),
+                      backgroundColor: ThemeConstants.error,
+                    ),
+                  );
+                }
+              }
+            },
             child: const Icon(
               LucideIcons.undo2,
               size: 12,
