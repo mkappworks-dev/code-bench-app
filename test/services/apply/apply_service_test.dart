@@ -30,6 +30,7 @@ void main() {
     final filePath = '${tmpDir.path}/new_file.dart';
     await service.applyChange(
       filePath: filePath,
+      projectPath: tmpDir.path,
       newContent: 'void main() {}',
       sessionId: 'sid',
       messageId: 'mid',
@@ -54,6 +55,7 @@ void main() {
 
     await service.applyChange(
       filePath: filePath,
+      projectPath: tmpDir.path,
       newContent: 'updated content',
       sessionId: 'sid',
       messageId: 'mid',
@@ -70,6 +72,7 @@ void main() {
 
     await service.applyChange(
       filePath: filePath,
+      projectPath: tmpDir.path,
       newContent: 'changed',
       sessionId: 'sid',
       messageId: 'mid',
@@ -93,6 +96,7 @@ void main() {
     final filePath = '${tmpDir.path}/new.dart';
     await service.applyChange(
       filePath: filePath,
+      projectPath: tmpDir.path,
       newContent: 'new file content',
       sessionId: 'sid',
       messageId: 'mid',
@@ -127,6 +131,7 @@ void main() {
 
     await gitService.applyChange(
       filePath: filePath,
+      projectPath: tmpDir.path,
       newContent: 'changed',
       sessionId: 'sid',
       messageId: 'mid',
@@ -158,6 +163,7 @@ void main() {
 
     await gitService.applyChange(
       filePath: filePath,
+      projectPath: tmpDir.path,
       newContent: 'changed',
       sessionId: 'sid',
       messageId: 'mid',
@@ -177,5 +183,31 @@ void main() {
     // Notifier entry should still be there (revert did not complete)
     await Future.delayed(Duration.zero);
     expect(container.read(appliedChangesProvider)['sid'], isNotNull);
+  });
+
+  test('applyChange throws StateError for path outside project root', () async {
+    await expectLater(
+      () => service.applyChange(
+        filePath: '${tmpDir.path}/../../etc/passwd',
+        projectPath: tmpDir.path,
+        newContent: 'malicious',
+        sessionId: 'sid',
+        messageId: 'mid',
+      ),
+      throwsA(isA<StateError>()),
+    );
+
+    // Nothing written, nothing tracked
+    expect(container.read(appliedChangesProvider)['sid'], isNull);
+  });
+
+  test('assertWithinProject allows paths inside project root', () {
+    expect(
+      () => ApplyService.assertWithinProject(
+        '${tmpDir.path}/lib/main.dart',
+        tmpDir.path,
+      ),
+      returnsNormally,
+    );
   });
 }

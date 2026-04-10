@@ -41,12 +41,26 @@ class ApplyService {
   final String Function() _uuidGen;
   final ProcessRunner _processRunner;
 
+  /// Throws [StateError] if [filePath] is not inside [projectPath].
+  /// Guards against path-traversal attacks from AI-controlled filenames.
+  static void assertWithinProject(String filePath, String projectPath) {
+    final normalized = p.normalize(filePath);
+    final root = p.normalize(projectPath) + p.separator;
+    if (!normalized.startsWith(root)) {
+      throw StateError(
+        'Path "$normalized" is outside project root "$projectPath"',
+      );
+    }
+  }
+
   Future<void> applyChange({
     required String filePath,
+    required String projectPath,
     required String newContent,
     required String sessionId,
     required String messageId,
   }) async {
+    assertWithinProject(filePath, projectPath);
     final file = File(filePath);
     String? originalContent;
     if (file.existsSync()) {
@@ -74,6 +88,7 @@ class ApplyService {
     required bool isGit,
     required String projectPath,
   }) async {
+    assertWithinProject(change.filePath, projectPath);
     if (change.originalContent == null) {
       // File was created by Apply — delete it
       await _fs.deleteFile(change.filePath);

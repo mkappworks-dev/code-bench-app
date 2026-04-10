@@ -316,6 +316,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
       if (project == null) throw Exception('No active project');
 
       final absolutePath = p.join(project.path, widget.filename!);
+      ApplyService.assertWithinProject(absolutePath, project.path);
 
       String? original;
       final file = File(absolutePath);
@@ -347,8 +348,10 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
       if (project == null) throw Exception('Active project not found');
 
       final absolutePath = p.join(project.path, widget.filename!);
+      ApplyService.assertWithinProject(absolutePath, project.path);
       await ref.read(applyServiceProvider).applyChange(
             filePath: absolutePath,
+            projectPath: project.path,
             newContent: widget.code,
             sessionId: widget.sessionId,
             messageId: widget.messageId,
