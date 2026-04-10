@@ -45,6 +45,7 @@ class WorkspaceProjects extends Table {
   TextColumn get currentBranch => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  TextColumn get actionsJson => text().withDefault(const Constant('[]'))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -67,6 +68,12 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
           .getSingleOrNull();
 
   Future<void> upsertSession(ChatSessionsCompanion session) => into(chatSessions).insertOnConflictUpdate(session);
+
+  Future<void> updateSession(
+    String sessionId,
+    ChatSessionsCompanion companion,
+  ) =>
+      (update(chatSessions)..where((t) => t.sessionId.equals(sessionId))).write(companion);
 
   Future<void> deleteSession(String sessionId) =>
       (delete(chatSessions)..where((t) => t.sessionId.equals(sessionId))).go();
@@ -128,6 +135,9 @@ class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
   Future<void> upsertProject(WorkspaceProjectsCompanion project) =>
       into(workspaceProjects).insertOnConflictUpdate(project);
 
+  Future<void> updateProject(String id, WorkspaceProjectsCompanion companion) =>
+      (update(workspaceProjects)..where((t) => t.id.equals(id))).write(companion);
+
   Future<void> deleteProject(String id) => (delete(workspaceProjects)..where((t) => t.id.equals(id))).go();
 }
 
@@ -141,7 +151,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -153,6 +163,12 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await migrator.addColumn(chatSessions, chatSessions.isArchived);
+          }
+          if (from < 4) {
+            await migrator.addColumn(
+              workspaceProjects,
+              workspaceProjects.actionsJson,
+            );
           }
         },
       );

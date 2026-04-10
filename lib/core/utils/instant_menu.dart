@@ -26,6 +26,36 @@ Future<T?> showInstantMenu<T>({
   );
 }
 
+/// Shows [showInstantMenu] anchored just below the bottom-left of the widget
+/// whose [buttonContext] is passed. Use inside an onTap handler wrapped in a
+/// [Builder] so [buttonContext] resolves to the button itself (not its parent).
+Future<T?> showInstantMenuAnchoredTo<T>({
+  required BuildContext buttonContext,
+  required List<PopupMenuEntry<T>> items,
+  Color? color,
+  ShapeBorder? shape,
+  double elevation = 8.0,
+}) {
+  final button = buttonContext.findRenderObject() as RenderBox;
+  final overlay = Overlay.of(buttonContext).context.findRenderObject() as RenderBox;
+  final topLeft = button.localToGlobal(Offset.zero, ancestor: overlay);
+  final bottomLeft = topLeft + Offset(0, button.size.height);
+
+  return showInstantMenu<T>(
+    context: buttonContext,
+    position: RelativeRect.fromLTRB(
+      bottomLeft.dx,
+      bottomLeft.dy,
+      overlay.size.width - bottomLeft.dx - button.size.width,
+      overlay.size.height - bottomLeft.dy,
+    ),
+    items: items,
+    color: color,
+    shape: shape,
+    elevation: elevation,
+  );
+}
+
 class _InstantMenuRoute<T> extends PopupRoute<T> {
   _InstantMenuRoute({required this.items, required this.position, this.color, this.shape, this.elevation = 8.0});
 

@@ -56,9 +56,9 @@ class SessionService {
   }
 
   Future<void> updateSessionTitle(String sessionId, String title) async {
-    await _db.sessionDao.upsertSession(
+    await _db.sessionDao.updateSession(
+      sessionId,
       ChatSessionsCompanion(
-        sessionId: Value(sessionId),
         title: Value(title),
         updatedAt: Value(DateTime.now()),
       ),
@@ -138,9 +138,9 @@ class SessionService {
         timestamp: Value(message.timestamp),
       ),
     );
-    await _db.sessionDao.upsertSession(
+    await _db.sessionDao.updateSession(
+      sessionId,
       ChatSessionsCompanion(
-        sessionId: Value(sessionId),
         updatedAt: Value(DateTime.now()),
       ),
     );

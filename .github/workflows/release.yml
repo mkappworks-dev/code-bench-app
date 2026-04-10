@@ -53,11 +53,9 @@ jobs:
       - name: Generate code
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Format generated code
-        run: dart format lib/ test/
-
-      - name: Check formatting
-        run: dart format --set-exit-if-changed lib/ test/
+      - name: Check formatting (hand-written files only)
+        run: |
+          dart format --set-exit-if-changed $(find lib test -name "*.dart" ! -name "*.g.dart" ! -name "*.freezed.dart")
 
       - name: Build (macOS)
         if: matrix.target == 'macos'
@@ -80,13 +78,11 @@ jobs:
       - name: Package (Windows)
         if: matrix.target == 'windows'
         shell: pwsh
-        run: |
-          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath codebench-windows.zip
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath codebench-windows.zip
 
       - name: Package (Linux)
         if: matrix.target == 'linux'
-        run: |
-          tar -czf codebench-linux.tar.gz -C build/linux/x64/release bundle
+        run: tar -czf codebench-linux.tar.gz -C build/linux/x64/release bundle
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -1,12 +1,29 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/errors/app_exception.dart';
+import '../../core/utils/instant_menu.dart';
 import '../../data/models/chat_session.dart';
 import '../../data/models/project.dart';
+import '../../data/models/project_action.dart';
 import '../../features/chat/chat_notifier.dart';
+import '../../features/chat/widgets/commit_dialog.dart';
 import '../../features/project_sidebar/project_sidebar_notifier.dart';
+import '../../services/actions/action_runner_service.dart';
+import '../../services/ai/ai_service_factory.dart';
+import '../../services/git/git_service.dart';
+import '../../services/ide/ide_launch_service.dart';
+import '../../data/datasources/local/general_preferences.dart';
+import '../../data/datasources/local/secure_storage_source.dart';
+import '../../features/chat/widgets/create_pr_dialog.dart';
+import '../../services/github/github_api_service.dart';
+import '../../services/project/project_service.dart';
 
 class TopActionBar extends ConsumerWidget {
   const TopActionBar({super.key});
@@ -98,23 +115,15 @@ class TopActionBar extends ConsumerWidget {
           ],
           const Spacer(),
           // ── Right: action buttons ─────────────────────────────────────────
-          _ActionButton(
-            icon: LucideIcons.plus,
-            label: 'Add action',
-            onTap: () {}, // wired in Phase 3
-          ),
+          if (project != null) _ActionsDropdown(project: project),
           const SizedBox(width: 5),
-          _VsCodeDropdown(),
+          if (project != null) _VsCodeDropdown(projectPath: project.path),
           const SizedBox(width: 5),
           // Git action: Commit & Push (git) or Initialize Git (no git)
           if (project != null && project.isGit)
-            _CommitPushButton(onCommit: () {}, onDropdown: () {})
+            _CommitPushButton(project: project)
           else if (project != null && !project.isGit)
-            _ActionButton(
-              icon: LucideIcons.gitMerge,
-              label: 'Initialize Git',
-              onTap: () {}, // wired in Phase 3
-            ),
+            _InitGitButton(project: project),
         ],
       ),
     );
@@ -123,15 +132,122 @@ class TopActionBar extends ConsumerWidget {
 
 // ── VS Code dropdown ─────────────────────────────────────────────────────────
 
-class _VsCodeDropdown extends StatelessWidget {
+class _VsCodeDropdown extends ConsumerWidget {
+  const _VsCodeDropdown({required this.projectPath});
+  final String projectPath;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final svc = ref.watch(ideLaunchServiceProvider);
+    return Tooltip(
+      message: 'Open in…',
+      child: Builder(
+        builder: (btnContext) => _ActionButton(
+          icon: LucideIcons.code,
+          label: 'VS Code',
+          trailingCaret: true,
+          onTap: () async {
+            final action = await showInstantMenuAnchoredTo<String>(
+              buttonContext: btnContext,
+              color: ThemeConstants.panelBackground,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(7),
+                side: const BorderSide(color: Color(0xFF333333)),
+              ),
+              items: [
+                _menuItem('vscode', LucideIcons.code, 'VS Code'),
+                _menuItem('cursor', LucideIcons.zap, 'Cursor'),
+                const PopupMenuDivider(),
+                _menuItem('finder', LucideIcons.folderOpen, 'Open in Finder'),
+                _menuItem('terminal', LucideIcons.terminal, 'Open in Terminal'),
+              ],
+            );
+            if (action == null) return;
+            String? error;
+            switch (action) {
+              case 'vscode':
+                error = await svc.openVsCode(projectPath);
+              case 'cursor':
+                error = await svc.openCursor(projectPath);
+              case 'finder':
+                error = await svc.openInFinder(projectPath);
+              case 'terminal':
+                error = await svc.openInTerminal(projectPath);
+            }
+            if (error != null && btnContext.mounted) {
+              ScaffoldMessenger.of(btnContext).showSnackBar(
+                SnackBar(content: Text(error), duration: const Duration(seconds: 4)),
+              );
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String label) {
+    return PopupMenuItem(
+      value: value,
+      height: 32,
+      child: Row(
+        children: [
+          Icon(icon, size: 12, color: ThemeConstants.textSecondary),
+          const SizedBox(width: 8),
+          Text(label, style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11)),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Initialize Git button ─────────────────────────────────────────────────────
+
+class _InitGitButton extends ConsumerWidget {
+  const _InitGitButton({required this.project});
+  final Project project;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     return _ActionButton(
-      icon: LucideIcons.code,
-      label: 'VS Code',
-      trailingCaret: true,
-      onTap: () {
-        // Stub — wired in Phase 3
+      icon: LucideIcons.gitMerge,
+      label: 'Initialize Git',
+      onTap: () async {
+        final gitSvc = GitService(project.path);
+        try {
+          await gitSvc.initGit();
+        } on GitException catch (e) {
+          if (kDebugMode) debugPrint('[_InitGitButton] initGit failed: $e');
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              // Include the underlying reason (git stderr) so the user
+              // sees "fatal: ..." instead of a generic "Failed to ...".
+              SnackBar(content: Text('Failed to initialize git: ${e.message}')),
+            );
+          }
+          return;
+        }
+
+        // Refresh git status separately so a db/refresh error doesn't get
+        // reported as "init failed" — init really did succeed.
+        var refreshFailed = false;
+        try {
+          await ref.read(projectServiceProvider).refreshGitStatus(project.id);
+        } on Exception catch (e) {
+          refreshFailed = true;
+          if (kDebugMode) debugPrint('[_InitGitButton] refreshGitStatus failed: $e');
+        }
+
+        if (context.mounted) {
+          // In release builds, a silent refresh failure would leave the
+          // sidebar showing "Not a git repo" with no explanation, making
+          // the button look broken on the user's next click. Tell them.
+          final message = refreshFailed
+              ? 'Git repository initialized — reopen the project to refresh the sidebar.'
+              : 'Git repository initialized';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message)),
+          );
+        }
       },
     );
   }
@@ -139,53 +255,466 @@ class _VsCodeDropdown extends StatelessWidget {
 
 // ── Commit & Push split button ───────────────────────────────────────────────
 
-class _CommitPushButton extends StatelessWidget {
-  const _CommitPushButton({required this.onCommit, required this.onDropdown});
-  final VoidCallback onCommit;
-  final VoidCallback onDropdown;
+class _CommitPushButton extends ConsumerStatefulWidget {
+  const _CommitPushButton({required this.project});
+  final Project project;
+
+  @override
+  ConsumerState<_CommitPushButton> createState() => _CommitPushButtonState();
+}
+
+class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
+  bool _pushing = false;
+  bool _pulling = false;
+  // `null` means "unknown" (offline, no upstream, fetch failed) —
+  // rendered as a "?" badge instead of silently claiming "up to date".
+  int? _behindCount;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_checkBehindCount());
+  }
+
+  Future<void> _checkBehindCount() async {
+    // `fetchBehindCount` is documented to return `null` on soft failures
+    // (no upstream, offline), but `Process.run` can still throw synchronously
+    // if the git binary is missing or the working directory was deleted
+    // between mount and this call. This runs from `unawaited(...)` in
+    // initState, so an escaped throw would hit Flutter's uncaught-error
+    // handler instead of updating the UI — explicitly fall through to
+    // "unknown" (the `↓?` badge) so the user at least sees an honest state.
+    int? count;
+    try {
+      count = await GitService(widget.project.path).fetchBehindCount();
+    } on Exception catch (e) {
+      if (kDebugMode) debugPrint('[_CommitPushButton] fetchBehindCount threw: $e');
+      count = null;
+    }
+    if (mounted) setState(() => _behindCount = count);
+  }
+
+  Future<void> _doCommit() async {
+    final prefs = ref.read(generalPreferencesProvider);
+    final autoCommit = await prefs.getAutoCommit();
+
+    // Collect file paths from applied changes for the active session.
+    final sessionId = ref.read(activeSessionIdProvider);
+    final changedFiles = sessionId != null
+        ? ref.read(appliedChangesProvider.notifier).changesForSession(sessionId).map((c) => c.filePath).toList()
+        : <String>[];
+
+    // Generate commit message via AI.
+    final model = ref.read(selectedModelProvider);
+    final aiSvc = await ref.read(aiServiceProvider(model.provider).future);
+    final prompt = 'Write a conventional commit message (subject line only, max 72 chars) '
+        'summarising these file changes: ${changedFiles.isEmpty ? "general changes" : changedFiles.join(", ")}. '
+        'Reply with only the commit message, no explanation.';
+
+    String message = 'chore: update files';
+    if (aiSvc != null) {
+      try {
+        final response = await aiSvc.sendMessage(
+          history: const [],
+          prompt: prompt,
+          model: model,
+        );
+        final text = response.content;
+        if (text.isNotEmpty) {
+          message = text.trim().replaceAll('"', '').split('\n').first.trim();
+        }
+      } on NetworkException catch (e) {
+        // Only swallow provider-side failures (offline, bad key, rate limit).
+        // A TypeError from malformed provider JSON, or any other
+        // `Error`/`Exception`, is a real bug and should propagate so we
+        // see it instead of masking it as "provider unavailable".
+        if (kDebugMode) debugPrint('[_CommitPushButton] AI commit message failed: ${e.message}');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('AI commit message unavailable — using default.'),
+            ),
+          );
+        }
+      }
+    }
+
+    if (autoCommit) {
+      await _runCommit(message);
+      return;
+    }
+
+    if (!mounted) return;
+    final confirmed = await CommitDialog.show(context, message);
+    if (confirmed != null) {
+      await _runCommit(confirmed);
+    }
+  }
+
+  Future<void> _runCommit(String message) async {
+    try {
+      final sha = await GitService(widget.project.path).commit(message);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Committed — $sha')),
+        );
+      }
+    } on GitException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Commit failed: ${e.message}')));
+      }
+    }
+  }
+
+  Future<void> _doPush() async {
+    setState(() => _pushing = true);
+    try {
+      final branch = await GitService(widget.project.path).push();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pushed to origin/$branch')));
+      }
+    } on GitNoUpstreamException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No upstream branch. Run `git push -u origin <branch>` in your terminal.'),
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    } on GitAuthException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Push failed — check your git credentials.')),
+        );
+      }
+    } on GitException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Push failed: ${e.message}')));
+      }
+    } finally {
+      if (mounted) setState(() => _pushing = false);
+    }
+  }
+
+  Future<void> _doPull() async {
+    setState(() => _pulling = true);
+    try {
+      final n = await GitService(widget.project.path).pull();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Pulled — $n new commit(s) from origin')),
+        );
+        setState(() => _behindCount = 0);
+      }
+    } on GitConflictException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pull failed — merge conflict detected. Resolve conflicts in your editor.'),
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    } on GitNoUpstreamException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No upstream branch set.')));
+      }
+    } on GitException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pull failed: ${e.message}')));
+      }
+    } finally {
+      if (mounted) setState(() => _pulling = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final behind = _behindCount;
+    final String badgeLabel;
+    if (behind == null) {
+      badgeLabel = ' ↓?';
+    } else if (behind > 0) {
+      badgeLabel = ' ↓$behind';
+    } else {
+      badgeLabel = '';
+    }
+    final busy = _pushing || _pulling;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Left: Commit & Push
+        // Left: Commit
         GestureDetector(
-          onTap: onCommit,
+          onTap: busy ? null : _doCommit,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
             decoration: BoxDecoration(
-              color: ThemeConstants.accent,
+              color: busy ? ThemeConstants.accentDark : ThemeConstants.accent,
               borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
             ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(LucideIcons.gitCommitHorizontal, size: 12, color: Colors.white),
-                SizedBox(width: 5),
-                Text(
-                  'Commit & Push',
-                  style: TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeSmall),
-                ),
-              ],
+            child: Center(
+              widthFactor: 1,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(LucideIcons.gitCommitHorizontal, size: 12, color: Colors.white),
+                  const SizedBox(width: 5),
+                  Text(
+                    _pushing
+                        ? '● Pushing…'
+                        : _pulling
+                            ? '● Pulling…'
+                            : 'Commit',
+                    style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeSmall),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-        // Right: dropdown caret
-        GestureDetector(
-          onTap: onDropdown,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-            decoration: BoxDecoration(
-              color: ThemeConstants.accentLight,
-              border: const Border(left: BorderSide(color: ThemeConstants.accentDark)),
-              borderRadius: const BorderRadius.horizontal(right: Radius.circular(5)),
+        // Right: dropdown
+        Tooltip(
+          message: 'Git actions',
+          child: Builder(
+            builder: (btnContext) => GestureDetector(
+              onTap: () async {
+                final action = await showInstantMenuAnchoredTo<String>(
+                  buttonContext: btnContext,
+                  color: ThemeConstants.panelBackground,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(7),
+                    side: const BorderSide(color: Color(0xFF333333)),
+                  ),
+                  items: [
+                    PopupMenuItem(
+                      value: 'push',
+                      height: 32,
+                      child: Text(
+                        _pushing ? '● Pushing…' : 'Push ↑',
+                        style: const TextStyle(
+                          color: ThemeConstants.textSecondary,
+                          fontSize: ThemeConstants.uiFontSizeSmall,
+                        ),
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'pull',
+                      height: 32,
+                      child: Text(
+                        (behind != null && behind > 0) ? 'Pull ↓$behind' : 'Pull',
+                        style: TextStyle(
+                          color: (behind != null && behind > 0) ? ThemeConstants.accent : ThemeConstants.textSecondary,
+                          fontSize: ThemeConstants.uiFontSizeSmall,
+                        ),
+                      ),
+                    ),
+                    const PopupMenuDivider(),
+                    const PopupMenuItem(
+                      value: 'create_pr',
+                      height: 32,
+                      child: Text(
+                        'Create PR',
+                        style: TextStyle(
+                          color: ThemeConstants.textSecondary,
+                          fontSize: ThemeConstants.uiFontSizeSmall,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+                if (action == null) return;
+                switch (action) {
+                  case 'push':
+                    unawaited(_doPush());
+                  case 'pull':
+                    unawaited(_doPull());
+                  case 'create_pr':
+                    unawaited(_showCreatePrDialog());
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7),
+                constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
+                decoration: BoxDecoration(
+                  color: ThemeConstants.accentLight,
+                  border: const Border(left: BorderSide(color: ThemeConstants.accentDark)),
+                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(5)),
+                ),
+                child: Center(
+                  widthFactor: 1,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (badgeLabel.isNotEmpty)
+                        Text(badgeLabel,
+                            style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeLabel)),
+                      const Icon(LucideIcons.chevronDown, size: 11, color: Colors.white),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            child: const Icon(LucideIcons.chevronDown, size: 11, color: Colors.white),
           ),
         ),
       ],
     );
+  }
+
+  void _snack(String message, {Duration duration = const Duration(seconds: 4), SnackBarAction? action}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: duration, action: action),
+    );
+  }
+
+  Future<void> _showCreatePrDialog() async {
+    final gitSvc = GitService(widget.project.path);
+
+    // 1. Check GitHub token.
+    final storage = ref.read(secureStorageSourceProvider);
+    final token = await storage.readGitHubToken();
+    if (token == null) {
+      _snack('Connect GitHub in Settings → Providers');
+      return;
+    }
+
+    // 2. Ensure we're not on the default branch. Use GitService so the
+    //    error path (git missing, corrupt repo) is surfaced rather than
+    //    defaulting to an empty branch name.
+    final currentBranch = await gitSvc.currentBranch();
+    if (currentBranch == null) {
+      _snack('Could not read current branch — is this a valid git repo?');
+      return;
+    }
+    if (currentBranch == 'main' || currentBranch == 'master') {
+      _snack("You're on the default branch — create a feature branch first.");
+      return;
+    }
+
+    // 3. Generate PR title + body via AI.
+    final sessionId = ref.read(activeSessionIdProvider);
+    final changedFiles = sessionId != null
+        ? ref.read(appliedChangesProvider.notifier).changesForSession(sessionId).map((c) => c.filePath).toList()
+        : <String>[];
+    final model = ref.read(selectedModelProvider);
+    final aiSvc = await ref.read(aiServiceProvider(model.provider).future);
+
+    String prTitle = currentBranch.replaceAll('-', ' ');
+    String prBody = '';
+    if (aiSvc != null) {
+      try {
+        final prompt = 'Generate a PR title (max 70 chars) and bullet-point body for these '
+            'changes: ${changedFiles.isEmpty ? "general changes" : changedFiles.join(", ")}. '
+            'Reply in this format:\nTITLE: <title>\nBODY:\n<bullets>';
+        final response = await aiSvc.sendMessage(history: const [], prompt: prompt, model: model);
+        final text = response.content;
+        final titleMatch = RegExp(r'TITLE:\s*(.+)').firstMatch(text);
+        final bodyMatch = RegExp(r'BODY:\n([\s\S]+)').firstMatch(text);
+        if (titleMatch != null) prTitle = titleMatch.group(1)!.trim();
+        if (bodyMatch != null) prBody = bodyMatch.group(1)!.trim();
+      } on NetworkException catch (e) {
+        // As in `_doCommit`: narrow to provider-side failures so a real
+        // bug in the regex / response shape propagates instead of being
+        // explained away as "AI unavailable".
+        if (kDebugMode) debugPrint('[_CommitPushButton] AI PR title/body failed: ${e.message}');
+        _snack('AI title/body unavailable — using a default. Check your model provider.');
+      }
+    }
+
+    // 4. Parse owner/repo from git remote URL.
+    final remoteUrl = await gitSvc.getOriginUrl();
+    if (remoteUrl == null) {
+      _snack("No `origin` remote configured — run `git remote add origin <url>` first.");
+      return;
+    }
+    final repoMatch = RegExp(r'github\.com[:/]([^/]+)/([^/\.]+)').firstMatch(remoteUrl);
+    if (repoMatch == null) {
+      _snack('Could not detect GitHub owner/repo from remote');
+      return;
+    }
+    final owner = repoMatch.group(1)!;
+    final repo = repoMatch.group(2)!;
+
+    // 5. Fetch branches from GitHub. If this fails, surface the failure
+    //    instead of silently defaulting to ['main', 'master'] — otherwise
+    //    the user's real problem (bad token, 404, offline) is masked until
+    //    the PR submission fails with an opaque error.
+    final api = GitHubApiService(token);
+    List<String> branches;
+    try {
+      branches = await api.listBranches(owner, repo);
+    } catch (e, st) {
+      if (kDebugMode) debugPrint('[_CommitPushButton] listBranches failed: $e\n$st');
+      _snack('Could not list branches for $owner/$repo — check your GitHub token and repo access.');
+      return;
+    }
+
+    if (!mounted) return;
+
+    // 6. Show dialog.
+    final result = await CreatePrDialog.show(
+      context,
+      initialTitle: prTitle,
+      initialBody: prBody,
+      branches: branches,
+    );
+    if (result == null) return;
+
+    // 7. Create PR and surface the URL to the user.
+    try {
+      final prUrl = await api.createPullRequest(
+        owner: owner,
+        repo: repo,
+        title: result.title,
+        body: result.body,
+        head: currentBranch,
+        base: result.base,
+        draft: result.draft,
+      );
+      // Defence-in-depth on the GitHub API response: `prUrl` comes from
+      // `data['html_url']` and is sent to `open`. The `--` separator
+      // already blocks flag parsing, but it does NOT constrain URL
+      // schemes (`file://`, `x-apple-…://`, etc.). Only offer the
+      // "Open" action for canonical github.com URLs; otherwise just
+      // show the text so the user can copy it manually.
+      final canAutoOpen = prUrl.startsWith('https://github.com/');
+      // Always surface the URL so the user can reach their PR even if
+      // `open` fails (browser misconfigured, headless CI, etc).
+      _snack(
+        'Pull request created: $prUrl',
+        duration: const Duration(seconds: 8),
+        action: canAutoOpen
+            ? SnackBarAction(
+                label: 'Open',
+                onPressed: () {
+                  // Fire-and-forget. `.catchError` prevents a
+                  // `ProcessException` (e.g. no `open` binary on
+                  // non-macOS) from escaping as an unhandled future —
+                  // the URL is already visible in the snackbar.
+                  unawaited(
+                    Process.run('open', ['--', prUrl]).catchError(
+                      (Object _) => ProcessResult(0, -1, '', ''),
+                    ),
+                  );
+                },
+              )
+            : null,
+      );
+      // Note: no eager auto-open. The SnackBarAction is the single
+      // source of truth so the user isn't surprised by a browser launch,
+      // and we don't double-fire `open` on a successful create.
+    } on NetworkException catch (e) {
+      // `NetworkException.toString()` only renders `message`
+      // (see `AppException.toString()`), but use `e.message` directly
+      // so that a future subclass which leaks `originalError` in its
+      // `toString()` cannot expose the request `Authorization` header.
+      // A non-`NetworkException` (TypeError, StateError, etc.) is a real
+      // bug and is intentionally left to propagate as an uncaught future
+      // so it's visible in logs rather than masked as "failed to create".
+      _snack('Failed to create PR: ${e.message}');
+    }
   }
 }
 
@@ -195,27 +724,27 @@ class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.icon,
     required this.label,
-    required this.onTap,
+    this.onTap,
     this.trailingCaret = false,
   });
 
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool trailingCaret;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(5),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: ThemeConstants.inputSurface,
-          border: Border.all(color: ThemeConstants.deepBorder),
-          borderRadius: BorderRadius.circular(5),
-        ),
+    final content = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
+      decoration: BoxDecoration(
+        color: ThemeConstants.inputSurface,
+        border: Border.all(color: ThemeConstants.deepBorder),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Center(
+        widthFactor: 1,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -235,6 +764,194 @@ class _ActionButton extends StatelessWidget {
           ],
         ),
       ),
+    );
+
+    // When used as a PopupMenuButton child, onTap is null and the outer
+    // PopupMenuButton wraps us in its own InkWell — don't double-wrap,
+    // or the inner InkWell swallows the tap before the menu can open.
+    if (onTap == null) return content;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(5),
+      child: content,
+    );
+  }
+}
+
+// ── Actions dropdown ─────────────────────────────────────────────────────────
+
+class _ActionsDropdown extends ConsumerWidget {
+  const _ActionsDropdown({required this.project});
+  final Project project;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Tooltip(
+      message: 'Actions',
+      child: Builder(
+        builder: (btnContext) => _ActionButton(
+          icon: LucideIcons.plus,
+          label: 'Actions',
+          trailingCaret: true,
+          onTap: () async {
+            final value = await showInstantMenuAnchoredTo<Object>(
+              buttonContext: btnContext,
+              color: ThemeConstants.panelBackground,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(7),
+                side: const BorderSide(color: Color(0xFF333333)),
+              ),
+              items: [
+                for (final action in project.actions)
+                  PopupMenuItem<Object>(
+                    value: action,
+                    height: 32,
+                    child: Row(
+                      children: [
+                        const Icon(LucideIcons.play, size: 12, color: ThemeConstants.textSecondary),
+                        const SizedBox(width: 6),
+                        Text(
+                          action.name,
+                          style: const TextStyle(
+                            color: ThemeConstants.textSecondary,
+                            fontSize: ThemeConstants.uiFontSizeSmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (project.actions.isNotEmpty) const PopupMenuDivider(),
+                PopupMenuItem<Object>(
+                  value: '__add__',
+                  height: 32,
+                  child: Row(
+                    children: const [
+                      Icon(LucideIcons.plus, size: 12, color: ThemeConstants.textSecondary),
+                      SizedBox(width: 6),
+                      Text(
+                        'Add action',
+                        style: TextStyle(
+                          color: ThemeConstants.textSecondary,
+                          fontSize: ThemeConstants.uiFontSizeSmall,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+            if (value == null) return;
+            if (value == '__add__') {
+              if (!btnContext.mounted) return;
+              final action = await _showAddActionDialog(btnContext);
+              if (action != null) {
+                final newActions = [...project.actions, action];
+                await ref.read(projectServiceProvider).updateProjectActions(project.id, newActions);
+              }
+            } else if (value is ProjectAction) {
+              await ref.read(actionOutputNotifierProvider.notifier).run(value, project.path);
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<ProjectAction?> _showAddActionDialog(BuildContext context) {
+    return showDialog<ProjectAction>(context: context, builder: (_) => const _AddActionDialog());
+  }
+}
+
+class _AddActionDialog extends StatefulWidget {
+  const _AddActionDialog();
+
+  @override
+  State<_AddActionDialog> createState() => _AddActionDialogState();
+}
+
+class _AddActionDialogState extends State<_AddActionDialog> {
+  final _nameController = TextEditingController();
+  final _commandController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _commandController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: ThemeConstants.inputSurface,
+      title: const Text('Add Action', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: _nameController,
+            maxLength: 40,
+            decoration: const InputDecoration(
+              labelText: 'Name (e.g. Run tests)',
+              labelStyle: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+            ),
+            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _commandController,
+            decoration: const InputDecoration(
+              labelText: 'Command (e.g. flutter test)',
+              labelStyle: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+              helperText: 'Arguments are split on whitespace. Quoted args are not supported.',
+              helperStyle: TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSizeLabel),
+            ),
+            style: TextStyle(
+              color: ThemeConstants.textPrimary,
+              fontSize: ThemeConstants.uiFontSize,
+              fontFamily: ThemeConstants.editorFontFamily,
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Security: the app runs without macOS App Sandbox (see
+          // macos/Runner/README.md), so user-defined actions execute
+          // with the user's full privileges. Make that visible.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Icon(LucideIcons.triangleAlert, size: 12, color: Color(0xFFE8A228)),
+              SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Commands run with your full user privileges. Only add actions '
+                  'you would run in a terminal yourself.',
+                  style: TextStyle(
+                    color: Color(0xFFE8A228),
+                    fontSize: ThemeConstants.uiFontSizeLabel,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel', style: TextStyle(color: ThemeConstants.textSecondary)),
+        ),
+        TextButton(
+          onPressed: () {
+            final name = _nameController.text.trim();
+            final command = _commandController.text.trim();
+            if (name.isEmpty || command.isEmpty) return;
+            Navigator.of(context).pop(ProjectAction(name: name, command: command));
+          },
+          child: const Text('Save', style: TextStyle(color: ThemeConstants.accent)),
+        ),
+      ],
     );
   }
 }

@@ -56,6 +56,10 @@ cd .worktrees/feat/2026-04-07-sign-features-flag
 
 All implementation work happens inside that worktree.
 
+## macOS notes
+
+App Sandbox is **intentionally disabled** on macOS because `ActionRunnerService`, `GitService`, and `IdeLaunchService` all shell out to external binaries. See [macos/Runner/README.md](macos/Runner/README.md) for the rationale, contributor rules (no `runInShell: true`, no PAT header logging), and distribution implications. Any change to `macos/Runner/*.entitlements` or to the process-execution services must be weighed against that threat model.
+
 ## Brainstorming Options
 
 When presenting multiple-choice options (A/B/C etc.) during brainstorming:

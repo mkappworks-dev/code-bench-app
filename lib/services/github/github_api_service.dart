@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -20,16 +21,22 @@ Future<GitHubApiService?> githubApiService(Ref ref) async {
 }
 
 class GitHubApiService {
-  GitHubApiService(String token)
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: ApiConstants.githubApiBaseUrl,
-            headers: {
-              'Authorization': 'Bearer $token',
-              'Accept': 'application/vnd.github.v3+json',
-            },
-          ),
-        );
+  GitHubApiService(String token, {Dio? dio})
+      : _dio = dio ??
+            Dio(
+              BaseOptions(
+                baseUrl: ApiConstants.githubApiBaseUrl,
+                headers: {
+                  'Authorization': 'Bearer $token',
+                  'Accept': 'application/vnd.github.v3+json',
+                },
+              ),
+            );
+
+  // SECURITY: Do NOT attach `LogInterceptor(requestHeader: true)` or any
+  // logger that dumps request headers. The `Authorization` header above
+  // contains the user's GitHub Personal Access Token, and anything that
+  // prints it to the console is one `debugPrint` away from a leak.
 
   final Dio _dio;
 
@@ -63,6 +70,25 @@ class GitHubApiService {
         statusCode: e.response?.statusCode,
         originalError: e,
       );
+    }
+  }
+
+  /// Returns the GitHub username if the token is valid, null otherwise.
+  /// Only catches [DioException] — a malformed response (bad JSON shape,
+  /// missing `login` field) will propagate so the caller can distinguish
+  /// "token rejected" from "GitHub returned something unexpected".
+  Future<String?> validateToken() async {
+    try {
+      final response = await _dio.get('/user');
+      final data = response.data as Map<String, dynamic>;
+      return data['login'] as String?;
+    } on DioException catch (e) {
+      // Only log the exception type to avoid any risk of a future
+      // `toString()` override leaking the Authorization header.
+      if (kDebugMode) {
+        debugPrint('[GitHubApiService] validateToken failed: ${e.type} ${e.response?.statusCode}');
+      }
+      return null;
     }
   }
 
@@ -126,10 +152,24 @@ class GitHubApiService {
     }
   }
 
+  // Branch/ref names that are safe to render in UI and (future-proofing)
+  // feed to `git` argv. Matches the loose subset of git check-ref-format:
+  // ASCII word chars, `.`, `/`, `-`, no leading `-`, bounded length.
+  // A hostile fork that returns an exotic ref name will be silently
+  // dropped from the picker rather than risking a shell-injection bug
+  // the next time a caller wires these into a Process.run call.
+  static final _safeBranchName = RegExp(r'^[A-Za-z0-9._/-]{1,255}$');
+
   Future<List<String>> listBranches(String owner, String repo) async {
     try {
-      final response = await _dio.get('/repos/$owner/$repo/branches');
-      return (response.data as List).map((b) => b['name'] as String).toList();
+      final response = await _dio.get(
+        '/repos/$owner/$repo/branches',
+        queryParameters: {'per_page': 50},
+      );
+      return (response.data as List)
+          .map((b) => b['name'] as String)
+          .where((name) => !name.startsWith('-') && _safeBranchName.hasMatch(name))
+          .toList();
     } on DioException catch (e) {
       throw NetworkException(
         'Failed to list branches',
@@ -159,7 +199,8 @@ class GitHubApiService {
     }
   }
 
-  Future<Map<String, dynamic>> createPullRequest({
+  /// Creates a pull request. Returns the HTML URL of the created PR.
+  Future<String> createPullRequest({
     required String owner,
     required String repo,
     required String title,
@@ -179,7 +220,8 @@ class GitHubApiService {
           'draft': draft,
         },
       );
-      return response.data as Map<String, dynamic>;
+      final data = response.data as Map<String, dynamic>;
+      return data['html_url'] as String;
     } on DioException catch (e) {
       throw NetworkException(
         'Failed to create pull request',

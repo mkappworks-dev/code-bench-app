@@ -24,11 +24,10 @@ jobs:
       - name: Generate code
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Format generated code
-        run: dart format lib/ test/
-
-      - name: Check formatting
-        run: dart format --set-exit-if-changed lib/ test/
+      - name: Check formatting (hand-written files only)
+        run: |
+          dart format --set-exit-if-changed \
+            $(find lib test -name "*.dart" ! -name "*.g.dart" ! -name "*.freezed.dart")
 
       - name: Analyze
         run: flutter analyze
