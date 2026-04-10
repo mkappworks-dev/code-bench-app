@@ -27,6 +27,7 @@ mixin _$Project {
   String? get currentBranch => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   int get sortOrder => throw _privateConstructorUsedError;
+  List<ProjectAction> get actions => throw _privateConstructorUsedError;
 
   /// Serializes this Project to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -39,14 +40,23 @@ mixin _$Project {
 
 /// @nodoc
 abstract class $ProjectCopyWith<$Res> {
-  factory $ProjectCopyWith(Project value, $Res Function(Project) then) = _$ProjectCopyWithImpl<$Res, Project>;
+  factory $ProjectCopyWith(Project value, $Res Function(Project) then) =
+      _$ProjectCopyWithImpl<$Res, Project>;
   @useResult
   $Res call(
-      {String id, String name, String path, bool isGit, String? currentBranch, DateTime createdAt, int sortOrder});
+      {String id,
+      String name,
+      String path,
+      bool isGit,
+      String? currentBranch,
+      DateTime createdAt,
+      int sortOrder,
+      List<ProjectAction> actions});
 }
 
 /// @nodoc
-class _$ProjectCopyWithImpl<$Res, $Val extends Project> implements $ProjectCopyWith<$Res> {
+class _$ProjectCopyWithImpl<$Res, $Val extends Project>
+    implements $ProjectCopyWith<$Res> {
   _$ProjectCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -66,6 +76,7 @@ class _$ProjectCopyWithImpl<$Res, $Val extends Project> implements $ProjectCopyW
     Object? currentBranch = freezed,
     Object? createdAt = null,
     Object? sortOrder = null,
+    Object? actions = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -96,24 +107,39 @@ class _$ProjectCopyWithImpl<$Res, $Val extends Project> implements $ProjectCopyW
           ? _value.sortOrder
           : sortOrder // ignore: cast_nullable_to_non_nullable
               as int,
+      actions: null == actions
+          ? _value.actions
+          : actions // ignore: cast_nullable_to_non_nullable
+              as List<ProjectAction>,
     ) as $Val);
   }
 }
 
 /// @nodoc
 abstract class _$$ProjectImplCopyWith<$Res> implements $ProjectCopyWith<$Res> {
-  factory _$$ProjectImplCopyWith(_$ProjectImpl value, $Res Function(_$ProjectImpl) then) =
+  factory _$$ProjectImplCopyWith(
+          _$ProjectImpl value, $Res Function(_$ProjectImpl) then) =
       __$$ProjectImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
-      {String id, String name, String path, bool isGit, String? currentBranch, DateTime createdAt, int sortOrder});
+      {String id,
+      String name,
+      String path,
+      bool isGit,
+      String? currentBranch,
+      DateTime createdAt,
+      int sortOrder,
+      List<ProjectAction> actions});
 }
 
 /// @nodoc
-class __$$ProjectImplCopyWithImpl<$Res> extends _$ProjectCopyWithImpl<$Res, _$ProjectImpl>
+class __$$ProjectImplCopyWithImpl<$Res>
+    extends _$ProjectCopyWithImpl<$Res, _$ProjectImpl>
     implements _$$ProjectImplCopyWith<$Res> {
-  __$$ProjectImplCopyWithImpl(_$ProjectImpl _value, $Res Function(_$ProjectImpl) _then) : super(_value, _then);
+  __$$ProjectImplCopyWithImpl(
+      _$ProjectImpl _value, $Res Function(_$ProjectImpl) _then)
+      : super(_value, _then);
 
   /// Create a copy of Project
   /// with the given fields replaced by the non-null parameter values.
@@ -127,6 +153,7 @@ class __$$ProjectImplCopyWithImpl<$Res> extends _$ProjectCopyWithImpl<$Res, _$Pr
     Object? currentBranch = freezed,
     Object? createdAt = null,
     Object? sortOrder = null,
+    Object? actions = null,
   }) {
     return _then(_$ProjectImpl(
       id: null == id
@@ -157,6 +184,10 @@ class __$$ProjectImplCopyWithImpl<$Res> extends _$ProjectCopyWithImpl<$Res, _$Pr
           ? _value.sortOrder
           : sortOrder // ignore: cast_nullable_to_non_nullable
               as int,
+      actions: null == actions
+          ? _value._actions
+          : actions // ignore: cast_nullable_to_non_nullable
+              as List<ProjectAction>,
     ));
   }
 }
@@ -171,9 +202,12 @@ class _$ProjectImpl implements _Project {
       this.isGit = false,
       this.currentBranch,
       required this.createdAt,
-      this.sortOrder = 0});
+      this.sortOrder = 0,
+      final List<ProjectAction> actions = const []})
+      : _actions = actions;
 
-  factory _$ProjectImpl.fromJson(Map<String, dynamic> json) => _$$ProjectImplFromJson(json);
+  factory _$ProjectImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ProjectImplFromJson(json);
 
   @override
   final String id;
@@ -191,10 +225,18 @@ class _$ProjectImpl implements _Project {
   @override
   @JsonKey()
   final int sortOrder;
+  final List<ProjectAction> _actions;
+  @override
+  @JsonKey()
+  List<ProjectAction> get actions {
+    if (_actions is EqualUnmodifiableListView) return _actions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_actions);
+  }
 
   @override
   String toString() {
-    return 'Project(id: $id, name: $name, path: $path, isGit: $isGit, currentBranch: $currentBranch, createdAt: $createdAt, sortOrder: $sortOrder)';
+    return 'Project(id: $id, name: $name, path: $path, isGit: $isGit, currentBranch: $currentBranch, createdAt: $createdAt, sortOrder: $sortOrder, actions: $actions)';
   }
 
   @override
@@ -206,21 +248,35 @@ class _$ProjectImpl implements _Project {
             (identical(other.name, name) || other.name == name) &&
             (identical(other.path, path) || other.path == path) &&
             (identical(other.isGit, isGit) || other.isGit == isGit) &&
-            (identical(other.currentBranch, currentBranch) || other.currentBranch == currentBranch) &&
-            (identical(other.createdAt, createdAt) || other.createdAt == createdAt) &&
-            (identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder));
+            (identical(other.currentBranch, currentBranch) ||
+                other.currentBranch == currentBranch) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
+            (identical(other.sortOrder, sortOrder) ||
+                other.sortOrder == sortOrder) &&
+            const DeepCollectionEquality().equals(other._actions, _actions));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, path, isGit, currentBranch, createdAt, sortOrder);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      name,
+      path,
+      isGit,
+      currentBranch,
+      createdAt,
+      sortOrder,
+      const DeepCollectionEquality().hash(_actions));
 
   /// Create a copy of Project
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$ProjectImplCopyWith<_$ProjectImpl> get copyWith => __$$ProjectImplCopyWithImpl<_$ProjectImpl>(this, _$identity);
+  _$$ProjectImplCopyWith<_$ProjectImpl> get copyWith =>
+      __$$ProjectImplCopyWithImpl<_$ProjectImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
@@ -238,7 +294,8 @@ abstract class _Project implements Project {
       final bool isGit,
       final String? currentBranch,
       required final DateTime createdAt,
-      final int sortOrder}) = _$ProjectImpl;
+      final int sortOrder,
+      final List<ProjectAction> actions}) = _$ProjectImpl;
 
   factory _Project.fromJson(Map<String, dynamic> json) = _$ProjectImpl.fromJson;
 
@@ -256,10 +313,13 @@ abstract class _Project implements Project {
   DateTime get createdAt;
   @override
   int get sortOrder;
+  @override
+  List<ProjectAction> get actions;
 
   /// Create a copy of Project
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ProjectImplCopyWith<_$ProjectImpl> get copyWith => throw _privateConstructorUsedError;
+  _$$ProjectImplCopyWith<_$ProjectImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }

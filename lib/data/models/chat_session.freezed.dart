@@ -36,12 +36,14 @@ mixin _$ChatSession {
   /// Create a copy of ChatSession
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $ChatSessionCopyWith<ChatSession> get copyWith => throw _privateConstructorUsedError;
+  $ChatSessionCopyWith<ChatSession> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class $ChatSessionCopyWith<$Res> {
-  factory $ChatSessionCopyWith(ChatSession value, $Res Function(ChatSession) then) =
+  factory $ChatSessionCopyWith(
+          ChatSession value, $Res Function(ChatSession) then) =
       _$ChatSessionCopyWithImpl<$Res, ChatSession>;
   @useResult
   $Res call(
@@ -57,7 +59,8 @@ abstract class $ChatSessionCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$ChatSessionCopyWithImpl<$Res, $Val extends ChatSession> implements $ChatSessionCopyWith<$Res> {
+class _$ChatSessionCopyWithImpl<$Res, $Val extends ChatSession>
+    implements $ChatSessionCopyWith<$Res> {
   _$ChatSessionCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -122,8 +125,10 @@ class _$ChatSessionCopyWithImpl<$Res, $Val extends ChatSession> implements $Chat
 }
 
 /// @nodoc
-abstract class _$$ChatSessionImplCopyWith<$Res> implements $ChatSessionCopyWith<$Res> {
-  factory _$$ChatSessionImplCopyWith(_$ChatSessionImpl value, $Res Function(_$ChatSessionImpl) then) =
+abstract class _$$ChatSessionImplCopyWith<$Res>
+    implements $ChatSessionCopyWith<$Res> {
+  factory _$$ChatSessionImplCopyWith(
+          _$ChatSessionImpl value, $Res Function(_$ChatSessionImpl) then) =
       __$$ChatSessionImplCopyWithImpl<$Res>;
   @override
   @useResult
@@ -140,9 +145,11 @@ abstract class _$$ChatSessionImplCopyWith<$Res> implements $ChatSessionCopyWith<
 }
 
 /// @nodoc
-class __$$ChatSessionImplCopyWithImpl<$Res> extends _$ChatSessionCopyWithImpl<$Res, _$ChatSessionImpl>
+class __$$ChatSessionImplCopyWithImpl<$Res>
+    extends _$ChatSessionCopyWithImpl<$Res, _$ChatSessionImpl>
     implements _$$ChatSessionImplCopyWith<$Res> {
-  __$$ChatSessionImplCopyWithImpl(_$ChatSessionImpl _value, $Res Function(_$ChatSessionImpl) _then)
+  __$$ChatSessionImplCopyWithImpl(
+      _$ChatSessionImpl _value, $Res Function(_$ChatSessionImpl) _then)
       : super(_value, _then);
 
   /// Create a copy of ChatSession
@@ -215,7 +222,8 @@ class _$ChatSessionImpl implements _ChatSession {
       this.isPinned = false,
       this.isArchived = false});
 
-  factory _$ChatSessionImpl.fromJson(Map<String, dynamic> json) => _$$ChatSessionImplFromJson(json);
+  factory _$ChatSessionImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ChatSessionImplFromJson(json);
 
   @override
   final String sessionId;
@@ -248,21 +256,28 @@ class _$ChatSessionImpl implements _ChatSession {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$ChatSessionImpl &&
-            (identical(other.sessionId, sessionId) || other.sessionId == sessionId) &&
+            (identical(other.sessionId, sessionId) ||
+                other.sessionId == sessionId) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.modelId, modelId) || other.modelId == modelId) &&
-            (identical(other.providerId, providerId) || other.providerId == providerId) &&
-            (identical(other.projectId, projectId) || other.projectId == projectId) &&
-            (identical(other.createdAt, createdAt) || other.createdAt == createdAt) &&
-            (identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt) &&
-            (identical(other.isPinned, isPinned) || other.isPinned == isPinned) &&
-            (identical(other.isArchived, isArchived) || other.isArchived == isArchived));
+            (identical(other.providerId, providerId) ||
+                other.providerId == providerId) &&
+            (identical(other.projectId, projectId) ||
+                other.projectId == projectId) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
+            (identical(other.updatedAt, updatedAt) ||
+                other.updatedAt == updatedAt) &&
+            (identical(other.isPinned, isPinned) ||
+                other.isPinned == isPinned) &&
+            (identical(other.isArchived, isArchived) ||
+                other.isArchived == isArchived));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, sessionId, title, modelId, providerId, projectId, createdAt, updatedAt, isPinned, isArchived);
+  int get hashCode => Object.hash(runtimeType, sessionId, title, modelId,
+      providerId, projectId, createdAt, updatedAt, isPinned, isArchived);
 
   /// Create a copy of ChatSession
   /// with the given fields replaced by the non-null parameter values.
@@ -292,7 +307,8 @@ abstract class _ChatSession implements ChatSession {
       final bool isPinned,
       final bool isArchived}) = _$ChatSessionImpl;
 
-  factory _ChatSession.fromJson(Map<String, dynamic> json) = _$ChatSessionImpl.fromJson;
+  factory _ChatSession.fromJson(Map<String, dynamic> json) =
+      _$ChatSessionImpl.fromJson;
 
   @override
   String get sessionId;
@@ -317,5 +333,6 @@ abstract class _ChatSession implements ChatSession {
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ChatSessionImplCopyWith<_$ChatSessionImpl> get copyWith => throw _privateConstructorUsedError;
+  _$$ChatSessionImplCopyWith<_$ChatSessionImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }

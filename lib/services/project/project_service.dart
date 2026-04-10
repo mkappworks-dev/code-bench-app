@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -7,6 +8,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../data/datasources/local/app_database.dart';
 import '../../data/models/project.dart';
+import '../../data/models/project_action.dart';
 import 'git_detector.dart';
 
 part 'project_service.g.dart';
@@ -86,6 +88,19 @@ class ProjectService {
     );
   }
 
+  Future<void> updateProjectActions(
+    String projectId,
+    List<ProjectAction> actions,
+  ) async {
+    final json = jsonEncode(actions.map((a) => a.toJson()).toList());
+    await _db.projectDao.upsertProject(
+      WorkspaceProjectsCompanion(
+        id: Value(projectId),
+        actionsJson: Value(json),
+      ),
+    );
+  }
+
   Future<void> refreshGitStatus(String projectId) async {
     final row = await _db.projectDao.getProject(projectId);
     if (row == null) return;
@@ -103,6 +118,15 @@ class ProjectService {
   }
 
   Project _projectFromRow(WorkspaceProjectRow row) {
+    List<ProjectAction> actions = const [];
+    try {
+      final decoded = jsonDecode(row.actionsJson) as List<dynamic>;
+      actions = decoded
+          .map((e) => ProjectAction.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      // Corrupt actionsJson — fall back to empty list rather than crashing.
+    }
     return Project(
       id: row.id,
       name: row.name,
@@ -111,6 +135,7 @@ class ProjectService {
       currentBranch: row.currentBranch,
       createdAt: row.createdAt,
       sortOrder: row.sortOrder,
+      actions: actions,
     );
   }
 }

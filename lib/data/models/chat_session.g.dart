@@ -6,7 +6,8 @@ part of 'chat_session.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$ChatSessionImpl _$$ChatSessionImplFromJson(Map<String, dynamic> json) => _$ChatSessionImpl(
+_$ChatSessionImpl _$$ChatSessionImplFromJson(Map<String, dynamic> json) =>
+    _$ChatSessionImpl(
       sessionId: json['sessionId'] as String,
       title: json['title'] as String,
       modelId: json['modelId'] as String,
@@ -18,7 +19,8 @@ _$ChatSessionImpl _$$ChatSessionImplFromJson(Map<String, dynamic> json) => _$Cha
       isArchived: json['isArchived'] as bool? ?? false,
     );
 
-Map<String, dynamic> _$$ChatSessionImplToJson(_$ChatSessionImpl instance) => <String, dynamic>{
+Map<String, dynamic> _$$ChatSessionImplToJson(_$ChatSessionImpl instance) =>
+    <String, dynamic>{
       'sessionId': instance.sessionId,
       'title': instance.title,
       'modelId': instance.modelId,

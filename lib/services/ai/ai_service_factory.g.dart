@@ -64,7 +64,8 @@ class AiServiceFamily extends Family<AsyncValue<AIService?>> {
   static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
 
   @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies => _allTransitiveDependencies;
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
 
   @override
   String? get name => r'aiServiceProvider';
@@ -82,7 +83,10 @@ class AiServiceProvider extends AutoDisposeFutureProvider<AIService?> {
           ),
           from: aiServiceProvider,
           name: r'aiServiceProvider',
-          debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$aiServiceHash,
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$aiServiceHash,
           dependencies: AiServiceFamily._dependencies,
           allTransitiveDependencies: AiServiceFamily._allTransitiveDependencies,
           aiProvider: aiProvider,
@@ -144,7 +148,8 @@ mixin AiServiceRef on AutoDisposeFutureProviderRef<AIService?> {
   AIProvider get aiProvider;
 }
 
-class _AiServiceProviderElement extends AutoDisposeFutureProviderElement<AIService?> with AiServiceRef {
+class _AiServiceProviderElement
+    extends AutoDisposeFutureProviderElement<AIService?> with AiServiceRef {
   _AiServiceProviderElement(super.provider);
 
   @override
@@ -155,10 +160,13 @@ String _$availableModelsHash() => r'69eb26eebb8ce7a109cc652cc5abe328c8fe995f';
 
 /// See also [availableModels].
 @ProviderFor(availableModels)
-final availableModelsProvider = AutoDisposeFutureProvider<List<AIModel>>.internal(
+final availableModelsProvider =
+    AutoDisposeFutureProvider<List<AIModel>>.internal(
   availableModels,
   name: r'availableModelsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$availableModelsHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$availableModelsHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );

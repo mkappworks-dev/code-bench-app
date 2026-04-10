@@ -34,12 +34,14 @@ mixin _$WorkspaceProject {
   /// Create a copy of WorkspaceProject
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $WorkspaceProjectCopyWith<WorkspaceProject> get copyWith => throw _privateConstructorUsedError;
+  $WorkspaceProjectCopyWith<WorkspaceProject> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class $WorkspaceProjectCopyWith<$Res> {
-  factory $WorkspaceProjectCopyWith(WorkspaceProject value, $Res Function(WorkspaceProject) then) =
+  factory $WorkspaceProjectCopyWith(
+          WorkspaceProject value, $Res Function(WorkspaceProject) then) =
       _$WorkspaceProjectCopyWithImpl<$Res, WorkspaceProject>;
   @useResult
   $Res call(
@@ -53,7 +55,8 @@ abstract class $WorkspaceProjectCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$WorkspaceProjectCopyWithImpl<$Res, $Val extends WorkspaceProject> implements $WorkspaceProjectCopyWith<$Res> {
+class _$WorkspaceProjectCopyWithImpl<$Res, $Val extends WorkspaceProject>
+    implements $WorkspaceProjectCopyWith<$Res> {
   _$WorkspaceProjectCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -108,8 +111,10 @@ class _$WorkspaceProjectCopyWithImpl<$Res, $Val extends WorkspaceProject> implem
 }
 
 /// @nodoc
-abstract class _$$WorkspaceProjectImplCopyWith<$Res> implements $WorkspaceProjectCopyWith<$Res> {
-  factory _$$WorkspaceProjectImplCopyWith(_$WorkspaceProjectImpl value, $Res Function(_$WorkspaceProjectImpl) then) =
+abstract class _$$WorkspaceProjectImplCopyWith<$Res>
+    implements $WorkspaceProjectCopyWith<$Res> {
+  factory _$$WorkspaceProjectImplCopyWith(_$WorkspaceProjectImpl value,
+          $Res Function(_$WorkspaceProjectImpl) then) =
       __$$WorkspaceProjectImplCopyWithImpl<$Res>;
   @override
   @useResult
@@ -124,9 +129,11 @@ abstract class _$$WorkspaceProjectImplCopyWith<$Res> implements $WorkspaceProjec
 }
 
 /// @nodoc
-class __$$WorkspaceProjectImplCopyWithImpl<$Res> extends _$WorkspaceProjectCopyWithImpl<$Res, _$WorkspaceProjectImpl>
+class __$$WorkspaceProjectImplCopyWithImpl<$Res>
+    extends _$WorkspaceProjectCopyWithImpl<$Res, _$WorkspaceProjectImpl>
     implements _$$WorkspaceProjectImplCopyWith<$Res> {
-  __$$WorkspaceProjectImplCopyWithImpl(_$WorkspaceProjectImpl _value, $Res Function(_$WorkspaceProjectImpl) _then)
+  __$$WorkspaceProjectImplCopyWithImpl(_$WorkspaceProjectImpl _value,
+      $Res Function(_$WorkspaceProjectImpl) _then)
       : super(_value, _then);
 
   /// Create a copy of WorkspaceProject
@@ -188,7 +195,8 @@ class _$WorkspaceProjectImpl implements _WorkspaceProject {
       this.lastOpenedAt})
       : _sessionIds = sessionIds;
 
-  factory _$WorkspaceProjectImpl.fromJson(Map<String, dynamic> json) => _$$WorkspaceProjectImplFromJson(json);
+  factory _$WorkspaceProjectImpl.fromJson(Map<String, dynamic> json) =>
+      _$$WorkspaceProjectImplFromJson(json);
 
   @override
   final String id;
@@ -224,17 +232,29 @@ class _$WorkspaceProjectImpl implements _WorkspaceProject {
             other is _$WorkspaceProjectImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
-            (identical(other.localPath, localPath) || other.localPath == localPath) &&
-            (identical(other.repositoryId, repositoryId) || other.repositoryId == repositoryId) &&
-            (identical(other.activeBranch, activeBranch) || other.activeBranch == activeBranch) &&
-            const DeepCollectionEquality().equals(other._sessionIds, _sessionIds) &&
-            (identical(other.lastOpenedAt, lastOpenedAt) || other.lastOpenedAt == lastOpenedAt));
+            (identical(other.localPath, localPath) ||
+                other.localPath == localPath) &&
+            (identical(other.repositoryId, repositoryId) ||
+                other.repositoryId == repositoryId) &&
+            (identical(other.activeBranch, activeBranch) ||
+                other.activeBranch == activeBranch) &&
+            const DeepCollectionEquality()
+                .equals(other._sessionIds, _sessionIds) &&
+            (identical(other.lastOpenedAt, lastOpenedAt) ||
+                other.lastOpenedAt == lastOpenedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, localPath, repositoryId, activeBranch,
-      const DeepCollectionEquality().hash(_sessionIds), lastOpenedAt);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      name,
+      localPath,
+      repositoryId,
+      activeBranch,
+      const DeepCollectionEquality().hash(_sessionIds),
+      lastOpenedAt);
 
   /// Create a copy of WorkspaceProject
   /// with the given fields replaced by the non-null parameter values.
@@ -242,7 +262,8 @@ class _$WorkspaceProjectImpl implements _WorkspaceProject {
   @override
   @pragma('vm:prefer-inline')
   _$$WorkspaceProjectImplCopyWith<_$WorkspaceProjectImpl> get copyWith =>
-      __$$WorkspaceProjectImplCopyWithImpl<_$WorkspaceProjectImpl>(this, _$identity);
+      __$$WorkspaceProjectImplCopyWithImpl<_$WorkspaceProjectImpl>(
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
@@ -262,7 +283,8 @@ abstract class _WorkspaceProject implements WorkspaceProject {
       final List<String> sessionIds,
       final DateTime? lastOpenedAt}) = _$WorkspaceProjectImpl;
 
-  factory _WorkspaceProject.fromJson(Map<String, dynamic> json) = _$WorkspaceProjectImpl.fromJson;
+  factory _WorkspaceProject.fromJson(Map<String, dynamic> json) =
+      _$WorkspaceProjectImpl.fromJson;
 
   @override
   String get id;
@@ -283,5 +305,6 @@ abstract class _WorkspaceProject implements WorkspaceProject {
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$WorkspaceProjectImplCopyWith<_$WorkspaceProjectImpl> get copyWith => throw _privateConstructorUsedError;
+  _$$WorkspaceProjectImplCopyWith<_$WorkspaceProjectImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }

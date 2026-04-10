@@ -13,7 +13,9 @@ String _$githubAuthServiceHash() => r'b33369cec83e38488c69619c3341245921675043';
 final githubAuthServiceProvider = Provider<GitHubAuthService>.internal(
   githubAuthService,
   name: r'githubAuthServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$githubAuthServiceHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$githubAuthServiceHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );

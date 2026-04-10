@@ -40,7 +40,8 @@ mixin _$AIModel {
 
 /// @nodoc
 abstract class $AIModelCopyWith<$Res> {
-  factory $AIModelCopyWith(AIModel value, $Res Function(AIModel) then) = _$AIModelCopyWithImpl<$Res, AIModel>;
+  factory $AIModelCopyWith(AIModel value, $Res Function(AIModel) then) =
+      _$AIModelCopyWithImpl<$Res, AIModel>;
   @useResult
   $Res call(
       {String id,
@@ -54,7 +55,8 @@ abstract class $AIModelCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$AIModelCopyWithImpl<$Res, $Val extends AIModel> implements $AIModelCopyWith<$Res> {
+class _$AIModelCopyWithImpl<$Res, $Val extends AIModel>
+    implements $AIModelCopyWith<$Res> {
   _$AIModelCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -115,7 +117,8 @@ class _$AIModelCopyWithImpl<$Res, $Val extends AIModel> implements $AIModelCopyW
 
 /// @nodoc
 abstract class _$$AIModelImplCopyWith<$Res> implements $AIModelCopyWith<$Res> {
-  factory _$$AIModelImplCopyWith(_$AIModelImpl value, $Res Function(_$AIModelImpl) then) =
+  factory _$$AIModelImplCopyWith(
+          _$AIModelImpl value, $Res Function(_$AIModelImpl) then) =
       __$$AIModelImplCopyWithImpl<$Res>;
   @override
   @useResult
@@ -131,9 +134,12 @@ abstract class _$$AIModelImplCopyWith<$Res> implements $AIModelCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$AIModelImplCopyWithImpl<$Res> extends _$AIModelCopyWithImpl<$Res, _$AIModelImpl>
+class __$$AIModelImplCopyWithImpl<$Res>
+    extends _$AIModelCopyWithImpl<$Res, _$AIModelImpl>
     implements _$$AIModelImplCopyWith<$Res> {
-  __$$AIModelImplCopyWithImpl(_$AIModelImpl _value, $Res Function(_$AIModelImpl) _then) : super(_value, _then);
+  __$$AIModelImplCopyWithImpl(
+      _$AIModelImpl _value, $Res Function(_$AIModelImpl) _then)
+      : super(_value, _then);
 
   /// Create a copy of AIModel
   /// with the given fields replaced by the non-null parameter values.
@@ -199,7 +205,8 @@ class _$AIModelImpl implements _AIModel {
       this.supportsStreaming = true,
       this.isDefault = false});
 
-  factory _$AIModelImpl.fromJson(Map<String, dynamic> json) => _$$AIModelImplFromJson(json);
+  factory _$AIModelImpl.fromJson(Map<String, dynamic> json) =>
+      _$$AIModelImplFromJson(json);
 
   @override
   final String id;
@@ -232,26 +239,32 @@ class _$AIModelImpl implements _AIModel {
         (other.runtimeType == runtimeType &&
             other is _$AIModelImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.provider, provider) || other.provider == provider) &&
+            (identical(other.provider, provider) ||
+                other.provider == provider) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.modelId, modelId) || other.modelId == modelId) &&
-            (identical(other.endpoint, endpoint) || other.endpoint == endpoint) &&
-            (identical(other.contextWindow, contextWindow) || other.contextWindow == contextWindow) &&
-            (identical(other.supportsStreaming, supportsStreaming) || other.supportsStreaming == supportsStreaming) &&
-            (identical(other.isDefault, isDefault) || other.isDefault == isDefault));
+            (identical(other.endpoint, endpoint) ||
+                other.endpoint == endpoint) &&
+            (identical(other.contextWindow, contextWindow) ||
+                other.contextWindow == contextWindow) &&
+            (identical(other.supportsStreaming, supportsStreaming) ||
+                other.supportsStreaming == supportsStreaming) &&
+            (identical(other.isDefault, isDefault) ||
+                other.isDefault == isDefault));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, provider, name, modelId, endpoint, contextWindow, supportsStreaming, isDefault);
+  int get hashCode => Object.hash(runtimeType, id, provider, name, modelId,
+      endpoint, contextWindow, supportsStreaming, isDefault);
 
   /// Create a copy of AIModel
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$AIModelImplCopyWith<_$AIModelImpl> get copyWith => __$$AIModelImplCopyWithImpl<_$AIModelImpl>(this, _$identity);
+  _$$AIModelImplCopyWith<_$AIModelImpl> get copyWith =>
+      __$$AIModelImplCopyWithImpl<_$AIModelImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
@@ -295,5 +308,6 @@ abstract class _AIModel implements AIModel {
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$AIModelImplCopyWith<_$AIModelImpl> get copyWith => throw _privateConstructorUsedError;
+  _$$AIModelImplCopyWith<_$AIModelImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }

@@ -6,14 +6,17 @@ part of 'onboarding_preferences.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$onboardingPreferencesHash() => r'3c6c84da8828282f8d3848a4a4a2bd3a14e5a646';
+String _$onboardingPreferencesHash() =>
+    r'3c6c84da8828282f8d3848a4a4a2bd3a14e5a646';
 
 /// See also [onboardingPreferences].
 @ProviderFor(onboardingPreferences)
 final onboardingPreferencesProvider = Provider<OnboardingPreferences>.internal(
   onboardingPreferences,
   name: r'onboardingPreferencesProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$onboardingPreferencesHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$onboardingPreferencesHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );

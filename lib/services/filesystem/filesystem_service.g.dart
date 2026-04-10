@@ -13,7 +13,9 @@ String _$filesystemServiceHash() => r'75f325571c452e8c8c22011b69c2dacd9cf05006';
 final filesystemServiceProvider = Provider<FilesystemService>.internal(
   filesystemService,
   name: r'filesystemServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$filesystemServiceHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$filesystemServiceHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );

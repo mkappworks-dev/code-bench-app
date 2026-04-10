@@ -45,6 +45,7 @@ class WorkspaceProjects extends Table {
   TextColumn get currentBranch => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  TextColumn get actionsJson => text().withDefault(const Constant('[]'))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -141,7 +142,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -153,6 +154,12 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await migrator.addColumn(chatSessions, chatSessions.isArchived);
+          }
+          if (from < 4) {
+            await migrator.addColumn(
+              workspaceProjects,
+              workspaceProjects.actionsJson,
+            );
           }
         },
       );

@@ -6,14 +6,17 @@ part of 'general_preferences.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$generalPreferencesHash() => r'45c3499e243189d6a6bd66afdeb2736ffba541dc';
+String _$generalPreferencesHash() =>
+    r'45c3499e243189d6a6bd66afdeb2736ffba541dc';
 
 /// See also [generalPreferences].
 @ProviderFor(generalPreferences)
 final generalPreferencesProvider = Provider<GeneralPreferences>.internal(
   generalPreferences,
   name: r'generalPreferencesProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$generalPreferencesHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$generalPreferencesHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );

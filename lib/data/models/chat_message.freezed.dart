@@ -30,18 +30,21 @@ mixin _$CodeBlock {
   /// Create a copy of CodeBlock
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $CodeBlockCopyWith<CodeBlock> get copyWith => throw _privateConstructorUsedError;
+  $CodeBlockCopyWith<CodeBlock> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class $CodeBlockCopyWith<$Res> {
-  factory $CodeBlockCopyWith(CodeBlock value, $Res Function(CodeBlock) then) = _$CodeBlockCopyWithImpl<$Res, CodeBlock>;
+  factory $CodeBlockCopyWith(CodeBlock value, $Res Function(CodeBlock) then) =
+      _$CodeBlockCopyWithImpl<$Res, CodeBlock>;
   @useResult
   $Res call({String code, String? language, String? filename});
 }
 
 /// @nodoc
-class _$CodeBlockCopyWithImpl<$Res, $Val extends CodeBlock> implements $CodeBlockCopyWith<$Res> {
+class _$CodeBlockCopyWithImpl<$Res, $Val extends CodeBlock>
+    implements $CodeBlockCopyWith<$Res> {
   _$CodeBlockCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -76,8 +79,10 @@ class _$CodeBlockCopyWithImpl<$Res, $Val extends CodeBlock> implements $CodeBloc
 }
 
 /// @nodoc
-abstract class _$$CodeBlockImplCopyWith<$Res> implements $CodeBlockCopyWith<$Res> {
-  factory _$$CodeBlockImplCopyWith(_$CodeBlockImpl value, $Res Function(_$CodeBlockImpl) then) =
+abstract class _$$CodeBlockImplCopyWith<$Res>
+    implements $CodeBlockCopyWith<$Res> {
+  factory _$$CodeBlockImplCopyWith(
+          _$CodeBlockImpl value, $Res Function(_$CodeBlockImpl) then) =
       __$$CodeBlockImplCopyWithImpl<$Res>;
   @override
   @useResult
@@ -85,9 +90,12 @@ abstract class _$$CodeBlockImplCopyWith<$Res> implements $CodeBlockCopyWith<$Res
 }
 
 /// @nodoc
-class __$$CodeBlockImplCopyWithImpl<$Res> extends _$CodeBlockCopyWithImpl<$Res, _$CodeBlockImpl>
+class __$$CodeBlockImplCopyWithImpl<$Res>
+    extends _$CodeBlockCopyWithImpl<$Res, _$CodeBlockImpl>
     implements _$$CodeBlockImplCopyWith<$Res> {
-  __$$CodeBlockImplCopyWithImpl(_$CodeBlockImpl _value, $Res Function(_$CodeBlockImpl) _then) : super(_value, _then);
+  __$$CodeBlockImplCopyWithImpl(
+      _$CodeBlockImpl _value, $Res Function(_$CodeBlockImpl) _then)
+      : super(_value, _then);
 
   /// Create a copy of CodeBlock
   /// with the given fields replaced by the non-null parameter values.
@@ -120,7 +128,8 @@ class __$$CodeBlockImplCopyWithImpl<$Res> extends _$CodeBlockCopyWithImpl<$Res, 
 class _$CodeBlockImpl implements _CodeBlock {
   const _$CodeBlockImpl({required this.code, this.language, this.filename});
 
-  factory _$CodeBlockImpl.fromJson(Map<String, dynamic> json) => _$$CodeBlockImplFromJson(json);
+  factory _$CodeBlockImpl.fromJson(Map<String, dynamic> json) =>
+      _$$CodeBlockImplFromJson(json);
 
   @override
   final String code;
@@ -140,8 +149,10 @@ class _$CodeBlockImpl implements _CodeBlock {
         (other.runtimeType == runtimeType &&
             other is _$CodeBlockImpl &&
             (identical(other.code, code) || other.code == code) &&
-            (identical(other.language, language) || other.language == language) &&
-            (identical(other.filename, filename) || other.filename == filename));
+            (identical(other.language, language) ||
+                other.language == language) &&
+            (identical(other.filename, filename) ||
+                other.filename == filename));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -165,10 +176,13 @@ class _$CodeBlockImpl implements _CodeBlock {
 }
 
 abstract class _CodeBlock implements CodeBlock {
-  const factory _CodeBlock({required final String code, final String? language, final String? filename}) =
-      _$CodeBlockImpl;
+  const factory _CodeBlock(
+      {required final String code,
+      final String? language,
+      final String? filename}) = _$CodeBlockImpl;
 
-  factory _CodeBlock.fromJson(Map<String, dynamic> json) = _$CodeBlockImpl.fromJson;
+  factory _CodeBlock.fromJson(Map<String, dynamic> json) =
+      _$CodeBlockImpl.fromJson;
 
   @override
   String get code;
@@ -181,7 +195,8 @@ abstract class _CodeBlock implements CodeBlock {
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$CodeBlockImplCopyWith<_$CodeBlockImpl> get copyWith => throw _privateConstructorUsedError;
+  _$$CodeBlockImplCopyWith<_$CodeBlockImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) {
@@ -204,12 +219,14 @@ mixin _$ChatMessage {
   /// Create a copy of ChatMessage
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $ChatMessageCopyWith<ChatMessage> get copyWith => throw _privateConstructorUsedError;
+  $ChatMessageCopyWith<ChatMessage> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
 abstract class $ChatMessageCopyWith<$Res> {
-  factory $ChatMessageCopyWith(ChatMessage value, $Res Function(ChatMessage) then) =
+  factory $ChatMessageCopyWith(
+          ChatMessage value, $Res Function(ChatMessage) then) =
       _$ChatMessageCopyWithImpl<$Res, ChatMessage>;
   @useResult
   $Res call(
@@ -223,7 +240,8 @@ abstract class $ChatMessageCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$ChatMessageCopyWithImpl<$Res, $Val extends ChatMessage> implements $ChatMessageCopyWith<$Res> {
+class _$ChatMessageCopyWithImpl<$Res, $Val extends ChatMessage>
+    implements $ChatMessageCopyWith<$Res> {
   _$ChatMessageCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
@@ -278,8 +296,10 @@ class _$ChatMessageCopyWithImpl<$Res, $Val extends ChatMessage> implements $Chat
 }
 
 /// @nodoc
-abstract class _$$ChatMessageImplCopyWith<$Res> implements $ChatMessageCopyWith<$Res> {
-  factory _$$ChatMessageImplCopyWith(_$ChatMessageImpl value, $Res Function(_$ChatMessageImpl) then) =
+abstract class _$$ChatMessageImplCopyWith<$Res>
+    implements $ChatMessageCopyWith<$Res> {
+  factory _$$ChatMessageImplCopyWith(
+          _$ChatMessageImpl value, $Res Function(_$ChatMessageImpl) then) =
       __$$ChatMessageImplCopyWithImpl<$Res>;
   @override
   @useResult
@@ -294,9 +314,11 @@ abstract class _$$ChatMessageImplCopyWith<$Res> implements $ChatMessageCopyWith<
 }
 
 /// @nodoc
-class __$$ChatMessageImplCopyWithImpl<$Res> extends _$ChatMessageCopyWithImpl<$Res, _$ChatMessageImpl>
+class __$$ChatMessageImplCopyWithImpl<$Res>
+    extends _$ChatMessageCopyWithImpl<$Res, _$ChatMessageImpl>
     implements _$$ChatMessageImplCopyWith<$Res> {
-  __$$ChatMessageImplCopyWithImpl(_$ChatMessageImpl _value, $Res Function(_$ChatMessageImpl) _then)
+  __$$ChatMessageImplCopyWithImpl(
+      _$ChatMessageImpl _value, $Res Function(_$ChatMessageImpl) _then)
       : super(_value, _then);
 
   /// Create a copy of ChatMessage
@@ -358,7 +380,8 @@ class _$ChatMessageImpl implements _ChatMessage {
       this.isStreaming = false})
       : _codeBlocks = codeBlocks;
 
-  factory _$ChatMessageImpl.fromJson(Map<String, dynamic> json) => _$$ChatMessageImplFromJson(json);
+  factory _$ChatMessageImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ChatMessageImplFromJson(json);
 
   @override
   final String id;
@@ -394,12 +417,16 @@ class _$ChatMessageImpl implements _ChatMessage {
         (other.runtimeType == runtimeType &&
             other is _$ChatMessageImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.sessionId, sessionId) || other.sessionId == sessionId) &&
+            (identical(other.sessionId, sessionId) ||
+                other.sessionId == sessionId) &&
             (identical(other.role, role) || other.role == role) &&
             (identical(other.content, content) || other.content == content) &&
-            const DeepCollectionEquality().equals(other._codeBlocks, _codeBlocks) &&
-            (identical(other.timestamp, timestamp) || other.timestamp == timestamp) &&
-            (identical(other.isStreaming, isStreaming) || other.isStreaming == isStreaming));
+            const DeepCollectionEquality()
+                .equals(other._codeBlocks, _codeBlocks) &&
+            (identical(other.timestamp, timestamp) ||
+                other.timestamp == timestamp) &&
+            (identical(other.isStreaming, isStreaming) ||
+                other.isStreaming == isStreaming));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -433,7 +460,8 @@ abstract class _ChatMessage implements ChatMessage {
       required final DateTime timestamp,
       final bool isStreaming}) = _$ChatMessageImpl;
 
-  factory _ChatMessage.fromJson(Map<String, dynamic> json) = _$ChatMessageImpl.fromJson;
+  factory _ChatMessage.fromJson(Map<String, dynamic> json) =
+      _$ChatMessageImpl.fromJson;
 
   @override
   String get id;
@@ -454,5 +482,6 @@ abstract class _ChatMessage implements ChatMessage {
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ChatMessageImplCopyWith<_$ChatMessageImpl> get copyWith => throw _privateConstructorUsedError;
+  _$$ChatMessageImplCopyWith<_$ChatMessageImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }

@@ -13,7 +13,9 @@ String _$sessionServiceHash() => r'711785a3c0116c25dc6daf99d11905dfc1f2a6f2';
 final sessionServiceProvider = Provider<SessionService>.internal(
   sessionService,
   name: r'sessionServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$sessionServiceHash,
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$sessionServiceHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
