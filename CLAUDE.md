@@ -32,6 +32,8 @@ dart run build_runner build --delete-conflicting-outputs
 dart run build_runner watch --delete-conflicting-outputs
 ```
 
+> **Never edit generated files manually** (e.g. `*.g.dart`, `*.freezed.dart`). Always regenerate them via `build_runner`. Manual edits will be overwritten on the next build.
+
 ## Implementation Plans & Worktrees
 
 Plans are saved to `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`.

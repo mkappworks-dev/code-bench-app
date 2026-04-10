@@ -153,7 +153,9 @@ The four chips in the controls row all become functional dropdowns, anchored to 
 
 Dropdown menus: background `panelBackground` (`#1E1E1E`), border `#333`, `border-radius: 7px`, `box-shadow: 0 6px 24px rgba(0,0,0,0.6)`. Active selection shows a Lucide `check` icon on the right. Item font size 11px.
 
-The model picker dropdown replaces the existing `showMenu` call (which positions at `RelativeRect.fromLTRB(0,0,0,0)` — a hardcoded position). The new dropdown opens anchored below the model chip using a `PopupMenuButton` or a custom overlay positioned relative to the chip's `RenderBox`.
+The model picker dropdown replaces the existing `showMenu` call (which positions at `RelativeRect.fromLTRB(0,0,0,0)` — a hardcoded position). The new dropdown opens anchored **above** the chip using `showInstantMenu` (see `lib/core/utils/instant_menu.dart`), a zero-animation `PopupRoute` subclass. `RelativeRect.top = origin.dy` (button top); `_MenuLayout` places the menu at `y = origin.dy − menuHeight` so the menu bottom sits at the button top without overlap.
+
+> **As implemented:** `PopupMenuButton` was not used. All chip menus (`effort`, `mode`, `permission`, `model`) use the shared `showInstantMenu` utility — a custom `PopupRoute<T>` with `transitionDuration: Duration.zero` that handles positioning via `_MenuLayout` (`SingleChildLayoutDelegate`). `PopupMenuThemeData.popUpAnimationStyle` (Flutter 3.16+) was unavailable on the project's Flutter version.
 
 ---
 
@@ -246,16 +248,19 @@ Archiving a session is triggered from the conversation tile context menu (right-
 | File | Changes |
 |---|---|
 | `pubspec.yaml` | Add `lucide_icons_flutter` (`shared_preferences` already present) |
+| `analysis_options.yaml` | Add `formatter: page_width: 120` — Dart 3.4+ reads this automatically *(added during impl)* |
 | `lib/core/constants/theme_constants.dart` | Add 4 tokens, update `uiFontSize`, add `uiFontSizeLabel`, `uiFontSizeBadge` |
+| `lib/core/utils/instant_menu.dart` | **New** — `showInstantMenu<T>`: zero-animation `PopupRoute` drop-in for `showMenu` *(added during impl)* |
 | `lib/router/app_router.dart` | Disable route transition animations |
 | `lib/features/chat/widgets/message_bubble.dart` | Full redesign — right-align user, flat assistant, pulsing dot, Lucide icons |
-| `lib/features/chat/widgets/chat_input_bar_v2.dart` | Lucide icons, anchored dropdowns for all 4 chips, token cleanup |
+| `lib/features/chat/widgets/chat_input_bar_v2.dart` | Lucide icons, `showInstantMenu` dropdowns for all 4 chips, `_keyboardFocusNode` memory fix, `mounted` guard |
 | `lib/features/chat/widgets/message_list.dart` | Typography token cleanup |
 | `lib/shell/widgets/top_action_bar.dart` | New button order, VS Code + Cursor + Finder + Terminal dropdown, Commit split button |
 | `lib/shell/widgets/status_bar.dart` | Lucide icons, token cleanup |
-| `lib/features/project_sidebar/project_sidebar.dart` | Lucide icons, token cleanup |
+| `lib/features/project_sidebar/project_sidebar.dart` | Lucide icons, sort icon + `showInstantMenu` sort dropdown, token cleanup |
 | `lib/features/project_sidebar/widgets/project_tile.dart` | Icon-only git badge, new-chat icon, Lucide icons, typography |
-| `lib/features/project_sidebar/widgets/conversation_tile.dart` | Typography token cleanup + Archive item in right-click context menu |
+| `lib/features/project_sidebar/widgets/project_context_menu.dart` | Switch to `showInstantMenu`; remove "Rename project" *(moved to conversation menu — see below)* |
+| `lib/features/project_sidebar/widgets/conversation_tile.dart` | Typography token cleanup + right-click context menu with **Rename** and **Delete** (`onRename`/`onDelete` callbacks; dialogs wired in Phase 3) |
 | `lib/features/project_sidebar/project_sidebar_notifier.dart` | Add sort state (projects + threads), persist via SharedPreferences |
 | `lib/features/settings/settings_screen.dart` | Full redesign — two-pane layout, section rows, provider rows, Restore defaults |
 | `lib/features/settings/archive_screen.dart` | New file — archived sessions grouped by project, Unarchive action |
