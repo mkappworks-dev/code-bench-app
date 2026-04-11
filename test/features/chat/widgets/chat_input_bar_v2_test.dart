@@ -37,4 +37,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Low'), findsOneWidget);
   });
+
+  testWidgets('typed draft does not carry over when sessionId changes', (tester) async {
+    // Pump with session 's1' and type a draft into the text field.
+    await tester.pumpWidget(_wrap(const ChatInputBarV2(sessionId: 's1')));
+    await tester.enterText(find.byType(TextField), 'half-written question');
+    expect(find.text('half-written question'), findsOneWidget);
+
+    // Pump the same widget type at the same tree slot with a new
+    // sessionId. Without didUpdateWidget clearing, Flutter would
+    // preserve the _ChatInputBarV2State and the draft would bleed
+    // through to the new session.
+    await tester.pumpWidget(_wrap(const ChatInputBarV2(sessionId: 's2')));
+    await tester.pump();
+
+    expect(find.text('half-written question'), findsNothing);
+    final textField = tester.widget<TextField>(find.byType(TextField));
+    expect(textField.controller?.text, isEmpty);
+  });
 }

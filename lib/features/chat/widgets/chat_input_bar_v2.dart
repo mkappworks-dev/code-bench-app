@@ -72,6 +72,20 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(ChatInputBarV2 oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Flutter reuses this Element across sessionId changes (same widget
+    // type in the same tree slot), so the text controller keeps whatever
+    // half-written draft the user left in the previous chat. Clear it
+    // here so drafts don't bleed between sessions of the same or
+    // different projects. Effort/mode/permission stay untouched —
+    // those are intentional global sender preferences.
+    if (oldWidget.sessionId != widget.sessionId) {
+      _controller.clear();
+    }
+  }
+
   /// Resolves the active project for this session. Returns null if no project
   /// is selected or the project row has not loaded yet.
   Project? _resolveActiveProject() {
