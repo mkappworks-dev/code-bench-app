@@ -1,9 +1,13 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../services/git/git_live_state_provider.dart';
 import '../../../services/git/git_service.dart';
 import '../branch_picker_notifier.dart';
@@ -36,6 +40,7 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
   List<String> _branches = [];
   Set<String> _worktreeBranches = {};
   bool _loading = true;
+  String? _loadError;
   bool _createMode = false;
 
   @override
@@ -55,16 +60,34 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
     super.dispose();
   }
 
+  /// Loads local and worktree branch lists. Wrapped in try/catch so a
+  /// synchronous `Process.run` throw (git binary missing, cwd deleted)
+  /// cannot escape `initState`'s async zone and leave `_loading == true`
+  /// forever — the popover would otherwise be stuck at an infinite spinner
+  /// with no way to recover short of closing and reopening.
   Future<void> _load() async {
-    final branches = await _notifier.listLocalBranches();
-    final wtBranches = await _notifier.worktreeBranches();
-    if (mounted) {
-      setState(() {
-        _branches = branches;
-        _worktreeBranches = wtBranches;
-        _loading = false;
-      });
-      _filterFocus.requestFocus();
+    try {
+      final branches = await _notifier.listLocalBranches();
+      final wtBranches = await _notifier.worktreeBranches();
+      if (mounted) {
+        setState(() {
+          _branches = branches;
+          _worktreeBranches = wtBranches;
+          _loading = false;
+          _loadError = null;
+        });
+        _filterFocus.requestFocus();
+      }
+    } on Exception catch (e) {
+      dLog('[BranchPickerPopover] _load failed: $e');
+      if (mounted) {
+        setState(() {
+          _branches = const [];
+          _worktreeBranches = const {};
+          _loading = false;
+          _loadError = 'Could not read branches — is git installed and the folder available?';
+        });
+      }
     }
   }
 
@@ -75,12 +98,40 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
         ref.invalidate(gitLiveStateProvider(widget.projectPath));
         widget.onClose();
       }
+    } on ArgumentError catch (e) {
+      // Leading-dash / empty branch guard from BranchPickerNotifier —
+      // surface as a snackbar rather than letting it crash the zone.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message.toString())));
+      }
     } on GitException catch (e) {
       if (mounted) {
         final msg = e.message.contains('would be overwritten')
             ? 'Checkout failed — stash or commit your changes first.'
             : 'Checkout failed: ${e.message}';
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), duration: const Duration(seconds: 4)));
+        // Reload the branch list so "current branch" highlighting reflects
+        // reality (another worktree may have moved the ref between _load
+        // and tap, and the stale list would mislead the next click).
+        unawaited(_load());
+      }
+    } on ProcessException catch (e) {
+      // Thrown when `git` isn't on PATH or the cwd was deleted out from
+      // under us. `on Exception` would swallow this too, but being
+      // explicit guarantees we won't accidentally hide a programmer-error
+      // `Error` subclass.
+      dLog('[BranchPickerPopover] checkout ProcessException: ${e.message}');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Checkout failed — git binary unavailable.')));
+      }
+    } on FileSystemException catch (e) {
+      dLog('[BranchPickerPopover] checkout FileSystemException: ${e.message}');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Checkout failed — project folder unavailable.')));
       }
     }
   }
@@ -100,6 +151,20 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
     } on GitException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: ${e.message}')));
+      }
+    } on ProcessException catch (e) {
+      dLog('[BranchPickerPopover] createBranch ProcessException: ${e.message}');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Create branch failed — git binary unavailable.')));
+      }
+    } on FileSystemException catch (e) {
+      dLog('[BranchPickerPopover] createBranch FileSystemException: ${e.message}');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Create branch failed — project folder unavailable.')));
       }
     }
   }
@@ -154,6 +219,17 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
                                   width: 14,
                                   height: 14,
                                   child: CircularProgressIndicator(strokeWidth: 1.5),
+                                ),
+                              ),
+                            )
+                          : _loadError != null
+                          ? Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Text(
+                                _loadError!,
+                                style: const TextStyle(
+                                  color: ThemeConstants.warning,
+                                  fontSize: ThemeConstants.uiFontSizeLabel,
                                 ),
                               ),
                             )

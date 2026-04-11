@@ -13,7 +13,7 @@ import '../../../data/models/applied_change.dart';
 import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../../../services/apply/apply_service.dart';
-import '../../../services/git/git_live_state_provider.dart';
+import '../../../services/project/git_detector.dart';
 import '../chat_notifier.dart';
 import 'conflict_merge_view.dart';
 
@@ -33,10 +33,14 @@ class ChangesPanel extends ConsumerWidget {
       grouped.putIfAbsent(change.messageId, () => []).add(change);
     }
 
-    // Resolve active project for path
+    // Resolve active project for path.
+    // Revert uses a *synchronous* `GitDetector.isGitRepo` check rather than
+    // reading `gitLiveStateProvider`. The provider's `AsyncValue.value`
+    // would fall back to `false` during loading/error and silently degrade
+    // the revert mechanism — a destructive mismatch if this gate is wrong.
     final projectId = ref.watch(activeProjectIdProvider);
     final project = ref.watch(projectsProvider).value?.firstWhereOrNull((proj) => proj.id == projectId);
-    final isGit = project != null ? (ref.watch(gitLiveStateProvider(project.path)).value?.isGit ?? false) : false;
+    final isGit = project != null ? GitDetector.isGitRepo(project.path) : false;
 
     return Container(
       decoration: const BoxDecoration(

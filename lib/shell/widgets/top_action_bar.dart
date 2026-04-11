@@ -88,7 +88,11 @@ class TopActionBar extends ConsumerWidget {
     );
 
     final liveStateAsync = project != null ? ref.watch(gitLiveStateProvider(project.path)) : null;
-    final isGit = liveStateAsync?.value?.isGit ?? false;
+    // Tri-state: `true` = known git repo, `false` = known non-git, `null` =
+    // loading OR error. We only flip to the "No Git" badge / Init Git button
+    // when we've **observed** a non-git state — loading and error keep the
+    // bar neutral so it doesn't flicker to "Init Git" on every refocus.
+    final bool? isGit = liveStateAsync?.value?.isGit;
 
     return Container(
       height: 38,
@@ -119,8 +123,9 @@ class TopActionBar extends ConsumerWidget {
                 style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeLabel),
               ),
             ),
-            // No Git badge (only when not a git repo)
-            if (!isGit) ...[
+            // No Git badge (only when we've definitively observed the path
+            // is not a git repo — skipped during loading/error).
+            if (isGit == false) ...[
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -148,8 +153,16 @@ class TopActionBar extends ConsumerWidget {
                   const SizedBox(width: 5),
                   _VsCodeDropdown(projectId: project.id, projectPath: project.path),
                   const SizedBox(width: 5),
-                  // Git action: Commit & Push (git) or Initialize Git (no git)
-                  if (isGit) _CommitPushButton(project: project) else _InitGitButton(project: project),
+                  // Git action: Commit & Push (git) or Initialize Git
+                  // (confirmed non-git). During loading/error (isGit == null)
+                  // render a spacer so the layout doesn't jump and the user
+                  // is never offered "Init Git" on a repo that already exists.
+                  if (isGit == true)
+                    _CommitPushButton(project: project)
+                  else if (isGit == false)
+                    _InitGitButton(project: project)
+                  else
+                    const SizedBox(width: 1, height: ThemeConstants.actionButtonHeight),
                 ],
               ),
             ),
@@ -525,15 +538,30 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     final liveState = liveStateAsync.value;
     final behind = behindAsync.value;
 
-    final canCommit = liveState?.hasUncommitted ?? false;
+    // Nullable probe fields from [GitLiveState] mean "unknown" — never
+    // treat them as falsy defaults. `hasUncommitted == null` or
+    // `aheadCount == null` disables the action and triggers a "?" badge,
+    // so a failing `git status` never deceptively dims the Commit button
+    // on a dirty repo. See the class-level docs on [GitLiveState].
+    final canCommit = liveState?.hasUncommitted == true;
     final canPush = (liveState?.aheadCount ?? 0) > 0;
     final canPull = (behind ?? 0) > 0;
-    final canPr = !(liveState?.isOnDefaultBranch ?? true);
+    // Open PR requires a real branch that isn't the default. Detached HEAD
+    // (branch == null) and unknown branch both fall through to `false`.
+    final canPr = liveState?.branch != null && !(liveState?.isOnDefaultBranch ?? true);
     final hasRemotes = _remotes.isNotEmpty;
     final canDropdown = canPush || canPull || canPr || hasRemotes;
 
+    // Probe-state badges on the dropdown. `↓?` signals "behind count
+    // unknown" (offline/fetch failed), `!` signals "one of the local
+    // probes failed" so the user can tell a disabled Commit/Push apart
+    // from a genuinely clean/up-to-date repo.
+    final bool hasUnknownProbe =
+        liveState?.isGit == true && (liveState?.hasUncommitted == null || liveState?.aheadCount == null);
     final String badgeLabel;
-    if (behind == null) {
+    if (hasUnknownProbe) {
+      badgeLabel = ' !';
+    } else if (behind == null) {
       badgeLabel = ' ↓?';
     } else if (behind > 0) {
       badgeLabel = ' ↓$behind';
@@ -545,38 +573,45 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       mainAxisSize: MainAxisSize.min,
       children: [
         // Left: Commit
-        GestureDetector(
-          onTap: (busy || !canCommit) ? null : _doCommit,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
-            decoration: BoxDecoration(
-              color: busy
-                  ? ThemeConstants.accentDark
-                  : canCommit
-                  ? ThemeConstants.accent
-                  : ThemeConstants.inputSurface,
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
-            ),
-            child: Center(
-              widthFactor: 1,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(AppIcons.gitCommit, size: 12, color: canCommit ? Colors.white : ThemeConstants.mutedFg),
-                  const SizedBox(width: 5),
-                  Text(
-                    _pushing
-                        ? '● Pushing…'
-                        : _pulling
-                        ? '● Pulling…'
-                        : 'Commit',
-                    style: TextStyle(
-                      color: canCommit ? Colors.white : ThemeConstants.mutedFg,
-                      fontSize: ThemeConstants.uiFontSizeSmall,
+        Tooltip(
+          message: hasUnknownProbe
+              ? 'Git status unavailable — run `git status` in a terminal to diagnose'
+              : canCommit
+              ? 'Commit staged & unstaged changes'
+              : 'No changes to commit',
+          child: GestureDetector(
+            onTap: (busy || !canCommit) ? null : _doCommit,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
+              decoration: BoxDecoration(
+                color: busy
+                    ? ThemeConstants.accentDark
+                    : canCommit
+                    ? ThemeConstants.accent
+                    : ThemeConstants.inputSurface,
+                borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
+              ),
+              child: Center(
+                widthFactor: 1,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(AppIcons.gitCommit, size: 12, color: canCommit ? Colors.white : ThemeConstants.mutedFg),
+                    const SizedBox(width: 5),
+                    Text(
+                      _pushing
+                          ? '● Pushing…'
+                          : _pulling
+                          ? '● Pulling…'
+                          : 'Commit',
+                      style: TextStyle(
+                        color: canCommit ? Colors.white : ThemeConstants.mutedFg,
+                        fontSize: ThemeConstants.uiFontSizeSmall,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
