@@ -430,8 +430,13 @@ class _GeneralSectionState extends State<_GeneralSection> {
             _SettingsGroup(
               rows: [
                 _SettingsRow(
-                  label: 'Reset onboarding',
-                  description: 'Show the setup wizard again on next launch',
+                  label: 'Replay onboarding wizard',
+                  // Be explicit about what this does *not* do: the button name
+                  // previously said "Reset onboarding" which implied a clean
+                  // slate, but it only flips the completion flag — API keys,
+                  // GitHub sign-in, and projects are left intact. Spell that
+                  // out so a dev reaching for this doesn't expect a wipe.
+                  description: 'Show the 3-step wizard on next launch. Does not clear API keys, GitHub sign-in, or projects.',
                   trailing: Builder(
                     builder: (ctx) => InkWell(
                       onTap: () async {
@@ -439,7 +444,7 @@ class _GeneralSectionState extends State<_GeneralSection> {
                         if (ctx.mounted) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             const SnackBar(
-                              content: Text('Onboarding will show on next launch'),
+                              content: Text('Wizard will replay on next launch'),
                               duration: Duration(seconds: 2),
                             ),
                           );
@@ -454,7 +459,7 @@ class _GeneralSectionState extends State<_GeneralSection> {
                           color: ThemeConstants.inputSurface,
                         ),
                         child: const Text(
-                          'Reset',
+                          'Replay',
                           style: TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
                         ),
                       ),
