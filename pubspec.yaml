@@ -68,7 +68,7 @@ dependencies:
 
   # Icons
   cupertino_icons: ^1.0.9
-  lucide_icons_flutter: ^1.0.0
+  lucide_icons_flutter: ^3.1.12
 
   # Splash screen
   flutter_native_splash: ^2.4.1
