@@ -5,7 +5,9 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/chat_session.dart';
 import '../../../data/models/project.dart';
+import '../../../services/git/git_live_state_provider.dart';
 import '../../../services/session/session_service.dart';
+import '../project_sidebar_notifier.dart';
 import 'conversation_tile.dart';
 import 'project_context_menu.dart';
 import 'rename_conversation_dialog.dart';
@@ -48,6 +50,14 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
   @override
   Widget build(BuildContext context) {
     final isMissing = widget.project.status == ProjectStatus.missing;
+    final activeProjectId = ref.watch(activeProjectIdProvider);
+    // Safe to watch unconditionally: for a missing folder the provider's
+    // isGitRepo check returns false (no `.git` entry), so it resolves to
+    // GitLiveState.notGit without spawning any git processes.
+    final liveStateAsync = ref.watch(gitLiveStateProvider(widget.project.path));
+    final liveState = liveStateAsync.value;
+    final isActive = widget.project.id == activeProjectId;
+    final isGit = !isMissing && (liveState?.isGit ?? false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +68,7 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
               context: context,
               position: details.globalPosition,
               projectPath: widget.project.path,
-              isGit: widget.project.isGit,
+              isGit: isGit,
               isMissing: isMissing,
             );
             if (action != null && context.mounted) {
@@ -78,66 +88,74 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
             onExit: (_) => setState(() => _hovered = false),
             child: InkWell(
               onTap: widget.onToggleExpand,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                child: Row(
-                  children: [
-                    // Chevron
-                    Icon(
-                      widget.isExpanded ? AppIcons.chevronDown : AppIcons.chevronRight,
-                      size: 14,
-                      color: ThemeConstants.faintFg,
-                    ),
-                    const SizedBox(width: 4),
-                    // Folder icon — warning triangle when missing
-                    Icon(
-                      isMissing ? AppIcons.warning : AppIcons.folder,
-                      size: 13,
-                      color: isMissing ? ThemeConstants.warning : ThemeConstants.textSecondary,
-                    ),
-                    const SizedBox(width: 6),
-                    // Project name — muted + strikethrough when missing
-                    Expanded(
-                      child: Tooltip(
-                        message: isMissing ? 'Folder not found: ${widget.project.path}' : '',
-                        child: Text(
-                          widget.project.name,
-                          style: TextStyle(
-                            color: isMissing ? ThemeConstants.mutedFg : ThemeConstants.textPrimary,
-                            fontSize: ThemeConstants.uiFontSize,
-                            fontWeight: FontWeight.w500,
-                            decoration: isMissing ? TextDecoration.lineThrough : null,
-                            decorationColor: ThemeConstants.mutedFg,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+              child: Container(
+                decoration: isActive
+                    ? BoxDecoration(
+                        color: ThemeConstants.success.withValues(alpha: 0.06),
+                        border: const Border(left: BorderSide(color: ThemeConstants.success, width: 2)),
+                      )
+                    : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  child: Row(
+                    children: [
+                      // Chevron
+                      Icon(
+                        widget.isExpanded ? AppIcons.chevronDown : AppIcons.chevronRight,
+                        size: 14,
+                        color: ThemeConstants.faintFg,
                       ),
-                    ),
-                    // New-chat icon — hidden entirely when missing
-                    if (!isMissing)
-                      AnimatedOpacity(
-                        opacity: _hovered ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 120),
-                        child: InkWell(
-                          onTap: () => widget.onNewConversation(widget.project.id),
-                          borderRadius: BorderRadius.circular(4),
-                          child: Padding(
-                            padding: const EdgeInsets.all(3),
-                            child: Icon(AppIcons.newChat, size: 13, color: ThemeConstants.mutedFg),
-                          ),
-                        ),
-                      ),
-                    const SizedBox(width: 4),
-                    // Git icon — faint when missing (no reliable branch info)
-                    Tooltip(
-                      message: (!isMissing && widget.project.isGit) ? (widget.project.currentBranch ?? 'git') : '',
-                      child: Icon(
-                        AppIcons.gitBranch,
+                      const SizedBox(width: 4),
+                      // Folder icon — warning triangle when missing
+                      Icon(
+                        isMissing ? AppIcons.warning : AppIcons.folder,
                         size: 13,
-                        color: (!isMissing && widget.project.isGit) ? ThemeConstants.success : ThemeConstants.faintFg,
+                        color: isMissing ? ThemeConstants.warning : ThemeConstants.textSecondary,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      // Project name — muted + strikethrough when missing
+                      Expanded(
+                        child: Tooltip(
+                          message: isMissing ? 'Folder not found: ${widget.project.path}' : '',
+                          child: Text(
+                            widget.project.name,
+                            style: TextStyle(
+                              color: isMissing ? ThemeConstants.mutedFg : ThemeConstants.textPrimary,
+                              fontSize: ThemeConstants.uiFontSize,
+                              fontWeight: FontWeight.w500,
+                              decoration: isMissing ? TextDecoration.lineThrough : null,
+                              decorationColor: ThemeConstants.mutedFg,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                      // New-chat icon — hidden entirely when missing
+                      if (!isMissing)
+                        AnimatedOpacity(
+                          opacity: _hovered ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 120),
+                          child: InkWell(
+                            onTap: () => widget.onNewConversation(widget.project.id),
+                            borderRadius: BorderRadius.circular(4),
+                            child: Padding(
+                              padding: const EdgeInsets.all(3),
+                              child: Icon(AppIcons.newChat, size: 13, color: ThemeConstants.mutedFg),
+                            ),
+                          ),
+                        ),
+                      const SizedBox(width: 4),
+                      // Git icon — faint when missing or not a repo
+                      Tooltip(
+                        message: isGit ? (liveState?.branch ?? 'git') : '',
+                        child: Icon(
+                          AppIcons.gitBranch,
+                          size: 13,
+                          color: isGit ? ThemeConstants.success : ThemeConstants.faintFg,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
