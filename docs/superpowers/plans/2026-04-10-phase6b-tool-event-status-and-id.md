@@ -622,6 +622,36 @@ Per memory `feedback_dart_format.md`, run the standard trio before handing off.
 
 Phase 7 becomes smaller and structurally simpler as a result. The `finishEntry(toolName, status, ...)` name-based lookup — which silently mis-matches when the model calls the same tool twice in a turn — also disappears, because emitters update by `id` instead.
 
+### Addendum — review-fix deltas not in the original Phase 7 plan
+
+The Phase 6b review-and-fix pass (commits `40f9040` and `46368c3`) landed several changes on top of the plan text above. These are now the shape the code on `main` takes, and Phase 7's plan snippets still show the *pre-review* pattern. Treat these as mandatory during the Phase 7 rebase — naively copy-pasting the Phase 7 code blocks reintroduces fixed bugs.
+
+1. **Ticker lifecycle — drive `_syncTicker` from `build`, not `initState`.** Phase 7 Task 5 Step 5.1 (the `WorkLogSection` snippet, ~lines 918-1105) and Task 6 Step 6.4 (the `_WorkingPill` snippet, ~lines 1232-1289) both show an `initState` + `Timer.periodic` pattern. That pattern goes dead after the first idle transition: once `isRunning` goes false the timer is cancelled, and there is no code path that restarts it on the next burst. Use the idempotent form from [work_log_section.dart](lib/features/chat/widgets/work_log_section.dart) / [status_bar.dart](lib/shell/widgets/status_bar.dart) instead — `_syncTicker({required bool anyRunning})` called from `build`, creating the timer only when `_ticker == null && anyRunning`.
+
+2. **Elapsed time is an `int _elapsedSeconds` counter, not a `DateTime.now()` delta.** Flutter's `tester.pump(Duration)` advances FakeAsync (which fires `Timer` callbacks) but does **not** advance `DateTime.now()`. The plan's wall-clock-delta approach can't be widget-tested deterministically. Switch to incrementing an integer on each tick fire.
+
+3. **Per-burst vs sticky counter semantics differ between the two widgets.** In `WorkLogSection`, `_elapsedSeconds` is **sticky** across bursts — it represents total "actual work time" for the message and is never reset to 0 when the agent idles. In `_WorkingPill` (status bar), `_elapsedSeconds` **resets to 0** on every idle transition — the pill is a per-burst "Working for Xs" indicator. Both behaviours are intentional; do not unify them.
+
+4. **`activeMessageIdProvider` — declare *and* wire set/clear in `ChatMessages.sendMessage`.** Phase 7 Step 6.4 (lines 1319-1329) only declares the provider. The pill never shows unless `sendMessage` actually calls `ref.read(activeMessageIdProvider.notifier).set(messageId)` at the start of a turn and clears it on completion (success and error paths). Add both calls when rebasing.
+
+5. **`_AssistantBubble` must be a `ConsumerWidget` with a `_submitAnswer` helper.** Phase 7 Step 6.2 (lines 1162-1182) stubs the `onSubmit` callback as a commented-out `// ref.read(...)` block. Real wiring needs `ref`, so the bubble cannot be a plain `StatelessWidget`. Convert to `ConsumerWidget`, extract `_submitAnswer(WidgetRef ref, Map<String, dynamic> answer)` as a private method, and pass it as `onSubmit: (answer) => _submitAnswer(ref, answer)`.
+
+6. **`ValueKey` on tool rows and work-log rows.** When tool events append mid-stream, unkeyed rows confuse Flutter's list diff and re-use the wrong `State`. Use `ValueKey(event.id)` on each tool-call row in `tool_call_row.dart` consumers, and `ValueKey('work-log-${entry.id}')` on each work-log entry row.
+
+7. **`firstWhereOrNull` (from `package:collection`), not `try/catch firstWhere`.** When resolving a `ChatMessage` or `ToolEvent` by id, prefer `list.firstWhereOrNull((e) => e.id == id)` over the exception-swallowing `try { firstWhere } catch { null }` idiom. This applies anywhere Phase 7 looks up messages or events by id.
+
+8. **"← Back" button is labelled "Clear answer" and does not rewind chat.** Phase 7 Task 4 Step 4.1 (line ~709) hard-codes the label as `'← Back'` and the Step 6.2 integration (line ~1175) wires `onBack` with rewind-sounding semantics. The actual behaviour is: the handler only clears the stored answer for the current step so the user can re-pick an option — it does **not** pop any prior messages. Rename the label to `'Clear answer'`, and leave the handler as a local clear-only operation. Real multi-step rewind is deferred to a future edit-and-fork pattern on user-message bubbles (not inside `AskUserQuestionCard`) — see the `project_edit_message_rewind.md` memory for the rationale.
+
+9. **Legacy `ToolEvent` id generator uses a monotonic counter.** The plan's legacy-id helper uses `DateTime.now().millisecondsSinceEpoch`, which collides when two events are constructed in the same millisecond. Use the `_legacyId` monotonic counter pattern shipped in [tool_event.dart](lib/data/models/tool_event.dart) instead.
+
+10. **Legacy status inference: `(hasOutput=false, hasError=true) → success`.** The plan table at line 142 maps this combination to `error`, but the shipped code (and the test cases in [tool_event_test.dart](test/data/models/tool_event_test.dart)) map it to `success` — an empty-output-with-error-field is how the legacy pipeline expressed "finished with an error string but no stdout". If you're touching the legacy inference branch during rebase, match the shipped behaviour, not the plan table.
+
+Several Phase 7 tasks are also **already complete on `main`** as a side-effect of the review-fix pass — skip them during rebase:
+
+- The `_WorkingPill` widget itself (Phase 7 Task 6 Step 6.4) ships in [status_bar.dart](lib/shell/widgets/status_bar.dart) with the counter-based ticker, to support its widget tests in [status_bar_working_pill_test.dart](test/shell/widgets/status_bar_working_pill_test.dart).
+- The `WorkLogSection` widget (Phase 7 Task 5) ships in [work_log_section.dart](lib/features/chat/widgets/work_log_section.dart) reading `message.toolEvents` directly.
+- `AskUserQuestionCard`'s "Clear answer" rename is already merged — don't re-apply it.
+
 ---
 
 ## Cross-reference: Phase 8 rebase note
