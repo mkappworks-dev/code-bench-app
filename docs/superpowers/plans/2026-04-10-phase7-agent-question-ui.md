@@ -116,7 +116,7 @@
   part 'ask_user_question.g.dart';
 
   @freezed
-  class AskUserQuestion with _$AskUserQuestion {
+  abstract class AskUserQuestion with _$AskUserQuestion {
     const factory AskUserQuestion({
       required String question,
       required List<String> options,
@@ -144,7 +144,7 @@
   enum WorkLogStatus { running, done, failed }
 
   @freezed
-  class WorkLogEntry with _$WorkLogEntry {
+  abstract class WorkLogEntry with _$WorkLogEntry {
     const factory WorkLogEntry({
       required String toolName,
       String? argument,
@@ -278,7 +278,7 @@
   part 'ask_question_notifier.g.dart';
 
   @freezed
-  class QuestionAnswer with _$QuestionAnswer {
+  abstract class QuestionAnswer with _$QuestionAnswer {
     const factory QuestionAnswer({
       required String? selectedOption,
       required String? freeText,
@@ -286,7 +286,7 @@
   }
 
   @freezed
-  class AskQuestionState with _$AskQuestionState {
+  abstract class AskQuestionState with _$AskQuestionState {
     const factory AskQuestionState({
       @Default({}) Map<(String, int), QuestionAnswer> answers,
     }) = _AskQuestionState;
@@ -465,7 +465,7 @@
   part 'work_log_notifier.g.dart';
 
   @freezed
-  class WorkLogState with _$WorkLogState {
+  abstract class WorkLogState with _$WorkLogState {
     const factory WorkLogState({
       @Default([]) List<WorkLogEntry> entries,
       @Default(false) bool isExpanded,

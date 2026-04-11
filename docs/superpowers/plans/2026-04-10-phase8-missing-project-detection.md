@@ -6,7 +6,7 @@
 
 **Architecture:** Status is **computed**, not persisted. `ProjectService._projectFromRow` calls `Directory(path).existsSync()` for each row and sets a new `ProjectStatus` enum field. Missing projects stay in the DB with all their sessions intact; the sidebar renders them with a muted/strikethrough label + warning icon and exposes a `Relocate…` context-menu action. Write call-sites (top action bar buttons, `ApplyService`) do an additional fresh `existsSync` check at the moment of the action — defense in depth against UI staleness.
 
-**Tech Stack:** Flutter, Riverpod (keepAlive notifiers), `freezed`, `dart:io` (`Directory.existsSync`), Drift (existing `ProjectDao.updateProject` from phase 3), `file_picker` (already in `pubspec.yaml` at ^8.1.2).
+**Tech Stack:** Flutter, Riverpod (keepAlive notifiers), `freezed`, `dart:io` (`Directory.existsSync`), Drift (existing `ProjectDao.updateProject` from phase 3), `file_picker` (already in `pubspec.yaml`).
 
 **Prerequisite:** This plan depends on `feat/2026-04-10-phase3-stub-button-functionality` — specifically the `ProjectDao.updateProject` method and the `kDebugMode` + `debugPrint` error-logging pattern. Branch from `main` **after phase 3 is merged**, or rebase this branch onto phase 3's tip if working in parallel.
 
@@ -66,7 +66,7 @@ cd .worktrees/feat/2026-04-10-missing-project-detection
   }
 
   @freezed
-  class Project with _$Project {
+  abstract class Project with _$Project {
     const factory Project({
       required String id,
       required String name,

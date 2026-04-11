@@ -653,7 +653,7 @@ cd .worktrees/feat/2026-04-11-phase9-live-git-status
       final liveStateAsync = activeProject != null
           ? ref.watch(gitLiveStateProvider(activeProject.path))
           : null;
-      final liveState = liveStateAsync?.valueOrNull;
+      final liveState = liveStateAsync?.value;
 
       return Container(
         height: 22,
@@ -793,7 +793,7 @@ cd .worktrees/feat/2026-04-11-phase9-live-git-status
   ```dart
   final activeProjectId = ref.watch(activeProjectIdProvider);
   final liveStateAsync = ref.watch(gitLiveStateProvider(widget.project.path));
-  final liveState = liveStateAsync.valueOrNull;
+  final liveState = liveStateAsync.value;
   final isActive = widget.project.id == activeProjectId;
   ```
 
@@ -879,8 +879,8 @@ cd .worktrees/feat/2026-04-11-phase9-live-git-status
   final behindAsync =
       ref.watch(behindCountProvider(widget.project.path));
 
-  final liveState = liveStateAsync.valueOrNull;
-  final behind = behindAsync.valueOrNull;
+  final liveState = liveStateAsync.value;
+  final behind = behindAsync.value;
 
   final canCommit = liveState?.hasUncommitted ?? false;
   final canPush = (liveState?.aheadCount ?? 0) > 0;
@@ -1059,7 +1059,7 @@ All consumers of `project.isGit` and `project.currentBranch` were migrated in Ta
   part 'project.g.dart';
 
   @freezed
-  class Project with _$Project {
+  abstract class Project with _$Project {
     const factory Project({
       required String id,
       required String name,

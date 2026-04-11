@@ -4,7 +4,7 @@
 
 **Goal:** Replace the single-screen API key onboarding with a polished three-step wizard: **API Keys → GitHub → Add First Project**. All steps are skippable. Left branding panel is unchanged; only the right content panel changes between steps.
 
-**Architecture:** `OnboardingScreen` becomes a wizard shell driven by an `OnboardingController` Riverpod `StateNotifier<int>` (scoped to the screen). Step widgets are extracted into dedicated files under `lib/features/onboarding/widgets/`. GitHub OAuth reuses the existing `GitHubAuthService`. Folder selection uses the `file_picker` package (already in project). Navigation to the main screen uses the existing `GoRouter` setup.
+**Architecture:** `OnboardingScreen` becomes a wizard shell driven by an `OnboardingController` generated `@riverpod Notifier<int>` (scoped to the screen). Step widgets are extracted into dedicated files under `lib/features/onboarding/widgets/`. GitHub OAuth reuses the existing `GitHubAuthService`. Folder selection uses the `file_picker` package (already in project). Navigation to the main screen uses the existing `GoRouter` setup.
 
 **Tech Stack:** Flutter, Riverpod, `freezed`, existing `GitHubAuthService`, existing `SecureStorageSource`, existing `ProjectService`, `file_picker` (already in pubspec), `GitDetector`.
 
@@ -15,7 +15,7 @@
 | Status | File | Responsibility |
 |---|---|---|
 | Modify | `lib/features/onboarding/onboarding_screen.dart` | Rewrite — wizard shell with `OnboardingController`, step routing, left panel unchanged |
-| **Create** | `lib/features/onboarding/notifiers/onboarding_notifier.dart` | `OnboardingController` — `StateNotifier<int>` holding current step (0–2) |
+| **Create** | `lib/features/onboarding/notifiers/onboarding_notifier.dart` | `OnboardingController` — generated `@riverpod Notifier<int>` holding current step (0–2) |
 | **Create** | `lib/features/onboarding/widgets/step_progress_indicator.dart` | Three pill-shaped dots + `STEP N OF 3` label + step title/subtitle |
 | **Create** | `lib/features/onboarding/widgets/api_keys_step.dart` | Extracted API key form from current `OnboardingScreen` |
 | **Create** | `lib/features/onboarding/widgets/github_step.dart` | OAuth + PAT fallback step; delegates auth to `GitHubAuthService` |

@@ -105,7 +105,7 @@
   part 'tool_event.g.dart';
 
   @freezed
-  class ToolEvent with _$ToolEvent {
+  abstract class ToolEvent with _$ToolEvent {
     const factory ToolEvent({
       required String type,
       required String toolName,
@@ -251,7 +251,7 @@
 
   ```dart
   @freezed
-  class AppliedChange with _$AppliedChange {
+  abstract class AppliedChange with _$AppliedChange {
     const factory AppliedChange({
       required String id,
       required String sessionId,
