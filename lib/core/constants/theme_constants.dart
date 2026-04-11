@@ -58,6 +58,11 @@ class ThemeConstants {
   static const Color frostedBg = Color(0x0AFFFFFF);
   static const Color frostedBorder = Color(0x12FFFFFF);
 
+  // VCS status badge
+  static const Color gitBadgeText = Color(0xFF4CAF50);
+  static const Color gitBadgeBg = Color(0xFF0F3D1F);
+  static const Color gitBadgeBorder = Color(0xFF1A6B35);
+
   // Input / surface tokens (for input boxes, card surfaces, button backgrounds)
   static const Color inputSurface = Color(0xFF1A1A1A);
   static const Color deepBorder = Color(0xFF222222);

@@ -20,15 +20,25 @@ Future<T?> showInstantMenu<T>({
   Color? color,
   ShapeBorder? shape,
   double elevation = 8.0,
+  double? minWidth,
+  double? anchorCenterX,
 }) {
-  return Navigator.of(
-    context,
-  ).push<T>(_InstantMenuRoute<T>(items: items, position: position, color: color, shape: shape, elevation: elevation));
+  return Navigator.of(context).push<T>(
+    _InstantMenuRoute<T>(
+      items: items,
+      position: position,
+      color: color,
+      shape: shape,
+      elevation: elevation,
+      minWidth: minWidth,
+      anchorCenterX: anchorCenterX,
+    ),
+  );
 }
 
-/// Shows [showInstantMenu] anchored just below the bottom-left of the widget
-/// whose [buttonContext] is passed. Use inside an onTap handler wrapped in a
-/// [Builder] so [buttonContext] resolves to the button itself (not its parent).
+/// Shows [showInstantMenu] anchored just below the widget whose [buttonContext]
+/// is passed, centered horizontally on that widget. Use inside an onTap handler
+/// wrapped in a [Builder] so [buttonContext] resolves to the button itself.
 Future<T?> showInstantMenuAnchoredTo<T>({
   required BuildContext buttonContext,
   required List<PopupMenuEntry<T>> items,
@@ -40,6 +50,7 @@ Future<T?> showInstantMenuAnchoredTo<T>({
   final overlay = Overlay.of(buttonContext).context.findRenderObject() as RenderBox;
   final topLeft = button.localToGlobal(Offset.zero, ancestor: overlay);
   final bottomLeft = topLeft + Offset(0, button.size.height);
+  final centerX = topLeft.dx + button.size.width / 2;
 
   return showInstantMenu<T>(
     context: buttonContext,
@@ -53,17 +64,29 @@ Future<T?> showInstantMenuAnchoredTo<T>({
     color: color,
     shape: shape,
     elevation: elevation,
+    minWidth: button.size.width,
+    anchorCenterX: centerX,
   );
 }
 
 class _InstantMenuRoute<T> extends PopupRoute<T> {
-  _InstantMenuRoute({required this.items, required this.position, this.color, this.shape, this.elevation = 8.0});
+  _InstantMenuRoute({
+    required this.items,
+    required this.position,
+    this.color,
+    this.shape,
+    this.elevation = 8.0,
+    this.minWidth,
+    this.anchorCenterX,
+  });
 
   final List<PopupMenuEntry<T>> items;
   final RelativeRect position;
   final Color? color;
   final ShapeBorder? shape;
   final double elevation;
+  final double? minWidth;
+  final double? anchorCenterX;
 
   @override
   Duration get transitionDuration => Duration.zero;
@@ -84,7 +107,7 @@ class _InstantMenuRoute<T> extends PopupRoute<T> {
   Widget buildPage(BuildContext context, Animation<double> a, Animation<double> s) {
     final bg = color ?? Theme.of(context).popupMenuTheme.color ?? Theme.of(context).colorScheme.surface;
     return CustomSingleChildLayout(
-      delegate: _MenuLayout(position: position),
+      delegate: _MenuLayout(position: position, anchorCenterX: anchorCenterX),
       child: Material(
         color: bg,
         shape: shape,
@@ -92,7 +115,7 @@ class _InstantMenuRoute<T> extends PopupRoute<T> {
         child: IntrinsicWidth(
           stepWidth: 56,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 112, maxWidth: 280),
+            constraints: BoxConstraints(minWidth: math.min(minWidth ?? 112, 280), maxWidth: 280),
             // ExcludeSemantics prevents the SemanticsRole.menuItem assertion
             // that fires when PopupMenuItem is rendered outside Flutter's own
             // _PopupMenu route (which provides the required SemanticsRole.menu
@@ -112,8 +135,12 @@ class _InstantMenuRoute<T> extends PopupRoute<T> {
 }
 
 class _MenuLayout extends SingleChildLayoutDelegate {
-  const _MenuLayout({required this.position});
+  const _MenuLayout({required this.position, this.anchorCenterX});
   final RelativeRect position;
+
+  /// When set, the popup is centered on this x coordinate instead of
+  /// left-aligning with [position.left].
+  final double? anchorCenterX;
 
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) => BoxConstraints.loose(constraints.biggest);
@@ -121,7 +148,9 @@ class _MenuLayout extends SingleChildLayoutDelegate {
   @override
   Offset getPositionForChild(Size size, Size childSize) {
     final double maxX = math.max(8.0, size.width - childSize.width - 8.0);
-    final double x = position.left.clamp(8.0, maxX);
+    final double x = anchorCenterX != null
+        ? (anchorCenterX! - childSize.width / 2).clamp(8.0, maxX)
+        : position.left.clamp(8.0, maxX);
 
     // Open above if there's not enough room below the anchor point.
     final double spaceBelow = size.height - position.top;
@@ -132,5 +161,5 @@ class _MenuLayout extends SingleChildLayoutDelegate {
   }
 
   @override
-  bool shouldRelayout(_MenuLayout old) => position != old.position;
+  bool shouldRelayout(_MenuLayout old) => position != old.position || anchorCenterX != old.anchorCenterX;
 }

@@ -88,6 +88,27 @@ class GitHubAuthService {
     );
   }
 
+  /// Signs in using a user-provided Personal Access Token.
+  ///
+  /// Validates the token by calling `/user`, persists it to secure storage
+  /// on success, and returns the populated account. Throws [AuthException]
+  /// if the token is rejected or the request fails — callers must handle
+  /// errors and must not persist the token themselves.
+  Future<GitHubAccount> signInWithPat(String token) async {
+    try {
+      final account = await _fetchUserInfo(token);
+      await _storage.writeGitHubToken(token);
+      return account;
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      // Deliberately do NOT interpolate `e` here — a Dio error's toString()
+      // can surface request headers (including the PAT). See
+      // macos/Runner/README.md threat model.
+      throw const AuthException('GitHub token rejected');
+    }
+  }
+
   Future<GitHubAccount?> getStoredAccount() async {
     final token = await _storage.readGitHubToken();
     if (token == null) return null;

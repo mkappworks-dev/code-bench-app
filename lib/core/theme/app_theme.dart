@@ -61,13 +61,25 @@ class AppTheme {
           elevation: 0,
         ),
       ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+      ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: ThemeConstants.accent,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         ),
       ),
-      iconButtonTheme: IconButtonThemeData(style: IconButton.styleFrom(foregroundColor: ThemeConstants.textSecondary)),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: ThemeConstants.textSecondary,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        ),
+      ),
       listTileTheme: const ListTileThemeData(
         textColor: ThemeConstants.textPrimary,
         iconColor: ThemeConstants.textSecondary,
