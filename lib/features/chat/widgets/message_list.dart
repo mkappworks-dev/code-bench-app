@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/errors/app_exception.dart';
 import '../chat_notifier.dart';
 import 'message_bubble.dart';
 
@@ -74,7 +75,7 @@ class _MessageListState extends ConsumerState<MessageList> {
 
     return messagesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      error: (e, _) => _ErrorState(error: e.toString()),
+      error: (e, _) => _ErrorState(error: userMessage(e, fallback: 'Could not load messages.')),
       data: (messages) {
         if (messages.isEmpty) return const _EmptyChat();
 

@@ -46,3 +46,11 @@ final class FileSystemException extends AppException {
 final class ValidationException extends AppException {
   const ValidationException(super.message, {super.code, super.originalError});
 }
+
+/// Returns a user-facing message from any error:
+/// - AppException → its own .message
+/// - Everything else → the fallback string
+String userMessage(Object error, {String fallback = 'Something went wrong.'}) {
+  if (error is AppException) return error.message;
+  return fallback;
+}

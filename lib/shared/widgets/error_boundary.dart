@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/errors/app_exception.dart';
 
 /// Wraps a widget and catches any Flutter errors thrown during build,
 /// showing a friendly error UI with an optional retry callback.
@@ -27,7 +28,7 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
   Widget build(BuildContext context) {
     if (_error != null) {
       return _ErrorFallback(
-        error: _error.toString(),
+        error: userMessage(_error!, fallback: 'An unexpected error occurred.'),
         onRetry: widget.onRetry != null
             ? () {
                 setState(() => _error = null);
@@ -115,7 +116,7 @@ class AsyncErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              error.toString(),
+              userMessage(error, fallback: 'An unexpected error occurred.'),
               style: const TextStyle(
                 color: ThemeConstants.textSecondary,
                 fontSize: 13,

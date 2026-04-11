@@ -78,7 +78,8 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: ThemeConstants.error),
+          SnackBar(
+              content: const Text('Failed to send message. Please try again.'), backgroundColor: ThemeConstants.error),
         );
       }
     } finally {

@@ -226,7 +226,7 @@ class _ChangeEntry extends StatelessWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Revert failed: ${e.message}'),
+                      content: const Text('Revert failed. Please try again.'),
                       backgroundColor: ThemeConstants.error,
                     ),
                   );
@@ -236,7 +236,7 @@ class _ChangeEntry extends StatelessWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Revert failed: $e'),
+                      content: const Text('Revert failed. Please try again.'),
                       backgroundColor: ThemeConstants.error,
                     ),
                   );
