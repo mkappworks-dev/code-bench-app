@@ -399,35 +399,8 @@ class _GeneralSectionState extends State<_GeneralSection> {
                 label: 'Terminal app',
                 description: 'App to open when "Open Terminal" is tapped',
                 trailing: SizedBox(width: 140, child: _InlineTextField(controller: _terminalAppController)),
-                isLast: !kDebugMode,
+                isLast: true,
               ),
-              if (kDebugMode)
-                _SettingsRow(
-                  label: 'Reset onboarding',
-                  description: '[Debug] Show the setup wizard again on next launch',
-                  trailing: OutlinedButton(
-                    onPressed: () async {
-                      await widget.onboardingPrefs.reset();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Onboarding will show on next launch'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: ThemeConstants.borderColor),
-                      foregroundColor: ThemeConstants.textSecondary,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: const Text('Reset', style: TextStyle(fontSize: 11)),
-                  ),
-                  isLast: true,
-                ),
             ],
           ),
           const SizedBox(height: 24),
@@ -450,6 +423,48 @@ class _GeneralSectionState extends State<_GeneralSection> {
               ),
             ],
           ),
+          if (kDebugMode) ...[
+            const SizedBox(height: 24),
+            _SectionLabel('Debug'),
+            const SizedBox(height: 8),
+            _SettingsGroup(
+              rows: [
+                _SettingsRow(
+                  label: 'Reset onboarding',
+                  description: 'Show the setup wizard again on next launch',
+                  trailing: Builder(
+                    builder: (ctx) => InkWell(
+                      onTap: () async {
+                        await widget.onboardingPrefs.reset();
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            const SnackBar(
+                              content: Text('Onboarding will show on next launch'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(5),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: ThemeConstants.deepBorder),
+                          borderRadius: BorderRadius.circular(5),
+                          color: ThemeConstants.inputSurface,
+                        ),
+                        child: const Text(
+                          'Reset',
+                          style: TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+                        ),
+                      ),
+                    ),
+                  ),
+                  isLast: true,
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
