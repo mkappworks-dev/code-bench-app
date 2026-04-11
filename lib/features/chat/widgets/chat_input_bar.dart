@@ -30,6 +30,12 @@ import '../chat_notifier.dart';
 /// grow with stale keys.
 final Map<String, String> _sessionDrafts = <String, String>{};
 
+/// Resets `_sessionDrafts` so one widget test can't leak its draft into the
+/// next. Intended only for `setUp` in widget tests — production code should
+/// never call this.
+@visibleForTesting
+void clearSessionDraftsForTesting() => _sessionDrafts.clear();
+
 enum _Effort { low, medium, high, max }
 
 enum _Mode { chat, plan, act }
@@ -134,18 +140,25 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
 
   /// Defense-in-depth check run at send time: the freezed `status` field only
   /// reflects state at the last Drift stream re-emission, so we hit the
-  /// filesystem directly here to catch a folder that vanished between the
-  /// last refresh and this click. On miss, kicks off a targeted refresh so
-  /// the sidebar tile + send button flip immediately.
+  /// filesystem directly here as the source of truth. On any drift between
+  /// the cached status and the filesystem — either direction — kicks off a
+  /// targeted refresh so the sidebar tile + send button catch up:
+  ///
+  ///  - cached `available` but folder just vanished → block + heal to missing
+  ///  - cached `missing` but folder was restored by the user out-of-band →
+  ///    allow send + heal back to available
   bool _isProjectAvailable(Project project) {
-    if (Directory(project.path).existsSync()) return true;
-    unawaited(
-      ref
-          .read(projectServiceProvider)
-          .refreshProjectStatus(project.id)
-          .catchError((Object e) => dLog('[ChatInputBar] refresh after missing-folder check failed: $e')),
-    );
-    return false;
+    final existsOnDisk = Directory(project.path).existsSync();
+    final cachedAsAvailable = project.status == ProjectStatus.available;
+    if (existsOnDisk != cachedAsAvailable) {
+      unawaited(
+        ref
+            .read(projectServiceProvider)
+            .refreshProjectStatus(project.id)
+            .catchError((Object e) => dLog('[ChatInputBar] refresh after stale folder-status check failed: $e')),
+      );
+    }
+    return existsOnDisk;
   }
 
   Future<void> _send() async {
@@ -155,12 +168,16 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     // tap on the disabled send button (which routes through this method)
     // still surfaces the "folder missing" snackbar — otherwise the user
     // gets a silent no-op and no explanation of why sending is blocked.
+    //
+    // The gate defers entirely to the filesystem via `_isProjectAvailable`;
+    // `project.status` is only read for rendering (button dim, hint text),
+    // never for blocking, because it can be stale in either direction.
     final project = _resolveActiveProject();
     if (project == null) {
       showErrorSnackBar(context, 'No active project.');
       return;
     }
-    if (project.status == ProjectStatus.missing || !_isProjectAvailable(project)) {
+    if (!_isProjectAvailable(project)) {
       showErrorSnackBar(
         context,
         'Project folder is missing. Right-click the project in the sidebar to Relocate or Remove it.',
