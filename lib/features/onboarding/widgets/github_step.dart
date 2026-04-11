@@ -57,8 +57,21 @@ class _GithubStepState extends ConsumerState<GithubStep> {
   }
 
   Future<void> _disconnect() async {
-    await ref.read(githubAuthServiceProvider).signOut();
-    if (mounted) setState(() => _account = null);
+    // Optimistically drop the account from UI state *before* the await: if
+    // signOut() throws partway (e.g. token delete succeeds but a subsequent
+    // cleanup fails), the user still sees the UI reflect "signed out" rather
+    // than being stuck looking at a Connected card with a stale token.
+    setState(() => _account = null);
+    try {
+      await ref.read(githubAuthServiceProvider).signOut();
+    } catch (e, st) {
+      dLog('[GithubStep] signOut failed: $e\n$st');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Signed out locally, but some data may still be stored')));
+      }
+    }
   }
 
   Future<void> _openTokenCreationPage() async {
