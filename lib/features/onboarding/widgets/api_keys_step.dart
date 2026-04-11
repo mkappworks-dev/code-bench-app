@@ -165,17 +165,32 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
 
   Future<void> _saveAll() async {
     setState(() => _saving = true);
+    AIProvider? failedProvider;
     try {
       final storage = ref.read(secureStorageSourceProvider);
       for (final entry in _controllers.entries) {
         final key = entry.value.text.trim();
-        if (key.isNotEmpty) {
-          await storage.writeApiKey(entry.key.name, key);
-        }
+        if (key.isEmpty) continue;
+        failedProvider = entry.key;
+        await storage.writeApiKey(entry.key.name, key);
+        failedProvider = null;
       }
-    } finally {
-      if (mounted) setState(() => _saving = false);
+    } catch (_) {
+      // Keychain failure (locked, denied, quota, corruption). Do NOT interpolate
+      // the exception into user-visible text — it may contain the key material
+      // or request context. Name the provider so the user knows which key to
+      // retry, and leave any earlier successful writes in place.
+      if (mounted) {
+        final providerName = failedProvider?.name ?? 'provider';
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save $providerName API key — please try again')));
+        setState(() => _saving = false);
+      }
+      return;
     }
+    if (!mounted) return;
+    setState(() => _saving = false);
     widget.onContinue();
   }
 
