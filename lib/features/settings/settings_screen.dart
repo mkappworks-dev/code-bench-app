@@ -34,6 +34,13 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   _SettingsNav _activeNav = _SettingsNav.general;
 
+  // Bumped whenever the user hits "Restore defaults" so the General section
+  // rebuilds with a fresh ValueKey and re-runs `_load()` against the new
+  // pref values. Without this, `_GeneralSectionState` holds stale in-memory
+  // values (its initState → _load only runs once) and the user has to
+  // navigate away and back to see the reset reflected.
+  int _generalVersion = 0;
+
   // Provider API key controllers
   final _controllers = <AIProvider, TextEditingController>{
     AIProvider.openai: TextEditingController(),
@@ -154,6 +161,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     switch (_activeNav) {
       case _SettingsNav.general:
         return _GeneralSection(
+          key: ValueKey('general-$_generalVersion'),
           generalPrefs: ref.read(generalPreferencesProvider),
           onboardingPrefs: ref.read(onboardingPreferencesProvider),
         );
@@ -177,9 +185,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: ThemeConstants.panelBackground,
-        title: const Text('Restore defaults?', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
+        title: const Text(
+          'Restore General defaults?',
+          style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14),
+        ),
         content: const Text(
-          'All settings will be reset to their default values.',
+          'Auto-commit, terminal app, and delete confirmation will be reset.\n\n'
+          'API keys, GitHub sign-in, chat history, and projects are not affected.',
           style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 12),
         ),
         actions: [
@@ -193,7 +205,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await prefs.setAutoCommit(false);
     await prefs.setTerminalApp('Terminal');
     await prefs.setDeleteConfirmation(true);
-    if (mounted) setState(() {});
+    // Bump the version so _GeneralSection rebuilds with a fresh ValueKey and
+    // re-runs its initState → _load(). A bare `setState(() {})` is not
+    // enough: Flutter reuses _GeneralSectionState across props-only rebuilds,
+    // so the in-memory _autoCommit / _deleteConfirmation / text field stay
+    // stale until the user navigates away and back.
+    if (mounted) setState(() => _generalVersion++);
   }
 }
 
@@ -305,7 +322,7 @@ class _NavItem extends StatelessWidget {
 // ── General section ───────────────────────────────────────────────────────────
 
 class _GeneralSection extends ConsumerStatefulWidget {
-  const _GeneralSection({required this.generalPrefs, required this.onboardingPrefs});
+  const _GeneralSection({super.key, required this.generalPrefs, required this.onboardingPrefs});
 
   final GeneralPreferences generalPrefs;
   final OnboardingPreferences onboardingPrefs;
