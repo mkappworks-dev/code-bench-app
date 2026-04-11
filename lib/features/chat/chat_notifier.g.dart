@@ -177,7 +177,7 @@ final class ChatMessagesProvider extends $AsyncNotifierProvider<ChatMessages, Li
   }
 }
 
-String _$chatMessagesHash() => r'9de42531dda943e1ea61e6701e3b06b2a636c6e5';
+String _$chatMessagesHash() => r'56dd04d7d6dfb300cca21c430b8064691f4a0be2';
 
 final class ChatMessagesFamily extends $Family
     with
