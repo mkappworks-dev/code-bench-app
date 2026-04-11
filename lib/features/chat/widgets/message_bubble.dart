@@ -19,7 +19,9 @@ import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../../../services/apply/apply_service.dart';
 import '../chat_notifier.dart';
+import 'ask_user_question_card.dart';
 import 'tool_call_row.dart';
+import 'work_log_section.dart';
 
 // ── Public helper (also used by tests) ───────────────────────────────────────
 
@@ -138,6 +140,31 @@ class _AssistantBubble extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 4),
                     child: ToolCallRow(event: event),
                   ),
+              ],
+              // Work log — collapsible summary of tool-call progress.
+              // Shown for any assistant message that has tool events.
+              if (message.toolEvents.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                WorkLogSection(sessionId: message.sessionId, messageId: message.id),
+              ],
+              // Structured question card — shown when the agent asks the user
+              // to choose an option or provide free-text input.
+              if (message.askQuestion != null) ...[
+                const SizedBox(height: 8),
+                AskUserQuestionCard(
+                  question: message.askQuestion!,
+                  sessionId: message.sessionId,
+                  onSubmit: (answer) {
+                    // TODO(phase11): send answer back to agent via
+                    // chatMessagesProvider(message.sessionId).notifier.sendMessage
+                  },
+                  onBack: message.askQuestion!.stepIndex > 0
+                      ? () {
+                          // TODO(phase11): navigate to previous step via
+                          // AskQuestionNotifier when multi-step flow is wired
+                        }
+                      : null,
+                ),
               ],
             ],
           ),

@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'ask_user_question.dart';
 import 'tool_event.dart';
 
 part 'chat_message.freezed.dart';
@@ -31,6 +32,7 @@ abstract class ChatMessage with _$ChatMessage {
     @Default([]) List<ToolEvent> toolEvents,
     required DateTime timestamp,
     @Default(false) bool isStreaming,
+    AskUserQuestion? askQuestion,
   }) = _ChatMessage;
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => _$ChatMessageFromJson(json);

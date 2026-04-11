@@ -133,6 +133,16 @@ class AppliedChanges extends _$AppliedChanges {
   List<AppliedChange> changesForSession(String sessionId) => state[sessionId] ?? [];
 }
 
+// ── Active message ID (for the status bar "Working for Xs" pill) ─────────────
+
+@Riverpod(keepAlive: true)
+class ActiveMessageId extends _$ActiveMessageId {
+  @override
+  String? build() => null;
+
+  void set(String? id) => state = id;
+}
+
 // ── Changes panel visibility ─────────────────────────────────────────────────
 
 @Riverpod(keepAlive: true)
