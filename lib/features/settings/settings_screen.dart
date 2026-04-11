@@ -9,8 +9,11 @@ import '../../core/constants/app_icons.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/errors/app_exception.dart';
+import '../../core/utils/debug_logger.dart';
 import '../../core/utils/instant_menu.dart';
 import '../../core/utils/platform_utils.dart';
+import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/local/general_preferences.dart';
 import '../../data/datasources/local/onboarding_preferences.dart';
 import '../../data/datasources/local/secure_storage_source.dart';
@@ -301,17 +304,17 @@ class _NavItem extends StatelessWidget {
 
 // ── General section ───────────────────────────────────────────────────────────
 
-class _GeneralSection extends StatefulWidget {
+class _GeneralSection extends ConsumerStatefulWidget {
   const _GeneralSection({required this.generalPrefs, required this.onboardingPrefs});
 
   final GeneralPreferences generalPrefs;
   final OnboardingPreferences onboardingPrefs;
 
   @override
-  State<_GeneralSection> createState() => _GeneralSectionState();
+  ConsumerState<_GeneralSection> createState() => _GeneralSectionState();
 }
 
-class _GeneralSectionState extends State<_GeneralSection> {
+class _GeneralSectionState extends ConsumerState<_GeneralSection> {
   bool _autoCommit = false;
   bool _deleteConfirmation = true;
   final _terminalAppController = TextEditingController();
@@ -338,6 +341,113 @@ class _GeneralSectionState extends State<_GeneralSection> {
   void dispose() {
     _terminalAppController.dispose();
     super.dispose();
+  }
+
+  /// Logs a wipe-step failure with the underlying cause.
+  ///
+  /// For [AppException]s, also prints `originalError` — otherwise the log
+  /// would only show the wrapper message ("Failed to wipe secure storage")
+  /// and you'd have no idea whether the real cause was a PlatformException,
+  /// a locked keychain, an auth denial, or something else.
+  void _logWipeFailure(String step, Object e, StackTrace st) {
+    if (e is AppException && e.originalError != null) {
+      dLog('[Settings] wipe $step failed: ${e.message} (cause: ${e.originalError})\n$st');
+    } else {
+      dLog('[Settings] wipe $step failed: $e\n$st');
+    }
+  }
+
+  Future<void> _confirmWipeAllData() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: ThemeConstants.panelBackground,
+        title: const Text('Wipe all data?', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
+        content: const Text(
+          'This will permanently delete:\n'
+          '  • All API keys\n'
+          '  • GitHub sign-in\n'
+          '  • All chat sessions and messages\n'
+          '  • All projects\n\n'
+          'You will see the onboarding wizard on next launch. This cannot be undone.',
+          style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 12),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            child: const Text('Wipe everything', style: TextStyle(color: ThemeConstants.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _wipeAllData();
+  }
+
+  /// Runs the wipe steps in sequence. Each step is isolated in its own
+  /// try/catch so a keychain failure (locked, denied) does not block the
+  /// chat DB wipe, and a DB failure does not block the projects wipe. Any
+  /// failures are logged via [dLog] and surfaced in a summary SnackBar so
+  /// the dev knows what still needs manual cleanup.
+  ///
+  /// Logging deliberately includes `originalError` for [AppException]s —
+  /// `AppException.toString()` only prints its `message`, so a bare `$e`
+  /// log hides the platform-level cause (e.g. the PlatformException from
+  /// flutter_secure_storage) which is what you actually need to debug.
+  Future<void> _wipeAllData() async {
+    final failures = <String>[];
+
+    try {
+      await ref.read(secureStorageSourceProvider).deleteAll();
+    } catch (e, st) {
+      _logWipeFailure('secure storage', e, st);
+      failures.add('secure storage');
+    }
+
+    try {
+      final db = ref.read(appDatabaseProvider);
+      await db.sessionDao.deleteAllSessionsAndMessages();
+    } catch (e, st) {
+      _logWipeFailure('chat history', e, st);
+      failures.add('chat history');
+    }
+
+    try {
+      final db = ref.read(appDatabaseProvider);
+      await db.projectDao.deleteAllProjects();
+    } catch (e, st) {
+      _logWipeFailure('projects', e, st);
+      failures.add('projects');
+    }
+
+    try {
+      await widget.onboardingPrefs.reset();
+    } catch (e, st) {
+      _logWipeFailure('onboarding flag', e, st);
+      failures.add('onboarding flag');
+    }
+
+    // Drop cached in-memory AI clients so they don't keep serving requests
+    // with keys that have just been wiped from disk.
+    ref.invalidate(aiServiceProvider);
+
+    if (!mounted) return;
+    if (failures.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('All data wiped. Restart the app to see the onboarding wizard.'),
+          backgroundColor: ThemeConstants.success,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Wipe partially failed: ${failures.join(', ')}. Check logs.'),
+          backgroundColor: ThemeConstants.error,
+        ),
+      );
+    }
   }
 
   @override
@@ -436,7 +546,8 @@ class _GeneralSectionState extends State<_GeneralSection> {
                   // slate, but it only flips the completion flag — API keys,
                   // GitHub sign-in, and projects are left intact. Spell that
                   // out so a dev reaching for this doesn't expect a wipe.
-                  description: 'Show the 3-step wizard on next launch. Does not clear API keys, GitHub sign-in, or projects.',
+                  description:
+                      'Show the 3-step wizard on next launch. Does not clear API keys, GitHub sign-in, or projects.',
                   trailing: Builder(
                     builder: (ctx) => InkWell(
                       onTap: () async {
@@ -462,6 +573,26 @@ class _GeneralSectionState extends State<_GeneralSection> {
                           'Replay',
                           style: TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
                         ),
+                      ),
+                    ),
+                  ),
+                ),
+                _SettingsRow(
+                  label: 'Wipe all data',
+                  description: 'Delete API keys, GitHub sign-in, chat history, and projects. Cannot be undone.',
+                  trailing: InkWell(
+                    onTap: _confirmWipeAllData,
+                    borderRadius: BorderRadius.circular(5),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: ThemeConstants.error),
+                        borderRadius: BorderRadius.circular(5),
+                        color: ThemeConstants.inputSurface,
+                      ),
+                      child: const Text(
+                        'Wipe',
+                        style: TextStyle(color: ThemeConstants.error, fontSize: ThemeConstants.uiFontSizeSmall),
                       ),
                     ),
                   ),

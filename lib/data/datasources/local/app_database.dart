@@ -104,6 +104,15 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   Future<void> unarchiveSession(String id) => (update(
     chatSessions,
   )..where((t) => t.sessionId.equals(id))).write(const ChatSessionsCompanion(isArchived: Value(false)));
+
+  /// Wipes every chat session and message. Used by the debug "Wipe all data"
+  /// action. Messages are deleted first to satisfy the FK onto ChatSessions.
+  Future<void> deleteAllSessionsAndMessages() async {
+    await transaction(() async {
+      await delete(chatMessages).go();
+      await delete(chatSessions).go();
+    });
+  }
 }
 
 @DriftAccessor(tables: [WorkspaceProjects])
@@ -126,6 +135,9 @@ class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
       (update(workspaceProjects)..where((t) => t.id.equals(id))).write(companion);
 
   Future<void> deleteProject(String id) => (delete(workspaceProjects)..where((t) => t.id.equals(id))).go();
+
+  /// Wipes every workspace project. Used by the debug "Wipe all data" action.
+  Future<void> deleteAllProjects() => delete(workspaceProjects).go();
 }
 
 // ── Database ─────────────────────────────────────────────────────────────────

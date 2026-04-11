@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/utils/debug_logger.dart';
 
 part 'secure_storage_source.g.dart';
 
@@ -92,6 +93,47 @@ class SecureStorageSource {
       return all.keys.any((k) => k.startsWith('api_key_'));
     } catch (e) {
       return false;
+    }
+  }
+
+  /// Deletes every entry this app has written to secure storage. Used by the
+  /// debug "Wipe all data" action.
+  ///
+  /// We deliberately do NOT call `_storage.deleteAll()` — on macOS without
+  /// App Sandbox (see macos/Runner/README.md), the plugin's batch sweep can
+  /// abort if a single keychain item returns unexpected accessibility attrs,
+  /// leaving the wipe partially done AND throwing. Instead, we enumerate
+  /// every key the bundle owns via `readAll()` and call `delete(key:)`
+  /// per-key, which is the same code path as our normal writeXxx/deleteXxx
+  /// methods and is reliable on macOS.
+  ///
+  /// Per-key failures are logged but do not abort the loop — we want the
+  /// wipe to make as much progress as possible even if one entry is stuck.
+  /// If ANY deletes failed, the method throws at the end so the caller can
+  /// surface a "partial wipe" message to the dev.
+  Future<void> deleteAll() async {
+    Map<String, String> all;
+    try {
+      all = await _storage.readAll();
+    } catch (e) {
+      throw StorageException('Failed to enumerate secure storage for wipe', originalError: e);
+    }
+
+    final failedKeys = <String>[];
+    for (final key in all.keys) {
+      try {
+        await _storage.delete(key: key);
+      } catch (e) {
+        dLog('[SecureStorageSource] delete($key) failed: $e');
+        failedKeys.add(key);
+      }
+    }
+
+    if (failedKeys.isNotEmpty) {
+      throw StorageException(
+        'Failed to wipe ${failedKeys.length} secure storage entries',
+        originalError: failedKeys.join(', '),
+      );
     }
   }
 
