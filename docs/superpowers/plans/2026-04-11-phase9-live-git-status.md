@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **⚠️ Rebase note — Phase 6 adjustment.** Task 7 Step 7 adds `ref.invalidate(gitLiveStateProvider(...))` + `ref.invalidate(behindCountProvider(...))` after `_doPush`, `_doPull`, and `_runCommit`. That enumeration predates Phase 6. When rebasing onto a Phase-6-merged `main`, **also add the same two invalidations once after `_doPushAll` completes successfully** (once per fan-out, not per remote). See Phase 10's "Cross-reference: Phase 9 rebase note" section for context.
+
 **Goal:** Replace frozen Drift-persisted git state with a reactive `gitLiveStateProvider`, add a searchable branch picker popover, and wire action-button enabled states to live repo data.
 
 **Architecture:** A new `GitLiveState` value object and `gitLiveStateProvider(projectPath)` family provider replace the persisted `isGit`/`currentBranch` fields on `Project`. Cheap git ops (branch, hasUncommitted, aheadCount) refresh on window focus and after each mutation; behindCount fetches on a 5-minute timer + post-push/pull. The branch picker is a `CompositedTransformFollower` overlay anchored to the status bar branch label.

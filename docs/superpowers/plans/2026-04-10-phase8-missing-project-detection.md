@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **⚠️ Rebase note — Phase 6 + Phase 10 adjustments.** Task 9's enumeration of write buttons to wrap with `_ensureProjectAvailable` predates Phase 6. When rebasing onto a Phase-6-merged `main`, **also wrap `_doPushAll`** (added in Phase 6 for remote fan-out push) alongside the existing `_doPush` entry. No changes needed to Task 8 (`ProjectMissingException` in `apply_service.dart`) — Phase 10 does not touch that file. See Phase 10's "Cross-reference: Phase 8 rebase note" section for context.
+
 **Goal:** Detect when a tracked project's folder has been deleted from the filesystem; render it in a muted "missing" state in the sidebar; allow the user to **Relocate** (pick a new folder) or **Remove** (with optional cascade-delete of its sessions); block all write operations (apply, git, IDE launch, actions, commit, push) on missing projects with clear feedback.
 
 **Architecture:** Status is **computed**, not persisted. `ProjectService._projectFromRow` calls `Directory(path).existsSync()` for each row and sets a new `ProjectStatus` enum field. Missing projects stay in the DB with all their sessions intact; the sidebar renders them with a muted/strikethrough label + warning icon and exposes a `Relocate…` context-menu action. Write call-sites (top action bar buttons, `ApplyService`) do an additional fresh `existsSync` check at the moment of the action — defense in depth against UI staleness.
