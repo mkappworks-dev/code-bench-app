@@ -12,7 +12,6 @@ SecureStorageSource secureStorageSource(Ref ref) {
 
 class SecureStorageSource {
   static const _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
     mOptions: MacOsOptions(accessibility: KeychainAccessibility.first_unlock),
   );
 
