@@ -1,9 +1,9 @@
-# Phase 10 — `ToolEvent.status` + `id` (kill the eternal spinner)
+# Phase 6b — `ToolEvent.status` + `id` (kill the eternal spinner)
 
-**Date:** 2026-04-11
+**Date:** 2026-04-10
 **Type:** `tech/` (model refactor + bug fix)
-**Worktree:** `.worktrees/tech/2026-04-11-phase10-tool-event-status-and-id`
-**Branch:** `tech/2026-04-11-phase10-tool-event-status-and-id`
+**Worktree:** `.worktrees/feat/2026-04-10-phase6b-tool-event-status-and-id`
+**Branch:** `feat/2026-04-10-phase6b-tool-event-status-and-id`
 **Depends on:** Phase 6 (`feat/2026-04-10-phase6-agentic-tool-use`) — must be merged to `main` first so this branches off the `ToolEvent` model Phase 6 introduced.
 
 ---
@@ -24,7 +24,7 @@ This infers "is this tool still running?" from the absence of two unrelated opti
 
 The root cause is that `ToolEvent` encodes state via field presence rather than an explicit `status`. Adding a typed `ToolStatus` enum makes the lifecycle explicit and unblocks the Phase 7 rework (see the cross-reference section below).
 
-Secondary motivation: Phase 7 as currently drafted introduces a parallel `WorkLogEntry` state machine with its own `{ running, done, failed }` enum. With `ToolEvent.status` in place, Phase 7 can render `message.toolEvents` directly and drop the duplicate model. Phase 10 is a prerequisite for that simplification.
+Secondary motivation: Phase 7 as currently drafted introduces a parallel `WorkLogEntry` state machine with its own `{ running, done, failed }` enum. With `ToolEvent.status` in place, Phase 7 can render `message.toolEvents` directly and drop the duplicate model. Phase 6b is a prerequisite for that simplification.
 
 ## Architecture
 
@@ -43,7 +43,7 @@ Because the app is **not yet released** (see memory `project_release_status.md`)
 ### What's intentionally NOT in this plan
 
 - **No new emitters.** As of the Phase 6 merge, nothing in `lib/` constructs a `ToolEvent` in production code (only the test file and the `fromJson` path do). Wiring emitters is Phase 11 territory (or folded into the Phase 7 tool-use pipeline work). This plan only makes the model ready.
-- **No WorkLogEntry deletion.** Phase 7 hasn't shipped yet. When Phase 7 rebases onto `main` with Phase 10 present, it drops `WorkLogEntry` itself (see `Cross-reference: Phase 7` below).
+- **No WorkLogEntry deletion.** Phase 7 hasn't shipped yet. When Phase 7 rebases onto `main` with Phase 6b present, it drops `WorkLogEntry` itself (see `Cross-reference: Phase 7` below).
 - **No status bar pill changes.** That's also Phase 7.
 
 ## Files
@@ -69,8 +69,8 @@ Because the app is **not yet released** (see memory `project_release_status.md`)
 - [ ] **Step 1.1: Create the worktree**
 
   ```bash
-  git worktree add .worktrees/tech/2026-04-11-phase10-tool-event-status-and-id -b tech/2026-04-11-phase10-tool-event-status-and-id
-  cd .worktrees/tech/2026-04-11-phase10-tool-event-status-and-id
+  git worktree add .worktrees/feat/2026-04-10-phase6b-tool-event-status-and-id -b feat/2026-04-10-phase6b-tool-event-status-and-id
+  cd .worktrees/feat/2026-04-10-phase6b-tool-event-status-and-id
   ```
 
 - [ ] **Step 1.2: Replace `lib/data/models/tool_event.dart`**
@@ -337,7 +337,7 @@ Because the app is **not yet released** (see memory `project_release_status.md`)
 
   ```dart
   // Explicit status replaces the Phase-6 "infer from field presence"
-  // heuristic. See Phase 10 plan for the eternal-spinner bug rationale.
+  // heuristic. See Phase 6b plan for the eternal-spinner bug rationale.
   final status = widget.event.status;
   ```
 
@@ -572,8 +572,8 @@ Per memory `feedback_dart_format.md`, run the standard trio before handing off.
   Wait for explicit user approval before pushing. When approved:
 
   ```bash
-  git push -u origin tech/2026-04-11-phase10-tool-event-status-and-id
-  gh pr create --title "tech(phase10): explicit ToolEvent.status — kill eternal spinner" --body "$(cat <<'EOF'
+  git push -u origin feat/2026-04-10-phase6b-tool-event-status-and-id
+  gh pr create --title "feat(phase6b): explicit ToolEvent.status — kill eternal spinner" --body "$(cat <<'EOF'
   ## Summary
 
   Replaces Phase 6's `isRunning = durationMs == null && output == null` heuristic in `tool_call_row.dart` with an explicit `ToolStatus` enum on `ToolEvent`. Fixes the eternal-spinner bug (M4 from the Phase 6 review) and adds a stable `id` field for future emitter-side deduplication.
@@ -611,9 +611,9 @@ Per memory `feedback_dart_format.md`, run the standard trio before handing off.
 
 ## Cross-reference: Phase 7 simplification
 
-`docs/superpowers/plans/2026-04-10-phase7-agent-question-ui.md` currently introduces `WorkLogEntry` + `WorkLogStatus { running, done, failed }` + `WorkLogNotifier` as a parallel state machine for tool-call progress. That model is a near-duplicate of what Phase 10 adds to `ToolEvent`.
+`docs/superpowers/plans/2026-04-10-phase7-agent-question-ui.md` currently introduces `WorkLogEntry` + `WorkLogStatus { running, done, failed }` + `WorkLogNotifier` as a parallel state machine for tool-call progress. That model is a near-duplicate of what Phase 6b adds to `ToolEvent`.
 
-**When Phase 7 rebases after Phase 10 lands, do this:**
+**When Phase 7 rebases after Phase 6b lands, do this:**
 
 1. **Delete** the `WorkLogEntry` model task (Phase 7 Task 1.4) and the `WorkLogNotifier` task (Phase 7 Task 3) entirely.
 2. **Rewrite Phase 7 Task 6 `_WorkLogSection`** to subscribe to `message.toolEvents` directly via `ref.watch(chatNotifierProvider(sessionId).select((s) => s.messages.firstWhere((m) => m.id == messageId).toolEvents))` (or equivalent `select` trim).
@@ -629,7 +629,7 @@ Phase 7 becomes smaller and structurally simpler as a result. The `finishEntry(t
 `docs/superpowers/plans/2026-04-10-phase8-missing-project-detection.md` Task 9 enumerates the write buttons in `top_action_bar.dart` to wrap with `_ensureProjectAvailable`. The enumeration predates Phase 6. When rebasing:
 
 - Add `_doPushAll` to the wrap list (new in Phase 6 — remote fan-out push).
-- No changes needed to Task 8 (`assertWithinProject`) — Phase 10 doesn't touch `apply_service.dart`.
+- No changes needed to Task 8 (`assertWithinProject`) — Phase 6b doesn't touch `apply_service.dart`.
 
 ---
 

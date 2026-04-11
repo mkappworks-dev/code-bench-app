@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -19,7 +20,10 @@ import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../../../services/apply/apply_service.dart';
 import '../chat_notifier.dart';
+import '../notifiers/ask_question_notifier.dart';
+import 'ask_user_question_card.dart';
 import 'tool_call_row.dart';
+import 'work_log_section.dart';
 
 // ── Public helper (also used by tests) ───────────────────────────────────────
 
@@ -111,12 +115,30 @@ class _UserBubble extends StatelessWidget {
 
 // ── Assistant bubble ─────────────────────────────────────────────────────────
 
-class _AssistantBubble extends StatelessWidget {
+class _AssistantBubble extends ConsumerWidget {
   const _AssistantBubble({required this.message});
   final ChatMessage message;
 
+  /// Formats the answer map produced by [AskUserQuestionCard] into a
+  /// plain user-message string and re-posts it via [chatMessagesProvider].
+  /// This is the minimal wiring that lets an ask-question card behave like
+  /// a normal turn without a dedicated agent protocol path: the agent sees
+  /// the user's choice as if they'd typed it themselves.
+  void _submitAnswer(WidgetRef ref, Map<String, dynamic> answer) {
+    final parts = <String>[];
+    final selected = answer['selectedOption'];
+    final freeText = answer['freeText'];
+    if (selected is String && selected.isNotEmpty) parts.add(selected);
+    if (freeText is String && freeText.isNotEmpty) parts.add(freeText);
+    if (parts.isEmpty) return;
+    final formatted = parts.join('\n\n');
+    // Fire-and-forget: sendMessage is async but the card's onSubmit is
+    // void. sendMessage routes its own errors through AsyncError state.
+    unawaited(ref.read(chatMessagesProvider(message.sessionId).notifier).sendMessage(formatted));
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -131,13 +153,54 @@ class _AssistantBubble extends StatelessWidget {
               // Agentic tool-use cards — one per ToolEvent. Rendered below
               // the markdown content so the assistant's prose reads first
               // and the tool trail reads as a chronological appendix.
+              //
+              // Each row is keyed by `event.id` so Flutter's list diffing
+              // keeps expansion state attached to the right tool event
+              // when the model inserts or re-orders events mid-stream.
+              // The `ToolEvent.id` requirement exists for this invariant;
+              // see `tool_event.dart` doc comments.
               if (message.toolEvents.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 for (final event in message.toolEvents)
                   Padding(
+                    key: ValueKey('tool-row-${event.id}'),
                     padding: const EdgeInsets.only(bottom: 4),
                     child: ToolCallRow(event: event),
                   ),
+              ],
+              // Work log — collapsible summary of tool-call progress.
+              // Shown for any assistant message that has tool events.
+              if (message.toolEvents.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                WorkLogSection(sessionId: message.sessionId, messageId: message.id),
+              ],
+              // Structured question card — shown when the agent asks the user
+              // to choose an option or provide free-text input. The submit
+              // path re-posts the formatted answer through the normal
+              // chat send pipeline (see `_submitAnswer`).
+              if (message.askQuestion != null) ...[
+                const SizedBox(height: 8),
+                AskUserQuestionCard(
+                  question: message.askQuestion!,
+                  sessionId: message.sessionId,
+                  onSubmit: (answer) => _submitAnswer(ref, answer),
+                  // "Clear answer" (rendered in the card as that
+                  // label, not "Back"): only clears the stored answer
+                  // for the current step so the user can re-pick an
+                  // option. Shown on step > 0. Real multi-step rewind
+                  // across prior messages is deferred to a future
+                  // edit-and-fork on user messages (Pattern B).
+                  onBack: message.askQuestion!.stepIndex > 0
+                      ? () => ref
+                            .read(askQuestionProvider.notifier)
+                            .setAnswer(
+                              sessionId: message.sessionId,
+                              stepIndex: message.askQuestion!.stepIndex,
+                              selectedOption: null,
+                              freeText: null,
+                            )
+                      : null,
+                ),
               ],
             ],
           ),

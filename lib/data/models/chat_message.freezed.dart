@@ -284,7 +284,7 @@ as String?,
 /// @nodoc
 mixin _$ChatMessage {
 
- String get id; String get sessionId; MessageRole get role; String get content; List<CodeBlock> get codeBlocks; List<ToolEvent> get toolEvents; DateTime get timestamp; bool get isStreaming;
+ String get id; String get sessionId; MessageRole get role; String get content; List<CodeBlock> get codeBlocks; List<ToolEvent> get toolEvents; DateTime get timestamp; bool get isStreaming; AskUserQuestion? get askQuestion;
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -297,16 +297,16 @@ $ChatMessageCopyWith<ChatMessage> get copyWith => _$ChatMessageCopyWithImpl<Chat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other.codeBlocks, codeBlocks)&&const DeepCollectionEquality().equals(other.toolEvents, toolEvents)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.isStreaming, isStreaming) || other.isStreaming == isStreaming));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other.codeBlocks, codeBlocks)&&const DeepCollectionEquality().equals(other.toolEvents, toolEvents)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.isStreaming, isStreaming) || other.isStreaming == isStreaming)&&(identical(other.askQuestion, askQuestion) || other.askQuestion == askQuestion));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,sessionId,role,content,const DeepCollectionEquality().hash(codeBlocks),const DeepCollectionEquality().hash(toolEvents),timestamp,isStreaming);
+int get hashCode => Object.hash(runtimeType,id,sessionId,role,content,const DeepCollectionEquality().hash(codeBlocks),const DeepCollectionEquality().hash(toolEvents),timestamp,isStreaming,askQuestion);
 
 @override
 String toString() {
-  return 'ChatMessage(id: $id, sessionId: $sessionId, role: $role, content: $content, codeBlocks: $codeBlocks, toolEvents: $toolEvents, timestamp: $timestamp, isStreaming: $isStreaming)';
+  return 'ChatMessage(id: $id, sessionId: $sessionId, role: $role, content: $content, codeBlocks: $codeBlocks, toolEvents: $toolEvents, timestamp: $timestamp, isStreaming: $isStreaming, askQuestion: $askQuestion)';
 }
 
 
@@ -317,11 +317,11 @@ abstract mixin class $ChatMessageCopyWith<$Res>  {
   factory $ChatMessageCopyWith(ChatMessage value, $Res Function(ChatMessage) _then) = _$ChatMessageCopyWithImpl;
 @useResult
 $Res call({
- String id, String sessionId, MessageRole role, String content, List<CodeBlock> codeBlocks, List<ToolEvent> toolEvents, DateTime timestamp, bool isStreaming
+ String id, String sessionId, MessageRole role, String content, List<CodeBlock> codeBlocks, List<ToolEvent> toolEvents, DateTime timestamp, bool isStreaming, AskUserQuestion? askQuestion
 });
 
 
-
+$AskUserQuestionCopyWith<$Res>? get askQuestion;
 
 }
 /// @nodoc
@@ -334,7 +334,7 @@ class _$ChatMessageCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? sessionId = null,Object? role = null,Object? content = null,Object? codeBlocks = null,Object? toolEvents = null,Object? timestamp = null,Object? isStreaming = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? sessionId = null,Object? role = null,Object? content = null,Object? codeBlocks = null,Object? toolEvents = null,Object? timestamp = null,Object? isStreaming = null,Object? askQuestion = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
@@ -344,10 +344,23 @@ as String,codeBlocks: null == codeBlocks ? _self.codeBlocks : codeBlocks // igno
 as List<CodeBlock>,toolEvents: null == toolEvents ? _self.toolEvents : toolEvents // ignore: cast_nullable_to_non_nullable
 as List<ToolEvent>,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
 as DateTime,isStreaming: null == isStreaming ? _self.isStreaming : isStreaming // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,askQuestion: freezed == askQuestion ? _self.askQuestion : askQuestion // ignore: cast_nullable_to_non_nullable
+as AskUserQuestion?,
   ));
 }
+/// Create a copy of ChatMessage
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$AskUserQuestionCopyWith<$Res>? get askQuestion {
+    if (_self.askQuestion == null) {
+    return null;
+  }
 
+  return $AskUserQuestionCopyWith<$Res>(_self.askQuestion!, (value) {
+    return _then(_self.copyWith(askQuestion: value));
+  });
+}
 }
 
 
@@ -429,10 +442,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  List<ToolEvent> toolEvents,  DateTime timestamp,  bool isStreaming)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  List<ToolEvent> toolEvents,  DateTime timestamp,  bool isStreaming,  AskUserQuestion? askQuestion)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatMessage() when $default != null:
-return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.toolEvents,_that.timestamp,_that.isStreaming);case _:
+return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.toolEvents,_that.timestamp,_that.isStreaming,_that.askQuestion);case _:
   return orElse();
 
 }
@@ -450,10 +463,10 @@ return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBloc
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  List<ToolEvent> toolEvents,  DateTime timestamp,  bool isStreaming)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  List<ToolEvent> toolEvents,  DateTime timestamp,  bool isStreaming,  AskUserQuestion? askQuestion)  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessage():
-return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.toolEvents,_that.timestamp,_that.isStreaming);case _:
+return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.toolEvents,_that.timestamp,_that.isStreaming,_that.askQuestion);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -470,10 +483,10 @@ return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBloc
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  List<ToolEvent> toolEvents,  DateTime timestamp,  bool isStreaming)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  List<ToolEvent> toolEvents,  DateTime timestamp,  bool isStreaming,  AskUserQuestion? askQuestion)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessage() when $default != null:
-return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.toolEvents,_that.timestamp,_that.isStreaming);case _:
+return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.toolEvents,_that.timestamp,_that.isStreaming,_that.askQuestion);case _:
   return null;
 
 }
@@ -485,7 +498,7 @@ return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBloc
 @JsonSerializable()
 
 class _ChatMessage implements ChatMessage {
-  const _ChatMessage({required this.id, required this.sessionId, required this.role, required this.content, final  List<CodeBlock> codeBlocks = const [], final  List<ToolEvent> toolEvents = const [], required this.timestamp, this.isStreaming = false}): _codeBlocks = codeBlocks,_toolEvents = toolEvents;
+  const _ChatMessage({required this.id, required this.sessionId, required this.role, required this.content, final  List<CodeBlock> codeBlocks = const [], final  List<ToolEvent> toolEvents = const [], required this.timestamp, this.isStreaming = false, this.askQuestion}): _codeBlocks = codeBlocks,_toolEvents = toolEvents;
   factory _ChatMessage.fromJson(Map<String, dynamic> json) => _$ChatMessageFromJson(json);
 
 @override final  String id;
@@ -508,6 +521,7 @@ class _ChatMessage implements ChatMessage {
 
 @override final  DateTime timestamp;
 @override@JsonKey() final  bool isStreaming;
+@override final  AskUserQuestion? askQuestion;
 
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
@@ -522,16 +536,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other._codeBlocks, _codeBlocks)&&const DeepCollectionEquality().equals(other._toolEvents, _toolEvents)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.isStreaming, isStreaming) || other.isStreaming == isStreaming));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other._codeBlocks, _codeBlocks)&&const DeepCollectionEquality().equals(other._toolEvents, _toolEvents)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.isStreaming, isStreaming) || other.isStreaming == isStreaming)&&(identical(other.askQuestion, askQuestion) || other.askQuestion == askQuestion));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,sessionId,role,content,const DeepCollectionEquality().hash(_codeBlocks),const DeepCollectionEquality().hash(_toolEvents),timestamp,isStreaming);
+int get hashCode => Object.hash(runtimeType,id,sessionId,role,content,const DeepCollectionEquality().hash(_codeBlocks),const DeepCollectionEquality().hash(_toolEvents),timestamp,isStreaming,askQuestion);
 
 @override
 String toString() {
-  return 'ChatMessage(id: $id, sessionId: $sessionId, role: $role, content: $content, codeBlocks: $codeBlocks, toolEvents: $toolEvents, timestamp: $timestamp, isStreaming: $isStreaming)';
+  return 'ChatMessage(id: $id, sessionId: $sessionId, role: $role, content: $content, codeBlocks: $codeBlocks, toolEvents: $toolEvents, timestamp: $timestamp, isStreaming: $isStreaming, askQuestion: $askQuestion)';
 }
 
 
@@ -542,11 +556,11 @@ abstract mixin class _$ChatMessageCopyWith<$Res> implements $ChatMessageCopyWith
   factory _$ChatMessageCopyWith(_ChatMessage value, $Res Function(_ChatMessage) _then) = __$ChatMessageCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String sessionId, MessageRole role, String content, List<CodeBlock> codeBlocks, List<ToolEvent> toolEvents, DateTime timestamp, bool isStreaming
+ String id, String sessionId, MessageRole role, String content, List<CodeBlock> codeBlocks, List<ToolEvent> toolEvents, DateTime timestamp, bool isStreaming, AskUserQuestion? askQuestion
 });
 
 
-
+@override $AskUserQuestionCopyWith<$Res>? get askQuestion;
 
 }
 /// @nodoc
@@ -559,7 +573,7 @@ class __$ChatMessageCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? sessionId = null,Object? role = null,Object? content = null,Object? codeBlocks = null,Object? toolEvents = null,Object? timestamp = null,Object? isStreaming = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? sessionId = null,Object? role = null,Object? content = null,Object? codeBlocks = null,Object? toolEvents = null,Object? timestamp = null,Object? isStreaming = null,Object? askQuestion = freezed,}) {
   return _then(_ChatMessage(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
@@ -569,11 +583,24 @@ as String,codeBlocks: null == codeBlocks ? _self._codeBlocks : codeBlocks // ign
 as List<CodeBlock>,toolEvents: null == toolEvents ? _self._toolEvents : toolEvents // ignore: cast_nullable_to_non_nullable
 as List<ToolEvent>,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
 as DateTime,isStreaming: null == isStreaming ? _self.isStreaming : isStreaming // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,askQuestion: freezed == askQuestion ? _self.askQuestion : askQuestion // ignore: cast_nullable_to_non_nullable
+as AskUserQuestion?,
   ));
 }
 
+/// Create a copy of ChatMessage
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$AskUserQuestionCopyWith<$Res>? get askQuestion {
+    if (_self.askQuestion == null) {
+    return null;
+  }
 
+  return $AskUserQuestionCopyWith<$Res>(_self.askQuestion!, (value) {
+    return _then(_self.copyWith(askQuestion: value));
+  });
+}
 }
 
 // dart format on

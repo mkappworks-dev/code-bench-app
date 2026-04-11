@@ -42,9 +42,9 @@ class _ToolCallRowState extends State<ToolCallRow> {
   @override
   Widget build(BuildContext context) {
     final arg = _primaryArg(widget.event);
-    // A tool event is "running" when we have neither a duration nor an
-    // output — both are written once the tool returns.
-    final isRunning = widget.event.durationMs == null && widget.event.output == null;
+    // Explicit status replaces the Phase-6 "infer from field presence"
+    // heuristic. See Phase 10 plan for the eternal-spinner bug rationale.
+    final status = widget.event.status;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -79,23 +79,22 @@ class _ToolCallRowState extends State<ToolCallRow> {
                 ] else
                   const Spacer(),
                 const SizedBox(width: 8),
-                if (isRunning)
-                  const SizedBox(
+                switch (status) {
+                  ToolStatus.running => const SizedBox(
                     width: 10,
                     height: 10,
                     child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF4A7CFF)),
-                  )
-                else if (widget.event.output != null)
-                  const Icon(Icons.check_circle, size: 11, color: Colors.green)
-                else
-                  // Tool finished (durationMs was written) but produced no
-                  // output — render as an error with a tooltip so the user
-                  // can at least see *which* tool failed. Without the
-                  // tooltip this was a silent red dot with zero context.
-                  Tooltip(
-                    message: '${widget.event.toolName} — no output recorded',
+                  ),
+                  ToolStatus.success => const Icon(Icons.check_circle, size: 11, color: Colors.green),
+                  ToolStatus.error => Tooltip(
+                    message: widget.event.error ?? '${widget.event.toolName} — failed',
                     child: const Icon(Icons.error, size: 11, color: Colors.red),
                   ),
+                  ToolStatus.cancelled => Tooltip(
+                    message: '${widget.event.toolName} — cancelled',
+                    child: const Icon(Icons.cancel_outlined, size: 11, color: Color(0xFF888888)),
+                  ),
+                },
                 if (widget.event.durationMs != null) ...[
                   const SizedBox(width: 6),
                   Text(
@@ -170,6 +169,15 @@ class _ToolCallRowState extends State<ToolCallRow> {
                   ),
                   const SizedBox(height: 4),
                   _ExpandableOutput(text: widget.event.output!),
+                  const SizedBox(height: 8),
+                ],
+                if (widget.event.status == ToolStatus.error && widget.event.error != null) ...[
+                  const Text('ERROR', style: TextStyle(color: Colors.red, fontSize: 9, letterSpacing: 1)),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.event.error!,
+                    style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 10, fontFamily: 'monospace'),
+                  ),
                   const SizedBox(height: 8),
                 ],
                 if (widget.event.durationMs != null)

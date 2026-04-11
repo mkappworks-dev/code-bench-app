@@ -31,6 +31,9 @@ _ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => _ChatMessage(
       const [],
   timestamp: DateTime.parse(json['timestamp'] as String),
   isStreaming: json['isStreaming'] as bool? ?? false,
+  askQuestion: json['askQuestion'] == null
+      ? null
+      : AskUserQuestion.fromJson(json['askQuestion'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$ChatMessageToJson(_ChatMessage instance) => <String, dynamic>{
@@ -42,6 +45,7 @@ Map<String, dynamic> _$ChatMessageToJson(_ChatMessage instance) => <String, dyna
   'toolEvents': instance.toolEvents,
   'timestamp': instance.timestamp.toIso8601String(),
   'isStreaming': instance.isStreaming,
+  'askQuestion': instance.askQuestion,
 };
 
 const _$MessageRoleEnumMap = {

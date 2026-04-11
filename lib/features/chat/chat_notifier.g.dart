@@ -403,6 +403,47 @@ abstract class _$AppliedChanges extends $Notifier<Map<String, List<AppliedChange
   }
 }
 
+@ProviderFor(ActiveMessageId)
+final activeMessageIdProvider = ActiveMessageIdProvider._();
+
+final class ActiveMessageIdProvider extends $NotifierProvider<ActiveMessageId, String?> {
+  ActiveMessageIdProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'activeMessageIdProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$activeMessageIdHash();
+
+  @$internal
+  @override
+  ActiveMessageId create() => ActiveMessageId();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String? value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<String?>(value));
+  }
+}
+
+String _$activeMessageIdHash() => r'd627282d12802c332c95db784dade7149af8531a';
+
+abstract class _$ActiveMessageId extends $Notifier<String?> {
+  String? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<String?, String?>;
+    final element = ref.element as $ClassProviderElement<AnyNotifier<String?, String?>, String?, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(ChangesPanelVisible)
 final changesPanelVisibleProvider = ChangesPanelVisibleProvider._();
 

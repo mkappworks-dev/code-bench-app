@@ -62,6 +62,13 @@ class ChatMessages extends _$ChatMessages {
     final currentMessages = state.value ?? [];
     state = AsyncData([...currentMessages]);
 
+    // Track the currently-streaming assistant message so UI affordances
+    // like the "Working for Xs" pill in `status_bar.dart` can subscribe
+    // to tool-event updates on it. Always cleared in `finally` so a
+    // crashed stream doesn't leave the pill pinned to a stale id.
+    final activeMessageIdNotifier = ref.read(activeMessageIdProvider.notifier);
+    String? streamingAssistantId;
+
     try {
       await for (final msg in service.sendAndStream(
         sessionId: sessionId,
@@ -69,6 +76,10 @@ class ChatMessages extends _$ChatMessages {
         model: model,
         systemPrompt: systemPrompt,
       )) {
+        if (msg.role == MessageRole.assistant && streamingAssistantId == null) {
+          streamingAssistantId = msg.id;
+          activeMessageIdNotifier.set(msg.id);
+        }
         final current = state.value ?? [];
         final idx = current.indexWhere((m) => m.id == msg.id);
         if (idx >= 0) {
@@ -82,6 +93,10 @@ class ChatMessages extends _$ChatMessages {
     } catch (e, st) {
       dLog('[sendMessage] stream error: $e\n$st');
       state = AsyncError(e, st);
+    } finally {
+      if (streamingAssistantId != null) {
+        activeMessageIdNotifier.set(null);
+      }
     }
   }
 
@@ -131,6 +146,16 @@ class AppliedChanges extends _$AppliedChanges {
   }
 
   List<AppliedChange> changesForSession(String sessionId) => state[sessionId] ?? [];
+}
+
+// ── Active message ID (for the status bar "Working for Xs" pill) ─────────────
+
+@Riverpod(keepAlive: true)
+class ActiveMessageId extends _$ActiveMessageId {
+  @override
+  String? build() => null;
+
+  void set(String? id) => state = id;
 }
 
 // ── Changes panel visibility ─────────────────────────────────────────────────
