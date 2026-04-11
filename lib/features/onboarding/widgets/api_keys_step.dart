@@ -136,9 +136,14 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
         },
       );
       return true;
-    } catch (e) {
-      if (e.toString().contains('400')) return true;
-      return false;
+    } on DioException catch (e) {
+      // Inspect the typed status code rather than searching e.toString() for
+      // "400" — a URL fragment or unrelated error message containing "400"
+      // would otherwise flip a broken key to "valid".
+      //   400 → key accepted, request body rejected → key is valid
+      //   401/403 → key rejected → key is invalid
+      //   anything else (timeout, 5xx, no response) → can't verify → invalid
+      return e.response?.statusCode == 400;
     }
   }
 
