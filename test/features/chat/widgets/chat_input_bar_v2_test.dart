@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/data/models/project.dart';
 import 'package:code_bench_app/features/chat/widgets/chat_input_bar_v2.dart';
+import 'package:code_bench_app/features/project_sidebar/project_sidebar_notifier.dart';
 
 Widget _wrap(Widget child) => ProviderScope(
+  // ChatInputBarV2 watches projectsProvider for the missing-folder guard.
+  // Override it with an empty stub stream so the widget tree can build
+  // without pulling in the real on-disk Drift database (which leaves
+  // pending timers that fail the test binding's invariant checks).
+  overrides: [projectsProvider.overrideWith((ref) => Stream<List<Project>>.value(const <Project>[]))],
   child: MaterialApp(home: Scaffold(body: child)),
 );
 

@@ -1,11 +1,19 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../data/models/ai_model.dart';
+import '../../../data/models/project.dart';
+import '../../../features/project_sidebar/project_sidebar_notifier.dart';
+import '../../../services/project/project_service.dart';
 import '../chat_notifier.dart';
 
 enum _Effort { low, medium, high, max }
@@ -64,9 +72,53 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     super.dispose();
   }
 
+  /// Resolves the active project for this session. Returns null if no project
+  /// is selected or the project row has not loaded yet.
+  Project? _resolveActiveProject() {
+    final projectId = ref.read(activeProjectIdProvider);
+    final projects = ref.read(projectsProvider).value ?? <Project>[];
+    return projects.firstWhereOrNull((p) => p.id == projectId);
+  }
+
+  /// Defense-in-depth check run at send time: the freezed `status` field only
+  /// reflects state at the last Drift stream re-emission, so we hit the
+  /// filesystem directly here to catch a folder that vanished between the
+  /// last refresh and this click. On miss, kicks off a targeted refresh so
+  /// the sidebar tile + send button flip immediately.
+  bool _isProjectAvailable(Project project) {
+    if (Directory(project.path).existsSync()) return true;
+    unawaited(
+      ref
+          .read(projectServiceProvider)
+          .refreshProjectStatus(project.id)
+          .catchError((Object e) => dLog('[ChatInputBarV2] refresh after missing-folder check failed: $e')),
+    );
+    return false;
+  }
+
   Future<void> _send() async {
+    if (_isSending) return;
+
+    // Check project availability BEFORE the empty-text bailout so that a
+    // tap on the disabled send button (which routes through this method)
+    // still surfaces the "folder missing" snackbar — otherwise the user
+    // gets a silent no-op and no explanation of why sending is blocked.
+    final project = _resolveActiveProject();
+    if (project == null) {
+      showErrorSnackBar(context, 'No active project.');
+      return;
+    }
+    if (project.status == ProjectStatus.missing || !_isProjectAvailable(project)) {
+      showErrorSnackBar(
+        context,
+        'Project folder is missing. Right-click the project in the sidebar to Relocate or Remove it.',
+      );
+      return;
+    }
+
     final text = _controller.text.trim();
-    if (text.isEmpty || _isSending) return;
+    if (text.isEmpty) return;
+
     _controller.clear();
     setState(() => _isSending = true);
     try {
@@ -178,6 +230,14 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
   @override
   Widget build(BuildContext context) {
     final model = ref.watch(selectedModelProvider);
+    // Re-render whenever the active project or its status changes so the
+    // send button + Enter key disable the moment the folder goes missing
+    // (e.g. app-resume refresh, write-button guard, or ApplyService catch).
+    final projectId = ref.watch(activeProjectIdProvider);
+    final projectsAsync = ref.watch(projectsProvider);
+    final project = projectsAsync.value?.firstWhereOrNull((p) => p.id == projectId);
+    final isMissing = project?.status == ProjectStatus.missing;
+    final canSend = !_isSending && !isMissing;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
       decoration: const BoxDecoration(
@@ -198,7 +258,10 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
               onKeyEvent: (event) {
                 if (event is KeyDownEvent &&
                     event.logicalKey == LogicalKeyboardKey.enter &&
-                    !HardwareKeyboard.instance.isShiftPressed) {
+                    !HardwareKeyboard.instance.isShiftPressed &&
+                    !_isSending) {
+                  // Let _send() own the missing-project branch so Enter
+                  // surfaces the same snackbar as the tap on the button.
                   _send();
                 }
               },
@@ -208,9 +271,11 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
                 maxLines: null,
                 minLines: 1,
                 style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
-                decoration: const InputDecoration(
-                  hintText: 'Ask anything, @tag files/folders, or use /command',
-                  hintStyle: TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSize),
+                decoration: InputDecoration(
+                  hintText: isMissing
+                      ? 'Project folder is missing — Relocate or Remove to continue'
+                      : 'Ask anything, @tag files/folders, or use /command',
+                  hintStyle: const TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSize),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -269,18 +334,27 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
                     ),
                   ),
                   const Spacer(),
-                  GestureDetector(
-                    onTap: _isSending ? null : _send,
-                    child: Container(
-                      width: 26,
-                      height: 26,
-                      decoration: const BoxDecoration(color: ThemeConstants.accent, shape: BoxShape.circle),
-                      child: _isSending
-                          ? const Padding(
-                              padding: EdgeInsets.all(6),
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(AppIcons.arrowUp, size: 14, color: Colors.white),
+                  Tooltip(
+                    message: isMissing ? 'Project folder is missing. Relocate or Remove it from the sidebar.' : '',
+                    child: GestureDetector(
+                      // Route all taps through _send() — even when visually
+                      // disabled for a missing folder — so the guard inside
+                      // _send() can show the explanatory snackbar.
+                      onTap: _isSending ? null : _send,
+                      child: Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          color: canSend ? ThemeConstants.accent : ThemeConstants.accent.withValues(alpha: 0.35),
+                          shape: BoxShape.circle,
+                        ),
+                        child: _isSending
+                            ? const Padding(
+                                padding: EdgeInsets.all(6),
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(AppIcons.arrowUp, size: 14, color: Colors.white),
+                      ),
                     ),
                   ),
                 ],
