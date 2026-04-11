@@ -1,10 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
+import 'core/utils/debug_logger.dart';
 import 'core/constants/app_constants.dart';
 import 'core/utils/platform_utils.dart';
 import 'data/datasources/local/app_database.dart';
@@ -16,9 +16,7 @@ void main() async {
   // Global Flutter error handler
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
-    if (kDebugMode) {
-      debugPrint('[FlutterError] ${details.exceptionAsString()}');
-    }
+    dLog('[FlutterError] ${details.exceptionAsString()}');
   };
 
   // Initialize window manager for desktop

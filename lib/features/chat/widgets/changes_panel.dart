@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/applied_change.dart';
 import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/project_sidebar_notifier.dart';
@@ -221,7 +222,7 @@ class _ChangeEntry extends StatelessWidget {
               try {
                 await onRevert();
               } on StateError catch (e) {
-                debugPrint('[revert] state error: $e');
+                dLog('[revert] state error: $e');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -231,7 +232,7 @@ class _ChangeEntry extends StatelessWidget {
                   );
                 }
               } catch (e, st) {
-                debugPrint('[revert] error: $e\n$st');
+                dLog('[revert] error: $e\n$st');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(

@@ -12,6 +12,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/project_sidebar_notifier.dart';
@@ -375,21 +376,21 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
     } on StateError catch (e) {
       // assertWithinProject rejection — a path-traversal attempt or a
       // guard-layer failure. Log with a security marker so it's grep-able.
-      debugPrint('[security] _loadDiff path rejected: $e');
+      dLog('[security] _loadDiff path rejected: $e');
       if (!mounted) return;
       setState(() {
         _diffError = 'This file is outside the current project.';
         _diffState = _DiffCardState.error;
       });
     } on FileSystemException catch (e) {
-      debugPrint('[_loadDiff] filesystem: $e');
+      dLog('[_loadDiff] filesystem: $e');
       if (!mounted) return;
       setState(() {
         _diffError = 'Could not read file from disk.';
         _diffState = _DiffCardState.error;
       });
     } catch (e, st) {
-      debugPrint('[_loadDiff] unexpected: $e\n$st');
+      dLog('[_loadDiff] unexpected: $e\n$st');
       if (!mounted) return;
       setState(() {
         _diffError = 'Unable to compute diff.';
@@ -422,13 +423,13 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
       ref.read(changesPanelVisibleProvider.notifier).show();
       setState(() => _diffState = _DiffCardState.hidden);
     } on StateError catch (e) {
-      debugPrint('[security] _applyChange path rejected: $e');
+      dLog('[security] _applyChange path rejected: $e');
       _showApplyError('This file is outside the current project.');
     } on FileSystemException catch (e) {
-      debugPrint('[_applyChange] filesystem: $e');
+      dLog('[_applyChange] filesystem: $e');
       _showApplyError('Could not write file to disk.');
     } catch (e, st) {
-      debugPrint('[_applyChange] unexpected: $e\n$st');
+      dLog('[_applyChange] unexpected: $e\n$st');
       _showApplyError('Unable to apply change.');
     } finally {
       if (mounted) setState(() => _applying = false);
@@ -750,7 +751,7 @@ class _CopyButtonState extends State<_CopyButton> {
           await Future.delayed(const Duration(seconds: 2));
           if (mounted) setState(() => _copied = false);
         } catch (e) {
-          debugPrint('[clipboard] copy failed: $e');
+          dLog('[clipboard] copy failed: $e');
         }
       },
       child: Row(
