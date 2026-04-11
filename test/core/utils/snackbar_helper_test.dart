@@ -1,3 +1,4 @@
+import 'package:code_bench_app/core/constants/theme_constants.dart';
 import 'package:code_bench_app/core/utils/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,7 +23,7 @@ void main() {
 
     expect(find.text('Test error'), findsOneWidget);
     final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
-    expect(snackBar.backgroundColor, const Color(0xFFF44747)); // ThemeConstants.error
+    expect(snackBar.backgroundColor, ThemeConstants.error);
   });
 
   testWidgets('showSuccessSnackBar shows message text', (tester) async {
