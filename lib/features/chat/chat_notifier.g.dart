@@ -12,8 +12,7 @@ part of 'chat_notifier.dart';
 @ProviderFor(SessionSystemPrompt)
 final sessionSystemPromptProvider = SessionSystemPromptProvider._();
 
-final class SessionSystemPromptProvider
-    extends $NotifierProvider<SessionSystemPrompt, Map<String, String>> {
+final class SessionSystemPromptProvider extends $NotifierProvider<SessionSystemPrompt, Map<String, String>> {
   SessionSystemPromptProvider._()
     : super(
         from: null,
@@ -34,15 +33,11 @@ final class SessionSystemPromptProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(Map<String, String> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<Map<String, String>>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<Map<String, String>>(value));
   }
 }
 
-String _$sessionSystemPromptHash() =>
-    r'cbf00e1c70fcc8c90707dd1122dea62958d5be1e';
+String _$sessionSystemPromptHash() => r'cbf00e1c70fcc8c90707dd1122dea62958d5be1e';
 
 abstract class _$SessionSystemPrompt extends $Notifier<Map<String, String>> {
   Map<String, String> build();
@@ -65,8 +60,7 @@ abstract class _$SessionSystemPrompt extends $Notifier<Map<String, String>> {
 @ProviderFor(ActiveSessionId)
 final activeSessionIdProvider = ActiveSessionIdProvider._();
 
-final class ActiveSessionIdProvider
-    extends $NotifierProvider<ActiveSessionId, String?> {
+final class ActiveSessionIdProvider extends $NotifierProvider<ActiveSessionId, String?> {
   ActiveSessionIdProvider._()
     : super(
         from: null,
@@ -87,10 +81,7 @@ final class ActiveSessionIdProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(String? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<String?>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<String?>(value));
   }
 }
 
@@ -102,14 +93,7 @@ abstract class _$ActiveSessionId extends $Notifier<String?> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<String?, String?>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<String?, String?>,
-              String?,
-              Object?,
-              Object?
-            >;
+    final element = ref.element as $ClassProviderElement<AnyNotifier<String?, String?>, String?, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }
@@ -117,8 +101,7 @@ abstract class _$ActiveSessionId extends $Notifier<String?> {
 @ProviderFor(SelectedModel)
 final selectedModelProvider = SelectedModelProvider._();
 
-final class SelectedModelProvider
-    extends $NotifierProvider<SelectedModel, AIModel> {
+final class SelectedModelProvider extends $NotifierProvider<SelectedModel, AIModel> {
   SelectedModelProvider._()
     : super(
         from: null,
@@ -139,10 +122,7 @@ final class SelectedModelProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(AIModel value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<AIModel>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<AIModel>(value));
   }
 }
 
@@ -154,14 +134,7 @@ abstract class _$SelectedModel extends $Notifier<AIModel> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<AIModel, AIModel>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<AIModel, AIModel>,
-              AIModel,
-              Object?,
-              Object?
-            >;
+    final element = ref.element as $ClassProviderElement<AnyNotifier<AIModel, AIModel>, AIModel, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }
@@ -169,18 +142,15 @@ abstract class _$SelectedModel extends $Notifier<AIModel> {
 @ProviderFor(ChatMessages)
 final chatMessagesProvider = ChatMessagesFamily._();
 
-final class ChatMessagesProvider
-    extends $AsyncNotifierProvider<ChatMessages, List<ChatMessage>> {
-  ChatMessagesProvider._({
-    required ChatMessagesFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'chatMessagesProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+final class ChatMessagesProvider extends $AsyncNotifierProvider<ChatMessages, List<ChatMessage>> {
+  ChatMessagesProvider._({required ChatMessagesFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'chatMessagesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$chatMessagesHash();
@@ -227,8 +197,7 @@ final class ChatMessagesFamily extends $Family
         isAutoDispose: true,
       );
 
-  ChatMessagesProvider call(String sessionId) =>
-      ChatMessagesProvider._(argument: sessionId, from: this);
+  ChatMessagesProvider call(String sessionId) => ChatMessagesProvider._(argument: sessionId, from: this);
 
   @override
   String toString() => r'chatMessagesProvider';
@@ -242,8 +211,7 @@ abstract class _$ChatMessages extends $AsyncNotifier<List<ChatMessage>> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref =
-        this.ref as $Ref<AsyncValue<List<ChatMessage>>, List<ChatMessage>>;
+    final ref = this.ref as $Ref<AsyncValue<List<ChatMessage>>, List<ChatMessage>>;
     final element =
         ref.element
             as $ClassProviderElement<
@@ -260,15 +228,8 @@ abstract class _$ChatMessages extends $AsyncNotifier<List<ChatMessage>> {
 final chatSessionsProvider = ChatSessionsProvider._();
 
 final class ChatSessionsProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<ChatSession>>,
-          List<ChatSession>,
-          Stream<List<ChatSession>>
-        >
-    with
-        $FutureModifier<List<ChatSession>>,
-        $StreamProvider<List<ChatSession>> {
+    extends $FunctionalProvider<AsyncValue<List<ChatSession>>, List<ChatSession>, Stream<List<ChatSession>>>
+    with $FutureModifier<List<ChatSession>>, $StreamProvider<List<ChatSession>> {
   ChatSessionsProvider._()
     : super(
         from: null,
@@ -285,9 +246,7 @@ final class ChatSessionsProvider
 
   @$internal
   @override
-  $StreamProviderElement<List<ChatSession>> $createElement(
-    $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
+  $StreamProviderElement<List<ChatSession>> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
 
   @override
   Stream<List<ChatSession>> create(Ref ref) {
@@ -301,25 +260,16 @@ String _$chatSessionsHash() => r'bd92b56150cdba1b0318a6538773f19e9755be19';
 final projectSessionsProvider = ProjectSessionsFamily._();
 
 final class ProjectSessionsProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<ChatSession>>,
-          List<ChatSession>,
-          Stream<List<ChatSession>>
-        >
-    with
-        $FutureModifier<List<ChatSession>>,
-        $StreamProvider<List<ChatSession>> {
-  ProjectSessionsProvider._({
-    required ProjectSessionsFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'projectSessionsProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+    extends $FunctionalProvider<AsyncValue<List<ChatSession>>, List<ChatSession>, Stream<List<ChatSession>>>
+    with $FutureModifier<List<ChatSession>>, $StreamProvider<List<ChatSession>> {
+  ProjectSessionsProvider._({required ProjectSessionsFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'projectSessionsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$projectSessionsHash();
@@ -333,9 +283,7 @@ final class ProjectSessionsProvider
 
   @$internal
   @override
-  $StreamProviderElement<List<ChatSession>> $createElement(
-    $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
+  $StreamProviderElement<List<ChatSession>> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
 
   @override
   Stream<List<ChatSession>> create(Ref ref) {
@@ -356,8 +304,7 @@ final class ProjectSessionsProvider
 
 String _$projectSessionsHash() => r'035aba6e7325f7e246c3dc25c052fcc4cee5a5a0';
 
-final class ProjectSessionsFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<List<ChatSession>>, String> {
+final class ProjectSessionsFamily extends $Family with $FunctionalFamilyOverride<Stream<List<ChatSession>>, String> {
   ProjectSessionsFamily._()
     : super(
         retry: null,
@@ -367,8 +314,7 @@ final class ProjectSessionsFamily extends $Family
         isAutoDispose: true,
       );
 
-  ProjectSessionsProvider call(String projectId) =>
-      ProjectSessionsProvider._(argument: projectId, from: this);
+  ProjectSessionsProvider call(String projectId) => ProjectSessionsProvider._(argument: projectId, from: this);
 
   @override
   String toString() => r'projectSessionsProvider';
@@ -378,15 +324,8 @@ final class ProjectSessionsFamily extends $Family
 final archivedSessionsProvider = ArchivedSessionsProvider._();
 
 final class ArchivedSessionsProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<ChatSession>>,
-          List<ChatSession>,
-          Stream<List<ChatSession>>
-        >
-    with
-        $FutureModifier<List<ChatSession>>,
-        $StreamProvider<List<ChatSession>> {
+    extends $FunctionalProvider<AsyncValue<List<ChatSession>>, List<ChatSession>, Stream<List<ChatSession>>>
+    with $FutureModifier<List<ChatSession>>, $StreamProvider<List<ChatSession>> {
   ArchivedSessionsProvider._()
     : super(
         from: null,
@@ -403,9 +342,7 @@ final class ArchivedSessionsProvider
 
   @$internal
   @override
-  $StreamProviderElement<List<ChatSession>> $createElement(
-    $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
+  $StreamProviderElement<List<ChatSession>> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
 
   @override
   Stream<List<ChatSession>> create(Ref ref) {
@@ -418,9 +355,7 @@ String _$archivedSessionsHash() => r'ac4a8fe2f5367fe1e8d70a0b1ccde35be9c98173';
 @ProviderFor(AppliedChanges)
 final appliedChangesProvider = AppliedChangesProvider._();
 
-final class AppliedChangesProvider
-    extends
-        $NotifierProvider<AppliedChanges, Map<String, List<AppliedChange>>> {
+final class AppliedChangesProvider extends $NotifierProvider<AppliedChanges, Map<String, List<AppliedChange>>> {
   AppliedChangesProvider._()
     : super(
         from: null,
@@ -443,34 +378,23 @@ final class AppliedChangesProvider
   Override overrideWithValue(Map<String, List<AppliedChange>> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<Map<String, List<AppliedChange>>>(
-        value,
-      ),
+      providerOverride: $SyncValueProvider<Map<String, List<AppliedChange>>>(value),
     );
   }
 }
 
 String _$appliedChangesHash() => r'2f1446537e686532ec607fd36b2475b2adf7d9f9';
 
-abstract class _$AppliedChanges
-    extends $Notifier<Map<String, List<AppliedChange>>> {
+abstract class _$AppliedChanges extends $Notifier<Map<String, List<AppliedChange>>> {
   Map<String, List<AppliedChange>> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref =
-        this.ref
-            as $Ref<
-              Map<String, List<AppliedChange>>,
-              Map<String, List<AppliedChange>>
-            >;
+    final ref = this.ref as $Ref<Map<String, List<AppliedChange>>, Map<String, List<AppliedChange>>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<
-                Map<String, List<AppliedChange>>,
-                Map<String, List<AppliedChange>>
-              >,
+              AnyNotifier<Map<String, List<AppliedChange>>, Map<String, List<AppliedChange>>>,
               Map<String, List<AppliedChange>>,
               Object?,
               Object?
@@ -482,8 +406,7 @@ abstract class _$AppliedChanges
 @ProviderFor(ActiveMessageId)
 final activeMessageIdProvider = ActiveMessageIdProvider._();
 
-final class ActiveMessageIdProvider
-    extends $NotifierProvider<ActiveMessageId, String?> {
+final class ActiveMessageIdProvider extends $NotifierProvider<ActiveMessageId, String?> {
   ActiveMessageIdProvider._()
     : super(
         from: null,
@@ -504,10 +427,7 @@ final class ActiveMessageIdProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(String? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<String?>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<String?>(value));
   }
 }
 
@@ -519,14 +439,7 @@ abstract class _$ActiveMessageId extends $Notifier<String?> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<String?, String?>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<String?, String?>,
-              String?,
-              Object?,
-              Object?
-            >;
+    final element = ref.element as $ClassProviderElement<AnyNotifier<String?, String?>, String?, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }
@@ -534,8 +447,7 @@ abstract class _$ActiveMessageId extends $Notifier<String?> {
 @ProviderFor(ChangesPanelVisible)
 final changesPanelVisibleProvider = ChangesPanelVisibleProvider._();
 
-final class ChangesPanelVisibleProvider
-    extends $NotifierProvider<ChangesPanelVisible, bool> {
+final class ChangesPanelVisibleProvider extends $NotifierProvider<ChangesPanelVisible, bool> {
   ChangesPanelVisibleProvider._()
     : super(
         from: null,
@@ -556,15 +468,11 @@ final class ChangesPanelVisibleProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(bool value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<bool>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<bool>(value));
   }
 }
 
-String _$changesPanelVisibleHash() =>
-    r'f81f3dbb0aeb38ffb87bbd472846a33f732504e3';
+String _$changesPanelVisibleHash() => r'f81f3dbb0aeb38ffb87bbd472846a33f732504e3';
 
 abstract class _$ChangesPanelVisible extends $Notifier<bool> {
   bool build();
@@ -572,14 +480,7 @@ abstract class _$ChangesPanelVisible extends $Notifier<bool> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<bool, bool>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<bool, bool>,
-              bool,
-              Object?,
-              Object?
-            >;
+    final element = ref.element as $ClassProviderElement<AnyNotifier<bool, bool>, bool, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }
