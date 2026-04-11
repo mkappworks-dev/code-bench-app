@@ -158,6 +158,11 @@ class _ContentPanel extends ConsumerWidget {
                 onPressed: () => ref.read(onboardingControllerProvider.notifier).back(),
                 icon: const Icon(Icons.chevron_left, size: 16, color: Color(0xFF888888)),
                 label: const Text('Back', style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
             )
           else
@@ -173,30 +178,11 @@ class _ContentPanel extends ConsumerWidget {
           // Step content
           Expanded(
             child: switch (step) {
-              0 => ApiKeysStep(onContinue: () => _next(context, ref)),
-              1 => GithubStep(onContinue: () => _next(context, ref)),
-              2 => AddProjectStep(onComplete: () => _finish(context, ref)),
+              0 => ApiKeysStep(onContinue: () => _next(context, ref), onSkip: () => _skip(context, ref)),
+              1 => GithubStep(onContinue: () => _next(context, ref), onSkip: () => _skip(context, ref)),
+              2 => AddProjectStep(onComplete: () => _finish(context, ref), onSkip: () => _skip(context, ref)),
               _ => const SizedBox.shrink(),
             },
-          ),
-          // Footer navigation
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              TextButton(
-                onPressed: () => _skip(context, ref),
-                child: const Text('Skip for now', style: TextStyle(color: Color(0xFF666666), fontSize: 12)),
-              ),
-              if (step == 1)
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: ThemeConstants.accent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                  ),
-                  onPressed: () => _next(context, ref),
-                  child: const Text('Continue →', style: TextStyle(fontSize: 12)),
-                ),
-            ],
           ),
         ],
       ),
@@ -217,6 +203,7 @@ class _FeatureCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 54,
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: ThemeConstants.frostedBg,

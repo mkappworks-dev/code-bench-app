@@ -8,7 +8,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
-          home: Scaffold(body: AddProjectStep(onComplete: () {})),
+          home: Scaffold(body: AddProjectStep(onComplete: () {}, onSkip: () {})),
         ),
       ),
     );
@@ -19,7 +19,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
-          home: Scaffold(body: AddProjectStep(onComplete: () {})),
+          home: Scaffold(body: AddProjectStep(onComplete: () {}, onSkip: () {})),
         ),
       ),
     );

@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/utils/instant_menu.dart';
 import '../../../data/datasources/local/secure_storage_source.dart';
 import '../../../data/models/ai_model.dart';
 
 class ApiKeysStep extends ConsumerStatefulWidget {
-  const ApiKeysStep({super.key, required this.onContinue});
+  const ApiKeysStep({super.key, required this.onContinue, required this.onSkip});
+  final VoidCallback onSkip;
   final VoidCallback onContinue;
 
   @override
@@ -46,28 +48,29 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
     });
   }
 
-  Future<void> _showProviderPicker() async {
+  Future<void> _showProviderPicker(BuildContext btnCtx) async {
     final available = AIProvider.values.where((p) => !_addedProviders.contains(p)).toList();
     if (available.isEmpty) return;
 
-    final picked = await showDialog<AIProvider>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        backgroundColor: ThemeConstants.panelBackground,
-        title: const Text('Add a provider', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
-        children: [
-          ...available.map(
-            (p) => SimpleDialogOption(
-              onPressed: () => Navigator.pop(ctx, p),
-              child: Text(p.displayName, style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 13)),
-            ),
-          ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx, null),
-            child: const Text('Cancel', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 13)),
-          ),
-        ],
+    final picked = await showInstantMenuAnchoredTo<AIProvider>(
+      buttonContext: btnCtx,
+      color: ThemeConstants.panelBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(6),
+        side: const BorderSide(color: ThemeConstants.faintFg),
       ),
+      items: available
+          .map(
+            (p) => PopupMenuItem(
+              value: p,
+              height: 30,
+              child: Text(
+                p.displayName,
+                style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+              ),
+            ),
+          )
+          .toList(),
     );
 
     if (picked != null) _addProvider(picked);
@@ -195,28 +198,44 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
                 ),
               ),
               if (!allAdded)
-                TextButton.icon(
-                  onPressed: _showProviderPicker,
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Add another provider'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: ThemeConstants.accent,
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                Builder(
+                  builder: (btnCtx) => TextButton.icon(
+                    onPressed: () => _showProviderPicker(btnCtx),
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Add another provider'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: ThemeConstants.accent,
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
                   ),
                 ),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: ThemeConstants.accent,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-          ),
-          onPressed: _saving ? null : _saveAll,
-          child: _saving
-              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Save & Continue', style: TextStyle(fontSize: 12)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextButton(
+              onPressed: widget.onSkip,
+              style: TextButton.styleFrom(
+                foregroundColor: ThemeConstants.textMuted,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              ),
+              child: const Text('Skip for now', style: TextStyle(fontSize: 12)),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: ThemeConstants.accent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              ),
+              onPressed: _saving ? null : _saveAll,
+              child: _saving
+                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Save & Continue', style: TextStyle(fontSize: 12)),
+            ),
+          ],
         ),
       ],
     );
@@ -301,18 +320,45 @@ class _ProviderRowState extends State<_ProviderRow> {
         ],
         if (_supportsTest) ...[
           const SizedBox(width: 6),
-          OutlinedButton(
-            onPressed: widget.isTesting ? null : widget.onTest,
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: widget.testResult == true ? ThemeConstants.success : ThemeConstants.borderColor),
-              foregroundColor: widget.testResult == true ? ThemeConstants.success : ThemeConstants.textSecondary,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: widget.isTesting
-                ? const SizedBox(height: 12, width: 12, child: CircularProgressIndicator(strokeWidth: 2))
-                : Text(widget.testResult == true ? '✓ OK' : 'Test', style: const TextStyle(fontSize: 11)),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: widget.controller,
+            builder: (context, value, _) {
+              final hasKey = value.text.trim().isNotEmpty;
+              final Color borderCol = !hasKey
+                  ? ThemeConstants.borderColor
+                  : widget.testResult == true
+                  ? ThemeConstants.success
+                  : widget.testResult == false
+                  ? ThemeConstants.error
+                  : ThemeConstants.borderColor;
+              final Color fgCol = widget.testResult == true
+                  ? ThemeConstants.success
+                  : widget.testResult == false
+                  ? ThemeConstants.error
+                  : ThemeConstants.textSecondary;
+              return OutlinedButton(
+                onPressed: (hasKey && !widget.isTesting) ? widget.onTest : null,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: borderCol),
+                  foregroundColor: fgCol,
+                  disabledForegroundColor: ThemeConstants.textMuted,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                ),
+                child: widget.isTesting
+                    ? const SizedBox(height: 12, width: 12, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(
+                        widget.testResult == true
+                            ? '✓ OK'
+                            : widget.testResult == false
+                            ? '✗ Fail'
+                            : 'Test',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+              );
+            },
           ),
         ],
         const SizedBox(width: 6),
