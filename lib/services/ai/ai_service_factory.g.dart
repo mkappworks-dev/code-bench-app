@@ -6,165 +6,100 @@ part of 'ai_service_factory.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$aiServiceHash() => r'b2b6ca1109c747094f80ac976f29ec5bbb98257d';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-/// See also [aiService].
 @ProviderFor(aiService)
-const aiServiceProvider = AiServiceFamily();
+final aiServiceProvider = AiServiceFamily._();
 
-/// See also [aiService].
-class AiServiceFamily extends Family<AsyncValue<AIService?>> {
-  /// See also [aiService].
-  const AiServiceFamily();
-
-  /// See also [aiService].
-  AiServiceProvider call(
-    AIProvider aiProvider,
-  ) {
-    return AiServiceProvider(
-      aiProvider,
-    );
-  }
-
-  @override
-  AiServiceProvider getProviderOverride(
-    covariant AiServiceProvider provider,
-  ) {
-    return call(
-      provider.aiProvider,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies => _allTransitiveDependencies;
-
-  @override
-  String? get name => r'aiServiceProvider';
-}
-
-/// See also [aiService].
-class AiServiceProvider extends AutoDisposeFutureProvider<AIService?> {
-  /// See also [aiService].
-  AiServiceProvider(
-    AIProvider aiProvider,
-  ) : this._internal(
-          (ref) => aiService(
-            ref as AiServiceRef,
-            aiProvider,
-          ),
-          from: aiServiceProvider,
-          name: r'aiServiceProvider',
-          debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$aiServiceHash,
-          dependencies: AiServiceFamily._dependencies,
-          allTransitiveDependencies: AiServiceFamily._allTransitiveDependencies,
-          aiProvider: aiProvider,
-        );
-
-  AiServiceProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.aiProvider,
-  }) : super.internal();
-
-  final AIProvider aiProvider;
-
-  @override
-  Override overrideWith(
-    FutureOr<AIService?> Function(AiServiceRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: AiServiceProvider._internal(
-        (ref) => create(ref as AiServiceRef),
-        from: from,
-        name: null,
+final class AiServiceProvider extends $FunctionalProvider<AsyncValue<AIService?>, AIService?, FutureOr<AIService?>>
+    with $FutureModifier<AIService?>, $FutureProvider<AIService?> {
+  AiServiceProvider._({required AiServiceFamily super.from, required AIProvider super.argument})
+    : super(
+        retry: null,
+        name: r'aiServiceProvider',
+        isAutoDispose: true,
         dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        aiProvider: aiProvider,
-      ),
-    );
-  }
+        $allTransitiveDependencies: null,
+      );
 
   @override
-  AutoDisposeFutureProviderElement<AIService?> createElement() {
-    return _AiServiceProviderElement(this);
+  String debugGetCreateSourceHash() => _$aiServiceHash();
+
+  @override
+  String toString() {
+    return r'aiServiceProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<AIService?> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<AIService?> create(Ref ref) {
+    final argument = this.argument as AIProvider;
+    return aiService(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is AiServiceProvider && other.aiProvider == aiProvider;
+    return other is AiServiceProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, aiProvider.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin AiServiceRef on AutoDisposeFutureProviderRef<AIService?> {
-  /// The parameter `aiProvider` of this provider.
-  AIProvider get aiProvider;
-}
+String _$aiServiceHash() => r'b2b6ca1109c747094f80ac976f29ec5bbb98257d';
 
-class _AiServiceProviderElement extends AutoDisposeFutureProviderElement<AIService?> with AiServiceRef {
-  _AiServiceProviderElement(super.provider);
+final class AiServiceFamily extends $Family with $FunctionalFamilyOverride<FutureOr<AIService?>, AIProvider> {
+  AiServiceFamily._()
+    : super(
+        retry: null,
+        name: r'aiServiceProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  AiServiceProvider call(AIProvider aiProvider) => AiServiceProvider._(argument: aiProvider, from: this);
 
   @override
-  AIProvider get aiProvider => (origin as AiServiceProvider).aiProvider;
+  String toString() => r'aiServiceProvider';
+}
+
+@ProviderFor(availableModels)
+final availableModelsProvider = AvailableModelsProvider._();
+
+final class AvailableModelsProvider
+    extends $FunctionalProvider<AsyncValue<List<AIModel>>, List<AIModel>, FutureOr<List<AIModel>>>
+    with $FutureModifier<List<AIModel>>, $FutureProvider<List<AIModel>> {
+  AvailableModelsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'availableModelsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$availableModelsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<AIModel>> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<AIModel>> create(Ref ref) {
+    return availableModels(ref);
+  }
 }
 
 String _$availableModelsHash() => r'69eb26eebb8ce7a109cc652cc5abe328c8fe995f';
-
-/// See also [availableModels].
-@ProviderFor(availableModels)
-final availableModelsProvider = AutoDisposeFutureProvider<List<AIModel>>.internal(
-  availableModels,
-  name: r'availableModelsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$availableModelsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef AvailableModelsRef = AutoDisposeFutureProviderRef<List<AIModel>>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

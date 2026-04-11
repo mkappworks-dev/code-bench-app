@@ -76,12 +76,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await storage.writeCustomApiKey(_customApiKeyController.text.trim());
     ref.invalidate(aiServiceProvider);
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Settings saved'),
-          backgroundColor: ThemeConstants.success,
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Settings saved'), backgroundColor: ThemeConstants.success));
     }
   }
 
@@ -95,25 +92,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _testOllama() async {
     final url = _ollamaController.text.trim();
     try {
-      final testDio = Dio(
-        BaseOptions(baseUrl: url, connectTimeout: const Duration(seconds: 5)),
-      );
+      final testDio = Dio(BaseOptions(baseUrl: url, connectTimeout: const Duration(seconds: 5)));
       await testDio.get('/api/tags');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ollama is running!'),
-            backgroundColor: ThemeConstants.success,
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Ollama is running!'), backgroundColor: ThemeConstants.success));
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cannot connect to Ollama.'),
-            backgroundColor: ThemeConstants.error,
-          ),
+          const SnackBar(content: Text('Cannot connect to Ollama.'), backgroundColor: ThemeConstants.error),
         );
       }
     }
@@ -147,11 +136,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Expanded(
             child: Container(
               color: ThemeConstants.sidebarBackground,
-              padding: EdgeInsets.only(
-                left: 24,
-                right: 24,
-                top: PlatformUtils.isMacOS ? 48 : 20,
-              ),
+              padding: EdgeInsets.only(left: 24, right: 24, top: PlatformUtils.isMacOS ? 48 : 20),
               child: _buildContent(),
             ),
           ),
@@ -163,9 +148,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _buildContent() {
     switch (_activeNav) {
       case _SettingsNav.general:
-        return _GeneralSection(
-          generalPrefs: ref.read(generalPreferencesProvider),
-        );
+        return _GeneralSection(generalPrefs: ref.read(generalPreferencesProvider));
       case _SettingsNav.providers:
         return _ProvidersSection(
           controllers: _controllers,
@@ -177,9 +160,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           onTestOllama: _testOllama,
         );
       case _SettingsNav.archive:
-        return ArchiveScreen(
-          onUnarchive: (id) => unawaited(ref.read(sessionServiceProvider).unarchiveSession(id)),
-        );
+        return ArchiveScreen(onUnarchive: (id) => unawaited(ref.read(sessionServiceProvider).unarchiveSession(id)));
     }
   }
 
@@ -188,23 +169,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: ThemeConstants.panelBackground,
-        title: const Text(
-          'Restore defaults?',
-          style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14),
-        ),
+        title: const Text('Restore defaults?', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
         content: const Text(
           'All settings will be reset to their default values.',
           style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 12),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Restore'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Restore')),
         ],
       ),
     );
@@ -249,11 +221,7 @@ class _SettingsLeftNav extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(16, 20, 16, 16),
             child: Text(
               'Settings',
-              style: TextStyle(
-                color: ThemeConstants.textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ),
           _NavItem(
@@ -279,21 +247,10 @@ class _SettingsLeftNav extends StatelessWidget {
             onTap: onRestoreDefaults,
             child: const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                '↺ Restore defaults',
-                style: TextStyle(
-                  color: ThemeConstants.mutedFg,
-                  fontSize: 11,
-                ),
-              ),
+              child: Text('↺ Restore defaults', style: TextStyle(color: ThemeConstants.mutedFg, fontSize: 11)),
             ),
           ),
-          _NavItem(
-            icon: AppIcons.arrowLeft,
-            label: 'Back',
-            isActive: false,
-            onTap: onBack,
-          ),
+          _NavItem(icon: AppIcons.arrowLeft, label: 'Back', isActive: false, onTap: onBack),
           const SizedBox(height: 12),
         ],
       ),
@@ -302,12 +259,7 @@ class _SettingsLeftNav extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
+  const _NavItem({required this.icon, required this.label, required this.isActive, required this.onTap});
 
   final IconData icon;
   final String label;
@@ -326,11 +278,7 @@ class _NavItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 14,
-              color: isActive ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
-            ),
+            Icon(icon, size: 14, color: isActive ? ThemeConstants.textPrimary : ThemeConstants.textSecondary),
             const SizedBox(width: 8),
             Text(
               label,
@@ -366,9 +314,7 @@ class _GeneralSectionState extends State<_GeneralSection> {
   void initState() {
     super.initState();
     _load();
-    _terminalAppController.addListener(
-      () => widget.generalPrefs.setTerminalApp(_terminalAppController.text),
-    );
+    _terminalAppController.addListener(() => widget.generalPrefs.setTerminalApp(_terminalAppController.text));
   }
 
   Future<void> _load() async {
@@ -396,86 +342,81 @@ class _GeneralSectionState extends State<_GeneralSection> {
         children: [
           _SectionLabel('General'),
           const SizedBox(height: 8),
-          _SettingsGroup(rows: [
-            _SettingsRow(
-              label: 'Theme',
-              description: 'How Code Bench looks',
-              trailing: Builder(
-                builder: (ctx) => _AppDropdown<String>(
-                  value: 'Dark',
-                  items: const ['Dark', 'Light', 'System'],
-                  label: (s) => s,
-                  onChanged: (_) {},
-                  context: ctx,
-                ),
-              ),
-            ),
-            _SettingsRow(
-              label: 'Delete confirmation',
-              description: 'Ask before deleting a session',
-              trailing: Builder(
-                builder: (ctx) => _AppDropdown<bool>(
-                  value: _deleteConfirmation,
-                  items: const [true, false],
-                  label: (v) => v ? 'Enabled' : 'Disabled',
-                  onChanged: (v) async {
-                    await widget.generalPrefs.setDeleteConfirmation(v);
-                    setState(() => _deleteConfirmation = v);
-                  },
-                  context: ctx,
-                ),
-              ),
-            ),
-            _SettingsRow(
-              label: 'Auto-commit',
-              description: 'Skip commit dialog; commit immediately with AI-generated message',
-              trailing: Builder(
-                builder: (ctx) => _AppDropdown<bool>(
-                  value: _autoCommit,
-                  items: const [true, false],
-                  label: (v) => v ? 'Enabled' : 'Disabled',
-                  onChanged: (v) async {
-                    await widget.generalPrefs.setAutoCommit(v);
-                    setState(() => _autoCommit = v);
-                  },
-                  context: ctx,
-                ),
-              ),
-            ),
-            _SettingsRow(
-              label: 'Terminal app',
-              description: 'App to open when "Open Terminal" is tapped',
-              trailing: SizedBox(
-                width: 140,
-                child: _InlineTextField(controller: _terminalAppController),
-              ),
-              isLast: true,
-            ),
-          ]),
-          const SizedBox(height: 24),
-          _SectionLabel('About'),
-          const SizedBox(height: 8),
-          _SettingsGroup(rows: [
-            _SettingsRow(
-              label: 'Version',
-              description: 'Current app version',
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: ThemeConstants.success.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  'Up to Date',
-                  style: TextStyle(
-                    color: ThemeConstants.success,
-                    fontSize: 10,
+          _SettingsGroup(
+            rows: [
+              _SettingsRow(
+                label: 'Theme',
+                description: 'How Code Bench looks',
+                trailing: Builder(
+                  builder: (ctx) => _AppDropdown<String>(
+                    value: 'Dark',
+                    items: const ['Dark', 'Light', 'System'],
+                    label: (s) => s,
+                    onChanged: (_) {},
+                    context: ctx,
                   ),
                 ),
               ),
-              isLast: true,
-            ),
-          ]),
+              _SettingsRow(
+                label: 'Delete confirmation',
+                description: 'Ask before deleting a session',
+                trailing: Builder(
+                  builder: (ctx) => _AppDropdown<bool>(
+                    value: _deleteConfirmation,
+                    items: const [true, false],
+                    label: (v) => v ? 'Enabled' : 'Disabled',
+                    onChanged: (v) async {
+                      await widget.generalPrefs.setDeleteConfirmation(v);
+                      setState(() => _deleteConfirmation = v);
+                    },
+                    context: ctx,
+                  ),
+                ),
+              ),
+              _SettingsRow(
+                label: 'Auto-commit',
+                description: 'Skip commit dialog; commit immediately with AI-generated message',
+                trailing: Builder(
+                  builder: (ctx) => _AppDropdown<bool>(
+                    value: _autoCommit,
+                    items: const [true, false],
+                    label: (v) => v ? 'Enabled' : 'Disabled',
+                    onChanged: (v) async {
+                      await widget.generalPrefs.setAutoCommit(v);
+                      setState(() => _autoCommit = v);
+                    },
+                    context: ctx,
+                  ),
+                ),
+              ),
+              _SettingsRow(
+                label: 'Terminal app',
+                description: 'App to open when "Open Terminal" is tapped',
+                trailing: SizedBox(width: 140, child: _InlineTextField(controller: _terminalAppController)),
+                isLast: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _SectionLabel('About'),
+          const SizedBox(height: 8),
+          _SettingsGroup(
+            rows: [
+              _SettingsRow(
+                label: 'Version',
+                description: 'Current app version',
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: ThemeConstants.success.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text('Up to Date', style: TextStyle(color: ThemeConstants.success, fontSize: 10)),
+                ),
+                isLast: true,
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -511,7 +452,9 @@ class _ProvidersSection extends StatelessWidget {
         children: [
           _SectionLabel('API Keys'),
           const SizedBox(height: 8),
-          ...AIProvider.values.where((p) => p != AIProvider.ollama && p != AIProvider.custom).map(
+          ...AIProvider.values
+              .where((p) => p != AIProvider.ollama && p != AIProvider.custom)
+              .map(
                 (provider) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _ProviderKeyCard(
@@ -524,17 +467,16 @@ class _ProvidersSection extends StatelessWidget {
           const SizedBox(height: 16),
           _SectionLabel('Ollama (Local)'),
           const SizedBox(height: 8),
-          _SettingsGroup(rows: [
-            _SettingsRow(
-              label: 'Base URL',
-              description: ApiConstants.ollamaDefaultBaseUrl,
-              trailing: SizedBox(
-                width: 200,
-                child: _InlineTextField(controller: ollamaController),
+          _SettingsGroup(
+            rows: [
+              _SettingsRow(
+                label: 'Base URL',
+                description: ApiConstants.ollamaDefaultBaseUrl,
+                trailing: SizedBox(width: 200, child: _InlineTextField(controller: ollamaController)),
+                isLast: true,
               ),
-              isLast: true,
-            ),
-          ]),
+            ],
+          ),
           const SizedBox(height: 8),
           TextButton.icon(
             onPressed: onTestOllama,
@@ -544,28 +486,24 @@ class _ProvidersSection extends StatelessWidget {
           const SizedBox(height: 16),
           _SectionLabel('Custom Endpoint (OpenAI-compatible)'),
           const SizedBox(height: 8),
-          _SettingsGroup(rows: [
-            _SettingsRow(
-              label: 'Base URL',
-              description: 'http://localhost:1234/v1',
-              trailing: SizedBox(
-                width: 200,
-                child: _InlineTextField(controller: customEndpointController),
+          _SettingsGroup(
+            rows: [
+              _SettingsRow(
+                label: 'Base URL',
+                description: 'http://localhost:1234/v1',
+                trailing: SizedBox(width: 200, child: _InlineTextField(controller: customEndpointController)),
               ),
-            ),
-            _SettingsRow(
-              label: 'API Key',
-              description: 'sk-... or leave blank',
-              trailing: SizedBox(
-                width: 200,
-                child: _InlineTextField(
-                  controller: customApiKeyController,
-                  obscureText: true,
+              _SettingsRow(
+                label: 'API Key',
+                description: 'sk-... or leave blank',
+                trailing: SizedBox(
+                  width: 200,
+                  child: _InlineTextField(controller: customApiKeyController, obscureText: true),
                 ),
+                isLast: true,
               ),
-              isLast: true,
-            ),
-          ]),
+            ],
+          ),
           const SizedBox(height: 24),
           SizedBox(
             width: 160,
@@ -581,11 +519,7 @@ class _ProvidersSection extends StatelessWidget {
 }
 
 class _ProviderKeyCard extends StatefulWidget {
-  const _ProviderKeyCard({
-    required this.provider,
-    required this.controller,
-    required this.onDelete,
-  });
+  const _ProviderKeyCard({required this.provider, required this.controller, required this.onDelete});
 
   final AIProvider provider;
   final TextEditingController controller;
@@ -637,17 +571,10 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
                   const SizedBox(width: 8),
                   Text(
                     hasKey ? 'Configured' : 'Not configured',
-                    style: const TextStyle(
-                      color: ThemeConstants.textSecondary,
-                      fontSize: 11,
-                    ),
+                    style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11),
                   ),
                   const Spacer(),
-                  Icon(
-                    _expanded ? AppIcons.chevronUp : AppIcons.chevronDown,
-                    size: 14,
-                    color: ThemeConstants.mutedFg,
-                  ),
+                  Icon(_expanded ? AppIcons.chevronUp : AppIcons.chevronDown, size: 14, color: ThemeConstants.mutedFg),
                 ],
               ),
             ),
@@ -669,10 +596,7 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
                       decoration: InputDecoration(
                         hintText: 'API key',
                         suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscure ? AppIcons.hideSecret : AppIcons.showSecret,
-                            size: 14,
-                          ),
+                          icon: Icon(_obscure ? AppIcons.hideSecret : AppIcons.showSecret, size: 14),
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
@@ -729,11 +653,7 @@ class _SettingsGroup extends StatelessWidget {
       child: Column(
         children: [
           for (int i = 0; i < rows.length; i++) ...[
-            if (i > 0)
-              const Divider(
-                height: 1,
-                color: ThemeConstants.deepBorder,
-              ),
+            if (i > 0) const Divider(height: 1, color: ThemeConstants.deepBorder),
             rows[i],
           ],
         ],
@@ -743,12 +663,7 @@ class _SettingsGroup extends StatelessWidget {
 }
 
 class _SettingsRow extends StatelessWidget {
-  const _SettingsRow({
-    required this.label,
-    required this.description,
-    required this.trailing,
-    this.isLast = false,
-  });
+  const _SettingsRow({required this.label, required this.description, required this.trailing, this.isLast = false});
 
   final String label;
   final String description;
@@ -767,20 +682,10 @@ class _SettingsRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: ThemeConstants.textPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    color: ThemeConstants.textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
+                Text(description, style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11)),
               ],
             ),
           ),
@@ -793,10 +698,7 @@ class _SettingsRow extends StatelessWidget {
 }
 
 class _InlineTextField extends StatelessWidget {
-  const _InlineTextField({
-    required this.controller,
-    this.obscureText = false,
-  });
+  const _InlineTextField({required this.controller, this.obscureText = false});
 
   final TextEditingController controller;
   final bool obscureText;
@@ -853,24 +755,26 @@ class _AppDropdown<T> extends StatelessWidget {
         side: const BorderSide(color: Color(0xFF333333)),
       ),
       items: items
-          .map((item) => PopupMenuItem<T>(
-                value: item,
-                height: 30,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        label(item),
-                        style: TextStyle(
-                          color: item == value ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
-                          fontSize: ThemeConstants.uiFontSizeSmall,
-                        ),
+          .map(
+            (item) => PopupMenuItem<T>(
+              value: item,
+              height: 30,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      label(item),
+                      style: TextStyle(
+                        color: item == value ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
+                        fontSize: ThemeConstants.uiFontSizeSmall,
                       ),
                     ),
-                    if (item == value) const Icon(AppIcons.check, size: 11, color: ThemeConstants.accent),
-                  ],
-                ),
-              ))
+                  ),
+                  if (item == value) const Icon(AppIcons.check, size: 11, color: ThemeConstants.accent),
+                ],
+              ),
+            ),
+          )
           .toList(),
     ).then((picked) {
       if (picked != null) onChanged(picked);
@@ -894,10 +798,7 @@ class _AppDropdown<T> extends StatelessWidget {
           children: [
             Text(
               label(value),
-              style: const TextStyle(
-                color: ThemeConstants.textPrimary,
-                fontSize: ThemeConstants.uiFontSizeSmall,
-              ),
+              style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
             ),
             const SizedBox(width: 4),
             const Icon(AppIcons.chevronDown, size: 10, color: ThemeConstants.mutedFg),

@@ -6,20 +6,41 @@ part of 'session_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$sessionServiceHash() => r'711785a3c0116c25dc6daf99d11905dfc1f2a6f2';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [sessionService].
 @ProviderFor(sessionService)
-final sessionServiceProvider = Provider<SessionService>.internal(
-  sessionService,
-  name: r'sessionServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$sessionServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final sessionServiceProvider = SessionServiceProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef SessionServiceRef = ProviderRef<SessionService>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class SessionServiceProvider extends $FunctionalProvider<SessionService, SessionService, SessionService>
+    with $Provider<SessionService> {
+  SessionServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sessionServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sessionServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<SessionService> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+
+  @override
+  SessionService create(Ref ref) {
+    return sessionService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SessionService value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<SessionService>(value));
+  }
+}
+
+String _$sessionServiceHash() => r'711785a3c0116c25dc6daf99d11905dfc1f2a6f2';

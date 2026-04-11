@@ -27,7 +27,7 @@ enum AIProvider {
 }
 
 @freezed
-class AIModel with _$AIModel {
+abstract class AIModel with _$AIModel {
   const factory AIModel({
     required String id,
     required AIProvider provider,
@@ -101,12 +101,5 @@ class AIModels {
     supportsStreaming: true,
   );
 
-  static List<AIModel> get defaults => [
-        gpt4o,
-        gpt4oMini,
-        claude35Sonnet,
-        claude3Haiku,
-        geminiPro,
-        customModel,
-      ];
+  static List<AIModel> get defaults => [gpt4o, gpt4oMini, claude35Sonnet, claude3Haiku, geminiPro, customModel];
 }

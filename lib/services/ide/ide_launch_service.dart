@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/datasources/local/general_preferences.dart';
@@ -15,9 +14,11 @@ class IdeLaunchService {
 
   final GeneralPreferences _prefs;
 
-  static const _vsCodeNotFoundMessage = "VS Code CLI not found — install it from the Command Palette "
+  static const _vsCodeNotFoundMessage =
+      "VS Code CLI not found — install it from the Command Palette "
       "(Shell Command: Install 'code' in PATH)";
-  static const _cursorNotFoundMessage = "Cursor CLI not found — install it from the Command Palette "
+  static const _cursorNotFoundMessage =
+      "Cursor CLI not found — install it from the Command Palette "
       "(Shell Command: Install 'cursor' in PATH)";
 
   static List<String> buildVsCodeArgs(String path) => [path];
@@ -25,12 +26,7 @@ class IdeLaunchService {
   // interpreted as an `open` flag (defense-in-depth; path is a user-chosen
   // project folder and not attacker-controlled).
   static List<String> buildFinderArgs(String path) => ['--', path];
-  static List<String> buildTerminalArgs(String path, String terminalApp) => [
-        '-a',
-        terminalApp,
-        '--',
-        path,
-      ];
+  static List<String> buildTerminalArgs(String path, String terminalApp) => ['-a', terminalApp, '--', path];
 
   /// Opens [path] in VS Code. Returns an error message if the CLI is not
   /// found, or null on success.

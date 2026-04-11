@@ -28,10 +28,7 @@ class _SkeletonLoaderState extends State<SkeletonLoader> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat(reverse: true);
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
   }
 
@@ -46,15 +43,11 @@ class _SkeletonLoaderState extends State<SkeletonLoader> with SingleTickerProvid
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, _) {
-        final shimmerColor = Color.lerp(
-          ThemeConstants.inputBackground,
-          ThemeConstants.borderColor,
-          _animation.value,
-        )!;
+        final shimmerColor = Color.lerp(ThemeConstants.inputBackground, ThemeConstants.borderColor, _animation.value)!;
 
         return ListView.separated(
           itemCount: widget.itemCount,
-          separatorBuilder: (_, __) => const Divider(height: 1),
+          separatorBuilder: (_, _) => const Divider(height: 1),
           itemBuilder: (context, index) {
             // vary widths so it looks more natural
             final titleWidth = index % 3 == 0 ? 0.6 : (index % 3 == 1 ? 0.75 : 0.5);
@@ -65,12 +58,7 @@ class _SkeletonLoaderState extends State<SkeletonLoader> with SingleTickerProvid
               child: Row(
                 children: [
                   if (widget.showLeading) ...[
-                    _SkeletonBox(
-                      width: 16,
-                      height: 16,
-                      color: shimmerColor,
-                      borderRadius: 4,
-                    ),
+                    _SkeletonBox(width: 16, height: 16, color: shimmerColor, borderRadius: 4),
                     const SizedBox(width: 12),
                   ],
                   Expanded(
@@ -130,10 +118,7 @@ class _SkeletonBox extends StatelessWidget {
       child: Container(
         width: width,
         height: height,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(borderRadius),
-        ),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(borderRadius)),
       ),
     );
   }

@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/utils/debug_logger.dart';
@@ -60,7 +59,7 @@ class ChatMessages extends _$ChatMessages {
     final service = ref.read(sessionServiceProvider);
 
     // Optimistically add user message
-    final currentMessages = state.valueOrNull ?? [];
+    final currentMessages = state.value ?? [];
     state = AsyncData([...currentMessages]);
 
     try {
@@ -70,7 +69,7 @@ class ChatMessages extends _$ChatMessages {
         model: model,
         systemPrompt: systemPrompt,
       )) {
-        final current = state.valueOrNull ?? [];
+        final current = state.value ?? [];
         final idx = current.indexWhere((m) => m.id == msg.id);
         if (idx >= 0) {
           final updated = List<ChatMessage>.from(current);
@@ -88,12 +87,8 @@ class ChatMessages extends _$ChatMessages {
 
   Future<void> loadMore(String sessionId, int offset) async {
     final service = ref.read(sessionServiceProvider);
-    final older = await service.loadHistory(
-      sessionId,
-      limit: 50,
-      offset: offset,
-    );
-    final current = state.valueOrNull ?? [];
+    final older = await service.loadHistory(sessionId, limit: 50, offset: offset);
+    final current = state.value ?? [];
     state = AsyncData([...older, ...current]);
   }
 }
@@ -131,9 +126,7 @@ class AppliedChanges extends _$AppliedChanges {
   }
 
   void revert(String id) {
-    final next = {
-      for (final entry in state.entries) entry.key: entry.value.where((c) => c.id != id).toList(),
-    };
+    final next = {for (final entry in state.entries) entry.key: entry.value.where((c) => c.id != id).toList()};
     state = Map.fromEntries(next.entries.where((e) => e.value.isNotEmpty));
   }
 

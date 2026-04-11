@@ -38,12 +38,7 @@ class AnthropicService implements AIService {
     String? systemPrompt,
   }) async* {
     final messages = _buildMessages(history, prompt);
-    final body = <String, dynamic>{
-      'model': model.modelId,
-      'max_tokens': 4096,
-      'messages': messages,
-      'stream': true,
-    };
+    final body = <String, dynamic>{'model': model.modelId, 'max_tokens': 4096, 'messages': messages, 'stream': true};
     if (systemPrompt != null) {
       body['system'] = systemPrompt;
     }
@@ -145,15 +140,10 @@ class AnthropicService implements AIService {
 
   @override
   Future<List<AIModel>> fetchAvailableModels(String apiKey) {
-    return Future.value(
-      AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList(),
-    );
+    return Future.value(AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList());
   }
 
-  List<Map<String, String>> _buildMessages(
-    List<ChatMessage> history,
-    String prompt,
-  ) {
+  List<Map<String, String>> _buildMessages(List<ChatMessage> history, String prompt) {
     final messages = <Map<String, String>>[];
     for (final msg in history.where((m) => m.role != MessageRole.system)) {
       messages.add({'role': msg.role.value, 'content': msg.content});

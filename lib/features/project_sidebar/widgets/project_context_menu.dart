@@ -38,11 +38,7 @@ class ProjectContextMenu {
     );
   }
 
-  static PopupMenuItem<String> _buildItem(
-    String value,
-    String label,
-    IconData icon,
-  ) {
+  static PopupMenuItem<String> _buildItem(String value, String label, IconData icon) {
     return PopupMenuItem<String>(
       value: value,
       height: 32,
@@ -50,13 +46,7 @@ class ProjectContextMenu {
         children: [
           Icon(icon, size: 14, color: ThemeConstants.textSecondary),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              color: ThemeConstants.textPrimary,
-              fontSize: 11,
-            ),
-          ),
+          Text(label, style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 11)),
         ],
       ),
     );
@@ -70,13 +60,7 @@ class ProjectContextMenu {
         children: [
           const Icon(Icons.close, size: 14, color: ThemeConstants.error),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              color: ThemeConstants.error,
-              fontSize: 11,
-            ),
-          ),
+          Text(label, style: const TextStyle(color: ThemeConstants.error, fontSize: 11)),
         ],
       ),
     );

@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/errors/app_exception.dart';
@@ -12,7 +11,6 @@ SecureStorageSource secureStorageSource(Ref ref) {
 
 class SecureStorageSource {
   static const _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
     mOptions: MacOsOptions(accessibility: KeychainAccessibility.first_unlock),
   );
 
@@ -105,10 +103,7 @@ class SecureStorageSource {
     try {
       await _storage.write(key: _customEndpointKey, value: url);
     } catch (e) {
-      throw StorageException(
-        'Failed to store custom endpoint',
-        originalError: e,
-      );
+      throw StorageException('Failed to store custom endpoint', originalError: e);
     }
   }
 
@@ -116,10 +111,7 @@ class SecureStorageSource {
     try {
       return await _storage.read(key: _customEndpointKey);
     } catch (e) {
-      throw StorageException(
-        'Failed to read custom endpoint',
-        originalError: e,
-      );
+      throw StorageException('Failed to read custom endpoint', originalError: e);
     }
   }
 
@@ -127,10 +119,7 @@ class SecureStorageSource {
     try {
       await _storage.write(key: _customApiKeyKey, value: apiKey);
     } catch (e) {
-      throw StorageException(
-        'Failed to store custom API key',
-        originalError: e,
-      );
+      throw StorageException('Failed to store custom API key', originalError: e);
     }
   }
 

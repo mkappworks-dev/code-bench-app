@@ -56,27 +56,16 @@ class _ErrorFallback extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 48,
-              color: ThemeConstants.error,
-            ),
+            const Icon(Icons.error_outline, size: 48, color: ThemeConstants.error),
             const SizedBox(height: 16),
             const Text(
               'Something went wrong',
-              style: TextStyle(
-                color: ThemeConstants.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 8),
             Text(
               error,
-              style: const TextStyle(
-                color: ThemeConstants.textMuted,
-                fontSize: 12,
-              ),
+              style: const TextStyle(color: ThemeConstants.textMuted, fontSize: 12),
               textAlign: TextAlign.center,
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
@@ -109,18 +98,11 @@ class AsyncErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 40,
-              color: ThemeConstants.error,
-            ),
+            const Icon(Icons.error_outline, size: 40, color: ThemeConstants.error),
             const SizedBox(height: 12),
             Text(
               userMessage(error, fallback: 'An unexpected error occurred.'),
-              style: const TextStyle(
-                color: ThemeConstants.textSecondary,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 13),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),

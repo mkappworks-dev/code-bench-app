@@ -19,9 +19,7 @@ class ProjectSidebar extends ConsumerWidget {
   const ProjectSidebar({super.key});
 
   Future<void> _addProject(BuildContext context, WidgetRef ref) async {
-    final result = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: 'Select project folder',
-    );
+    final result = await FilePicker.getDirectoryPath(dialogTitle: 'Select project folder');
     if (result == null) return;
 
     final service = ref.read(projectServiceProvider);
@@ -30,17 +28,10 @@ class ProjectSidebar extends ConsumerWidget {
     ref.read(expandedProjectIdsProvider.notifier).expand(project.id);
   }
 
-  Future<void> _newConversation(
-    BuildContext context,
-    WidgetRef ref,
-    String projectId,
-  ) async {
+  Future<void> _newConversation(BuildContext context, WidgetRef ref, String projectId) async {
     final model = ref.read(selectedModelProvider);
     final service = ref.read(sessionServiceProvider);
-    final sessionId = await service.createSession(
-      model: model,
-      projectId: projectId,
-    );
+    final sessionId = await service.createSession(model: model, projectId: projectId);
     ref.read(activeSessionIdProvider.notifier).set(sessionId);
     ref.read(activeProjectIdProvider.notifier).set(projectId);
     if (context.mounted) context.go('/chat/$sessionId');
@@ -48,7 +39,7 @@ class ProjectSidebar extends ConsumerWidget {
 
   void _showSortMenu(BuildContext context, WidgetRef ref) {
     final sortAsync = ref.read(projectSortProvider);
-    final current = sortAsync.valueOrNull;
+    final current = sortAsync.value;
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
@@ -157,16 +148,11 @@ class ProjectSidebar extends ConsumerWidget {
           // Project list
           Expanded(
             child: projectsAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+              loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
               error: (e, _) => Center(
                 child: Text(
                   'Error: $e',
-                  style: const TextStyle(
-                    color: ThemeConstants.error,
-                    fontSize: ThemeConstants.uiFontSizeSmall,
-                  ),
+                  style: const TextStyle(color: ThemeConstants.error, fontSize: ThemeConstants.uiFontSizeSmall),
                 ),
               ),
               data: (projects) {
@@ -175,27 +161,17 @@ class ProjectSidebar extends ConsumerWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          AppIcons.folder,
-                          size: 32,
-                          color: ThemeConstants.faintFg,
-                        ),
+                        Icon(AppIcons.folder, size: 32, color: ThemeConstants.faintFg),
                         const SizedBox(height: 12),
                         const Text(
                           'No projects yet',
-                          style: TextStyle(
-                            color: ThemeConstants.mutedFg,
-                            fontSize: ThemeConstants.uiFontSize,
-                          ),
+                          style: TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSize),
                         ),
                         const SizedBox(height: 12),
                         TextButton.icon(
                           onPressed: () => _addProject(context, ref),
                           icon: Icon(AppIcons.add, size: 12),
-                          label: const Text(
-                            'Open folder',
-                            style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall),
-                          ),
+                          label: const Text('Open folder', style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall)),
                         ),
                       ],
                     ),
@@ -206,16 +182,12 @@ class ProjectSidebar extends ConsumerWidget {
                   itemCount: projects.length,
                   itemBuilder: (context, i) {
                     final project = projects[i];
-                    final sessionsAsync = ref.watch(
-                      projectSessionsProvider(project.id),
-                    );
-                    final sessions = sessionsAsync.valueOrNull ?? [];
+                    final sessionsAsync = ref.watch(projectSessionsProvider(project.id));
+                    final sessions = sessionsAsync.value ?? [];
 
                     return Container(
                       decoration: const BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: ThemeConstants.deepBackground),
-                        ),
+                        border: Border(bottom: BorderSide(color: ThemeConstants.deepBackground)),
                       ),
                       child: ProjectTile(
                         project: project,
@@ -245,18 +217,11 @@ class ProjectSidebar extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Row(
                 children: [
-                  Icon(
-                    AppIcons.settings,
-                    size: 14,
-                    color: ThemeConstants.mutedFg,
-                  ),
+                  Icon(AppIcons.settings, size: 14, color: ThemeConstants.mutedFg),
                   const SizedBox(width: 7),
                   Text(
                     'Settings',
-                    style: const TextStyle(
-                      color: ThemeConstants.mutedFg,
-                      fontSize: ThemeConstants.uiFontSize,
-                    ),
+                    style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSize),
                   ),
                 ],
               ),
@@ -269,34 +234,34 @@ class ProjectSidebar extends ConsumerWidget {
 }
 
 PopupMenuItem<String> _sortHeader(String label) => PopupMenuItem<String>(
-      enabled: false,
-      height: 24,
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: ThemeConstants.mutedFg,
-          fontSize: ThemeConstants.uiFontSizeLabel,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.6,
-        ),
-      ),
-    );
+  enabled: false,
+  height: 24,
+  child: Text(
+    label,
+    style: const TextStyle(
+      color: ThemeConstants.mutedFg,
+      fontSize: ThemeConstants.uiFontSizeLabel,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.6,
+    ),
+  ),
+);
 
 PopupMenuItem<String> _sortItem(String value, String label, bool selected) => PopupMenuItem<String>(
-      value: value,
-      height: 32,
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
-                fontSize: ThemeConstants.uiFontSizeSmall,
-              ),
-            ),
+  value: value,
+  height: 32,
+  child: Row(
+    children: [
+      Expanded(
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
+            fontSize: ThemeConstants.uiFontSizeSmall,
           ),
-          if (selected) const Icon(AppIcons.check, size: 11, color: ThemeConstants.accent),
-        ],
+        ),
       ),
-    );
+      if (selected) const Icon(AppIcons.check, size: 11, color: ThemeConstants.accent),
+    ],
+  ),
+);

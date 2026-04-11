@@ -44,7 +44,7 @@ class _MessageListState extends ConsumerState<MessageList> {
 
   Future<void> _loadMore() async {
     if (_loadingMore || !_hasMore) return;
-    final messages = ref.read(chatMessagesProvider(widget.sessionId)).valueOrNull;
+    final messages = ref.read(chatMessagesProvider(widget.sessionId)).value;
     if (messages == null) return;
     if (messages.length < _pageSize) {
       setState(() => _hasMore = false);
@@ -56,7 +56,7 @@ class _MessageListState extends ConsumerState<MessageList> {
       final offset = messages.length;
       await ref.read(chatMessagesProvider(widget.sessionId).notifier).loadMore(widget.sessionId, offset);
       // If fewer than a full page came back, no more to load
-      final updated = ref.read(chatMessagesProvider(widget.sessionId)).valueOrNull;
+      final updated = ref.read(chatMessagesProvider(widget.sessionId)).value;
       if (updated != null && updated.length - messages.length < _pageSize) {
         setState(() => _hasMore = false);
       }
@@ -112,11 +112,7 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.error_outline,
-            color: ThemeConstants.error,
-            size: 40,
-          ),
+          const Icon(Icons.error_outline, color: ThemeConstants.error, size: 40),
           const SizedBox(height: 8),
           Text(
             error,
@@ -138,21 +134,11 @@ class _EmptyChat extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 48,
-            color: ThemeConstants.textMuted.withAlpha(100),
-          ),
+          Icon(Icons.chat_bubble_outline, size: 48, color: ThemeConstants.textMuted.withAlpha(100)),
           const SizedBox(height: 16),
-          const Text(
-            'Start a conversation',
-            style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 16),
-          ),
+          const Text('Start a conversation', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 16)),
           const SizedBox(height: 8),
-          const Text(
-            'Ask anything about your code',
-            style: TextStyle(color: ThemeConstants.textMuted, fontSize: 13),
-          ),
+          const Text('Ask anything about your code', style: TextStyle(color: ThemeConstants.textMuted, fontSize: 13)),
         ],
       ),
     );

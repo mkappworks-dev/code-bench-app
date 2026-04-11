@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -29,16 +28,10 @@ class SessionService {
   // ── Sessions ───────────────────────────────────────────────────────────────
 
   Stream<List<session_model.ChatSession>> watchAllSessions() {
-    return _db.sessionDao.watchAllSessions().map(
-          (rows) => rows.map(_sessionFromRow).toList(),
-        );
+    return _db.sessionDao.watchAllSessions().map((rows) => rows.map(_sessionFromRow).toList());
   }
 
-  Future<String> createSession({
-    required AIModel model,
-    String? title,
-    String? projectId,
-  }) async {
+  Future<String> createSession({required AIModel model, String? title, String? projectId}) async {
     final sessionId = _uuid.v4();
     final now = DateTime.now();
     await _db.sessionDao.upsertSession(
@@ -58,10 +51,7 @@ class SessionService {
   Future<void> updateSessionTitle(String sessionId, String title) async {
     await _db.sessionDao.updateSession(
       sessionId,
-      ChatSessionsCompanion(
-        title: Value(title),
-        updatedAt: Value(DateTime.now()),
-      ),
+      ChatSessionsCompanion(title: Value(title), updatedAt: Value(DateTime.now())),
     );
   }
 
@@ -75,18 +65,12 @@ class SessionService {
     return row != null ? _sessionFromRow(row) : null;
   }
 
-  Stream<List<session_model.ChatSession>> watchSessionsByProject(
-    String projectId,
-  ) {
-    return _db.sessionDao.watchSessionsByProject(projectId).map(
-          (rows) => rows.map(_sessionFromRow).toList(),
-        );
+  Stream<List<session_model.ChatSession>> watchSessionsByProject(String projectId) {
+    return _db.sessionDao.watchSessionsByProject(projectId).map((rows) => rows.map(_sessionFromRow).toList());
   }
 
   Stream<List<session_model.ChatSession>> watchArchivedSessions() {
-    return _db.sessionDao.watchArchivedSessions().map(
-          (rows) => rows.map(_sessionFromRow).toList(),
-        );
+    return _db.sessionDao.watchArchivedSessions().map((rows) => rows.map(_sessionFromRow).toList());
   }
 
   Future<void> archiveSession(String sessionId) async {
@@ -99,23 +83,12 @@ class SessionService {
 
   // ── Messages ───────────────────────────────────────────────────────────────
 
-  Future<List<msg_model.ChatMessage>> loadHistory(
-    String sessionId, {
-    int limit = 50,
-    int offset = 0,
-  }) async {
-    final rows = await _db.sessionDao.getMessages(
-      sessionId,
-      limit: limit,
-      offset: offset,
-    );
+  Future<List<msg_model.ChatMessage>> loadHistory(String sessionId, {int limit = 50, int offset = 0}) async {
+    final rows = await _db.sessionDao.getMessages(sessionId, limit: limit, offset: offset);
     return rows.map(_messageFromRow).toList();
   }
 
-  Future<void> persistMessage(
-    String sessionId,
-    msg_model.ChatMessage message,
-  ) async {
+  Future<void> persistMessage(String sessionId, msg_model.ChatMessage message) async {
     await _db.sessionDao.insertMessage(
       ChatMessagesCompanion(
         id: Value(message.id),
@@ -124,26 +97,13 @@ class SessionService {
         content: Value(message.content),
         codeBlocksJson: Value(
           jsonEncode(
-            message.codeBlocks
-                .map(
-                  (b) => {
-                    'code': b.code,
-                    'language': b.language,
-                    'filename': b.filename,
-                  },
-                )
-                .toList(),
+            message.codeBlocks.map((b) => {'code': b.code, 'language': b.language, 'filename': b.filename}).toList(),
           ),
         ),
         timestamp: Value(message.timestamp),
       ),
     );
-    await _db.sessionDao.updateSession(
-      sessionId,
-      ChatSessionsCompanion(
-        updatedAt: Value(DateTime.now()),
-      ),
-    );
+    await _db.sessionDao.updateSession(sessionId, ChatSessionsCompanion(updatedAt: Value(DateTime.now())));
   }
 
   // ── Streaming ─────────────────────────────────────────────────────────────
@@ -166,9 +126,7 @@ class SessionService {
 
     final service = await _ref.read(aiServiceProvider(model.provider).future);
     if (service == null) {
-      throw Exception(
-        'No API key configured for ${model.provider.displayName}',
-      );
+      throw Exception('No API key configured for ${model.provider.displayName}');
     }
 
     final history = await loadHistory(sessionId, limit: 20);

@@ -6,9 +6,28 @@ part of 'app_database.dart';
 mixin _$SessionDaoMixin on DatabaseAccessor<AppDatabase> {
   $ChatSessionsTable get chatSessions => attachedDatabase.chatSessions;
   $ChatMessagesTable get chatMessages => attachedDatabase.chatMessages;
+  SessionDaoManager get managers => SessionDaoManager(this);
 }
+
+class SessionDaoManager {
+  final _$SessionDaoMixin _db;
+  SessionDaoManager(this._db);
+  $$ChatSessionsTableTableManager get chatSessions =>
+      $$ChatSessionsTableTableManager(_db.attachedDatabase, _db.chatSessions);
+  $$ChatMessagesTableTableManager get chatMessages =>
+      $$ChatMessagesTableTableManager(_db.attachedDatabase, _db.chatMessages);
+}
+
 mixin _$ProjectDaoMixin on DatabaseAccessor<AppDatabase> {
   $WorkspaceProjectsTable get workspaceProjects => attachedDatabase.workspaceProjects;
+  ProjectDaoManager get managers => ProjectDaoManager(this);
+}
+
+class ProjectDaoManager {
+  final _$ProjectDaoMixin _db;
+  ProjectDaoManager(this._db);
+  $$WorkspaceProjectsTableTableManager get workspaceProjects =>
+      $$WorkspaceProjectsTableTableManager(_db.attachedDatabase, _db.workspaceProjects);
 }
 
 class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable, ChatSessionRow> {
@@ -18,49 +37,101 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
   $ChatSessionsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _sessionIdMeta = const VerificationMeta('sessionId');
   @override
-  late final GeneratedColumn<String> sessionId =
-      GeneratedColumn<String>('session_id', aliasedName, false, type: DriftSqlType.string, requiredDuringInsert: true);
+  late final GeneratedColumn<String> sessionId = GeneratedColumn<String>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
-  late final GeneratedColumn<String> title =
-      GeneratedColumn<String>('title', aliasedName, false, type: DriftSqlType.string, requiredDuringInsert: true);
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _modelIdMeta = const VerificationMeta('modelId');
   @override
-  late final GeneratedColumn<String> modelId =
-      GeneratedColumn<String>('model_id', aliasedName, false, type: DriftSqlType.string, requiredDuringInsert: true);
+  late final GeneratedColumn<String> modelId = GeneratedColumn<String>(
+    'model_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _providerIdMeta = const VerificationMeta('providerId');
   @override
-  late final GeneratedColumn<String> providerId =
-      GeneratedColumn<String>('provider_id', aliasedName, false, type: DriftSqlType.string, requiredDuringInsert: true);
+  late final GeneratedColumn<String> providerId = GeneratedColumn<String>(
+    'provider_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _projectIdMeta = const VerificationMeta('projectId');
   @override
-  late final GeneratedColumn<String> projectId =
-      GeneratedColumn<String>('project_id', aliasedName, true, type: DriftSqlType.string, requiredDuringInsert: false);
+  late final GeneratedColumn<String> projectId = GeneratedColumn<String>(
+    'project_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta('createdAt');
   @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>('created_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta('updatedAt');
   @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>('updated_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _isPinnedMeta = const VerificationMeta('isPinned');
   @override
-  late final GeneratedColumn<bool> isPinned = GeneratedColumn<bool>('is_pinned', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_pinned" IN (0, 1))'),
-      defaultValue: const Constant(false));
+  late final GeneratedColumn<bool> isPinned = GeneratedColumn<bool>(
+    'is_pinned',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_pinned" IN (0, 1))'),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _isArchivedMeta = const VerificationMeta('isArchived');
   @override
-  late final GeneratedColumn<bool> isArchived = GeneratedColumn<bool>('is_archived', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_archived" IN (0, 1))'),
-      defaultValue: const Constant(false));
+  late final GeneratedColumn<bool> isArchived = GeneratedColumn<bool>(
+    'is_archived',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_archived" IN (0, 1))'),
+    defaultValue: const Constant(false),
+  );
   @override
-  List<GeneratedColumn> get $columns =>
-      [sessionId, title, modelId, providerId, projectId, createdAt, updatedAt, isPinned, isArchived];
+  List<GeneratedColumn> get $columns => [
+    sessionId,
+    title,
+    modelId,
+    providerId,
+    projectId,
+    createdAt,
+    updatedAt,
+    isPinned,
+    isArchived,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -146,16 +217,17 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
   final DateTime updatedAt;
   final bool isPinned;
   final bool isArchived;
-  const ChatSessionRow(
-      {required this.sessionId,
-      required this.title,
-      required this.modelId,
-      required this.providerId,
-      this.projectId,
-      required this.createdAt,
-      required this.updatedAt,
-      required this.isPinned,
-      required this.isArchived});
+  const ChatSessionRow({
+    required this.sessionId,
+    required this.title,
+    required this.modelId,
+    required this.providerId,
+    this.projectId,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.isPinned,
+    required this.isArchived,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -217,27 +289,27 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
     };
   }
 
-  ChatSessionRow copyWith(
-          {String? sessionId,
-          String? title,
-          String? modelId,
-          String? providerId,
-          Value<String?> projectId = const Value.absent(),
-          DateTime? createdAt,
-          DateTime? updatedAt,
-          bool? isPinned,
-          bool? isArchived}) =>
-      ChatSessionRow(
-        sessionId: sessionId ?? this.sessionId,
-        title: title ?? this.title,
-        modelId: modelId ?? this.modelId,
-        providerId: providerId ?? this.providerId,
-        projectId: projectId.present ? projectId.value : this.projectId,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        isPinned: isPinned ?? this.isPinned,
-        isArchived: isArchived ?? this.isArchived,
-      );
+  ChatSessionRow copyWith({
+    String? sessionId,
+    String? title,
+    String? modelId,
+    String? providerId,
+    Value<String?> projectId = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isPinned,
+    bool? isArchived,
+  }) => ChatSessionRow(
+    sessionId: sessionId ?? this.sessionId,
+    title: title ?? this.title,
+    modelId: modelId ?? this.modelId,
+    providerId: providerId ?? this.providerId,
+    projectId: projectId.present ? projectId.value : this.projectId,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    isPinned: isPinned ?? this.isPinned,
+    isArchived: isArchived ?? this.isArchived,
+  );
   ChatSessionRow copyWithCompanion(ChatSessionsCompanion data) {
     return ChatSessionRow(
       sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
@@ -320,12 +392,12 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
     this.isPinned = const Value.absent(),
     this.isArchived = const Value.absent(),
     this.rowid = const Value.absent(),
-  })  : sessionId = Value(sessionId),
-        title = Value(title),
-        modelId = Value(modelId),
-        providerId = Value(providerId),
-        createdAt = Value(createdAt),
-        updatedAt = Value(updatedAt);
+  }) : sessionId = Value(sessionId),
+       title = Value(title),
+       modelId = Value(modelId),
+       providerId = Value(providerId),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
   static Insertable<ChatSessionRow> custom({
     Expression<String>? sessionId,
     Expression<String>? title,
@@ -352,17 +424,18 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
     });
   }
 
-  ChatSessionsCompanion copyWith(
-      {Value<String>? sessionId,
-      Value<String>? title,
-      Value<String>? modelId,
-      Value<String>? providerId,
-      Value<String?>? projectId,
-      Value<DateTime>? createdAt,
-      Value<DateTime>? updatedAt,
-      Value<bool>? isPinned,
-      Value<bool>? isArchived,
-      Value<int>? rowid}) {
+  ChatSessionsCompanion copyWith({
+    Value<String>? sessionId,
+    Value<String>? title,
+    Value<String>? modelId,
+    Value<String>? providerId,
+    Value<String?>? projectId,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<bool>? isPinned,
+    Value<bool>? isArchived,
+    Value<int>? rowid,
+  }) {
     return ChatSessionsCompanion(
       sessionId: sessionId ?? this.sessionId,
       title: title ?? this.title,
@@ -438,30 +511,60 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
   $ChatMessagesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id =
-      GeneratedColumn<String>('id', aliasedName, false, type: DriftSqlType.string, requiredDuringInsert: true);
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _sessionIdMeta = const VerificationMeta('sessionId');
   @override
-  late final GeneratedColumn<String> sessionId = GeneratedColumn<String>('session_id', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways('REFERENCES chat_sessions (session_id)'));
+  late final GeneratedColumn<String> sessionId = GeneratedColumn<String>(
+    'session_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('REFERENCES chat_sessions (session_id)'),
+  );
   static const VerificationMeta _roleMeta = const VerificationMeta('role');
   @override
-  late final GeneratedColumn<String> role =
-      GeneratedColumn<String>('role', aliasedName, false, type: DriftSqlType.string, requiredDuringInsert: true);
+  late final GeneratedColumn<String> role = GeneratedColumn<String>(
+    'role',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _contentMeta = const VerificationMeta('content');
   @override
-  late final GeneratedColumn<String> content =
-      GeneratedColumn<String>('content', aliasedName, false, type: DriftSqlType.string, requiredDuringInsert: true);
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+    'content',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _codeBlocksJsonMeta = const VerificationMeta('codeBlocksJson');
   @override
-  late final GeneratedColumn<String> codeBlocksJson = GeneratedColumn<String>('code_blocks_json', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: false, defaultValue: const Constant('[]'));
+  late final GeneratedColumn<String> codeBlocksJson = GeneratedColumn<String>(
+    'code_blocks_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
   static const VerificationMeta _timestampMeta = const VerificationMeta('timestamp');
   @override
-  late final GeneratedColumn<DateTime> timestamp = GeneratedColumn<DateTime>('timestamp', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  late final GeneratedColumn<DateTime> timestamp = GeneratedColumn<DateTime>(
+    'timestamp',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
   @override
   List<GeneratedColumn> get $columns => [id, sessionId, role, content, codeBlocksJson, timestamp];
   @override
@@ -495,7 +598,9 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
     }
     if (data.containsKey('code_blocks_json')) {
       context.handle(
-          _codeBlocksJsonMeta, codeBlocksJson.isAcceptableOrUnknown(data['code_blocks_json']!, _codeBlocksJsonMeta));
+        _codeBlocksJsonMeta,
+        codeBlocksJson.isAcceptableOrUnknown(data['code_blocks_json']!, _codeBlocksJsonMeta),
+      );
     }
     if (data.containsKey('timestamp')) {
       context.handle(_timestampMeta, timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta));
@@ -515,8 +620,10 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
       sessionId: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}session_id'])!,
       role: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}role'])!,
       content: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}content'])!,
-      codeBlocksJson:
-          attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}code_blocks_json'])!,
+      codeBlocksJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}code_blocks_json'],
+      )!,
       timestamp: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}timestamp'])!,
     );
   }
@@ -534,13 +641,14 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
   final String content;
   final String codeBlocksJson;
   final DateTime timestamp;
-  const ChatMessageRow(
-      {required this.id,
-      required this.sessionId,
-      required this.role,
-      required this.content,
-      required this.codeBlocksJson,
-      required this.timestamp});
+  const ChatMessageRow({
+    required this.id,
+    required this.sessionId,
+    required this.role,
+    required this.content,
+    required this.codeBlocksJson,
+    required this.timestamp,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -588,21 +696,21 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
     };
   }
 
-  ChatMessageRow copyWith(
-          {String? id,
-          String? sessionId,
-          String? role,
-          String? content,
-          String? codeBlocksJson,
-          DateTime? timestamp}) =>
-      ChatMessageRow(
-        id: id ?? this.id,
-        sessionId: sessionId ?? this.sessionId,
-        role: role ?? this.role,
-        content: content ?? this.content,
-        codeBlocksJson: codeBlocksJson ?? this.codeBlocksJson,
-        timestamp: timestamp ?? this.timestamp,
-      );
+  ChatMessageRow copyWith({
+    String? id,
+    String? sessionId,
+    String? role,
+    String? content,
+    String? codeBlocksJson,
+    DateTime? timestamp,
+  }) => ChatMessageRow(
+    id: id ?? this.id,
+    sessionId: sessionId ?? this.sessionId,
+    role: role ?? this.role,
+    content: content ?? this.content,
+    codeBlocksJson: codeBlocksJson ?? this.codeBlocksJson,
+    timestamp: timestamp ?? this.timestamp,
+  );
   ChatMessageRow copyWithCompanion(ChatMessagesCompanion data) {
     return ChatMessageRow(
       id: data.id.present ? data.id.value : this.id,
@@ -666,11 +774,11 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessageRow> {
     this.codeBlocksJson = const Value.absent(),
     required DateTime timestamp,
     this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        sessionId = Value(sessionId),
-        role = Value(role),
-        content = Value(content),
-        timestamp = Value(timestamp);
+  }) : id = Value(id),
+       sessionId = Value(sessionId),
+       role = Value(role),
+       content = Value(content),
+       timestamp = Value(timestamp);
   static Insertable<ChatMessageRow> custom({
     Expression<String>? id,
     Expression<String>? sessionId,
@@ -691,14 +799,15 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessageRow> {
     });
   }
 
-  ChatMessagesCompanion copyWith(
-      {Value<String>? id,
-      Value<String>? sessionId,
-      Value<String>? role,
-      Value<String>? content,
-      Value<String>? codeBlocksJson,
-      Value<DateTime>? timestamp,
-      Value<int>? rowid}) {
+  ChatMessagesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? sessionId,
+    Value<String>? role,
+    Value<String>? content,
+    Value<String>? codeBlocksJson,
+    Value<DateTime>? timestamp,
+    Value<int>? rowid,
+  }) {
     return ChatMessagesCompanion(
       id: id ?? this.id,
       sessionId: sessionId ?? this.sessionId,
@@ -759,39 +868,80 @@ class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$Workspac
   $WorkspaceProjectsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id =
-      GeneratedColumn<String>('id', aliasedName, false, type: DriftSqlType.string, requiredDuringInsert: true);
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
-  late final GeneratedColumn<String> name =
-      GeneratedColumn<String>('name', aliasedName, false, type: DriftSqlType.string, requiredDuringInsert: true);
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _pathMeta = const VerificationMeta('path');
   @override
-  late final GeneratedColumn<String> path =
-      GeneratedColumn<String>('path', aliasedName, false, type: DriftSqlType.string, requiredDuringInsert: true);
+  late final GeneratedColumn<String> path = GeneratedColumn<String>(
+    'path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _isGitMeta = const VerificationMeta('isGit');
   @override
-  late final GeneratedColumn<bool> isGit = GeneratedColumn<bool>('is_git', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_git" IN (0, 1))'),
-      defaultValue: const Constant(false));
+  late final GeneratedColumn<bool> isGit = GeneratedColumn<bool>(
+    'is_git',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_git" IN (0, 1))'),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _currentBranchMeta = const VerificationMeta('currentBranch');
   @override
-  late final GeneratedColumn<String> currentBranch = GeneratedColumn<String>('current_branch', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
+  late final GeneratedColumn<String> currentBranch = GeneratedColumn<String>(
+    'current_branch',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta('createdAt');
   @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>('created_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _sortOrderMeta = const VerificationMeta('sortOrder');
   @override
-  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>('sort_order', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: false, defaultValue: const Constant(0));
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _actionsJsonMeta = const VerificationMeta('actionsJson');
   @override
-  late final GeneratedColumn<String> actionsJson = GeneratedColumn<String>('actions_json', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: false, defaultValue: const Constant('[]'));
+  late final GeneratedColumn<String> actionsJson = GeneratedColumn<String>(
+    'actions_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
   @override
   List<GeneratedColumn> get $columns => [id, name, path, isGit, currentBranch, createdAt, sortOrder, actionsJson];
   @override
@@ -823,7 +973,9 @@ class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$Workspac
     }
     if (data.containsKey('current_branch')) {
       context.handle(
-          _currentBranchMeta, currentBranch.isAcceptableOrUnknown(data['current_branch']!, _currentBranchMeta));
+        _currentBranchMeta,
+        currentBranch.isAcceptableOrUnknown(data['current_branch']!, _currentBranchMeta),
+      );
     }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta, createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -871,15 +1023,16 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
   final DateTime createdAt;
   final int sortOrder;
   final String actionsJson;
-  const WorkspaceProjectRow(
-      {required this.id,
-      required this.name,
-      required this.path,
-      required this.isGit,
-      this.currentBranch,
-      required this.createdAt,
-      required this.sortOrder,
-      required this.actionsJson});
+  const WorkspaceProjectRow({
+    required this.id,
+    required this.name,
+    required this.path,
+    required this.isGit,
+    this.currentBranch,
+    required this.createdAt,
+    required this.sortOrder,
+    required this.actionsJson,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -937,25 +1090,25 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
     };
   }
 
-  WorkspaceProjectRow copyWith(
-          {String? id,
-          String? name,
-          String? path,
-          bool? isGit,
-          Value<String?> currentBranch = const Value.absent(),
-          DateTime? createdAt,
-          int? sortOrder,
-          String? actionsJson}) =>
-      WorkspaceProjectRow(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        path: path ?? this.path,
-        isGit: isGit ?? this.isGit,
-        currentBranch: currentBranch.present ? currentBranch.value : this.currentBranch,
-        createdAt: createdAt ?? this.createdAt,
-        sortOrder: sortOrder ?? this.sortOrder,
-        actionsJson: actionsJson ?? this.actionsJson,
-      );
+  WorkspaceProjectRow copyWith({
+    String? id,
+    String? name,
+    String? path,
+    bool? isGit,
+    Value<String?> currentBranch = const Value.absent(),
+    DateTime? createdAt,
+    int? sortOrder,
+    String? actionsJson,
+  }) => WorkspaceProjectRow(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    path: path ?? this.path,
+    isGit: isGit ?? this.isGit,
+    currentBranch: currentBranch.present ? currentBranch.value : this.currentBranch,
+    createdAt: createdAt ?? this.createdAt,
+    sortOrder: sortOrder ?? this.sortOrder,
+    actionsJson: actionsJson ?? this.actionsJson,
+  );
   WorkspaceProjectRow copyWithCompanion(WorkspaceProjectsCompanion data) {
     return WorkspaceProjectRow(
       id: data.id.present ? data.id.value : this.id,
@@ -1031,10 +1184,10 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
     this.sortOrder = const Value.absent(),
     this.actionsJson = const Value.absent(),
     this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        name = Value(name),
-        path = Value(path),
-        createdAt = Value(createdAt);
+  }) : id = Value(id),
+       name = Value(name),
+       path = Value(path),
+       createdAt = Value(createdAt);
   static Insertable<WorkspaceProjectRow> custom({
     Expression<String>? id,
     Expression<String>? name,
@@ -1059,16 +1212,17 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
     });
   }
 
-  WorkspaceProjectsCompanion copyWith(
-      {Value<String>? id,
-      Value<String>? name,
-      Value<String>? path,
-      Value<bool>? isGit,
-      Value<String?>? currentBranch,
-      Value<DateTime>? createdAt,
-      Value<int>? sortOrder,
-      Value<String>? actionsJson,
-      Value<int>? rowid}) {
+  WorkspaceProjectsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String>? path,
+    Value<bool>? isGit,
+    Value<String?>? currentBranch,
+    Value<DateTime>? createdAt,
+    Value<int>? sortOrder,
+    Value<String>? actionsJson,
+    Value<int>? rowid,
+  }) {
     return WorkspaceProjectsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -1148,41 +1302,47 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   DriftDatabaseOptions get options => const DriftDatabaseOptions(storeDateTimeAsText: true);
 }
 
-typedef $$ChatSessionsTableCreateCompanionBuilder = ChatSessionsCompanion Function({
-  required String sessionId,
-  required String title,
-  required String modelId,
-  required String providerId,
-  Value<String?> projectId,
-  required DateTime createdAt,
-  required DateTime updatedAt,
-  Value<bool> isPinned,
-  Value<bool> isArchived,
-  Value<int> rowid,
-});
-typedef $$ChatSessionsTableUpdateCompanionBuilder = ChatSessionsCompanion Function({
-  Value<String> sessionId,
-  Value<String> title,
-  Value<String> modelId,
-  Value<String> providerId,
-  Value<String?> projectId,
-  Value<DateTime> createdAt,
-  Value<DateTime> updatedAt,
-  Value<bool> isPinned,
-  Value<bool> isArchived,
-  Value<int> rowid,
-});
+typedef $$ChatSessionsTableCreateCompanionBuilder =
+    ChatSessionsCompanion Function({
+      required String sessionId,
+      required String title,
+      required String modelId,
+      required String providerId,
+      Value<String?> projectId,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<bool> isPinned,
+      Value<bool> isArchived,
+      Value<int> rowid,
+    });
+typedef $$ChatSessionsTableUpdateCompanionBuilder =
+    ChatSessionsCompanion Function({
+      Value<String> sessionId,
+      Value<String> title,
+      Value<String> modelId,
+      Value<String> providerId,
+      Value<String?> projectId,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<bool> isPinned,
+      Value<bool> isArchived,
+      Value<int> rowid,
+    });
 
 final class $$ChatSessionsTableReferences extends BaseReferences<_$AppDatabase, $ChatSessionsTable, ChatSessionRow> {
   $$ChatSessionsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static MultiTypedResultKey<$ChatMessagesTable, List<ChatMessageRow>> _chatMessagesRefsTable(_$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(db.chatMessages,
-          aliasName: $_aliasNameGenerator(db.chatSessions.sessionId, db.chatMessages.sessionId));
+      MultiTypedResultKey.fromTable(
+        db.chatMessages,
+        aliasName: $_aliasNameGenerator(db.chatSessions.sessionId, db.chatMessages.sessionId),
+      );
 
   $$ChatMessagesTableProcessedTableManager get chatMessagesRefs {
-    final manager = $$ChatMessagesTableTableManager($_db, $_db.chatMessages)
-        .filter((f) => f.sessionId.sessionId.sqlEquals($_itemColumn<String>('session_id')!));
+    final manager = $$ChatMessagesTableTableManager(
+      $_db,
+      $_db.chatMessages,
+    ).filter((f) => f.sessionId.sessionId.sqlEquals($_itemColumn<String>('session_id')!));
 
     final cache = $_typedResult.readTableOrNull(_chatMessagesRefsTable($_db));
     return ProcessedTableManager(manager.$state.copyWith(prefetchedData: cache));
@@ -1226,18 +1386,19 @@ class $$ChatSessionsTableFilterComposer extends Composer<_$AppDatabase, $ChatSes
 
   Expression<bool> chatMessagesRefs(Expression<bool> Function($$ChatMessagesTableFilterComposer f) f) {
     final $$ChatMessagesTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.sessionId,
-        referencedTable: $db.chatMessages,
-        getReferencedColumn: (t) => t.sessionId,
-        builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
-            $$ChatMessagesTableFilterComposer(
-              $db: $db,
-              $table: $db.chatMessages,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.chatMessages,
+      getReferencedColumn: (t) => t.sessionId,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ChatMessagesTableFilterComposer(
+            $db: $db,
+            $table: $db.chatMessages,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 }
@@ -1306,89 +1467,94 @@ class $$ChatSessionsTableAnnotationComposer extends Composer<_$AppDatabase, $Cha
 
   Expression<T> chatMessagesRefs<T extends Object>(Expression<T> Function($$ChatMessagesTableAnnotationComposer a) f) {
     final $$ChatMessagesTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.sessionId,
-        referencedTable: $db.chatMessages,
-        getReferencedColumn: (t) => t.sessionId,
-        builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
-            $$ChatMessagesTableAnnotationComposer(
-              $db: $db,
-              $table: $db.chatMessages,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.chatMessages,
+      getReferencedColumn: (t) => t.sessionId,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ChatMessagesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chatMessages,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 }
 
-class $$ChatSessionsTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $ChatSessionsTable,
-    ChatSessionRow,
-    $$ChatSessionsTableFilterComposer,
-    $$ChatSessionsTableOrderingComposer,
-    $$ChatSessionsTableAnnotationComposer,
-    $$ChatSessionsTableCreateCompanionBuilder,
-    $$ChatSessionsTableUpdateCompanionBuilder,
-    (ChatSessionRow, $$ChatSessionsTableReferences),
-    ChatSessionRow,
-    PrefetchHooks Function({bool chatMessagesRefs})> {
+class $$ChatSessionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ChatSessionsTable,
+          ChatSessionRow,
+          $$ChatSessionsTableFilterComposer,
+          $$ChatSessionsTableOrderingComposer,
+          $$ChatSessionsTableAnnotationComposer,
+          $$ChatSessionsTableCreateCompanionBuilder,
+          $$ChatSessionsTableUpdateCompanionBuilder,
+          (ChatSessionRow, $$ChatSessionsTableReferences),
+          ChatSessionRow,
+          PrefetchHooks Function({bool chatMessagesRefs})
+        > {
   $$ChatSessionsTableTableManager(_$AppDatabase db, $ChatSessionsTable table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () => $$ChatSessionsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () => $$ChatSessionsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () => $$ChatSessionsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> sessionId = const Value.absent(),
-            Value<String> title = const Value.absent(),
-            Value<String> modelId = const Value.absent(),
-            Value<String> providerId = const Value.absent(),
-            Value<String?> projectId = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime> updatedAt = const Value.absent(),
-            Value<bool> isPinned = const Value.absent(),
-            Value<bool> isArchived = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              ChatSessionsCompanion(
-            sessionId: sessionId,
-            title: title,
-            modelId: modelId,
-            providerId: providerId,
-            projectId: projectId,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            isPinned: isPinned,
-            isArchived: isArchived,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String sessionId,
-            required String title,
-            required String modelId,
-            required String providerId,
-            Value<String?> projectId = const Value.absent(),
-            required DateTime createdAt,
-            required DateTime updatedAt,
-            Value<bool> isPinned = const Value.absent(),
-            Value<bool> isArchived = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              ChatSessionsCompanion.insert(
-            sessionId: sessionId,
-            title: title,
-            modelId: modelId,
-            providerId: providerId,
-            projectId: projectId,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            isPinned: isPinned,
-            isArchived: isArchived,
-            rowid: rowid,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<String> sessionId = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> modelId = const Value.absent(),
+                Value<String> providerId = const Value.absent(),
+                Value<String?> projectId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isPinned = const Value.absent(),
+                Value<bool> isArchived = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ChatSessionsCompanion(
+                sessionId: sessionId,
+                title: title,
+                modelId: modelId,
+                providerId: providerId,
+                projectId: projectId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                isPinned: isPinned,
+                isArchived: isArchived,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String sessionId,
+                required String title,
+                required String modelId,
+                required String providerId,
+                Value<String?> projectId = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<bool> isPinned = const Value.absent(),
+                Value<bool> isArchived = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ChatSessionsCompanion.insert(
+                sessionId: sessionId,
+                title: title,
+                modelId: modelId,
+                providerId: providerId,
+                projectId: projectId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                isPinned: isPinned,
+                isArchived: isArchived,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) =>
               p0.map((e) => (e.readTable(table), $$ChatSessionsTableReferences(db, table, e))).toList(),
           prefetchHooksCallback: ({chatMessagesRefs = false}) {
@@ -1400,49 +1566,55 @@ class $$ChatSessionsTableTableManager extends RootTableManager<
                 return [
                   if (chatMessagesRefs)
                     await $_getPrefetchedData<ChatSessionRow, $ChatSessionsTable, ChatMessageRow>(
-                        currentTable: table,
-                        referencedTable: $$ChatSessionsTableReferences._chatMessagesRefsTable(db),
-                        managerFromTypedResult: (p0) => $$ChatSessionsTableReferences(db, table, p0).chatMessagesRefs,
-                        referencedItemsForCurrentItem: (item, referencedItems) =>
-                            referencedItems.where((e) => e.sessionId == item.sessionId),
-                        typedResults: items)
+                      currentTable: table,
+                      referencedTable: $$ChatSessionsTableReferences._chatMessagesRefsTable(db),
+                      managerFromTypedResult: (p0) => $$ChatSessionsTableReferences(db, table, p0).chatMessagesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.sessionId == item.sessionId),
+                      typedResults: items,
+                    ),
                 ];
               },
             );
           },
-        ));
+        ),
+      );
 }
 
-typedef $$ChatSessionsTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $ChatSessionsTable,
-    ChatSessionRow,
-    $$ChatSessionsTableFilterComposer,
-    $$ChatSessionsTableOrderingComposer,
-    $$ChatSessionsTableAnnotationComposer,
-    $$ChatSessionsTableCreateCompanionBuilder,
-    $$ChatSessionsTableUpdateCompanionBuilder,
-    (ChatSessionRow, $$ChatSessionsTableReferences),
-    ChatSessionRow,
-    PrefetchHooks Function({bool chatMessagesRefs})>;
-typedef $$ChatMessagesTableCreateCompanionBuilder = ChatMessagesCompanion Function({
-  required String id,
-  required String sessionId,
-  required String role,
-  required String content,
-  Value<String> codeBlocksJson,
-  required DateTime timestamp,
-  Value<int> rowid,
-});
-typedef $$ChatMessagesTableUpdateCompanionBuilder = ChatMessagesCompanion Function({
-  Value<String> id,
-  Value<String> sessionId,
-  Value<String> role,
-  Value<String> content,
-  Value<String> codeBlocksJson,
-  Value<DateTime> timestamp,
-  Value<int> rowid,
-});
+typedef $$ChatSessionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ChatSessionsTable,
+      ChatSessionRow,
+      $$ChatSessionsTableFilterComposer,
+      $$ChatSessionsTableOrderingComposer,
+      $$ChatSessionsTableAnnotationComposer,
+      $$ChatSessionsTableCreateCompanionBuilder,
+      $$ChatSessionsTableUpdateCompanionBuilder,
+      (ChatSessionRow, $$ChatSessionsTableReferences),
+      ChatSessionRow,
+      PrefetchHooks Function({bool chatMessagesRefs})
+    >;
+typedef $$ChatMessagesTableCreateCompanionBuilder =
+    ChatMessagesCompanion Function({
+      required String id,
+      required String sessionId,
+      required String role,
+      required String content,
+      Value<String> codeBlocksJson,
+      required DateTime timestamp,
+      Value<int> rowid,
+    });
+typedef $$ChatMessagesTableUpdateCompanionBuilder =
+    ChatMessagesCompanion Function({
+      Value<String> id,
+      Value<String> sessionId,
+      Value<String> role,
+      Value<String> content,
+      Value<String> codeBlocksJson,
+      Value<DateTime> timestamp,
+      Value<int> rowid,
+    });
 
 final class $$ChatMessagesTableReferences extends BaseReferences<_$AppDatabase, $ChatMessagesTable, ChatMessageRow> {
   $$ChatMessagesTableReferences(super.$_db, super.$_table, super.$_typedResult);
@@ -1453,8 +1625,10 @@ final class $$ChatMessagesTableReferences extends BaseReferences<_$AppDatabase, 
   $$ChatSessionsTableProcessedTableManager get sessionId {
     final $_column = $_itemColumn<String>('session_id')!;
 
-    final manager =
-        $$ChatSessionsTableTableManager($_db, $_db.chatSessions).filter((f) => f.sessionId.sqlEquals($_column));
+    final manager = $$ChatSessionsTableTableManager(
+      $_db,
+      $_db.chatSessions,
+    ).filter((f) => f.sessionId.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(manager.$state.copyWith(prefetchedData: [item]));
@@ -1484,18 +1658,19 @@ class $$ChatMessagesTableFilterComposer extends Composer<_$AppDatabase, $ChatMes
 
   $$ChatSessionsTableFilterComposer get sessionId {
     final $$ChatSessionsTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.sessionId,
-        referencedTable: $db.chatSessions,
-        getReferencedColumn: (t) => t.sessionId,
-        builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
-            $$ChatSessionsTableFilterComposer(
-              $db: $db,
-              $table: $db.chatSessions,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.chatSessions,
+      getReferencedColumn: (t) => t.sessionId,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ChatSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.chatSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
@@ -1524,18 +1699,19 @@ class $$ChatMessagesTableOrderingComposer extends Composer<_$AppDatabase, $ChatM
 
   $$ChatSessionsTableOrderingComposer get sessionId {
     final $$ChatSessionsTableOrderingComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.sessionId,
-        referencedTable: $db.chatSessions,
-        getReferencedColumn: (t) => t.sessionId,
-        builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
-            $$ChatSessionsTableOrderingComposer(
-              $db: $db,
-              $table: $db.chatSessions,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.chatSessions,
+      getReferencedColumn: (t) => t.sessionId,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ChatSessionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.chatSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
@@ -1561,139 +1737,164 @@ class $$ChatMessagesTableAnnotationComposer extends Composer<_$AppDatabase, $Cha
 
   $$ChatSessionsTableAnnotationComposer get sessionId {
     final $$ChatSessionsTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.sessionId,
-        referencedTable: $db.chatSessions,
-        getReferencedColumn: (t) => t.sessionId,
-        builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
-            $$ChatSessionsTableAnnotationComposer(
-              $db: $db,
-              $table: $db.chatSessions,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.chatSessions,
+      getReferencedColumn: (t) => t.sessionId,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$ChatSessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chatSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
 
-class $$ChatMessagesTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $ChatMessagesTable,
-    ChatMessageRow,
-    $$ChatMessagesTableFilterComposer,
-    $$ChatMessagesTableOrderingComposer,
-    $$ChatMessagesTableAnnotationComposer,
-    $$ChatMessagesTableCreateCompanionBuilder,
-    $$ChatMessagesTableUpdateCompanionBuilder,
-    (ChatMessageRow, $$ChatMessagesTableReferences),
-    ChatMessageRow,
-    PrefetchHooks Function({bool sessionId})> {
+class $$ChatMessagesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ChatMessagesTable,
+          ChatMessageRow,
+          $$ChatMessagesTableFilterComposer,
+          $$ChatMessagesTableOrderingComposer,
+          $$ChatMessagesTableAnnotationComposer,
+          $$ChatMessagesTableCreateCompanionBuilder,
+          $$ChatMessagesTableUpdateCompanionBuilder,
+          (ChatMessageRow, $$ChatMessagesTableReferences),
+          ChatMessageRow,
+          PrefetchHooks Function({bool sessionId})
+        > {
   $$ChatMessagesTableTableManager(_$AppDatabase db, $ChatMessagesTable table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () => $$ChatMessagesTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () => $$ChatMessagesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () => $$ChatMessagesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
-            Value<String> sessionId = const Value.absent(),
-            Value<String> role = const Value.absent(),
-            Value<String> content = const Value.absent(),
-            Value<String> codeBlocksJson = const Value.absent(),
-            Value<DateTime> timestamp = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              ChatMessagesCompanion(
-            id: id,
-            sessionId: sessionId,
-            role: role,
-            content: content,
-            codeBlocksJson: codeBlocksJson,
-            timestamp: timestamp,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String id,
-            required String sessionId,
-            required String role,
-            required String content,
-            Value<String> codeBlocksJson = const Value.absent(),
-            required DateTime timestamp,
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              ChatMessagesCompanion.insert(
-            id: id,
-            sessionId: sessionId,
-            role: role,
-            content: content,
-            codeBlocksJson: codeBlocksJson,
-            timestamp: timestamp,
-            rowid: rowid,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> sessionId = const Value.absent(),
+                Value<String> role = const Value.absent(),
+                Value<String> content = const Value.absent(),
+                Value<String> codeBlocksJson = const Value.absent(),
+                Value<DateTime> timestamp = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ChatMessagesCompanion(
+                id: id,
+                sessionId: sessionId,
+                role: role,
+                content: content,
+                codeBlocksJson: codeBlocksJson,
+                timestamp: timestamp,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String sessionId,
+                required String role,
+                required String content,
+                Value<String> codeBlocksJson = const Value.absent(),
+                required DateTime timestamp,
+                Value<int> rowid = const Value.absent(),
+              }) => ChatMessagesCompanion.insert(
+                id: id,
+                sessionId: sessionId,
+                role: role,
+                content: content,
+                codeBlocksJson: codeBlocksJson,
+                timestamp: timestamp,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) =>
               p0.map((e) => (e.readTable(table), $$ChatMessagesTableReferences(db, table, e))).toList(),
           prefetchHooksCallback: ({sessionId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
-              addJoins: <
-                  T extends TableManagerState<dynamic, dynamic, dynamic, dynamic, dynamic, dynamic, dynamic, dynamic,
-                      dynamic, dynamic, dynamic>>(state) {
-                if (sessionId) {
-                  state = state.withJoin(
-                    currentTable: table,
-                    currentColumn: table.sessionId,
-                    referencedTable: $$ChatMessagesTableReferences._sessionIdTable(db),
-                    referencedColumn: $$ChatMessagesTableReferences._sessionIdTable(db).sessionId,
-                  ) as T;
-                }
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (sessionId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.sessionId,
+                                referencedTable: $$ChatMessagesTableReferences._sessionIdTable(db),
+                                referencedColumn: $$ChatMessagesTableReferences._sessionIdTable(db).sessionId,
+                              )
+                              as T;
+                    }
 
-                return state;
-              },
+                    return state;
+                  },
               getPrefetchedDataCallback: (items) async {
                 return [];
               },
             );
           },
-        ));
+        ),
+      );
 }
 
-typedef $$ChatMessagesTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $ChatMessagesTable,
-    ChatMessageRow,
-    $$ChatMessagesTableFilterComposer,
-    $$ChatMessagesTableOrderingComposer,
-    $$ChatMessagesTableAnnotationComposer,
-    $$ChatMessagesTableCreateCompanionBuilder,
-    $$ChatMessagesTableUpdateCompanionBuilder,
-    (ChatMessageRow, $$ChatMessagesTableReferences),
-    ChatMessageRow,
-    PrefetchHooks Function({bool sessionId})>;
-typedef $$WorkspaceProjectsTableCreateCompanionBuilder = WorkspaceProjectsCompanion Function({
-  required String id,
-  required String name,
-  required String path,
-  Value<bool> isGit,
-  Value<String?> currentBranch,
-  required DateTime createdAt,
-  Value<int> sortOrder,
-  Value<String> actionsJson,
-  Value<int> rowid,
-});
-typedef $$WorkspaceProjectsTableUpdateCompanionBuilder = WorkspaceProjectsCompanion Function({
-  Value<String> id,
-  Value<String> name,
-  Value<String> path,
-  Value<bool> isGit,
-  Value<String?> currentBranch,
-  Value<DateTime> createdAt,
-  Value<int> sortOrder,
-  Value<String> actionsJson,
-  Value<int> rowid,
-});
+typedef $$ChatMessagesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ChatMessagesTable,
+      ChatMessageRow,
+      $$ChatMessagesTableFilterComposer,
+      $$ChatMessagesTableOrderingComposer,
+      $$ChatMessagesTableAnnotationComposer,
+      $$ChatMessagesTableCreateCompanionBuilder,
+      $$ChatMessagesTableUpdateCompanionBuilder,
+      (ChatMessageRow, $$ChatMessagesTableReferences),
+      ChatMessageRow,
+      PrefetchHooks Function({bool sessionId})
+    >;
+typedef $$WorkspaceProjectsTableCreateCompanionBuilder =
+    WorkspaceProjectsCompanion Function({
+      required String id,
+      required String name,
+      required String path,
+      Value<bool> isGit,
+      Value<String?> currentBranch,
+      required DateTime createdAt,
+      Value<int> sortOrder,
+      Value<String> actionsJson,
+      Value<int> rowid,
+    });
+typedef $$WorkspaceProjectsTableUpdateCompanionBuilder =
+    WorkspaceProjectsCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String> path,
+      Value<bool> isGit,
+      Value<String?> currentBranch,
+      Value<DateTime> createdAt,
+      Value<int> sortOrder,
+      Value<String> actionsJson,
+      Value<int> rowid,
+    });
 
 class $$WorkspaceProjectsTableFilterComposer extends Composer<_$AppDatabase, $WorkspaceProjectsTable> {
   $$WorkspaceProjectsTableFilterComposer({
@@ -1783,86 +1984,93 @@ class $$WorkspaceProjectsTableAnnotationComposer extends Composer<_$AppDatabase,
       $composableBuilder(column: $table.actionsJson, builder: (column) => column);
 }
 
-class $$WorkspaceProjectsTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $WorkspaceProjectsTable,
-    WorkspaceProjectRow,
-    $$WorkspaceProjectsTableFilterComposer,
-    $$WorkspaceProjectsTableOrderingComposer,
-    $$WorkspaceProjectsTableAnnotationComposer,
-    $$WorkspaceProjectsTableCreateCompanionBuilder,
-    $$WorkspaceProjectsTableUpdateCompanionBuilder,
-    (WorkspaceProjectRow, BaseReferences<_$AppDatabase, $WorkspaceProjectsTable, WorkspaceProjectRow>),
-    WorkspaceProjectRow,
-    PrefetchHooks Function()> {
+class $$WorkspaceProjectsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WorkspaceProjectsTable,
+          WorkspaceProjectRow,
+          $$WorkspaceProjectsTableFilterComposer,
+          $$WorkspaceProjectsTableOrderingComposer,
+          $$WorkspaceProjectsTableAnnotationComposer,
+          $$WorkspaceProjectsTableCreateCompanionBuilder,
+          $$WorkspaceProjectsTableUpdateCompanionBuilder,
+          (WorkspaceProjectRow, BaseReferences<_$AppDatabase, $WorkspaceProjectsTable, WorkspaceProjectRow>),
+          WorkspaceProjectRow,
+          PrefetchHooks Function()
+        > {
   $$WorkspaceProjectsTableTableManager(_$AppDatabase db, $WorkspaceProjectsTable table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () => $$WorkspaceProjectsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () => $$WorkspaceProjectsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () => $$WorkspaceProjectsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
-            Value<String> name = const Value.absent(),
-            Value<String> path = const Value.absent(),
-            Value<bool> isGit = const Value.absent(),
-            Value<String?> currentBranch = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<int> sortOrder = const Value.absent(),
-            Value<String> actionsJson = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              WorkspaceProjectsCompanion(
-            id: id,
-            name: name,
-            path: path,
-            isGit: isGit,
-            currentBranch: currentBranch,
-            createdAt: createdAt,
-            sortOrder: sortOrder,
-            actionsJson: actionsJson,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String id,
-            required String name,
-            required String path,
-            Value<bool> isGit = const Value.absent(),
-            Value<String?> currentBranch = const Value.absent(),
-            required DateTime createdAt,
-            Value<int> sortOrder = const Value.absent(),
-            Value<String> actionsJson = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              WorkspaceProjectsCompanion.insert(
-            id: id,
-            name: name,
-            path: path,
-            isGit: isGit,
-            currentBranch: currentBranch,
-            createdAt: createdAt,
-            sortOrder: sortOrder,
-            actionsJson: actionsJson,
-            rowid: rowid,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> path = const Value.absent(),
+                Value<bool> isGit = const Value.absent(),
+                Value<String?> currentBranch = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<String> actionsJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WorkspaceProjectsCompanion(
+                id: id,
+                name: name,
+                path: path,
+                isGit: isGit,
+                currentBranch: currentBranch,
+                createdAt: createdAt,
+                sortOrder: sortOrder,
+                actionsJson: actionsJson,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                required String path,
+                Value<bool> isGit = const Value.absent(),
+                Value<String?> currentBranch = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> sortOrder = const Value.absent(),
+                Value<String> actionsJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WorkspaceProjectsCompanion.insert(
+                id: id,
+                name: name,
+                path: path,
+                isGit: isGit,
+                currentBranch: currentBranch,
+                createdAt: createdAt,
+                sortOrder: sortOrder,
+                actionsJson: actionsJson,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) => p0.map((e) => (e.readTable(table), BaseReferences(db, table, e))).toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $$WorkspaceProjectsTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $WorkspaceProjectsTable,
-    WorkspaceProjectRow,
-    $$WorkspaceProjectsTableFilterComposer,
-    $$WorkspaceProjectsTableOrderingComposer,
-    $$WorkspaceProjectsTableAnnotationComposer,
-    $$WorkspaceProjectsTableCreateCompanionBuilder,
-    $$WorkspaceProjectsTableUpdateCompanionBuilder,
-    (WorkspaceProjectRow, BaseReferences<_$AppDatabase, $WorkspaceProjectsTable, WorkspaceProjectRow>),
-    WorkspaceProjectRow,
-    PrefetchHooks Function()>;
+typedef $$WorkspaceProjectsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WorkspaceProjectsTable,
+      WorkspaceProjectRow,
+      $$WorkspaceProjectsTableFilterComposer,
+      $$WorkspaceProjectsTableOrderingComposer,
+      $$WorkspaceProjectsTableAnnotationComposer,
+      $$WorkspaceProjectsTableCreateCompanionBuilder,
+      $$WorkspaceProjectsTableUpdateCompanionBuilder,
+      (WorkspaceProjectRow, BaseReferences<_$AppDatabase, $WorkspaceProjectsTable, WorkspaceProjectRow>),
+      WorkspaceProjectRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1877,20 +2085,41 @@ class $AppDatabaseManager {
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appDatabaseHash() => r'59cce38d45eeaba199eddd097d8e149d66f9f3e1';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [appDatabase].
 @ProviderFor(appDatabase)
-final appDatabaseProvider = Provider<AppDatabase>.internal(
-  appDatabase,
-  name: r'appDatabaseProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$appDatabaseHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final appDatabaseProvider = AppDatabaseProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef AppDatabaseRef = ProviderRef<AppDatabase>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class AppDatabaseProvider extends $FunctionalProvider<AppDatabase, AppDatabase, AppDatabase>
+    with $Provider<AppDatabase> {
+  AppDatabaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appDatabaseProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appDatabaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<AppDatabase> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+
+  @override
+  AppDatabase create(Ref ref) {
+    return appDatabase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppDatabase value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<AppDatabase>(value));
+  }
+}
+
+String _$appDatabaseHash() => r'59cce38d45eeaba199eddd097d8e149d66f9f3e1';

@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'applied_change.freezed.dart';
 
 @freezed
-class AppliedChange with _$AppliedChange {
+abstract class AppliedChange with _$AppliedChange {
   const factory AppliedChange({
     required String id, // uuid
     required String sessionId,

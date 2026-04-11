@@ -10,16 +10,15 @@ AppliedChange _change({
   String filePath = '/tmp/foo.dart',
   String newContent = 'new',
   String? originalContent = 'old',
-}) =>
-    AppliedChange(
-      id: id,
-      sessionId: sessionId,
-      messageId: messageId,
-      filePath: filePath,
-      originalContent: originalContent,
-      newContent: newContent,
-      appliedAt: DateTime(2026),
-    );
+}) => AppliedChange(
+  id: id,
+  sessionId: sessionId,
+  messageId: messageId,
+  filePath: filePath,
+  originalContent: originalContent,
+  newContent: newContent,
+  appliedAt: DateTime(2026),
+);
 
 void main() {
   late ProviderContainer container;

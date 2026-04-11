@@ -64,10 +64,7 @@ class OllamaService implements AIService {
       }
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError) {
-        throw NetworkException(
-          'Ollama is not running. Start it with: ollama serve',
-          originalError: e,
-        );
+        throw NetworkException('Ollama is not running. Start it with: ollama serve', originalError: e);
       }
       throw NetworkException(
         e.message ?? 'Ollama request failed',
@@ -133,11 +130,7 @@ class OllamaService implements AIService {
     }
   }
 
-  List<Map<String, String>> _buildMessages(
-    List<ChatMessage> history,
-    String prompt,
-    String? systemPrompt,
-  ) {
+  List<Map<String, String>> _buildMessages(List<ChatMessage> history, String prompt, String? systemPrompt) {
     final messages = <Map<String, String>>[];
     if (systemPrompt != null) {
       messages.add({'role': 'system', 'content': systemPrompt});

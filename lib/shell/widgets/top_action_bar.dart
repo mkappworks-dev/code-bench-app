@@ -35,7 +35,8 @@ class TopActionBar extends ConsumerWidget {
     final sessionsAsync = ref.watch(chatSessionsProvider);
     final projectsAsync = ref.watch(projectsProvider);
 
-    final sessionTitle = sessionsAsync.whenOrNull(
+    final sessionTitle =
+        sessionsAsync.whenOrNull(
           data: (List<ChatSession> list) {
             if (sessionId == null) return 'Code Bench';
             try {
@@ -81,16 +82,10 @@ class TopActionBar extends ConsumerWidget {
             // Project name badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: ThemeConstants.inputSurface,
-                borderRadius: BorderRadius.circular(4),
-              ),
+              decoration: BoxDecoration(color: ThemeConstants.inputSurface, borderRadius: BorderRadius.circular(4)),
               child: Text(
                 project.name,
-                style: const TextStyle(
-                  color: ThemeConstants.mutedFg,
-                  fontSize: ThemeConstants.uiFontSizeLabel,
-                ),
+                style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeLabel),
               ),
             ),
             // No Git badge (only when not a git repo)
@@ -98,10 +93,7 @@ class TopActionBar extends ConsumerWidget {
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A1F0A),
-                  borderRadius: BorderRadius.circular(4),
-                ),
+                decoration: BoxDecoration(color: const Color(0xFF2A1F0A), borderRadius: BorderRadius.circular(4)),
                 child: const Text(
                   'No Git',
                   style: TextStyle(
@@ -175,9 +167,9 @@ class _VsCodeDropdown extends ConsumerWidget {
                 error = await svc.openInTerminal(projectPath);
             }
             if (error != null && btnContext.mounted) {
-              ScaffoldMessenger.of(btnContext).showSnackBar(
-                SnackBar(content: Text(error), duration: const Duration(seconds: 4)),
-              );
+              ScaffoldMessenger.of(
+                btnContext,
+              ).showSnackBar(SnackBar(content: Text(error), duration: const Duration(seconds: 4)));
             }
           },
         ),
@@ -244,9 +236,7 @@ class _InitGitButton extends ConsumerWidget {
           final message = refreshFailed
               ? 'Git repository initialized — reopen the project to refresh the sidebar.'
               : 'Git repository initialized';
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message)),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
         }
       },
     );
@@ -307,18 +297,15 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     // Generate commit message via AI.
     final model = ref.read(selectedModelProvider);
     final aiSvc = await ref.read(aiServiceProvider(model.provider).future);
-    final prompt = 'Write a conventional commit message (subject line only, max 72 chars) '
+    final prompt =
+        'Write a conventional commit message (subject line only, max 72 chars) '
         'summarising these file changes: ${changedFiles.isEmpty ? "general changes" : changedFiles.join(", ")}. '
         'Reply with only the commit message, no explanation.';
 
     String message = 'chore: update files';
     if (aiSvc != null) {
       try {
-        final response = await aiSvc.sendMessage(
-          history: const [],
-          prompt: prompt,
-          model: model,
-        );
+        final response = await aiSvc.sendMessage(history: const [], prompt: prompt, model: model);
         final text = response.content;
         if (text.isNotEmpty) {
           message = text.trim().replaceAll('"', '').split('\n').first.trim();
@@ -330,11 +317,9 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         // see it instead of masking it as "provider unavailable".
         dLog('[_CommitPushButton] AI commit message failed: ${e.message}');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('AI commit message unavailable — using default.'),
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('AI commit message unavailable — using default.')));
         }
       }
     }
@@ -355,9 +340,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     try {
       final sha = await GitService(widget.project.path).commit(message);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Committed — $sha')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Committed — $sha')));
       }
     } on GitException catch (e) {
       if (mounted) {
@@ -384,9 +367,9 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       }
     } on GitAuthException {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Push failed — check your git credentials.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Push failed — check your git credentials.')));
       }
     } on GitException catch (e) {
       if (mounted) {
@@ -402,9 +385,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     try {
       final n = await GitService(widget.project.path).pull();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Pulled — $n new commit(s) from origin')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pulled — $n new commit(s) from origin')));
         setState(() => _behindCount = 0);
       }
     } on GitConflictException {
@@ -465,8 +446,8 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                     _pushing
                         ? '● Pushing…'
                         : _pulling
-                            ? '● Pulling…'
-                            : 'Commit',
+                        ? '● Pulling…'
+                        : 'Commit',
                     style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeSmall),
                   ),
                 ],
@@ -516,10 +497,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                       height: 32,
                       child: Text(
                         'Create PR',
-                        style: TextStyle(
-                          color: ThemeConstants.textSecondary,
-                          fontSize: ThemeConstants.uiFontSizeSmall,
-                        ),
+                        style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                       ),
                     ),
                   ],
@@ -548,8 +526,10 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (badgeLabel.isNotEmpty)
-                        Text(badgeLabel,
-                            style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeLabel)),
+                        Text(
+                          badgeLabel,
+                          style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeLabel),
+                        ),
                       const Icon(AppIcons.chevronDown, size: 11, color: Colors.white),
                     ],
                   ),
@@ -564,9 +544,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
 
   void _snack(String message, {Duration duration = const Duration(seconds: 4), SnackBarAction? action}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: duration, action: action),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), duration: duration, action: action));
   }
 
   Future<void> _showCreatePrDialog() async {
@@ -605,7 +583,8 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     String prBody = '';
     if (aiSvc != null) {
       try {
-        final prompt = 'Generate a PR title (max 70 chars) and bullet-point body for these '
+        final prompt =
+            'Generate a PR title (max 70 chars) and bullet-point body for these '
             'changes: ${changedFiles.isEmpty ? "general changes" : changedFiles.join(", ")}. '
             'Reply in this format:\nTITLE: <title>\nBODY:\n<bullets>';
         final response = await aiSvc.sendMessage(history: const [], prompt: prompt, model: model);
@@ -654,12 +633,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     if (!mounted) return;
 
     // 6. Show dialog.
-    final result = await CreatePrDialog.show(
-      context,
-      initialTitle: prTitle,
-      initialBody: prBody,
-      branches: branches,
-    );
+    final result = await CreatePrDialog.show(context, initialTitle: prTitle, initialBody: prBody, branches: branches);
     if (result == null) return;
 
     // 7. Create PR and surface the URL to the user.
@@ -693,11 +667,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                   // `ProcessException` (e.g. no `open` binary on
                   // non-macOS) from escaping as an unhandled future —
                   // the URL is already visible in the snackbar.
-                  unawaited(
-                    Process.run('open', ['--', prUrl]).catchError(
-                      (Object _) => ProcessResult(0, -1, '', ''),
-                    ),
-                  );
+                  unawaited(Process.run('open', ['--', prUrl]).catchError((Object _) => ProcessResult(0, -1, '', '')));
                 },
               )
             : null,
@@ -721,12 +691,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
 // ── Shared action button ─────────────────────────────────────────────────────
 
 class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-    this.onTap,
-    this.trailingCaret = false,
-  });
+  const _ActionButton({required this.icon, required this.label, this.onTap, this.trailingCaret = false});
 
   final IconData icon;
   final String label;
@@ -752,10 +717,7 @@ class _ActionButton extends StatelessWidget {
             const SizedBox(width: 5),
             Text(
               label,
-              style: const TextStyle(
-                color: ThemeConstants.textSecondary,
-                fontSize: ThemeConstants.uiFontSizeSmall,
-              ),
+              style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
             ),
             if (trailingCaret) ...[
               const SizedBox(width: 4),
@@ -771,11 +733,7 @@ class _ActionButton extends StatelessWidget {
     // or the inner InkWell swallows the tap before the menu can open.
     if (onTap == null) return content;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(5),
-      child: content,
-    );
+    return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(5), child: content);
   }
 }
 
@@ -831,10 +789,7 @@ class _ActionsDropdown extends ConsumerWidget {
                       SizedBox(width: 6),
                       Text(
                         'Add action',
-                        style: TextStyle(
-                          color: ThemeConstants.textSecondary,
-                          fontSize: ThemeConstants.uiFontSizeSmall,
-                        ),
+                        style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                       ),
                     ],
                   ),
@@ -850,7 +805,7 @@ class _ActionsDropdown extends ConsumerWidget {
                 await ref.read(projectServiceProvider).updateProjectActions(project.id, newActions);
               }
             } else if (value is ProjectAction) {
-              await ref.read(actionOutputNotifierProvider.notifier).run(value, project.path);
+              await ref.read(actionOutputProvider.notifier).run(value, project.path);
             }
           },
         ),
@@ -927,10 +882,7 @@ class _AddActionDialogState extends State<_AddActionDialog> {
                 child: Text(
                   'Commands run with your full user privileges. Only add actions '
                   'you would run in a terminal yourself.',
-                  style: TextStyle(
-                    color: Color(0xFFE8A228),
-                    fontSize: ThemeConstants.uiFontSizeLabel,
-                  ),
+                  style: TextStyle(color: Color(0xFFE8A228), fontSize: ThemeConstants.uiFontSizeLabel),
                 ),
               ),
             ],

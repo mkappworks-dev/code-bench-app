@@ -105,11 +105,7 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                         borderRadius: BorderRadius.circular(4),
                         child: Padding(
                           padding: const EdgeInsets.all(3),
-                          child: Icon(
-                            AppIcons.newChat,
-                            size: 13,
-                            color: ThemeConstants.mutedFg,
-                          ),
+                          child: Icon(AppIcons.newChat, size: 13, color: ThemeConstants.mutedFg),
                         ),
                       ),
                     ),
@@ -134,19 +130,21 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
             padding: const EdgeInsets.only(left: 24, right: 10, bottom: 6),
             child: Column(
               children: widget.sessions
-                  .map((s) => ConversationTile(
-                        session: s,
-                        isActive: s.sessionId == widget.activeSessionId,
-                        onTap: () => widget.onSessionTap(s.sessionId),
-                        onArchive: () => widget.onArchive(s.sessionId),
-                        onRename: () async {
-                          if (!context.mounted) return;
-                          final newTitle = await RenameConversationDialog.show(context, s.title);
-                          if (newTitle != null) {
-                            await ref.read(sessionServiceProvider).updateSessionTitle(s.sessionId, newTitle);
-                          }
-                        },
-                      ))
+                  .map(
+                    (s) => ConversationTile(
+                      session: s,
+                      isActive: s.sessionId == widget.activeSessionId,
+                      onTap: () => widget.onSessionTap(s.sessionId),
+                      onArchive: () => widget.onArchive(s.sessionId),
+                      onRename: () async {
+                        if (!context.mounted) return;
+                        final newTitle = await RenameConversationDialog.show(context, s.title);
+                        if (newTitle != null) {
+                          await ref.read(sessionServiceProvider).updateSessionTitle(s.sessionId, newTitle);
+                        }
+                      },
+                    ),
+                  )
                   .toList(),
             ),
           ),

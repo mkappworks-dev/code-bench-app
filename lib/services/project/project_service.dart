@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -28,9 +27,7 @@ class ProjectService {
   AppDatabase get _db => _ref.read(appDatabaseProvider);
 
   Stream<List<Project>> watchAllProjects() {
-    return _db.projectDao.watchAllProjects().map(
-          (rows) => rows.map(_projectFromRow).toList(),
-        );
+    return _db.projectDao.watchAllProjects().map((rows) => rows.map(_projectFromRow).toList());
   }
 
   Future<Project> addExistingFolder(String directoryPath) async {
@@ -80,15 +77,9 @@ class ProjectService {
     await _db.projectDao.deleteProject(projectId);
   }
 
-  Future<void> updateProjectActions(
-    String projectId,
-    List<ProjectAction> actions,
-  ) async {
+  Future<void> updateProjectActions(String projectId, List<ProjectAction> actions) async {
     final json = jsonEncode(actions.map((a) => a.toJson()).toList());
-    await _db.projectDao.updateProject(
-      projectId,
-      WorkspaceProjectsCompanion(actionsJson: Value(json)),
-    );
+    await _db.projectDao.updateProject(projectId, WorkspaceProjectsCompanion(actionsJson: Value(json)));
   }
 
   Future<void> refreshGitStatus(String projectId) async {

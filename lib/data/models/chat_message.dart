@@ -12,18 +12,14 @@ enum MessageRole {
 }
 
 @freezed
-class CodeBlock with _$CodeBlock {
-  const factory CodeBlock({
-    required String code,
-    String? language,
-    String? filename,
-  }) = _CodeBlock;
+abstract class CodeBlock with _$CodeBlock {
+  const factory CodeBlock({required String code, String? language, String? filename}) = _CodeBlock;
 
   factory CodeBlock.fromJson(Map<String, dynamic> json) => _$CodeBlockFromJson(json);
 }
 
 @freezed
-class ChatMessage with _$ChatMessage {
+abstract class ChatMessage with _$ChatMessage {
   const factory ChatMessage({
     required String id,
     required String sessionId,

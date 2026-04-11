@@ -21,9 +21,9 @@ Future<T?> showInstantMenu<T>({
   ShapeBorder? shape,
   double elevation = 8.0,
 }) {
-  return Navigator.of(context).push<T>(
-    _InstantMenuRoute<T>(items: items, position: position, color: color, shape: shape, elevation: elevation),
-  );
+  return Navigator.of(
+    context,
+  ).push<T>(_InstantMenuRoute<T>(items: items, position: position, color: color, shape: shape, elevation: elevation));
 }
 
 /// Shows [showInstantMenu] anchored just below the bottom-left of the widget

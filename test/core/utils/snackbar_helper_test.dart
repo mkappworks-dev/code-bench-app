@@ -9,10 +9,8 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: Builder(
-            builder: (context) => ElevatedButton(
-              onPressed: () => showErrorSnackBar(context, 'Test error'),
-              child: const Text('tap'),
-            ),
+            builder: (context) =>
+                ElevatedButton(onPressed: () => showErrorSnackBar(context, 'Test error'), child: const Text('tap')),
           ),
         ),
       ),
@@ -31,10 +29,8 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: Builder(
-            builder: (context) => ElevatedButton(
-              onPressed: () => showSuccessSnackBar(context, 'Saved'),
-              child: const Text('tap'),
-            ),
+            builder: (context) =>
+                ElevatedButton(onPressed: () => showSuccessSnackBar(context, 'Saved'), child: const Text('tap')),
           ),
         ),
       ),

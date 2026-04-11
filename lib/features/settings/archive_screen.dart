@@ -20,8 +20,10 @@ class ArchiveScreen extends ConsumerWidget {
     return sessionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
       error: (e, _) => Center(
-        child: const Text('Failed to load archived sessions.',
-            style: TextStyle(color: ThemeConstants.error, fontSize: 11)),
+        child: const Text(
+          'Failed to load archived sessions.',
+          style: TextStyle(color: ThemeConstants.error, fontSize: 11),
+        ),
       ),
       data: (sessions) {
         if (sessions.isEmpty) {
@@ -31,19 +33,13 @@ class ArchiveScreen extends ConsumerWidget {
               children: const [
                 Icon(AppIcons.archive, size: 32, color: ThemeConstants.mutedFg),
                 SizedBox(height: 12),
-                Text(
-                  'No archived conversations',
-                  style: TextStyle(
-                    color: ThemeConstants.textSecondary,
-                    fontSize: 12,
-                  ),
-                ),
+                Text('No archived conversations', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 12)),
               ],
             ),
           );
         }
 
-        final projects = projectsAsync.valueOrNull ?? [];
+        final projects = projectsAsync.value ?? [];
         final projectMap = {for (final p in projects) p.id: p.name};
 
         // Group sessions by projectId
@@ -55,14 +51,9 @@ class ArchiveScreen extends ConsumerWidget {
         return ListView(
           children: [
             for (final entry in groups.entries) ...[
-              _ProjectHeader(
-                name: projectMap[entry.key] ?? 'No Project',
-              ),
+              _ProjectHeader(name: projectMap[entry.key] ?? 'No Project'),
               for (final s in entry.value)
-                _ArchivedSessionCard(
-                  session: s,
-                  onUnarchive: () => onUnarchive(s.sessionId),
-                ),
+                _ArchivedSessionCard(session: s, onUnarchive: () => onUnarchive(s.sessionId)),
               const SizedBox(height: 8),
             ],
           ],
@@ -101,10 +92,7 @@ class _ProjectHeader extends StatelessWidget {
 }
 
 class _ArchivedSessionCard extends StatelessWidget {
-  const _ArchivedSessionCard({
-    required this.session,
-    required this.onUnarchive,
-  });
+  const _ArchivedSessionCard({required this.session, required this.onUnarchive});
 
   final ChatSession session;
   final VoidCallback onUnarchive;
@@ -134,20 +122,13 @@ class _ArchivedSessionCard extends StatelessWidget {
               children: [
                 Text(
                   session.title,
-                  style: const TextStyle(
-                    color: ThemeConstants.textPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 3),
                 Text(
                   'Archived ${_relativeTime(session.updatedAt)} · Created ${_relativeTime(session.createdAt)}',
-                  style: const TextStyle(
-                    color: ThemeConstants.textSecondary,
-                    fontSize: 11,
-                  ),
+                  style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11),
                 ),
               ],
             ),

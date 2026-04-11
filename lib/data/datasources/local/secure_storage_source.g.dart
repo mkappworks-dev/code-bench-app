@@ -6,20 +6,42 @@ part of 'secure_storage_source.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$secureStorageSourceHash() => r'b15f22b348732cb7c31fb84aa22fd56c167ef5d9';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [secureStorageSource].
 @ProviderFor(secureStorageSource)
-final secureStorageSourceProvider = Provider<SecureStorageSource>.internal(
-  secureStorageSource,
-  name: r'secureStorageSourceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$secureStorageSourceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final secureStorageSourceProvider = SecureStorageSourceProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef SecureStorageSourceRef = ProviderRef<SecureStorageSource>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class SecureStorageSourceProvider
+    extends $FunctionalProvider<SecureStorageSource, SecureStorageSource, SecureStorageSource>
+    with $Provider<SecureStorageSource> {
+  SecureStorageSourceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'secureStorageSourceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$secureStorageSourceHash();
+
+  @$internal
+  @override
+  $ProviderElement<SecureStorageSource> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+
+  @override
+  SecureStorageSource create(Ref ref) {
+    return secureStorageSource(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SecureStorageSource value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<SecureStorageSource>(value));
+  }
+}
+
+String _$secureStorageSourceHash() => r'b15f22b348732cb7c31fb84aa22fd56c167ef5d9';

@@ -14,16 +14,10 @@ Widget _buildArchive({
 }) {
   return ProviderScope(
     overrides: [
-      archivedSessionsProvider.overrideWith(
-        (ref) => Stream.value(sessions),
-      ),
-      projectsProvider.overrideWith(
-        (ref) => Stream.value(projects),
-      ),
+      archivedSessionsProvider.overrideWith((ref) => Stream.value(sessions)),
+      projectsProvider.overrideWith((ref) => Stream.value(projects)),
     ],
-    child: MaterialApp(
-      home: ArchiveScreen(onUnarchive: onUnarchive ?? (_) {}),
-    ),
+    child: MaterialApp(home: ArchiveScreen(onUnarchive: onUnarchive ?? (_) {})),
   );
 }
 
@@ -61,10 +55,7 @@ void main() {
       createdAt: DateTime(2025),
       updatedAt: DateTime(2025),
     );
-    await tester.pumpWidget(_buildArchive(
-      sessions: [session],
-      onUnarchive: (id) => unarchived = id,
-    ));
+    await tester.pumpWidget(_buildArchive(sessions: [session], onUnarchive: (id) => unarchived = id));
     await tester.pump();
 
     await tester.tap(find.text('Unarchive'));

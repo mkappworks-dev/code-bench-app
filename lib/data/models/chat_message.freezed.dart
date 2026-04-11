@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,450 +9,562 @@ part of 'chat_message.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
-CodeBlock _$CodeBlockFromJson(Map<String, dynamic> json) {
-  return _CodeBlock.fromJson(json);
-}
 
 /// @nodoc
 mixin _$CodeBlock {
-  String get code => throw _privateConstructorUsedError;
-  String? get language => throw _privateConstructorUsedError;
-  String? get filename => throw _privateConstructorUsedError;
+
+ String get code; String? get language; String? get filename;
+/// Create a copy of CodeBlock
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CodeBlockCopyWith<CodeBlock> get copyWith => _$CodeBlockCopyWithImpl<CodeBlock>(this as CodeBlock, _$identity);
 
   /// Serializes this CodeBlock to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  Map<String, dynamic> toJson();
 
-  /// Create a copy of CodeBlock
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $CodeBlockCopyWith<CodeBlock> get copyWith => throw _privateConstructorUsedError;
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CodeBlock&&(identical(other.code, code) || other.code == code)&&(identical(other.language, language) || other.language == language)&&(identical(other.filename, filename) || other.filename == filename));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,code,language,filename);
+
+@override
+String toString() {
+  return 'CodeBlock(code: $code, language: $language, filename: $filename)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $CodeBlockCopyWith<$Res> {
-  factory $CodeBlockCopyWith(CodeBlock value, $Res Function(CodeBlock) then) = _$CodeBlockCopyWithImpl<$Res, CodeBlock>;
-  @useResult
-  $Res call({String code, String? language, String? filename});
+abstract mixin class $CodeBlockCopyWith<$Res>  {
+  factory $CodeBlockCopyWith(CodeBlock value, $Res Function(CodeBlock) _then) = _$CodeBlockCopyWithImpl;
+@useResult
+$Res call({
+ String code, String? language, String? filename
+});
+
+
+
+
+}
+/// @nodoc
+class _$CodeBlockCopyWithImpl<$Res>
+    implements $CodeBlockCopyWith<$Res> {
+  _$CodeBlockCopyWithImpl(this._self, this._then);
+
+  final CodeBlock _self;
+  final $Res Function(CodeBlock) _then;
+
+/// Create a copy of CodeBlock
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? code = null,Object? language = freezed,Object? filename = freezed,}) {
+  return _then(_self.copyWith(
+code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
+as String,language: freezed == language ? _self.language : language // ignore: cast_nullable_to_non_nullable
+as String?,filename: freezed == filename ? _self.filename : filename // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
 }
 
-/// @nodoc
-class _$CodeBlockCopyWithImpl<$Res, $Val extends CodeBlock> implements $CodeBlockCopyWith<$Res> {
-  _$CodeBlockCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of CodeBlock
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? code = null,
-    Object? language = freezed,
-    Object? filename = freezed,
-  }) {
-    return _then(_value.copyWith(
-      code: null == code
-          ? _value.code
-          : code // ignore: cast_nullable_to_non_nullable
-              as String,
-      language: freezed == language
-          ? _value.language
-          : language // ignore: cast_nullable_to_non_nullable
-              as String?,
-      filename: freezed == filename
-          ? _value.filename
-          : filename // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
-  }
 }
 
-/// @nodoc
-abstract class _$$CodeBlockImplCopyWith<$Res> implements $CodeBlockCopyWith<$Res> {
-  factory _$$CodeBlockImplCopyWith(_$CodeBlockImpl value, $Res Function(_$CodeBlockImpl) then) =
-      __$$CodeBlockImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({String code, String? language, String? filename});
+
+/// Adds pattern-matching-related methods to [CodeBlock].
+extension CodeBlockPatterns on CodeBlock {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CodeBlock value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _CodeBlock() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CodeBlock value)  $default,){
+final _that = this;
+switch (_that) {
+case _CodeBlock():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CodeBlock value)?  $default,){
+final _that = this;
+switch (_that) {
+case _CodeBlock() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String code,  String? language,  String? filename)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _CodeBlock() when $default != null:
+return $default(_that.code,_that.language,_that.filename);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String code,  String? language,  String? filename)  $default,) {final _that = this;
+switch (_that) {
+case _CodeBlock():
+return $default(_that.code,_that.language,_that.filename);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String code,  String? language,  String? filename)?  $default,) {final _that = this;
+switch (_that) {
+case _CodeBlock() when $default != null:
+return $default(_that.code,_that.language,_that.filename);case _:
+  return null;
+
+}
 }
 
-/// @nodoc
-class __$$CodeBlockImplCopyWithImpl<$Res> extends _$CodeBlockCopyWithImpl<$Res, _$CodeBlockImpl>
-    implements _$$CodeBlockImplCopyWith<$Res> {
-  __$$CodeBlockImplCopyWithImpl(_$CodeBlockImpl _value, $Res Function(_$CodeBlockImpl) _then) : super(_value, _then);
-
-  /// Create a copy of CodeBlock
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? code = null,
-    Object? language = freezed,
-    Object? filename = freezed,
-  }) {
-    return _then(_$CodeBlockImpl(
-      code: null == code
-          ? _value.code
-          : code // ignore: cast_nullable_to_non_nullable
-              as String,
-      language: freezed == language
-          ? _value.language
-          : language // ignore: cast_nullable_to_non_nullable
-              as String?,
-      filename: freezed == filename
-          ? _value.filename
-          : filename // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
-  }
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$CodeBlockImpl implements _CodeBlock {
-  const _$CodeBlockImpl({required this.code, this.language, this.filename});
 
-  factory _$CodeBlockImpl.fromJson(Map<String, dynamic> json) => _$$CodeBlockImplFromJson(json);
+class _CodeBlock implements CodeBlock {
+  const _CodeBlock({required this.code, this.language, this.filename});
+  factory _CodeBlock.fromJson(Map<String, dynamic> json) => _$CodeBlockFromJson(json);
 
-  @override
-  final String code;
-  @override
-  final String? language;
-  @override
-  final String? filename;
+@override final  String code;
+@override final  String? language;
+@override final  String? filename;
 
-  @override
-  String toString() {
-    return 'CodeBlock(code: $code, language: $language, filename: $filename)';
-  }
+/// Create a copy of CodeBlock
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$CodeBlockCopyWith<_CodeBlock> get copyWith => __$CodeBlockCopyWithImpl<_CodeBlock>(this, _$identity);
 
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$CodeBlockImpl &&
-            (identical(other.code, code) || other.code == code) &&
-            (identical(other.language, language) || other.language == language) &&
-            (identical(other.filename, filename) || other.filename == filename));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, code, language, filename);
-
-  /// Create a copy of CodeBlock
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$CodeBlockImplCopyWith<_$CodeBlockImpl> get copyWith =>
-      __$$CodeBlockImplCopyWithImpl<_$CodeBlockImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$CodeBlockImplToJson(
-      this,
-    );
-  }
+@override
+Map<String, dynamic> toJson() {
+  return _$CodeBlockToJson(this, );
 }
 
-abstract class _CodeBlock implements CodeBlock {
-  const factory _CodeBlock({required final String code, final String? language, final String? filename}) =
-      _$CodeBlockImpl;
-
-  factory _CodeBlock.fromJson(Map<String, dynamic> json) = _$CodeBlockImpl.fromJson;
-
-  @override
-  String get code;
-  @override
-  String? get language;
-  @override
-  String? get filename;
-
-  /// Create a copy of CodeBlock
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$CodeBlockImplCopyWith<_$CodeBlockImpl> get copyWith => throw _privateConstructorUsedError;
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CodeBlock&&(identical(other.code, code) || other.code == code)&&(identical(other.language, language) || other.language == language)&&(identical(other.filename, filename) || other.filename == filename));
 }
 
-ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) {
-  return _ChatMessage.fromJson(json);
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,code,language,filename);
+
+@override
+String toString() {
+  return 'CodeBlock(code: $code, language: $language, filename: $filename)';
 }
+
+
+}
+
+/// @nodoc
+abstract mixin class _$CodeBlockCopyWith<$Res> implements $CodeBlockCopyWith<$Res> {
+  factory _$CodeBlockCopyWith(_CodeBlock value, $Res Function(_CodeBlock) _then) = __$CodeBlockCopyWithImpl;
+@override @useResult
+$Res call({
+ String code, String? language, String? filename
+});
+
+
+
+
+}
+/// @nodoc
+class __$CodeBlockCopyWithImpl<$Res>
+    implements _$CodeBlockCopyWith<$Res> {
+  __$CodeBlockCopyWithImpl(this._self, this._then);
+
+  final _CodeBlock _self;
+  final $Res Function(_CodeBlock) _then;
+
+/// Create a copy of CodeBlock
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? code = null,Object? language = freezed,Object? filename = freezed,}) {
+  return _then(_CodeBlock(
+code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
+as String,language: freezed == language ? _self.language : language // ignore: cast_nullable_to_non_nullable
+as String?,filename: freezed == filename ? _self.filename : filename // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
 
 /// @nodoc
 mixin _$ChatMessage {
-  String get id => throw _privateConstructorUsedError;
-  String get sessionId => throw _privateConstructorUsedError;
-  MessageRole get role => throw _privateConstructorUsedError;
-  String get content => throw _privateConstructorUsedError;
-  List<CodeBlock> get codeBlocks => throw _privateConstructorUsedError;
-  DateTime get timestamp => throw _privateConstructorUsedError;
-  bool get isStreaming => throw _privateConstructorUsedError;
+
+ String get id; String get sessionId; MessageRole get role; String get content; List<CodeBlock> get codeBlocks; DateTime get timestamp; bool get isStreaming;
+/// Create a copy of ChatMessage
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatMessageCopyWith<ChatMessage> get copyWith => _$ChatMessageCopyWithImpl<ChatMessage>(this as ChatMessage, _$identity);
 
   /// Serializes this ChatMessage to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  Map<String, dynamic> toJson();
 
-  /// Create a copy of ChatMessage
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $ChatMessageCopyWith<ChatMessage> get copyWith => throw _privateConstructorUsedError;
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other.codeBlocks, codeBlocks)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.isStreaming, isStreaming) || other.isStreaming == isStreaming));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,sessionId,role,content,const DeepCollectionEquality().hash(codeBlocks),timestamp,isStreaming);
+
+@override
+String toString() {
+  return 'ChatMessage(id: $id, sessionId: $sessionId, role: $role, content: $content, codeBlocks: $codeBlocks, timestamp: $timestamp, isStreaming: $isStreaming)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $ChatMessageCopyWith<$Res> {
-  factory $ChatMessageCopyWith(ChatMessage value, $Res Function(ChatMessage) then) =
-      _$ChatMessageCopyWithImpl<$Res, ChatMessage>;
-  @useResult
-  $Res call(
-      {String id,
-      String sessionId,
-      MessageRole role,
-      String content,
-      List<CodeBlock> codeBlocks,
-      DateTime timestamp,
-      bool isStreaming});
+abstract mixin class $ChatMessageCopyWith<$Res>  {
+  factory $ChatMessageCopyWith(ChatMessage value, $Res Function(ChatMessage) _then) = _$ChatMessageCopyWithImpl;
+@useResult
+$Res call({
+ String id, String sessionId, MessageRole role, String content, List<CodeBlock> codeBlocks, DateTime timestamp, bool isStreaming
+});
+
+
+
+
+}
+/// @nodoc
+class _$ChatMessageCopyWithImpl<$Res>
+    implements $ChatMessageCopyWith<$Res> {
+  _$ChatMessageCopyWithImpl(this._self, this._then);
+
+  final ChatMessage _self;
+  final $Res Function(ChatMessage) _then;
+
+/// Create a copy of ChatMessage
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? sessionId = null,Object? role = null,Object? content = null,Object? codeBlocks = null,Object? timestamp = null,Object? isStreaming = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
+as String,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
+as MessageRole,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
+as String,codeBlocks: null == codeBlocks ? _self.codeBlocks : codeBlocks // ignore: cast_nullable_to_non_nullable
+as List<CodeBlock>,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
+as DateTime,isStreaming: null == isStreaming ? _self.isStreaming : isStreaming // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
 }
 
-/// @nodoc
-class _$ChatMessageCopyWithImpl<$Res, $Val extends ChatMessage> implements $ChatMessageCopyWith<$Res> {
-  _$ChatMessageCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of ChatMessage
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? sessionId = null,
-    Object? role = null,
-    Object? content = null,
-    Object? codeBlocks = null,
-    Object? timestamp = null,
-    Object? isStreaming = null,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      sessionId: null == sessionId
-          ? _value.sessionId
-          : sessionId // ignore: cast_nullable_to_non_nullable
-              as String,
-      role: null == role
-          ? _value.role
-          : role // ignore: cast_nullable_to_non_nullable
-              as MessageRole,
-      content: null == content
-          ? _value.content
-          : content // ignore: cast_nullable_to_non_nullable
-              as String,
-      codeBlocks: null == codeBlocks
-          ? _value.codeBlocks
-          : codeBlocks // ignore: cast_nullable_to_non_nullable
-              as List<CodeBlock>,
-      timestamp: null == timestamp
-          ? _value.timestamp
-          : timestamp // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      isStreaming: null == isStreaming
-          ? _value.isStreaming
-          : isStreaming // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ) as $Val);
-  }
 }
 
-/// @nodoc
-abstract class _$$ChatMessageImplCopyWith<$Res> implements $ChatMessageCopyWith<$Res> {
-  factory _$$ChatMessageImplCopyWith(_$ChatMessageImpl value, $Res Function(_$ChatMessageImpl) then) =
-      __$$ChatMessageImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call(
-      {String id,
-      String sessionId,
-      MessageRole role,
-      String content,
-      List<CodeBlock> codeBlocks,
-      DateTime timestamp,
-      bool isStreaming});
+
+/// Adds pattern-matching-related methods to [ChatMessage].
+extension ChatMessagePatterns on ChatMessage {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ChatMessage value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ChatMessage() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ChatMessage value)  $default,){
+final _that = this;
+switch (_that) {
+case _ChatMessage():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ChatMessage value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ChatMessage() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  DateTime timestamp,  bool isStreaming)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ChatMessage() when $default != null:
+return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.timestamp,_that.isStreaming);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  DateTime timestamp,  bool isStreaming)  $default,) {final _that = this;
+switch (_that) {
+case _ChatMessage():
+return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.timestamp,_that.isStreaming);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  DateTime timestamp,  bool isStreaming)?  $default,) {final _that = this;
+switch (_that) {
+case _ChatMessage() when $default != null:
+return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.timestamp,_that.isStreaming);case _:
+  return null;
+
+}
 }
 
-/// @nodoc
-class __$$ChatMessageImplCopyWithImpl<$Res> extends _$ChatMessageCopyWithImpl<$Res, _$ChatMessageImpl>
-    implements _$$ChatMessageImplCopyWith<$Res> {
-  __$$ChatMessageImplCopyWithImpl(_$ChatMessageImpl _value, $Res Function(_$ChatMessageImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of ChatMessage
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? sessionId = null,
-    Object? role = null,
-    Object? content = null,
-    Object? codeBlocks = null,
-    Object? timestamp = null,
-    Object? isStreaming = null,
-  }) {
-    return _then(_$ChatMessageImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      sessionId: null == sessionId
-          ? _value.sessionId
-          : sessionId // ignore: cast_nullable_to_non_nullable
-              as String,
-      role: null == role
-          ? _value.role
-          : role // ignore: cast_nullable_to_non_nullable
-              as MessageRole,
-      content: null == content
-          ? _value.content
-          : content // ignore: cast_nullable_to_non_nullable
-              as String,
-      codeBlocks: null == codeBlocks
-          ? _value._codeBlocks
-          : codeBlocks // ignore: cast_nullable_to_non_nullable
-              as List<CodeBlock>,
-      timestamp: null == timestamp
-          ? _value.timestamp
-          : timestamp // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      isStreaming: null == isStreaming
-          ? _value.isStreaming
-          : isStreaming // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ));
-  }
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$ChatMessageImpl implements _ChatMessage {
-  const _$ChatMessageImpl(
-      {required this.id,
-      required this.sessionId,
-      required this.role,
-      required this.content,
-      final List<CodeBlock> codeBlocks = const [],
-      required this.timestamp,
-      this.isStreaming = false})
-      : _codeBlocks = codeBlocks;
 
-  factory _$ChatMessageImpl.fromJson(Map<String, dynamic> json) => _$$ChatMessageImplFromJson(json);
+class _ChatMessage implements ChatMessage {
+  const _ChatMessage({required this.id, required this.sessionId, required this.role, required this.content, final  List<CodeBlock> codeBlocks = const [], required this.timestamp, this.isStreaming = false}): _codeBlocks = codeBlocks;
+  factory _ChatMessage.fromJson(Map<String, dynamic> json) => _$ChatMessageFromJson(json);
 
-  @override
-  final String id;
-  @override
-  final String sessionId;
-  @override
-  final MessageRole role;
-  @override
-  final String content;
-  final List<CodeBlock> _codeBlocks;
-  @override
-  @JsonKey()
-  List<CodeBlock> get codeBlocks {
-    if (_codeBlocks is EqualUnmodifiableListView) return _codeBlocks;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_codeBlocks);
-  }
-
-  @override
-  final DateTime timestamp;
-  @override
-  @JsonKey()
-  final bool isStreaming;
-
-  @override
-  String toString() {
-    return 'ChatMessage(id: $id, sessionId: $sessionId, role: $role, content: $content, codeBlocks: $codeBlocks, timestamp: $timestamp, isStreaming: $isStreaming)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$ChatMessageImpl &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.sessionId, sessionId) || other.sessionId == sessionId) &&
-            (identical(other.role, role) || other.role == role) &&
-            (identical(other.content, content) || other.content == content) &&
-            const DeepCollectionEquality().equals(other._codeBlocks, _codeBlocks) &&
-            (identical(other.timestamp, timestamp) || other.timestamp == timestamp) &&
-            (identical(other.isStreaming, isStreaming) || other.isStreaming == isStreaming));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, id, sessionId, role, content,
-      const DeepCollectionEquality().hash(_codeBlocks), timestamp, isStreaming);
-
-  /// Create a copy of ChatMessage
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$ChatMessageImplCopyWith<_$ChatMessageImpl> get copyWith =>
-      __$$ChatMessageImplCopyWithImpl<_$ChatMessageImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$ChatMessageImplToJson(
-      this,
-    );
-  }
+@override final  String id;
+@override final  String sessionId;
+@override final  MessageRole role;
+@override final  String content;
+ final  List<CodeBlock> _codeBlocks;
+@override@JsonKey() List<CodeBlock> get codeBlocks {
+  if (_codeBlocks is EqualUnmodifiableListView) return _codeBlocks;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_codeBlocks);
 }
 
-abstract class _ChatMessage implements ChatMessage {
-  const factory _ChatMessage(
-      {required final String id,
-      required final String sessionId,
-      required final MessageRole role,
-      required final String content,
-      final List<CodeBlock> codeBlocks,
-      required final DateTime timestamp,
-      final bool isStreaming}) = _$ChatMessageImpl;
+@override final  DateTime timestamp;
+@override@JsonKey() final  bool isStreaming;
 
-  factory _ChatMessage.fromJson(Map<String, dynamic> json) = _$ChatMessageImpl.fromJson;
+/// Create a copy of ChatMessage
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ChatMessageCopyWith<_ChatMessage> get copyWith => __$ChatMessageCopyWithImpl<_ChatMessage>(this, _$identity);
 
-  @override
-  String get id;
-  @override
-  String get sessionId;
-  @override
-  MessageRole get role;
-  @override
-  String get content;
-  @override
-  List<CodeBlock> get codeBlocks;
-  @override
-  DateTime get timestamp;
-  @override
-  bool get isStreaming;
-
-  /// Create a copy of ChatMessage
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ChatMessageImplCopyWith<_$ChatMessageImpl> get copyWith => throw _privateConstructorUsedError;
+@override
+Map<String, dynamic> toJson() {
+  return _$ChatMessageToJson(this, );
 }
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other._codeBlocks, _codeBlocks)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.isStreaming, isStreaming) || other.isStreaming == isStreaming));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,sessionId,role,content,const DeepCollectionEquality().hash(_codeBlocks),timestamp,isStreaming);
+
+@override
+String toString() {
+  return 'ChatMessage(id: $id, sessionId: $sessionId, role: $role, content: $content, codeBlocks: $codeBlocks, timestamp: $timestamp, isStreaming: $isStreaming)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ChatMessageCopyWith<$Res> implements $ChatMessageCopyWith<$Res> {
+  factory _$ChatMessageCopyWith(_ChatMessage value, $Res Function(_ChatMessage) _then) = __$ChatMessageCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String sessionId, MessageRole role, String content, List<CodeBlock> codeBlocks, DateTime timestamp, bool isStreaming
+});
+
+
+
+
+}
+/// @nodoc
+class __$ChatMessageCopyWithImpl<$Res>
+    implements _$ChatMessageCopyWith<$Res> {
+  __$ChatMessageCopyWithImpl(this._self, this._then);
+
+  final _ChatMessage _self;
+  final $Res Function(_ChatMessage) _then;
+
+/// Create a copy of ChatMessage
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? sessionId = null,Object? role = null,Object? content = null,Object? codeBlocks = null,Object? timestamp = null,Object? isStreaming = null,}) {
+  return _then(_ChatMessage(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
+as String,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
+as MessageRole,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
+as String,codeBlocks: null == codeBlocks ? _self._codeBlocks : codeBlocks // ignore: cast_nullable_to_non_nullable
+as List<CodeBlock>,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
+as DateTime,isStreaming: null == isStreaming ? _self.isStreaming : isStreaming // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+// dart format on
