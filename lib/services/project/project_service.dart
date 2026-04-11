@@ -130,15 +130,17 @@ class ProjectService {
     List<ProjectAction> actions = const [];
     // We write this column ourselves as jsonEncode(...) in
     // updateProjectActions, so a decode failure here means either manual
-    // DB tampering or a schema bug — log it and fall back to an empty
-    // list so the UI still functions.
+    // DB tampering, a serializer regression, or a schema bug. Log via
+    // `sLog` (not `dLog`) so the breadcrumb persists into release builds —
+    // otherwise a production user's project rows would silently render
+    // with zero actions and the bug would be invisible at triage time.
     try {
       final decoded = jsonDecode(row.actionsJson) as List<dynamic>;
       actions = decoded.map((e) => ProjectAction.fromJson(e as Map<String, dynamic>)).toList();
     } on FormatException catch (e) {
-      dLog('[ProjectService] actionsJson FormatException for ${row.id}: $e');
+      sLog('[ProjectService] actionsJson FormatException for ${row.id}: $e');
     } on TypeError catch (e) {
-      dLog('[ProjectService] actionsJson TypeError for ${row.id}: $e');
+      sLog('[ProjectService] actionsJson TypeError for ${row.id}: $e');
     }
 
     final status = Directory(row.path).existsSync() ? ProjectStatus.available : ProjectStatus.missing;
