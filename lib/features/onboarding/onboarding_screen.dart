@@ -187,7 +187,7 @@ class _ContentPanel extends ConsumerWidget {
                 onPressed: () => _skip(context, ref),
                 child: const Text('Skip for now', style: TextStyle(color: Color(0xFF666666), fontSize: 12)),
               ),
-              if (step < 2)
+              if (step == 1)
                 FilledButton(
                   style: FilledButton.styleFrom(
                     backgroundColor: ThemeConstants.accent,
@@ -216,6 +216,7 @@ class _FeatureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 54,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: ThemeConstants.frostedBg,
@@ -224,13 +225,21 @@ class _FeatureCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             '$icon  $title',
             style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 11, fontWeight: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 2),
-          Text(subtitle, style: const TextStyle(color: ThemeConstants.textMuted, fontSize: 10)),
+          Text(
+            subtitle,
+            style: const TextStyle(color: ThemeConstants.textMuted, fontSize: 10),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
