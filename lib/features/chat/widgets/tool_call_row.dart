@@ -88,7 +88,14 @@ class _ToolCallRowState extends State<ToolCallRow> {
                 else if (widget.event.output != null)
                   const Icon(Icons.check_circle, size: 11, color: Colors.green)
                 else
-                  const Icon(Icons.error, size: 11, color: Colors.red),
+                  // Tool finished (durationMs was written) but produced no
+                  // output — render as an error with a tooltip so the user
+                  // can at least see *which* tool failed. Without the
+                  // tooltip this was a silent red dot with zero context.
+                  Tooltip(
+                    message: '${widget.event.toolName} — no output recorded',
+                    child: const Icon(Icons.error, size: 11, color: Colors.red),
+                  ),
                 if (widget.event.durationMs != null) ...[
                   const SizedBox(width: 6),
                   Text(
