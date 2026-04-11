@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/errors/app_exception.dart';
 import '../../../data/models/repository.dart';
-import '../../../services/github/github_api_service.dart';
 import '../../../services/github/github_auth_service.dart';
 
 class GithubStep extends ConsumerStatefulWidget {
@@ -66,16 +66,18 @@ class _GithubStepState extends ConsumerState<GithubStep> {
     if (token.isEmpty) return;
     setState(() => _testingPat = true);
     try {
-      final svc = GitHubApiService(token);
-      final username = await svc.validateToken();
-      if (mounted) {
-        setState(() {
-          _patValid = username != null;
-          if (username != null) {
-            _account = GitHubAccount(username: username, avatarUrl: '', email: null, name: null);
-          }
-        });
-      }
+      // signInWithPat validates the token, persists it to secure storage on
+      // success, and returns the full account. Doing the persist inside the
+      // service keeps the token out of the widget layer and guarantees the
+      // "connected" UI state always matches what is actually on disk.
+      final account = await ref.read(githubAuthServiceProvider).signInWithPat(token);
+      if (!mounted) return;
+      setState(() {
+        _patValid = true;
+        _account = account;
+      });
+    } on AuthException {
+      if (mounted) setState(() => _patValid = false);
     } catch (_) {
       if (mounted) setState(() => _patValid = false);
     } finally {
