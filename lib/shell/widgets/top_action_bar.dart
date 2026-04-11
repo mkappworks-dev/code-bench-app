@@ -398,8 +398,11 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         target = 'origin/$branch';
       } else {
         await gitSvc.pushToRemote(_selectedRemote);
-        final branch = await gitSvc.currentBranch() ?? '';
-        target = '$_selectedRemote/$branch';
+        // `currentBranch()` can return null in detached-HEAD or transient
+        // git failure modes. Show the remote on its own rather than a
+        // dangling "remote/" with empty suffix.
+        final branch = await gitSvc.currentBranch();
+        target = (branch == null || branch.isEmpty) ? _selectedRemote : '$_selectedRemote/$branch';
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pushed to $target')));
@@ -434,21 +437,32 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     final gitSvc = GitService(widget.project.path);
     final pushed = <String>[];
     final failed = <String>[];
-    // Sequential rather than parallel: git can legitimately reject a
-    // push on one remote (non-fast-forward) without that telling us
-    // anything about the others, and a parallel `Future.wait` would
-    // obscure which remote failed in the user-facing message.
-    for (final remote in _remotes) {
-      try {
-        await gitSvc.pushToRemote(remote.name);
-        pushed.add(remote.name);
-      } on GitException catch (e) {
-        dLog('[_CommitPushButton] pushToRemote(${remote.name}) failed: ${e.message}');
-        failed.add(remote.name);
+    try {
+      // Sequential rather than parallel: git can legitimately reject a
+      // push on one remote (non-fast-forward) without that telling us
+      // anything about the others, and a parallel `Future.wait` would
+      // obscure which remote failed in the user-facing message.
+      //
+      // Catch `Exception` (not just `GitException`) so a missing git
+      // binary or a deleted cwd — both `ProcessException`/`FileSystemException`
+      // rather than our typed subclass — still counts the remote as
+      // "failed" and keeps the loop going instead of escaping the whole
+      // method and leaving the button stuck on "Pushing…" forever.
+      for (final remote in _remotes) {
+        try {
+          await gitSvc.pushToRemote(remote.name);
+          pushed.add(remote.name);
+        } on Exception catch (e) {
+          dLog('[_CommitPushButton] pushToRemote(${remote.name}) failed: ${e.runtimeType}');
+          failed.add(remote.name);
+        }
       }
+    } finally {
+      // Guarantee the spinner clears even if something truly unexpected
+      // (an `Error`, not an `Exception`) escapes the loop.
+      if (mounted) setState(() => _pushing = false);
     }
     if (!mounted) return;
-    setState(() => _pushing = false);
     final parts = <String>[];
     if (pushed.isNotEmpty) parts.add('Pushed: ${pushed.join(", ")}');
     if (failed.isNotEmpty) parts.add('Failed: ${failed.join(", ")}');
