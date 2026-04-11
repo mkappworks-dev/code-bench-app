@@ -184,12 +184,12 @@ class _AssistantBubble extends ConsumerWidget {
                   question: message.askQuestion!,
                   sessionId: message.sessionId,
                   onSubmit: (answer) => _submitAnswer(ref, answer),
-                  // Back navigation is currently dormant: multi-step
-                  // question flows span multiple messages, and rewinding
-                  // the chat history from a child widget is out of scope
-                  // here. The button is only shown on step > 0 and clears
-                  // the stored answer so the user can re-answer; we don't
-                  // pop a prior message.
+                  // "Clear answer" (rendered in the card as that
+                  // label, not "Back"): only clears the stored answer
+                  // for the current step so the user can re-pick an
+                  // option. Shown on step > 0. Real multi-step rewind
+                  // across prior messages is deferred to a future
+                  // edit-and-fork on user messages (Pattern B).
                   onBack: message.askQuestion!.stepIndex > 0
                       ? () => ref
                             .read(askQuestionProvider.notifier)

@@ -118,9 +118,14 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
           const SizedBox(height: 14),
           Row(
             children: [
+              // "Clear answer" rather than "Back": the handler only
+              // clears the stored answer for the current step so the
+              // user can re-answer — it does NOT rewind the chat to a
+              // previous question. Real rewind is tracked for a future
+              // edit-and-fork on user messages (Pattern B).
               TextButton(
                 onPressed: widget.question.stepIndex > 0 ? widget.onBack : null,
-                child: const Text('← Back', style: TextStyle(fontSize: 11)),
+                child: const Text('Clear answer', style: TextStyle(fontSize: 11)),
               ),
               const Spacer(),
               if (!_isLastStep)
