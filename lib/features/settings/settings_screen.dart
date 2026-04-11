@@ -11,6 +11,7 @@ import '../../core/constants/theme_constants.dart';
 import '../../core/utils/instant_menu.dart';
 import '../../core/utils/platform_utils.dart';
 import '../../data/datasources/local/general_preferences.dart';
+import '../../data/datasources/local/onboarding_preferences.dart';
 import '../../data/datasources/local/secure_storage_source.dart';
 import '../../data/models/ai_model.dart';
 import '../../services/ai/ai_service_factory.dart';
@@ -148,7 +149,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _buildContent() {
     switch (_activeNav) {
       case _SettingsNav.general:
-        return _GeneralSection(generalPrefs: ref.read(generalPreferencesProvider));
+        return _GeneralSection(
+          generalPrefs: ref.read(generalPreferencesProvider),
+          onboardingPrefs: ref.read(onboardingPreferencesProvider),
+        );
       case _SettingsNav.providers:
         return _ProvidersSection(
           controllers: _controllers,
@@ -297,9 +301,10 @@ class _NavItem extends StatelessWidget {
 // ── General section ───────────────────────────────────────────────────────────
 
 class _GeneralSection extends StatefulWidget {
-  const _GeneralSection({required this.generalPrefs});
+  const _GeneralSection({required this.generalPrefs, required this.onboardingPrefs});
 
   final GeneralPreferences generalPrefs;
+  final OnboardingPreferences onboardingPrefs;
 
   @override
   State<_GeneralSection> createState() => _GeneralSectionState();
@@ -393,6 +398,31 @@ class _GeneralSectionState extends State<_GeneralSection> {
                 label: 'Terminal app',
                 description: 'App to open when "Open Terminal" is tapped',
                 trailing: SizedBox(width: 140, child: _InlineTextField(controller: _terminalAppController)),
+              ),
+              _SettingsRow(
+                label: 'Reset onboarding',
+                description: 'Show the setup wizard again on next launch',
+                trailing: OutlinedButton(
+                  onPressed: () async {
+                    await widget.onboardingPrefs.reset();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Onboarding will show on next launch'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: ThemeConstants.borderColor),
+                    foregroundColor: ThemeConstants.textSecondary,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('Reset', style: TextStyle(fontSize: 11)),
+                ),
                 isLast: true,
               ),
             ],
