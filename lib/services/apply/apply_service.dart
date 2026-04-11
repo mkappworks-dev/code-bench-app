@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -144,6 +146,7 @@ class ApplyService {
     await _fs.writeFile(filePath, newContent);
 
     final (additions, deletions) = _computeLineCounts(originalContent, newContent);
+    final checksum = sha256OfString(newContent);
 
     _notifier.apply(
       AppliedChange(
@@ -156,8 +159,41 @@ class ApplyService {
         appliedAt: DateTime.now(),
         additions: additions,
         deletions: deletions,
+        contentChecksum: checksum,
       ),
     );
+  }
+
+  /// Returns the SHA-256 hex digest of [content].
+  ///
+  /// Used at apply-time to snapshot the content we wrote, so a later revert
+  /// can detect when the file was edited out-of-band (IDE save, formatter,
+  /// another AI session) and prompt for a three-way merge instead of
+  /// silently clobbering the user's work.
+  static String sha256OfString(String content) {
+    final bytes = utf8.encode(content);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  /// Returns true if [filePath] no longer matches [storedChecksum].
+  ///
+  /// A deleted file, a read error, or any mismatch all resolve to `true` —
+  /// we err on the side of prompting the user rather than silently reverting
+  /// over unknown state. Read errors are logged (runtimeType only) so a
+  /// permissions regression doesn't become invisible in the wild: without
+  /// the log, a broken AV rule or locked file would silently surface as
+  /// "externally modified" forever with no diagnostic trail.
+  static Future<bool> isExternallyModified(String filePath, String storedChecksum) async {
+    try {
+      final file = File(filePath);
+      if (!file.existsSync()) return true; // file deleted = modified
+      final current = await file.readAsString();
+      return sha256OfString(current) != storedChecksum;
+    } catch (e) {
+      dLog('[ApplyService] isExternallyModified read failed: ${e.runtimeType}');
+      return true;
+    }
   }
 
   Future<void> revertChange({required AppliedChange change, required bool isGit, required String projectPath}) async {

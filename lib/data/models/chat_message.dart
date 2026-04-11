@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'tool_event.dart';
+
 part 'chat_message.freezed.dart';
 part 'chat_message.g.dart';
 
@@ -26,6 +28,7 @@ abstract class ChatMessage with _$ChatMessage {
     required MessageRole role,
     required String content,
     @Default([]) List<CodeBlock> codeBlocks,
+    @Default([]) List<ToolEvent> toolEvents,
     required DateTime timestamp,
     @Default(false) bool isStreaming,
   }) = _ChatMessage;

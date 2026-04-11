@@ -142,6 +142,51 @@ class GitHubApiService {
     }
   }
 
+  /// Fetches a single pull request by number. Returns the raw GitHub
+  /// payload — callers that only need a handful of fields are cheaper
+  /// to feed raw maps than to maintain a typed PR model for fields we
+  /// don't strongly typecheck yet.
+  Future<Map<String, dynamic>> getPullRequest(String owner, String repo, int number) async {
+    try {
+      final response = await _dio.get('/repos/$owner/$repo/pulls/$number');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw NetworkException('Failed to get PR', statusCode: e.response?.statusCode, originalError: e);
+    }
+  }
+
+  /// Lists check-runs (CI statuses) for a commit SHA. Used by the PR card
+  /// to render CI chips next to the PR title.
+  Future<List<Map<String, dynamic>>> getCheckRuns(String owner, String repo, String sha) async {
+    try {
+      final response = await _dio.get('/repos/$owner/$repo/commits/$sha/check-runs');
+      final data = response.data as Map<String, dynamic>;
+      return (data['check_runs'] as List).cast<Map<String, dynamic>>();
+    } on DioException catch (e) {
+      throw NetworkException('Failed to get check runs', statusCode: e.response?.statusCode, originalError: e);
+    }
+  }
+
+  /// Posts an APPROVE review on a pull request.
+  Future<void> approvePullRequest(String owner, String repo, int number) async {
+    try {
+      await _dio.post('/repos/$owner/$repo/pulls/$number/reviews', data: {'event': 'APPROVE'});
+    } on DioException catch (e) {
+      throw NetworkException('Failed to approve PR', statusCode: e.response?.statusCode, originalError: e);
+    }
+  }
+
+  /// Merges a pull request. Uses the default merge strategy configured
+  /// on the repo — we deliberately don't expose strategy as a parameter
+  /// until there is UI that lets the user pick one.
+  Future<void> mergePullRequest(String owner, String repo, int number) async {
+    try {
+      await _dio.put('/repos/$owner/$repo/pulls/$number/merge');
+    } on DioException catch (e) {
+      throw NetworkException('Failed to merge PR', statusCode: e.response?.statusCode, originalError: e);
+    }
+  }
+
   /// Creates a pull request. Returns the HTML URL of the created PR.
   Future<String> createPullRequest({
     required String owner,

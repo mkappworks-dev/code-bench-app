@@ -19,6 +19,7 @@ import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../../../services/apply/apply_service.dart';
 import '../chat_notifier.dart';
+import 'tool_call_row.dart';
 
 // ── Public helper (also used by tests) ───────────────────────────────────────
 
@@ -127,6 +128,17 @@ class _AssistantBubble extends StatelessWidget {
             children: [
               if (message.isStreaming) const StreamingDot(),
               _MessageContent(message: message),
+              // Agentic tool-use cards — one per ToolEvent. Rendered below
+              // the markdown content so the assistant's prose reads first
+              // and the tool trail reads as a chronological appendix.
+              if (message.toolEvents.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                for (final event in message.toolEvents)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: ToolCallRow(event: event),
+                  ),
+              ],
             ],
           ),
         ),
@@ -281,6 +293,20 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
   int _activeTab = 1; // 0=Before, 1=Diff, 2=After
   bool _applying = false;
 
+  // Filename supplied by the user via the inline picker when the AI's
+  // code fence didn't include one. Once set, it shadows `widget.filename`
+  // via [_effectiveFilename] for all downstream operations (diff, apply,
+  // header display).
+  String? _pickedFilename;
+  // Whether the picker panel is currently showing. Mutually exclusive with
+  // the diff card: the user either picks a file or views a diff, never both.
+  bool _showingPicker = false;
+
+  /// Effective filename used for diff / apply. Prefers the user-picked one
+  /// over the AI-supplied one; null means the code fence is still nameless
+  /// and the Diff… picker button should be offered instead of plain Diff.
+  String? get _effectiveFilename => _pickedFilename ?? widget.filename;
+
   Project? _resolveActiveProject() {
     final projectId = ref.read(activeProjectIdProvider);
     final projects = ref.read(projectsProvider).value ?? <Project>[];
@@ -296,10 +322,18 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
       });
       return;
     }
+    final filename = _effectiveFilename;
+    if (filename == null) {
+      setState(() {
+        _diffError = 'No filename set for this code block.';
+        _diffState = _DiffCardState.error;
+      });
+      return;
+    }
 
     setState(() => _diffState = _DiffCardState.loading);
     try {
-      final absolutePath = p.join(project.path, widget.filename!);
+      final absolutePath = p.join(project.path, filename);
       ApplyService.assertWithinProject(absolutePath, project.path);
 
       // TOCTOU-safe read: attempt the read directly and treat a missing
@@ -353,10 +387,15 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
       _showApplyError('No active project.');
       return;
     }
+    final filename = _effectiveFilename;
+    if (filename == null) {
+      _showApplyError('No filename set for this code block.');
+      return;
+    }
 
     setState(() => _applying = true);
     try {
-      final absolutePath = p.join(project.path, widget.filename!);
+      final absolutePath = p.join(project.path, filename);
       ApplyService.assertWithinProject(absolutePath, project.path);
       await ref
           .read(applyServiceProvider)
@@ -404,7 +443,19 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildHeader(),
-          if (_diffState == _DiffCardState.loading)
+          if (_showingPicker)
+            _FilePickerPanel(
+              project: _resolveActiveProject(),
+              onCancel: () => setState(() => _showingPicker = false),
+              onPicked: (picked) {
+                setState(() {
+                  _pickedFilename = picked;
+                  _showingPicker = false;
+                });
+                _loadDiff();
+              },
+            )
+          else if (_diffState == _DiffCardState.loading)
             const Padding(
               padding: EdgeInsets.all(12),
               child: Center(child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5))),
@@ -455,11 +506,11 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
               fontFamily: ThemeConstants.editorFontFamily,
             ),
           ),
-          if (widget.filename != null) ...[
+          if (_effectiveFilename != null) ...[
             const SizedBox(width: 6),
             Expanded(
               child: Text(
-                widget.filename!,
+                _effectiveFilename!,
                 style: const TextStyle(
                   color: ThemeConstants.textSecondary,
                   fontSize: ThemeConstants.uiFontSizeSmall,
@@ -470,8 +521,10 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
             ),
           ] else
             const Spacer(),
-          if (widget.filename != null && _diffState == _DiffCardState.hidden)
+          if (_effectiveFilename != null && _diffState == _DiffCardState.hidden && !_showingPicker)
             _HeaderButton(label: 'Diff', icon: AppIcons.gitDiff, onTap: _loadDiff),
+          if (_effectiveFilename == null && !_showingPicker)
+            _HeaderButton(label: 'Diff…', icon: AppIcons.gitDiff, onTap: () => setState(() => _showingPicker = true)),
           if (_diffState == _DiffCardState.loaded) ...[
             _HeaderButton(
               label: _applying ? 'Applying...' : 'Apply',
@@ -638,6 +691,253 @@ class _Tab extends StatelessWidget {
             color: isActive ? ThemeConstants.textPrimary : ThemeConstants.mutedFg,
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── File picker panel ─────────────────────────────────────────────────────────
+
+/// Inline picker shown when the user clicks Diff… on a code fence that has
+/// no filename. Scans the project directory for common code files and
+/// substring-filters them as the user types, similar to a fuzzy file
+/// opener. On pick, [onPicked] is called with the project-relative path.
+///
+/// The scan is deliberately eager but bounded ([_kMaxScanFiles]) — a huge
+/// project would otherwise pause the UI on open. We pick bounded-eager
+/// over streamed-lazy because the suggestion list is tiny and users expect
+/// instant filtering after the first keystroke.
+class _FilePickerPanel extends StatefulWidget {
+  const _FilePickerPanel({required this.project, required this.onCancel, required this.onPicked});
+  final Project? project;
+  final VoidCallback onCancel;
+  final void Function(String relativePath) onPicked;
+
+  @override
+  State<_FilePickerPanel> createState() => _FilePickerPanelState();
+}
+
+class _FilePickerPanelState extends State<_FilePickerPanel> {
+  static const int _kMaxScanFiles = 2000;
+  static const Set<String> _kCodeExtensions = {
+    '.dart',
+    '.ts',
+    '.tsx',
+    '.js',
+    '.jsx',
+    '.py',
+    '.go',
+    '.rs',
+    '.java',
+    '.kt',
+    '.swift',
+    '.rb',
+    '.c',
+    '.cpp',
+    '.cc',
+    '.h',
+    '.hpp',
+    '.cs',
+    '.json',
+    '.yaml',
+    '.yml',
+    '.toml',
+    '.md',
+    '.sh',
+    '.html',
+    '.css',
+    '.scss',
+  };
+  static const Set<String> _kSkipDirs = {
+    '.git',
+    '.dart_tool',
+    'build',
+    'node_modules',
+    '.worktrees',
+    '.idea',
+    '.vscode',
+  };
+
+  final _controller = TextEditingController();
+  List<String> _allFiles = const [];
+  List<String> _suggestions = const [];
+  bool _scanning = true;
+  String? _scanError;
+
+  @override
+  void initState() {
+    super.initState();
+    _scanProjectFiles();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _scanProjectFiles() async {
+    final project = widget.project;
+    if (project == null) {
+      setState(() => _scanning = false);
+      return;
+    }
+    final files = <String>[];
+    String? error;
+    try {
+      await _walk(Directory(project.path), project.path, files);
+    } on FileSystemException catch (e) {
+      // Surface the reason in the UI instead of producing an empty
+      // picker that looks identical to "project has no code files".
+      dLog('[_FilePickerPanel] scan failed: ${e.runtimeType}');
+      error = 'Couldn\'t scan project — ${e.message}';
+    } on Exception catch (e) {
+      dLog('[_FilePickerPanel] scan failed: ${e.runtimeType}');
+      error = 'Couldn\'t scan project.';
+    }
+    if (!mounted) return;
+    setState(() {
+      _allFiles = files;
+      _scanning = false;
+      _scanError = error;
+    });
+  }
+
+  /// Recursive directory walk that prunes [_kSkipDirs] at the directory
+  /// level rather than filtering yielded files after the fact.
+  ///
+  /// `Directory.list(recursive: true)` walks the entire tree unconditionally
+  /// at the OS level, so on a repo with `node_modules` or a populated
+  /// `.dart_tool` that can mean stat-ing tens of thousands of files only
+  /// to discard them. This walker skips entire subtrees when the directory
+  /// basename matches a known heavy folder, and short-circuits as soon as
+  /// [_kMaxScanFiles] results have been collected.
+  Future<void> _walk(Directory dir, String rootPath, List<String> out) async {
+    if (out.length >= _kMaxScanFiles) return;
+    final List<FileSystemEntity> entries;
+    try {
+      entries = await dir.list(followLinks: false).toList();
+    } on FileSystemException catch (e) {
+      // Permission-denied on a subdirectory: skip it but continue the
+      // walk. Only a root-level failure should bubble up as a scan error.
+      if (dir.path == rootPath) rethrow;
+      dLog('[_FilePickerPanel] skipping ${dir.path}: ${e.runtimeType}');
+      return;
+    }
+    for (final entity in entries) {
+      if (out.length >= _kMaxScanFiles) return;
+      if (entity is Directory) {
+        final base = p.basename(entity.path);
+        if (_kSkipDirs.contains(base)) continue;
+        await _walk(entity, rootPath, out);
+      } else if (entity is File) {
+        final ext = p.extension(entity.path).toLowerCase();
+        if (!_kCodeExtensions.contains(ext)) continue;
+        out.add(p.relative(entity.path, from: rootPath));
+      }
+    }
+  }
+
+  void _filter(String query) {
+    if (query.isEmpty) {
+      setState(() => _suggestions = const []);
+      return;
+    }
+    final q = query.toLowerCase();
+    final matches = <String>[];
+    for (final f in _allFiles) {
+      if (f.toLowerCase().contains(q)) {
+        matches.add(f);
+        if (matches.length >= 20) break;
+      }
+    }
+    setState(() => _suggestions = matches);
+  }
+
+  void _submit() {
+    final text = _controller.text.trim();
+    if (_suggestions.isNotEmpty) {
+      widget.onPicked(_suggestions.first);
+    } else if (text.isNotEmpty) {
+      widget.onPicked(text);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Which file does this update?',
+            style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  autofocus: true,
+                  onChanged: _filter,
+                  onSubmitted: (_) => _submit(),
+                  decoration: InputDecoration(
+                    hintText: _scanError ?? (_scanning ? 'Scanning project…' : 'lib/features/…'),
+                    hintStyle: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4),
+                      borderSide: const BorderSide(color: ThemeConstants.borderColor),
+                    ),
+                  ),
+                  style: const TextStyle(
+                    color: ThemeConstants.textPrimary,
+                    fontSize: ThemeConstants.uiFontSizeSmall,
+                    fontFamily: ThemeConstants.editorFontFamily,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _HeaderButton(label: 'Diff', icon: AppIcons.gitDiff, onTap: _submit),
+              const SizedBox(width: 8),
+              _HeaderButton(label: 'Cancel', icon: AppIcons.chevronUp, onTap: widget.onCancel),
+            ],
+          ),
+          if (_suggestions.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 140),
+              decoration: BoxDecoration(
+                border: Border.all(color: ThemeConstants.borderColor),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _suggestions.length,
+                itemBuilder: (_, i) => InkWell(
+                  onTap: () => widget.onPicked(_suggestions[i]),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Text(
+                      _suggestions[i],
+                      style: const TextStyle(
+                        color: ThemeConstants.textSecondary,
+                        fontSize: ThemeConstants.uiFontSizeSmall,
+                        fontFamily: ThemeConstants.editorFontFamily,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
