@@ -1222,7 +1222,6 @@
 
   import '../../../core/constants/theme_constants.dart';
   import '../../../services/github/github_api_service.dart';
-  import '../../../data/datasources/local/secure_storage_source.dart';
 
   class PRCard extends ConsumerStatefulWidget {
     const PRCard({
@@ -1262,14 +1261,13 @@
       super.dispose();
     }
 
-    Future<GitHubApiService?> _service() async {
-      final token = await ref.read(secureStorageSourceProvider).readGitHubToken();
-      if (token == null) return null;
-      return GitHubApiService(token);
-    }
-
     Future<void> _load() async {
-      final svc = await _service();
+      // Use the existing `githubApiServiceProvider` rather than reading the
+      // token + constructing GitHubApiService by hand. The provider already
+      // does exactly that, is keepAlive, and keeps the PAT out of the widget
+      // layer — reinventing it here would just duplicate logic and give us
+      // a second place to forget a null-check.
+      final svc = await ref.read(githubApiServiceProvider.future);
       if (svc == null) return;
       try {
         final pr = await svc.getPullRequest(widget.owner, widget.repo, widget.prNumber);
@@ -1283,14 +1281,14 @@
     }
 
     Future<void> _approve() async {
-      final svc = await _service();
+      final svc = await ref.read(githubApiServiceProvider.future);
       if (svc == null) return;
       await svc.approvePullRequest(widget.owner, widget.repo, widget.prNumber);
       if (mounted) setState(() => _approved = true);
     }
 
     Future<void> _merge() async {
-      final svc = await _service();
+      final svc = await ref.read(githubApiServiceProvider.future);
       if (svc == null) return;
       await svc.mergePullRequest(widget.owner, widget.repo, widget.prNumber);
       if (mounted) setState(() => _merged = true);
