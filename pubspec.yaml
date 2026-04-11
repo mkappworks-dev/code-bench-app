@@ -50,7 +50,7 @@ dependencies:
   path: ^1.9.0
 
   # Window management
-  window_manager: ^0.4.2
+  window_manager: ^0.5.1
 
   # Utilities
   uuid: ^4.5.1
