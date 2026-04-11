@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/utils/debug_logger.dart';
 import '../../data/models/applied_change.dart';
 import '../../features/chat/chat_notifier.dart';
 import '../filesystem/filesystem_service.dart';
@@ -63,6 +64,7 @@ class ApplyService {
     final lexRoot = p.normalize(p.absolute(projectPath));
     final lexRootWithSep = lexRoot + p.separator;
     if (!lexFile.startsWith(lexRootWithSep)) {
+      sLog('[assertWithinProject] lexical reject: "$filePath" outside "$projectPath"');
       throw StateError('Path "$filePath" is outside project root "$projectPath"');
     }
 
@@ -85,10 +87,12 @@ class ApplyService {
     try {
       probeReal = probe.resolveSymbolicLinksSync();
     } on FileSystemException {
+      sLog('[assertWithinProject] symlink resolve failed: "$filePath"');
       throw StateError('Could not resolve real path for "$filePath"');
     }
     final rootRealWithSep = rootReal + p.separator;
     if (probeReal != rootReal && !probeReal.startsWith(rootRealWithSep)) {
+      sLog('[assertWithinProject] symlink escape: "$filePath" → "$probeReal" outside "$rootReal"');
       throw StateError('Path "$filePath" resolves outside project root via a symlink');
     }
   }

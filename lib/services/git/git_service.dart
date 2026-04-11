@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import '../../core/utils/debug_logger.dart';
+
 class GitRemote {
   const GitRemote({required this.name, required this.url});
   final String name;
@@ -183,12 +185,14 @@ class GitService {
     // Defense-in-depth: reject remotes that look like flags so a remote
     // literally named `-d` or `--delete` cannot alter `git push` semantics.
     if (remote.startsWith('-')) {
+      sLog('[pushToRemote] flag-shaped remote rejected: "$remote"');
       throw GitException('Invalid remote name: $remote');
     }
     final branch = await _currentBranch() ?? '';
     // Same reasoning for the branch name — a hostile ref baked into
     // `.git/HEAD` could otherwise reach `git push <remote> <branch>` argv.
     if (branch.startsWith('-')) {
+      sLog('[pushToRemote] flag-shaped branch rejected: "$branch"');
       throw GitException('Invalid branch name: $branch');
     }
 

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../core/utils/debug_logger.dart';
 import '../../data/datasources/local/general_preferences.dart';
 
 part 'ide_launch_service.g.dart';
@@ -80,6 +81,7 @@ class IdeLaunchService {
     final app = await _prefs.getTerminalApp();
     // Defense-in-depth: reject a terminal app name that looks like a flag.
     if (app.startsWith('-')) {
+      sLog('[openInTerminal] flag-shaped terminal app rejected: "$app"');
       return 'Invalid terminal app configured: $app';
     }
     try {

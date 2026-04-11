@@ -199,9 +199,6 @@ class _ChangeEntry extends StatelessWidget {
             onTap: () async {
               try {
                 await onRevert();
-              } on StateError catch (e) {
-                dLog('[revert] state error: $e');
-                if (context.mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');
               } catch (e, st) {
                 dLog('[revert] error: $e\n$st');
                 if (context.mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');

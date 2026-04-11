@@ -13,6 +13,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/debug_logger.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/project_sidebar_notifier.dart';
@@ -321,9 +322,9 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
         _diffState = _DiffCardState.loaded;
       });
     } on StateError catch (e) {
-      // assertWithinProject rejection — a path-traversal attempt or a
-      // guard-layer failure. Log with a security marker so it's grep-able.
-      dLog('[security] _loadDiff path rejected: $e');
+      // assertWithinProject rejection — security event already logged via
+      // sLog at the guard. This dLog is a triage breadcrumb only.
+      dLog('[_loadDiff] path rejected: $e');
       if (!mounted) return;
       setState(() {
         _diffError = 'This file is outside the current project.';
@@ -372,7 +373,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
       ref.read(changesPanelVisibleProvider.notifier).show();
       setState(() => _diffState = _DiffCardState.hidden);
     } on StateError catch (e) {
-      dLog('[security] _applyChange path rejected: $e');
+      dLog('[_applyChange] path rejected: $e');
       _showApplyError('This file is outside the current project.');
     } on FileSystemException catch (e) {
       dLog('[_applyChange] filesystem: $e');
@@ -387,7 +388,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
 
   void _showApplyError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: ThemeConstants.error));
+    showErrorSnackBar(context, message);
   }
 
   @override

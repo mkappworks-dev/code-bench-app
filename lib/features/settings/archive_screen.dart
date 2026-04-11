@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/utils/debug_logger.dart';
 import '../../data/models/chat_session.dart';
 import '../chat/chat_notifier.dart';
 import '../project_sidebar/project_sidebar_notifier.dart';
@@ -19,12 +20,10 @@ class ArchiveScreen extends ConsumerWidget {
 
     return sessionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      error: (e, _) => Center(
-        child: const Text(
-          'Failed to load archived sessions.',
-          style: TextStyle(color: ThemeConstants.error, fontSize: 11),
-        ),
-      ),
+      error: (e, st) {
+        dLog('[archive] load failed: $e\n$st');
+        return _ArchiveErrorView(onRetry: () => ref.invalidate(archivedSessionsProvider));
+      },
       data: (sessions) {
         if (sessions.isEmpty) {
           return Center(
@@ -59,6 +58,37 @@ class ArchiveScreen extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _ArchiveErrorView extends StatelessWidget {
+  const _ArchiveErrorView({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Failed to load archived sessions.', style: TextStyle(color: ThemeConstants.error, fontSize: 11)),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: onRetry,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: ThemeConstants.textPrimary,
+              side: const BorderSide(color: ThemeConstants.borderColor),
+              textStyle: const TextStyle(fontSize: 11),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
     );
   }
 }
