@@ -762,6 +762,7 @@ class _FilePickerPanelState extends State<_FilePickerPanel> {
   List<String> _allFiles = const [];
   List<String> _suggestions = const [];
   bool _scanning = true;
+  String? _scanError;
 
   @override
   void initState() {
@@ -782,26 +783,59 @@ class _FilePickerPanelState extends State<_FilePickerPanel> {
       return;
     }
     final files = <String>[];
+    String? error;
     try {
-      await for (final entity in Directory(project.path).list(recursive: true, followLinks: false)) {
-        if (entity is! File) continue;
-        final relative = p.relative(entity.path, from: project.path);
-        // Skip hidden directories and well-known heavy folders at any depth.
-        final segments = p.split(relative);
-        if (segments.any((s) => _kSkipDirs.contains(s))) continue;
-        final ext = p.extension(relative).toLowerCase();
-        if (!_kCodeExtensions.contains(ext)) continue;
-        files.add(relative);
-        if (files.length >= _kMaxScanFiles) break;
-      }
+      await _walk(Directory(project.path), project.path, files);
     } on FileSystemException catch (e) {
-      dLog('[_FilePickerPanel] scan failed: $e');
+      // Surface the reason in the UI instead of producing an empty
+      // picker that looks identical to "project has no code files".
+      dLog('[_FilePickerPanel] scan failed: ${e.runtimeType}');
+      error = 'Couldn\'t scan project — ${e.message}';
+    } on Exception catch (e) {
+      dLog('[_FilePickerPanel] scan failed: ${e.runtimeType}');
+      error = 'Couldn\'t scan project.';
     }
     if (!mounted) return;
     setState(() {
       _allFiles = files;
       _scanning = false;
+      _scanError = error;
     });
+  }
+
+  /// Recursive directory walk that prunes [_kSkipDirs] at the directory
+  /// level rather than filtering yielded files after the fact.
+  ///
+  /// `Directory.list(recursive: true)` walks the entire tree unconditionally
+  /// at the OS level, so on a repo with `node_modules` or a populated
+  /// `.dart_tool` that can mean stat-ing tens of thousands of files only
+  /// to discard them. This walker skips entire subtrees when the directory
+  /// basename matches a known heavy folder, and short-circuits as soon as
+  /// [_kMaxScanFiles] results have been collected.
+  Future<void> _walk(Directory dir, String rootPath, List<String> out) async {
+    if (out.length >= _kMaxScanFiles) return;
+    final List<FileSystemEntity> entries;
+    try {
+      entries = await dir.list(followLinks: false).toList();
+    } on FileSystemException catch (e) {
+      // Permission-denied on a subdirectory: skip it but continue the
+      // walk. Only a root-level failure should bubble up as a scan error.
+      if (dir.path == rootPath) rethrow;
+      dLog('[_FilePickerPanel] skipping ${dir.path}: ${e.runtimeType}');
+      return;
+    }
+    for (final entity in entries) {
+      if (out.length >= _kMaxScanFiles) return;
+      if (entity is Directory) {
+        final base = p.basename(entity.path);
+        if (_kSkipDirs.contains(base)) continue;
+        await _walk(entity, rootPath, out);
+      } else if (entity is File) {
+        final ext = p.extension(entity.path).toLowerCase();
+        if (!_kCodeExtensions.contains(ext)) continue;
+        out.add(p.relative(entity.path, from: rootPath));
+      }
+    }
   }
 
   void _filter(String query) {
@@ -853,7 +887,7 @@ class _FilePickerPanelState extends State<_FilePickerPanel> {
                   onChanged: _filter,
                   onSubmitted: (_) => _submit(),
                   decoration: InputDecoration(
-                    hintText: _scanning ? 'Scanning project…' : 'lib/features/…',
+                    hintText: _scanError ?? (_scanning ? 'Scanning project…' : 'lib/features/…'),
                     hintStyle: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
