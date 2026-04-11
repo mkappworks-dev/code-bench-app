@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../data/models/ai_model.dart';
 import '../chat_notifier.dart';
@@ -76,11 +76,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
             systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty) ? systemPrompt : null,
           );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: ThemeConstants.error),
-        );
-      }
+      if (mounted) showErrorSnackBar(context, 'Failed to send message. Please try again.');
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
@@ -135,7 +131,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
                         ),
                       ),
                     ),
-                    if (item == selected) const Icon(LucideIcons.check, size: 11, color: ThemeConstants.accent),
+                    if (item == selected) const Icon(AppIcons.check, size: 11, color: ThemeConstants.accent),
                   ],
                 ),
               ))
@@ -234,7 +230,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
                 children: [
                   Builder(
                     builder: (ctx) => _ControlChip(
-                      icon: LucideIcons.zap,
+                      icon: AppIcons.aiMode,
                       label: model.name,
                       onTap: () => _showModelPicker(ctx),
                     ),
@@ -255,7 +251,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
                   const _Separator(),
                   Builder(
                     builder: (ctx) => _ControlChip(
-                      icon: LucideIcons.messageSquare,
+                      icon: AppIcons.chat,
                       label: _mode.label,
                       onTap: () => _showDropdown(
                         ctx,
@@ -269,7 +265,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
                   const _Separator(),
                   Builder(
                     builder: (ctx) => _ControlChip(
-                      icon: LucideIcons.lock,
+                      icon: AppIcons.lock,
                       label: _permission.label,
                       onTap: () => _showDropdown(
                         ctx,
@@ -295,7 +291,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
                               padding: EdgeInsets.all(6),
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : const Icon(LucideIcons.arrowUp, size: 14, color: Colors.white),
+                          : const Icon(AppIcons.arrowUp, size: 14, color: Colors.white),
                     ),
                   ),
                 ],
@@ -331,7 +327,7 @@ class _ControlChip extends StatelessWidget {
             Text(label,
                 style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall)),
             const SizedBox(width: 3),
-            const Icon(LucideIcons.chevronDown, size: 10, color: ThemeConstants.faintFg),
+            const Icon(AppIcons.chevronDown, size: 10, color: ThemeConstants.faintFg),
           ],
         ),
       ),

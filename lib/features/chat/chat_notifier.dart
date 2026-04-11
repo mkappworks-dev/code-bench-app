@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../core/utils/debug_logger.dart';
 import '../../data/models/ai_model.dart';
 import '../../data/models/applied_change.dart';
 import '../../data/models/chat_message.dart';
@@ -81,7 +81,7 @@ class ChatMessages extends _$ChatMessages {
         }
       }
     } catch (e, st) {
-      debugPrint('[sendMessage] stream error: $e\n$st');
+      dLog('[sendMessage] stream error: $e\n$st');
       state = AsyncError(e, st);
     }
   }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/constants/app_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/chat_session.dart';
@@ -76,13 +76,13 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                   children: [
                     // Chevron
                     Icon(
-                      widget.isExpanded ? LucideIcons.chevronDown : LucideIcons.chevronRight,
+                      widget.isExpanded ? AppIcons.chevronDown : AppIcons.chevronRight,
                       size: 14,
                       color: ThemeConstants.faintFg,
                     ),
                     const SizedBox(width: 4),
                     // Folder icon
-                    Icon(LucideIcons.folder, size: 13, color: ThemeConstants.textSecondary),
+                    Icon(AppIcons.folder, size: 13, color: ThemeConstants.textSecondary),
                     const SizedBox(width: 6),
                     // Project name
                     Expanded(
@@ -106,7 +106,7 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                         child: Padding(
                           padding: const EdgeInsets.all(3),
                           child: Icon(
-                            LucideIcons.messageSquarePlus,
+                            AppIcons.newChat,
                             size: 13,
                             color: ThemeConstants.mutedFg,
                           ),
@@ -118,7 +118,7 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                     Tooltip(
                       message: widget.project.isGit ? (widget.project.currentBranch ?? 'git') : '',
                       child: Icon(
-                        LucideIcons.gitBranch,
+                        AppIcons.gitBranch,
                         size: 13,
                         color: widget.project.isGit ? ThemeConstants.success : ThemeConstants.faintFg,
                       ),

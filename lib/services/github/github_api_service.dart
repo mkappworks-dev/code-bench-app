@@ -1,11 +1,11 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/constants/api_constants.dart';
+import '../../core/utils/debug_logger.dart';
 import '../../core/errors/app_exception.dart';
 import '../../data/datasources/local/secure_storage_source.dart';
 import '../../data/models/repository.dart';
@@ -85,9 +85,7 @@ class GitHubApiService {
     } on DioException catch (e) {
       // Only log the exception type to avoid any risk of a future
       // `toString()` override leaking the Authorization header.
-      if (kDebugMode) {
-        debugPrint('[GitHubApiService] validateToken failed: ${e.type} ${e.response?.statusCode}');
-      }
+      dLog('[GitHubApiService] validateToken failed: ${e.type} ${e.response?.statusCode}');
       return null;
     }
   }

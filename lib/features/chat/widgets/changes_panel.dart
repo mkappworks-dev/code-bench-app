@@ -1,10 +1,12 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/constants/app_icons.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/applied_change.dart';
 import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/project_sidebar_notifier.dart';
@@ -126,7 +128,7 @@ class ChangesPanel extends ConsumerWidget {
                   ),
                   SizedBox(width: 4),
                   Icon(
-                    LucideIcons.arrowRight,
+                    AppIcons.arrowRight,
                     size: 11,
                     color: ThemeConstants.textSecondary,
                   ),
@@ -221,29 +223,15 @@ class _ChangeEntry extends StatelessWidget {
               try {
                 await onRevert();
               } on StateError catch (e) {
-                debugPrint('[revert] state error: $e');
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Revert failed: ${e.message}'),
-                      backgroundColor: ThemeConstants.error,
-                    ),
-                  );
-                }
+                dLog('[revert] state error: $e');
+                if (context.mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');
               } catch (e, st) {
-                debugPrint('[revert] error: $e\n$st');
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Revert failed: $e'),
-                      backgroundColor: ThemeConstants.error,
-                    ),
-                  );
-                }
+                dLog('[revert] error: $e\n$st');
+                if (context.mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');
               }
             },
             child: const Icon(
-              LucideIcons.undo2,
+              AppIcons.revert,
               size: 12,
               color: ThemeConstants.mutedFg,
             ),

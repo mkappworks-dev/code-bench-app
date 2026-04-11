@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/constants/theme_constants.dart';
+import '../core/utils/debug_logger.dart';
 import '../features/chat/chat_notifier.dart';
 import '../features/chat/widgets/changes_panel.dart';
 import '../features/project_sidebar/project_sidebar.dart';
@@ -41,11 +42,11 @@ class ChatShell extends ConsumerWidget {
       child: CallbackShortcuts(
         bindings: {
           const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () => _newChat(ref, context).catchError((e, st) {
-                debugPrint('[_newChat] error: $e\n$st');
+                dLog('[_newChat] error: $e\n$st');
               }),
           const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
               _newChat(ref, context).catchError((e, st) {
-                debugPrint('[_newChat] error: $e\n$st');
+                dLog('[_newChat] error: $e\n$st');
               }),
           const SingleActivator(LogicalKeyboardKey.comma, meta: true): () => context.go('/settings'),
           const SingleActivator(LogicalKeyboardKey.comma, control: true): () => context.go('/settings'),

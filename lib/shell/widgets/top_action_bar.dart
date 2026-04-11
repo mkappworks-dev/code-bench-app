@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/constants/app_icons.dart';
+import '../../core/utils/debug_logger.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../core/errors/app_exception.dart';
@@ -143,7 +143,7 @@ class _VsCodeDropdown extends ConsumerWidget {
       message: 'Open in…',
       child: Builder(
         builder: (btnContext) => _ActionButton(
-          icon: LucideIcons.code,
+          icon: AppIcons.code,
           label: 'VS Code',
           trailingCaret: true,
           onTap: () async {
@@ -155,11 +155,11 @@ class _VsCodeDropdown extends ConsumerWidget {
                 side: const BorderSide(color: Color(0xFF333333)),
               ),
               items: [
-                _menuItem('vscode', LucideIcons.code, 'VS Code'),
-                _menuItem('cursor', LucideIcons.zap, 'Cursor'),
+                _menuItem('vscode', AppIcons.code, 'VS Code'),
+                _menuItem('cursor', AppIcons.aiMode, 'Cursor'),
                 const PopupMenuDivider(),
-                _menuItem('finder', LucideIcons.folderOpen, 'Open in Finder'),
-                _menuItem('terminal', LucideIcons.terminal, 'Open in Terminal'),
+                _menuItem('finder', AppIcons.folderOpen, 'Open in Finder'),
+                _menuItem('terminal', AppIcons.terminal, 'Open in Terminal'),
               ],
             );
             if (action == null) return;
@@ -209,14 +209,14 @@ class _InitGitButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return _ActionButton(
-      icon: LucideIcons.gitMerge,
+      icon: AppIcons.gitMerge,
       label: 'Initialize Git',
       onTap: () async {
         final gitSvc = GitService(project.path);
         try {
           await gitSvc.initGit();
         } on GitException catch (e) {
-          if (kDebugMode) debugPrint('[_InitGitButton] initGit failed: $e');
+          dLog('[_InitGitButton] initGit failed: $e');
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               // Include the underlying reason (git stderr) so the user
@@ -234,7 +234,7 @@ class _InitGitButton extends ConsumerWidget {
           await ref.read(projectServiceProvider).refreshGitStatus(project.id);
         } on Exception catch (e) {
           refreshFailed = true;
-          if (kDebugMode) debugPrint('[_InitGitButton] refreshGitStatus failed: $e');
+          dLog('[_InitGitButton] refreshGitStatus failed: $e');
         }
 
         if (context.mounted) {
@@ -288,7 +288,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     try {
       count = await GitService(widget.project.path).fetchBehindCount();
     } on Exception catch (e) {
-      if (kDebugMode) debugPrint('[_CommitPushButton] fetchBehindCount threw: $e');
+      dLog('[_CommitPushButton] fetchBehindCount threw: $e');
       count = null;
     }
     if (mounted) setState(() => _behindCount = count);
@@ -328,7 +328,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         // A TypeError from malformed provider JSON, or any other
         // `Error`/`Exception`, is a real bug and should propagate so we
         // see it instead of masking it as "provider unavailable".
-        if (kDebugMode) debugPrint('[_CommitPushButton] AI commit message failed: ${e.message}');
+        dLog('[_CommitPushButton] AI commit message failed: ${e.message}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -459,7 +459,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(LucideIcons.gitCommitHorizontal, size: 12, color: Colors.white),
+                  const Icon(AppIcons.gitCommit, size: 12, color: Colors.white),
                   const SizedBox(width: 5),
                   Text(
                     _pushing
@@ -550,7 +550,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                       if (badgeLabel.isNotEmpty)
                         Text(badgeLabel,
                             style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeLabel)),
-                      const Icon(LucideIcons.chevronDown, size: 11, color: Colors.white),
+                      const Icon(AppIcons.chevronDown, size: 11, color: Colors.white),
                     ],
                   ),
                 ),
@@ -618,7 +618,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         // As in `_doCommit`: narrow to provider-side failures so a real
         // bug in the regex / response shape propagates instead of being
         // explained away as "AI unavailable".
-        if (kDebugMode) debugPrint('[_CommitPushButton] AI PR title/body failed: ${e.message}');
+        dLog('[_CommitPushButton] AI PR title/body failed: ${e.message}');
         _snack('AI title/body unavailable — using a default. Check your model provider.');
       }
     }
@@ -646,7 +646,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     try {
       branches = await api.listBranches(owner, repo);
     } catch (e, st) {
-      if (kDebugMode) debugPrint('[_CommitPushButton] listBranches failed: $e\n$st');
+      dLog('[_CommitPushButton] listBranches failed: $e\n$st');
       _snack('Could not list branches for $owner/$repo — check your GitHub token and repo access.');
       return;
     }
@@ -759,7 +759,7 @@ class _ActionButton extends StatelessWidget {
             ),
             if (trailingCaret) ...[
               const SizedBox(width: 4),
-              const Icon(LucideIcons.chevronDown, size: 10, color: ThemeConstants.faintFg),
+              const Icon(AppIcons.chevronDown, size: 10, color: ThemeConstants.faintFg),
             ],
           ],
         ),
@@ -791,7 +791,7 @@ class _ActionsDropdown extends ConsumerWidget {
       message: 'Actions',
       child: Builder(
         builder: (btnContext) => _ActionButton(
-          icon: LucideIcons.plus,
+          icon: AppIcons.add,
           label: 'Actions',
           trailingCaret: true,
           onTap: () async {
@@ -809,7 +809,7 @@ class _ActionsDropdown extends ConsumerWidget {
                     height: 32,
                     child: Row(
                       children: [
-                        const Icon(LucideIcons.play, size: 12, color: ThemeConstants.textSecondary),
+                        const Icon(AppIcons.run, size: 12, color: ThemeConstants.textSecondary),
                         const SizedBox(width: 6),
                         Text(
                           action.name,
@@ -827,7 +827,7 @@ class _ActionsDropdown extends ConsumerWidget {
                   height: 32,
                   child: Row(
                     children: const [
-                      Icon(LucideIcons.plus, size: 12, color: ThemeConstants.textSecondary),
+                      Icon(AppIcons.add, size: 12, color: ThemeConstants.textSecondary),
                       SizedBox(width: 6),
                       Text(
                         'Add action',
@@ -921,7 +921,7 @@ class _AddActionDialogState extends State<_AddActionDialog> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
-              Icon(LucideIcons.triangleAlert, size: 12, color: Color(0xFFE8A228)),
+              Icon(AppIcons.warning, size: 12, color: Color(0xFFE8A228)),
               SizedBox(width: 6),
               Expanded(
                 child: Text(
