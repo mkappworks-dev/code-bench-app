@@ -19,7 +19,7 @@ class ProjectSidebar extends ConsumerWidget {
   const ProjectSidebar({super.key});
 
   Future<void> _addProject(BuildContext context, WidgetRef ref) async {
-    final result = await FilePicker.platform.getDirectoryPath(
+    final result = await FilePicker.getDirectoryPath(
       dialogTitle: 'Select project folder',
     );
     if (result == null) return;
