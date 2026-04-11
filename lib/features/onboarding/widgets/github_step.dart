@@ -1,10 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/repository.dart';
 import '../../../services/github/github_auth_service.dart';
 
@@ -59,6 +59,28 @@ class _GithubStepState extends ConsumerState<GithubStep> {
   Future<void> _disconnect() async {
     await ref.read(githubAuthServiceProvider).signOut();
     if (mounted) setState(() => _account = null);
+  }
+
+  Future<void> _openTokenCreationPage() async {
+    // Use url_launcher rather than Process.run('open', ...) so this works on
+    // every desktop platform the app targets (macOS/Linux/Windows); the
+    // previous Process.run('open', ...) only worked on macOS.
+    final uri = Uri.parse('https://github.com/settings/tokens/new');
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Could not open browser — visit github.com/settings/tokens/new')));
+      }
+    } catch (e, st) {
+      dLog('[GithubStep] launchUrl failed: $e\n$st');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Could not open browser — visit github.com/settings/tokens/new')));
+      }
+    }
   }
 
   Future<void> _testPat() async {
@@ -177,9 +199,7 @@ class _GithubStepState extends ConsumerState<GithubStep> {
           ),
           const SizedBox(height: 8),
           GestureDetector(
-            onTap: () async {
-              await Process.run('open', ['https://github.com/settings/tokens/new']);
-            },
+            onTap: _openTokenCreationPage,
             child: Text(
               'Create a token on GitHub →',
               style: TextStyle(
