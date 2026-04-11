@@ -92,11 +92,17 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
         default:
           success = false;
       }
+      if (!mounted) return;
       setState(() => _testResults[provider] = success);
     } catch (_) {
+      if (!mounted) return;
       setState(() => _testResults[provider] = false);
     } finally {
-      setState(() => _testing[provider] = false);
+      // Guard the finally as well: tests have a 10s connect timeout, so the
+      // user can easily hit Skip and unmount the widget before the await
+      // resolves. Without the check Flutter logs "setState called after
+      // dispose" in debug and throws in release.
+      if (mounted) setState(() => _testing[provider] = false);
     }
   }
 
