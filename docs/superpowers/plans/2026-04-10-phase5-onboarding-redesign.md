@@ -94,7 +94,6 @@
   Create `lib/features/onboarding/notifiers/onboarding_notifier.dart`:
 
   ```dart
-  import 'package:flutter_riverpod/flutter_riverpod.dart';
   import 'package:riverpod_annotation/riverpod_annotation.dart';
 
   part 'onboarding_notifier.g.dart';
