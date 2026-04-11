@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import '../../core/utils/debug_logger.dart';
 import '../../services/git/git_service.dart';
 
 /// Plain Dart class that handles git operations for the branch picker.
@@ -45,8 +46,22 @@ class BranchPickerNotifier {
   }
 
   /// Runs `git checkout [branch]`.
-  /// Throws [GitException] on failure (includes uncommitted-conflict message).
+  /// Throws [ArgumentError] for invalid names, [GitException] on git failure.
+  ///
+  /// Defence-in-depth: a cloned-from-attacker repo can ship a ref literally
+  /// named `--orphan` (or any leading-dash name). `git branch --format=…`
+  /// surfaces it unchanged, the picker renders it, and — without this
+  /// guard — a click would reach `git checkout --orphan`, silently mutating
+  /// repo state. Mirror the same leading-dash guard used in [createBranch]
+  /// and in `GitService.pushToRemote`.
   Future<void> checkout(String branch) async {
+    if (branch.isEmpty) {
+      throw ArgumentError('Branch name must not be empty.');
+    }
+    if (branch.startsWith('-')) {
+      sLog('[branchPicker] flag-shaped checkout branch rejected: "$branch"');
+      throw ArgumentError('Branch name must not start with a dash.');
+    }
     final result = await Process.run('git', ['checkout', branch], workingDirectory: projectPath);
     if (result.exitCode != 0) {
       throw GitException(
