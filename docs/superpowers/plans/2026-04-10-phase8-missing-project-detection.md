@@ -1125,6 +1125,8 @@ cd .worktrees/feat/2026-04-10-missing-project-detection
   7. Remove without cascade → project disappears from sidebar, sessions remain in DB (verifiable by inspecting the DB via Drift inspector or by quickly checking `SessionDao.watchAllSessions`).
   8. Re-add a fresh folder → works as before.
   9. Clicking on a missing project in the sidebar still selects it and lets you READ linked chat history in the chat pane — only writes are blocked.
+  10. Right-click a conversation in the sidebar → Delete → conversation disappears immediately; it does NOT reappear on refresh.
+  11. Try to add the same folder twice → second attempt shows a snackbar "A project at '…' already exists in Code Bench." and only one entry appears in the sidebar.
 
 - [ ] **Step 11.3: Final format + analyze**
 
@@ -1148,6 +1150,150 @@ cd .worktrees/feat/2026-04-10-missing-project-detection
   - `Relocate…` context-menu action with a folder picker.
   - `Remove from Code Bench` now prompts with an optional cascade-delete of linked conversations.
   - All top-bar write actions short-circuit with a snackbar when the folder is missing.
+  - Fix: Delete conversation now correctly wired through `ProjectTile` → `ConversationTile`.
+  - Fix: Adding a project whose path is already tracked now shows a clear error instead of creating a duplicate.
+
+---
+
+## Task 12: Fix delete-chat wiring in `ProjectTile` / sidebar
+
+**Context:** `ConversationTile` already has a Delete item in its context menu. When clicked it calls `onDelete?.call()` — but `ProjectTile` never accepted an `onDelete` parameter and never passed one down, so the callback is always `null` and nothing happens.
+
+**Files:**
+- Modify: `lib/features/project_sidebar/widgets/project_tile.dart`
+- Modify: `lib/features/project_sidebar/project_sidebar.dart`
+
+- [ ] **Step 12.1: Add `onDelete` to `ProjectTile`**
+
+  In `lib/features/project_sidebar/widgets/project_tile.dart`, add the field alongside `onArchive`:
+
+  ```dart
+  final ValueChanged<String> onDelete;
+  ```
+
+  And add `required this.onDelete,` to the constructor (after `required this.onArchive,`).
+
+- [ ] **Step 12.2: Pass `onDelete` down to `ConversationTile`**
+
+  In `_ProjectTileState.build`, in the `.map(...)` that builds `ConversationTile` widgets, add:
+
+  ```dart
+  onDelete: () => widget.onDelete(s.sessionId),
+  ```
+
+  alongside the existing `onArchive` and `onRename` lines.
+
+- [ ] **Step 12.3: Wire `onDelete` in `project_sidebar.dart`**
+
+  In `lib/features/project_sidebar/project_sidebar.dart`, in the `ProjectTile(...)` constructor call (around the `onArchive` line), add:
+
+  ```dart
+  onDelete: (sessionId) => unawaited(ref.read(sessionServiceProvider).deleteSession(sessionId)),
+  ```
+
+  `deleteSession` already deletes both the session row and its messages. No additional cascade logic needed.
+
+- [ ] **Step 12.4: Format, analyze, commit**
+
+  ```bash
+  dart format lib/
+  flutter analyze
+  git add lib/features/project_sidebar/widgets/project_tile.dart \
+          lib/features/project_sidebar/project_sidebar.dart
+  git commit -m "fix: wire onDelete through ProjectTile to ConversationTile"
+  ```
+
+---
+
+## Task 13: Prevent duplicate project paths
+
+**Context:** `addExistingFolder` generates a fresh UUID on every call and passes it to `upsertProject` (which conflicts only on primary key `id`). As a result, the same folder path can be added multiple times, each with a different UUID. Fix: look up the path before inserting and surface a clear error if it already exists.
+
+**Files:**
+- Modify: `lib/data/datasources/local/app_database.dart`
+- Modify: `lib/services/project/project_service.dart`
+- Modify (test): `test/services/project/project_service_missing_test.dart`
+
+- [ ] **Step 13.1: Add `getProjectByPath` to `ProjectDao`**
+
+  In `lib/data/datasources/local/app_database.dart`, inside `class ProjectDao`, add after `getProject`:
+
+  ```dart
+  Future<WorkspaceProjectRow?> getProjectByPath(String path) =>
+      (select(workspaceProjects)..where((t) => t.path.equals(path)))
+          .getSingleOrNull();
+  ```
+
+- [ ] **Step 13.2: Add `DuplicateProjectPathException`**
+
+  Near the top of `lib/services/project/project_service.dart` (after the imports, before `class ProjectService`), add:
+
+  ```dart
+  /// Thrown when attempting to add a project whose folder path is already
+  /// tracked by another project entry.
+  class DuplicateProjectPathException implements Exception {
+    DuplicateProjectPathException(this.path);
+    final String path;
+
+    @override
+    String toString() => 'A project at "$path" already exists in Code Bench.';
+  }
+  ```
+
+- [ ] **Step 13.3: Guard `addExistingFolder` against duplicates**
+
+  In `addExistingFolder`, immediately after the `dir.existsSync()` check (before generating the UUID), add:
+
+  ```dart
+  final existing = await _db.projectDao.getProjectByPath(directoryPath);
+  if (existing != null) {
+    throw DuplicateProjectPathException(directoryPath);
+  }
+  ```
+
+- [ ] **Step 13.4: Catch the exception in the UI (add-project flow)**
+
+  Locate where `addExistingFolder` is called in the UI (search for its call site in `lib/features/project_sidebar/`). In the `catch` block (or add one if there is only a happy-path), surface the error to the user with a snackbar when `DuplicateProjectPathException` is thrown:
+
+  ```dart
+  } on DuplicateProjectPathException catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  ```
+
+- [ ] **Step 13.5: Add a test for the duplicate-path guard**
+
+  In `test/services/project/project_service_missing_test.dart`, add a new test inside `main()`:
+
+  ```dart
+  test('addExistingFolder throws DuplicateProjectPathException for the same path',
+      () async {
+    await service.addExistingFolder(tmpDir.path);
+    await expectLater(
+      service.addExistingFolder(tmpDir.path),
+      throwsA(isA<DuplicateProjectPathException>()),
+    );
+  });
+  ```
+
+- [ ] **Step 13.6: Run tests**
+
+  Run: `flutter test test/services/project/project_service_missing_test.dart`
+  Expected: PASS, all tests green (including the new duplicate test).
+
+- [ ] **Step 13.7: Format, analyze, commit**
+
+  ```bash
+  dart format lib/ test/
+  flutter analyze
+  git add lib/data/datasources/local/app_database.dart \
+          lib/services/project/project_service.dart \
+          test/services/project/project_service_missing_test.dart
+  git commit -m "fix: prevent adding duplicate project paths"
+  ```
 
 ---
 
