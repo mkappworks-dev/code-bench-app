@@ -15,8 +15,13 @@ _Project _$ProjectFromJson(Map<String, dynamic> json) => _Project(
   createdAt: DateTime.parse(json['createdAt'] as String),
   sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
   actions:
-      (json['actions'] as List<dynamic>?)?.map((e) => ProjectAction.fromJson(e as Map<String, dynamic>)).toList() ??
+      (json['actions'] as List<dynamic>?)
+          ?.map((e) => ProjectAction.fromJson(e as Map<String, dynamic>))
+          .toList() ??
       const [],
+  status:
+      $enumDecodeNullable(_$ProjectStatusEnumMap, json['status']) ??
+      ProjectStatus.available,
 );
 
 Map<String, dynamic> _$ProjectToJson(_Project instance) => <String, dynamic>{
@@ -28,4 +33,10 @@ Map<String, dynamic> _$ProjectToJson(_Project instance) => <String, dynamic>{
   'createdAt': instance.createdAt.toIso8601String(),
   'sortOrder': instance.sortOrder,
   'actions': instance.actions,
+  'status': _$ProjectStatusEnumMap[instance.status]!,
+};
+
+const _$ProjectStatusEnumMap = {
+  ProjectStatus.available: 'available',
+  ProjectStatus.missing: 'missing',
 };
