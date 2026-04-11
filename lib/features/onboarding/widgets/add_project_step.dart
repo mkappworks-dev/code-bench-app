@@ -31,6 +31,44 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
     if (result != null) setState(() => _selectedPath = result);
   }
 
+  /// Validates a dropped payload and, if it looks like exactly one real
+  /// directory, sets it as the selected path. Everything else surfaces a
+  /// SnackBar and leaves `_selectedPath` untouched — the previous behaviour
+  /// of silently falling back to the dropped file's parent turned a stray
+  /// file-drop (e.g. from `~/Downloads`) into "add Downloads as a project".
+  void _handleDrop(DropDoneDetails detail) {
+    setState(() => _isDragOver = false);
+
+    if (detail.files.isEmpty) return;
+    if (detail.files.length > 1) {
+      _showDropError('Please drop a single folder');
+      return;
+    }
+
+    final path = detail.files.first.path;
+    String resolved;
+    try {
+      // resolveSymbolicLinksSync throws on broken or non-existent paths, which
+      // is the behaviour we want — a dangling symlink must not become a project.
+      resolved = Directory(path).resolveSymbolicLinksSync();
+    } catch (_) {
+      _showDropError('That path could not be opened');
+      return;
+    }
+
+    if (!FileSystemEntity.isDirectorySync(resolved)) {
+      _showDropError('Please drop a folder, not a file');
+      return;
+    }
+
+    setState(() => _selectedPath = resolved);
+  }
+
+  void _showDropError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _addProject() async {
     if (_selectedPath == null) return;
     setState(() => _adding = true);
@@ -88,15 +126,7 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
     return DropTarget(
       onDragEntered: (_) => setState(() => _isDragOver = true),
       onDragExited: (_) => setState(() => _isDragOver = false),
-      onDragDone: (detail) {
-        if (detail.files.isNotEmpty) {
-          final path = detail.files.first.path;
-          // Prefer a directory; if a file was dropped use its parent folder.
-          final resolved = Directory(path).existsSync() ? path : File(path).parent.path;
-          setState(() => _selectedPath = resolved);
-        }
-        setState(() => _isDragOver = false);
-      },
+      onDragDone: _handleDrop,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
