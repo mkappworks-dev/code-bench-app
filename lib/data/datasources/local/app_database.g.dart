@@ -19,7 +19,8 @@ class SessionDaoManager {
 }
 
 mixin _$ProjectDaoMixin on DatabaseAccessor<AppDatabase> {
-  $WorkspaceProjectsTable get workspaceProjects => attachedDatabase.workspaceProjects;
+  $WorkspaceProjectsTable get workspaceProjects =>
+      attachedDatabase.workspaceProjects;
   ProjectDaoManager get managers => ProjectDaoManager(this);
 }
 
@@ -27,15 +28,21 @@ class ProjectDaoManager {
   final _$ProjectDaoMixin _db;
   ProjectDaoManager(this._db);
   $$WorkspaceProjectsTableTableManager get workspaceProjects =>
-      $$WorkspaceProjectsTableTableManager(_db.attachedDatabase, _db.workspaceProjects);
+      $$WorkspaceProjectsTableTableManager(
+        _db.attachedDatabase,
+        _db.workspaceProjects,
+      );
 }
 
-class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable, ChatSessionRow> {
+class $ChatSessionsTable extends ChatSessions
+    with TableInfo<$ChatSessionsTable, ChatSessionRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $ChatSessionsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _sessionIdMeta = const VerificationMeta('sessionId');
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
   @override
   late final GeneratedColumn<String> sessionId = GeneratedColumn<String>(
     'session_id',
@@ -53,7 +60,9 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _modelIdMeta = const VerificationMeta('modelId');
+  static const VerificationMeta _modelIdMeta = const VerificationMeta(
+    'modelId',
+  );
   @override
   late final GeneratedColumn<String> modelId = GeneratedColumn<String>(
     'model_id',
@@ -62,7 +71,9 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _providerIdMeta = const VerificationMeta('providerId');
+  static const VerificationMeta _providerIdMeta = const VerificationMeta(
+    'providerId',
+  );
   @override
   late final GeneratedColumn<String> providerId = GeneratedColumn<String>(
     'provider_id',
@@ -71,7 +82,9 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _projectIdMeta = const VerificationMeta('projectId');
+  static const VerificationMeta _projectIdMeta = const VerificationMeta(
+    'projectId',
+  );
   @override
   late final GeneratedColumn<String> projectId = GeneratedColumn<String>(
     'project_id',
@@ -80,7 +93,9 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta('createdAt');
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
     'created_at',
@@ -89,7 +104,9 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta('updatedAt');
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
   @override
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
     'updated_at',
@@ -98,7 +115,9 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _isPinnedMeta = const VerificationMeta('isPinned');
+  static const VerificationMeta _isPinnedMeta = const VerificationMeta(
+    'isPinned',
+  );
   @override
   late final GeneratedColumn<bool> isPinned = GeneratedColumn<bool>(
     'is_pinned',
@@ -106,10 +125,14 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
     false,
     type: DriftSqlType.bool,
     requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_pinned" IN (0, 1))'),
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pinned" IN (0, 1))',
+    ),
     defaultValue: const Constant(false),
   );
-  static const VerificationMeta _isArchivedMeta = const VerificationMeta('isArchived');
+  static const VerificationMeta _isArchivedMeta = const VerificationMeta(
+    'isArchived',
+  );
   @override
   late final GeneratedColumn<bool> isArchived = GeneratedColumn<bool>(
     'is_archived',
@@ -117,7 +140,9 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
     false,
     type: DriftSqlType.bool,
     requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_archived" IN (0, 1))'),
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_archived" IN (0, 1))',
+    ),
     defaultValue: const Constant(false),
   );
   @override
@@ -138,47 +163,77 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
   String get actualTableName => $name;
   static const String $name = 'chat_sessions';
   @override
-  VerificationContext validateIntegrity(Insertable<ChatSessionRow> instance, {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<ChatSessionRow> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('session_id')) {
-      context.handle(_sessionIdMeta, sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta));
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_sessionIdMeta);
     }
     if (data.containsKey('title')) {
-      context.handle(_titleMeta, title.isAcceptableOrUnknown(data['title']!, _titleMeta));
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
     } else if (isInserting) {
       context.missing(_titleMeta);
     }
     if (data.containsKey('model_id')) {
-      context.handle(_modelIdMeta, modelId.isAcceptableOrUnknown(data['model_id']!, _modelIdMeta));
+      context.handle(
+        _modelIdMeta,
+        modelId.isAcceptableOrUnknown(data['model_id']!, _modelIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_modelIdMeta);
     }
     if (data.containsKey('provider_id')) {
-      context.handle(_providerIdMeta, providerId.isAcceptableOrUnknown(data['provider_id']!, _providerIdMeta));
+      context.handle(
+        _providerIdMeta,
+        providerId.isAcceptableOrUnknown(data['provider_id']!, _providerIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_providerIdMeta);
     }
     if (data.containsKey('project_id')) {
-      context.handle(_projectIdMeta, projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta));
+      context.handle(
+        _projectIdMeta,
+        projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
+      );
     }
     if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta, createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
     if (data.containsKey('updated_at')) {
-      context.handle(_updatedAtMeta, updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
     if (data.containsKey('is_pinned')) {
-      context.handle(_isPinnedMeta, isPinned.isAcceptableOrUnknown(data['is_pinned']!, _isPinnedMeta));
+      context.handle(
+        _isPinnedMeta,
+        isPinned.isAcceptableOrUnknown(data['is_pinned']!, _isPinnedMeta),
+      );
     }
     if (data.containsKey('is_archived')) {
-      context.handle(_isArchivedMeta, isArchived.isAcceptableOrUnknown(data['is_archived']!, _isArchivedMeta));
+      context.handle(
+        _isArchivedMeta,
+        isArchived.isAcceptableOrUnknown(data['is_archived']!, _isArchivedMeta),
+      );
     }
     return context;
   }
@@ -189,15 +244,42 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
   ChatSessionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ChatSessionRow(
-      sessionId: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}session_id'])!,
-      title: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}title'])!,
-      modelId: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}model_id'])!,
-      providerId: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}provider_id'])!,
-      projectId: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}project_id']),
-      createdAt: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
-      updatedAt: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
-      isPinned: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}is_pinned'])!,
-      isArchived: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}is_archived'])!,
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}session_id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      modelId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}model_id'],
+      )!,
+      providerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provider_id'],
+      )!,
+      projectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}project_id'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      isPinned: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pinned'],
+      )!,
+      isArchived: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_archived'],
+      )!,
     );
   }
 
@@ -251,7 +333,9 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
       title: Value(title),
       modelId: Value(modelId),
       providerId: Value(providerId),
-      projectId: projectId == null && nullToAbsent ? const Value.absent() : Value(projectId),
+      projectId: projectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(projectId),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       isPinned: Value(isPinned),
@@ -259,7 +343,10 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
     );
   }
 
-  factory ChatSessionRow.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+  factory ChatSessionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ChatSessionRow(
       sessionId: serializer.fromJson<String>(json['sessionId']),
@@ -315,12 +402,16 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
       sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
       title: data.title.present ? data.title.value : this.title,
       modelId: data.modelId.present ? data.modelId.value : this.modelId,
-      providerId: data.providerId.present ? data.providerId.value : this.providerId,
+      providerId: data.providerId.present
+          ? data.providerId.value
+          : this.providerId,
       projectId: data.projectId.present ? data.projectId.value : this.projectId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isPinned: data.isPinned.present ? data.isPinned.value : this.isPinned,
-      isArchived: data.isArchived.present ? data.isArchived.value : this.isArchived,
+      isArchived: data.isArchived.present
+          ? data.isArchived.value
+          : this.isArchived,
     );
   }
 
@@ -341,8 +432,17 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(sessionId, title, modelId, providerId, projectId, createdAt, updatedAt, isPinned, isArchived);
+  int get hashCode => Object.hash(
+    sessionId,
+    title,
+    modelId,
+    providerId,
+    projectId,
+    createdAt,
+    updatedAt,
+    isPinned,
+    isArchived,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -504,7 +604,8 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
   }
 }
 
-class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable, ChatMessageRow> {
+class $ChatMessagesTable extends ChatMessages
+    with TableInfo<$ChatMessagesTable, ChatMessageRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -518,7 +619,9 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _sessionIdMeta = const VerificationMeta('sessionId');
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
   @override
   late final GeneratedColumn<String> sessionId = GeneratedColumn<String>(
     'session_id',
@@ -526,7 +629,9 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('REFERENCES chat_sessions (session_id)'),
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES chat_sessions (session_id)',
+    ),
   );
   static const VerificationMeta _roleMeta = const VerificationMeta('role');
   @override
@@ -537,7 +642,9 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _contentMeta = const VerificationMeta('content');
+  static const VerificationMeta _contentMeta = const VerificationMeta(
+    'content',
+  );
   @override
   late final GeneratedColumn<String> content = GeneratedColumn<String>(
     'content',
@@ -546,7 +653,9 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _codeBlocksJsonMeta = const VerificationMeta('codeBlocksJson');
+  static const VerificationMeta _codeBlocksJsonMeta = const VerificationMeta(
+    'codeBlocksJson',
+  );
   @override
   late final GeneratedColumn<String> codeBlocksJson = GeneratedColumn<String>(
     'code_blocks_json',
@@ -556,7 +665,9 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
     requiredDuringInsert: false,
     defaultValue: const Constant('[]'),
   );
-  static const VerificationMeta _timestampMeta = const VerificationMeta('timestamp');
+  static const VerificationMeta _timestampMeta = const VerificationMeta(
+    'timestamp',
+  );
   @override
   late final GeneratedColumn<DateTime> timestamp = GeneratedColumn<DateTime>(
     'timestamp',
@@ -566,14 +677,24 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, sessionId, role, content, codeBlocksJson, timestamp];
+  List<GeneratedColumn> get $columns => [
+    id,
+    sessionId,
+    role,
+    content,
+    codeBlocksJson,
+    timestamp,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'chat_messages';
   @override
-  VerificationContext validateIntegrity(Insertable<ChatMessageRow> instance, {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<ChatMessageRow> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
@@ -582,28 +703,43 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
       context.missing(_idMeta);
     }
     if (data.containsKey('session_id')) {
-      context.handle(_sessionIdMeta, sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta));
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_sessionIdMeta);
     }
     if (data.containsKey('role')) {
-      context.handle(_roleMeta, role.isAcceptableOrUnknown(data['role']!, _roleMeta));
+      context.handle(
+        _roleMeta,
+        role.isAcceptableOrUnknown(data['role']!, _roleMeta),
+      );
     } else if (isInserting) {
       context.missing(_roleMeta);
     }
     if (data.containsKey('content')) {
-      context.handle(_contentMeta, content.isAcceptableOrUnknown(data['content']!, _contentMeta));
+      context.handle(
+        _contentMeta,
+        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
+      );
     } else if (isInserting) {
       context.missing(_contentMeta);
     }
     if (data.containsKey('code_blocks_json')) {
       context.handle(
         _codeBlocksJsonMeta,
-        codeBlocksJson.isAcceptableOrUnknown(data['code_blocks_json']!, _codeBlocksJsonMeta),
+        codeBlocksJson.isAcceptableOrUnknown(
+          data['code_blocks_json']!,
+          _codeBlocksJsonMeta,
+        ),
       );
     }
     if (data.containsKey('timestamp')) {
-      context.handle(_timestampMeta, timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta));
+      context.handle(
+        _timestampMeta,
+        timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta),
+      );
     } else if (isInserting) {
       context.missing(_timestampMeta);
     }
@@ -616,15 +752,30 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
   ChatMessageRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ChatMessageRow(
-      id: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}id'])!,
-      sessionId: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}session_id'])!,
-      role: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}role'])!,
-      content: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}content'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}session_id'],
+      )!,
+      role: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role'],
+      )!,
+      content: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content'],
+      )!,
       codeBlocksJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}code_blocks_json'],
       )!,
-      timestamp: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}timestamp'])!,
+      timestamp: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}timestamp'],
+      )!,
     );
   }
 
@@ -672,7 +823,10 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
     );
   }
 
-  factory ChatMessageRow.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+  factory ChatMessageRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ChatMessageRow(
       id: serializer.fromJson<String>(json['id']),
@@ -717,7 +871,9 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
       sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
       role: data.role.present ? data.role.value : this.role,
       content: data.content.present ? data.content.value : this.content,
-      codeBlocksJson: data.codeBlocksJson.present ? data.codeBlocksJson.value : this.codeBlocksJson,
+      codeBlocksJson: data.codeBlocksJson.present
+          ? data.codeBlocksJson.value
+          : this.codeBlocksJson,
       timestamp: data.timestamp.present ? data.timestamp.value : this.timestamp,
     );
   }
@@ -736,7 +892,8 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
   }
 
   @override
-  int get hashCode => Object.hash(id, sessionId, role, content, codeBlocksJson, timestamp);
+  int get hashCode =>
+      Object.hash(id, sessionId, role, content, codeBlocksJson, timestamp);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -861,7 +1018,8 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessageRow> {
   }
 }
 
-class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$WorkspaceProjectsTable, WorkspaceProjectRow> {
+class $WorkspaceProjectsTable extends WorkspaceProjects
+    with TableInfo<$WorkspaceProjectsTable, WorkspaceProjectRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -893,27 +1051,9 @@ class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$Workspac
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _isGitMeta = const VerificationMeta('isGit');
-  @override
-  late final GeneratedColumn<bool> isGit = GeneratedColumn<bool>(
-    'is_git',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_git" IN (0, 1))'),
-    defaultValue: const Constant(false),
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
   );
-  static const VerificationMeta _currentBranchMeta = const VerificationMeta('currentBranch');
-  @override
-  late final GeneratedColumn<String> currentBranch = GeneratedColumn<String>(
-    'current_branch',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta('createdAt');
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
     'created_at',
@@ -922,7 +1062,9 @@ class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$Workspac
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _sortOrderMeta = const VerificationMeta('sortOrder');
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
   @override
   late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
     'sort_order',
@@ -932,7 +1074,9 @@ class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$Workspac
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
-  static const VerificationMeta _actionsJsonMeta = const VerificationMeta('actionsJson');
+  static const VerificationMeta _actionsJsonMeta = const VerificationMeta(
+    'actionsJson',
+  );
   @override
   late final GeneratedColumn<String> actionsJson = GeneratedColumn<String>(
     'actions_json',
@@ -943,14 +1087,24 @@ class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$Workspac
     defaultValue: const Constant('[]'),
   );
   @override
-  List<GeneratedColumn> get $columns => [id, name, path, isGit, currentBranch, createdAt, sortOrder, actionsJson];
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    path,
+    createdAt,
+    sortOrder,
+    actionsJson,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'workspace_projects';
   @override
-  VerificationContext validateIntegrity(Insertable<WorkspaceProjectRow> instance, {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<WorkspaceProjectRow> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
@@ -959,34 +1113,43 @@ class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$Workspac
       context.missing(_idMeta);
     }
     if (data.containsKey('name')) {
-      context.handle(_nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
     if (data.containsKey('path')) {
-      context.handle(_pathMeta, path.isAcceptableOrUnknown(data['path']!, _pathMeta));
+      context.handle(
+        _pathMeta,
+        path.isAcceptableOrUnknown(data['path']!, _pathMeta),
+      );
     } else if (isInserting) {
       context.missing(_pathMeta);
     }
-    if (data.containsKey('is_git')) {
-      context.handle(_isGitMeta, isGit.isAcceptableOrUnknown(data['is_git']!, _isGitMeta));
-    }
-    if (data.containsKey('current_branch')) {
-      context.handle(
-        _currentBranchMeta,
-        currentBranch.isAcceptableOrUnknown(data['current_branch']!, _currentBranchMeta),
-      );
-    }
     if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta, createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
     if (data.containsKey('sort_order')) {
-      context.handle(_sortOrderMeta, sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
     }
     if (data.containsKey('actions_json')) {
-      context.handle(_actionsJsonMeta, actionsJson.isAcceptableOrUnknown(data['actions_json']!, _actionsJsonMeta));
+      context.handle(
+        _actionsJsonMeta,
+        actionsJson.isAcceptableOrUnknown(
+          data['actions_json']!,
+          _actionsJsonMeta,
+        ),
+      );
     }
     return context;
   }
@@ -997,14 +1160,30 @@ class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$Workspac
   WorkspaceProjectRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return WorkspaceProjectRow(
-      id: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}id'])!,
-      name: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}name'])!,
-      path: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}path'])!,
-      isGit: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}is_git'])!,
-      currentBranch: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}current_branch']),
-      createdAt: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
-      sortOrder: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
-      actionsJson: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}actions_json'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      actionsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}actions_json'],
+      )!,
     );
   }
 
@@ -1014,12 +1193,11 @@ class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$Workspac
   }
 }
 
-class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProjectRow> {
+class WorkspaceProjectRow extends DataClass
+    implements Insertable<WorkspaceProjectRow> {
   final String id;
   final String name;
   final String path;
-  final bool isGit;
-  final String? currentBranch;
   final DateTime createdAt;
   final int sortOrder;
   final String actionsJson;
@@ -1027,8 +1205,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
     required this.id,
     required this.name,
     required this.path,
-    required this.isGit,
-    this.currentBranch,
     required this.createdAt,
     required this.sortOrder,
     required this.actionsJson,
@@ -1039,10 +1215,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
     map['path'] = Variable<String>(path);
-    map['is_git'] = Variable<bool>(isGit);
-    if (!nullToAbsent || currentBranch != null) {
-      map['current_branch'] = Variable<String>(currentBranch);
-    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['sort_order'] = Variable<int>(sortOrder);
     map['actions_json'] = Variable<String>(actionsJson);
@@ -1054,22 +1226,21 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
       id: Value(id),
       name: Value(name),
       path: Value(path),
-      isGit: Value(isGit),
-      currentBranch: currentBranch == null && nullToAbsent ? const Value.absent() : Value(currentBranch),
       createdAt: Value(createdAt),
       sortOrder: Value(sortOrder),
       actionsJson: Value(actionsJson),
     );
   }
 
-  factory WorkspaceProjectRow.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+  factory WorkspaceProjectRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return WorkspaceProjectRow(
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       path: serializer.fromJson<String>(json['path']),
-      isGit: serializer.fromJson<bool>(json['isGit']),
-      currentBranch: serializer.fromJson<String?>(json['currentBranch']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       actionsJson: serializer.fromJson<String>(json['actionsJson']),
@@ -1082,8 +1253,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'path': serializer.toJson<String>(path),
-      'isGit': serializer.toJson<bool>(isGit),
-      'currentBranch': serializer.toJson<String?>(currentBranch),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'sortOrder': serializer.toJson<int>(sortOrder),
       'actionsJson': serializer.toJson<String>(actionsJson),
@@ -1094,8 +1263,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
     String? id,
     String? name,
     String? path,
-    bool? isGit,
-    Value<String?> currentBranch = const Value.absent(),
     DateTime? createdAt,
     int? sortOrder,
     String? actionsJson,
@@ -1103,8 +1270,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
     id: id ?? this.id,
     name: name ?? this.name,
     path: path ?? this.path,
-    isGit: isGit ?? this.isGit,
-    currentBranch: currentBranch.present ? currentBranch.value : this.currentBranch,
     createdAt: createdAt ?? this.createdAt,
     sortOrder: sortOrder ?? this.sortOrder,
     actionsJson: actionsJson ?? this.actionsJson,
@@ -1114,11 +1279,11 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       path: data.path.present ? data.path.value : this.path,
-      isGit: data.isGit.present ? data.isGit.value : this.isGit,
-      currentBranch: data.currentBranch.present ? data.currentBranch.value : this.currentBranch,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
-      actionsJson: data.actionsJson.present ? data.actionsJson.value : this.actionsJson,
+      actionsJson: data.actionsJson.present
+          ? data.actionsJson.value
+          : this.actionsJson,
     );
   }
 
@@ -1128,8 +1293,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('path: $path, ')
-          ..write('isGit: $isGit, ')
-          ..write('currentBranch: $currentBranch, ')
           ..write('createdAt: $createdAt, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('actionsJson: $actionsJson')
@@ -1138,7 +1301,8 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
   }
 
   @override
-  int get hashCode => Object.hash(id, name, path, isGit, currentBranch, createdAt, sortOrder, actionsJson);
+  int get hashCode =>
+      Object.hash(id, name, path, createdAt, sortOrder, actionsJson);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1146,8 +1310,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
           other.id == this.id &&
           other.name == this.name &&
           other.path == this.path &&
-          other.isGit == this.isGit &&
-          other.currentBranch == this.currentBranch &&
           other.createdAt == this.createdAt &&
           other.sortOrder == this.sortOrder &&
           other.actionsJson == this.actionsJson);
@@ -1157,8 +1319,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
   final Value<String> id;
   final Value<String> name;
   final Value<String> path;
-  final Value<bool> isGit;
-  final Value<String?> currentBranch;
   final Value<DateTime> createdAt;
   final Value<int> sortOrder;
   final Value<String> actionsJson;
@@ -1167,8 +1327,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.path = const Value.absent(),
-    this.isGit = const Value.absent(),
-    this.currentBranch = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.actionsJson = const Value.absent(),
@@ -1178,8 +1336,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
     required String id,
     required String name,
     required String path,
-    this.isGit = const Value.absent(),
-    this.currentBranch = const Value.absent(),
     required DateTime createdAt,
     this.sortOrder = const Value.absent(),
     this.actionsJson = const Value.absent(),
@@ -1192,8 +1348,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? path,
-    Expression<bool>? isGit,
-    Expression<String>? currentBranch,
     Expression<DateTime>? createdAt,
     Expression<int>? sortOrder,
     Expression<String>? actionsJson,
@@ -1203,8 +1357,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (path != null) 'path': path,
-      if (isGit != null) 'is_git': isGit,
-      if (currentBranch != null) 'current_branch': currentBranch,
       if (createdAt != null) 'created_at': createdAt,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (actionsJson != null) 'actions_json': actionsJson,
@@ -1216,8 +1368,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
     Value<String>? id,
     Value<String>? name,
     Value<String>? path,
-    Value<bool>? isGit,
-    Value<String?>? currentBranch,
     Value<DateTime>? createdAt,
     Value<int>? sortOrder,
     Value<String>? actionsJson,
@@ -1227,8 +1377,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
       id: id ?? this.id,
       name: name ?? this.name,
       path: path ?? this.path,
-      isGit: isGit ?? this.isGit,
-      currentBranch: currentBranch ?? this.currentBranch,
       createdAt: createdAt ?? this.createdAt,
       sortOrder: sortOrder ?? this.sortOrder,
       actionsJson: actionsJson ?? this.actionsJson,
@@ -1247,12 +1395,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
     }
     if (path.present) {
       map['path'] = Variable<String>(path.value);
-    }
-    if (isGit.present) {
-      map['is_git'] = Variable<bool>(isGit.value);
-    }
-    if (currentBranch.present) {
-      map['current_branch'] = Variable<String>(currentBranch.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -1275,8 +1417,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('path: $path, ')
-          ..write('isGit: $isGit, ')
-          ..write('currentBranch: $currentBranch, ')
           ..write('createdAt: $createdAt, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('actionsJson: $actionsJson, ')
@@ -1291,15 +1431,22 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $ChatSessionsTable chatSessions = $ChatSessionsTable(this);
   late final $ChatMessagesTable chatMessages = $ChatMessagesTable(this);
-  late final $WorkspaceProjectsTable workspaceProjects = $WorkspaceProjectsTable(this);
+  late final $WorkspaceProjectsTable workspaceProjects =
+      $WorkspaceProjectsTable(this);
   late final SessionDao sessionDao = SessionDao(this as AppDatabase);
   late final ProjectDao projectDao = ProjectDao(this as AppDatabase);
   @override
-  Iterable<TableInfo<Table, Object?>> get allTables => allSchemaEntities.whereType<TableInfo<Table, Object?>>();
+  Iterable<TableInfo<Table, Object?>> get allTables =>
+      allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [chatSessions, chatMessages, workspaceProjects];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    chatSessions,
+    chatMessages,
+    workspaceProjects,
+  ];
   @override
-  DriftDatabaseOptions get options => const DriftDatabaseOptions(storeDateTimeAsText: true);
+  DriftDatabaseOptions get options =>
+      const DriftDatabaseOptions(storeDateTimeAsText: true);
 }
 
 typedef $$ChatSessionsTableCreateCompanionBuilder =
@@ -1329,27 +1476,36 @@ typedef $$ChatSessionsTableUpdateCompanionBuilder =
       Value<int> rowid,
     });
 
-final class $$ChatSessionsTableReferences extends BaseReferences<_$AppDatabase, $ChatSessionsTable, ChatSessionRow> {
+final class $$ChatSessionsTableReferences
+    extends BaseReferences<_$AppDatabase, $ChatSessionsTable, ChatSessionRow> {
   $$ChatSessionsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static MultiTypedResultKey<$ChatMessagesTable, List<ChatMessageRow>> _chatMessagesRefsTable(_$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(
-        db.chatMessages,
-        aliasName: $_aliasNameGenerator(db.chatSessions.sessionId, db.chatMessages.sessionId),
-      );
+  static MultiTypedResultKey<$ChatMessagesTable, List<ChatMessageRow>>
+  _chatMessagesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.chatMessages,
+    aliasName: $_aliasNameGenerator(
+      db.chatSessions.sessionId,
+      db.chatMessages.sessionId,
+    ),
+  );
 
   $$ChatMessagesTableProcessedTableManager get chatMessagesRefs {
-    final manager = $$ChatMessagesTableTableManager(
-      $_db,
-      $_db.chatMessages,
-    ).filter((f) => f.sessionId.sessionId.sqlEquals($_itemColumn<String>('session_id')!));
+    final manager = $$ChatMessagesTableTableManager($_db, $_db.chatMessages)
+        .filter(
+          (f) => f.sessionId.sessionId.sqlEquals(
+            $_itemColumn<String>('session_id')!,
+          ),
+        );
 
     final cache = $_typedResult.readTableOrNull(_chatMessagesRefsTable($_db));
-    return ProcessedTableManager(manager.$state.copyWith(prefetchedData: cache));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
   }
 }
 
-class $$ChatSessionsTableFilterComposer extends Composer<_$AppDatabase, $ChatSessionsTable> {
+class $$ChatSessionsTableFilterComposer
+    extends Composer<_$AppDatabase, $ChatSessionsTable> {
   $$ChatSessionsTableFilterComposer({
     required super.$db,
     required super.$table,
@@ -1357,53 +1513,79 @@ class $$ChatSessionsTableFilterComposer extends Composer<_$AppDatabase, $ChatSes
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get sessionId =>
-      $composableBuilder(column: $table.sessionId, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get sessionId => $composableBuilder(
+    column: $table.sessionId,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<String> get title =>
-      $composableBuilder(column: $table.title, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<String> get modelId =>
-      $composableBuilder(column: $table.modelId, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get modelId => $composableBuilder(
+    column: $table.modelId,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<String> get providerId =>
-      $composableBuilder(column: $table.providerId, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get providerId => $composableBuilder(
+    column: $table.providerId,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<String> get projectId =>
-      $composableBuilder(column: $table.projectId, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<bool> get isPinned =>
-      $composableBuilder(column: $table.isPinned, builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get isPinned => $composableBuilder(
+    column: $table.isPinned,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<bool> get isArchived =>
-      $composableBuilder(column: $table.isArchived, builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get isArchived => $composableBuilder(
+    column: $table.isArchived,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  Expression<bool> chatMessagesRefs(Expression<bool> Function($$ChatMessagesTableFilterComposer f) f) {
+  Expression<bool> chatMessagesRefs(
+    Expression<bool> Function($$ChatMessagesTableFilterComposer f) f,
+  ) {
     final $$ChatMessagesTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.sessionId,
       referencedTable: $db.chatMessages,
       getReferencedColumn: (t) => t.sessionId,
-      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
-          $$ChatMessagesTableFilterComposer(
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatMessagesTableFilterComposer(
             $db: $db,
             $table: $db.chatMessages,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
           ),
     );
     return f(composer);
   }
 }
 
-class $$ChatSessionsTableOrderingComposer extends Composer<_$AppDatabase, $ChatSessionsTable> {
+class $$ChatSessionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ChatSessionsTable> {
   $$ChatSessionsTableOrderingComposer({
     required super.$db,
     required super.$table,
@@ -1411,35 +1593,54 @@ class $$ChatSessionsTableOrderingComposer extends Composer<_$AppDatabase, $ChatS
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get sessionId =>
-      $composableBuilder(column: $table.sessionId, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get sessionId => $composableBuilder(
+    column: $table.sessionId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<String> get title =>
-      $composableBuilder(column: $table.title, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<String> get modelId =>
-      $composableBuilder(column: $table.modelId, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get modelId => $composableBuilder(
+    column: $table.modelId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<String> get providerId =>
-      $composableBuilder(column: $table.providerId, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get providerId => $composableBuilder(
+    column: $table.providerId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<String> get projectId =>
-      $composableBuilder(column: $table.projectId, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<bool> get isPinned =>
-      $composableBuilder(column: $table.isPinned, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get isPinned => $composableBuilder(
+    column: $table.isPinned,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<bool> get isArchived =>
-      $composableBuilder(column: $table.isArchived, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get isArchived => $composableBuilder(
+    column: $table.isArchived,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
-class $$ChatSessionsTableAnnotationComposer extends Composer<_$AppDatabase, $ChatSessionsTable> {
+class $$ChatSessionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ChatSessionsTable> {
   $$ChatSessionsTableAnnotationComposer({
     required super.$db,
     required super.$table,
@@ -1447,37 +1648,57 @@ class $$ChatSessionsTableAnnotationComposer extends Composer<_$AppDatabase, $Cha
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get sessionId => $composableBuilder(column: $table.sessionId, builder: (column) => column);
+  GeneratedColumn<String> get sessionId =>
+      $composableBuilder(column: $table.sessionId, builder: (column) => column);
 
-  GeneratedColumn<String> get title => $composableBuilder(column: $table.title, builder: (column) => column);
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
 
-  GeneratedColumn<String> get modelId => $composableBuilder(column: $table.modelId, builder: (column) => column);
+  GeneratedColumn<String> get modelId =>
+      $composableBuilder(column: $table.modelId, builder: (column) => column);
 
-  GeneratedColumn<String> get providerId => $composableBuilder(column: $table.providerId, builder: (column) => column);
+  GeneratedColumn<String> get providerId => $composableBuilder(
+    column: $table.providerId,
+    builder: (column) => column,
+  );
 
-  GeneratedColumn<String> get projectId => $composableBuilder(column: $table.projectId, builder: (column) => column);
+  GeneratedColumn<String> get projectId =>
+      $composableBuilder(column: $table.projectId, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get createdAt => $composableBuilder(column: $table.createdAt, builder: (column) => column);
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get updatedAt => $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
-  GeneratedColumn<bool> get isPinned => $composableBuilder(column: $table.isPinned, builder: (column) => column);
+  GeneratedColumn<bool> get isPinned =>
+      $composableBuilder(column: $table.isPinned, builder: (column) => column);
 
-  GeneratedColumn<bool> get isArchived => $composableBuilder(column: $table.isArchived, builder: (column) => column);
+  GeneratedColumn<bool> get isArchived => $composableBuilder(
+    column: $table.isArchived,
+    builder: (column) => column,
+  );
 
-  Expression<T> chatMessagesRefs<T extends Object>(Expression<T> Function($$ChatMessagesTableAnnotationComposer a) f) {
+  Expression<T> chatMessagesRefs<T extends Object>(
+    Expression<T> Function($$ChatMessagesTableAnnotationComposer a) f,
+  ) {
     final $$ChatMessagesTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.sessionId,
       referencedTable: $db.chatMessages,
       getReferencedColumn: (t) => t.sessionId,
-      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
-          $$ChatMessagesTableAnnotationComposer(
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatMessagesTableAnnotationComposer(
             $db: $db,
             $table: $db.chatMessages,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
           ),
     );
     return f(composer);
@@ -1504,9 +1725,12 @@ class $$ChatSessionsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer: () => $$ChatSessionsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () => $$ChatSessionsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () => $$ChatSessionsTableAnnotationComposer($db: db, $table: table),
+          createFilteringComposer: () =>
+              $$ChatSessionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChatSessionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChatSessionsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> sessionId = const Value.absent(),
@@ -1555,8 +1779,14 @@ class $$ChatSessionsTableTableManager
                 isArchived: isArchived,
                 rowid: rowid,
               ),
-          withReferenceMapper: (p0) =>
-              p0.map((e) => (e.readTable(table), $$ChatSessionsTableReferences(db, table, e))).toList(),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ChatSessionsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
           prefetchHooksCallback: ({chatMessagesRefs = false}) {
             return PrefetchHooks(
               db: db,
@@ -1565,12 +1795,24 @@ class $$ChatSessionsTableTableManager
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (chatMessagesRefs)
-                    await $_getPrefetchedData<ChatSessionRow, $ChatSessionsTable, ChatMessageRow>(
+                    await $_getPrefetchedData<
+                      ChatSessionRow,
+                      $ChatSessionsTable,
+                      ChatMessageRow
+                    >(
                       currentTable: table,
-                      referencedTable: $$ChatSessionsTableReferences._chatMessagesRefsTable(db),
-                      managerFromTypedResult: (p0) => $$ChatSessionsTableReferences(db, table, p0).chatMessagesRefs,
+                      referencedTable: $$ChatSessionsTableReferences
+                          ._chatMessagesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$ChatSessionsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).chatMessagesRefs,
                       referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.sessionId == item.sessionId),
+                          referencedItems.where(
+                            (e) => e.sessionId == item.sessionId,
+                          ),
                       typedResults: items,
                     ),
                 ];
@@ -1616,11 +1858,17 @@ typedef $$ChatMessagesTableUpdateCompanionBuilder =
       Value<int> rowid,
     });
 
-final class $$ChatMessagesTableReferences extends BaseReferences<_$AppDatabase, $ChatMessagesTable, ChatMessageRow> {
+final class $$ChatMessagesTableReferences
+    extends BaseReferences<_$AppDatabase, $ChatMessagesTable, ChatMessageRow> {
   $$ChatMessagesTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static $ChatSessionsTable _sessionIdTable(_$AppDatabase db) =>
-      db.chatSessions.createAlias($_aliasNameGenerator(db.chatMessages.sessionId, db.chatSessions.sessionId));
+      db.chatSessions.createAlias(
+        $_aliasNameGenerator(
+          db.chatMessages.sessionId,
+          db.chatSessions.sessionId,
+        ),
+      );
 
   $$ChatSessionsTableProcessedTableManager get sessionId {
     final $_column = $_itemColumn<String>('session_id')!;
@@ -1631,11 +1879,14 @@ final class $$ChatMessagesTableReferences extends BaseReferences<_$AppDatabase, 
     ).filter((f) => f.sessionId.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
     if (item == null) return manager;
-    return ProcessedTableManager(manager.$state.copyWith(prefetchedData: [item]));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
   }
 }
 
-class $$ChatMessagesTableFilterComposer extends Composer<_$AppDatabase, $ChatMessagesTable> {
+class $$ChatMessagesTableFilterComposer
+    extends Composer<_$AppDatabase, $ChatMessagesTable> {
   $$ChatMessagesTableFilterComposer({
     required super.$db,
     required super.$table,
@@ -1643,18 +1894,30 @@ class $$ChatMessagesTableFilterComposer extends Composer<_$AppDatabase, $ChatMes
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<String> get role => $composableBuilder(column: $table.role, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<String> get content =>
-      $composableBuilder(column: $table.content, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<String> get codeBlocksJson =>
-      $composableBuilder(column: $table.codeBlocksJson, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get codeBlocksJson => $composableBuilder(
+    column: $table.codeBlocksJson,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<DateTime> get timestamp =>
-      $composableBuilder(column: $table.timestamp, builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get timestamp => $composableBuilder(
+    column: $table.timestamp,
+    builder: (column) => ColumnFilters(column),
+  );
 
   $$ChatSessionsTableFilterComposer get sessionId {
     final $$ChatSessionsTableFilterComposer composer = $composerBuilder(
@@ -1662,20 +1925,26 @@ class $$ChatMessagesTableFilterComposer extends Composer<_$AppDatabase, $ChatMes
       getCurrentColumn: (t) => t.sessionId,
       referencedTable: $db.chatSessions,
       getReferencedColumn: (t) => t.sessionId,
-      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
-          $$ChatSessionsTableFilterComposer(
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatSessionsTableFilterComposer(
             $db: $db,
             $table: $db.chatSessions,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
           ),
     );
     return composer;
   }
 }
 
-class $$ChatMessagesTableOrderingComposer extends Composer<_$AppDatabase, $ChatMessagesTable> {
+class $$ChatMessagesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ChatMessagesTable> {
   $$ChatMessagesTableOrderingComposer({
     required super.$db,
     required super.$table,
@@ -1683,19 +1952,30 @@ class $$ChatMessagesTableOrderingComposer extends Composer<_$AppDatabase, $ChatM
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<String> get role =>
-      $composableBuilder(column: $table.role, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<String> get content =>
-      $composableBuilder(column: $table.content, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<String> get codeBlocksJson =>
-      $composableBuilder(column: $table.codeBlocksJson, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get codeBlocksJson => $composableBuilder(
+    column: $table.codeBlocksJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<DateTime> get timestamp =>
-      $composableBuilder(column: $table.timestamp, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get timestamp => $composableBuilder(
+    column: $table.timestamp,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   $$ChatSessionsTableOrderingComposer get sessionId {
     final $$ChatSessionsTableOrderingComposer composer = $composerBuilder(
@@ -1703,20 +1983,26 @@ class $$ChatMessagesTableOrderingComposer extends Composer<_$AppDatabase, $ChatM
       getCurrentColumn: (t) => t.sessionId,
       referencedTable: $db.chatSessions,
       getReferencedColumn: (t) => t.sessionId,
-      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
-          $$ChatSessionsTableOrderingComposer(
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatSessionsTableOrderingComposer(
             $db: $db,
             $table: $db.chatSessions,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
           ),
     );
     return composer;
   }
 }
 
-class $$ChatMessagesTableAnnotationComposer extends Composer<_$AppDatabase, $ChatMessagesTable> {
+class $$ChatMessagesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ChatMessagesTable> {
   $$ChatMessagesTableAnnotationComposer({
     required super.$db,
     required super.$table,
@@ -1724,16 +2010,22 @@ class $$ChatMessagesTableAnnotationComposer extends Composer<_$AppDatabase, $Cha
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id => $composableBuilder(column: $table.id, builder: (column) => column);
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get role => $composableBuilder(column: $table.role, builder: (column) => column);
+  GeneratedColumn<String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
 
-  GeneratedColumn<String> get content => $composableBuilder(column: $table.content, builder: (column) => column);
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
 
-  GeneratedColumn<String> get codeBlocksJson =>
-      $composableBuilder(column: $table.codeBlocksJson, builder: (column) => column);
+  GeneratedColumn<String> get codeBlocksJson => $composableBuilder(
+    column: $table.codeBlocksJson,
+    builder: (column) => column,
+  );
 
-  GeneratedColumn<DateTime> get timestamp => $composableBuilder(column: $table.timestamp, builder: (column) => column);
+  GeneratedColumn<DateTime> get timestamp =>
+      $composableBuilder(column: $table.timestamp, builder: (column) => column);
 
   $$ChatSessionsTableAnnotationComposer get sessionId {
     final $$ChatSessionsTableAnnotationComposer composer = $composerBuilder(
@@ -1741,13 +2033,18 @@ class $$ChatMessagesTableAnnotationComposer extends Composer<_$AppDatabase, $Cha
       getCurrentColumn: (t) => t.sessionId,
       referencedTable: $db.chatSessions,
       getReferencedColumn: (t) => t.sessionId,
-      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
-          $$ChatSessionsTableAnnotationComposer(
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChatSessionsTableAnnotationComposer(
             $db: $db,
             $table: $db.chatSessions,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
           ),
     );
     return composer;
@@ -1774,9 +2071,12 @@ class $$ChatMessagesTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer: () => $$ChatMessagesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () => $$ChatMessagesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () => $$ChatMessagesTableAnnotationComposer($db: db, $table: table),
+          createFilteringComposer: () =>
+              $$ChatMessagesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChatMessagesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChatMessagesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
@@ -1813,8 +2113,14 @@ class $$ChatMessagesTableTableManager
                 timestamp: timestamp,
                 rowid: rowid,
               ),
-          withReferenceMapper: (p0) =>
-              p0.map((e) => (e.readTable(table), $$ChatMessagesTableReferences(db, table, e))).toList(),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ChatMessagesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
           prefetchHooksCallback: ({sessionId = false}) {
             return PrefetchHooks(
               db: db,
@@ -1840,8 +2146,11 @@ class $$ChatMessagesTableTableManager
                           state.withJoin(
                                 currentTable: table,
                                 currentColumn: table.sessionId,
-                                referencedTable: $$ChatMessagesTableReferences._sessionIdTable(db),
-                                referencedColumn: $$ChatMessagesTableReferences._sessionIdTable(db).sessionId,
+                                referencedTable: $$ChatMessagesTableReferences
+                                    ._sessionIdTable(db),
+                                referencedColumn: $$ChatMessagesTableReferences
+                                    ._sessionIdTable(db)
+                                    .sessionId,
                               )
                               as T;
                     }
@@ -1876,8 +2185,6 @@ typedef $$WorkspaceProjectsTableCreateCompanionBuilder =
       required String id,
       required String name,
       required String path,
-      Value<bool> isGit,
-      Value<String?> currentBranch,
       required DateTime createdAt,
       Value<int> sortOrder,
       Value<String> actionsJson,
@@ -1888,15 +2195,14 @@ typedef $$WorkspaceProjectsTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> name,
       Value<String> path,
-      Value<bool> isGit,
-      Value<String?> currentBranch,
       Value<DateTime> createdAt,
       Value<int> sortOrder,
       Value<String> actionsJson,
       Value<int> rowid,
     });
 
-class $$WorkspaceProjectsTableFilterComposer extends Composer<_$AppDatabase, $WorkspaceProjectsTable> {
+class $$WorkspaceProjectsTableFilterComposer
+    extends Composer<_$AppDatabase, $WorkspaceProjectsTable> {
   $$WorkspaceProjectsTableFilterComposer({
     required super.$db,
     required super.$table,
@@ -1904,28 +2210,39 @@ class $$WorkspaceProjectsTableFilterComposer extends Composer<_$AppDatabase, $Wo
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<String> get name => $composableBuilder(column: $table.name, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<String> get path => $composableBuilder(column: $table.path, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<bool> get isGit => $composableBuilder(column: $table.isGit, builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<String> get currentBranch =>
-      $composableBuilder(column: $table.currentBranch, builder: (column) => ColumnFilters(column));
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
 
-  ColumnFilters<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get sortOrder =>
-      $composableBuilder(column: $table.sortOrder, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get actionsJson =>
-      $composableBuilder(column: $table.actionsJson, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get actionsJson => $composableBuilder(
+    column: $table.actionsJson,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
-class $$WorkspaceProjectsTableOrderingComposer extends Composer<_$AppDatabase, $WorkspaceProjectsTable> {
+class $$WorkspaceProjectsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WorkspaceProjectsTable> {
   $$WorkspaceProjectsTableOrderingComposer({
     required super.$db,
     required super.$table,
@@ -1933,31 +2250,39 @@ class $$WorkspaceProjectsTableOrderingComposer extends Composer<_$AppDatabase, $
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<String> get path =>
-      $composableBuilder(column: $table.path, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<bool> get isGit =>
-      $composableBuilder(column: $table.isGit, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<String> get currentBranch =>
-      $composableBuilder(column: $table.currentBranch, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
 
-  ColumnOrderings<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get sortOrder =>
-      $composableBuilder(column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get actionsJson =>
-      $composableBuilder(column: $table.actionsJson, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get actionsJson => $composableBuilder(
+    column: $table.actionsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
-class $$WorkspaceProjectsTableAnnotationComposer extends Composer<_$AppDatabase, $WorkspaceProjectsTable> {
+class $$WorkspaceProjectsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WorkspaceProjectsTable> {
   $$WorkspaceProjectsTableAnnotationComposer({
     required super.$db,
     required super.$table,
@@ -1965,23 +2290,25 @@ class $$WorkspaceProjectsTableAnnotationComposer extends Composer<_$AppDatabase,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id => $composableBuilder(column: $table.id, builder: (column) => column);
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get name => $composableBuilder(column: $table.name, builder: (column) => column);
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
 
-  GeneratedColumn<String> get path => $composableBuilder(column: $table.path, builder: (column) => column);
+  GeneratedColumn<String> get path =>
+      $composableBuilder(column: $table.path, builder: (column) => column);
 
-  GeneratedColumn<bool> get isGit => $composableBuilder(column: $table.isGit, builder: (column) => column);
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
-  GeneratedColumn<String> get currentBranch =>
-      $composableBuilder(column: $table.currentBranch, builder: (column) => column);
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get createdAt => $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<int> get sortOrder => $composableBuilder(column: $table.sortOrder, builder: (column) => column);
-
-  GeneratedColumn<String> get actionsJson =>
-      $composableBuilder(column: $table.actionsJson, builder: (column) => column);
+  GeneratedColumn<String> get actionsJson => $composableBuilder(
+    column: $table.actionsJson,
+    builder: (column) => column,
+  );
 }
 
 class $$WorkspaceProjectsTableTableManager
@@ -1995,25 +2322,38 @@ class $$WorkspaceProjectsTableTableManager
           $$WorkspaceProjectsTableAnnotationComposer,
           $$WorkspaceProjectsTableCreateCompanionBuilder,
           $$WorkspaceProjectsTableUpdateCompanionBuilder,
-          (WorkspaceProjectRow, BaseReferences<_$AppDatabase, $WorkspaceProjectsTable, WorkspaceProjectRow>),
+          (
+            WorkspaceProjectRow,
+            BaseReferences<
+              _$AppDatabase,
+              $WorkspaceProjectsTable,
+              WorkspaceProjectRow
+            >,
+          ),
           WorkspaceProjectRow,
           PrefetchHooks Function()
         > {
-  $$WorkspaceProjectsTableTableManager(_$AppDatabase db, $WorkspaceProjectsTable table)
-    : super(
+  $$WorkspaceProjectsTableTableManager(
+    _$AppDatabase db,
+    $WorkspaceProjectsTable table,
+  ) : super(
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer: () => $$WorkspaceProjectsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () => $$WorkspaceProjectsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () => $$WorkspaceProjectsTableAnnotationComposer($db: db, $table: table),
+          createFilteringComposer: () =>
+              $$WorkspaceProjectsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WorkspaceProjectsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WorkspaceProjectsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String> path = const Value.absent(),
-                Value<bool> isGit = const Value.absent(),
-                Value<String?> currentBranch = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<String> actionsJson = const Value.absent(),
@@ -2022,8 +2362,6 @@ class $$WorkspaceProjectsTableTableManager
                 id: id,
                 name: name,
                 path: path,
-                isGit: isGit,
-                currentBranch: currentBranch,
                 createdAt: createdAt,
                 sortOrder: sortOrder,
                 actionsJson: actionsJson,
@@ -2034,8 +2372,6 @@ class $$WorkspaceProjectsTableTableManager
                 required String id,
                 required String name,
                 required String path,
-                Value<bool> isGit = const Value.absent(),
-                Value<String?> currentBranch = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> sortOrder = const Value.absent(),
                 Value<String> actionsJson = const Value.absent(),
@@ -2044,14 +2380,14 @@ class $$WorkspaceProjectsTableTableManager
                 id: id,
                 name: name,
                 path: path,
-                isGit: isGit,
-                currentBranch: currentBranch,
                 createdAt: createdAt,
                 sortOrder: sortOrder,
                 actionsJson: actionsJson,
                 rowid: rowid,
               ),
-          withReferenceMapper: (p0) => p0.map((e) => (e.readTable(table), BaseReferences(db, table, e))).toList(),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -2067,7 +2403,14 @@ typedef $$WorkspaceProjectsTableProcessedTableManager =
       $$WorkspaceProjectsTableAnnotationComposer,
       $$WorkspaceProjectsTableCreateCompanionBuilder,
       $$WorkspaceProjectsTableUpdateCompanionBuilder,
-      (WorkspaceProjectRow, BaseReferences<_$AppDatabase, $WorkspaceProjectsTable, WorkspaceProjectRow>),
+      (
+        WorkspaceProjectRow,
+        BaseReferences<
+          _$AppDatabase,
+          $WorkspaceProjectsTable,
+          WorkspaceProjectRow
+        >,
+      ),
       WorkspaceProjectRow,
       PrefetchHooks Function()
     >;
@@ -2075,8 +2418,10 @@ typedef $$WorkspaceProjectsTableProcessedTableManager =
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$ChatSessionsTableTableManager get chatSessions => $$ChatSessionsTableTableManager(_db, _db.chatSessions);
-  $$ChatMessagesTableTableManager get chatMessages => $$ChatMessagesTableTableManager(_db, _db.chatMessages);
+  $$ChatSessionsTableTableManager get chatSessions =>
+      $$ChatSessionsTableTableManager(_db, _db.chatSessions);
+  $$ChatMessagesTableTableManager get chatMessages =>
+      $$ChatMessagesTableTableManager(_db, _db.chatMessages);
   $$WorkspaceProjectsTableTableManager get workspaceProjects =>
       $$WorkspaceProjectsTableTableManager(_db, _db.workspaceProjects);
 }
@@ -2091,7 +2436,8 @@ class $AppDatabaseManager {
 @ProviderFor(appDatabase)
 final appDatabaseProvider = AppDatabaseProvider._();
 
-final class AppDatabaseProvider extends $FunctionalProvider<AppDatabase, AppDatabase, AppDatabase>
+final class AppDatabaseProvider
+    extends $FunctionalProvider<AppDatabase, AppDatabase, AppDatabase>
     with $Provider<AppDatabase> {
   AppDatabaseProvider._()
     : super(
@@ -2109,7 +2455,8 @@ final class AppDatabaseProvider extends $FunctionalProvider<AppDatabase, AppData
 
   @$internal
   @override
-  $ProviderElement<AppDatabase> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<AppDatabase> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   AppDatabase create(Ref ref) {
@@ -2118,7 +2465,10 @@ final class AppDatabaseProvider extends $FunctionalProvider<AppDatabase, AppData
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(AppDatabase value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<AppDatabase>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppDatabase>(value),
+    );
   }
 }
 

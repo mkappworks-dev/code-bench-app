@@ -10,7 +10,6 @@ import '../../core/utils/debug_logger.dart';
 import '../../data/datasources/local/app_database.dart';
 import '../../data/models/project.dart';
 import '../../data/models/project_action.dart';
-import 'git_detector.dart';
 
 part 'project_service.g.dart';
 
@@ -54,29 +53,18 @@ class ProjectService {
 
     final id = _uuid.v4();
     final name = dir.uri.pathSegments.lastWhere((s) => s.isNotEmpty, orElse: () => directoryPath);
-    final isGit = GitDetector.isGitRepo(directoryPath);
-    final branch = isGit ? GitDetector.getCurrentBranch(directoryPath) : null;
 
     await _db.projectDao.upsertProject(
       WorkspaceProjectsCompanion(
         id: Value(id),
         name: Value(name),
         path: Value(directoryPath),
-        isGit: Value(isGit),
-        currentBranch: Value(branch),
         createdAt: Value(DateTime.now()),
         sortOrder: Value(0),
       ),
     );
 
-    return Project(
-      id: id,
-      name: name,
-      path: directoryPath,
-      isGit: isGit,
-      currentBranch: branch,
-      createdAt: DateTime.now(),
-    );
+    return Project(id: id, name: name, path: directoryPath, createdAt: DateTime.now());
   }
 
   Future<Project> createNewFolder(String parentPath, String folderName) async {
@@ -96,19 +84,6 @@ class ProjectService {
   Future<void> updateProjectActions(String projectId, List<ProjectAction> actions) async {
     final json = jsonEncode(actions.map((a) => a.toJson()).toList());
     await _db.projectDao.updateProject(projectId, WorkspaceProjectsCompanion(actionsJson: Value(json)));
-  }
-
-  Future<void> refreshGitStatus(String projectId) async {
-    final row = await _db.projectDao.getProject(projectId);
-    if (row == null) return;
-
-    final isGit = GitDetector.isGitRepo(row.path);
-    final branch = isGit ? GitDetector.getCurrentBranch(row.path) : null;
-
-    await _db.projectDao.updateProject(
-      projectId,
-      WorkspaceProjectsCompanion(isGit: Value(isGit), currentBranch: Value(branch)),
-    );
   }
 
   /// Touches every project row with a no-op write so Drift re-emits the
@@ -135,7 +110,8 @@ class ProjectService {
 
   /// Point an existing project at a new folder on disk. Used by the
   /// "Relocate…" action when the user has moved or restored a project
-  /// folder under a different path.
+  /// folder under a different path. Git state for the new path is derived
+  /// live by [gitLiveStateProvider] — no persisted flags to update.
   Future<void> relocateProject(String projectId, String newPath) async {
     final dir = Directory(newPath);
     if (!dir.existsSync()) {
@@ -147,13 +123,7 @@ class ProjectService {
       throw DuplicateProjectPathException(newPath);
     }
 
-    final isGit = GitDetector.isGitRepo(newPath);
-    final branch = isGit ? GitDetector.getCurrentBranch(newPath) : null;
-
-    await _db.projectDao.updateProject(
-      projectId,
-      WorkspaceProjectsCompanion(path: Value(newPath), isGit: Value(isGit), currentBranch: Value(branch)),
-    );
+    await _db.projectDao.updateProject(projectId, WorkspaceProjectsCompanion(path: Value(newPath)));
   }
 
   Project _projectFromRow(WorkspaceProjectRow row) {
@@ -177,8 +147,6 @@ class ProjectService {
       id: row.id,
       name: row.name,
       path: row.path,
-      isGit: row.isGit,
-      currentBranch: row.currentBranch,
       createdAt: row.createdAt,
       sortOrder: row.sortOrder,
       actions: actions,

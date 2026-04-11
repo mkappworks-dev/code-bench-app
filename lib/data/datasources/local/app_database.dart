@@ -40,8 +40,6 @@ class WorkspaceProjects extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
   TextColumn get path => text()();
-  BoolColumn get isGit => boolean().withDefault(const Constant(false))();
-  TextColumn get currentBranch => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   TextColumn get actionsJson => text().withDefault(const Constant('[]'))();
@@ -151,7 +149,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -166,6 +164,11 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await migrator.addColumn(workspaceProjects, workspaceProjects.actionsJson);
+      }
+      if (from < 5) {
+        // isGit and currentBranch removed from the Dart model.
+        // Columns are left as orphans in the SQLite file — harmless,
+        // as Drift only selects declared columns.
       }
     },
   );
