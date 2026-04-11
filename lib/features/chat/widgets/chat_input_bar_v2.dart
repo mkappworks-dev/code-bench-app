@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
-
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../data/models/ai_model.dart';
 import '../chat_notifier.dart';
@@ -76,12 +76,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
             systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty) ? systemPrompt : null,
           );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: const Text('Failed to send message. Please try again.'), backgroundColor: ThemeConstants.error),
-        );
-      }
+      if (mounted) showErrorSnackBar(context, 'Failed to send message. Please try again.');
     } finally {
       if (mounted) {
         setState(() => _isSending = false);

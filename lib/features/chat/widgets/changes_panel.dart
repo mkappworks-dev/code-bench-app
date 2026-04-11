@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
@@ -223,24 +224,10 @@ class _ChangeEntry extends StatelessWidget {
                 await onRevert();
               } on StateError catch (e) {
                 dLog('[revert] state error: $e');
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Revert failed. Please try again.'),
-                      backgroundColor: ThemeConstants.error,
-                    ),
-                  );
-                }
+                if (context.mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');
               } catch (e, st) {
                 dLog('[revert] error: $e\n$st');
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Revert failed. Please try again.'),
-                      backgroundColor: ThemeConstants.error,
-                    ),
-                  );
-                }
+                if (context.mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');
               }
             },
             child: const Icon(
