@@ -144,13 +144,19 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
 
   Future<bool> _testGemini(String key) async {
     try {
+      // SECURITY: Send the key via the `x-goog-api-key` header, NOT as a
+      // query-string parameter. Query strings get logged by reverse proxies,
+      // CDN edges, and — most importantly — Dio's own DioException.toString()
+      // includes the request URL, which would leak the key if anything ever
+      // prints the exception. See macos/Runner/README.md threat model.
       final dio = Dio(
         BaseOptions(
           baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
           connectTimeout: const Duration(seconds: 10),
+          headers: {'x-goog-api-key': key},
         ),
       );
-      await dio.get('/models?key=$key');
+      await dio.get('/models');
       return true;
     } catch (_) {
       return false;
