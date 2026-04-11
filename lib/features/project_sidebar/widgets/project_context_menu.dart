@@ -85,7 +85,10 @@ class ProjectContextMenu {
   }) async {
     switch (action) {
       case 'open_finder':
-        Process.run('open', [projectPath]);
+        final result = await Process.run('open', [projectPath]);
+        if (result.exitCode != 0 && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open in Finder.')));
+        }
       case 'copy_path':
         await Clipboard.setData(ClipboardData(text: projectPath));
       case 'new_conversation':

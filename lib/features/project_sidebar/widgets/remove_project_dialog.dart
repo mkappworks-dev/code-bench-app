@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/project.dart';
 import '../../../services/project/project_service.dart';
 import '../../../services/session/session_service.dart';
@@ -36,12 +36,24 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
   }
 
   Future<void> _loadSessionCount() async {
-    final sessions = await ref.read(sessionServiceProvider).watchSessionsByProject(widget.project.id).first;
-    if (!mounted) return;
-    setState(() {
-      _sessionCount = sessions.length;
-      _sessionCountLoaded = true;
-    });
+    try {
+      final sessions = await ref.read(sessionServiceProvider).watchSessionsByProject(widget.project.id).first;
+      if (!mounted) return;
+      setState(() {
+        _sessionCount = sessions.length;
+        _sessionCountLoaded = true;
+      });
+    } catch (e) {
+      dLog('[RemoveProjectDialog] loadSessionCount failed: $e');
+      if (!mounted) return;
+      // Mark loaded so the dialog remains usable. Sessions are not deleted
+      // without an explicit checkbox, so this is safe — the user just won't
+      // see the cascade-delete option if the count query failed.
+      setState(() {
+        _sessionCount = 0;
+        _sessionCountLoaded = true;
+      });
+    }
   }
 
   Future<void> _submit() async {
@@ -56,9 +68,7 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
       await ref.read(projectServiceProvider).removeProject(widget.project.id);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('[RemoveProjectDialog] remove failed: $e\n$st');
-      }
+      dLog('[RemoveProjectDialog] remove failed: $e\n$st');
       if (mounted) {
         setState(() => _submitting = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to remove project: $e')));

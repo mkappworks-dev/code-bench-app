@@ -64,4 +64,39 @@ void main() {
     await service.addExistingFolder(tmpDir.path);
     await expectLater(service.addExistingFolder(tmpDir.path), throwsA(isA<DuplicateProjectPathException>()));
   });
+
+  test('refreshProjectStatus flips a single project to missing when its folder disappears', () async {
+    final added = await service.addExistingFolder(tmpDir.path);
+    await tmpDir.delete(recursive: true);
+
+    await service.refreshProjectStatus(added.id);
+
+    final list = await service.watchAllProjects().first;
+    final reloaded = list.firstWhere((p) => p.id == added.id);
+    expect(reloaded.status, ProjectStatus.missing);
+  });
+
+  test('refreshProjectStatus silently no-ops for an unknown project id', () async {
+    // Should not throw even when the id is not in the DB.
+    await service.refreshProjectStatus('does-not-exist');
+  });
+
+  test(
+    'relocateProject throws DuplicateProjectPathException when new path is already tracked by another project',
+    () async {
+      final otherDir = await Directory.systemTemp.createTemp('project_dup_relocate_test_');
+      addTearDown(() async {
+        if (otherDir.existsSync()) await otherDir.delete(recursive: true);
+      });
+
+      await service.addExistingFolder(tmpDir.path);
+      final projectB = await service.addExistingFolder(otherDir.path);
+
+      // Relocating B to A's existing path should be rejected.
+      await expectLater(
+        service.relocateProject(projectB.id, tmpDir.path),
+        throwsA(isA<DuplicateProjectPathException>()),
+      );
+    },
+  );
 }

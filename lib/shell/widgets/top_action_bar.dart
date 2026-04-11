@@ -26,10 +26,20 @@ import '../../services/github/github_api_service.dart';
 import '../../services/project/project_service.dart';
 
 /// Returns `true` if the project folder exists on disk. If the folder is
-/// missing, shows a snackbar and returns `false`. Checks the filesystem
-/// directly — does NOT rely on cached `project.status` which may be stale.
-bool _ensureProjectAvailable(BuildContext context, String projectPath) {
+/// missing, shows a snackbar, kicks off a targeted status refresh so the
+/// sidebar flips to the "missing" visual state, and returns `false`.
+/// Checks the filesystem directly — does NOT rely on cached
+/// `project.status` which may be stale.
+bool _ensureProjectAvailable(BuildContext context, WidgetRef ref, String projectId, String projectPath) {
   if (Directory(projectPath).existsSync()) return true;
+  // Fire-and-forget: the snackbar should show immediately; the sidebar
+  // re-render follows on the next Drift stream emission.
+  unawaited(
+    ref
+        .read(projectServiceProvider)
+        .refreshProjectStatus(projectId)
+        .catchError((Object e) => dLog('[_ensureProjectAvailable] refresh failed: $e')),
+  );
   ScaffoldMessenger.of(context).showSnackBar(
     const SnackBar(
       content: Text(
@@ -132,7 +142,7 @@ class TopActionBar extends ConsumerWidget {
                 children: [
                   _ActionsDropdown(project: project),
                   const SizedBox(width: 5),
-                  _VsCodeDropdown(projectPath: project.path),
+                  _VsCodeDropdown(projectId: project.id, projectPath: project.path),
                   const SizedBox(width: 5),
                   // Git action: Commit & Push (git) or Initialize Git (no git)
                   if (project.isGit) _CommitPushButton(project: project) else _InitGitButton(project: project),
@@ -148,7 +158,8 @@ class TopActionBar extends ConsumerWidget {
 // ── VS Code dropdown ─────────────────────────────────────────────────────────
 
 class _VsCodeDropdown extends ConsumerWidget {
-  const _VsCodeDropdown({required this.projectPath});
+  const _VsCodeDropdown({required this.projectId, required this.projectPath});
+  final String projectId;
   final String projectPath;
 
   @override
@@ -179,12 +190,13 @@ class _VsCodeDropdown extends ConsumerWidget {
             );
             if (action == null) return;
             if (!btnContext.mounted) return;
-            if (!_ensureProjectAvailable(btnContext, projectPath)) return;
             String? error;
             switch (action) {
               case 'vscode':
+                if (!_ensureProjectAvailable(btnContext, ref, projectId, projectPath)) return;
                 error = await svc.openVsCode(projectPath);
               case 'cursor':
+                if (!_ensureProjectAvailable(btnContext, ref, projectId, projectPath)) return;
                 error = await svc.openCursor(projectPath);
               case 'finder':
                 error = await svc.openInFinder(projectPath);
@@ -229,7 +241,7 @@ class _InitGitButton extends ConsumerWidget {
       icon: AppIcons.gitMerge,
       label: 'Initialize Git',
       onTap: () async {
-        if (!_ensureProjectAvailable(context, project.path)) return;
+        if (!_ensureProjectAvailable(context, ref, project.id, project.path)) return;
         final gitSvc = GitService(project.path);
         try {
           await gitSvc.initGit();
@@ -346,7 +358,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   }
 
   Future<void> _doCommit() async {
-    if (!_ensureProjectAvailable(context, widget.project.path)) return;
+    if (!_ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
     final prefs = ref.read(generalPreferencesProvider);
     final autoCommit = await prefs.getAutoCommit();
 
@@ -412,7 +424,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   }
 
   Future<void> _doPush() async {
-    if (!_ensureProjectAvailable(context, widget.project.path)) return;
+    if (!_ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
     setState(() => _pushing = true);
     try {
       final gitSvc = GitService(widget.project.path);
@@ -460,7 +472,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   }
 
   Future<void> _doPushAll() async {
-    if (!_ensureProjectAvailable(context, widget.project.path)) return;
+    if (!_ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
     if (_remotes.isEmpty) return;
     setState(() => _pushing = true);
     final gitSvc = GitService(widget.project.path);
@@ -499,7 +511,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   }
 
   Future<void> _doPull() async {
-    if (!_ensureProjectAvailable(context, widget.project.path)) return;
+    if (!_ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
     setState(() => _pulling = true);
     try {
       final n = await GitService(widget.project.path).pull();
@@ -723,7 +735,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   }
 
   Future<void> _showCreatePrDialog() async {
-    if (!_ensureProjectAvailable(context, widget.project.path)) return;
+    if (!_ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
     final gitSvc = GitService(widget.project.path);
 
     // 1. Check GitHub token.
@@ -974,7 +986,7 @@ class _ActionsDropdown extends ConsumerWidget {
             );
             if (value == null) return;
             if (!btnContext.mounted) return;
-            if (!_ensureProjectAvailable(btnContext, project.path)) return;
+            if (!_ensureProjectAvailable(btnContext, ref, project.id, project.path)) return;
             if (value == '__add__') {
               if (!btnContext.mounted) return;
               final action = await _showAddActionDialog(btnContext);

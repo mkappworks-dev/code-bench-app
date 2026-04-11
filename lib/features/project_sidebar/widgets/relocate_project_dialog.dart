@@ -1,9 +1,9 @@
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/project.dart';
 import '../../../services/project/project_service.dart';
 
@@ -48,12 +48,14 @@ class _RelocateProjectDialogState extends ConsumerState<RelocateProjectDialog> {
       await ref.read(projectServiceProvider).relocateProject(widget.project.id, _newPath!);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('[RelocateProjectDialog] relocate failed: $e\n$st');
-      }
+      dLog('[RelocateProjectDialog] relocate failed: $e\n$st');
       setState(() {
         _submitting = false;
-        _error = 'Could not relocate: $e';
+        _error = e is ArgumentError
+            ? 'The selected folder does not exist. Please choose a valid folder.'
+            : e is DuplicateProjectPathException
+            ? e.toString()
+            : 'Could not relocate project. Please try again.';
       });
     }
   }

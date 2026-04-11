@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
+
+import '../../core/utils/debug_logger.dart';
 
 import '../../data/datasources/local/app_database.dart';
 import '../../data/models/project.dart';
@@ -121,6 +122,17 @@ class ProjectService {
     }
   }
 
+  /// Single-project variant of [refreshProjectStatuses]. Call this at the
+  /// moment a missing folder is detected (e.g. from the write-button guard
+  /// or an `ApplyService` `ProjectMissingException`) so the sidebar flips
+  /// to the "missing" visual state without waiting for app resume.
+  /// No-ops silently if the project id is unknown.
+  Future<void> refreshProjectStatus(String projectId) async {
+    final row = await _db.projectDao.getProject(projectId);
+    if (row == null) return;
+    await _db.projectDao.updateProject(projectId, WorkspaceProjectsCompanion(sortOrder: Value(row.sortOrder)));
+  }
+
   /// Point an existing project at a new folder on disk. Used by the
   /// "Relocate…" action when the user has moved or restored a project
   /// folder under a different path.
@@ -128,6 +140,11 @@ class ProjectService {
     final dir = Directory(newPath);
     if (!dir.existsSync()) {
       throw ArgumentError('Directory does not exist: $newPath');
+    }
+
+    final existing = await _db.projectDao.getProjectByPath(newPath);
+    if (existing != null && existing.id != projectId) {
+      throw DuplicateProjectPathException(newPath);
     }
 
     final isGit = GitDetector.isGitRepo(newPath);
@@ -149,9 +166,9 @@ class ProjectService {
       final decoded = jsonDecode(row.actionsJson) as List<dynamic>;
       actions = decoded.map((e) => ProjectAction.fromJson(e as Map<String, dynamic>)).toList();
     } on FormatException catch (e) {
-      if (kDebugMode) debugPrint('[ProjectService] actionsJson FormatException for ${row.id}: $e');
+      dLog('[ProjectService] actionsJson FormatException for ${row.id}: $e');
     } on TypeError catch (e) {
-      if (kDebugMode) debugPrint('[ProjectService] actionsJson TypeError for ${row.id}: $e');
+      dLog('[ProjectService] actionsJson TypeError for ${row.id}: $e');
     }
 
     final status = Directory(row.path).existsSync() ? ProjectStatus.available : ProjectStatus.missing;

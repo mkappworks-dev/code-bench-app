@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_icons.dart';
+import '../../core/utils/debug_logger.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../core/utils/instant_menu.dart';
@@ -24,13 +25,36 @@ class ProjectSidebar extends ConsumerStatefulWidget {
   ConsumerState<ProjectSidebar> createState() => _ProjectSidebarState();
 }
 
-class _ProjectSidebarState extends ConsumerState<ProjectSidebar> {
+class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(projectServiceProvider).refreshProjectStatuses();
-    });
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(_safeRefresh()));
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Re-check every project's folder on disk whenever the user returns
+    // to Code Bench. Catches the common flow: delete/move a folder in
+    // Finder, alt-tab back to the app, expect the sidebar to reflect it.
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_safeRefresh());
+    }
+  }
+
+  Future<void> _safeRefresh() async {
+    try {
+      await ref.read(projectServiceProvider).refreshProjectStatuses();
+    } catch (e) {
+      dLog('[ProjectSidebar] refreshProjectStatuses failed: $e');
+    }
   }
 
   Future<void> _addProject() async {
@@ -45,6 +69,11 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> {
       ref.read(expandedProjectIdsProvider.notifier).expand(project.id);
     } on DuplicateProjectPathException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+    } on ArgumentError {
+      messenger.showSnackBar(const SnackBar(content: Text('The selected folder does not exist.')));
+    } catch (e) {
+      dLog('[ProjectSidebar] addProject failed: $e');
+      messenger.showSnackBar(const SnackBar(content: Text('Failed to add project. Please try again.')));
     }
   }
 
