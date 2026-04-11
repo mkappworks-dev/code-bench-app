@@ -1,4 +1,4 @@
-# Phase 4 — Onboarding Redesign Implementation Plan
+# Phase 5 — Onboarding Redesign Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -1443,7 +1443,7 @@ The API key form currently lives inline in `OnboardingScreen`. This task extract
          lib/features/onboarding/widgets/api_keys_step.dart \
          lib/features/onboarding/widgets/github_step.dart \
          test/features/onboarding/
-  git commit -m "feat: Phase 4 — 3-step onboarding wizard (API Keys, GitHub, Add Project)"
+  git commit -m "feat: Phase 5 — 3-step onboarding wizard (API Keys, GitHub, Add Project)"
   ```
 
 ---

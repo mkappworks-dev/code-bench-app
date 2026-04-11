@@ -1,10 +1,10 @@
-# Phase 5 — Agentic Tool-use & Advanced Diff Implementation Plan
+# Phase 6 — Agentic Tool-use & Advanced Diff Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Surface real agentic tool-use cards in chat (collapsed/expanded rows with metrics), close the Phase 2 diff gap (unnamed code fences), add conflict detection on revert (three-way merge view), upgrade Push to a split button for multi-remote repos, and introduce an inline PR review card.
 
-**Architecture:** `ToolEvent` is a new `@freezed` model stored as a JSON list on `ChatMessage`. `AppliedChange` gains a SHA-256 `contentChecksum` field so `ApplyService` can detect when a file is externally modified before revert. The `ConflictMergeView` widget is shown inline in the changes panel. `GitService` gains `listRemotes`. `GitHubApiService` gains PR review methods. `PRCard` polls live every 30s via a timer in its `ConsumerStatefulWidget`.
+**Architecture:** `ToolEvent` is a new `@freezed` model stored as a JSON list on `ChatMessage`. `AppliedChange` gains a SHA-256 `contentChecksum` field so `ApplyService` can detect when a file is externally modified before revert. The `ConflictMergeView` widget is shown inline in the changes panel. `GitService` already has `listRemotes`, `pushToRemote`, and `getOriginUrl` from Phase 3. `GitHubApiService` already has `listBranches` and `listPullRequests` from Phase 3; Phase 6 adds PR review methods (`getPullRequest`, `getCheckRuns`, `approvePullRequest`, `mergePullRequest`). `PRCard` polls live every 30s via a timer in its `ConsumerStatefulWidget`. **Note:** `_CommitPushButton` in `top_action_bar.dart` is a full `ConsumerStatefulWidget` (~400+ lines) with AI commit message generation and PR creation from Phase 3 — read it carefully before modifying.
 
 **Tech Stack:** Flutter, Riverpod (keepAlive), `freezed`, `crypto` package (SHA-256), existing `diff_match_patch` (Phase 2), existing `GitService` (Phase 3), existing `GitHubApiService` (Phase 3).
 
@@ -23,8 +23,8 @@
 | Modify | `lib/features/chat/widgets/message_bubble.dart` | Render tool-call rows; Diff… button + inline path picker for nameless fences (Phase 2 already has Diff/Apply buttons for named fences, ~600+ lines) |
 | **Create** | `lib/features/chat/widgets/conflict_merge_view.dart` | Three-tab merge view (Original / Applied / Current) |
 | Modify | `lib/features/chat/widgets/changes_panel.dart` | Show `edited` badge; trigger `ConflictMergeView` (Phase 2 already has ~255-line panel with file rows, add/del counts, Revert button) |
-| Modify | `lib/services/git/git_service.dart` | Add `listRemotes` (already in Phase 3) — verify it exists |
-| Modify | `lib/services/github/github_api_service.dart` | Add `getPullRequest`, `getCheckRuns`, `approvePullRequest`, `mergePullRequest` |
+| Modify | `lib/services/git/git_service.dart` | `listRemotes`, `pushToRemote`, `getOriginUrl` already added in Phase 3 — no changes needed |
+| Modify | `lib/services/github/github_api_service.dart` | Add `getPullRequest`, `getCheckRuns`, `approvePullRequest`, `mergePullRequest` (Phase 3 already added `listBranches`, `listPullRequests`) |
 | **Create** | `lib/features/chat/widgets/pr_card.dart` | PR status card — CI chips, comments, Approve/Merge/Open |
 | Modify | `lib/shell/widgets/top_action_bar.dart` | Multi-remote split Push button |
 | **Create** | `test/data/models/tool_event_test.dart` | Model serialisation tests |
@@ -45,7 +45,7 @@
 
   ```dart
   import 'package:flutter_test/flutter_test.dart';
-  import 'package:code_bench/data/models/tool_event.dart';
+  import 'package:code_bench_app/data/models/tool_event.dart';
 
   void main() {
     test('ToolEvent serializes and deserializes', () {
@@ -190,7 +190,7 @@
   ```dart
   import 'dart:io';
   import 'package:flutter_test/flutter_test.dart';
-  import 'package:code_bench/services/apply/apply_service.dart';
+  import 'package:code_bench_app/services/apply/apply_service.dart';
 
   void main() {
     test('sha256OfString returns non-empty hex string', () {
@@ -1105,6 +1105,8 @@
 
 ## Task 6: `GitHubApiService` PR review methods
 
+> **Phase 3 context:** `github_api_service.dart` already has `validateToken`, `createPullRequest`, `listBranches`, `listPullRequests` from Phase 3. The methods below are additive — do not duplicate existing ones.
+
 **Files:**
 - Modify: `lib/services/github/github_api_service.dart`
 
@@ -1481,13 +1483,13 @@
 **Files:**
 - Modify: `lib/shell/widgets/top_action_bar.dart`
 
-- [ ] **Step 8.1: Verify `GitService.listRemotes` exists**
+- [ ] **Step 8.1: Verify `GitService.listRemotes` and `pushToRemote` exist**
 
-  If Phase 3 is complete, `listRemotes()` is already in `lib/services/git/git_service.dart`. If not, add it now (see Phase 3, Task 2 for the implementation).
+  Phase 3 added `listRemotes()`, `pushToRemote(String remote)`, and `getOriginUrl()` to `lib/services/git/git_service.dart`. Verify all three are present before proceeding. **Read `top_action_bar.dart` in full before editing** — `_CommitPushButton` is a full `ConsumerStatefulWidget` (~400+ lines) with AI commit message generation and PR creation already wired up from Phase 3.
 
 - [ ] **Step 8.2: Load remote list in `_CommitPushButtonState`**
 
-  In the `_CommitPushButtonState` class (added in Phase 3), add remote-list state:
+  In the existing `_CommitPushButtonState` class (from Phase 3), add remote-list state:
 
   ```dart
   List<GitRemote> _remotes = [];

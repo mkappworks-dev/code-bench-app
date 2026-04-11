@@ -1,10 +1,10 @@
-# Phase 6 — Agent Question UI Implementation Plan
+# Phase 7 — Agent Question UI Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Surface agentic `AskUserQuestion` calls as structured in-chat cards with numbered option rows, free-text input, Back/Next/Submit navigation. Add a collapsible WORK LOG section inside the active message bubble showing live tool-call progress with a running timer. Add a status bar "Working for Xs" pill.
 
-**Architecture:** `AskUserQuestion` and `WorkLogEntry` are new `@freezed` models. `AskQuestionNotifier` is a keepAlive notifier that stores per-session answers keyed by `(sessionId, stepIndex)`. `WorkLogNotifier` is a keepAlive family notifier keyed by `messageId` — each message gets its own live log. Both notifiers are fed by the same tool-call pipeline that populates `ToolEvent` (Phase 5). The status bar pill is a `Timer`-driven widget separate from the message list to avoid mass rebuilds.
+**Architecture:** `AskUserQuestion` and `WorkLogEntry` are new `@freezed` models. `AskQuestionNotifier` is a keepAlive notifier that stores per-session answers keyed by `(sessionId, stepIndex)`. `WorkLogNotifier` is a keepAlive family notifier keyed by `messageId` — each message gets its own live log. Both notifiers are fed by the same tool-call pipeline that populates `ToolEvent` (Phase 6). The status bar pill is a `Timer`-driven widget separate from the message list to avoid mass rebuilds.
 
 **Tech Stack:** Flutter, Riverpod (`keepAlive`, family notifiers via `@Riverpod(keepAlive: true)`), `freezed`, `dart:async` (`Timer`).
 
@@ -20,7 +20,7 @@
 | **Create** | `lib/features/chat/notifiers/work_log_notifier.dart` | keepAlive family notifier keyed by `messageId`; appended to by tool pipeline |
 | **Create** | `lib/features/chat/widgets/ask_user_question_card.dart` | Numbered rows, step counter, progress dots, free-text, Back/Next/Submit |
 | **Create** | `lib/features/chat/widgets/work_log_section.dart` | Collapsible toggle row + live log entries + elapsed timer |
-| Modify | `lib/features/chat/widgets/message_bubble.dart` | Render `AskUserQuestionCard` and `WorkLogSection` when present (Phase 2 added Diff/Apply/Revert buttons ~600+ lines; Phase 5 adds tool-call rows — read first) |
+| Modify | `lib/features/chat/widgets/message_bubble.dart` | Render `AskUserQuestionCard` and `WorkLogSection` when present (Phase 2 added Diff/Apply/Revert buttons ~600+ lines; Phase 6 adds tool-call rows — read first) |
 | Modify | `lib/shell/widgets/status_bar.dart` | Add "Working for Xs" timer-driven pill; tap scrolls to active message (Phase 2 added "N changes" indicator + `changesPanelVisibleProvider` toggle — preserve it) |
 | **Create** | `test/data/models/ask_user_question_test.dart` | Model serialization tests |
 | **Create** | `test/features/chat/notifiers/ask_question_notifier_test.dart` | Answer storage + back navigation tests |
@@ -41,8 +41,8 @@
 
   ```dart
   import 'package:flutter_test/flutter_test.dart';
-  import 'package:code_bench/data/models/ask_user_question.dart';
-  import 'package:code_bench/data/models/work_log_entry.dart';
+  import 'package:code_bench_app/data/models/ask_user_question.dart';
+  import 'package:code_bench_app/data/models/work_log_entry.dart';
 
   void main() {
     group('AskUserQuestion', () {
@@ -208,7 +208,7 @@
   ```dart
   import 'package:flutter_riverpod/flutter_riverpod.dart';
   import 'package:flutter_test/flutter_test.dart';
-  import 'package:code_bench/features/chat/notifiers/ask_question_notifier.dart';
+  import 'package:code_bench_app/features/chat/notifiers/ask_question_notifier.dart';
 
   void main() {
     ProviderContainer makeContainer() {
@@ -374,8 +374,8 @@
   ```dart
   import 'package:flutter_riverpod/flutter_riverpod.dart';
   import 'package:flutter_test/flutter_test.dart';
-  import 'package:code_bench/data/models/work_log_entry.dart';
-  import 'package:code_bench/features/chat/notifiers/work_log_notifier.dart';
+  import 'package:code_bench_app/data/models/work_log_entry.dart';
+  import 'package:code_bench_app/features/chat/notifiers/work_log_notifier.dart';
 
   void main() {
     ProviderContainer makeContainer() {
@@ -1128,9 +1128,9 @@
 
 - [ ] **Step 6.1: Read `message_bubble.dart`**
 
-  Read `lib/features/chat/widgets/message_bubble.dart` to understand its current structure. **Note:** This file is large after Phase 2 (~600+ lines) and Phase 5 (tool-call rows). Key landmarks:
-  - `_CodeBlockWidget` — code fence rendering with Diff/Apply buttons (Phase 2) and Diff… picker (Phase 5)
-  - Tool-call rows rendered after markdown content (Phase 5)
+  Read `lib/features/chat/widgets/message_bubble.dart` to understand its current structure. **Note:** This file is large after Phase 2 (~600+ lines) and Phase 6 (tool-call rows). Key landmarks:
+  - `_CodeBlockWidget` — code fence rendering with Diff/Apply buttons (Phase 2) and Diff… picker (Phase 6)
+  - Tool-call rows rendered after markdown content (Phase 6)
   - The assistant bubble content `Column` is where `AskUserQuestionCard` and `WorkLogSection` should be added
 
 - [ ] **Step 6.2: Wire `AskUserQuestionCard` and `WorkLogSection` into `message_bubble.dart`**
@@ -1145,7 +1145,7 @@
   import '../notifiers/work_log_notifier.dart';
   ```
 
-  In the assistant bubble `Column` (after markdown content and tool-call rows from Phase 5). Insert **after** the `ToolCallRow` loop added in Phase 5:
+  In the assistant bubble `Column` (after markdown content and tool-call rows from Phase 6). Insert **after** the `ToolCallRow` loop added in Phase 6:
 
   ```dart
   // Render AskUserQuestion card if the message has one
