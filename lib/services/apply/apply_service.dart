@@ -15,6 +15,17 @@ import '../filesystem/filesystem_service.dart';
 
 part 'apply_service.g.dart';
 
+/// Thrown when a write is attempted against a project whose root folder
+/// has been deleted or moved. The UI should catch this and prompt the
+/// user to Relocate or Remove.
+class ProjectMissingException implements Exception {
+  ProjectMissingException(this.projectPath);
+  final String projectPath;
+
+  @override
+  String toString() => 'Project folder is missing: $projectPath';
+}
+
 typedef ProcessRunner =
     Future<ProcessResult> Function(String executable, List<String> arguments, {String? workingDirectory});
 
@@ -75,7 +86,7 @@ class ApplyService {
     // the file may not exist yet (creating a new file is a normal case).
     final rootDir = Directory(lexRoot);
     if (!rootDir.existsSync()) {
-      throw StateError('Project root does not exist: "$projectPath"');
+      throw ProjectMissingException(projectPath);
     }
     final rootReal = rootDir.resolveSymbolicLinksSync();
 

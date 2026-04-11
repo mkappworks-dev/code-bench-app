@@ -14,21 +14,41 @@ import '../../services/project/project_service.dart';
 import '../../services/session/session_service.dart';
 import 'project_sidebar_notifier.dart';
 import 'widgets/project_tile.dart';
+import 'widgets/relocate_project_dialog.dart';
+import 'widgets/remove_project_dialog.dart';
 
-class ProjectSidebar extends ConsumerWidget {
+class ProjectSidebar extends ConsumerStatefulWidget {
   const ProjectSidebar({super.key});
 
-  Future<void> _addProject(BuildContext context, WidgetRef ref) async {
+  @override
+  ConsumerState<ProjectSidebar> createState() => _ProjectSidebarState();
+}
+
+class _ProjectSidebarState extends ConsumerState<ProjectSidebar> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(projectServiceProvider).refreshProjectStatuses();
+    });
+  }
+
+  Future<void> _addProject() async {
+    final messenger = ScaffoldMessenger.of(context);
     final result = await FilePicker.getDirectoryPath(dialogTitle: 'Select project folder');
     if (result == null) return;
 
-    final service = ref.read(projectServiceProvider);
-    final project = await service.addExistingFolder(result);
-    ref.read(activeProjectIdProvider.notifier).set(project.id);
-    ref.read(expandedProjectIdsProvider.notifier).expand(project.id);
+    try {
+      final service = ref.read(projectServiceProvider);
+      final project = await service.addExistingFolder(result);
+      ref.read(activeProjectIdProvider.notifier).set(project.id);
+      ref.read(expandedProjectIdsProvider.notifier).expand(project.id);
+    } on DuplicateProjectPathException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+    }
   }
 
-  Future<void> _newConversation(BuildContext context, WidgetRef ref, String projectId) async {
+  Future<void> _newConversation(BuildContext context, String projectId) async {
     final model = ref.read(selectedModelProvider);
     final service = ref.read(sessionServiceProvider);
     final sessionId = await service.createSession(model: model, projectId: projectId);
@@ -37,7 +57,7 @@ class ProjectSidebar extends ConsumerWidget {
     if (context.mounted) context.go('/chat/$sessionId');
   }
 
-  void _showSortMenu(BuildContext context, WidgetRef ref) {
+  void _showSortMenu(BuildContext context) {
     final sortAsync = ref.read(projectSortProvider);
     final current = sortAsync.value;
     final box = context.findRenderObject();
@@ -89,7 +109,7 @@ class ProjectSidebar extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final projectsAsync = ref.watch(projectsProvider);
     final expandedIds = ref.watch(expandedProjectIdsProvider);
     final activeSessionId = ref.watch(activeSessionIdProvider);
@@ -124,7 +144,7 @@ class ProjectSidebar extends ConsumerWidget {
                 // Sort icon
                 Builder(
                   builder: (ctx) => InkWell(
-                    onTap: () => _showSortMenu(ctx, ref),
+                    onTap: () => _showSortMenu(ctx),
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
                       padding: const EdgeInsets.all(3),
@@ -135,7 +155,7 @@ class ProjectSidebar extends ConsumerWidget {
                 const SizedBox(width: 6),
                 // Add project icon
                 InkWell(
-                  onTap: () => _addProject(context, ref),
+                  onTap: () => _addProject(),
                   borderRadius: BorderRadius.circular(4),
                   child: Padding(
                     padding: const EdgeInsets.all(3),
@@ -169,7 +189,7 @@ class ProjectSidebar extends ConsumerWidget {
                         ),
                         const SizedBox(height: 12),
                         TextButton.icon(
-                          onPressed: () => _addProject(context, ref),
+                          onPressed: () => _addProject(),
                           icon: Icon(AppIcons.add, size: 12),
                           label: const Text('Open folder', style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall)),
                         ),
@@ -200,9 +220,17 @@ class ProjectSidebar extends ConsumerWidget {
                           ref.read(activeProjectIdProvider.notifier).set(project.id);
                           context.go('/chat/$sessionId');
                         },
-                        onRemove: (id) => ref.read(projectServiceProvider).removeProject(id),
-                        onNewConversation: (id) => _newConversation(context, ref, id),
+                        onRemove: (id) async {
+                          final p = projects.firstWhere((p) => p.id == id);
+                          await RemoveProjectDialog.show(context, p);
+                        },
+                        onRelocate: (id) async {
+                          final p = projects.firstWhere((p) => p.id == id);
+                          await RelocateProjectDialog.show(context, p);
+                        },
+                        onNewConversation: (id) => _newConversation(context, id),
                         onArchive: (sessionId) => unawaited(ref.read(sessionServiceProvider).archiveSession(sessionId)),
+                        onDelete: (sessionId) => unawaited(ref.read(sessionServiceProvider).deleteSession(sessionId)),
                       ),
                     );
                   },

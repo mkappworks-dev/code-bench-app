@@ -12,6 +12,7 @@ class ProjectContextMenu {
     required Offset position,
     required String projectPath,
     required bool isGit,
+    bool isMissing = false,
   }) async {
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     return showInstantMenu<String>(
@@ -28,11 +29,18 @@ class ProjectContextMenu {
         side: const BorderSide(color: Color(0xFF333333)),
       ),
       items: [
-        _buildItem('open_finder', 'Open in Finder', Icons.folder_open_outlined),
-        _buildItem('copy_path', 'Copy path', Icons.copy_outlined),
-        const PopupMenuDivider(),
-        _buildItem('new_conversation', 'New conversation', Icons.add),
-        const PopupMenuDivider(),
+        if (!isMissing) ...[
+          _buildItem('open_finder', 'Open in Finder', Icons.folder_open_outlined),
+          _buildItem('copy_path', 'Copy path', Icons.copy_outlined),
+          const PopupMenuDivider(),
+          _buildItem('new_conversation', 'New conversation', Icons.add),
+          const PopupMenuDivider(),
+        ] else ...[
+          _buildItem('copy_path', 'Copy path', Icons.copy_outlined),
+          const PopupMenuDivider(),
+          _buildItem('relocate', 'Relocate…', Icons.drive_file_move_outlined),
+          const PopupMenuDivider(),
+        ],
         _buildDangerItem('remove', 'Remove from Code Bench'),
       ],
     );
@@ -73,6 +81,7 @@ class ProjectContextMenu {
     required BuildContext context,
     required Function(String) onRemove,
     required Function(String) onNewConversation,
+    Function(String)? onRelocate,
   }) async {
     switch (action) {
       case 'open_finder':
@@ -81,6 +90,8 @@ class ProjectContextMenu {
         await Clipboard.setData(ClipboardData(text: projectPath));
       case 'new_conversation':
         onNewConversation(projectId);
+      case 'relocate':
+        onRelocate?.call(projectId);
       case 'remove':
         onRemove(projectId);
     }
