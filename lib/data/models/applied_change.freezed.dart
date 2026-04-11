@@ -22,7 +22,10 @@ mixin _$AppliedChange {
  DateTime get appliedAt;// Line counts derived at apply-time from a char-level diff so the
 // changes-panel indicator reflects real additions/deletions instead of
 // a signed line delta. 0 when no diff was computed (e.g. legacy rows).
- int get additions; int get deletions;
+ int get additions; int get deletions;// SHA-256 of [newContent] captured at apply-time. Used to detect
+// external modification before revert (Phase 6 conflict detection).
+// Null on legacy rows written before the field existed.
+ String? get contentChecksum;
 /// Create a copy of AppliedChange
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -33,16 +36,16 @@ $AppliedChangeCopyWith<AppliedChange> get copyWith => _$AppliedChangeCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppliedChange&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.originalContent, originalContent) || other.originalContent == originalContent)&&(identical(other.newContent, newContent) || other.newContent == newContent)&&(identical(other.appliedAt, appliedAt) || other.appliedAt == appliedAt)&&(identical(other.additions, additions) || other.additions == additions)&&(identical(other.deletions, deletions) || other.deletions == deletions));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppliedChange&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.originalContent, originalContent) || other.originalContent == originalContent)&&(identical(other.newContent, newContent) || other.newContent == newContent)&&(identical(other.appliedAt, appliedAt) || other.appliedAt == appliedAt)&&(identical(other.additions, additions) || other.additions == additions)&&(identical(other.deletions, deletions) || other.deletions == deletions)&&(identical(other.contentChecksum, contentChecksum) || other.contentChecksum == contentChecksum));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,sessionId,messageId,filePath,originalContent,newContent,appliedAt,additions,deletions);
+int get hashCode => Object.hash(runtimeType,id,sessionId,messageId,filePath,originalContent,newContent,appliedAt,additions,deletions,contentChecksum);
 
 @override
 String toString() {
-  return 'AppliedChange(id: $id, sessionId: $sessionId, messageId: $messageId, filePath: $filePath, originalContent: $originalContent, newContent: $newContent, appliedAt: $appliedAt, additions: $additions, deletions: $deletions)';
+  return 'AppliedChange(id: $id, sessionId: $sessionId, messageId: $messageId, filePath: $filePath, originalContent: $originalContent, newContent: $newContent, appliedAt: $appliedAt, additions: $additions, deletions: $deletions, contentChecksum: $contentChecksum)';
 }
 
 
@@ -53,7 +56,7 @@ abstract mixin class $AppliedChangeCopyWith<$Res>  {
   factory $AppliedChangeCopyWith(AppliedChange value, $Res Function(AppliedChange) _then) = _$AppliedChangeCopyWithImpl;
 @useResult
 $Res call({
- String id, String sessionId, String messageId, String filePath, String? originalContent, String newContent, DateTime appliedAt, int additions, int deletions
+ String id, String sessionId, String messageId, String filePath, String? originalContent, String newContent, DateTime appliedAt, int additions, int deletions, String? contentChecksum
 });
 
 
@@ -70,7 +73,7 @@ class _$AppliedChangeCopyWithImpl<$Res>
 
 /// Create a copy of AppliedChange
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? sessionId = null,Object? messageId = null,Object? filePath = null,Object? originalContent = freezed,Object? newContent = null,Object? appliedAt = null,Object? additions = null,Object? deletions = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? sessionId = null,Object? messageId = null,Object? filePath = null,Object? originalContent = freezed,Object? newContent = null,Object? appliedAt = null,Object? additions = null,Object? deletions = null,Object? contentChecksum = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
@@ -81,7 +84,8 @@ as String?,newContent: null == newContent ? _self.newContent : newContent // ign
 as String,appliedAt: null == appliedAt ? _self.appliedAt : appliedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,additions: null == additions ? _self.additions : additions // ignore: cast_nullable_to_non_nullable
 as int,deletions: null == deletions ? _self.deletions : deletions // ignore: cast_nullable_to_non_nullable
-as int,
+as int,contentChecksum: freezed == contentChecksum ? _self.contentChecksum : contentChecksum // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -166,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String sessionId,  String messageId,  String filePath,  String? originalContent,  String newContent,  DateTime appliedAt,  int additions,  int deletions)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String sessionId,  String messageId,  String filePath,  String? originalContent,  String newContent,  DateTime appliedAt,  int additions,  int deletions,  String? contentChecksum)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppliedChange() when $default != null:
-return $default(_that.id,_that.sessionId,_that.messageId,_that.filePath,_that.originalContent,_that.newContent,_that.appliedAt,_that.additions,_that.deletions);case _:
+return $default(_that.id,_that.sessionId,_that.messageId,_that.filePath,_that.originalContent,_that.newContent,_that.appliedAt,_that.additions,_that.deletions,_that.contentChecksum);case _:
   return orElse();
 
 }
@@ -187,10 +191,10 @@ return $default(_that.id,_that.sessionId,_that.messageId,_that.filePath,_that.or
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String sessionId,  String messageId,  String filePath,  String? originalContent,  String newContent,  DateTime appliedAt,  int additions,  int deletions)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String sessionId,  String messageId,  String filePath,  String? originalContent,  String newContent,  DateTime appliedAt,  int additions,  int deletions,  String? contentChecksum)  $default,) {final _that = this;
 switch (_that) {
 case _AppliedChange():
-return $default(_that.id,_that.sessionId,_that.messageId,_that.filePath,_that.originalContent,_that.newContent,_that.appliedAt,_that.additions,_that.deletions);case _:
+return $default(_that.id,_that.sessionId,_that.messageId,_that.filePath,_that.originalContent,_that.newContent,_that.appliedAt,_that.additions,_that.deletions,_that.contentChecksum);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -207,10 +211,10 @@ return $default(_that.id,_that.sessionId,_that.messageId,_that.filePath,_that.or
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String sessionId,  String messageId,  String filePath,  String? originalContent,  String newContent,  DateTime appliedAt,  int additions,  int deletions)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String sessionId,  String messageId,  String filePath,  String? originalContent,  String newContent,  DateTime appliedAt,  int additions,  int deletions,  String? contentChecksum)?  $default,) {final _that = this;
 switch (_that) {
 case _AppliedChange() when $default != null:
-return $default(_that.id,_that.sessionId,_that.messageId,_that.filePath,_that.originalContent,_that.newContent,_that.appliedAt,_that.additions,_that.deletions);case _:
+return $default(_that.id,_that.sessionId,_that.messageId,_that.filePath,_that.originalContent,_that.newContent,_that.appliedAt,_that.additions,_that.deletions,_that.contentChecksum);case _:
   return null;
 
 }
@@ -222,7 +226,7 @@ return $default(_that.id,_that.sessionId,_that.messageId,_that.filePath,_that.or
 
 
 class _AppliedChange implements AppliedChange {
-  const _AppliedChange({required this.id, required this.sessionId, required this.messageId, required this.filePath, this.originalContent, required this.newContent, required this.appliedAt, this.additions = 0, this.deletions = 0});
+  const _AppliedChange({required this.id, required this.sessionId, required this.messageId, required this.filePath, this.originalContent, required this.newContent, required this.appliedAt, this.additions = 0, this.deletions = 0, this.contentChecksum});
   
 
 @override final  String id;
@@ -242,6 +246,10 @@ class _AppliedChange implements AppliedChange {
 // a signed line delta. 0 when no diff was computed (e.g. legacy rows).
 @override@JsonKey() final  int additions;
 @override@JsonKey() final  int deletions;
+// SHA-256 of [newContent] captured at apply-time. Used to detect
+// external modification before revert (Phase 6 conflict detection).
+// Null on legacy rows written before the field existed.
+@override final  String? contentChecksum;
 
 /// Create a copy of AppliedChange
 /// with the given fields replaced by the non-null parameter values.
@@ -253,16 +261,16 @@ _$AppliedChangeCopyWith<_AppliedChange> get copyWith => __$AppliedChangeCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppliedChange&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.originalContent, originalContent) || other.originalContent == originalContent)&&(identical(other.newContent, newContent) || other.newContent == newContent)&&(identical(other.appliedAt, appliedAt) || other.appliedAt == appliedAt)&&(identical(other.additions, additions) || other.additions == additions)&&(identical(other.deletions, deletions) || other.deletions == deletions));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppliedChange&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.originalContent, originalContent) || other.originalContent == originalContent)&&(identical(other.newContent, newContent) || other.newContent == newContent)&&(identical(other.appliedAt, appliedAt) || other.appliedAt == appliedAt)&&(identical(other.additions, additions) || other.additions == additions)&&(identical(other.deletions, deletions) || other.deletions == deletions)&&(identical(other.contentChecksum, contentChecksum) || other.contentChecksum == contentChecksum));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,sessionId,messageId,filePath,originalContent,newContent,appliedAt,additions,deletions);
+int get hashCode => Object.hash(runtimeType,id,sessionId,messageId,filePath,originalContent,newContent,appliedAt,additions,deletions,contentChecksum);
 
 @override
 String toString() {
-  return 'AppliedChange(id: $id, sessionId: $sessionId, messageId: $messageId, filePath: $filePath, originalContent: $originalContent, newContent: $newContent, appliedAt: $appliedAt, additions: $additions, deletions: $deletions)';
+  return 'AppliedChange(id: $id, sessionId: $sessionId, messageId: $messageId, filePath: $filePath, originalContent: $originalContent, newContent: $newContent, appliedAt: $appliedAt, additions: $additions, deletions: $deletions, contentChecksum: $contentChecksum)';
 }
 
 
@@ -273,7 +281,7 @@ abstract mixin class _$AppliedChangeCopyWith<$Res> implements $AppliedChangeCopy
   factory _$AppliedChangeCopyWith(_AppliedChange value, $Res Function(_AppliedChange) _then) = __$AppliedChangeCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String sessionId, String messageId, String filePath, String? originalContent, String newContent, DateTime appliedAt, int additions, int deletions
+ String id, String sessionId, String messageId, String filePath, String? originalContent, String newContent, DateTime appliedAt, int additions, int deletions, String? contentChecksum
 });
 
 
@@ -290,7 +298,7 @@ class __$AppliedChangeCopyWithImpl<$Res>
 
 /// Create a copy of AppliedChange
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? sessionId = null,Object? messageId = null,Object? filePath = null,Object? originalContent = freezed,Object? newContent = null,Object? appliedAt = null,Object? additions = null,Object? deletions = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? sessionId = null,Object? messageId = null,Object? filePath = null,Object? originalContent = freezed,Object? newContent = null,Object? appliedAt = null,Object? additions = null,Object? deletions = null,Object? contentChecksum = freezed,}) {
   return _then(_AppliedChange(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
@@ -301,7 +309,8 @@ as String?,newContent: null == newContent ? _self.newContent : newContent // ign
 as String,appliedAt: null == appliedAt ? _self.appliedAt : appliedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,additions: null == additions ? _self.additions : additions // ignore: cast_nullable_to_non_nullable
 as int,deletions: null == deletions ? _self.deletions : deletions // ignore: cast_nullable_to_non_nullable
-as int,
+as int,contentChecksum: freezed == contentChecksum ? _self.contentChecksum : contentChecksum // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
