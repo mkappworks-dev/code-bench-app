@@ -14,6 +14,24 @@ Widget _wrap(Widget child) => ProviderScope(
   child: MaterialApp(home: Scaffold(body: child)),
 );
 
+/// Test harness that keeps a single ProviderScope alive while the caller
+/// swaps the active sessionId via a GlobalKey. Needed because per-session
+/// drafts live in a Riverpod provider that resets if the ProviderScope
+/// itself is rebuilt between tester.pumpWidget calls.
+class _SessionSwitcher extends StatefulWidget {
+  const _SessionSwitcher({super.key, required this.initial});
+  final String initial;
+  @override
+  State<_SessionSwitcher> createState() => _SessionSwitcherState();
+}
+
+class _SessionSwitcherState extends State<_SessionSwitcher> {
+  late String sessionId = widget.initial;
+  void switchTo(String id) => setState(() => sessionId = id);
+  @override
+  Widget build(BuildContext context) => ChatInputBarV2(sessionId: sessionId);
+}
+
 void main() {
   testWidgets('effort chip shows current selection', (tester) async {
     await tester.pumpWidget(_wrap(const ChatInputBarV2(sessionId: 'sid')));
@@ -38,21 +56,43 @@ void main() {
     expect(find.text('Low'), findsOneWidget);
   });
 
-  testWidgets('typed draft does not carry over when sessionId changes', (tester) async {
-    // Pump with session 's1' and type a draft into the text field.
-    await tester.pumpWidget(_wrap(const ChatInputBarV2(sessionId: 's1')));
+  testWidgets('switching to a never-typed-in session shows an empty draft', (tester) async {
+    final key = GlobalKey<_SessionSwitcherState>();
+    await tester.pumpWidget(_wrap(_SessionSwitcher(key: key, initial: 's1')));
     await tester.enterText(find.byType(TextField), 'half-written question');
     expect(find.text('half-written question'), findsOneWidget);
 
-    // Pump the same widget type at the same tree slot with a new
-    // sessionId. Without didUpdateWidget clearing, Flutter would
-    // preserve the _ChatInputBarV2State and the draft would bleed
-    // through to the new session.
-    await tester.pumpWidget(_wrap(const ChatInputBarV2(sessionId: 's2')));
+    // Switch to s2 which has never had anything typed — should be empty,
+    // not inherit s1's draft.
+    key.currentState!.switchTo('s2');
     await tester.pump();
 
     expect(find.text('half-written question'), findsNothing);
     final textField = tester.widget<TextField>(find.byType(TextField));
     expect(textField.controller?.text, isEmpty);
+  });
+
+  testWidgets('draft persists per-session when switching back and forth', (tester) async {
+    final key = GlobalKey<_SessionSwitcherState>();
+    await tester.pumpWidget(_wrap(_SessionSwitcher(key: key, initial: 's1')));
+
+    // Type a draft in s1.
+    await tester.enterText(find.byType(TextField), 's1 draft');
+
+    // Switch to s2, type a different draft there.
+    key.currentState!.switchTo('s2');
+    await tester.pump();
+    expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, isEmpty);
+    await tester.enterText(find.byType(TextField), 's2 draft');
+
+    // Switch back to s1 — original draft should reappear.
+    key.currentState!.switchTo('s1');
+    await tester.pump();
+    expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, 's1 draft');
+
+    // And switching forward to s2 again — that draft should also be there.
+    key.currentState!.switchTo('s2');
+    await tester.pump();
+    expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, 's2 draft');
   });
 }

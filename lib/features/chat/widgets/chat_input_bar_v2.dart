@@ -16,6 +16,20 @@ import '../../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../../../services/project/project_service.dart';
 import '../chat_notifier.dart';
 
+/// Private in-memory store of per-session chat-input drafts.
+///
+/// Not a Riverpod provider because nothing in the tree needs to observe it —
+/// the drafts are only read/written by ChatInputBarV2 itself in response to
+/// session switches. Using a plain module-level map sidesteps Riverpod's
+/// "can't modify provider during build" guard (which fires in
+/// `didUpdateWidget`) and the "ref unsafe after unmount" check (in
+/// `dispose`), both of which are triggered by this widget's lifecycle.
+///
+/// Survives switching between chats within a single app run but is not
+/// persisted across restarts. Empty entries are evicted so the map doesn't
+/// grow with stale keys.
+final Map<String, String> _sessionDrafts = <String, String>{};
+
 enum _Effort { low, medium, high, max }
 
 enum _Mode { chat, plan, act }
@@ -64,8 +78,31 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
   _Mode _mode = _Mode.chat;
   _Permission _permission = _Permission.fullAccess;
 
+  void _stashDraft(String sessionId, String text) {
+    if (text.isEmpty) {
+      _sessionDrafts.remove(sessionId);
+    } else {
+      _sessionDrafts[sessionId] = text;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Restore any draft that was stashed for this session last time
+    // the user switched away. In-memory only, so a fresh app launch
+    // starts with an empty controller.
+    final draft = _sessionDrafts[widget.sessionId];
+    if (draft != null && draft.isNotEmpty) {
+      _controller.text = draft;
+    }
+  }
+
   @override
   void dispose() {
+    // Stash the current draft so a later ChatInputBarV2 rebuild can
+    // restore it for this session.
+    _stashDraft(widget.sessionId, _controller.text);
     _controller.dispose();
     _focusNode.dispose();
     _keyboardFocusNode.dispose();
@@ -77,12 +114,13 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     super.didUpdateWidget(oldWidget);
     // Flutter reuses this Element across sessionId changes (same widget
     // type in the same tree slot), so the text controller keeps whatever
-    // half-written draft the user left in the previous chat. Clear it
-    // here so drafts don't bleed between sessions of the same or
-    // different projects. Effort/mode/permission stay untouched —
+    // the user typed in the previous chat. Save the outgoing draft
+    // against oldWidget.sessionId and load the incoming one so drafts
+    // are isolated per session. Effort/mode/permission stay untouched —
     // those are intentional global sender preferences.
     if (oldWidget.sessionId != widget.sessionId) {
-      _controller.clear();
+      _stashDraft(oldWidget.sessionId, _controller.text);
+      _controller.text = _sessionDrafts[widget.sessionId] ?? '';
     }
   }
 
@@ -134,6 +172,9 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
     if (text.isEmpty) return;
 
     _controller.clear();
+    // Drop the stashed draft for this session too — once the message
+    // is on the wire, there's nothing to restore on a later switch.
+    _sessionDrafts.remove(widget.sessionId);
     setState(() => _isSending = true);
     try {
       final systemPrompt = ref.read(sessionSystemPromptProvider)[widget.sessionId];
