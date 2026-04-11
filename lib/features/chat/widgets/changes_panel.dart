@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +14,7 @@ import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../../../services/apply/apply_service.dart';
 import '../chat_notifier.dart';
+import 'conflict_merge_view.dart';
 
 class ChangesPanel extends ConsumerWidget {
   const ChangesPanel({super.key, required this.sessionId});
@@ -128,7 +131,7 @@ class ChangesPanel extends ConsumerWidget {
 
 // ── Single change entry ───────────────────────────────────────────────────────
 
-class _ChangeEntry extends StatelessWidget {
+class _ChangeEntry extends StatefulWidget {
   const _ChangeEntry({required this.change, required this.project, required this.onRevert});
 
   final AppliedChange change;
@@ -136,9 +139,80 @@ class _ChangeEntry extends StatelessWidget {
   final Future<void> Function() onRevert;
 
   @override
+  State<_ChangeEntry> createState() => _ChangeEntryState();
+}
+
+class _ChangeEntryState extends State<_ChangeEntry> {
+  // Cached once per widget lifecycle so the badge doesn't flicker between
+  // rebuilds. The entry is short-lived — it goes away as soon as revert
+  // succeeds — so a stale result is acceptable.
+  late final Future<bool> _editedFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    final checksum = widget.change.contentChecksum;
+    _editedFuture = checksum == null
+        ? Future.value(false)
+        : ApplyService.isExternallyModified(widget.change.filePath, checksum);
+  }
+
+  Future<void> _handleRevert() async {
+    final isEdited = await _editedFuture;
+    if (!mounted) return;
+    if (!isEdited) {
+      // No conflict — delegate straight to the service-backed revert.
+      try {
+        await widget.onRevert();
+      } catch (e, st) {
+        dLog('[revert] error: $e\n$st');
+        if (mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');
+      }
+      return;
+    }
+
+    // File was modified out-of-band. Read the current content and show
+    // the three-way merge view so the user can decide.
+    String currentContent;
+    try {
+      currentContent = await File(widget.change.filePath).readAsString();
+    } on FileSystemException catch (e) {
+      dLog('[revert] could not read current content: $e');
+      currentContent = '(file unreadable)';
+    }
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text(
+          'File externally modified',
+          style: TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
+        ),
+        content: ConflictMergeView(
+          change: widget.change,
+          currentContent: currentContent,
+          onAcceptRevert: () async {
+            Navigator.of(dialogCtx).pop();
+            try {
+              await widget.onRevert();
+            } catch (e, st) {
+              dLog('[revert] error after accept: $e\n$st');
+              if (mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');
+            }
+          },
+          onKeepCurrent: () => Navigator.of(dialogCtx).pop(),
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final change = widget.change;
+    final project = widget.project;
     final filename = p.basename(change.filePath);
-    final relativePath = project != null ? p.relative(change.filePath, from: project!.path) : change.filePath;
+    final relativePath = project != null ? p.relative(change.filePath, from: project.path) : change.filePath;
 
     // Use persisted line counts computed from a char-level diff at
     // apply-time — see ApplyService._computeLineCounts. This is strictly
@@ -156,14 +230,37 @@ class _ChangeEntry extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  filename,
-                  style: const TextStyle(
-                    fontFamily: ThemeConstants.editorFontFamily,
-                    color: ThemeConstants.textPrimary,
-                    fontSize: ThemeConstants.uiFontSizeSmall,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        filename,
+                        style: const TextStyle(
+                          fontFamily: ThemeConstants.editorFontFamily,
+                          color: ThemeConstants.textPrimary,
+                          fontSize: ThemeConstants.uiFontSizeSmall,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    FutureBuilder<bool>(
+                      future: _editedFuture,
+                      builder: (context, snap) {
+                        final isEdited = snap.data ?? false;
+                        if (!isEdited) return const SizedBox.shrink();
+                        return Container(
+                          margin: const EdgeInsets.only(left: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF3D2900),
+                            borderRadius: BorderRadius.circular(3),
+                            border: Border.all(color: const Color(0xFFAA7700)),
+                          ),
+                          child: const Text('edited', style: TextStyle(color: Color(0xFFFFAA00), fontSize: 9)),
+                        );
+                      },
+                    ),
+                  ],
                 ),
                 Text(
                   relativePath,
@@ -196,14 +293,7 @@ class _ChangeEntry extends StatelessWidget {
           const SizedBox(width: 6),
           // Revert button
           GestureDetector(
-            onTap: () async {
-              try {
-                await onRevert();
-              } catch (e, st) {
-                dLog('[revert] error: $e\n$st');
-                if (context.mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');
-              }
-            },
+            onTap: _handleRevert,
             child: const Icon(AppIcons.revert, size: 12, color: ThemeConstants.mutedFg),
           ),
         ],
