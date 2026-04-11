@@ -260,10 +260,45 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   // rendered as a "?" badge instead of silently claiming "up to date".
   int? _behindCount;
 
+  // Configured remotes for this repo. Empty list = single-origin (or
+  // non-git) project; the dropdown collapses to the classic Push/Pull
+  // items without a remote picker. `_selectedRemote` is the one the
+  // next `Push` click targets — defaults to `origin` so first render
+  // matches the pre-multi-remote behaviour.
+  List<GitRemote> _remotes = const [];
+  String _selectedRemote = 'origin';
+
   @override
   void initState() {
     super.initState();
     unawaited(_checkBehindCount());
+    unawaited(_loadRemotes());
+  }
+
+  Future<void> _loadRemotes() async {
+    // `listRemotes` already swallows a non-zero exit code into `[]`, so
+    // the only thing that can throw here is a missing git binary or a
+    // deleted working directory — same failure modes as
+    // `_checkBehindCount`. Mirror that soft-failure behaviour: leave
+    // `_remotes` as the empty list so the UI falls back to classic
+    // single-remote Push.
+    List<GitRemote> remotes;
+    try {
+      remotes = await GitService(widget.project.path).listRemotes();
+    } on Exception catch (e) {
+      dLog('[_CommitPushButton] listRemotes threw: $e');
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _remotes = remotes;
+      // If `origin` isn't one of the configured remotes (fork-first
+      // workflows, custom names), fall back to the first remote so
+      // `_doPush` has something valid to target.
+      if (remotes.isNotEmpty && !remotes.any((r) => r.name == _selectedRemote)) {
+        _selectedRemote = remotes.first.name;
+      }
+    });
   }
 
   Future<void> _checkBehindCount() async {
@@ -352,9 +387,22 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   Future<void> _doPush() async {
     setState(() => _pushing = true);
     try {
-      final branch = await GitService(widget.project.path).push();
+      final gitSvc = GitService(widget.project.path);
+      // Single-remote (or unknown) repos keep the classic `push()` path
+      // because it also handles the "set upstream on first push" nicety.
+      // A multi-remote repo explicitly targets `_selectedRemote` — the
+      // one the user picked in the dropdown (or defaulted to `origin`).
+      final String target;
+      if (_remotes.length <= 1) {
+        final branch = await gitSvc.push();
+        target = 'origin/$branch';
+      } else {
+        await gitSvc.pushToRemote(_selectedRemote);
+        final branch = await gitSvc.currentBranch() ?? '';
+        target = '$_selectedRemote/$branch';
+      }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pushed to origin/$branch')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pushed to $target')));
       }
     } on GitNoUpstreamException {
       if (mounted) {
@@ -378,6 +426,33 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     } finally {
       if (mounted) setState(() => _pushing = false);
     }
+  }
+
+  Future<void> _doPushAll() async {
+    if (_remotes.isEmpty) return;
+    setState(() => _pushing = true);
+    final gitSvc = GitService(widget.project.path);
+    final pushed = <String>[];
+    final failed = <String>[];
+    // Sequential rather than parallel: git can legitimately reject a
+    // push on one remote (non-fast-forward) without that telling us
+    // anything about the others, and a parallel `Future.wait` would
+    // obscure which remote failed in the user-facing message.
+    for (final remote in _remotes) {
+      try {
+        await gitSvc.pushToRemote(remote.name);
+        pushed.add(remote.name);
+      } on GitException catch (e) {
+        dLog('[_CommitPushButton] pushToRemote(${remote.name}) failed: ${e.message}');
+        failed.add(remote.name);
+      }
+    }
+    if (!mounted) return;
+    setState(() => _pushing = false);
+    final parts = <String>[];
+    if (pushed.isNotEmpty) parts.add('Pushed: ${pushed.join(", ")}');
+    if (failed.isNotEmpty) parts.add('Failed: ${failed.join(", ")}');
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(parts.join(' · '))));
   }
 
   Future<void> _doPull() async {
@@ -469,11 +544,60 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                     side: const BorderSide(color: Color(0xFF333333)),
                   ),
                   items: [
+                    // Multi-remote picker. Only rendered when the repo
+                    // has more than one remote — single-origin repos
+                    // keep the flat Push/Pull/Create-PR menu unchanged.
+                    if (_remotes.length > 1) ...[
+                      for (final remote in _remotes)
+                        CheckedPopupMenuItem<String>(
+                          value: 'select_${remote.name}',
+                          checked: _selectedRemote == remote.name,
+                          height: 40,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                remote.name,
+                                style: const TextStyle(
+                                  color: ThemeConstants.textSecondary,
+                                  fontSize: ThemeConstants.uiFontSizeSmall,
+                                ),
+                              ),
+                              Text(
+                                remote.url,
+                                style: const TextStyle(
+                                  color: ThemeConstants.faintFg,
+                                  fontSize: ThemeConstants.uiFontSizeLabel,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(
+                        value: 'push_all',
+                        height: 32,
+                        child: Text(
+                          'Push to all remotes',
+                          style: TextStyle(
+                            color: ThemeConstants.textSecondary,
+                            fontSize: ThemeConstants.uiFontSizeSmall,
+                          ),
+                        ),
+                      ),
+                      const PopupMenuDivider(),
+                    ],
                     PopupMenuItem(
                       value: 'push',
                       height: 32,
                       child: Text(
-                        _pushing ? '● Pushing…' : 'Push ↑',
+                        _pushing
+                            ? '● Pushing…'
+                            : _remotes.length > 1
+                            ? 'Push ↑ ($_selectedRemote)'
+                            : 'Push ↑',
                         style: const TextStyle(
                           color: ThemeConstants.textSecondary,
                           fontSize: ThemeConstants.uiFontSizeSmall,
@@ -506,10 +630,17 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                 switch (action) {
                   case 'push':
                     unawaited(_doPush());
+                  case 'push_all':
+                    unawaited(_doPushAll());
                   case 'pull':
                     unawaited(_doPull());
                   case 'create_pr':
                     unawaited(_showCreatePrDialog());
+                  // Remote picker entries carry a dynamic `select_<name>`
+                  // value so the switch pattern uses a guarded wildcard
+                  // rather than a literal case per remote.
+                  case final String s when s.startsWith('select_'):
+                    setState(() => _selectedRemote = s.substring('select_'.length));
                 }
               },
               child: Container(
