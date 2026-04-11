@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-> **⚠️ Rebase note — Phase 6 adjustment.** Task 7 Step 7 adds `ref.invalidate(gitLiveStateProvider(...))` + `ref.invalidate(behindCountProvider(...))` after `_doPush`, `_doPull`, and `_runCommit`. That enumeration predates Phase 6. When rebasing onto a Phase-6-merged `main`, **also add the same two invalidations once after `_doPushAll` completes successfully** (once per fan-out, not per remote). See Phase 10's "Cross-reference: Phase 9 rebase note" section for context.
+> **⚠️ Rebase note — Phase 6 adjustment.** Task 7 Step 7 adds `ref.invalidate(gitLiveStateProvider(...))` + `ref.invalidate(behindCountProvider(...))` after `_doPush`, `_doPull`, and `_runCommit`. That enumeration predates Phase 6. When rebasing onto a Phase-6-merged `main`, **also add the same two invalidations once after `_doPushAll` completes successfully** (once per fan-out, not per remote). See Phase 6b's "Cross-reference: Phase 9 rebase note" section for context.
 
 **Goal:** Replace frozen Drift-persisted git state with a reactive `gitLiveStateProvider`, add a searchable branch picker popover, and wire action-button enabled states to live repo data.
 
