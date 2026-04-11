@@ -68,7 +68,11 @@ void main() {
       expect(restored.id, startsWith('legacy-'));
     });
 
-    test('legacy JSON with durationMs but no output → status error', () {
+    test('legacy JSON with durationMs but no output → status success', () {
+      // The earlier draft treated this as `error` — that mis-flagged
+      // legitimately empty-output tools like write_file / silent shell
+      // commands. The charitable inference is success (see
+      // _normalizeLegacyToolEventJson for rationale).
       final legacy = <String, dynamic>{
         'type': 'tool_use',
         'toolName': 'run_command',
@@ -76,13 +80,31 @@ void main() {
         'durationMs': 200,
       };
       final restored = ToolEvent.fromJson(legacy);
-      expect(restored.status, ToolStatus.error);
+      expect(restored.status, ToolStatus.success);
     });
 
     test('legacy JSON with neither → status running', () {
       final legacy = <String, dynamic>{'type': 'tool_use', 'toolName': 'bash', 'input': <String, dynamic>{}};
       final restored = ToolEvent.fromJson(legacy);
       expect(restored.status, ToolStatus.running);
+    });
+
+    test('legacy ids are unique across a tight decode loop', () {
+      // Regression: a time-only `_legacyId()` collided when a batch of
+      // legacy rows were decoded inside one microsecond during
+      // loadHistory. Flutter widget keys depend on uniqueness, so this
+      // invariant is load-bearing — if you break it, `ToolCallRow`
+      // expansion state starts swapping between sibling rows.
+      final ids = <String>{};
+      for (var i = 0; i < 50; i++) {
+        final restored = ToolEvent.fromJson(<String, dynamic>{
+          'type': 'tool_use',
+          'toolName': 'read_file',
+          'input': <String, dynamic>{},
+        });
+        ids.add(restored.id);
+      }
+      expect(ids.length, 50, reason: 'legacy ids must be unique per decode');
     });
   });
 }

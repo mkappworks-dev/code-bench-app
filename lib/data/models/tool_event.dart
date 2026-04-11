@@ -49,7 +49,7 @@ abstract class ToolEvent with _$ToolEvent {
 /// Legacy tolerance: pre-Phase-10 chat DB rows have no `id` or `status`.
 /// The app is not yet released, but local dev databases from Phase 6
 /// exist. Infer a plausible status from the old "field presence" rule
-/// and mint a time-based id so the widget tree stays stable on rebuild.
+/// and mint a unique id so the widget tree stays stable on rebuild.
 ///
 /// NOTE: intentionally forgiving — one-release bridge.
 /// Remove after the next app release if deemed safe.
@@ -59,19 +59,26 @@ Map<String, dynamic> _normalizeLegacyToolEventJson(Map<String, dynamic> json) {
   if (out['status'] == null) {
     final hasOutput = out['output'] != null;
     final hasDuration = out['durationMs'] != null;
-    out['status'] = switch ((hasOutput, hasDuration)) {
-      (true, _) => 'success',
-      (false, true) => 'error', // finished but no output — treat as error
-      (false, false) => 'running', // truly unknown — leave spinner
-    };
+    // Anything terminal (output set OR duration recorded) is assumed
+    // success — the charitable default for legitimate empty-output tools
+    // like `write_file` or a silent `run_command`. Mis-flagging these as
+    // errors (an earlier draft) was misleading on reload and gave the
+    // eternal-spinner bug a second guise in the review.
+    out['status'] = (hasOutput || hasDuration) ? 'success' : 'running';
   }
   return out;
 }
 
-// Uses a time-based id rather than pulling in the `uuid` package —
-// legacy ids never round-trip to a provider, so collision resistance
-// is overkill.
+// Process-lifetime counter appended to the micros-epoch timestamp so that
+// a batch of legacy rows decoded inside one micro-tick still get unique
+// ids. Widget keying (see `ValueKey(event.id)` in `message_bubble.dart`)
+// depends on that uniqueness; a time-only id collided under `loadHistory`
+// bulk decode. No need for `package:uuid` — legacy ids never round-trip
+// to a provider, so only intra-process uniqueness matters.
+int _legacyCounter = 0;
+
 String _legacyId() {
   final now = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
-  return 'legacy-$now';
+  final seq = (_legacyCounter++).toRadixString(36);
+  return 'legacy-$now-$seq';
 }

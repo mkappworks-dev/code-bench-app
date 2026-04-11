@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../data/models/chat_message.dart';
 import '../../data/models/project.dart';
 import '../../data/models/tool_event.dart';
 import '../../features/chat/chat_notifier.dart';
@@ -128,35 +129,37 @@ class _WorkingPill extends ConsumerStatefulWidget {
 }
 
 class _WorkingPillState extends ConsumerState<_WorkingPill> {
-  Timer? _tick;
-  int _seconds = 0;
+  Timer? _ticker;
 
-  @override
-  void initState() {
-    super.initState();
-    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
-      final anyRunning = _anyRunning();
-      if (!anyRunning) {
-        _tick?.cancel();
-        return;
-      }
-      if (mounted) setState(() => _seconds++);
-    });
-  }
+  /// Seconds elapsed in the current running burst. Incremented on each
+  /// ticker fire, reset to 0 on every running→idle transition so the
+  /// next burst's "Working for Xs" pill starts fresh — each tool call
+  /// is its own timer. Using an integer counter (rather than
+  /// `DateTime.now()` minus a start time) keeps the value deterministic
+  /// under `tester.pump` — Flutter's fake async advances `Timer`
+  /// callbacks but not the system wall clock.
+  int _elapsedSeconds = 0;
 
   @override
   void dispose() {
-    _tick?.cancel();
+    _ticker?.cancel();
     super.dispose();
   }
 
-  bool _anyRunning() {
-    final messages = ref.read(chatMessagesProvider(widget.sessionId)).asData?.value ?? [];
-    try {
-      final msg = messages.firstWhere((m) => m.id == widget.messageId);
-      return msg.toolEvents.any((e) => e.status == ToolStatus.running);
-    } catch (_) {
-      return false;
+  /// Idempotent ticker lifecycle, driven from [build]. Starts a 1Hz
+  /// rebuild ticker on the first running observation, cancels it when
+  /// none are running. A running→idle transition also zeroes
+  /// [_elapsedSeconds] so the next burst starts fresh at 0s — matches
+  /// the "Working for Xs" UX: each burst is its own timer.
+  void _syncTicker({required bool anyRunning}) {
+    if (anyRunning) {
+      _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() => _elapsedSeconds++);
+      });
+    } else {
+      _ticker?.cancel();
+      _ticker = null;
+      _elapsedSeconds = 0;
     }
   }
 
@@ -164,17 +167,17 @@ class _WorkingPillState extends ConsumerState<_WorkingPill> {
   Widget build(BuildContext context) {
     final anyRunning = ref.watch(
       chatMessagesProvider(widget.sessionId).select((async) {
-        final messages = async.asData?.value ?? [];
-        try {
-          final msg = messages.firstWhere((m) => m.id == widget.messageId);
-          return msg.toolEvents.any((e) => e.status == ToolStatus.running);
-        } catch (_) {
-          return false;
-        }
+        final messages = async.asData?.value ?? const <ChatMessage>[];
+        final msg = messages.firstWhereOrNull((m) => m.id == widget.messageId);
+        return msg?.toolEvents.any((e) => e.status == ToolStatus.running) ?? false;
       }),
     );
 
+    _syncTicker(anyRunning: anyRunning);
+
     if (!anyRunning) return const SizedBox.shrink();
+
+    final seconds = _elapsedSeconds;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -183,7 +186,7 @@ class _WorkingPillState extends ConsumerState<_WorkingPill> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFF2A3550)),
       ),
-      child: Text('Working for ${_seconds}s', style: const TextStyle(color: Color(0xFF4A7CFF), fontSize: 10)),
+      child: Text('Working for ${seconds}s', style: const TextStyle(color: Color(0xFF4A7CFF), fontSize: 10)),
     );
   }
 }

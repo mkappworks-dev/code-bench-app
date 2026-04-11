@@ -1,17 +1,19 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../data/models/chat_message.dart';
 import '../../../data/models/tool_event.dart';
 import '../chat_notifier.dart';
 
 /// Collapsible in-message tool-call log.
 ///
-/// Reads [ToolEvent]s from [chatProvider] for [sessionId]/[messageId] rather
-/// than maintaining a parallel WorkLogNotifier — [ToolEvent] is the single
-/// source of truth after Phase 10 added explicit [ToolStatus].
+/// Reads [ToolEvent]s from [chatMessagesProvider] for [sessionId]/[messageId]
+/// rather than maintaining a parallel WorkLogNotifier — [ToolEvent] is the
+/// single source of truth after Phase 10 added explicit [ToolStatus].
 class WorkLogSection extends ConsumerStatefulWidget {
   const WorkLogSection({super.key, required this.sessionId, required this.messageId});
 
@@ -23,57 +25,63 @@ class WorkLogSection extends ConsumerStatefulWidget {
 }
 
 class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
-  Timer? _tickTimer;
+  Timer? _ticker;
+
+  /// Accumulated "work time" in seconds. Incremented on each ticker fire
+  /// while a tool is running and deliberately *not* reset on running→
+  /// idle transitions: the displayed counter reflects total seconds the
+  /// agent has been actively working on this message across bursts,
+  /// which matches the long-running UX this section is meant to show.
+  ///
+  /// Using an integer counter (rather than `DateTime.now()` minus a
+  /// start time) keeps the value deterministic under `tester.pump` —
+  /// Flutter's fake async advances `Timer` callbacks but not the system
+  /// wall clock, so wall-clock deltas are untestable in widget tests.
   int _elapsedSeconds = 0;
   bool _isExpanded = false;
 
   @override
-  void initState() {
-    super.initState();
-    _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      final events = _toolEvents();
-      final anyRunning = events.any((e) => e.status == ToolStatus.running);
-      if (!anyRunning) {
-        _tickTimer?.cancel();
-        return;
-      }
-      if (mounted) setState(() => _elapsedSeconds++);
-    });
-  }
-
-  @override
   void dispose() {
-    _tickTimer?.cancel();
+    _ticker?.cancel();
     super.dispose();
   }
 
-  List<ToolEvent> _toolEvents() {
-    final messages = ref.read(chatMessagesProvider(widget.sessionId)).asData?.value ?? [];
-    try {
-      return messages.firstWhere((m) => m.id == widget.messageId).toolEvents;
-    } catch (_) {
-      return const [];
+  /// Idempotent ticker lifecycle management, driven from [build]. Starts
+  /// a 1Hz rebuild ticker when any event flips to running, cancels it
+  /// when none are running. Called on every rebuild so a running→idle→
+  /// running sequence (multi-tool turn) reliably restarts the ticker —
+  /// the earlier `initState`-only version silently froze the counter
+  /// after the first tool completed.
+  void _syncTicker({required bool anyRunning}) {
+    if (anyRunning) {
+      _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() => _elapsedSeconds++);
+      });
+    } else {
+      _ticker?.cancel();
+      _ticker = null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch the tool events for this specific message. The select trims
-    // rebuilds to changes in this message's toolEvents only.
+    // Watch the tool events for this specific message. `select` trims
+    // rebuilds to changes in this message's toolEvents only — and uses
+    // firstWhereOrNull so a missing message just produces an empty list
+    // without the exception-swallowing try/catch we used to rely on.
     final toolEvents = ref.watch(
       chatMessagesProvider(widget.sessionId).select((async) {
-        final messages = async.asData?.value ?? [];
-        try {
-          return messages.firstWhere((m) => m.id == widget.messageId).toolEvents;
-        } catch (_) {
-          return const <ToolEvent>[];
-        }
+        final messages = async.asData?.value ?? const <ChatMessage>[];
+        return messages.firstWhereOrNull((m) => m.id == widget.messageId)?.toolEvents ?? const <ToolEvent>[];
       }),
     );
 
     if (toolEvents.isEmpty) return const SizedBox.shrink();
 
     final anyRunning = toolEvents.any((e) => e.status == ToolStatus.running);
+    _syncTicker(anyRunning: anyRunning);
+
+    final elapsedSeconds = _elapsedSeconds;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -104,7 +112,7 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text('⏱ ${_elapsedSeconds}s', style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 9)),
+                Text('⏱ ${elapsedSeconds}s', style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 9)),
                 const Spacer(),
                 Icon(
                   _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
@@ -145,6 +153,7 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
                         ? entry.input.values.first as String
                         : null);
                 return Padding(
+                  key: ValueKey('work-log-${entry.id}'),
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
                     children: [
