@@ -19,7 +19,7 @@ import '../chat_notifier.dart';
 /// Private in-memory store of per-session chat-input drafts.
 ///
 /// Not a Riverpod provider because nothing in the tree needs to observe it —
-/// the drafts are only read/written by ChatInputBarV2 itself in response to
+/// the drafts are only read/written by ChatInputBar itself in response to
 /// session switches. Using a plain module-level map sidesteps Riverpod's
 /// "can't modify provider during build" guard (which fires in
 /// `didUpdateWidget`) and the "ref unsafe after unmount" check (in
@@ -61,15 +61,15 @@ extension _PermissionLabel on _Permission {
   };
 }
 
-class ChatInputBarV2 extends ConsumerStatefulWidget {
-  const ChatInputBarV2({super.key, required this.sessionId});
+class ChatInputBar extends ConsumerStatefulWidget {
+  const ChatInputBar({super.key, required this.sessionId});
   final String sessionId;
 
   @override
-  ConsumerState<ChatInputBarV2> createState() => _ChatInputBarV2State();
+  ConsumerState<ChatInputBar> createState() => _ChatInputBarState();
 }
 
-class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
+class _ChatInputBarState extends ConsumerState<ChatInputBar> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   final _keyboardFocusNode = FocusNode();
@@ -100,7 +100,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
 
   @override
   void dispose() {
-    // Stash the current draft so a later ChatInputBarV2 rebuild can
+    // Stash the current draft so a later ChatInputBar rebuild can
     // restore it for this session.
     _stashDraft(widget.sessionId, _controller.text);
     _controller.dispose();
@@ -110,7 +110,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
   }
 
   @override
-  void didUpdateWidget(ChatInputBarV2 oldWidget) {
+  void didUpdateWidget(ChatInputBar oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Flutter reuses this Element across sessionId changes (same widget
     // type in the same tree slot), so the text controller keeps whatever
@@ -143,7 +143,7 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
       ref
           .read(projectServiceProvider)
           .refreshProjectStatus(project.id)
-          .catchError((Object e) => dLog('[ChatInputBarV2] refresh after missing-folder check failed: $e')),
+          .catchError((Object e) => dLog('[ChatInputBar] refresh after missing-folder check failed: $e')),
     );
     return false;
   }
