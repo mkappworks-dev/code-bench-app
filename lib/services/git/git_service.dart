@@ -143,7 +143,14 @@ class GitService {
     final result = await Process.run('git', ['rev-parse', '--abbrev-ref', 'HEAD'], workingDirectory: projectPath);
     if (result.exitCode != 0) return null;
     final branch = (result.stdout as String).trim();
-    return branch.isEmpty ? null : branch;
+    if (branch.isEmpty) return null;
+    // `rev-parse --abbrev-ref HEAD` prints the literal string "HEAD" (exit 0)
+    // when the repo is in detached-HEAD state. Map that to `null` so callers
+    // can distinguish "detached" from "on a real branch named HEAD" — and
+    // so the status bar renders "(detached)" rather than "HEAD", and the
+    // Open PR button's `isOnDefaultBranch` check stays correct.
+    if (branch == 'HEAD') return null;
+    return branch;
   }
 
   Future<String?> _headSha() async {

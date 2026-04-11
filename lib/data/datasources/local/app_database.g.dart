@@ -893,26 +893,6 @@ class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$Workspac
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _isGitMeta = const VerificationMeta('isGit');
-  @override
-  late final GeneratedColumn<bool> isGit = GeneratedColumn<bool>(
-    'is_git',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_git" IN (0, 1))'),
-    defaultValue: const Constant(false),
-  );
-  static const VerificationMeta _currentBranchMeta = const VerificationMeta('currentBranch');
-  @override
-  late final GeneratedColumn<String> currentBranch = GeneratedColumn<String>(
-    'current_branch',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta('createdAt');
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
@@ -943,7 +923,7 @@ class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$Workspac
     defaultValue: const Constant('[]'),
   );
   @override
-  List<GeneratedColumn> get $columns => [id, name, path, isGit, currentBranch, createdAt, sortOrder, actionsJson];
+  List<GeneratedColumn> get $columns => [id, name, path, createdAt, sortOrder, actionsJson];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -968,15 +948,6 @@ class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$Workspac
     } else if (isInserting) {
       context.missing(_pathMeta);
     }
-    if (data.containsKey('is_git')) {
-      context.handle(_isGitMeta, isGit.isAcceptableOrUnknown(data['is_git']!, _isGitMeta));
-    }
-    if (data.containsKey('current_branch')) {
-      context.handle(
-        _currentBranchMeta,
-        currentBranch.isAcceptableOrUnknown(data['current_branch']!, _currentBranchMeta),
-      );
-    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta, createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     } else if (isInserting) {
@@ -1000,8 +971,6 @@ class $WorkspaceProjectsTable extends WorkspaceProjects with TableInfo<$Workspac
       id: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       name: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       path: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}path'])!,
-      isGit: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}is_git'])!,
-      currentBranch: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}current_branch']),
       createdAt: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       sortOrder: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
       actionsJson: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}actions_json'])!,
@@ -1018,8 +987,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
   final String id;
   final String name;
   final String path;
-  final bool isGit;
-  final String? currentBranch;
   final DateTime createdAt;
   final int sortOrder;
   final String actionsJson;
@@ -1027,8 +994,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
     required this.id,
     required this.name,
     required this.path,
-    required this.isGit,
-    this.currentBranch,
     required this.createdAt,
     required this.sortOrder,
     required this.actionsJson,
@@ -1039,10 +1004,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
     map['path'] = Variable<String>(path);
-    map['is_git'] = Variable<bool>(isGit);
-    if (!nullToAbsent || currentBranch != null) {
-      map['current_branch'] = Variable<String>(currentBranch);
-    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['sort_order'] = Variable<int>(sortOrder);
     map['actions_json'] = Variable<String>(actionsJson);
@@ -1054,8 +1015,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
       id: Value(id),
       name: Value(name),
       path: Value(path),
-      isGit: Value(isGit),
-      currentBranch: currentBranch == null && nullToAbsent ? const Value.absent() : Value(currentBranch),
       createdAt: Value(createdAt),
       sortOrder: Value(sortOrder),
       actionsJson: Value(actionsJson),
@@ -1068,8 +1027,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       path: serializer.fromJson<String>(json['path']),
-      isGit: serializer.fromJson<bool>(json['isGit']),
-      currentBranch: serializer.fromJson<String?>(json['currentBranch']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       actionsJson: serializer.fromJson<String>(json['actionsJson']),
@@ -1082,8 +1039,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'path': serializer.toJson<String>(path),
-      'isGit': serializer.toJson<bool>(isGit),
-      'currentBranch': serializer.toJson<String?>(currentBranch),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'sortOrder': serializer.toJson<int>(sortOrder),
       'actionsJson': serializer.toJson<String>(actionsJson),
@@ -1094,8 +1049,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
     String? id,
     String? name,
     String? path,
-    bool? isGit,
-    Value<String?> currentBranch = const Value.absent(),
     DateTime? createdAt,
     int? sortOrder,
     String? actionsJson,
@@ -1103,8 +1056,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
     id: id ?? this.id,
     name: name ?? this.name,
     path: path ?? this.path,
-    isGit: isGit ?? this.isGit,
-    currentBranch: currentBranch.present ? currentBranch.value : this.currentBranch,
     createdAt: createdAt ?? this.createdAt,
     sortOrder: sortOrder ?? this.sortOrder,
     actionsJson: actionsJson ?? this.actionsJson,
@@ -1114,8 +1065,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       path: data.path.present ? data.path.value : this.path,
-      isGit: data.isGit.present ? data.isGit.value : this.isGit,
-      currentBranch: data.currentBranch.present ? data.currentBranch.value : this.currentBranch,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       actionsJson: data.actionsJson.present ? data.actionsJson.value : this.actionsJson,
@@ -1128,8 +1077,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('path: $path, ')
-          ..write('isGit: $isGit, ')
-          ..write('currentBranch: $currentBranch, ')
           ..write('createdAt: $createdAt, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('actionsJson: $actionsJson')
@@ -1138,7 +1085,7 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
   }
 
   @override
-  int get hashCode => Object.hash(id, name, path, isGit, currentBranch, createdAt, sortOrder, actionsJson);
+  int get hashCode => Object.hash(id, name, path, createdAt, sortOrder, actionsJson);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1146,8 +1093,6 @@ class WorkspaceProjectRow extends DataClass implements Insertable<WorkspaceProje
           other.id == this.id &&
           other.name == this.name &&
           other.path == this.path &&
-          other.isGit == this.isGit &&
-          other.currentBranch == this.currentBranch &&
           other.createdAt == this.createdAt &&
           other.sortOrder == this.sortOrder &&
           other.actionsJson == this.actionsJson);
@@ -1157,8 +1102,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
   final Value<String> id;
   final Value<String> name;
   final Value<String> path;
-  final Value<bool> isGit;
-  final Value<String?> currentBranch;
   final Value<DateTime> createdAt;
   final Value<int> sortOrder;
   final Value<String> actionsJson;
@@ -1167,8 +1110,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.path = const Value.absent(),
-    this.isGit = const Value.absent(),
-    this.currentBranch = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.actionsJson = const Value.absent(),
@@ -1178,8 +1119,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
     required String id,
     required String name,
     required String path,
-    this.isGit = const Value.absent(),
-    this.currentBranch = const Value.absent(),
     required DateTime createdAt,
     this.sortOrder = const Value.absent(),
     this.actionsJson = const Value.absent(),
@@ -1192,8 +1131,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? path,
-    Expression<bool>? isGit,
-    Expression<String>? currentBranch,
     Expression<DateTime>? createdAt,
     Expression<int>? sortOrder,
     Expression<String>? actionsJson,
@@ -1203,8 +1140,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (path != null) 'path': path,
-      if (isGit != null) 'is_git': isGit,
-      if (currentBranch != null) 'current_branch': currentBranch,
       if (createdAt != null) 'created_at': createdAt,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (actionsJson != null) 'actions_json': actionsJson,
@@ -1216,8 +1151,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
     Value<String>? id,
     Value<String>? name,
     Value<String>? path,
-    Value<bool>? isGit,
-    Value<String?>? currentBranch,
     Value<DateTime>? createdAt,
     Value<int>? sortOrder,
     Value<String>? actionsJson,
@@ -1227,8 +1160,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
       id: id ?? this.id,
       name: name ?? this.name,
       path: path ?? this.path,
-      isGit: isGit ?? this.isGit,
-      currentBranch: currentBranch ?? this.currentBranch,
       createdAt: createdAt ?? this.createdAt,
       sortOrder: sortOrder ?? this.sortOrder,
       actionsJson: actionsJson ?? this.actionsJson,
@@ -1247,12 +1178,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
     }
     if (path.present) {
       map['path'] = Variable<String>(path.value);
-    }
-    if (isGit.present) {
-      map['is_git'] = Variable<bool>(isGit.value);
-    }
-    if (currentBranch.present) {
-      map['current_branch'] = Variable<String>(currentBranch.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -1275,8 +1200,6 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('path: $path, ')
-          ..write('isGit: $isGit, ')
-          ..write('currentBranch: $currentBranch, ')
           ..write('createdAt: $createdAt, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('actionsJson: $actionsJson, ')
@@ -1876,8 +1799,6 @@ typedef $$WorkspaceProjectsTableCreateCompanionBuilder =
       required String id,
       required String name,
       required String path,
-      Value<bool> isGit,
-      Value<String?> currentBranch,
       required DateTime createdAt,
       Value<int> sortOrder,
       Value<String> actionsJson,
@@ -1888,8 +1809,6 @@ typedef $$WorkspaceProjectsTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> name,
       Value<String> path,
-      Value<bool> isGit,
-      Value<String?> currentBranch,
       Value<DateTime> createdAt,
       Value<int> sortOrder,
       Value<String> actionsJson,
@@ -1909,11 +1828,6 @@ class $$WorkspaceProjectsTableFilterComposer extends Composer<_$AppDatabase, $Wo
   ColumnFilters<String> get name => $composableBuilder(column: $table.name, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get path => $composableBuilder(column: $table.path, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get isGit => $composableBuilder(column: $table.isGit, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get currentBranch =>
-      $composableBuilder(column: $table.currentBranch, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -1941,12 +1855,6 @@ class $$WorkspaceProjectsTableOrderingComposer extends Composer<_$AppDatabase, $
   ColumnOrderings<String> get path =>
       $composableBuilder(column: $table.path, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get isGit =>
-      $composableBuilder(column: $table.isGit, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get currentBranch =>
-      $composableBuilder(column: $table.currentBranch, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -1970,11 +1878,6 @@ class $$WorkspaceProjectsTableAnnotationComposer extends Composer<_$AppDatabase,
   GeneratedColumn<String> get name => $composableBuilder(column: $table.name, builder: (column) => column);
 
   GeneratedColumn<String> get path => $composableBuilder(column: $table.path, builder: (column) => column);
-
-  GeneratedColumn<bool> get isGit => $composableBuilder(column: $table.isGit, builder: (column) => column);
-
-  GeneratedColumn<String> get currentBranch =>
-      $composableBuilder(column: $table.currentBranch, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt => $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -2012,8 +1915,6 @@ class $$WorkspaceProjectsTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String> path = const Value.absent(),
-                Value<bool> isGit = const Value.absent(),
-                Value<String?> currentBranch = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<String> actionsJson = const Value.absent(),
@@ -2022,8 +1923,6 @@ class $$WorkspaceProjectsTableTableManager
                 id: id,
                 name: name,
                 path: path,
-                isGit: isGit,
-                currentBranch: currentBranch,
                 createdAt: createdAt,
                 sortOrder: sortOrder,
                 actionsJson: actionsJson,
@@ -2034,8 +1933,6 @@ class $$WorkspaceProjectsTableTableManager
                 required String id,
                 required String name,
                 required String path,
-                Value<bool> isGit = const Value.absent(),
-                Value<String?> currentBranch = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> sortOrder = const Value.absent(),
                 Value<String> actionsJson = const Value.absent(),
@@ -2044,8 +1941,6 @@ class $$WorkspaceProjectsTableTableManager
                 id: id,
                 name: name,
                 path: path,
-                isGit: isGit,
-                currentBranch: currentBranch,
                 createdAt: createdAt,
                 sortOrder: sortOrder,
                 actionsJson: actionsJson,

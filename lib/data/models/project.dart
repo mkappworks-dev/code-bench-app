@@ -21,8 +21,6 @@ abstract class Project with _$Project {
     required String id,
     required String name,
     required String path,
-    @Default(false) bool isGit,
-    String? currentBranch,
     required DateTime createdAt,
     @Default(0) int sortOrder,
     @Default([]) List<ProjectAction> actions,

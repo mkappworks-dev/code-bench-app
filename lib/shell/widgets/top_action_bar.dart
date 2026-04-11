@@ -17,6 +17,7 @@ import '../../features/chat/widgets/commit_dialog.dart';
 import '../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../../services/actions/action_runner_service.dart';
 import '../../services/ai/ai_service_factory.dart';
+import '../../services/git/git_live_state_provider.dart';
 import '../../services/git/git_service.dart';
 import '../../services/ide/ide_launch_service.dart';
 import '../../data/datasources/local/general_preferences.dart';
@@ -86,6 +87,13 @@ class TopActionBar extends ConsumerWidget {
       },
     );
 
+    final liveStateAsync = project != null ? ref.watch(gitLiveStateProvider(project.path)) : null;
+    // Tri-state: `true` = known git repo, `false` = known non-git, `null` =
+    // loading OR error. We only flip to the "No Git" badge / Init Git button
+    // when we've **observed** a non-git state — loading and error keep the
+    // bar neutral so it doesn't flicker to "Init Git" on every refocus.
+    final bool? isGit = liveStateAsync?.value?.isGit;
+
     return Container(
       height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -115,8 +123,9 @@ class TopActionBar extends ConsumerWidget {
                 style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeLabel),
               ),
             ),
-            // No Git badge (only when not a git repo)
-            if (!project.isGit) ...[
+            // No Git badge (only when we've definitively observed the path
+            // is not a git repo — skipped during loading/error).
+            if (isGit == false) ...[
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -144,8 +153,16 @@ class TopActionBar extends ConsumerWidget {
                   const SizedBox(width: 5),
                   _VsCodeDropdown(projectId: project.id, projectPath: project.path),
                   const SizedBox(width: 5),
-                  // Git action: Commit & Push (git) or Initialize Git (no git)
-                  if (project.isGit) _CommitPushButton(project: project) else _InitGitButton(project: project),
+                  // Git action: Commit & Push (git) or Initialize Git
+                  // (confirmed non-git). During loading/error (isGit == null)
+                  // render a spacer so the layout doesn't jump and the user
+                  // is never offered "Init Git" on a repo that already exists.
+                  if (isGit == true)
+                    _CommitPushButton(project: project)
+                  else if (isGit == false)
+                    _InitGitButton(project: project)
+                  else
+                    const SizedBox(width: 1, height: ThemeConstants.actionButtonHeight),
                 ],
               ),
             ),
@@ -257,24 +274,10 @@ class _InitGitButton extends ConsumerWidget {
           return;
         }
 
-        // Refresh git status separately so a db/refresh error doesn't get
-        // reported as "init failed" — init really did succeed.
-        var refreshFailed = false;
-        try {
-          await ref.read(projectServiceProvider).refreshGitStatus(project.id);
-        } on Exception catch (e) {
-          refreshFailed = true;
-          dLog('[_InitGitButton] refreshGitStatus failed: $e');
-        }
+        ref.invalidate(gitLiveStateProvider(project.path));
 
         if (context.mounted) {
-          // In release builds, a silent refresh failure would leave the
-          // sidebar showing "Not a git repo" with no explanation, making
-          // the button look broken on the user's next click. Tell them.
-          final message = refreshFailed
-              ? 'Git repository initialized — reopen the project to refresh the sidebar.'
-              : 'Git repository initialized';
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Git repository initialized')));
         }
       },
     );
@@ -294,9 +297,6 @@ class _CommitPushButton extends ConsumerStatefulWidget {
 class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   bool _pushing = false;
   bool _pulling = false;
-  // `null` means "unknown" (offline, no upstream, fetch failed) —
-  // rendered as a "?" badge instead of silently claiming "up to date".
-  int? _behindCount;
 
   // Configured remotes for this repo. Empty list = single-origin (or
   // non-git) project; the dropdown collapses to the classic Push/Pull
@@ -309,7 +309,6 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   @override
   void initState() {
     super.initState();
-    unawaited(_checkBehindCount());
     unawaited(_loadRemotes());
   }
 
@@ -337,24 +336,6 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         _selectedRemote = remotes.first.name;
       }
     });
-  }
-
-  Future<void> _checkBehindCount() async {
-    // `fetchBehindCount` is documented to return `null` on soft failures
-    // (no upstream, offline), but `Process.run` can still throw synchronously
-    // if the git binary is missing or the working directory was deleted
-    // between mount and this call. This runs from `unawaited(...)` in
-    // initState, so an escaped throw would hit Flutter's uncaught-error
-    // handler instead of updating the UI — explicitly fall through to
-    // "unknown" (the `↓?` badge) so the user at least sees an honest state.
-    int? count;
-    try {
-      count = await GitService(widget.project.path).fetchBehindCount();
-    } on Exception catch (e) {
-      dLog('[_CommitPushButton] fetchBehindCount threw: $e');
-      count = null;
-    }
-    if (mounted) setState(() => _behindCount = count);
   }
 
   Future<void> _doCommit() async {
@@ -415,6 +396,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       final sha = await GitService(widget.project.path).commit(message);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Committed — $sha')));
+        ref.invalidate(gitLiveStateProvider(widget.project.path));
       }
     } on GitException catch (e) {
       if (mounted) {
@@ -446,6 +428,8 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pushed to $target')));
+        ref.invalidate(gitLiveStateProvider(widget.project.path));
+        ref.invalidate(behindCountProvider(widget.project.path));
       }
     } on GitNoUpstreamException {
       if (mounted) {
@@ -508,6 +492,10 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     if (pushed.isNotEmpty) parts.add('Pushed: ${pushed.join(", ")}');
     if (failed.isNotEmpty) parts.add('Failed: ${failed.join(", ")}');
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(parts.join(' · '))));
+    if (pushed.isNotEmpty) {
+      ref.invalidate(gitLiveStateProvider(widget.project.path));
+      ref.invalidate(behindCountProvider(widget.project.path));
+    }
   }
 
   Future<void> _doPull() async {
@@ -517,7 +505,8 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       final n = await GitService(widget.project.path).pull();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pulled — $n new commit(s) from origin')));
-        setState(() => _behindCount = 0);
+        ref.invalidate(gitLiveStateProvider(widget.project.path));
+        ref.invalidate(behindCountProvider(widget.project.path));
       }
     } on GitConflictException {
       if (mounted) {
@@ -543,9 +532,36 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
 
   @override
   Widget build(BuildContext context) {
-    final behind = _behindCount;
+    final liveStateAsync = ref.watch(gitLiveStateProvider(widget.project.path));
+    final behindAsync = ref.watch(behindCountProvider(widget.project.path));
+
+    final liveState = liveStateAsync.value;
+    final behind = behindAsync.value;
+
+    // Nullable probe fields from [GitLiveState] mean "unknown" — never
+    // treat them as falsy defaults. `hasUncommitted == null` or
+    // `aheadCount == null` disables the action and triggers a "?" badge,
+    // so a failing `git status` never deceptively dims the Commit button
+    // on a dirty repo. See the class-level docs on [GitLiveState].
+    final canCommit = liveState?.hasUncommitted == true;
+    final canPush = (liveState?.aheadCount ?? 0) > 0;
+    final canPull = (behind ?? 0) > 0;
+    // Open PR requires a real branch that isn't the default. Detached HEAD
+    // (branch == null) and unknown branch both fall through to `false`.
+    final canPr = liveState?.branch != null && !(liveState?.isOnDefaultBranch ?? true);
+    final hasRemotes = _remotes.isNotEmpty;
+    final canDropdown = canPush || canPull || canPr || hasRemotes;
+
+    // Probe-state badges on the dropdown. `↓?` signals "behind count
+    // unknown" (offline/fetch failed), `!` signals "one of the local
+    // probes failed" so the user can tell a disabled Commit/Push apart
+    // from a genuinely clean/up-to-date repo.
+    final bool hasUnknownProbe =
+        liveState?.isGit == true && (liveState?.hasUncommitted == null || liveState?.aheadCount == null);
     final String badgeLabel;
-    if (behind == null) {
+    if (hasUnknownProbe) {
+      badgeLabel = ' !';
+    } else if (behind == null) {
       badgeLabel = ' ↓?';
     } else if (behind > 0) {
       badgeLabel = ' ↓$behind';
@@ -557,31 +573,45 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       mainAxisSize: MainAxisSize.min,
       children: [
         // Left: Commit
-        GestureDetector(
-          onTap: busy ? null : _doCommit,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
-            decoration: BoxDecoration(
-              color: busy ? ThemeConstants.accentDark : ThemeConstants.accent,
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
-            ),
-            child: Center(
-              widthFactor: 1,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(AppIcons.gitCommit, size: 12, color: Colors.white),
-                  const SizedBox(width: 5),
-                  Text(
-                    _pushing
-                        ? '● Pushing…'
-                        : _pulling
-                        ? '● Pulling…'
-                        : 'Commit',
-                    style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeSmall),
-                  ),
-                ],
+        Tooltip(
+          message: hasUnknownProbe
+              ? 'Git status unavailable — run `git status` in a terminal to diagnose'
+              : canCommit
+              ? 'Commit staged & unstaged changes'
+              : 'No changes to commit',
+          child: GestureDetector(
+            onTap: (busy || !canCommit) ? null : _doCommit,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
+              decoration: BoxDecoration(
+                color: busy
+                    ? ThemeConstants.accentDark
+                    : canCommit
+                    ? ThemeConstants.accent
+                    : ThemeConstants.inputSurface,
+                borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
+              ),
+              child: Center(
+                widthFactor: 1,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(AppIcons.gitCommit, size: 12, color: canCommit ? Colors.white : ThemeConstants.mutedFg),
+                    const SizedBox(width: 5),
+                    Text(
+                      _pushing
+                          ? '● Pushing…'
+                          : _pulling
+                          ? '● Pulling…'
+                          : 'Commit',
+                      style: TextStyle(
+                        color: canCommit ? Colors.white : ThemeConstants.mutedFg,
+                        fontSize: ThemeConstants.uiFontSizeSmall,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -591,120 +621,130 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
           message: 'Git actions',
           child: Builder(
             builder: (btnContext) => GestureDetector(
-              onTap: () async {
-                final action = await showInstantMenuAnchoredTo<String>(
-                  buttonContext: btnContext,
-                  color: ThemeConstants.panelBackground,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(7),
-                    side: const BorderSide(color: Color(0xFF333333)),
-                  ),
-                  items: [
-                    // Multi-remote picker. Only rendered when the repo
-                    // has more than one remote — single-origin repos
-                    // keep the flat Push/Pull/Create-PR menu unchanged.
-                    if (_remotes.length > 1) ...[
-                      for (final remote in _remotes)
-                        CheckedPopupMenuItem<String>(
-                          value: 'select_${remote.name}',
-                          checked: _selectedRemote == remote.name,
-                          height: 40,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                remote.name,
-                                style: const TextStyle(
+              onTap: canDropdown
+                  ? () async {
+                      final action = await showInstantMenuAnchoredTo<String>(
+                        buttonContext: btnContext,
+                        color: ThemeConstants.panelBackground,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(7),
+                          side: const BorderSide(color: Color(0xFF333333)),
+                        ),
+                        items: [
+                          // Multi-remote picker. Only rendered when the repo
+                          // has more than one remote — single-origin repos
+                          // keep the flat Push/Pull/Create-PR menu unchanged.
+                          if (_remotes.length > 1) ...[
+                            for (final remote in _remotes)
+                              CheckedPopupMenuItem<String>(
+                                value: 'select_${remote.name}',
+                                checked: _selectedRemote == remote.name,
+                                height: 40,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      remote.name,
+                                      style: const TextStyle(
+                                        color: ThemeConstants.textSecondary,
+                                        fontSize: ThemeConstants.uiFontSizeSmall,
+                                      ),
+                                    ),
+                                    Text(
+                                      remote.url,
+                                      style: const TextStyle(
+                                        color: ThemeConstants.faintFg,
+                                        fontSize: ThemeConstants.uiFontSizeLabel,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            const PopupMenuDivider(),
+                            const PopupMenuItem(
+                              value: 'push_all',
+                              height: 32,
+                              child: Text(
+                                'Push to all remotes',
+                                style: TextStyle(
                                   color: ThemeConstants.textSecondary,
                                   fontSize: ThemeConstants.uiFontSizeSmall,
                                 ),
                               ),
-                              Text(
-                                remote.url,
-                                style: const TextStyle(
-                                  color: ThemeConstants.faintFg,
-                                  fontSize: ThemeConstants.uiFontSizeLabel,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                            ),
+                            const PopupMenuDivider(),
+                          ],
+                          PopupMenuItem(
+                            value: 'push',
+                            height: 32,
+                            enabled: canPush && !busy,
+                            child: Text(
+                              _pushing
+                                  ? '● Pushing…'
+                                  : _remotes.length > 1
+                                  ? 'Push ↑ ($_selectedRemote)'
+                                  : 'Push ↑',
+                              style: TextStyle(
+                                color: (canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                fontSize: ThemeConstants.uiFontSizeSmall,
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      const PopupMenuDivider(),
-                      const PopupMenuItem(
-                        value: 'push_all',
-                        height: 32,
-                        child: Text(
-                          'Push to all remotes',
-                          style: TextStyle(
-                            color: ThemeConstants.textSecondary,
-                            fontSize: ThemeConstants.uiFontSizeSmall,
+                          PopupMenuItem(
+                            value: 'pull',
+                            height: 32,
+                            enabled: canPull && !busy,
+                            child: Text(
+                              canPull ? 'Pull ↓${behind ?? ''}' : 'Pull',
+                              style: TextStyle(
+                                color: canPull ? ThemeConstants.accent : ThemeConstants.faintFg,
+                                fontSize: ThemeConstants.uiFontSizeSmall,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      const PopupMenuDivider(),
-                    ],
-                    PopupMenuItem(
-                      value: 'push',
-                      height: 32,
-                      child: Text(
-                        _pushing
-                            ? '● Pushing…'
-                            : _remotes.length > 1
-                            ? 'Push ↑ ($_selectedRemote)'
-                            : 'Push ↑',
-                        style: const TextStyle(
-                          color: ThemeConstants.textSecondary,
-                          fontSize: ThemeConstants.uiFontSizeSmall,
-                        ),
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'pull',
-                      height: 32,
-                      child: Text(
-                        (behind != null && behind > 0) ? 'Pull ↓$behind' : 'Pull',
-                        style: TextStyle(
-                          color: (behind != null && behind > 0) ? ThemeConstants.accent : ThemeConstants.textSecondary,
-                          fontSize: ThemeConstants.uiFontSizeSmall,
-                        ),
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    const PopupMenuItem(
-                      value: 'create_pr',
-                      height: 32,
-                      child: Text(
-                        'Create PR',
-                        style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-                      ),
-                    ),
-                  ],
-                );
-                if (action == null) return;
-                switch (action) {
-                  case 'push':
-                    unawaited(_doPush());
-                  case 'push_all':
-                    unawaited(_doPushAll());
-                  case 'pull':
-                    unawaited(_doPull());
-                  case 'create_pr':
-                    unawaited(_showCreatePrDialog());
-                  // Remote picker entries carry a dynamic `select_<name>`
-                  // value so the switch pattern uses a guarded wildcard
-                  // rather than a literal case per remote.
-                  case final String s when s.startsWith('select_'):
-                    setState(() => _selectedRemote = s.substring('select_'.length));
-                }
-              },
+                          const PopupMenuDivider(),
+                          PopupMenuItem(
+                            value: 'create_pr',
+                            height: 32,
+                            enabled: canPr,
+                            child: Text(
+                              'Create PR',
+                              style: TextStyle(
+                                color: canPr ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                fontSize: ThemeConstants.uiFontSizeSmall,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                      if (action == null) return;
+                      switch (action) {
+                        case 'push':
+                          unawaited(_doPush());
+                        case 'push_all':
+                          unawaited(_doPushAll());
+                        case 'pull':
+                          unawaited(_doPull());
+                        case 'create_pr':
+                          unawaited(_showCreatePrDialog());
+                        // Remote picker entries carry a dynamic `select_<name>`
+                        // value so the switch pattern uses a guarded wildcard
+                        // rather than a literal case per remote.
+                        case final String s when s.startsWith('select_'):
+                          setState(() => _selectedRemote = s.substring('select_'.length));
+                      }
+                    }
+                  : null,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7),
                 constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
                 decoration: BoxDecoration(
-                  color: ThemeConstants.accentLight,
-                  border: const Border(left: BorderSide(color: ThemeConstants.accentDark)),
+                  color: canDropdown ? ThemeConstants.accentLight : ThemeConstants.inputSurface,
+                  border: Border(
+                    left: BorderSide(color: canDropdown ? ThemeConstants.accentDark : ThemeConstants.deepBorder),
+                  ),
                   borderRadius: const BorderRadius.horizontal(right: Radius.circular(5)),
                 ),
                 child: Center(
@@ -715,9 +755,12 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                       if (badgeLabel.isNotEmpty)
                         Text(
                           badgeLabel,
-                          style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeLabel),
+                          style: TextStyle(
+                            color: canDropdown ? Colors.white : ThemeConstants.mutedFg,
+                            fontSize: ThemeConstants.uiFontSizeLabel,
+                          ),
                         ),
-                      const Icon(AppIcons.chevronDown, size: 11, color: Colors.white),
+                      Icon(AppIcons.chevronDown, size: 11, color: canDropdown ? Colors.white : ThemeConstants.mutedFg),
                     ],
                   ),
                 ),

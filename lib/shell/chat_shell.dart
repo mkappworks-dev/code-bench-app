@@ -11,6 +11,7 @@ import '../features/project_sidebar/project_sidebar.dart';
 import '../features/project_sidebar/project_sidebar_notifier.dart';
 import '../services/session/session_service.dart';
 import 'widgets/action_output_panel.dart';
+import 'widgets/app_lifecycle_observer.dart';
 import 'widgets/status_bar.dart';
 import 'widgets/top_action_bar.dart';
 
@@ -34,46 +35,49 @@ class ChatShell extends ConsumerWidget {
     final panelVisible = ref.watch(changesPanelVisibleProvider);
     final activeSessionId = ref.watch(activeSessionIdProvider);
 
-    return Material(
-      color: ThemeConstants.background,
-      child: CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () => _newChat(ref, context).catchError((e, st) {
-            dLog('[_newChat] error: $e\n$st');
-          }),
-          const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
-              _newChat(ref, context).catchError((e, st) {
-                dLog('[_newChat] error: $e\n$st');
-              }),
-          const SingleActivator(LogicalKeyboardKey.comma, meta: true): () => context.go('/settings'),
-          const SingleActivator(LogicalKeyboardKey.comma, control: true): () => context.go('/settings'),
-        },
-        child: Focus(
-          autofocus: true,
-          child: Row(
-            children: [
-              // Left sidebar
-              const ProjectSidebar(),
-              // Right: chat column + optional changes panel
-              Expanded(
-                child: Column(
-                  children: [
-                    const TopActionBar(),
-                    const ActionOutputPanel(),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Expanded(child: child),
-                          if (panelVisible && activeSessionId != null)
-                            SizedBox(width: 190, child: ChangesPanel(sessionId: activeSessionId)),
-                        ],
+    return AppLifecycleObserver(
+      child: Material(
+        color: ThemeConstants.background,
+        child: CallbackShortcuts(
+          bindings: {
+            const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () =>
+                _newChat(ref, context).catchError((e, st) {
+                  dLog('[_newChat] error: $e\n$st');
+                }),
+            const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
+                _newChat(ref, context).catchError((e, st) {
+                  dLog('[_newChat] error: $e\n$st');
+                }),
+            const SingleActivator(LogicalKeyboardKey.comma, meta: true): () => context.go('/settings'),
+            const SingleActivator(LogicalKeyboardKey.comma, control: true): () => context.go('/settings'),
+          },
+          child: Focus(
+            autofocus: true,
+            child: Row(
+              children: [
+                // Left sidebar
+                const ProjectSidebar(),
+                // Right: chat column + optional changes panel
+                Expanded(
+                  child: Column(
+                    children: [
+                      const TopActionBar(),
+                      const ActionOutputPanel(),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(child: child),
+                            if (panelVisible && activeSessionId != null)
+                              SizedBox(width: 190, child: ChangesPanel(sessionId: activeSessionId)),
+                          ],
+                        ),
                       ),
-                    ),
-                    const StatusBar(),
-                  ],
+                      const StatusBar(),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
