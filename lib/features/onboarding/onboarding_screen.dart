@@ -13,11 +13,7 @@ import 'widgets/add_project_step.dart';
 class OnboardingScreen extends ConsumerWidget {
   const OnboardingScreen({super.key});
 
-  static const _stepTitles = [
-    'Connect AI Providers',
-    'Connect GitHub',
-    'Add Your First Project',
-  ];
+  static const _stepTitles = ['Connect AI Providers', 'Connect GitHub', 'Add Your First Project'];
 
   static const _stepSubtitles = [
     'Add API keys to use AI in Code Bench',
@@ -38,11 +34,7 @@ class OnboardingScreen extends ConsumerWidget {
           // ── Right: content (62% width) ───────────────────────────────────
           Expanded(
             flex: 62,
-            child: _ContentPanel(
-              step: step,
-              stepTitles: _stepTitles,
-              stepSubtitles: _stepSubtitles,
-            ),
+            child: _ContentPanel(step: step, stepTitles: _stepTitles, stepSubtitles: _stepSubtitles),
           ),
         ],
       ),
@@ -65,11 +57,7 @@ class _BrandingPanel extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             stops: [0.0, 0.5, 1.0],
-            colors: [
-              ThemeConstants.sidebarBackground,
-              ThemeConstants.activityBar,
-              ThemeConstants.deepBackground,
-            ],
+            colors: [ThemeConstants.sidebarBackground, ThemeConstants.activityBar, ThemeConstants.deepBackground],
           ),
           border: Border(right: BorderSide(color: ThemeConstants.borderColor)),
         ),
@@ -90,32 +78,18 @@ class _BrandingPanel extends StatelessWidget {
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(8),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x99000000),
-                        blurRadius: 10,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
+                    boxShadow: const [BoxShadow(color: Color(0x99000000), blurRadius: 10, offset: Offset(0, 2))],
                   ),
                   alignment: Alignment.center,
                   child: const Text(
                     'C',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
                   ),
                 ),
                 const SizedBox(width: 10),
                 const Text(
                   'Code Bench',
-                  style: TextStyle(
-                    color: ThemeConstants.textPrimary,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 17, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -125,23 +99,11 @@ class _BrandingPanel extends StatelessWidget {
               style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 11),
             ),
             const SizedBox(height: 28),
-            _FeatureCard(
-              icon: '⚡',
-              title: 'Multi-provider AI',
-              subtitle: 'OpenAI · Anthropic · Gemini · Ollama',
-            ),
+            _FeatureCard(icon: '⚡', title: 'Multi-provider AI', subtitle: 'OpenAI · Anthropic · Gemini · Ollama'),
             const SizedBox(height: 8),
-            _FeatureCard(
-              icon: '🖊',
-              title: 'Smart Code Editor',
-              subtitle: 'AI apply · diff view · file explorer',
-            ),
+            _FeatureCard(icon: '🖊', title: 'Smart Code Editor', subtitle: 'AI apply · diff view · file explorer'),
             const SizedBox(height: 8),
-            _FeatureCard(
-              icon: '🐙',
-              title: 'GitHub Integration',
-              subtitle: 'PRs · commits · repo browser',
-            ),
+            _FeatureCard(icon: '🐙', title: 'GitHub Integration', subtitle: 'PRs · commits · repo browser'),
             const Spacer(),
             const Text(
               '🔒 Keys stored in your OS keychain',
@@ -157,11 +119,7 @@ class _BrandingPanel extends StatelessWidget {
 // ── Right content panel ────────────────────────────────────────────────────
 
 class _ContentPanel extends ConsumerWidget {
-  const _ContentPanel({
-    required this.step,
-    required this.stepTitles,
-    required this.stepSubtitles,
-  });
+  const _ContentPanel({required this.step, required this.stepTitles, required this.stepSubtitles});
 
   final int step;
   final List<String> stepTitles;
@@ -197,13 +155,9 @@ class _ContentPanel extends ConsumerWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
-                onPressed: () =>
-                    ref.read(onboardingControllerProvider.notifier).back(),
-                icon: const Icon(Icons.chevron_left,
-                    size: 16, color: Color(0xFF888888)),
-                label: const Text('Back',
-                    style:
-                        TextStyle(color: Color(0xFF888888), fontSize: 12)),
+                onPressed: () => ref.read(onboardingControllerProvider.notifier).back(),
+                icon: const Icon(Icons.chevron_left, size: 16, color: Color(0xFF888888)),
+                label: const Text('Back', style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
               ),
             )
           else
@@ -231,21 +185,16 @@ class _ContentPanel extends ConsumerWidget {
             children: [
               TextButton(
                 onPressed: () => _skip(context, ref),
-                child: const Text('Skip for now',
-                    style: TextStyle(
-                        color: Color(0xFF666666), fontSize: 12)),
+                child: const Text('Skip for now', style: TextStyle(color: Color(0xFF666666), fontSize: 12)),
               ),
               if (step < 2)
                 FilledButton(
                   style: FilledButton.styleFrom(
                     backgroundColor: ThemeConstants.accent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                   ),
                   onPressed: () => _next(context, ref),
-                  child: const Text('Continue →',
-                      style: TextStyle(fontSize: 12)),
+                  child: const Text('Continue →', style: TextStyle(fontSize: 12)),
                 ),
             ],
           ),
@@ -258,11 +207,7 @@ class _ContentPanel extends ConsumerWidget {
 // ── Feature card (used in branding panel) ─────────────────────────────────
 
 class _FeatureCard extends StatelessWidget {
-  const _FeatureCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
+  const _FeatureCard({required this.icon, required this.title, required this.subtitle});
 
   final String icon;
   final String title;
@@ -282,17 +227,10 @@ class _FeatureCard extends StatelessWidget {
         children: [
           Text(
             '$icon  $title',
-            style: const TextStyle(
-                color: ThemeConstants.textPrimary,
-                fontSize: 11,
-                fontWeight: FontWeight.w600),
+            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 11, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style:
-                const TextStyle(color: ThemeConstants.textMuted, fontSize: 10),
-          ),
+          Text(subtitle, style: const TextStyle(color: ThemeConstants.textMuted, fontSize: 10)),
         ],
       ),
     );

@@ -126,7 +126,7 @@ final class ProjectSortProvider extends $AsyncNotifierProvider<ProjectSort, Proj
   ProjectSort create() => ProjectSort();
 }
 
-String _$projectSortHash() => r'b4fd5fbc44ad448ba62978dc91636fce8aa67b68';
+String _$projectSortHash() => r'4e71b840509f03a4e46fcaaffa3b696b3544dbac';
 
 abstract class _$ProjectSort extends $AsyncNotifier<ProjectSortState> {
   FutureOr<ProjectSortState> build();

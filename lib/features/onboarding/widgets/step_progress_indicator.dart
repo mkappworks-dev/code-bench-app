@@ -26,8 +26,7 @@ class StepProgressIndicator extends StatelessWidget {
             if (i < currentStep) {
               dotColor = const Color(0xFF4A7CFF); // completed
             } else if (i == currentStep) {
-              dotColor =
-                  const Color(0xFF4A7CFF).withValues(alpha: 0.5); // current
+              dotColor = const Color(0xFF4A7CFF).withValues(alpha: 0.5); // current
             } else {
               dotColor = const Color(0xFF2A2A2A); // upcoming
             }
@@ -37,10 +36,7 @@ class StepProgressIndicator extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 width: 24,
                 height: 6,
-                decoration: BoxDecoration(
-                  color: dotColor,
-                  borderRadius: BorderRadius.circular(3),
-                ),
+                decoration: BoxDecoration(color: dotColor, borderRadius: BorderRadius.circular(3)),
               ),
             );
           }),
@@ -60,21 +56,11 @@ class StepProgressIndicator extends StatelessWidget {
         // Step title
         Text(
           stepTitle,
-          style: const TextStyle(
-            color: Color(0xFFE0E0E0),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(color: Color(0xFFE0E0E0), fontSize: 18, fontWeight: FontWeight.w600),
         ),
         if (stepSubtitle.isNotEmpty) ...[
           const SizedBox(height: 4),
-          Text(
-            stepSubtitle,
-            style: const TextStyle(
-              color: Color(0xFF666666),
-              fontSize: 12,
-            ),
-          ),
+          Text(stepSubtitle, style: const TextStyle(color: Color(0xFF666666), fontSize: 12)),
         ],
       ],
     );

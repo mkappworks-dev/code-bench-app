@@ -16,9 +16,7 @@ class ApiKeysStep extends ConsumerStatefulWidget {
 
 class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
   final List<AIProvider> _addedProviders = [AIProvider.anthropic];
-  final Map<AIProvider, TextEditingController> _controllers = {
-    AIProvider.anthropic: TextEditingController(),
-  };
+  final Map<AIProvider, TextEditingController> _controllers = {AIProvider.anthropic: TextEditingController()};
   final Map<AIProvider, bool?> _testResults = {};
   final Map<AIProvider, bool> _testing = {};
   bool _saving = false;
@@ -49,36 +47,24 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
   }
 
   Future<void> _showProviderPicker() async {
-    final available =
-        AIProvider.values.where((p) => !_addedProviders.contains(p)).toList();
+    final available = AIProvider.values.where((p) => !_addedProviders.contains(p)).toList();
     if (available.isEmpty) return;
 
     final picked = await showDialog<AIProvider>(
       context: context,
       builder: (ctx) => SimpleDialog(
         backgroundColor: ThemeConstants.panelBackground,
-        title: const Text(
-          'Add a provider',
-          style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14),
-        ),
+        title: const Text('Add a provider', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
         children: [
           ...available.map(
             (p) => SimpleDialogOption(
               onPressed: () => Navigator.pop(ctx, p),
-              child: Text(
-                p.displayName,
-                style: const TextStyle(
-                    color: ThemeConstants.textPrimary, fontSize: 13),
-              ),
+              child: Text(p.displayName, style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 13)),
             ),
           ),
           SimpleDialogOption(
             onPressed: () => Navigator.pop(ctx, null),
-            child: const Text(
-              'Cancel',
-              style:
-                  TextStyle(color: ThemeConstants.textSecondary, fontSize: 13),
-            ),
+            child: const Text('Cancel', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 13)),
           ),
         ],
       ),
@@ -133,11 +119,7 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
         BaseOptions(
           baseUrl: 'https://api.anthropic.com/v1',
           connectTimeout: const Duration(seconds: 10),
-          headers: {
-            'x-api-key': key,
-            'anthropic-version': '2023-06-01',
-            'content-type': 'application/json',
-          },
+          headers: {'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
         ),
       );
       await dio.post(
@@ -219,8 +201,7 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
                   label: const Text('Add another provider'),
                   style: TextButton.styleFrom(
                     foregroundColor: ThemeConstants.accent,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                   ),
                 ),
             ],
@@ -230,15 +211,11 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
         FilledButton(
           style: FilledButton.styleFrom(
             backgroundColor: ThemeConstants.accent,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           ),
           onPressed: _saving ? null : _saveAll,
           child: _saving
-              ? const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2))
+              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
               : const Text('Save & Continue', style: TextStyle(fontSize: 12)),
         ),
       ],
@@ -274,9 +251,7 @@ class _ProviderRow extends StatefulWidget {
 class _ProviderRowState extends State<_ProviderRow> {
   bool _obscure = true;
 
-  bool get _isUrlProvider =>
-      widget.provider == AIProvider.ollama ||
-      widget.provider == AIProvider.custom;
+  bool get _isUrlProvider => widget.provider == AIProvider.ollama || widget.provider == AIProvider.custom;
 
   bool get _supportsTest =>
       widget.provider == AIProvider.openai ||
@@ -308,10 +283,7 @@ class _ProviderRowState extends State<_ProviderRow> {
               fontSize: 13,
               fontFamily: ThemeConstants.editorFontFamily,
             ),
-            decoration: InputDecoration(
-              hintText:
-                  _isUrlProvider ? 'http://localhost:11434' : 'API key...',
-            ),
+            decoration: InputDecoration(hintText: _isUrlProvider ? 'http://localhost:11434' : 'API key...'),
           ),
         ),
         if (!_isUrlProvider) ...[
@@ -332,28 +304,15 @@ class _ProviderRowState extends State<_ProviderRow> {
           OutlinedButton(
             onPressed: widget.isTesting ? null : widget.onTest,
             style: OutlinedButton.styleFrom(
-              side: BorderSide(
-                color: widget.testResult == true
-                    ? ThemeConstants.success
-                    : ThemeConstants.borderColor,
-              ),
-              foregroundColor: widget.testResult == true
-                  ? ThemeConstants.success
-                  : ThemeConstants.textSecondary,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              side: BorderSide(color: widget.testResult == true ? ThemeConstants.success : ThemeConstants.borderColor),
+              foregroundColor: widget.testResult == true ? ThemeConstants.success : ThemeConstants.textSecondary,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: widget.isTesting
-                ? const SizedBox(
-                    height: 12,
-                    width: 12,
-                    child: CircularProgressIndicator(strokeWidth: 2))
-                : Text(
-                    widget.testResult == true ? '✓ OK' : 'Test',
-                    style: const TextStyle(fontSize: 11),
-                  ),
+                ? const SizedBox(height: 12, width: 12, child: CircularProgressIndicator(strokeWidth: 2))
+                : Text(widget.testResult == true ? '✓ OK' : 'Test', style: const TextStyle(fontSize: 11)),
           ),
         ],
         const SizedBox(width: 6),
@@ -361,9 +320,7 @@ class _ProviderRowState extends State<_ProviderRow> {
           icon: Icon(
             Icons.close,
             size: 14,
-            color: widget.canRemove
-                ? ThemeConstants.textSecondary
-                : ThemeConstants.borderColor,
+            color: widget.canRemove ? ThemeConstants.textSecondary : ThemeConstants.borderColor,
           ),
           onPressed: widget.canRemove ? widget.onRemove : null,
           padding: EdgeInsets.zero,
