@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/utils/debug_logger.dart';
 import '../../data/datasources/local/onboarding_preferences.dart';
 import 'notifiers/onboarding_notifier.dart';
 import 'widgets/step_progress_indicator.dart';
@@ -125,9 +128,26 @@ class _ContentPanel extends ConsumerWidget {
   final List<String> stepTitles;
   final List<String> stepSubtitles;
 
+  /// Marks onboarding complete and navigates to the chat screen.
+  ///
+  /// This method swallows its own errors deliberately: if `markCompleted()`
+  /// throws (disk full, prefs corruption), we still want the user to land
+  /// in the app rather than be trapped on the final step. The worst case
+  /// is that onboarding reappears on next launch — a smaller UX failure
+  /// than stranding the user with a non-working "Finish" button.
+  ///
+  /// Callers can safely fire-and-forget this future.
   Future<void> _finish(BuildContext context, WidgetRef ref) async {
-    final prefs = ref.read(onboardingPreferencesProvider);
-    await prefs.markCompleted();
+    try {
+      await ref.read(onboardingPreferencesProvider).markCompleted();
+    } catch (e, st) {
+      dLog('[OnboardingScreen] markCompleted failed: $e\n$st');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not save onboarding progress — you may see this screen again')),
+        );
+      }
+    }
     if (context.mounted) context.go('/chat');
   }
 
@@ -136,7 +156,9 @@ class _ContentPanel extends ConsumerWidget {
     if (step < OnboardingController.totalSteps - 1) {
       controller.next();
     } else {
-      _finish(context, ref);
+      // `_finish` catches its own errors and navigates on every path, so
+      // dropping this future is intentional.
+      unawaited(_finish(context, ref));
     }
   }
 
