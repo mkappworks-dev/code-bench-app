@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_database.g.dart';
@@ -57,32 +56,24 @@ class WorkspaceProjects extends Table {
 class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   SessionDao(super.db);
 
-  Stream<List<ChatSessionRow>> watchAllSessions() => (select(chatSessions)
-        ..where((t) => t.isArchived.equals(false))
-        ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
-      .watch();
+  Stream<List<ChatSessionRow>> watchAllSessions() =>
+      (select(chatSessions)
+            ..where((t) => t.isArchived.equals(false))
+            ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+          .watch();
 
-  Future<ChatSessionRow?> getSession(String sessionId) => (select(
-        chatSessions,
-      )..where((t) => t.sessionId.equals(sessionId)))
-          .getSingleOrNull();
+  Future<ChatSessionRow?> getSession(String sessionId) =>
+      (select(chatSessions)..where((t) => t.sessionId.equals(sessionId))).getSingleOrNull();
 
   Future<void> upsertSession(ChatSessionsCompanion session) => into(chatSessions).insertOnConflictUpdate(session);
 
-  Future<void> updateSession(
-    String sessionId,
-    ChatSessionsCompanion companion,
-  ) =>
+  Future<void> updateSession(String sessionId, ChatSessionsCompanion companion) =>
       (update(chatSessions)..where((t) => t.sessionId.equals(sessionId))).write(companion);
 
   Future<void> deleteSession(String sessionId) =>
       (delete(chatSessions)..where((t) => t.sessionId.equals(sessionId))).go();
 
-  Future<List<ChatMessageRow>> getMessages(
-    String sessionId, {
-    int limit = 50,
-    int offset = 0,
-  }) =>
+  Future<List<ChatMessageRow>> getMessages(String sessionId, {int limit = 50, int offset = 0}) =>
       (select(chatMessages)
             ..where((t) => t.sessionId.equals(sessionId))
             ..orderBy([(t) => OrderingTerm.asc(t.timestamp)])
@@ -94,43 +85,39 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   Future<void> deleteSessionMessages(String sessionId) =>
       (delete(chatMessages)..where((t) => t.sessionId.equals(sessionId))).go();
 
-  Stream<List<ChatSessionRow>> watchSessionsByProject(String projectId) => (select(chatSessions)
-        ..where(
-          (t) => t.projectId.equals(projectId) & t.isArchived.equals(false),
-        )
-        ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
-      .watch();
+  Stream<List<ChatSessionRow>> watchSessionsByProject(String projectId) =>
+      (select(chatSessions)
+            ..where((t) => t.projectId.equals(projectId) & t.isArchived.equals(false))
+            ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+          .watch();
 
-  Stream<List<ChatSessionRow>> watchArchivedSessions() => (select(chatSessions)
-        ..where((t) => t.isArchived.equals(true))
-        ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
-      .watch();
+  Stream<List<ChatSessionRow>> watchArchivedSessions() =>
+      (select(chatSessions)
+            ..where((t) => t.isArchived.equals(true))
+            ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+          .watch();
 
-  Future<void> archiveSession(String id) => (update(chatSessions)..where((t) => t.sessionId.equals(id)))
-      .write(const ChatSessionsCompanion(isArchived: Value(true)));
+  Future<void> archiveSession(String id) => (update(
+    chatSessions,
+  )..where((t) => t.sessionId.equals(id))).write(const ChatSessionsCompanion(isArchived: Value(true)));
 
-  Future<void> unarchiveSession(String id) => (update(chatSessions)..where((t) => t.sessionId.equals(id)))
-      .write(const ChatSessionsCompanion(isArchived: Value(false)));
+  Future<void> unarchiveSession(String id) => (update(
+    chatSessions,
+  )..where((t) => t.sessionId.equals(id))).write(const ChatSessionsCompanion(isArchived: Value(false)));
 }
 
 @DriftAccessor(tables: [WorkspaceProjects])
 class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
   ProjectDao(super.db);
 
-  Future<List<WorkspaceProjectRow>> getAllProjects() => (select(
-        workspaceProjects,
-      )..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
-          .get();
+  Future<List<WorkspaceProjectRow>> getAllProjects() =>
+      (select(workspaceProjects)..orderBy([(t) => OrderingTerm.asc(t.sortOrder)])).get();
 
-  Stream<List<WorkspaceProjectRow>> watchAllProjects() => (select(
-        workspaceProjects,
-      )..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
-          .watch();
+  Stream<List<WorkspaceProjectRow>> watchAllProjects() =>
+      (select(workspaceProjects)..orderBy([(t) => OrderingTerm.asc(t.sortOrder)])).watch();
 
-  Future<WorkspaceProjectRow?> getProject(String id) => (select(
-        workspaceProjects,
-      )..where((t) => t.id.equals(id)))
-          .getSingleOrNull();
+  Future<WorkspaceProjectRow?> getProject(String id) =>
+      (select(workspaceProjects)..where((t) => t.id.equals(id))).getSingleOrNull();
 
   Future<void> upsertProject(WorkspaceProjectsCompanion project) =>
       into(workspaceProjects).insertOnConflictUpdate(project);
@@ -143,10 +130,7 @@ class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
 
 // ── Database ─────────────────────────────────────────────────────────────────
 
-@DriftDatabase(
-  tables: [ChatSessions, ChatMessages, WorkspaceProjects],
-  daos: [SessionDao, ProjectDao],
-)
+@DriftDatabase(tables: [ChatSessions, ChatMessages, WorkspaceProjects], daos: [SessionDao, ProjectDao])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -155,23 +139,20 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onUpgrade: (migrator, from, to) async {
-          if (from < 2) {
-            await migrator.addColumn(chatSessions, chatSessions.projectId);
-            await migrator.deleteTable('workspace_projects');
-            await migrator.createTable(workspaceProjects);
-          }
-          if (from < 3) {
-            await migrator.addColumn(chatSessions, chatSessions.isArchived);
-          }
-          if (from < 4) {
-            await migrator.addColumn(
-              workspaceProjects,
-              workspaceProjects.actionsJson,
-            );
-          }
-        },
-      );
+    onUpgrade: (migrator, from, to) async {
+      if (from < 2) {
+        await migrator.addColumn(chatSessions, chatSessions.projectId);
+        await migrator.deleteTable('workspace_projects');
+        await migrator.createTable(workspaceProjects);
+      }
+      if (from < 3) {
+        await migrator.addColumn(chatSessions, chatSessions.isArchived);
+      }
+      if (from < 4) {
+        await migrator.addColumn(workspaceProjects, workspaceProjects.actionsJson);
+      }
+    },
+  );
 }
 
 QueryExecutor _openConnection() {

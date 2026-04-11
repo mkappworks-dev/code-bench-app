@@ -124,12 +124,7 @@ class GeminiService implements AIService {
       final models = (data['models'] as List).where((m) => (m['name'] as String).contains('gemini')).map((m) {
         final name = m['name'] as String;
         final id = name.split('/').last;
-        return AIModel(
-          id: id,
-          provider: AIProvider.gemini,
-          name: m['displayName'] as String? ?? id,
-          modelId: id,
-        );
+        return AIModel(id: id, provider: AIProvider.gemini, name: m['displayName'] as String? ?? id, modelId: id);
       }).toList();
       return models;
     } catch (_) {
@@ -137,10 +132,7 @@ class GeminiService implements AIService {
     }
   }
 
-  List<Map<String, dynamic>> _buildContents(
-    List<ChatMessage> history,
-    String prompt,
-  ) {
+  List<Map<String, dynamic>> _buildContents(List<ChatMessage> history, String prompt) {
     final contents = <Map<String, dynamic>>[];
     for (final msg in history.where((m) => m.role != MessageRole.system)) {
       contents.add({

@@ -189,11 +189,7 @@ void main() {
     );
 
     final change = container.read(appliedChangesProvider)['sid']!.first;
-    await service.revertChange(
-      change: change,
-      isGit: false,
-      projectPath: tmpDir.path,
-    );
+    await service.revertChange(change: change, isGit: false, projectPath: tmpDir.path);
 
     expect(File(filePath).readAsStringSync(), 'original');
 
@@ -213,11 +209,7 @@ void main() {
     );
 
     final change = container.read(appliedChangesProvider)['sid']!.first;
-    await service.revertChange(
-      change: change,
-      isGit: false,
-      projectPath: tmpDir.path,
-    );
+    await service.revertChange(change: change, isGit: false, projectPath: tmpDir.path);
 
     expect(File(filePath).existsSync(), false);
   });
@@ -248,11 +240,7 @@ void main() {
     );
 
     final change = container.read(appliedChangesProvider)['sid']!.first;
-    await gitService.revertChange(
-      change: change,
-      isGit: true,
-      projectPath: tmpDir.path,
-    );
+    await gitService.revertChange(change: change, isGit: true, projectPath: tmpDir.path);
 
     expect(capturedArgs, ['git', 'checkout', '--', filePath]);
     expect(capturedWorkingDir, tmpDir.path);
@@ -270,9 +258,8 @@ void main() {
       uuidGen: () => 'timeout-direct-uuid',
       // Throw TimeoutException directly to exercise the catch branch
       // without actually waiting the 15s timer.
-      processRunner: (exe, args, {workingDirectory}) => Future.delayed(const Duration(milliseconds: 1)).then(
-        (_) => throw TimeoutException('simulated hang'),
-      ),
+      processRunner: (exe, args, {workingDirectory}) =>
+          Future.delayed(const Duration(milliseconds: 1)).then((_) => throw TimeoutException('simulated hang')),
     );
 
     await timeoutService.applyChange(
@@ -286,18 +273,8 @@ void main() {
     final change = container.read(appliedChangesProvider)['sid']!.first;
 
     await expectLater(
-      () => timeoutService.revertChange(
-        change: change,
-        isGit: true,
-        projectPath: tmpDir.path,
-      ),
-      throwsA(
-        isA<StateError>().having(
-          (e) => e.message,
-          'message',
-          contains('timed out'),
-        ),
-      ),
+      () => timeoutService.revertChange(change: change, isGit: true, projectPath: tmpDir.path),
+      throwsA(isA<StateError>().having((e) => e.message, 'message', contains('timed out'))),
     );
 
     // Notifier entry preserved on failure
@@ -326,11 +303,7 @@ void main() {
     final change = container.read(appliedChangesProvider)['sid']!.first;
 
     await expectLater(
-      () => gitService.revertChange(
-        change: change,
-        isGit: true,
-        projectPath: tmpDir.path,
-      ),
+      () => gitService.revertChange(change: change, isGit: true, projectPath: tmpDir.path),
       throwsA(isA<StateError>()),
     );
 
@@ -370,11 +343,7 @@ void main() {
     );
 
     await expectLater(
-      () => service.revertChange(
-        change: maliciousChange,
-        isGit: false,
-        projectPath: tmpDir.path,
-      ),
+      () => service.revertChange(change: maliciousChange, isGit: false, projectPath: tmpDir.path),
       throwsA(isA<StateError>()),
     );
   });
@@ -397,11 +366,7 @@ void main() {
       );
 
       await expectLater(
-        () => service.revertChange(
-          change: maliciousChange,
-          isGit: false,
-          projectPath: tmpDir.path,
-        ),
+        () => service.revertChange(change: maliciousChange, isGit: false, projectPath: tmpDir.path),
         throwsA(isA<StateError>()),
       );
     } finally {
@@ -410,13 +375,7 @@ void main() {
   });
 
   test('assertWithinProject allows paths inside project root', () {
-    expect(
-      () => ApplyService.assertWithinProject(
-        '${tmpDir.path}/lib/main.dart',
-        tmpDir.path,
-      ),
-      returnsNormally,
-    );
+    expect(() => ApplyService.assertWithinProject('${tmpDir.path}/lib/main.dart', tmpDir.path), returnsNormally);
   });
 
   test('assertWithinProject blocks symlink escape', () async {
@@ -430,10 +389,7 @@ void main() {
       // Attempting to write through the symlink must be blocked even though
       // the lexical path "<project>/escape/evil.txt" starts with the project root
       expect(
-        () => ApplyService.assertWithinProject(
-          p.join(linkPath, 'evil.txt'),
-          tmpDir.path,
-        ),
+        () => ApplyService.assertWithinProject(p.join(linkPath, 'evil.txt'), tmpDir.path),
         throwsA(isA<StateError>()),
       );
     } finally {
@@ -444,9 +400,6 @@ void main() {
   test('assertWithinProject blocks sibling-prefix attack', () {
     // Project is /tmp/foo, attacker tries /tmp/foo-evil/x.dart
     final siblingPath = '${tmpDir.path}-evil/x.dart';
-    expect(
-      () => ApplyService.assertWithinProject(siblingPath, tmpDir.path),
-      throwsA(isA<StateError>()),
-    );
+    expect(() => ApplyService.assertWithinProject(siblingPath, tmpDir.path), throwsA(isA<StateError>()));
   });
 }

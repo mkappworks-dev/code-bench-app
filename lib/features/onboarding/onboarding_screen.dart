@@ -17,9 +17,7 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final List<AIProvider> _addedProviders = [AIProvider.anthropic];
-  final Map<AIProvider, TextEditingController> _controllers = {
-    AIProvider.anthropic: TextEditingController(),
-  };
+  final Map<AIProvider, TextEditingController> _controllers = {AIProvider.anthropic: TextEditingController()};
   final Map<AIProvider, bool?> _testResults = {};
   final Map<AIProvider, bool> _testing = {};
   bool _saving = false;
@@ -57,29 +55,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       context: context,
       builder: (ctx) => SimpleDialog(
         backgroundColor: ThemeConstants.panelBackground,
-        title: const Text(
-          'Add a provider',
-          style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14),
-        ),
+        title: const Text('Add a provider', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
         children: [
           ...available.map(
             (p) => SimpleDialogOption(
               onPressed: () => Navigator.pop(ctx, p),
-              child: Text(
-                p.displayName,
-                style: const TextStyle(
-                  color: ThemeConstants.textPrimary,
-                  fontSize: 13,
-                ),
-              ),
+              child: Text(p.displayName, style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 13)),
             ),
           ),
           SimpleDialogOption(
             onPressed: () => Navigator.pop(ctx, null),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 13),
-            ),
+            child: const Text('Cancel', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 13)),
           ),
         ],
       ),
@@ -114,11 +100,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<bool> _testOpenAI(String key) async {
     try {
-      final dio = Dio(BaseOptions(
-        baseUrl: 'https://api.openai.com/v1',
-        connectTimeout: const Duration(seconds: 10),
-        headers: {'Authorization': 'Bearer $key'},
-      ));
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: 'https://api.openai.com/v1',
+          connectTimeout: const Duration(seconds: 10),
+          headers: {'Authorization': 'Bearer $key'},
+        ),
+      );
       await dio.get('/models');
       return true;
     } catch (_) {
@@ -128,22 +116,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<bool> _testAnthropic(String key) async {
     try {
-      final dio = Dio(BaseOptions(
-        baseUrl: 'https://api.anthropic.com/v1',
-        connectTimeout: const Duration(seconds: 10),
-        headers: {
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: 'https://api.anthropic.com/v1',
+          connectTimeout: const Duration(seconds: 10),
+          headers: {'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
+        ),
+      );
+      await dio.post(
+        '/messages',
+        data: {
+          'model': 'claude-3-haiku-20240307',
+          'max_tokens': 1,
+          'messages': [
+            {'role': 'user', 'content': 'hi'},
+          ],
         },
-      ));
-      await dio.post('/messages', data: {
-        'model': 'claude-3-haiku-20240307',
-        'max_tokens': 1,
-        'messages': [
-          {'role': 'user', 'content': 'hi'},
-        ],
-      });
+      );
       return true;
     } catch (e) {
       if (e.toString().contains('400')) return true;
@@ -153,10 +142,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<bool> _testGemini(String key) async {
     try {
-      final dio = Dio(BaseOptions(
-        baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-        connectTimeout: const Duration(seconds: 10),
-      ));
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+          connectTimeout: const Duration(seconds: 10),
+        ),
+      );
       await dio.get('/models?key=$key');
       return true;
     } catch (_) {
@@ -207,15 +198,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   stops: [0.0, 0.5, 1.0],
-                  colors: [
-                    ThemeConstants.sidebarBackground,
-                    ThemeConstants.activityBar,
-                    ThemeConstants.deepBackground,
-                  ],
+                  colors: [ThemeConstants.sidebarBackground, ThemeConstants.activityBar, ThemeConstants.deepBackground],
                 ),
-                border: Border(
-                  right: BorderSide(color: ThemeConstants.borderColor),
-                ),
+                border: Border(right: BorderSide(color: ThemeConstants.borderColor)),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
               child: Column(
@@ -234,49 +219,28 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(8),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x99000000),
-                              blurRadius: 10,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
+                          boxShadow: const [BoxShadow(color: Color(0x99000000), blurRadius: 10, offset: Offset(0, 2))],
                         ),
                         alignment: Alignment.center,
                         child: const Text(
                           'C',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
                         ),
                       ),
                       const SizedBox(width: 10),
                       const Text(
                         'Code Bench',
-                        style: TextStyle(
-                          color: ThemeConstants.textPrimary,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 17, fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   const Text(
                     'AI-powered coding workspace',
-                    style: TextStyle(
-                      color: ThemeConstants.textSecondary,
-                      fontSize: 11,
-                    ),
+                    style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 11),
                   ),
                   const SizedBox(height: 28),
-                  _FeatureCard(
-                    icon: '⚡',
-                    title: 'Multi-provider AI',
-                    subtitle: 'OpenAI · Anthropic · Gemini · Ollama',
-                  ),
+                  _FeatureCard(icon: '⚡', title: 'Multi-provider AI', subtitle: 'OpenAI · Anthropic · Gemini · Ollama'),
                   const SizedBox(height: 8),
                   _FeatureCard(
                     icon: '🖊',
@@ -284,18 +248,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     subtitle: 'AI apply · diff view · file explorer',
                   ),
                   const SizedBox(height: 8),
-                  _FeatureCard(
-                    icon: '🐙',
-                    title: 'GitHub Integration',
-                    subtitle: 'PRs · commits · repo browser',
-                  ),
+                  _FeatureCard(icon: '🐙', title: 'GitHub Integration', subtitle: 'PRs · commits · repo browser'),
                   const Spacer(),
                   const Text(
                     '🔒 Keys stored in your OS keychain',
-                    style: TextStyle(
-                      color: ThemeConstants.textMuted,
-                      fontSize: 10,
-                    ),
+                    style: TextStyle(color: ThemeConstants.textMuted, fontSize: 10),
                   ),
                 ],
               ),
@@ -314,19 +271,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 children: [
                   const Text(
                     'Add API Keys',
-                    style: TextStyle(
-                      color: ThemeConstants.textPrimary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
                   const Text(
                     'Add now or any time in Settings.',
-                    style: TextStyle(
-                      color: ThemeConstants.textSecondary,
-                      fontSize: 11,
-                    ),
+                    style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 11),
                   ),
                   const SizedBox(height: 28),
                   ..._addedProviders.map(
@@ -351,10 +301,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       label: const Text('Add another provider'),
                       style: TextButton.styleFrom(
                         foregroundColor: ThemeConstants.accent,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 8,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                       ),
                     ),
                   ],
@@ -377,11 +324,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         child: ElevatedButton(
                           onPressed: _saving ? null : _saveAndContinue,
                           child: _saving
-                              ? const SizedBox(
-                                  height: 16,
-                                  width: 16,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
+                              ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
                               : const Text('Save & Continue'),
                         ),
                       ),
@@ -398,11 +341,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 }
 
 class _FeatureCard extends StatelessWidget {
-  const _FeatureCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
+  const _FeatureCard({required this.icon, required this.title, required this.subtitle});
 
   final String icon;
   final String title;
@@ -422,20 +361,10 @@ class _FeatureCard extends StatelessWidget {
         children: [
           Text(
             '$icon  $title',
-            style: const TextStyle(
-              color: ThemeConstants.textPrimary,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 11, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              color: ThemeConstants.textMuted,
-              fontSize: 10,
-            ),
-          ),
+          Text(subtitle, style: const TextStyle(color: ThemeConstants.textMuted, fontSize: 10)),
         ],
       ),
     );
@@ -500,9 +429,7 @@ class _ProviderRowState extends State<_ProviderRow> {
               fontSize: 13,
               fontFamily: ThemeConstants.editorFontFamily,
             ),
-            decoration: InputDecoration(
-              hintText: _isUrlProvider ? 'http://localhost:11434' : 'API key...',
-            ),
+            decoration: InputDecoration(hintText: _isUrlProvider ? 'http://localhost:11434' : 'API key...'),
           ),
         ),
         if (!_isUrlProvider) ...[
@@ -523,24 +450,15 @@ class _ProviderRowState extends State<_ProviderRow> {
           OutlinedButton(
             onPressed: widget.isTesting ? null : widget.onTest,
             style: OutlinedButton.styleFrom(
-              side: BorderSide(
-                color: widget.testResult == true ? ThemeConstants.success : ThemeConstants.borderColor,
-              ),
+              side: BorderSide(color: widget.testResult == true ? ThemeConstants.success : ThemeConstants.borderColor),
               foregroundColor: widget.testResult == true ? ThemeConstants.success : ThemeConstants.textSecondary,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: widget.isTesting
-                ? const SizedBox(
-                    height: 12,
-                    width: 12,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(
-                    widget.testResult == true ? '✓ OK' : 'Test',
-                    style: const TextStyle(fontSize: 11),
-                  ),
+                ? const SizedBox(height: 12, width: 12, child: CircularProgressIndicator(strokeWidth: 2))
+                : Text(widget.testResult == true ? '✓ OK' : 'Test', style: const TextStyle(fontSize: 11)),
           ),
         ],
         const SizedBox(width: 6),

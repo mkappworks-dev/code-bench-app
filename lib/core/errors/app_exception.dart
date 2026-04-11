@@ -10,12 +10,7 @@ sealed class AppException implements Exception {
 }
 
 final class NetworkException extends AppException {
-  const NetworkException(
-    super.message, {
-    super.code,
-    super.originalError,
-    this.statusCode,
-  });
+  const NetworkException(super.message, {super.code, super.originalError, this.statusCode});
 
   final int? statusCode;
 }
@@ -33,12 +28,7 @@ final class StorageException extends AppException {
 }
 
 final class FileSystemException extends AppException {
-  const FileSystemException(
-    super.message, {
-    super.code,
-    super.originalError,
-    this.path,
-  });
+  const FileSystemException(super.message, {super.code, super.originalError, this.path});
 
   final String? path;
 }

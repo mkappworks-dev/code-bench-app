@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -47,10 +46,8 @@ class ProjectSortState {
   const ProjectSortState({required this.projectSort, required this.threadSort});
   final ProjectSortOrder projectSort;
   final ThreadSortOrder threadSort;
-  ProjectSortState copyWith({ProjectSortOrder? projectSort, ThreadSortOrder? threadSort}) => ProjectSortState(
-        projectSort: projectSort ?? this.projectSort,
-        threadSort: threadSort ?? this.threadSort,
-      );
+  ProjectSortState copyWith({ProjectSortOrder? projectSort, ThreadSortOrder? threadSort}) =>
+      ProjectSortState(projectSort: projectSort ?? this.projectSort, threadSort: threadSort ?? this.threadSort);
 }
 
 @Riverpod(keepAlive: true)
@@ -73,14 +70,14 @@ class ProjectSort extends _$ProjectSort {
   }
 
   Future<void> setProjectSort(ProjectSortOrder order) async {
-    final current = state.valueOrNull ?? await future;
+    final current = state.value ?? await future;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_projectKey, order.name);
     state = AsyncData(current.copyWith(projectSort: order));
   }
 
   Future<void> setThreadSort(ThreadSortOrder order) async {
-    final current = state.valueOrNull ?? await future;
+    final current = state.value ?? await future;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_threadKey, order.name);
     state = AsyncData(current.copyWith(threadSort: order));

@@ -19,10 +19,7 @@ class OpenAIService implements AIService {
       baseUrl: ApiConstants.openAiBaseUrl,
       connectTimeout: ApiConstants.connectTimeout,
       receiveTimeout: ApiConstants.receiveTimeout,
-      headers: {
-        'Authorization': 'Bearer $_apiKey',
-        'Content-Type': 'application/json',
-      },
+      headers: {'Authorization': 'Bearer $_apiKey', 'Content-Type': 'application/json'},
     ),
   );
 
@@ -111,10 +108,7 @@ class OpenAIService implements AIService {
       final testDio = Dio(
         BaseOptions(
           baseUrl: ApiConstants.openAiBaseUrl,
-          headers: {
-            'Authorization': 'Bearer $apiKey',
-            'Content-Type': 'application/json',
-          },
+          headers: {'Authorization': 'Bearer $apiKey', 'Content-Type': 'application/json'},
         ),
       );
       await testDio.get(ApiConstants.openAiModelsEndpoint);
@@ -128,24 +122,14 @@ class OpenAIService implements AIService {
   Future<List<AIModel>> fetchAvailableModels(String apiKey) async {
     try {
       final testDio = Dio(
-        BaseOptions(
-          baseUrl: ApiConstants.openAiBaseUrl,
-          headers: {'Authorization': 'Bearer $apiKey'},
-        ),
+        BaseOptions(baseUrl: ApiConstants.openAiBaseUrl, headers: {'Authorization': 'Bearer $apiKey'}),
       );
       final response = await testDio.get(ApiConstants.openAiModelsEndpoint);
       final data = response.data as Map<String, dynamic>;
       final models = (data['data'] as List)
           .map((m) => m['id'] as String)
           .where((id) => id.startsWith('gpt-'))
-          .map(
-            (id) => AIModel(
-              id: id,
-              provider: AIProvider.openai,
-              name: id,
-              modelId: id,
-            ),
-          )
+          .map((id) => AIModel(id: id, provider: AIProvider.openai, name: id, modelId: id))
           .toList();
       return models;
     } catch (_) {
@@ -153,11 +137,7 @@ class OpenAIService implements AIService {
     }
   }
 
-  List<Map<String, String>> _buildMessages(
-    List<ChatMessage> history,
-    String prompt,
-    String? systemPrompt,
-  ) {
+  List<Map<String, String>> _buildMessages(List<ChatMessage> history, String prompt, String? systemPrompt) {
     final messages = <Map<String, String>>[];
     if (systemPrompt != null) {
       messages.add({'role': 'system', 'content': systemPrompt});

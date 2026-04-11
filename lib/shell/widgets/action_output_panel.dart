@@ -9,7 +9,7 @@ class ActionOutputPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(actionOutputNotifierProvider);
+    final state = ref.watch(actionOutputProvider);
     if (state.status == ActionStatus.idle) return const SizedBox.shrink();
 
     final statusLabel = switch (state.status) {
@@ -60,7 +60,7 @@ class ActionOutputPanel extends ConsumerWidget {
                 ),
                 const Spacer(),
                 GestureDetector(
-                  onTap: () => ref.read(actionOutputNotifierProvider.notifier).clear(),
+                  onTap: () => ref.read(actionOutputProvider.notifier).clear(),
                   child: const Icon(Icons.close, size: 14, color: ThemeConstants.textSecondary),
                 ),
               ],

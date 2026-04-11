@@ -6,20 +6,42 @@ part of 'general_preferences.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$generalPreferencesHash() => r'45c3499e243189d6a6bd66afdeb2736ffba541dc';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [generalPreferences].
 @ProviderFor(generalPreferences)
-final generalPreferencesProvider = Provider<GeneralPreferences>.internal(
-  generalPreferences,
-  name: r'generalPreferencesProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$generalPreferencesHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final generalPreferencesProvider = GeneralPreferencesProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef GeneralPreferencesRef = ProviderRef<GeneralPreferences>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class GeneralPreferencesProvider
+    extends $FunctionalProvider<GeneralPreferences, GeneralPreferences, GeneralPreferences>
+    with $Provider<GeneralPreferences> {
+  GeneralPreferencesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'generalPreferencesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$generalPreferencesHash();
+
+  @$internal
+  @override
+  $ProviderElement<GeneralPreferences> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+
+  @override
+  GeneralPreferences create(Ref ref) {
+    return generalPreferences(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(GeneralPreferences value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<GeneralPreferences>(value));
+  }
+}
+
+String _$generalPreferencesHash() => r'45c3499e243189d6a6bd66afdeb2736ffba541dc';

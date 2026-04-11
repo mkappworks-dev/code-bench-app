@@ -8,12 +8,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 ProviderContainer _container() {
-  final c = ProviderContainer(overrides: [
-    // Override the stream-based projectsProvider so it doesn't hit the
-    // database layer. An empty list is fine — changes_panel gracefully
-    // handles project == null.
-    projectsProvider.overrideWith((ref) => Stream.value(<Project>[])),
-  ]);
+  final c = ProviderContainer(
+    overrides: [
+      // Override the stream-based projectsProvider so it doesn't hit the
+      // database layer. An empty list is fine — changes_panel gracefully
+      // handles project == null.
+      projectsProvider.overrideWith((ref) => Stream.value(<Project>[])),
+    ],
+  );
   return c;
 }
 
@@ -33,31 +35,26 @@ AppliedChange _makeChange({
   String newContent = 'new',
   int additions = 0,
   int deletions = 0,
-}) =>
-    AppliedChange(
-      id: id,
-      sessionId: sessionId,
-      messageId: messageId,
-      filePath: filePath,
-      originalContent: originalContent,
-      newContent: newContent,
-      appliedAt: DateTime.now(),
-      additions: additions,
-      deletions: deletions,
-    );
+}) => AppliedChange(
+  id: id,
+  sessionId: sessionId,
+  messageId: messageId,
+  filePath: filePath,
+  originalContent: originalContent,
+  newContent: newContent,
+  appliedAt: DateTime.now(),
+  additions: additions,
+  deletions: deletions,
+);
 
 void main() {
   testWidgets('renders persisted +N and −N from AppliedChange', (tester) async {
     final container = _container();
     addTearDown(container.dispose);
 
-    container.read(appliedChangesProvider.notifier).apply(
-          _makeChange(additions: 7, deletions: 3),
-        );
+    container.read(appliedChangesProvider.notifier).apply(_makeChange(additions: 7, deletions: 3));
 
-    await tester.pumpWidget(
-      _wrap(const ChangesPanel(sessionId: 'sid'), container),
-    );
+    await tester.pumpWidget(_wrap(const ChangesPanel(sessionId: 'sid'), container));
 
     expect(find.text('+7'), findsOneWidget);
     expect(find.text('\u22123'), findsOneWidget);
@@ -67,39 +64,30 @@ void main() {
     final container = _container();
     addTearDown(container.dispose);
 
-    await tester.pumpWidget(
-      _wrap(const ChangesPanel(sessionId: 'sid'), container),
-    );
+    await tester.pumpWidget(_wrap(const ChangesPanel(sessionId: 'sid'), container));
 
     expect(find.text('No changes yet'), findsOneWidget);
   });
 
-  testWidgets(
-    'swapping N lines for N different lines does NOT show +0 −0 (regression guard)',
-    (tester) async {
-      // In the pre-fix world, _lineCounts computed a signed line-delta
-      // (newLines - originalLines), which returned 0/0 when the line count
-      // was unchanged — visually identical to "no change". After the fix,
-      // the panel reads persisted additions/deletions from AppliedChange,
-      // so a 10-for-10 swap shows non-zero counts on both sides.
-      final container = _container();
-      addTearDown(container.dispose);
+  testWidgets('swapping N lines for N different lines does NOT show +0 −0 (regression guard)', (tester) async {
+    // In the pre-fix world, _lineCounts computed a signed line-delta
+    // (newLines - originalLines), which returned 0/0 when the line count
+    // was unchanged — visually identical to "no change". After the fix,
+    // the panel reads persisted additions/deletions from AppliedChange,
+    // so a 10-for-10 swap shows non-zero counts on both sides.
+    final container = _container();
+    addTearDown(container.dispose);
 
-      container.read(appliedChangesProvider.notifier).apply(
-            _makeChange(additions: 10, deletions: 10),
-          );
+    container.read(appliedChangesProvider.notifier).apply(_makeChange(additions: 10, deletions: 10));
 
-      await tester.pumpWidget(
-        _wrap(const ChangesPanel(sessionId: 'sid'), container),
-      );
+    await tester.pumpWidget(_wrap(const ChangesPanel(sessionId: 'sid'), container));
 
-      expect(find.text('+10'), findsOneWidget);
-      expect(find.text('\u221210'), findsOneWidget);
-      // Explicit regression assertions: the old buggy rendering is gone.
-      expect(find.text('+0'), findsNothing);
-      expect(find.text('\u22120'), findsNothing);
-    },
-  );
+    expect(find.text('+10'), findsOneWidget);
+    expect(find.text('\u221210'), findsOneWidget);
+    // Explicit regression assertions: the old buggy rendering is gone.
+    expect(find.text('+0'), findsNothing);
+    expect(find.text('\u22120'), findsNothing);
+  });
 
   testWidgets('groups multiple changes under their messageId', (tester) async {
     final container = _container();
@@ -108,18 +96,10 @@ void main() {
     final notifier = container.read(appliedChangesProvider.notifier);
     notifier.apply(_makeChange(id: 'c1', messageId: 'm1', additions: 1, deletions: 0));
     notifier.apply(
-      _makeChange(
-        id: 'c2',
-        messageId: 'm1',
-        filePath: '/tmp/proj/lib/other.dart',
-        additions: 2,
-        deletions: 0,
-      ),
+      _makeChange(id: 'c2', messageId: 'm1', filePath: '/tmp/proj/lib/other.dart', additions: 2, deletions: 0),
     );
 
-    await tester.pumpWidget(
-      _wrap(const ChangesPanel(sessionId: 'sid'), container),
-    );
+    await tester.pumpWidget(_wrap(const ChangesPanel(sessionId: 'sid'), container));
 
     // One "Message 1" header for the grouped m1 bundle
     expect(find.text('Message 1'), findsOneWidget);

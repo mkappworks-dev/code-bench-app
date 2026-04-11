@@ -6,12 +6,10 @@ part of 'project_action.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$ProjectActionImpl _$$ProjectActionImplFromJson(Map<String, dynamic> json) => _$ProjectActionImpl(
-      name: json['name'] as String,
-      command: json['command'] as String,
-    );
+_ProjectAction _$ProjectActionFromJson(Map<String, dynamic> json) =>
+    _ProjectAction(name: json['name'] as String, command: json['command'] as String);
 
-Map<String, dynamic> _$$ProjectActionImplToJson(_$ProjectActionImpl instance) => <String, dynamic>{
-      'name': instance.name,
-      'command': instance.command,
-    };
+Map<String, dynamic> _$ProjectActionToJson(_ProjectAction instance) => <String, dynamic>{
+  'name': instance.name,
+  'command': instance.command,
+};

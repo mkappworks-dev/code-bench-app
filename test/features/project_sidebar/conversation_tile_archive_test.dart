@@ -16,16 +16,18 @@ void main() {
 
   testWidgets('right-click shows Archive option', (tester) async {
     String? archived;
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ConversationTile(
-          session: session,
-          isActive: false,
-          onTap: () {},
-          onArchive: () => archived = session.sessionId,
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ConversationTile(
+            session: session,
+            isActive: false,
+            onTap: () {},
+            onArchive: () => archived = session.sessionId,
+          ),
         ),
       ),
-    ));
+    );
 
     await tester.sendEventToBinding(
       TestPointer(1, PointerDeviceKind.mouse).hover(tester.getCenter(find.text('My session'))),

@@ -93,22 +93,13 @@ class _UserBubble extends StatelessWidget {
     return Align(
       alignment: Alignment.centerRight,
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.82,
-        ),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-          decoration: BoxDecoration(
-            color: ThemeConstants.userMessageBg,
-            borderRadius: BorderRadius.circular(10),
-          ),
+          decoration: BoxDecoration(color: ThemeConstants.userMessageBg, borderRadius: BorderRadius.circular(10)),
           child: SelectableText(
             message.content,
-            style: const TextStyle(
-              color: ThemeConstants.textPrimary,
-              fontSize: ThemeConstants.uiFontSize,
-              height: 1.5,
-            ),
+            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),
           ),
         ),
       ),
@@ -127,11 +118,7 @@ class _AssistantBubble extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 2,
-          margin: const EdgeInsets.only(top: 3, bottom: 3),
-          color: ThemeConstants.borderColor,
-        ),
+        Container(width: 2, margin: const EdgeInsets.only(top: 3, bottom: 3), color: ThemeConstants.borderColor),
         const SizedBox(width: 9),
         Expanded(
           child: Column(
@@ -163,10 +150,7 @@ class _StreamingDotState extends State<StreamingDot> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    )..repeat(reverse: true);
+    _controller = AnimationController(duration: const Duration(milliseconds: 1200), vsync: this)..repeat(reverse: true);
     _opacity = Tween<double>(begin: 0.3, end: 1.0).animate(_controller);
   }
 
@@ -185,10 +169,7 @@ class _StreamingDotState extends State<StreamingDot> with SingleTickerProviderSt
         child: Container(
           width: 6,
           height: 6,
-          decoration: const BoxDecoration(
-            color: ThemeConstants.success,
-            shape: BoxShape.circle,
-          ),
+          decoration: const BoxDecoration(color: ThemeConstants.success, shape: BoxShape.circle),
         ),
       ),
     );
@@ -206,55 +187,27 @@ class _MessageContent extends StatelessWidget {
     if (message.role == MessageRole.user) {
       return SelectableText(
         message.content,
-        style: const TextStyle(
-          color: ThemeConstants.textPrimary,
-          fontSize: ThemeConstants.uiFontSize,
-          height: 1.5,
-        ),
+        style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),
       );
     }
     return MarkdownBody(
       data: message.content,
       styleSheet: MarkdownStyleSheet(
-        p: const TextStyle(
-          color: ThemeConstants.textPrimary,
-          fontSize: ThemeConstants.uiFontSize,
-          height: 1.65,
-        ),
+        p: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.65),
         code: const TextStyle(
           fontFamily: ThemeConstants.editorFontFamily,
           backgroundColor: ThemeConstants.codeBlockBg,
           color: ThemeConstants.syntaxString,
           fontSize: ThemeConstants.uiFontSizeSmall,
         ),
-        codeblockDecoration: BoxDecoration(
-          color: ThemeConstants.codeBlockBg,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        h1: const TextStyle(
-          color: ThemeConstants.textPrimary,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-        h2: const TextStyle(
-          color: ThemeConstants.textPrimary,
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
-        h3: const TextStyle(
-          color: ThemeConstants.textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-        ),
+        codeblockDecoration: BoxDecoration(color: ThemeConstants.codeBlockBg, borderRadius: BorderRadius.circular(6)),
+        h1: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+        h2: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
+        h3: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
         blockquote: const TextStyle(color: ThemeConstants.textSecondary),
         listBullet: const TextStyle(color: ThemeConstants.textPrimary),
       ),
-      builders: {
-        'code': _CodeBlockBuilder(
-          messageId: message.id,
-          sessionId: message.sessionId,
-        ),
-      },
+      builders: {'code': _CodeBlockBuilder(messageId: message.id, sessionId: message.sessionId)},
     );
   }
 }
@@ -262,10 +215,7 @@ class _MessageContent extends StatelessWidget {
 // ── Code block builder ───────────────────────────────────────────────────────
 
 class _CodeBlockBuilder extends MarkdownElementBuilder {
-  _CodeBlockBuilder({
-    required this.messageId,
-    required this.sessionId,
-  });
+  _CodeBlockBuilder({required this.messageId, required this.sessionId});
   final String messageId;
   final String sessionId;
 
@@ -277,10 +227,7 @@ class _CodeBlockBuilder extends MarkdownElementBuilder {
     if (!element.attributes.containsKey('class') && !code.contains('\n')) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-        decoration: BoxDecoration(
-          color: ThemeConstants.codeBlockBg,
-          borderRadius: BorderRadius.circular(3),
-        ),
+        decoration: BoxDecoration(color: ThemeConstants.codeBlockBg, borderRadius: BorderRadius.circular(3)),
         child: Text(
           code,
           style: const TextStyle(
@@ -335,7 +282,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
 
   Project? _resolveActiveProject() {
     final projectId = ref.read(activeProjectIdProvider);
-    final projects = ref.read(projectsProvider).valueOrNull ?? <Project>[];
+    final projects = ref.read(projectsProvider).value ?? <Project>[];
     return projects.firstWhereOrNull((p) => p.id == projectId);
   }
 
@@ -410,7 +357,9 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
     try {
       final absolutePath = p.join(project.path, widget.filename!);
       ApplyService.assertWithinProject(absolutePath, project.path);
-      await ref.read(applyServiceProvider).applyChange(
+      await ref
+          .read(applyServiceProvider)
+          .applyChange(
             filePath: absolutePath,
             projectPath: project.path,
             newContent: widget.code,
@@ -438,12 +387,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
 
   void _showApplyError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: ThemeConstants.error,
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: ThemeConstants.error));
   }
 
   @override
@@ -462,13 +406,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
           if (_diffState == _DiffCardState.loading)
             const Padding(
               padding: EdgeInsets.all(12),
-              child: Center(
-                child: SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 1.5),
-                ),
-              ),
+              child: Center(child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5))),
             )
           else if (_diffState == _DiffCardState.loaded)
             _buildDiffCard()
@@ -477,10 +415,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
               padding: const EdgeInsets.all(12),
               child: Text(
                 _diffError ?? 'Error computing diff',
-                style: const TextStyle(
-                  color: ThemeConstants.error,
-                  fontSize: ThemeConstants.uiFontSizeSmall,
-                ),
+                style: const TextStyle(color: ThemeConstants.error, fontSize: ThemeConstants.uiFontSizeSmall),
               ),
             )
           else
@@ -535,11 +470,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
           ] else
             const Spacer(),
           if (widget.filename != null && _diffState == _DiffCardState.hidden)
-            _HeaderButton(
-              label: 'Diff',
-              icon: AppIcons.gitDiff,
-              onTap: _loadDiff,
-            ),
+            _HeaderButton(label: 'Diff', icon: AppIcons.gitDiff, onTap: _loadDiff),
           if (_diffState == _DiffCardState.loaded) ...[
             _HeaderButton(
               label: _applying ? 'Applying...' : 'Apply',
@@ -587,8 +518,8 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
             child: _activeTab == 0
                 ? _buildPlainContent(_originalContent ?? '(new file)')
                 : _activeTab == 2
-                    ? _buildPlainContent(widget.code)
-                    : _buildDiffContent(),
+                ? _buildPlainContent(widget.code)
+                : _buildDiffContent(),
           ),
         ),
       ],
@@ -624,13 +555,13 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
             final bg = diff.operation == DIFF_INSERT
                 ? const Color(0x3300CC66)
                 : diff.operation == DIFF_DELETE
-                    ? const Color(0x33FF4444)
-                    : Colors.transparent;
+                ? const Color(0x33FF4444)
+                : Colors.transparent;
             final prefix = diff.operation == DIFF_INSERT
                 ? '+'
                 : diff.operation == DIFF_DELETE
-                    ? '−'
-                    : ' ';
+                ? '−'
+                : ' ';
             return Container(
               color: bg,
               child: Text(
@@ -656,11 +587,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
 // ── Small reusable header button ─────────────────────────────────────────────
 
 class _HeaderButton extends StatelessWidget {
-  const _HeaderButton({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
+  const _HeaderButton({required this.label, required this.icon, required this.onTap});
   final String label;
   final IconData icon;
   final VoidCallback? onTap;
@@ -676,10 +603,7 @@ class _HeaderButton extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: const TextStyle(
-              color: ThemeConstants.mutedFg,
-              fontSize: ThemeConstants.uiFontSizeSmall,
-            ),
+            style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
           ),
         ],
       ),
@@ -690,12 +614,7 @@ class _HeaderButton extends StatelessWidget {
 // ── Tab ───────────────────────────────────────────────────────────────────────
 
 class _Tab extends StatelessWidget {
-  const _Tab({
-    required this.label,
-    required this.index,
-    required this.activeIndex,
-    required this.onTap,
-  });
+  const _Tab({required this.label, required this.index, required this.activeIndex, required this.onTap});
   final String label;
   final int index;
   final int activeIndex;
@@ -709,12 +628,7 @@ class _Tab extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isActive ? ThemeConstants.accent : Colors.transparent,
-              width: 2,
-            ),
-          ),
+          border: Border(bottom: BorderSide(color: isActive ? ThemeConstants.accent : Colors.transparent, width: 2)),
         ),
         child: Text(
           label,
@@ -757,18 +671,11 @@ class _CopyButtonState extends State<_CopyButton> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            _copied ? AppIcons.check : AppIcons.copy,
-            size: 12,
-            color: ThemeConstants.mutedFg,
-          ),
+          Icon(_copied ? AppIcons.check : AppIcons.copy, size: 12, color: ThemeConstants.mutedFg),
           const SizedBox(width: 4),
           Text(
             _copied ? 'Copied' : 'Copy',
-            style: const TextStyle(
-              color: ThemeConstants.mutedFg,
-              fontSize: ThemeConstants.uiFontSizeSmall,
-            ),
+            style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
           ),
         ],
       ),

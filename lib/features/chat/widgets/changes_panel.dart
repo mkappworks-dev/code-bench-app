@@ -31,7 +31,7 @@ class ChangesPanel extends ConsumerWidget {
 
     // Resolve active project for isGit + path
     final projectId = ref.watch(activeProjectIdProvider);
-    final project = ref.watch(projectsProvider).valueOrNull?.firstWhereOrNull((proj) => proj.id == projectId);
+    final project = ref.watch(projectsProvider).value?.firstWhereOrNull((proj) => proj.id == projectId);
 
     return Container(
       decoration: const BoxDecoration(
@@ -45,9 +45,7 @@ class ChangesPanel extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: ThemeConstants.borderColor),
-              ),
+              border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
             ),
             child: const Text(
               'Changes',
@@ -64,10 +62,7 @@ class ChangesPanel extends ConsumerWidget {
                 ? const Center(
                     child: Text(
                       'No changes yet',
-                      style: TextStyle(
-                        color: ThemeConstants.mutedFg,
-                        fontSize: ThemeConstants.uiFontSizeSmall,
-                      ),
+                      style: TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
                     ),
                   )
                 : ListView(
@@ -92,11 +87,9 @@ class ChangesPanel extends ConsumerWidget {
                             project: project,
                             onRevert: () async {
                               if (project == null) throw StateError('No active project');
-                              await ref.read(applyServiceProvider).revertChange(
-                                    change: change,
-                                    isGit: project.isGit,
-                                    projectPath: project.path,
-                                  );
+                              await ref
+                                  .read(applyServiceProvider)
+                                  .revertChange(change: change, isGit: project.isGit, projectPath: project.path);
                             },
                           ),
                         ),
@@ -108,9 +101,7 @@ class ChangesPanel extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(color: ThemeConstants.borderColor),
-              ),
+              border: Border(top: BorderSide(color: ThemeConstants.borderColor)),
             ),
             child: GestureDetector(
               onTap: () {
@@ -121,17 +112,10 @@ class ChangesPanel extends ConsumerWidget {
                 children: const [
                   Text(
                     'Commit all',
-                    style: TextStyle(
-                      color: ThemeConstants.textSecondary,
-                      fontSize: ThemeConstants.uiFontSizeSmall,
-                    ),
+                    style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                   ),
                   SizedBox(width: 4),
-                  Icon(
-                    AppIcons.arrowRight,
-                    size: 11,
-                    color: ThemeConstants.textSecondary,
-                  ),
+                  Icon(AppIcons.arrowRight, size: 11, color: ThemeConstants.textSecondary),
                 ],
               ),
             ),
@@ -145,11 +129,7 @@ class ChangesPanel extends ConsumerWidget {
 // ── Single change entry ───────────────────────────────────────────────────────
 
 class _ChangeEntry extends StatelessWidget {
-  const _ChangeEntry({
-    required this.change,
-    required this.project,
-    required this.onRevert,
-  });
+  const _ChangeEntry({required this.change, required this.project, required this.onRevert});
 
   final AppliedChange change;
   final Project? project;
@@ -187,10 +167,7 @@ class _ChangeEntry extends StatelessWidget {
                 ),
                 Text(
                   relativePath,
-                  style: const TextStyle(
-                    color: ThemeConstants.mutedFg,
-                    fontSize: ThemeConstants.uiFontSizeLabel,
-                  ),
+                  style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeLabel),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -230,11 +207,7 @@ class _ChangeEntry extends StatelessWidget {
                 if (context.mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');
               }
             },
-            child: const Icon(
-              AppIcons.revert,
-              size: 12,
-              color: ThemeConstants.mutedFg,
-            ),
+            child: const Icon(AppIcons.revert, size: 12, color: ThemeConstants.mutedFg),
           ),
         ],
       ),

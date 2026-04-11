@@ -4,7 +4,7 @@ part 'repository.freezed.dart';
 part 'repository.g.dart';
 
 @freezed
-class Repository with _$Repository {
+abstract class Repository with _$Repository {
   const factory Repository({
     required int id,
     required String name,
@@ -22,7 +22,7 @@ class Repository with _$Repository {
 }
 
 @freezed
-class GitHubAccount with _$GitHubAccount {
+abstract class GitHubAccount with _$GitHubAccount {
   const factory GitHubAccount({
     required String username,
     required String avatarUrl,
@@ -35,7 +35,7 @@ class GitHubAccount with _$GitHubAccount {
 }
 
 @freezed
-class GitTreeItem with _$GitTreeItem {
+abstract class GitTreeItem with _$GitTreeItem {
   const factory GitTreeItem({
     required String path,
     required String type, // blob | tree

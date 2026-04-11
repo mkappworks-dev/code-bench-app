@@ -24,14 +24,8 @@ void main() async {
     await windowManager.ensureInitialized();
     await windowManager.waitUntilReadyToShow(
       WindowOptions(
-        size: const Size(
-          AppConstants.minWindowWidth + 200,
-          AppConstants.minWindowHeight + 100,
-        ),
-        minimumSize: const Size(
-          AppConstants.minWindowWidth,
-          AppConstants.minWindowHeight,
-        ),
+        size: const Size(AppConstants.minWindowWidth + 200, AppConstants.minWindowHeight + 100),
+        minimumSize: const Size(AppConstants.minWindowWidth, AppConstants.minWindowHeight),
         center: true,
         titleBarStyle: TitleBarStyle.hidden,
         title: AppConstants.appName,

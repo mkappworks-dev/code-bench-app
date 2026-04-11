@@ -4,8 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/features/chat/widgets/chat_input_bar_v2.dart';
 
 Widget _wrap(Widget child) => ProviderScope(
-      child: MaterialApp(home: Scaffold(body: child)),
-    );
+  child: MaterialApp(home: Scaffold(body: child)),
+);
 
 void main() {
   testWidgets('effort chip shows current selection', (tester) async {

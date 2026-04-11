@@ -20,16 +20,10 @@ class GitService {
   /// This is defence-in-depth so no UI path can accidentally leak a token.
   static String _sanitizeGitStderr(String input) {
     // 1. Classic + fine-grained GitHub PATs.
-    var out = input.replaceAll(
-      RegExp(r'(ghp|gho|ghu|ghs|ghr|github_pat)_[A-Za-z0-9_]{20,}'),
-      '[redacted-token]',
-    );
+    var out = input.replaceAll(RegExp(r'(ghp|gho|ghu|ghs|ghr|github_pat)_[A-Za-z0-9_]{20,}'), '[redacted-token]');
     // 2. Basic auth embedded in https URLs
     //    (e.g. https://user:pat@github.com/… → https://[redacted]@github.com/…).
-    out = out.replaceAllMapped(
-      RegExp(r'(https?://)([^/@\s]+)@'),
-      (m) => '${m[1]}[redacted]@',
-    );
+    out = out.replaceAllMapped(RegExp(r'(https?://)([^/@\s]+)@'), (m) => '${m[1]}[redacted]@');
     return out;
   }
 
@@ -48,11 +42,7 @@ class GitService {
     if (addResult.exitCode != 0) {
       throw GitException('git add failed: ${_sanitizeGitStderr(addResult.stderr as String)}');
     }
-    final commitResult = await Process.run(
-      'git',
-      ['commit', '-m', message],
-      workingDirectory: projectPath,
-    );
+    final commitResult = await Process.run('git', ['commit', '-m', message], workingDirectory: projectPath);
     if (commitResult.exitCode != 0) {
       throw GitException('git commit failed: ${_sanitizeGitStderr(commitResult.stderr as String)}');
     }
@@ -63,11 +53,7 @@ class GitService {
     final match = RegExp(r'\[[^\s\]]+(?:\s+\([^)]+\))?\s+([a-f0-9]+)\]').firstMatch(out);
     if (match == null) {
       // Fall back to `git rev-parse HEAD` if parsing fails — never return ''.
-      final rev = await Process.run(
-        'git',
-        ['rev-parse', '--short', 'HEAD'],
-        workingDirectory: projectPath,
-      );
+      final rev = await Process.run('git', ['rev-parse', '--short', 'HEAD'], workingDirectory: projectPath);
       if (rev.exitCode == 0) return (rev.stdout as String).trim();
       throw GitException('Commit succeeded but could not parse SHA');
     }
@@ -135,11 +121,7 @@ class GitService {
     // normally rejects these, but don't rely on that guarantee.
     if (branch.startsWith('-')) return null;
 
-    final fetchResult = await Process.run(
-      'git',
-      ['fetch', '--quiet'],
-      workingDirectory: projectPath,
-    );
+    final fetchResult = await Process.run('git', ['fetch', '--quiet'], workingDirectory: projectPath);
     if (fetchResult.exitCode != 0) return null;
 
     final countResult = await Process.run(
@@ -156,33 +138,21 @@ class GitService {
   Future<String?> currentBranch() => _currentBranch();
 
   Future<String?> _currentBranch() async {
-    final result = await Process.run(
-      'git',
-      ['rev-parse', '--abbrev-ref', 'HEAD'],
-      workingDirectory: projectPath,
-    );
+    final result = await Process.run('git', ['rev-parse', '--abbrev-ref', 'HEAD'], workingDirectory: projectPath);
     if (result.exitCode != 0) return null;
     final branch = (result.stdout as String).trim();
     return branch.isEmpty ? null : branch;
   }
 
   Future<String?> _headSha() async {
-    final result = await Process.run(
-      'git',
-      ['rev-parse', 'HEAD'],
-      workingDirectory: projectPath,
-    );
+    final result = await Process.run('git', ['rev-parse', 'HEAD'], workingDirectory: projectPath);
     if (result.exitCode != 0) return null;
     return (result.stdout as String).trim();
   }
 
   /// Returns the URL of the configured `origin` remote, or `null` if unset.
   Future<String?> getOriginUrl() async {
-    final result = await Process.run(
-      'git',
-      ['remote', 'get-url', 'origin'],
-      workingDirectory: projectPath,
-    );
+    final result = await Process.run('git', ['remote', 'get-url', 'origin'], workingDirectory: projectPath);
     if (result.exitCode != 0) return null;
     final url = (result.stdout as String).trim();
     return url.isEmpty ? null : url;
@@ -222,11 +192,7 @@ class GitService {
       throw GitException('Invalid branch name: $branch');
     }
 
-    final result = await Process.run(
-      'git',
-      ['push', remote, branch],
-      workingDirectory: projectPath,
-    );
+    final result = await Process.run('git', ['push', remote, branch], workingDirectory: projectPath);
     if (result.exitCode != 0) {
       throw GitException(_sanitizeGitStderr((result.stderr as String).trim()));
     }

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -12,12 +11,7 @@ part 'filesystem_service.g.dart';
 FilesystemService filesystemService(Ref ref) => FilesystemService();
 
 class FileNode {
-  const FileNode({
-    required this.path,
-    required this.name,
-    required this.isDirectory,
-    this.children,
-  });
+  const FileNode({required this.path, required this.name, required this.isDirectory, this.children});
 
   final String path;
   final String name;
@@ -48,11 +42,7 @@ class FilesystemService {
       // Filter hidden files (starting with .)
       return nodes.where((n) => !n.name.startsWith('.')).toList();
     } catch (e) {
-      throw app_errors.FileSystemException(
-        'Failed to list directory: $dirPath',
-        path: dirPath,
-        originalError: e,
-      );
+      throw app_errors.FileSystemException('Failed to list directory: $dirPath', path: dirPath, originalError: e);
     }
   }
 
@@ -60,11 +50,7 @@ class FilesystemService {
     try {
       return await File(filePath).readAsString();
     } catch (e) {
-      throw app_errors.FileSystemException(
-        'Failed to read file: $filePath',
-        path: filePath,
-        originalError: e,
-      );
+      throw app_errors.FileSystemException('Failed to read file: $filePath', path: filePath, originalError: e);
     }
   }
 
@@ -72,11 +58,7 @@ class FilesystemService {
     try {
       await File(filePath).writeAsString(content);
     } catch (e) {
-      throw app_errors.FileSystemException(
-        'Failed to write file: $filePath',
-        path: filePath,
-        originalError: e,
-      );
+      throw app_errors.FileSystemException('Failed to write file: $filePath', path: filePath, originalError: e);
     }
   }
 
@@ -84,11 +66,7 @@ class FilesystemService {
     try {
       await File(filePath).create(recursive: true);
     } catch (e) {
-      throw app_errors.FileSystemException(
-        'Failed to create file: $filePath',
-        path: filePath,
-        originalError: e,
-      );
+      throw app_errors.FileSystemException('Failed to create file: $filePath', path: filePath, originalError: e);
     }
   }
 
@@ -96,11 +74,7 @@ class FilesystemService {
     try {
       await Directory(dirPath).create(recursive: true);
     } catch (e) {
-      throw app_errors.FileSystemException(
-        'Failed to create directory: $dirPath',
-        path: dirPath,
-        originalError: e,
-      );
+      throw app_errors.FileSystemException('Failed to create directory: $dirPath', path: dirPath, originalError: e);
     }
   }
 
@@ -108,11 +82,7 @@ class FilesystemService {
     try {
       await File(filePath).delete();
     } catch (e) {
-      throw app_errors.FileSystemException(
-        'Failed to delete: $filePath',
-        path: filePath,
-        originalError: e,
-      );
+      throw app_errors.FileSystemException('Failed to delete: $filePath', path: filePath, originalError: e);
     }
   }
 
@@ -120,11 +90,7 @@ class FilesystemService {
     try {
       await File(oldPath).rename(newPath);
     } catch (e) {
-      throw app_errors.FileSystemException(
-        'Failed to rename: $oldPath',
-        path: oldPath,
-        originalError: e,
-      );
+      throw app_errors.FileSystemException('Failed to rename: $oldPath', path: oldPath, originalError: e);
     }
   }
 

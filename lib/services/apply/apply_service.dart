@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:diff_match_patch/diff_match_patch.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
@@ -13,11 +12,8 @@ import '../filesystem/filesystem_service.dart';
 
 part 'apply_service.g.dart';
 
-typedef ProcessRunner = Future<ProcessResult> Function(
-  String executable,
-  List<String> arguments, {
-  String? workingDirectory,
-});
+typedef ProcessRunner =
+    Future<ProcessResult> Function(String executable, List<String> arguments, {String? workingDirectory});
 
 /// Hard cap on the size of content that can be applied in a single operation.
 /// Prevents an AI-generated multi-megabyte blob from pinning memory inside
@@ -32,10 +28,7 @@ const Duration kGitCheckoutTimeout = Duration(seconds: 15);
 
 @Riverpod(keepAlive: true)
 ApplyService applyService(Ref ref) {
-  return ApplyService(
-    fs: ref.watch(filesystemServiceProvider),
-    notifier: ref.watch(appliedChangesProvider.notifier),
-  );
+  return ApplyService(fs: ref.watch(filesystemServiceProvider), notifier: ref.watch(appliedChangesProvider.notifier));
 }
 
 class ApplyService {
@@ -44,10 +37,10 @@ class ApplyService {
     required AppliedChanges notifier,
     String Function()? uuidGen,
     ProcessRunner? processRunner,
-  })  : _fs = fs,
-        _notifier = notifier,
-        _uuidGen = uuidGen ?? (() => const Uuid().v4()),
-        _processRunner = processRunner ?? Process.run;
+  }) : _fs = fs,
+       _notifier = notifier,
+       _uuidGen = uuidGen ?? (() => const Uuid().v4()),
+       _processRunner = processRunner ?? Process.run;
 
   final FilesystemService _fs;
   final AppliedChanges _notifier;
@@ -70,9 +63,7 @@ class ApplyService {
     final lexRoot = p.normalize(p.absolute(projectPath));
     final lexRootWithSep = lexRoot + p.separator;
     if (!lexFile.startsWith(lexRootWithSep)) {
-      throw StateError(
-        'Path "$filePath" is outside project root "$projectPath"',
-      );
+      throw StateError('Path "$filePath" is outside project root "$projectPath"');
     }
 
     // Physical check — resolve symlinks on both root and deepest existing
@@ -98,9 +89,7 @@ class ApplyService {
     }
     final rootRealWithSep = rootReal + p.separator;
     if (probeReal != rootReal && !probeReal.startsWith(rootRealWithSep)) {
-      throw StateError(
-        'Path "$filePath" resolves outside project root via a symlink',
-      );
+      throw StateError('Path "$filePath" resolves outside project root via a symlink');
     }
   }
 
@@ -152,24 +141,22 @@ class ApplyService {
 
     final (additions, deletions) = _computeLineCounts(originalContent, newContent);
 
-    _notifier.apply(AppliedChange(
-      id: _uuidGen(),
-      sessionId: sessionId,
-      messageId: messageId,
-      filePath: filePath,
-      originalContent: originalContent,
-      newContent: newContent,
-      appliedAt: DateTime.now(),
-      additions: additions,
-      deletions: deletions,
-    ));
+    _notifier.apply(
+      AppliedChange(
+        id: _uuidGen(),
+        sessionId: sessionId,
+        messageId: messageId,
+        filePath: filePath,
+        originalContent: originalContent,
+        newContent: newContent,
+        appliedAt: DateTime.now(),
+        additions: additions,
+        deletions: deletions,
+      ),
+    );
   }
 
-  Future<void> revertChange({
-    required AppliedChange change,
-    required bool isGit,
-    required String projectPath,
-  }) async {
+  Future<void> revertChange({required AppliedChange change, required bool isGit, required String projectPath}) async {
     assertWithinProject(change.filePath, projectPath);
     if (change.originalContent == null) {
       // File was created by Apply — delete it
@@ -177,20 +164,16 @@ class ApplyService {
     } else if (isGit) {
       final ProcessResult result;
       try {
-        result = await _processRunner(
-          'git',
-          ['checkout', '--', change.filePath],
-          workingDirectory: projectPath,
-        ).timeout(kGitCheckoutTimeout);
+        result = await _processRunner('git', [
+          'checkout',
+          '--',
+          change.filePath,
+        ], workingDirectory: projectPath).timeout(kGitCheckoutTimeout);
       } on TimeoutException {
-        throw StateError(
-          'git checkout timed out after ${kGitCheckoutTimeout.inSeconds}s',
-        );
+        throw StateError('git checkout timed out after ${kGitCheckoutTimeout.inSeconds}s');
       }
       if (result.exitCode != 0) {
-        throw StateError(
-          'git checkout failed (exit ${result.exitCode}): ${result.stderr}',
-        );
+        throw StateError('git checkout failed (exit ${result.exitCode}): ${result.stderr}');
       }
     } else {
       await _fs.writeFile(change.filePath, change.originalContent!);
@@ -206,10 +189,7 @@ class ApplyService {
   /// deleted characters (each representing one line). This avoids the
   /// double-counting that a char-level diff produces when inline edits
   /// straddle line boundaries.
-  static (int additions, int deletions) _computeLineCounts(
-    String? original,
-    String newContent,
-  ) {
+  static (int additions, int deletions) _computeLineCounts(String? original, String newContent) {
     final a = original ?? '';
     final aLines = a.isEmpty ? <String>[] : a.split('\n');
     final bLines = newContent.isEmpty ? <String>[] : newContent.split('\n');

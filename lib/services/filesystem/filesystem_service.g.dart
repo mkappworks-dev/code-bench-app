@@ -6,20 +6,42 @@ part of 'filesystem_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$filesystemServiceHash() => r'75f325571c452e8c8c22011b69c2dacd9cf05006';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [filesystemService].
 @ProviderFor(filesystemService)
-final filesystemServiceProvider = Provider<FilesystemService>.internal(
-  filesystemService,
-  name: r'filesystemServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$filesystemServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final filesystemServiceProvider = FilesystemServiceProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef FilesystemServiceRef = ProviderRef<FilesystemService>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class FilesystemServiceProvider
+    extends $FunctionalProvider<FilesystemService, FilesystemService, FilesystemService>
+    with $Provider<FilesystemService> {
+  FilesystemServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'filesystemServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$filesystemServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<FilesystemService> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+
+  @override
+  FilesystemService create(Ref ref) {
+    return filesystemService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(FilesystemService value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<FilesystemService>(value));
+  }
+}
+
+String _$filesystemServiceHash() => r'75f325571c452e8c8c22011b69c2dacd9cf05006';

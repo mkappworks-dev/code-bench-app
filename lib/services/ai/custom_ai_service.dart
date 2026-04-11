@@ -22,10 +22,7 @@ class CustomAIService implements AIService {
       baseUrl: _baseUrl,
       connectTimeout: ApiConstants.connectTimeout,
       receiveTimeout: ApiConstants.receiveTimeout,
-      headers: {
-        if (_apiKey.isNotEmpty) 'Authorization': 'Bearer $_apiKey',
-        'Content-Type': 'application/json',
-      },
+      headers: {if (_apiKey.isNotEmpty) 'Authorization': 'Bearer $_apiKey', 'Content-Type': 'application/json'},
     ),
   );
 
@@ -139,11 +136,7 @@ class CustomAIService implements AIService {
     }
   }
 
-  List<Map<String, String>> _buildMessages(
-    List<ChatMessage> history,
-    String prompt,
-    String? systemPrompt,
-  ) {
+  List<Map<String, String>> _buildMessages(List<ChatMessage> history, String prompt, String? systemPrompt) {
     final messages = <Map<String, String>>[];
     if (systemPrompt != null) {
       messages.add({'role': 'system', 'content': systemPrompt});

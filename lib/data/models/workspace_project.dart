@@ -4,7 +4,7 @@ part 'workspace_project.freezed.dart';
 part 'workspace_project.g.dart';
 
 @freezed
-class WorkspaceProject with _$WorkspaceProject {
+abstract class WorkspaceProject with _$WorkspaceProject {
   const factory WorkspaceProject({
     required String id,
     required String name,

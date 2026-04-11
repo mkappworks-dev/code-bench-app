@@ -11,7 +11,7 @@ part 'action_runner_service.g.dart';
 enum ActionStatus { idle, running, done, failed }
 
 @freezed
-class ActionOutputState with _$ActionOutputState {
+abstract class ActionOutputState with _$ActionOutputState {
   const factory ActionOutputState({
     @Default(ActionStatus.idle) ActionStatus status,
     @Default([]) List<String> lines,
@@ -28,11 +28,7 @@ class ActionOutputNotifier extends _$ActionOutputNotifier {
   ActionOutputState build() => const ActionOutputState();
 
   void appendLine(String line, ActionStatus status, String? name) {
-    state = state.copyWith(
-      lines: [...state.lines, line],
-      status: status,
-      actionName: name ?? state.actionName,
-    );
+    state = state.copyWith(lines: [...state.lines, line], status: status, actionName: name ?? state.actionName);
   }
 
   void clear() {
@@ -45,11 +41,7 @@ class ActionOutputNotifier extends _$ActionOutputNotifier {
     // Kill any currently running process first.
     _currentProcess?.kill();
     _currentProcess = null;
-    state = ActionOutputState(
-      status: ActionStatus.running,
-      lines: const [],
-      actionName: action.name,
-    );
+    state = ActionOutputState(status: ActionStatus.running, lines: const [], actionName: action.name);
 
     // Split shell command into executable + args (MVP: no quoted-arg support).
     final parts = action.command.trim().split(RegExp(r'\s+'));
@@ -60,11 +52,7 @@ class ActionOutputNotifier extends _$ActionOutputNotifier {
       // SECURITY: NEVER set runInShell: true here. Arguments are passed as
       // a literal argv list; enabling shell mode would turn any user-defined
       // command into a shell-injection vector once variables get interpolated.
-      final process = await Process.start(
-        executable,
-        args,
-        workingDirectory: workingDirectory,
-      );
+      final process = await Process.start(executable, args, workingDirectory: workingDirectory);
       _currentProcess = process;
 
       // Drain both streams to completion. We must await the stream futures
@@ -87,17 +75,10 @@ class ActionOutputNotifier extends _$ActionOutputNotifier {
         }
       });
 
-      final results = await Future.wait([
-        stdoutDone,
-        stderrDone,
-        process.exitCode,
-      ]);
+      final results = await Future.wait([stdoutDone, stderrDone, process.exitCode]);
       _currentProcess = null;
       final code = results[2] as int;
-      state = state.copyWith(
-        status: code == 0 ? ActionStatus.done : ActionStatus.failed,
-        exitCode: code,
-      );
+      state = state.copyWith(status: code == 0 ? ActionStatus.done : ActionStatus.failed, exitCode: code);
     } on ProcessException catch (e) {
       // Distinguish "command not found" from other failures so the user gets
       // actionable guidance instead of a cryptic stack trace.

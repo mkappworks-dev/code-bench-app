@@ -5,15 +5,15 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.6.0
+  sdk: ^3.8.0
 
 dependencies:
   flutter:
     sdk: flutter
 
   # State management
-  flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.3.5
+  flutter_riverpod: ^3.3.1
+  riverpod_annotation: ^4.0.2
 
   # Navigation
   go_router: ^14.6.2
@@ -22,16 +22,16 @@ dependencies:
   dio: ^5.7.0
 
   # Database
-  drift: ^2.21.0
+  drift: ^2.31.0
   sqlite3_flutter_libs: ^0.5.26
-  drift_flutter: ^0.2.1
+  drift_flutter: ^0.2.8
 
   # Secure storage
   flutter_secure_storage: ^10.0.0
 
   # Code generation annotations
-  freezed_annotation: ^2.4.4
-  json_annotation: ^4.9.0
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.11.0
 
   # Code editor
   re_editor: ^0.8.0
@@ -78,14 +78,14 @@ dev_dependencies:
     sdk: flutter
 
   # Code generators
-  build_runner: ^2.4.13
-  riverpod_generator: ^2.4.3
-  freezed: ^2.5.7
-  json_serializable: ^6.8.0
-  drift_dev: ^2.21.0
+  build_runner: ^2.13.1
+  riverpod_generator: ^4.0.3
+  freezed: ^3.2.5
+  json_serializable: ^6.13.0
+  drift_dev: ^2.31.0
 
   # Testing
-  mockito: ^5.4.4
+  mockito: ^5.6.4
 
   flutter_lints: ^6.0.0
 

@@ -6,17 +6,17 @@ import 'package:code_bench_app/features/chat/widgets/message_bubble.dart'
     show MessageBubble, StreamingDot, parseCodeFenceInfo;
 
 Widget _wrap(Widget child) => ProviderScope(
-      child: MaterialApp(home: Scaffold(body: child)),
-    );
+  child: MaterialApp(home: Scaffold(body: child)),
+);
 
 ChatMessage _msg(MessageRole role, {bool streaming = false}) => ChatMessage(
-      id: 'id',
-      sessionId: 'sid',
-      role: role,
-      content: 'Hello world',
-      timestamp: DateTime.now(),
-      isStreaming: streaming,
-    );
+  id: 'id',
+  sessionId: 'sid',
+  role: role,
+  content: 'Hello world',
+  timestamp: DateTime.now(),
+  isStreaming: streaming,
+);
 
 void main() {
   testWidgets('user message is right-aligned', (tester) async {
@@ -34,9 +34,7 @@ void main() {
   });
 
   testWidgets('streaming shows pulsing dot, not CircularProgressIndicator', (tester) async {
-    await tester.pumpWidget(
-      _wrap(MessageBubble(message: _msg(MessageRole.assistant, streaming: true))),
-    );
+    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.assistant, streaming: true))));
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.byType(StreamingDot), findsOneWidget);
   });
@@ -60,45 +58,42 @@ void main() {
     expect(find.text('Copy'), findsOneWidget);
   });
 
-  testWidgets(
-    '_loadDiff shows user-friendly error when no active project',
-    (tester) async {
-      // Markdown fence with filename → Diff button appears. When tapped
-      // with no active project configured, the widget must show "No active
-      // project." and never leak raw exception text.
-      final msg = ChatMessage(
-        id: 'mid',
-        sessionId: 'sid',
-        role: MessageRole.assistant,
-        content: '```dart lib/main.dart\nvoid main() {}\n```',
-        timestamp: DateTime.now(),
-      );
+  testWidgets('_loadDiff shows user-friendly error when no active project', (tester) async {
+    // Markdown fence with filename → Diff button appears. When tapped
+    // with no active project configured, the widget must show "No active
+    // project." and never leak raw exception text.
+    final msg = ChatMessage(
+      id: 'mid',
+      sessionId: 'sid',
+      role: MessageRole.assistant,
+      content: '```dart lib/main.dart\nvoid main() {}\n```',
+      timestamp: DateTime.now(),
+    );
 
-      await tester.pumpWidget(_wrap(MessageBubble(message: msg)));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_wrap(MessageBubble(message: msg)));
+    await tester.pumpAndSettle();
 
-      // Diff button should be visible when filename is parsed from fence info.
-      // NOTE: if this fails, the markdown package is stripping the filename
-      // from the fence info string — that's a separate pipeline issue.
-      final diffFinder = find.text('Diff');
-      if (diffFinder.evaluate().isEmpty) {
-        // The markdown parser didn't pass the full info string through.
-        // Skip the rest of this test — the Diff button never appears, so
-        // the error-classification path cannot be exercised via widget test.
-        // The service-layer tests in apply_service_test.dart still cover
-        // the error paths.
-        return;
-      }
+    // Diff button should be visible when filename is parsed from fence info.
+    // NOTE: if this fails, the markdown package is stripping the filename
+    // from the fence info string — that's a separate pipeline issue.
+    final diffFinder = find.text('Diff');
+    if (diffFinder.evaluate().isEmpty) {
+      // The markdown parser didn't pass the full info string through.
+      // Skip the rest of this test — the Diff button never appears, so
+      // the error-classification path cannot be exercised via widget test.
+      // The service-layer tests in apply_service_test.dart still cover
+      // the error paths.
+      return;
+    }
 
-      await tester.tap(diffFinder);
-      await tester.pumpAndSettle();
+    await tester.tap(diffFinder);
+    await tester.pumpAndSettle();
 
-      // User-friendly message, not raw exception text
-      expect(find.text('No active project.'), findsOneWidget);
-      expect(find.textContaining('Exception:'), findsNothing);
-      expect(find.textContaining('Instance of'), findsNothing);
-    },
-  );
+    // User-friendly message, not raw exception text
+    expect(find.text('No active project.'), findsOneWidget);
+    expect(find.textContaining('Exception:'), findsNothing);
+    expect(find.textContaining('Instance of'), findsNothing);
+  });
 
   group('parseCodeFenceInfo', () {
     test('returns language only when no filename', () {

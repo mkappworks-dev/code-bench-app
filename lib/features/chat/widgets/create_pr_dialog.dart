@@ -4,12 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/theme_constants.dart';
 
 class PrFormResult {
-  const PrFormResult({
-    required this.title,
-    required this.body,
-    required this.base,
-    required this.draft,
-  });
+  const PrFormResult({required this.title, required this.body, required this.base, required this.draft});
   final String title;
   final String body;
   final String base;
@@ -17,12 +12,7 @@ class PrFormResult {
 }
 
 class CreatePrDialog extends ConsumerStatefulWidget {
-  const CreatePrDialog({
-    super.key,
-    required this.initialTitle,
-    required this.initialBody,
-    required this.branches,
-  });
+  const CreatePrDialog({super.key, required this.initialTitle, required this.initialBody, required this.branches});
   final String initialTitle;
   final String initialBody;
   final List<String> branches;
@@ -35,11 +25,7 @@ class CreatePrDialog extends ConsumerStatefulWidget {
   }) {
     return showDialog<PrFormResult>(
       context: context,
-      builder: (_) => CreatePrDialog(
-        initialTitle: initialTitle,
-        initialBody: initialBody,
-        branches: branches,
-      ),
+      builder: (_) => CreatePrDialog(initialTitle: initialTitle, initialBody: initialBody, branches: branches),
     );
   }
 
@@ -72,10 +58,7 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: ThemeConstants.inputSurface,
-      title: const Text(
-        'Create Pull Request',
-        style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14),
-      ),
+      title: const Text('Create Pull Request', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
       content: SizedBox(
         width: 480,
         child: Column(
@@ -124,10 +107,7 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
                   'Draft PR',
                   style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                 ),
-                Switch(
-                  value: _draft,
-                  onChanged: (v) => setState(() => _draft = v),
-                ),
+                Switch(value: _draft, onChanged: (v) => setState(() => _draft = v)),
               ],
             ),
           ],
@@ -142,12 +122,9 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
           onPressed: () {
             final title = _titleController.text.trim();
             if (title.isEmpty) return;
-            Navigator.of(context).pop(PrFormResult(
-              title: title,
-              body: _bodyController.text.trim(),
-              base: _base,
-              draft: _draft,
-            ));
+            Navigator.of(
+              context,
+            ).pop(PrFormResult(title: title, body: _bodyController.text.trim(), base: _base, draft: _draft));
           },
           child: const Text('Create PR', style: TextStyle(color: ThemeConstants.accent)),
         ),

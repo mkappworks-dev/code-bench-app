@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -63,19 +62,13 @@ class GitHubAuthService {
     final dio = Dio();
     final response = await dio.post(
       ApiConstants.githubTokenUrl,
-      data: {
-        'client_id': _clientId,
-        'code': code,
-        'redirect_uri': AppConstants.oauthCallbackUrl,
-      },
+      data: {'client_id': _clientId, 'code': code, 'redirect_uri': AppConstants.oauthCallbackUrl},
       options: Options(headers: {'Accept': 'application/json'}),
     );
     final data = response.data as Map<String, dynamic>;
     final token = data['access_token'] as String?;
     if (token == null) {
-      throw AuthException(
-        'Failed to obtain access token: ${data['error_description'] ?? data['error']}',
-      );
+      throw AuthException('Failed to obtain access token: ${data['error_description'] ?? data['error']}');
     }
     return token;
   }
@@ -84,12 +77,7 @@ class GitHubAuthService {
     final dio = Dio();
     final response = await dio.get(
       '${ApiConstants.githubApiBaseUrl}/user',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/vnd.github.v3+json',
-        },
-      ),
+      options: Options(headers: {'Authorization': 'Bearer $token', 'Accept': 'application/vnd.github.v3+json'}),
     );
     final data = response.data as Map<String, dynamic>;
     return GitHubAccount(

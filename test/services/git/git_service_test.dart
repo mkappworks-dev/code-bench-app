@@ -79,9 +79,6 @@ void main() {
 
   test('pushToRemote rejects a remote name that looks like a flag', () async {
     final svc = GitService(tempDir.path);
-    expect(
-      () => svc.pushToRemote('-d'),
-      throwsA(isA<GitException>()),
-    );
+    expect(() => svc.pushToRemote('-d'), throwsA(isA<GitException>()));
   });
 }

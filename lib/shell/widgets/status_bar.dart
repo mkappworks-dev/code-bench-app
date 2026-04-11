@@ -20,9 +20,7 @@ class StatusBar extends ConsumerWidget {
 
     Project? activeProject;
     if (projectId != null) {
-      activeProject = projectsAsync.whenOrNull(
-        data: (list) => list.firstWhereOrNull((p) => p.id == projectId),
-      );
+      activeProject = projectsAsync.whenOrNull(data: (list) => list.firstWhereOrNull((p) => p.id == projectId));
     }
 
     // Count changes for the current session (watch unconditionally — Riverpod rule)
@@ -39,18 +37,11 @@ class StatusBar extends ConsumerWidget {
       child: Row(
         children: [
           // Left: Local indicator
-          Icon(
-            AppIcons.storage,
-            size: 10,
-            color: ThemeConstants.faintFg,
-          ),
+          Icon(AppIcons.storage, size: 10, color: ThemeConstants.faintFg),
           const SizedBox(width: 5),
           Text(
             'Local',
-            style: const TextStyle(
-              color: ThemeConstants.faintFg,
-              fontSize: ThemeConstants.uiFontSizeLabel,
-            ),
+            style: const TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSizeLabel),
           ),
           const Spacer(),
           // Centre-right: N changes indicator (hidden when 0)
@@ -86,26 +77,17 @@ class StatusBar extends ConsumerWidget {
             Container(
               width: 5,
               height: 5,
-              decoration: const BoxDecoration(
-                color: ThemeConstants.success,
-                shape: BoxShape.circle,
-              ),
+              decoration: const BoxDecoration(color: ThemeConstants.success, shape: BoxShape.circle),
             ),
             const SizedBox(width: 5),
             Text(
               activeProject.currentBranch ?? 'unknown',
-              style: const TextStyle(
-                color: ThemeConstants.success,
-                fontSize: ThemeConstants.uiFontSizeLabel,
-              ),
+              style: const TextStyle(color: ThemeConstants.success, fontSize: ThemeConstants.uiFontSizeLabel),
             ),
           ] else if (activeProject != null) ...[
             Text(
               'Not git',
-              style: const TextStyle(
-                color: ThemeConstants.faintFg,
-                fontSize: ThemeConstants.uiFontSizeLabel,
-              ),
+              style: const TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSizeLabel),
             ),
           ],
         ],

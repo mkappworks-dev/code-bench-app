@@ -6,383 +6,440 @@ part of 'chat_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$chatSessionsHash() => r'bd92b56150cdba1b0318a6538773f19e9755be19';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [chatSessions].
-@ProviderFor(chatSessions)
-final chatSessionsProvider = AutoDisposeStreamProvider<List<ChatSession>>.internal(
-  chatSessions,
-  name: r'chatSessionsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$chatSessionsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+@ProviderFor(SessionSystemPrompt)
+final sessionSystemPromptProvider = SessionSystemPromptProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ChatSessionsRef = AutoDisposeStreamProviderRef<List<ChatSession>>;
-String _$projectSessionsHash() => r'035aba6e7325f7e246c3dc25c052fcc4cee5a5a0';
-
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-/// See also [projectSessions].
-@ProviderFor(projectSessions)
-const projectSessionsProvider = ProjectSessionsFamily();
-
-/// See also [projectSessions].
-class ProjectSessionsFamily extends Family<AsyncValue<List<ChatSession>>> {
-  /// See also [projectSessions].
-  const ProjectSessionsFamily();
-
-  /// See also [projectSessions].
-  ProjectSessionsProvider call(
-    String projectId,
-  ) {
-    return ProjectSessionsProvider(
-      projectId,
-    );
-  }
-
-  @override
-  ProjectSessionsProvider getProviderOverride(
-    covariant ProjectSessionsProvider provider,
-  ) {
-    return call(
-      provider.projectId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies => _allTransitiveDependencies;
-
-  @override
-  String? get name => r'projectSessionsProvider';
-}
-
-/// See also [projectSessions].
-class ProjectSessionsProvider extends AutoDisposeStreamProvider<List<ChatSession>> {
-  /// See also [projectSessions].
-  ProjectSessionsProvider(
-    String projectId,
-  ) : this._internal(
-          (ref) => projectSessions(
-            ref as ProjectSessionsRef,
-            projectId,
-          ),
-          from: projectSessionsProvider,
-          name: r'projectSessionsProvider',
-          debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$projectSessionsHash,
-          dependencies: ProjectSessionsFamily._dependencies,
-          allTransitiveDependencies: ProjectSessionsFamily._allTransitiveDependencies,
-          projectId: projectId,
-        );
-
-  ProjectSessionsProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.projectId,
-  }) : super.internal();
-
-  final String projectId;
-
-  @override
-  Override overrideWith(
-    Stream<List<ChatSession>> Function(ProjectSessionsRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: ProjectSessionsProvider._internal(
-        (ref) => create(ref as ProjectSessionsRef),
-        from: from,
-        name: null,
+final class SessionSystemPromptProvider extends $NotifierProvider<SessionSystemPrompt, Map<String, String>> {
+  SessionSystemPromptProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sessionSystemPromptProvider',
+        isAutoDispose: false,
         dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        projectId: projectId,
-      ),
-    );
-  }
+        $allTransitiveDependencies: null,
+      );
 
   @override
-  AutoDisposeStreamProviderElement<List<ChatSession>> createElement() {
-    return _ProjectSessionsProviderElement(this);
+  String debugGetCreateSourceHash() => _$sessionSystemPromptHash();
+
+  @$internal
+  @override
+  SessionSystemPrompt create() => SessionSystemPrompt();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<String, String> value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<Map<String, String>>(value));
   }
+}
+
+String _$sessionSystemPromptHash() => r'cbf00e1c70fcc8c90707dd1122dea62958d5be1e';
+
+abstract class _$SessionSystemPrompt extends $Notifier<Map<String, String>> {
+  Map<String, String> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<Map<String, String>, Map<String, String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Map<String, String>, Map<String, String>>,
+              Map<String, String>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ActiveSessionId)
+final activeSessionIdProvider = ActiveSessionIdProvider._();
+
+final class ActiveSessionIdProvider extends $NotifierProvider<ActiveSessionId, String?> {
+  ActiveSessionIdProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'activeSessionIdProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$activeSessionIdHash();
+
+  @$internal
+  @override
+  ActiveSessionId create() => ActiveSessionId();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String? value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<String?>(value));
+  }
+}
+
+String _$activeSessionIdHash() => r'6bbf5f2b584ffb0f12be4776b38c2f3a6ca6575e';
+
+abstract class _$ActiveSessionId extends $Notifier<String?> {
+  String? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<String?, String?>;
+    final element = ref.element as $ClassProviderElement<AnyNotifier<String?, String?>, String?, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(SelectedModel)
+final selectedModelProvider = SelectedModelProvider._();
+
+final class SelectedModelProvider extends $NotifierProvider<SelectedModel, AIModel> {
+  SelectedModelProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'selectedModelProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$selectedModelHash();
+
+  @$internal
+  @override
+  SelectedModel create() => SelectedModel();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AIModel value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<AIModel>(value));
+  }
+}
+
+String _$selectedModelHash() => r'23dfb6790a1851dce12997ba05dd7e1b89da9fcc';
+
+abstract class _$SelectedModel extends $Notifier<AIModel> {
+  AIModel build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AIModel, AIModel>;
+    final element = ref.element as $ClassProviderElement<AnyNotifier<AIModel, AIModel>, AIModel, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(ChatMessages)
+final chatMessagesProvider = ChatMessagesFamily._();
+
+final class ChatMessagesProvider extends $AsyncNotifierProvider<ChatMessages, List<ChatMessage>> {
+  ChatMessagesProvider._({required ChatMessagesFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'chatMessagesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$chatMessagesHash();
+
+  @override
+  String toString() {
+    return r'chatMessagesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  ChatMessages create() => ChatMessages();
 
   @override
   bool operator ==(Object other) {
-    return other is ProjectSessionsProvider && other.projectId == projectId;
+    return other is ChatMessagesProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, projectId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ProjectSessionsRef on AutoDisposeStreamProviderRef<List<ChatSession>> {
-  /// The parameter `projectId` of this provider.
-  String get projectId;
-}
+String _$chatMessagesHash() => r'0f3cab917afc981b6929908b1ccf896e7b57060b';
 
-class _ProjectSessionsProviderElement extends AutoDisposeStreamProviderElement<List<ChatSession>>
-    with ProjectSessionsRef {
-  _ProjectSessionsProviderElement(super.provider);
+final class ChatMessagesFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          ChatMessages,
+          AsyncValue<List<ChatMessage>>,
+          List<ChatMessage>,
+          FutureOr<List<ChatMessage>>,
+          String
+        > {
+  ChatMessagesFamily._()
+    : super(
+        retry: null,
+        name: r'chatMessagesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ChatMessagesProvider call(String sessionId) => ChatMessagesProvider._(argument: sessionId, from: this);
 
   @override
-  String get projectId => (origin as ProjectSessionsProvider).projectId;
+  String toString() => r'chatMessagesProvider';
+}
+
+abstract class _$ChatMessages extends $AsyncNotifier<List<ChatMessage>> {
+  late final _$args = ref.$arg as String;
+  String get sessionId => _$args;
+
+  FutureOr<List<ChatMessage>> build(String sessionId);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<List<ChatMessage>>, List<ChatMessage>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<ChatMessage>>, List<ChatMessage>>,
+              AsyncValue<List<ChatMessage>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
+}
+
+@ProviderFor(chatSessions)
+final chatSessionsProvider = ChatSessionsProvider._();
+
+final class ChatSessionsProvider
+    extends $FunctionalProvider<AsyncValue<List<ChatSession>>, List<ChatSession>, Stream<List<ChatSession>>>
+    with $FutureModifier<List<ChatSession>>, $StreamProvider<List<ChatSession>> {
+  ChatSessionsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'chatSessionsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$chatSessionsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<ChatSession>> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<ChatSession>> create(Ref ref) {
+    return chatSessions(ref);
+  }
+}
+
+String _$chatSessionsHash() => r'bd92b56150cdba1b0318a6538773f19e9755be19';
+
+@ProviderFor(projectSessions)
+final projectSessionsProvider = ProjectSessionsFamily._();
+
+final class ProjectSessionsProvider
+    extends $FunctionalProvider<AsyncValue<List<ChatSession>>, List<ChatSession>, Stream<List<ChatSession>>>
+    with $FutureModifier<List<ChatSession>>, $StreamProvider<List<ChatSession>> {
+  ProjectSessionsProvider._({required ProjectSessionsFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'projectSessionsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$projectSessionsHash();
+
+  @override
+  String toString() {
+    return r'projectSessionsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<ChatSession>> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<ChatSession>> create(Ref ref) {
+    final argument = this.argument as String;
+    return projectSessions(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ProjectSessionsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$projectSessionsHash() => r'035aba6e7325f7e246c3dc25c052fcc4cee5a5a0';
+
+final class ProjectSessionsFamily extends $Family with $FunctionalFamilyOverride<Stream<List<ChatSession>>, String> {
+  ProjectSessionsFamily._()
+    : super(
+        retry: null,
+        name: r'projectSessionsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ProjectSessionsProvider call(String projectId) => ProjectSessionsProvider._(argument: projectId, from: this);
+
+  @override
+  String toString() => r'projectSessionsProvider';
+}
+
+@ProviderFor(archivedSessions)
+final archivedSessionsProvider = ArchivedSessionsProvider._();
+
+final class ArchivedSessionsProvider
+    extends $FunctionalProvider<AsyncValue<List<ChatSession>>, List<ChatSession>, Stream<List<ChatSession>>>
+    with $FutureModifier<List<ChatSession>>, $StreamProvider<List<ChatSession>> {
+  ArchivedSessionsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'archivedSessionsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$archivedSessionsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<ChatSession>> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<ChatSession>> create(Ref ref) {
+    return archivedSessions(ref);
+  }
 }
 
 String _$archivedSessionsHash() => r'ac4a8fe2f5367fe1e8d70a0b1ccde35be9c98173';
 
-/// See also [archivedSessions].
-@ProviderFor(archivedSessions)
-final archivedSessionsProvider = AutoDisposeStreamProvider<List<ChatSession>>.internal(
-  archivedSessions,
-  name: r'archivedSessionsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$archivedSessionsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+@ProviderFor(AppliedChanges)
+final appliedChangesProvider = AppliedChangesProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ArchivedSessionsRef = AutoDisposeStreamProviderRef<List<ChatSession>>;
-String _$sessionSystemPromptHash() => r'cbf00e1c70fcc8c90707dd1122dea62958d5be1e';
-
-/// See also [SessionSystemPrompt].
-@ProviderFor(SessionSystemPrompt)
-final sessionSystemPromptProvider = NotifierProvider<SessionSystemPrompt, Map<String, String>>.internal(
-  SessionSystemPrompt.new,
-  name: r'sessionSystemPromptProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$sessionSystemPromptHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$SessionSystemPrompt = Notifier<Map<String, String>>;
-String _$activeSessionIdHash() => r'6bbf5f2b584ffb0f12be4776b38c2f3a6ca6575e';
-
-/// See also [ActiveSessionId].
-@ProviderFor(ActiveSessionId)
-final activeSessionIdProvider = NotifierProvider<ActiveSessionId, String?>.internal(
-  ActiveSessionId.new,
-  name: r'activeSessionIdProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$activeSessionIdHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$ActiveSessionId = Notifier<String?>;
-String _$selectedModelHash() => r'23dfb6790a1851dce12997ba05dd7e1b89da9fcc';
-
-/// See also [SelectedModel].
-@ProviderFor(SelectedModel)
-final selectedModelProvider = NotifierProvider<SelectedModel, AIModel>.internal(
-  SelectedModel.new,
-  name: r'selectedModelProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$selectedModelHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$SelectedModel = Notifier<AIModel>;
-String _$chatMessagesHash() => r'7ccfb448579afde3abc33f89cd80da99ef9b51f4';
-
-abstract class _$ChatMessages extends BuildlessAutoDisposeAsyncNotifier<List<ChatMessage>> {
-  late final String sessionId;
-
-  FutureOr<List<ChatMessage>> build(
-    String sessionId,
-  );
-}
-
-/// See also [ChatMessages].
-@ProviderFor(ChatMessages)
-const chatMessagesProvider = ChatMessagesFamily();
-
-/// See also [ChatMessages].
-class ChatMessagesFamily extends Family<AsyncValue<List<ChatMessage>>> {
-  /// See also [ChatMessages].
-  const ChatMessagesFamily();
-
-  /// See also [ChatMessages].
-  ChatMessagesProvider call(
-    String sessionId,
-  ) {
-    return ChatMessagesProvider(
-      sessionId,
-    );
-  }
-
-  @override
-  ChatMessagesProvider getProviderOverride(
-    covariant ChatMessagesProvider provider,
-  ) {
-    return call(
-      provider.sessionId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies => _allTransitiveDependencies;
-
-  @override
-  String? get name => r'chatMessagesProvider';
-}
-
-/// See also [ChatMessages].
-class ChatMessagesProvider extends AutoDisposeAsyncNotifierProviderImpl<ChatMessages, List<ChatMessage>> {
-  /// See also [ChatMessages].
-  ChatMessagesProvider(
-    String sessionId,
-  ) : this._internal(
-          () => ChatMessages()..sessionId = sessionId,
-          from: chatMessagesProvider,
-          name: r'chatMessagesProvider',
-          debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$chatMessagesHash,
-          dependencies: ChatMessagesFamily._dependencies,
-          allTransitiveDependencies: ChatMessagesFamily._allTransitiveDependencies,
-          sessionId: sessionId,
-        );
-
-  ChatMessagesProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.sessionId,
-  }) : super.internal();
-
-  final String sessionId;
-
-  @override
-  FutureOr<List<ChatMessage>> runNotifierBuild(
-    covariant ChatMessages notifier,
-  ) {
-    return notifier.build(
-      sessionId,
-    );
-  }
-
-  @override
-  Override overrideWith(ChatMessages Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: ChatMessagesProvider._internal(
-        () => create()..sessionId = sessionId,
-        from: from,
-        name: null,
+final class AppliedChangesProvider extends $NotifierProvider<AppliedChanges, Map<String, List<AppliedChange>>> {
+  AppliedChangesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appliedChangesProvider',
+        isAutoDispose: false,
         dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        sessionId: sessionId,
-      ),
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appliedChangesHash();
+
+  @$internal
+  @override
+  AppliedChanges create() => AppliedChanges();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<String, List<AppliedChange>> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<String, List<AppliedChange>>>(value),
     );
   }
-
-  @override
-  AutoDisposeAsyncNotifierProviderElement<ChatMessages, List<ChatMessage>> createElement() {
-    return _ChatMessagesProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ChatMessagesProvider && other.sessionId == sessionId;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, sessionId.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
-}
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ChatMessagesRef on AutoDisposeAsyncNotifierProviderRef<List<ChatMessage>> {
-  /// The parameter `sessionId` of this provider.
-  String get sessionId;
-}
-
-class _ChatMessagesProviderElement extends AutoDisposeAsyncNotifierProviderElement<ChatMessages, List<ChatMessage>>
-    with ChatMessagesRef {
-  _ChatMessagesProviderElement(super.provider);
-
-  @override
-  String get sessionId => (origin as ChatMessagesProvider).sessionId;
 }
 
 String _$appliedChangesHash() => r'2f1446537e686532ec607fd36b2475b2adf7d9f9';
 
-/// See also [AppliedChanges].
-@ProviderFor(AppliedChanges)
-final appliedChangesProvider = NotifierProvider<AppliedChanges, Map<String, List<AppliedChange>>>.internal(
-  AppliedChanges.new,
-  name: r'appliedChangesProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$appliedChangesHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+abstract class _$AppliedChanges extends $Notifier<Map<String, List<AppliedChange>>> {
+  Map<String, List<AppliedChange>> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<Map<String, List<AppliedChange>>, Map<String, List<AppliedChange>>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Map<String, List<AppliedChange>>, Map<String, List<AppliedChange>>>,
+              Map<String, List<AppliedChange>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
 
-typedef _$AppliedChanges = Notifier<Map<String, List<AppliedChange>>>;
+@ProviderFor(ChangesPanelVisible)
+final changesPanelVisibleProvider = ChangesPanelVisibleProvider._();
+
+final class ChangesPanelVisibleProvider extends $NotifierProvider<ChangesPanelVisible, bool> {
+  ChangesPanelVisibleProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'changesPanelVisibleProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$changesPanelVisibleHash();
+
+  @$internal
+  @override
+  ChangesPanelVisible create() => ChangesPanelVisible();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<bool>(value));
+  }
+}
+
 String _$changesPanelVisibleHash() => r'f81f3dbb0aeb38ffb87bbd472846a33f732504e3';
 
-/// See also [ChangesPanelVisible].
-@ProviderFor(ChangesPanelVisible)
-final changesPanelVisibleProvider = NotifierProvider<ChangesPanelVisible, bool>.internal(
-  ChangesPanelVisible.new,
-  name: r'changesPanelVisibleProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$changesPanelVisibleHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$ChangesPanelVisible = Notifier<bool>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$ChangesPanelVisible extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element = ref.element as $ClassProviderElement<AnyNotifier<bool, bool>, bool, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}

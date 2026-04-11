@@ -4,7 +4,7 @@ part 'chat_session.freezed.dart';
 part 'chat_session.g.dart';
 
 @freezed
-class ChatSession with _$ChatSession {
+abstract class ChatSession with _$ChatSession {
   const factory ChatSession({
     required String sessionId,
     required String title,

@@ -6,20 +6,42 @@ part of 'github_auth_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$githubAuthServiceHash() => r'b33369cec83e38488c69619c3341245921675043';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [githubAuthService].
 @ProviderFor(githubAuthService)
-final githubAuthServiceProvider = Provider<GitHubAuthService>.internal(
-  githubAuthService,
-  name: r'githubAuthServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$githubAuthServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final githubAuthServiceProvider = GithubAuthServiceProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef GithubAuthServiceRef = ProviderRef<GitHubAuthService>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class GithubAuthServiceProvider
+    extends $FunctionalProvider<GitHubAuthService, GitHubAuthService, GitHubAuthService>
+    with $Provider<GitHubAuthService> {
+  GithubAuthServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'githubAuthServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$githubAuthServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<GitHubAuthService> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+
+  @override
+  GitHubAuthService create(Ref ref) {
+    return githubAuthService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(GitHubAuthService value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<GitHubAuthService>(value));
+  }
+}
+
+String _$githubAuthServiceHash() => r'b33369cec83e38488c69619c3341245921675043';

@@ -20,23 +20,10 @@ class AppTheme {
         onError: Colors.white,
       ),
       textTheme: GoogleFonts.interTextTheme(base.textTheme).copyWith(
-        bodyMedium: GoogleFonts.inter(
-          color: ThemeConstants.textPrimary,
-          fontSize: ThemeConstants.uiFontSize,
-        ),
-        bodySmall: GoogleFonts.inter(
-          color: ThemeConstants.textSecondary,
-          fontSize: 12,
-        ),
-        titleMedium: GoogleFonts.inter(
-          color: ThemeConstants.textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-        labelMedium: GoogleFonts.inter(
-          color: ThemeConstants.textSecondary,
-          fontSize: 12,
-        ),
+        bodyMedium: GoogleFonts.inter(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
+        bodySmall: GoogleFonts.inter(color: ThemeConstants.textSecondary, fontSize: 12),
+        titleMedium: GoogleFonts.inter(color: ThemeConstants.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+        labelMedium: GoogleFonts.inter(color: ThemeConstants.textSecondary, fontSize: 12),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: ThemeConstants.titleBar,
@@ -44,14 +31,8 @@ class AppTheme {
         elevation: 0,
         toolbarHeight: 36,
       ),
-      drawerTheme: const DrawerThemeData(
-        backgroundColor: ThemeConstants.sidebarBackground,
-      ),
-      dividerTheme: const DividerThemeData(
-        color: ThemeConstants.dividerColor,
-        thickness: 1,
-        space: 1,
-      ),
+      drawerTheme: const DrawerThemeData(backgroundColor: ThemeConstants.sidebarBackground),
+      dividerTheme: const DividerThemeData(color: ThemeConstants.dividerColor, thickness: 1, space: 1),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: ThemeConstants.inputBackground,
@@ -67,10 +48,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(6),
           borderSide: const BorderSide(color: ThemeConstants.accent),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 10,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         hintStyle: const TextStyle(color: ThemeConstants.textMuted),
         labelStyle: const TextStyle(color: ThemeConstants.textSecondary),
       ),
@@ -89,11 +67,7 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
       ),
-      iconButtonTheme: IconButtonThemeData(
-        style: IconButton.styleFrom(
-          foregroundColor: ThemeConstants.textSecondary,
-        ),
-      ),
+      iconButtonTheme: IconButtonThemeData(style: IconButton.styleFrom(foregroundColor: ThemeConstants.textSecondary)),
       listTileTheme: const ListTileThemeData(
         textColor: ThemeConstants.textPrimary,
         iconColor: ThemeConstants.textSecondary,
@@ -103,9 +77,7 @@ class AppTheme {
         contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       ),
       scrollbarTheme: ScrollbarThemeData(
-        thumbColor: WidgetStateProperty.all(
-          ThemeConstants.textMuted.withAlpha(100),
-        ),
+        thumbColor: WidgetStateProperty.all(ThemeConstants.textMuted.withAlpha(100)),
         thickness: WidgetStateProperty.all(6),
         radius: const Radius.circular(3),
       ),
@@ -115,10 +87,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: ThemeConstants.borderColor),
         ),
-        textStyle: const TextStyle(
-          color: ThemeConstants.textPrimary,
-          fontSize: 12,
-        ),
+        textStyle: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
         waitDuration: const Duration(milliseconds: 500),
       ),
       cardTheme: CardThemeData(

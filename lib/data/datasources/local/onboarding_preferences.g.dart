@@ -6,20 +6,42 @@ part of 'onboarding_preferences.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$onboardingPreferencesHash() => r'3c6c84da8828282f8d3848a4a4a2bd3a14e5a646';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [onboardingPreferences].
 @ProviderFor(onboardingPreferences)
-final onboardingPreferencesProvider = Provider<OnboardingPreferences>.internal(
-  onboardingPreferences,
-  name: r'onboardingPreferencesProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product') ? null : _$onboardingPreferencesHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final onboardingPreferencesProvider = OnboardingPreferencesProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef OnboardingPreferencesRef = ProviderRef<OnboardingPreferences>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class OnboardingPreferencesProvider
+    extends $FunctionalProvider<OnboardingPreferences, OnboardingPreferences, OnboardingPreferences>
+    with $Provider<OnboardingPreferences> {
+  OnboardingPreferencesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'onboardingPreferencesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$onboardingPreferencesHash();
+
+  @$internal
+  @override
+  $ProviderElement<OnboardingPreferences> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+
+  @override
+  OnboardingPreferences create(Ref ref) {
+    return onboardingPreferences(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(OnboardingPreferences value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<OnboardingPreferences>(value));
+  }
+}
+
+String _$onboardingPreferencesHash() => r'3c6c84da8828282f8d3848a4a4a2bd3a14e5a646';

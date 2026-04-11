@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/constants/api_constants.dart';
@@ -22,16 +21,14 @@ Future<GitHubApiService?> githubApiService(Ref ref) async {
 
 class GitHubApiService {
   GitHubApiService(String token, {Dio? dio})
-      : _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: ApiConstants.githubApiBaseUrl,
-                headers: {
-                  'Authorization': 'Bearer $token',
-                  'Accept': 'application/vnd.github.v3+json',
-                },
-              ),
-            );
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
+              baseUrl: ApiConstants.githubApiBaseUrl,
+              headers: {'Authorization': 'Bearer $token', 'Accept': 'application/vnd.github.v3+json'},
+            ),
+          );
 
   // SECURITY: Do NOT attach `LogInterceptor(requestHeader: true)` or any
   // logger that dumps request headers. The `Authorization` header above
@@ -48,28 +45,17 @@ class GitHubApiService {
       );
       return (response.data as List).map((r) => _repoFromGitHub(r as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
-      throw NetworkException(
-        'Failed to list repositories',
-        statusCode: e.response?.statusCode,
-        originalError: e,
-      );
+      throw NetworkException('Failed to list repositories', statusCode: e.response?.statusCode, originalError: e);
     }
   }
 
   Future<List<Repository>> searchRepositories(String query) async {
     try {
-      final response = await _dio.get(
-        '/search/repositories',
-        queryParameters: {'q': query, 'per_page': 20},
-      );
+      final response = await _dio.get('/search/repositories', queryParameters: {'q': query, 'per_page': 20});
       final data = response.data as Map<String, dynamic>;
       return (data['items'] as List).map((r) => _repoFromGitHub(r as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
-      throw NetworkException(
-        'Search failed',
-        statusCode: e.response?.statusCode,
-        originalError: e,
-      );
+      throw NetworkException('Search failed', statusCode: e.response?.statusCode, originalError: e);
     }
   }
 
@@ -106,47 +92,24 @@ class GitHubApiService {
     );
   }
 
-  Future<List<GitTreeItem>> getRepositoryTree(
-    String owner,
-    String repo,
-    String branch,
-  ) async {
+  Future<List<GitTreeItem>> getRepositoryTree(String owner, String repo, String branch) async {
     try {
-      final response = await _dio.get(
-        '/repos/$owner/$repo/git/trees/$branch',
-        queryParameters: {'recursive': '1'},
-      );
+      final response = await _dio.get('/repos/$owner/$repo/git/trees/$branch', queryParameters: {'recursive': '1'});
       final data = response.data as Map<String, dynamic>;
       return (data['tree'] as List).map((t) => GitTreeItem.fromJson(t as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
-      throw NetworkException(
-        'Failed to get repository tree',
-        statusCode: e.response?.statusCode,
-        originalError: e,
-      );
+      throw NetworkException('Failed to get repository tree', statusCode: e.response?.statusCode, originalError: e);
     }
   }
 
-  Future<String> getFileContent(
-    String owner,
-    String repo,
-    String path,
-    String branch,
-  ) async {
+  Future<String> getFileContent(String owner, String repo, String path, String branch) async {
     try {
-      final response = await _dio.get(
-        '/repos/$owner/$repo/contents/$path',
-        queryParameters: {'ref': branch},
-      );
+      final response = await _dio.get('/repos/$owner/$repo/contents/$path', queryParameters: {'ref': branch});
       final data = response.data as Map<String, dynamic>;
       final encoded = data['content'] as String;
       return utf8.decode(base64.decode(encoded.replaceAll('\n', '')));
     } on DioException catch (e) {
-      throw NetworkException(
-        'Failed to get file content',
-        statusCode: e.response?.statusCode,
-        originalError: e,
-      );
+      throw NetworkException('Failed to get file content', statusCode: e.response?.statusCode, originalError: e);
     }
   }
 
@@ -160,40 +123,22 @@ class GitHubApiService {
 
   Future<List<String>> listBranches(String owner, String repo) async {
     try {
-      final response = await _dio.get(
-        '/repos/$owner/$repo/branches',
-        queryParameters: {'per_page': 50},
-      );
+      final response = await _dio.get('/repos/$owner/$repo/branches', queryParameters: {'per_page': 50});
       return (response.data as List)
           .map((b) => b['name'] as String)
           .where((name) => !name.startsWith('-') && _safeBranchName.hasMatch(name))
           .toList();
     } on DioException catch (e) {
-      throw NetworkException(
-        'Failed to list branches',
-        statusCode: e.response?.statusCode,
-        originalError: e,
-      );
+      throw NetworkException('Failed to list branches', statusCode: e.response?.statusCode, originalError: e);
     }
   }
 
-  Future<List<Map<String, dynamic>>> listPullRequests(
-    String owner,
-    String repo, {
-    String state = 'open',
-  }) async {
+  Future<List<Map<String, dynamic>>> listPullRequests(String owner, String repo, {String state = 'open'}) async {
     try {
-      final response = await _dio.get(
-        '/repos/$owner/$repo/pulls',
-        queryParameters: {'state': state, 'per_page': 50},
-      );
+      final response = await _dio.get('/repos/$owner/$repo/pulls', queryParameters: {'state': state, 'per_page': 50});
       return (response.data as List).cast<Map<String, dynamic>>();
     } on DioException catch (e) {
-      throw NetworkException(
-        'Failed to list pull requests',
-        statusCode: e.response?.statusCode,
-        originalError: e,
-      );
+      throw NetworkException('Failed to list pull requests', statusCode: e.response?.statusCode, originalError: e);
     }
   }
 
@@ -210,22 +155,12 @@ class GitHubApiService {
     try {
       final response = await _dio.post(
         '/repos/$owner/$repo/pulls',
-        data: {
-          'title': title,
-          'body': body,
-          'head': head,
-          'base': base,
-          'draft': draft,
-        },
+        data: {'title': title, 'body': body, 'head': head, 'base': base, 'draft': draft},
       );
       final data = response.data as Map<String, dynamic>;
       return data['html_url'] as String;
     } on DioException catch (e) {
-      throw NetworkException(
-        'Failed to create pull request',
-        statusCode: e.response?.statusCode,
-        originalError: e,
-      );
+      throw NetworkException('Failed to create pull request', statusCode: e.response?.statusCode, originalError: e);
     }
   }
 }

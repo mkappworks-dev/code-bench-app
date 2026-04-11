@@ -136,10 +136,7 @@ class ConversationTile extends StatelessWidget {
               // Time
               Text(
                 _relativeTime(session.updatedAt),
-                style: const TextStyle(
-                  color: ThemeConstants.faintFg,
-                  fontSize: ThemeConstants.uiFontSizeBadge,
-                ),
+                style: const TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSizeBadge),
               ),
             ],
           ),

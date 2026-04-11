@@ -24,10 +24,7 @@ class ChatShell extends ConsumerWidget {
     if (projectId == null) return;
     final model = ref.read(selectedModelProvider);
     final service = ref.read(sessionServiceProvider);
-    final sessionId = await service.createSession(
-      model: model,
-      projectId: projectId,
-    );
+    final sessionId = await service.createSession(model: model, projectId: projectId);
     ref.read(activeSessionIdProvider.notifier).set(sessionId);
     if (context.mounted) context.go('/chat/$sessionId');
   }
@@ -42,8 +39,8 @@ class ChatShell extends ConsumerWidget {
       child: CallbackShortcuts(
         bindings: {
           const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () => _newChat(ref, context).catchError((e, st) {
-                dLog('[_newChat] error: $e\n$st');
-              }),
+            dLog('[_newChat] error: $e\n$st');
+          }),
           const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
               _newChat(ref, context).catchError((e, st) {
                 dLog('[_newChat] error: $e\n$st');
@@ -68,10 +65,7 @@ class ChatShell extends ConsumerWidget {
                         children: [
                           Expanded(child: child),
                           if (panelVisible && activeSessionId != null)
-                            SizedBox(
-                              width: 190,
-                              child: ChangesPanel(sessionId: activeSessionId),
-                            ),
+                            SizedBox(width: 190, child: ChangesPanel(sessionId: activeSessionId)),
                         ],
                       ),
                     ),

@@ -94,10 +94,7 @@ void main() {
       late RequestOptions captured;
       final adapter = _FakeAdapter((opts) async {
         captured = opts;
-        return _json(201, {
-          'html_url': 'https://github.com/octo/hello/pull/7',
-          'number': 7,
-        });
+        return _json(201, {'html_url': 'https://github.com/octo/hello/pull/7', 'number': 7});
       });
       final svc = GitHubApiService('tok', dio: _dioWith(adapter));
 
@@ -123,19 +120,10 @@ void main() {
     });
 
     test('throws NetworkException with the status code on 422', () async {
-      final adapter = _FakeAdapter(
-        (_) async => _json(422, {'message': 'Validation Failed'}),
-      );
+      final adapter = _FakeAdapter((_) async => _json(422, {'message': 'Validation Failed'}));
       final svc = GitHubApiService('tok', dio: _dioWith(adapter));
       try {
-        await svc.createPullRequest(
-          owner: 'octo',
-          repo: 'hello',
-          title: 't',
-          body: 'b',
-          head: 'feat',
-          base: 'main',
-        );
+        await svc.createPullRequest(owner: 'octo', repo: 'hello', title: 't', body: 'b', head: 'feat', base: 'main');
         fail('expected NetworkException');
       } on NetworkException catch (e) {
         expect(e.statusCode, 422);
@@ -146,14 +134,7 @@ void main() {
       final adapter = _FakeAdapter((_) async => _json(401, {'message': 'Bad credentials'}));
       final svc = GitHubApiService('bad', dio: _dioWith(adapter));
       expect(
-        () => svc.createPullRequest(
-          owner: 'octo',
-          repo: 'hello',
-          title: 't',
-          body: 'b',
-          head: 'feat',
-          base: 'main',
-        ),
+        () => svc.createPullRequest(owner: 'octo', repo: 'hello', title: 't', body: 'b', head: 'feat', base: 'main'),
         throwsA(isA<NetworkException>().having((e) => e.statusCode, 'statusCode', 401)),
       );
     });
