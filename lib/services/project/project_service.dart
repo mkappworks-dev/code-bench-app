@@ -13,6 +13,16 @@ import 'git_detector.dart';
 
 part 'project_service.g.dart';
 
+/// Thrown when attempting to add a project whose folder path is already
+/// tracked by another project entry.
+class DuplicateProjectPathException implements Exception {
+  DuplicateProjectPathException(this.path);
+  final String path;
+
+  @override
+  String toString() => 'A project at "$path" already exists in Code Bench.';
+}
+
 @Riverpod(keepAlive: true)
 ProjectService projectService(Ref ref) {
   return ProjectService(ref);
@@ -34,6 +44,11 @@ class ProjectService {
     final dir = Directory(directoryPath);
     if (!dir.existsSync()) {
       throw ArgumentError('Directory does not exist: $directoryPath');
+    }
+
+    final existing = await _db.projectDao.getProjectByPath(directoryPath);
+    if (existing != null) {
+      throw DuplicateProjectPathException(directoryPath);
     }
 
     final id = _uuid.v4();
@@ -95,6 +110,35 @@ class ProjectService {
     );
   }
 
+  /// Touches every project row with a no-op write so Drift re-emits the
+  /// `watchAllProjects` stream. Call this after operations that may have
+  /// changed filesystem state outside the app (e.g. the user deleted a
+  /// folder in Finder while Code Bench was running).
+  Future<void> refreshProjectStatuses() async {
+    final rows = await _db.projectDao.getAllProjects();
+    for (final r in rows) {
+      await _db.projectDao.updateProject(r.id, WorkspaceProjectsCompanion(sortOrder: Value(r.sortOrder)));
+    }
+  }
+
+  /// Point an existing project at a new folder on disk. Used by the
+  /// "Relocate…" action when the user has moved or restored a project
+  /// folder under a different path.
+  Future<void> relocateProject(String projectId, String newPath) async {
+    final dir = Directory(newPath);
+    if (!dir.existsSync()) {
+      throw ArgumentError('Directory does not exist: $newPath');
+    }
+
+    final isGit = GitDetector.isGitRepo(newPath);
+    final branch = isGit ? GitDetector.getCurrentBranch(newPath) : null;
+
+    await _db.projectDao.updateProject(
+      projectId,
+      WorkspaceProjectsCompanion(path: Value(newPath), isGit: Value(isGit), currentBranch: Value(branch)),
+    );
+  }
+
   Project _projectFromRow(WorkspaceProjectRow row) {
     List<ProjectAction> actions = const [];
     // We write this column ourselves as jsonEncode(...) in
@@ -109,6 +153,9 @@ class ProjectService {
     } on TypeError catch (e) {
       if (kDebugMode) debugPrint('[ProjectService] actionsJson TypeError for ${row.id}: $e');
     }
+
+    final status = Directory(row.path).existsSync() ? ProjectStatus.available : ProjectStatus.missing;
+
     return Project(
       id: row.id,
       name: row.name,
@@ -118,6 +165,7 @@ class ProjectService {
       createdAt: row.createdAt,
       sortOrder: row.sortOrder,
       actions: actions,
+      status: status,
     );
   }
 }
