@@ -180,14 +180,18 @@ class ApplyService {
   ///
   /// A deleted file, a read error, or any mismatch all resolve to `true` —
   /// we err on the side of prompting the user rather than silently reverting
-  /// over unknown state.
+  /// over unknown state. Read errors are logged (runtimeType only) so a
+  /// permissions regression doesn't become invisible in the wild: without
+  /// the log, a broken AV rule or locked file would silently surface as
+  /// "externally modified" forever with no diagnostic trail.
   static Future<bool> isExternallyModified(String filePath, String storedChecksum) async {
     try {
       final file = File(filePath);
       if (!file.existsSync()) return true; // file deleted = modified
       final current = await file.readAsString();
       return sha256OfString(current) != storedChecksum;
-    } catch (_) {
+    } catch (e) {
+      dLog('[ApplyService] isExternallyModified read failed: ${e.runtimeType}');
       return true;
     }
   }
