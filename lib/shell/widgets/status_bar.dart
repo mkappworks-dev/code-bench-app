@@ -11,6 +11,7 @@ import '../../data/models/project.dart';
 import '../../data/models/tool_event.dart';
 import '../../features/chat/chat_notifier.dart';
 import '../../features/project_sidebar/project_sidebar_notifier.dart';
+import '../../features/branch_picker/widgets/branch_picker_popover.dart';
 import '../../services/git/git_live_state.dart';
 import '../../services/git/git_live_state_provider.dart';
 
@@ -149,8 +150,20 @@ class _StatusBarState extends ConsumerState<StatusBar> {
   }
 
   void _openPicker(Project project, GitLiveState liveState) {
-    // Picker widget added in Task 11 — placeholder keeps code compiling.
-    // Tap is wired but does nothing until BranchPickerPopover exists.
+    if (_pickerEntry != null) {
+      closePicker();
+      return;
+    }
+    _pickerEntry = OverlayEntry(
+      builder: (ctx) => BranchPickerPopover(
+        layerLink: _branchLabelLink,
+        projectPath: project.path,
+        currentBranch: liveState.branch,
+        onClose: closePicker,
+      ),
+    );
+    Overlay.of(context).insert(_pickerEntry!);
+    setState(() {}); // rebuild so the branch label stays visible under the overlay
   }
 }
 
