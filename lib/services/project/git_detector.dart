@@ -2,8 +2,8 @@ import 'dart:io';
 
 class GitDetector {
   static bool isGitRepo(String directoryPath) {
-    final gitDir = Directory('$directoryPath/.git');
-    return gitDir.existsSync();
+    final type = FileSystemEntity.typeSync('$directoryPath/.git');
+    return type == FileSystemEntityType.directory || type == FileSystemEntityType.file; // worktree: .git is a file
   }
 
   static String? getCurrentBranch(String directoryPath) {
