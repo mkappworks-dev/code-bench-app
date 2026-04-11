@@ -284,7 +284,7 @@ as String?,
 /// @nodoc
 mixin _$ChatMessage {
 
- String get id; String get sessionId; MessageRole get role; String get content; List<CodeBlock> get codeBlocks; DateTime get timestamp; bool get isStreaming;
+ String get id; String get sessionId; MessageRole get role; String get content; List<CodeBlock> get codeBlocks; List<ToolEvent> get toolEvents; DateTime get timestamp; bool get isStreaming;
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -297,16 +297,16 @@ $ChatMessageCopyWith<ChatMessage> get copyWith => _$ChatMessageCopyWithImpl<Chat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other.codeBlocks, codeBlocks)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.isStreaming, isStreaming) || other.isStreaming == isStreaming));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other.codeBlocks, codeBlocks)&&const DeepCollectionEquality().equals(other.toolEvents, toolEvents)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.isStreaming, isStreaming) || other.isStreaming == isStreaming));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,sessionId,role,content,const DeepCollectionEquality().hash(codeBlocks),timestamp,isStreaming);
+int get hashCode => Object.hash(runtimeType,id,sessionId,role,content,const DeepCollectionEquality().hash(codeBlocks),const DeepCollectionEquality().hash(toolEvents),timestamp,isStreaming);
 
 @override
 String toString() {
-  return 'ChatMessage(id: $id, sessionId: $sessionId, role: $role, content: $content, codeBlocks: $codeBlocks, timestamp: $timestamp, isStreaming: $isStreaming)';
+  return 'ChatMessage(id: $id, sessionId: $sessionId, role: $role, content: $content, codeBlocks: $codeBlocks, toolEvents: $toolEvents, timestamp: $timestamp, isStreaming: $isStreaming)';
 }
 
 
@@ -317,7 +317,7 @@ abstract mixin class $ChatMessageCopyWith<$Res>  {
   factory $ChatMessageCopyWith(ChatMessage value, $Res Function(ChatMessage) _then) = _$ChatMessageCopyWithImpl;
 @useResult
 $Res call({
- String id, String sessionId, MessageRole role, String content, List<CodeBlock> codeBlocks, DateTime timestamp, bool isStreaming
+ String id, String sessionId, MessageRole role, String content, List<CodeBlock> codeBlocks, List<ToolEvent> toolEvents, DateTime timestamp, bool isStreaming
 });
 
 
@@ -334,14 +334,15 @@ class _$ChatMessageCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? sessionId = null,Object? role = null,Object? content = null,Object? codeBlocks = null,Object? timestamp = null,Object? isStreaming = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? sessionId = null,Object? role = null,Object? content = null,Object? codeBlocks = null,Object? toolEvents = null,Object? timestamp = null,Object? isStreaming = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
 as String,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as MessageRole,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
 as String,codeBlocks: null == codeBlocks ? _self.codeBlocks : codeBlocks // ignore: cast_nullable_to_non_nullable
-as List<CodeBlock>,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
+as List<CodeBlock>,toolEvents: null == toolEvents ? _self.toolEvents : toolEvents // ignore: cast_nullable_to_non_nullable
+as List<ToolEvent>,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
 as DateTime,isStreaming: null == isStreaming ? _self.isStreaming : isStreaming // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -428,10 +429,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  DateTime timestamp,  bool isStreaming)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  List<ToolEvent> toolEvents,  DateTime timestamp,  bool isStreaming)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatMessage() when $default != null:
-return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.timestamp,_that.isStreaming);case _:
+return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.toolEvents,_that.timestamp,_that.isStreaming);case _:
   return orElse();
 
 }
@@ -449,10 +450,10 @@ return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBloc
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  DateTime timestamp,  bool isStreaming)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  List<ToolEvent> toolEvents,  DateTime timestamp,  bool isStreaming)  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessage():
-return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.timestamp,_that.isStreaming);case _:
+return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.toolEvents,_that.timestamp,_that.isStreaming);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -469,10 +470,10 @@ return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBloc
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  DateTime timestamp,  bool isStreaming)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String sessionId,  MessageRole role,  String content,  List<CodeBlock> codeBlocks,  List<ToolEvent> toolEvents,  DateTime timestamp,  bool isStreaming)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessage() when $default != null:
-return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.timestamp,_that.isStreaming);case _:
+return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBlocks,_that.toolEvents,_that.timestamp,_that.isStreaming);case _:
   return null;
 
 }
@@ -484,7 +485,7 @@ return $default(_that.id,_that.sessionId,_that.role,_that.content,_that.codeBloc
 @JsonSerializable()
 
 class _ChatMessage implements ChatMessage {
-  const _ChatMessage({required this.id, required this.sessionId, required this.role, required this.content, final  List<CodeBlock> codeBlocks = const [], required this.timestamp, this.isStreaming = false}): _codeBlocks = codeBlocks;
+  const _ChatMessage({required this.id, required this.sessionId, required this.role, required this.content, final  List<CodeBlock> codeBlocks = const [], final  List<ToolEvent> toolEvents = const [], required this.timestamp, this.isStreaming = false}): _codeBlocks = codeBlocks,_toolEvents = toolEvents;
   factory _ChatMessage.fromJson(Map<String, dynamic> json) => _$ChatMessageFromJson(json);
 
 @override final  String id;
@@ -496,6 +497,13 @@ class _ChatMessage implements ChatMessage {
   if (_codeBlocks is EqualUnmodifiableListView) return _codeBlocks;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_codeBlocks);
+}
+
+ final  List<ToolEvent> _toolEvents;
+@override@JsonKey() List<ToolEvent> get toolEvents {
+  if (_toolEvents is EqualUnmodifiableListView) return _toolEvents;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_toolEvents);
 }
 
 @override final  DateTime timestamp;
@@ -514,16 +522,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other._codeBlocks, _codeBlocks)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.isStreaming, isStreaming) || other.isStreaming == isStreaming));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.role, role) || other.role == role)&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other._codeBlocks, _codeBlocks)&&const DeepCollectionEquality().equals(other._toolEvents, _toolEvents)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.isStreaming, isStreaming) || other.isStreaming == isStreaming));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,sessionId,role,content,const DeepCollectionEquality().hash(_codeBlocks),timestamp,isStreaming);
+int get hashCode => Object.hash(runtimeType,id,sessionId,role,content,const DeepCollectionEquality().hash(_codeBlocks),const DeepCollectionEquality().hash(_toolEvents),timestamp,isStreaming);
 
 @override
 String toString() {
-  return 'ChatMessage(id: $id, sessionId: $sessionId, role: $role, content: $content, codeBlocks: $codeBlocks, timestamp: $timestamp, isStreaming: $isStreaming)';
+  return 'ChatMessage(id: $id, sessionId: $sessionId, role: $role, content: $content, codeBlocks: $codeBlocks, toolEvents: $toolEvents, timestamp: $timestamp, isStreaming: $isStreaming)';
 }
 
 
@@ -534,7 +542,7 @@ abstract mixin class _$ChatMessageCopyWith<$Res> implements $ChatMessageCopyWith
   factory _$ChatMessageCopyWith(_ChatMessage value, $Res Function(_ChatMessage) _then) = __$ChatMessageCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String sessionId, MessageRole role, String content, List<CodeBlock> codeBlocks, DateTime timestamp, bool isStreaming
+ String id, String sessionId, MessageRole role, String content, List<CodeBlock> codeBlocks, List<ToolEvent> toolEvents, DateTime timestamp, bool isStreaming
 });
 
 
@@ -551,14 +559,15 @@ class __$ChatMessageCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? sessionId = null,Object? role = null,Object? content = null,Object? codeBlocks = null,Object? timestamp = null,Object? isStreaming = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? sessionId = null,Object? role = null,Object? content = null,Object? codeBlocks = null,Object? toolEvents = null,Object? timestamp = null,Object? isStreaming = null,}) {
   return _then(_ChatMessage(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
 as String,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as MessageRole,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
 as String,codeBlocks: null == codeBlocks ? _self._codeBlocks : codeBlocks // ignore: cast_nullable_to_non_nullable
-as List<CodeBlock>,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
+as List<CodeBlock>,toolEvents: null == toolEvents ? _self._toolEvents : toolEvents // ignore: cast_nullable_to_non_nullable
+as List<ToolEvent>,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
 as DateTime,isStreaming: null == isStreaming ? _self.isStreaming : isStreaming // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

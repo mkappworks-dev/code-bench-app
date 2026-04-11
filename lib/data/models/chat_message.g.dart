@@ -26,6 +26,9 @@ _ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => _ChatMessage(
   codeBlocks:
       (json['codeBlocks'] as List<dynamic>?)?.map((e) => CodeBlock.fromJson(e as Map<String, dynamic>)).toList() ??
       const [],
+  toolEvents:
+      (json['toolEvents'] as List<dynamic>?)?.map((e) => ToolEvent.fromJson(e as Map<String, dynamic>)).toList() ??
+      const [],
   timestamp: DateTime.parse(json['timestamp'] as String),
   isStreaming: json['isStreaming'] as bool? ?? false,
 );
@@ -36,6 +39,7 @@ Map<String, dynamic> _$ChatMessageToJson(_ChatMessage instance) => <String, dyna
   'role': _$MessageRoleEnumMap[instance.role]!,
   'content': instance.content,
   'codeBlocks': instance.codeBlocks,
+  'toolEvents': instance.toolEvents,
   'timestamp': instance.timestamp.toIso8601String(),
   'isStreaming': instance.isStreaming,
 };
