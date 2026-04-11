@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -398,33 +399,35 @@ class _GeneralSectionState extends State<_GeneralSection> {
                 label: 'Terminal app',
                 description: 'App to open when "Open Terminal" is tapped',
                 trailing: SizedBox(width: 140, child: _InlineTextField(controller: _terminalAppController)),
+                isLast: !kDebugMode,
               ),
-              _SettingsRow(
-                label: 'Reset onboarding',
-                description: 'Show the setup wizard again on next launch',
-                trailing: OutlinedButton(
-                  onPressed: () async {
-                    await widget.onboardingPrefs.reset();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Onboarding will show on next launch'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    }
-                  },
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: ThemeConstants.borderColor),
-                    foregroundColor: ThemeConstants.textSecondary,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              if (kDebugMode)
+                _SettingsRow(
+                  label: 'Reset onboarding',
+                  description: '[Debug] Show the setup wizard again on next launch',
+                  trailing: OutlinedButton(
+                    onPressed: () async {
+                      await widget.onboardingPrefs.reset();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Onboarding will show on next launch'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: ThemeConstants.borderColor),
+                      foregroundColor: ThemeConstants.textSecondary,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('Reset', style: TextStyle(fontSize: 11)),
                   ),
-                  child: const Text('Reset', style: TextStyle(fontSize: 11)),
+                  isLast: true,
                 ),
-                isLast: true,
-              ),
             ],
           ),
           const SizedBox(height: 24),
