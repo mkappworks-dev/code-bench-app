@@ -69,5 +69,61 @@ void main() {
     test('createBranch throws ArgumentError on empty name', () async {
       expect(() => notifier.createBranch(''), throwsA(isA<ArgumentError>()));
     });
+
+    test('createBranch throws ArgumentError on name containing spaces', () async {
+      expect(() => notifier.createBranch('has space'), throwsA(isA<ArgumentError>()));
+    });
+
+    test('checkout throws ArgumentError on leading-dash name (security guard)', () async {
+      // Defence-in-depth against a malicious repo that surfaces a ref named
+      // `--orphan` in the picker: the click must NOT reach
+      // `git checkout --orphan`.
+      expect(() => notifier.checkout('--orphan'), throwsA(isA<ArgumentError>()));
+    });
+
+    test('checkout throws ArgumentError on empty name', () async {
+      expect(() => notifier.checkout(''), throwsA(isA<ArgumentError>()));
+    });
+
+    test('checkout throws GitException when working tree is dirty', () async {
+      // Create a second branch that diverges, then modify tracked content
+      // so a checkout back would overwrite uncommitted changes.
+      await Process.run('git', ['checkout', '-b', 'feat/other'], workingDirectory: repoDir.path);
+      await File('${repoDir.path}/readme.txt').writeAsString('changed on other');
+      await Process.run('git', ['add', '.'], workingDirectory: repoDir.path);
+      await Process.run('git', ['commit', '-m', 'divergent'], workingDirectory: repoDir.path);
+      await Process.run('git', ['checkout', 'main'], workingDirectory: repoDir.path);
+      // Dirty the same file on main without committing.
+      await File('${repoDir.path}/readme.txt').writeAsString('dirty');
+
+      expect(() => notifier.checkout('feat/other'), throwsA(isA<GitException>()));
+    });
+
+    test('worktreeBranches parses `git worktree list --porcelain` output', () async {
+      // Create a second branch, then a real worktree checking it out in a
+      // sibling directory. `git worktree list --porcelain` in the main
+      // checkout should then enumerate that branch.
+      await Process.run('git', ['branch', 'feat/alt'], workingDirectory: repoDir.path);
+      final siblingPath = '${repoDir.parent.path}/wt_${DateTime.now().microsecondsSinceEpoch}';
+      addTearDown(() async {
+        // Clean up the external worktree directory after the test.
+        final d = Directory(siblingPath);
+        if (d.existsSync()) await d.delete(recursive: true);
+      });
+      final addResult = await Process.run('git', [
+        'worktree',
+        'add',
+        siblingPath,
+        'feat/alt',
+      ], workingDirectory: repoDir.path);
+      expect(addResult.exitCode, equals(0), reason: addResult.stderr as String);
+
+      final worktrees = await notifier.worktreeBranches();
+      expect(worktrees, contains('feat/alt'));
+      // The main worktree's own branch must NOT be listed — it's skipped
+      // by design so the picker doesn't mark the current branch as
+      // "checked out in another worktree".
+      expect(worktrees, isNot(contains('main')));
+    });
   });
 }

@@ -85,6 +85,76 @@ void main() {
       final state = await container.read(gitLiveStateProvider(dir.path).future);
       expect(state.isOnDefaultBranch, isFalse);
     });
+
+    test('aheadCount is positive when local commits exceed upstream tip', () async {
+      // Build a local "upstream" bare repo, clone it, commit two more
+      // commits locally so `@{u}..HEAD` reports 2 ahead. Verifies the
+      // happy path of `_aheadCount` — the only branch currently untested.
+      final upstream = await Directory.systemTemp.createTemp('git_live_upstream_');
+      addTearDown(() => upstream.delete(recursive: true));
+      await Process.run('git', ['init', '--bare', '-b', 'main'], workingDirectory: upstream.path);
+
+      final clone = await Directory.systemTemp.createTemp('git_live_clone_');
+      addTearDown(() => clone.delete(recursive: true));
+      await Process.run('git', ['clone', upstream.path, clone.path]);
+      await Process.run('git', ['config', 'user.email', 'test@test.com'], workingDirectory: clone.path);
+      await Process.run('git', ['config', 'user.name', 'Test'], workingDirectory: clone.path);
+      // Seed commit so the clone has a HEAD we can push.
+      await File('${clone.path}/readme.txt').writeAsString('seed');
+      await Process.run('git', ['add', '.'], workingDirectory: clone.path);
+      await Process.run('git', ['commit', '-m', 'seed'], workingDirectory: clone.path);
+      await Process.run('git', ['push', '-u', 'origin', 'main'], workingDirectory: clone.path);
+      // Two new commits beyond upstream.
+      await File('${clone.path}/a.txt').writeAsString('a');
+      await Process.run('git', ['add', '.'], workingDirectory: clone.path);
+      await Process.run('git', ['commit', '-m', 'a'], workingDirectory: clone.path);
+      await File('${clone.path}/b.txt').writeAsString('b');
+      await Process.run('git', ['add', '.'], workingDirectory: clone.path);
+      await Process.run('git', ['commit', '-m', 'b'], workingDirectory: clone.path);
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final state = await container.read(gitLiveStateProvider(clone.path).future);
+      expect(state.aheadCount, equals(2));
+    });
+
+    test('detached HEAD yields null branch, not literal "HEAD"', () async {
+      final dir = await _initGitRepo();
+      addTearDown(() => dir.delete(recursive: true));
+      // Detach.
+      final sha = await Process.run('git', ['rev-parse', 'HEAD'], workingDirectory: dir.path);
+      await Process.run('git', ['checkout', (sha.stdout as String).trim()], workingDirectory: dir.path);
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final state = await container.read(gitLiveStateProvider(dir.path).future);
+      expect(state.branch, isNull, reason: 'detached HEAD must map to null, not "HEAD"');
+      expect(state.isOnDefaultBranch, isFalse);
+    });
+
+    test('recognises a git worktree (.git-as-file) at the provider level', () async {
+      // Main repo.
+      final main = await _initGitRepo();
+      addTearDown(() => main.delete(recursive: true));
+      // Second branch + real worktree.
+      await Process.run('git', ['branch', 'feat/wt'], workingDirectory: main.path);
+      final wtPath = '${main.parent.path}/wt_${DateTime.now().microsecondsSinceEpoch}';
+      addTearDown(() async {
+        final d = Directory(wtPath);
+        if (d.existsSync()) await d.delete(recursive: true);
+      });
+      final addResult = await Process.run('git', ['worktree', 'add', wtPath, 'feat/wt'], workingDirectory: main.path);
+      expect(addResult.exitCode, equals(0), reason: addResult.stderr as String);
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final state = await container.read(gitLiveStateProvider(wtPath).future);
+      expect(state.isGit, isTrue);
+      expect(state.branch, equals('feat/wt'));
+    });
   });
 
   group('behindCountProvider', () {
