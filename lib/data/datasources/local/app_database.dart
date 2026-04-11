@@ -128,6 +128,9 @@ class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
   Future<WorkspaceProjectRow?> getProject(String id) =>
       (select(workspaceProjects)..where((t) => t.id.equals(id))).getSingleOrNull();
 
+  Future<WorkspaceProjectRow?> getProjectByPath(String path) =>
+      (select(workspaceProjects)..where((t) => t.path.equals(path))).getSingleOrNull();
+
   Future<void> upsertProject(WorkspaceProjectsCompanion project) =>
       into(workspaceProjects).insertOnConflictUpdate(project);
 
@@ -145,6 +148,7 @@ class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
 @DriftDatabase(tables: [ChatSessions, ChatMessages, WorkspaceProjects], daos: [SessionDao, ProjectDao])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
+  AppDatabase.forTesting(super.executor);
 
   @override
   int get schemaVersion => 4;

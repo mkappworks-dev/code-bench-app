@@ -22,6 +22,8 @@ class ProjectTile extends ConsumerStatefulWidget {
     required this.onRemove,
     required this.onNewConversation,
     required this.onArchive,
+    required this.onDelete,
+    required this.onRelocate,
   });
 
   final Project project;
@@ -33,6 +35,8 @@ class ProjectTile extends ConsumerStatefulWidget {
   final ValueChanged<String> onRemove;
   final ValueChanged<String> onNewConversation;
   final ValueChanged<String> onArchive;
+  final ValueChanged<String> onDelete;
+  final ValueChanged<String> onRelocate;
 
   @override
   ConsumerState<ProjectTile> createState() => _ProjectTileState();
@@ -43,6 +47,8 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
 
   @override
   Widget build(BuildContext context) {
+    final isMissing = widget.project.status == ProjectStatus.missing;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -53,6 +59,7 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
               position: details.globalPosition,
               projectPath: widget.project.path,
               isGit: widget.project.isGit,
+              isMissing: isMissing,
             );
             if (action != null && context.mounted) {
               await ProjectContextMenu.handleAction(
@@ -62,6 +69,7 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                 context: context,
                 onRemove: widget.onRemove,
                 onNewConversation: widget.onNewConversation,
+                onRelocate: widget.onRelocate,
               );
             }
           },
@@ -81,42 +89,52 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                       color: ThemeConstants.faintFg,
                     ),
                     const SizedBox(width: 4),
-                    // Folder icon
-                    Icon(AppIcons.folder, size: 13, color: ThemeConstants.textSecondary),
+                    // Folder icon — warning triangle when missing
+                    Icon(
+                      isMissing ? AppIcons.warning : AppIcons.folder,
+                      size: 13,
+                      color: isMissing ? ThemeConstants.warning : ThemeConstants.textSecondary,
+                    ),
                     const SizedBox(width: 6),
-                    // Project name
+                    // Project name — muted + strikethrough when missing
                     Expanded(
-                      child: Text(
-                        widget.project.name,
-                        style: const TextStyle(
-                          color: ThemeConstants.textPrimary,
-                          fontSize: ThemeConstants.uiFontSize,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    // New-chat icon (hover only)
-                    AnimatedOpacity(
-                      opacity: _hovered ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 120),
-                      child: InkWell(
-                        onTap: () => widget.onNewConversation(widget.project.id),
-                        borderRadius: BorderRadius.circular(4),
-                        child: Padding(
-                          padding: const EdgeInsets.all(3),
-                          child: Icon(AppIcons.newChat, size: 13, color: ThemeConstants.mutedFg),
+                      child: Tooltip(
+                        message: isMissing ? 'Folder not found: ${widget.project.path}' : '',
+                        child: Text(
+                          widget.project.name,
+                          style: TextStyle(
+                            color: isMissing ? ThemeConstants.mutedFg : ThemeConstants.textPrimary,
+                            fontSize: ThemeConstants.uiFontSize,
+                            fontWeight: FontWeight.w500,
+                            decoration: isMissing ? TextDecoration.lineThrough : null,
+                            decorationColor: ThemeConstants.mutedFg,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
+                    // New-chat icon — hidden entirely when missing
+                    if (!isMissing)
+                      AnimatedOpacity(
+                        opacity: _hovered ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 120),
+                        child: InkWell(
+                          onTap: () => widget.onNewConversation(widget.project.id),
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.all(3),
+                            child: Icon(AppIcons.newChat, size: 13, color: ThemeConstants.mutedFg),
+                          ),
+                        ),
+                      ),
                     const SizedBox(width: 4),
-                    // Git icon (icon only, no pill)
+                    // Git icon — faint when missing (no reliable branch info)
                     Tooltip(
-                      message: widget.project.isGit ? (widget.project.currentBranch ?? 'git') : '',
+                      message: (!isMissing && widget.project.isGit) ? (widget.project.currentBranch ?? 'git') : '',
                       child: Icon(
                         AppIcons.gitBranch,
                         size: 13,
-                        color: widget.project.isGit ? ThemeConstants.success : ThemeConstants.faintFg,
+                        color: (!isMissing && widget.project.isGit) ? ThemeConstants.success : ThemeConstants.faintFg,
                       ),
                     ),
                   ],
@@ -136,6 +154,7 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                       isActive: s.sessionId == widget.activeSessionId,
                       onTap: () => widget.onSessionTap(s.sessionId),
                       onArchive: () => widget.onArchive(s.sessionId),
+                      onDelete: () => widget.onDelete(s.sessionId),
                       onRename: () async {
                         if (!context.mounted) return;
                         final newTitle = await RenameConversationDialog.show(context, s.title);

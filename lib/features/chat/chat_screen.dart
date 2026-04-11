@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/theme_constants.dart';
 import 'chat_notifier.dart';
-import 'widgets/chat_input_bar_v2.dart';
+import 'widgets/chat_input_bar.dart';
 import 'widgets/message_list.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -53,7 +53,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       body: Column(
         children: [
           Expanded(child: MessageList(sessionId: sessionId)),
-          ChatInputBarV2(sessionId: sessionId),
+          ChatInputBar(sessionId: sessionId),
         ],
       ),
     );

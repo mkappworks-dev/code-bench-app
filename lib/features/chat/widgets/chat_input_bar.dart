@@ -1,12 +1,40 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../data/models/ai_model.dart';
+import '../../../data/models/project.dart';
+import '../../../features/project_sidebar/project_sidebar_notifier.dart';
+import '../../../services/project/project_service.dart';
 import '../chat_notifier.dart';
+
+/// Private in-memory store of per-session chat-input drafts.
+///
+/// Not a Riverpod provider because nothing in the tree needs to observe it —
+/// the drafts are only read/written by ChatInputBar itself in response to
+/// session switches. Using a plain module-level map sidesteps Riverpod's
+/// "can't modify provider during build" guard (which fires in
+/// `didUpdateWidget`) and the "ref unsafe after unmount" check (in
+/// `dispose`), both of which are triggered by this widget's lifecycle.
+///
+/// Survives switching between chats within a single app run but is not
+/// persisted across restarts. Empty entries are evicted so the map doesn't
+/// grow with stale keys.
+final Map<String, String> _sessionDrafts = <String, String>{};
+
+/// Resets `_sessionDrafts` so one widget test can't leak its draft into the
+/// next. Intended only for `setUp` in widget tests — production code should
+/// never call this.
+@visibleForTesting
+void clearSessionDraftsForTesting() => _sessionDrafts.clear();
 
 enum _Effort { low, medium, high, max }
 
@@ -39,15 +67,15 @@ extension _PermissionLabel on _Permission {
   };
 }
 
-class ChatInputBarV2 extends ConsumerStatefulWidget {
-  const ChatInputBarV2({super.key, required this.sessionId});
+class ChatInputBar extends ConsumerStatefulWidget {
+  const ChatInputBar({super.key, required this.sessionId});
   final String sessionId;
 
   @override
-  ConsumerState<ChatInputBarV2> createState() => _ChatInputBarV2State();
+  ConsumerState<ChatInputBar> createState() => _ChatInputBarState();
 }
 
-class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
+class _ChatInputBarState extends ConsumerState<ChatInputBar> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   final _keyboardFocusNode = FocusNode();
@@ -56,18 +84,114 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
   _Mode _mode = _Mode.chat;
   _Permission _permission = _Permission.fullAccess;
 
+  void _stashDraft(String sessionId, String text) {
+    if (text.isEmpty) {
+      _sessionDrafts.remove(sessionId);
+    } else {
+      _sessionDrafts[sessionId] = text;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Restore any draft that was stashed for this session last time
+    // the user switched away. In-memory only, so a fresh app launch
+    // starts with an empty controller.
+    final draft = _sessionDrafts[widget.sessionId];
+    if (draft != null && draft.isNotEmpty) {
+      _controller.text = draft;
+    }
+  }
+
   @override
   void dispose() {
+    // Stash the current draft so a later ChatInputBar rebuild can
+    // restore it for this session.
+    _stashDraft(widget.sessionId, _controller.text);
     _controller.dispose();
     _focusNode.dispose();
     _keyboardFocusNode.dispose();
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(ChatInputBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Flutter reuses this Element across sessionId changes (same widget
+    // type in the same tree slot), so the text controller keeps whatever
+    // the user typed in the previous chat. Save the outgoing draft
+    // against oldWidget.sessionId and load the incoming one so drafts
+    // are isolated per session. Effort/mode/permission stay untouched —
+    // those are intentional global sender preferences.
+    if (oldWidget.sessionId != widget.sessionId) {
+      _stashDraft(oldWidget.sessionId, _controller.text);
+      _controller.text = _sessionDrafts[widget.sessionId] ?? '';
+    }
+  }
+
+  /// Resolves the active project for this session. Returns null if no project
+  /// is selected or the project row has not loaded yet.
+  Project? _resolveActiveProject() {
+    final projectId = ref.read(activeProjectIdProvider);
+    final projects = ref.read(projectsProvider).value ?? <Project>[];
+    return projects.firstWhereOrNull((p) => p.id == projectId);
+  }
+
+  /// Defense-in-depth check run at send time: the freezed `status` field only
+  /// reflects state at the last Drift stream re-emission, so we hit the
+  /// filesystem directly here as the source of truth. On any drift between
+  /// the cached status and the filesystem — either direction — kicks off a
+  /// targeted refresh so the sidebar tile + send button catch up:
+  ///
+  ///  - cached `available` but folder just vanished → block + heal to missing
+  ///  - cached `missing` but folder was restored by the user out-of-band →
+  ///    allow send + heal back to available
+  bool _isProjectAvailable(Project project) {
+    final existsOnDisk = Directory(project.path).existsSync();
+    final cachedAsAvailable = project.status == ProjectStatus.available;
+    if (existsOnDisk != cachedAsAvailable) {
+      unawaited(
+        ref
+            .read(projectServiceProvider)
+            .refreshProjectStatus(project.id)
+            .catchError((Object e) => dLog('[ChatInputBar] refresh after stale folder-status check failed: $e')),
+      );
+    }
+    return existsOnDisk;
+  }
+
   Future<void> _send() async {
+    if (_isSending) return;
+
+    // Check project availability BEFORE the empty-text bailout so that a
+    // tap on the disabled send button (which routes through this method)
+    // still surfaces the "folder missing" snackbar — otherwise the user
+    // gets a silent no-op and no explanation of why sending is blocked.
+    //
+    // The gate defers entirely to the filesystem via `_isProjectAvailable`;
+    // `project.status` is only read for rendering (button dim, hint text),
+    // never for blocking, because it can be stale in either direction.
+    final project = _resolveActiveProject();
+    if (project == null) {
+      showErrorSnackBar(context, 'No active project.');
+      return;
+    }
+    if (!_isProjectAvailable(project)) {
+      showErrorSnackBar(
+        context,
+        'Project folder is missing. Right-click the project in the sidebar to Relocate or Remove it.',
+      );
+      return;
+    }
+
     final text = _controller.text.trim();
-    if (text.isEmpty || _isSending) return;
+    if (text.isEmpty) return;
+
     _controller.clear();
+    // Drop the stashed draft for this session too — once the message
+    // is on the wire, there's nothing to restore on a later switch.
+    _sessionDrafts.remove(widget.sessionId);
     setState(() => _isSending = true);
     try {
       final systemPrompt = ref.read(sessionSystemPromptProvider)[widget.sessionId];
@@ -178,6 +302,14 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
   @override
   Widget build(BuildContext context) {
     final model = ref.watch(selectedModelProvider);
+    // Re-render whenever the active project or its status changes so the
+    // send button + Enter key disable the moment the folder goes missing
+    // (e.g. app-resume refresh, write-button guard, or ApplyService catch).
+    final projectId = ref.watch(activeProjectIdProvider);
+    final projectsAsync = ref.watch(projectsProvider);
+    final project = projectsAsync.value?.firstWhereOrNull((p) => p.id == projectId);
+    final isMissing = project?.status == ProjectStatus.missing;
+    final canSend = !_isSending && !isMissing;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
       decoration: const BoxDecoration(
@@ -198,7 +330,10 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
               onKeyEvent: (event) {
                 if (event is KeyDownEvent &&
                     event.logicalKey == LogicalKeyboardKey.enter &&
-                    !HardwareKeyboard.instance.isShiftPressed) {
+                    !HardwareKeyboard.instance.isShiftPressed &&
+                    !_isSending) {
+                  // Let _send() own the missing-project branch so Enter
+                  // surfaces the same snackbar as the tap on the button.
                   _send();
                 }
               },
@@ -208,9 +343,11 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
                 maxLines: null,
                 minLines: 1,
                 style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
-                decoration: const InputDecoration(
-                  hintText: 'Ask anything, @tag files/folders, or use /command',
-                  hintStyle: TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSize),
+                decoration: InputDecoration(
+                  hintText: isMissing
+                      ? 'Project folder is missing — Relocate or Remove to continue'
+                      : 'Ask anything, @tag files/folders, or use /command',
+                  hintStyle: const TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSize),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -269,18 +406,27 @@ class _ChatInputBarV2State extends ConsumerState<ChatInputBarV2> {
                     ),
                   ),
                   const Spacer(),
-                  GestureDetector(
-                    onTap: _isSending ? null : _send,
-                    child: Container(
-                      width: 26,
-                      height: 26,
-                      decoration: const BoxDecoration(color: ThemeConstants.accent, shape: BoxShape.circle),
-                      child: _isSending
-                          ? const Padding(
-                              padding: EdgeInsets.all(6),
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(AppIcons.arrowUp, size: 14, color: Colors.white),
+                  Tooltip(
+                    message: isMissing ? 'Project folder is missing. Relocate or Remove it from the sidebar.' : '',
+                    child: GestureDetector(
+                      // Route all taps through _send() — even when visually
+                      // disabled for a missing folder — so the guard inside
+                      // _send() can show the explanatory snackbar.
+                      onTap: _isSending ? null : _send,
+                      child: Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          color: canSend ? ThemeConstants.accent : ThemeConstants.accent.withValues(alpha: 0.35),
+                          shape: BoxShape.circle,
+                        ),
+                        child: _isSending
+                            ? const Padding(
+                                padding: EdgeInsets.all(6),
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(AppIcons.arrowUp, size: 14, color: Colors.white),
+                      ),
                     ),
                   ),
                 ],
