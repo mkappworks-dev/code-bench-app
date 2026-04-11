@@ -17,6 +17,7 @@ import '../../features/chat/widgets/commit_dialog.dart';
 import '../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../../services/actions/action_runner_service.dart';
 import '../../services/ai/ai_service_factory.dart';
+import '../../services/git/git_live_state_provider.dart';
 import '../../services/git/git_service.dart';
 import '../../services/ide/ide_launch_service.dart';
 import '../../data/datasources/local/general_preferences.dart';
@@ -86,6 +87,9 @@ class TopActionBar extends ConsumerWidget {
       },
     );
 
+    final liveStateAsync = project != null ? ref.watch(gitLiveStateProvider(project.path)) : null;
+    final isGit = liveStateAsync?.value?.isGit ?? false;
+
     return Container(
       height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -116,7 +120,7 @@ class TopActionBar extends ConsumerWidget {
               ),
             ),
             // No Git badge (only when not a git repo)
-            if (!project.isGit) ...[
+            if (!isGit) ...[
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -145,7 +149,7 @@ class TopActionBar extends ConsumerWidget {
                   _VsCodeDropdown(projectId: project.id, projectPath: project.path),
                   const SizedBox(width: 5),
                   // Git action: Commit & Push (git) or Initialize Git (no git)
-                  if (project.isGit) _CommitPushButton(project: project) else _InitGitButton(project: project),
+                  if (isGit) _CommitPushButton(project: project) else _InitGitButton(project: project),
                 ],
               ),
             ),
@@ -257,24 +261,10 @@ class _InitGitButton extends ConsumerWidget {
           return;
         }
 
-        // Refresh git status separately so a db/refresh error doesn't get
-        // reported as "init failed" — init really did succeed.
-        var refreshFailed = false;
-        try {
-          await ref.read(projectServiceProvider).refreshGitStatus(project.id);
-        } on Exception catch (e) {
-          refreshFailed = true;
-          dLog('[_InitGitButton] refreshGitStatus failed: $e');
-        }
+        ref.invalidate(gitLiveStateProvider(project.path));
 
         if (context.mounted) {
-          // In release builds, a silent refresh failure would leave the
-          // sidebar showing "Not a git repo" with no explanation, making
-          // the button look broken on the user's next click. Tell them.
-          final message = refreshFailed
-              ? 'Git repository initialized — reopen the project to refresh the sidebar.'
-              : 'Git repository initialized';
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Git repository initialized')));
         }
       },
     );
@@ -294,9 +284,6 @@ class _CommitPushButton extends ConsumerStatefulWidget {
 class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   bool _pushing = false;
   bool _pulling = false;
-  // `null` means "unknown" (offline, no upstream, fetch failed) —
-  // rendered as a "?" badge instead of silently claiming "up to date".
-  int? _behindCount;
 
   // Configured remotes for this repo. Empty list = single-origin (or
   // non-git) project; the dropdown collapses to the classic Push/Pull
@@ -309,7 +296,6 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   @override
   void initState() {
     super.initState();
-    unawaited(_checkBehindCount());
     unawaited(_loadRemotes());
   }
 
@@ -337,24 +323,6 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         _selectedRemote = remotes.first.name;
       }
     });
-  }
-
-  Future<void> _checkBehindCount() async {
-    // `fetchBehindCount` is documented to return `null` on soft failures
-    // (no upstream, offline), but `Process.run` can still throw synchronously
-    // if the git binary is missing or the working directory was deleted
-    // between mount and this call. This runs from `unawaited(...)` in
-    // initState, so an escaped throw would hit Flutter's uncaught-error
-    // handler instead of updating the UI — explicitly fall through to
-    // "unknown" (the `↓?` badge) so the user at least sees an honest state.
-    int? count;
-    try {
-      count = await GitService(widget.project.path).fetchBehindCount();
-    } on Exception catch (e) {
-      dLog('[_CommitPushButton] fetchBehindCount threw: $e');
-      count = null;
-    }
-    if (mounted) setState(() => _behindCount = count);
   }
 
   Future<void> _doCommit() async {
@@ -415,6 +383,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       final sha = await GitService(widget.project.path).commit(message);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Committed — $sha')));
+        ref.invalidate(gitLiveStateProvider(widget.project.path));
       }
     } on GitException catch (e) {
       if (mounted) {
@@ -446,6 +415,8 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pushed to $target')));
+        ref.invalidate(gitLiveStateProvider(widget.project.path));
+        ref.invalidate(behindCountProvider(widget.project.path));
       }
     } on GitNoUpstreamException {
       if (mounted) {
@@ -508,6 +479,10 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     if (pushed.isNotEmpty) parts.add('Pushed: ${pushed.join(", ")}');
     if (failed.isNotEmpty) parts.add('Failed: ${failed.join(", ")}');
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(parts.join(' · '))));
+    if (pushed.isNotEmpty) {
+      ref.invalidate(gitLiveStateProvider(widget.project.path));
+      ref.invalidate(behindCountProvider(widget.project.path));
+    }
   }
 
   Future<void> _doPull() async {
@@ -517,7 +492,8 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       final n = await GitService(widget.project.path).pull();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pulled — $n new commit(s) from origin')));
-        setState(() => _behindCount = 0);
+        ref.invalidate(gitLiveStateProvider(widget.project.path));
+        ref.invalidate(behindCountProvider(widget.project.path));
       }
     } on GitConflictException {
       if (mounted) {
@@ -543,7 +519,17 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
 
   @override
   Widget build(BuildContext context) {
-    final behind = _behindCount;
+    final liveStateAsync = ref.watch(gitLiveStateProvider(widget.project.path));
+    final behindAsync = ref.watch(behindCountProvider(widget.project.path));
+
+    final liveState = liveStateAsync.value;
+    final behind = behindAsync.value;
+
+    final canCommit = liveState?.hasUncommitted ?? false;
+    final canPush = (liveState?.aheadCount ?? 0) > 0;
+    final canPull = (behind ?? 0) > 0;
+    final canPr = !(liveState?.isOnDefaultBranch ?? true);
+
     final String badgeLabel;
     if (behind == null) {
       badgeLabel = ' ↓?';
@@ -558,12 +544,16 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       children: [
         // Left: Commit
         GestureDetector(
-          onTap: busy ? null : _doCommit,
+          onTap: (busy || !canCommit) ? null : _doCommit,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
             decoration: BoxDecoration(
-              color: busy ? ThemeConstants.accentDark : ThemeConstants.accent,
+              color: busy
+                  ? ThemeConstants.accentDark
+                  : canCommit
+                  ? ThemeConstants.accent
+                  : ThemeConstants.inputSurface,
               borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
             ),
             child: Center(
@@ -571,7 +561,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(AppIcons.gitCommit, size: 12, color: Colors.white),
+                  Icon(AppIcons.gitCommit, size: 12, color: canCommit ? Colors.white : ThemeConstants.mutedFg),
                   const SizedBox(width: 5),
                   Text(
                     _pushing
@@ -579,7 +569,10 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                         : _pulling
                         ? '● Pulling…'
                         : 'Commit',
-                    style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeSmall),
+                    style: TextStyle(
+                      color: canCommit ? Colors.white : ThemeConstants.mutedFg,
+                      fontSize: ThemeConstants.uiFontSizeSmall,
+                    ),
                   ),
                 ],
               ),
@@ -648,14 +641,15 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                     PopupMenuItem(
                       value: 'push',
                       height: 32,
+                      enabled: canPush && !busy,
                       child: Text(
                         _pushing
                             ? '● Pushing…'
                             : _remotes.length > 1
                             ? 'Push ↑ ($_selectedRemote)'
                             : 'Push ↑',
-                        style: const TextStyle(
-                          color: ThemeConstants.textSecondary,
+                        style: TextStyle(
+                          color: (canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
                           fontSize: ThemeConstants.uiFontSizeSmall,
                         ),
                       ),
@@ -663,21 +657,26 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                     PopupMenuItem(
                       value: 'pull',
                       height: 32,
+                      enabled: canPull && !busy,
                       child: Text(
-                        (behind != null && behind > 0) ? 'Pull ↓$behind' : 'Pull',
+                        canPull ? 'Pull ↓${behind ?? ''}' : 'Pull',
                         style: TextStyle(
-                          color: (behind != null && behind > 0) ? ThemeConstants.accent : ThemeConstants.textSecondary,
+                          color: canPull ? ThemeConstants.accent : ThemeConstants.faintFg,
                           fontSize: ThemeConstants.uiFontSizeSmall,
                         ),
                       ),
                     ),
                     const PopupMenuDivider(),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'create_pr',
                       height: 32,
+                      enabled: canPr,
                       child: Text(
                         'Create PR',
-                        style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                        style: TextStyle(
+                          color: canPr ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                          fontSize: ThemeConstants.uiFontSizeSmall,
+                        ),
                       ),
                     ),
                   ],
