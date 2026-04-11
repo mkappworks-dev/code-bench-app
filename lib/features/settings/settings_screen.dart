@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/constants/app_icons.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/theme_constants.dart';
@@ -257,19 +257,19 @@ class _SettingsLeftNav extends StatelessWidget {
             ),
           ),
           _NavItem(
-            icon: LucideIcons.settings,
+            icon: AppIcons.settings,
             label: 'General',
             isActive: activeNav == _SettingsNav.general,
             onTap: () => onSelect(_SettingsNav.general),
           ),
           _NavItem(
-            icon: LucideIcons.messageSquare,
+            icon: AppIcons.chat,
             label: 'Providers',
             isActive: activeNav == _SettingsNav.providers,
             onTap: () => onSelect(_SettingsNav.providers),
           ),
           _NavItem(
-            icon: LucideIcons.archive,
+            icon: AppIcons.archive,
             label: 'Archive',
             isActive: activeNav == _SettingsNav.archive,
             onTap: () => onSelect(_SettingsNav.archive),
@@ -289,7 +289,7 @@ class _SettingsLeftNav extends StatelessWidget {
             ),
           ),
           _NavItem(
-            icon: LucideIcons.arrowLeft,
+            icon: AppIcons.arrowLeft,
             label: 'Back',
             isActive: false,
             onTap: onBack,
@@ -538,7 +538,7 @@ class _ProvidersSection extends StatelessWidget {
           const SizedBox(height: 8),
           TextButton.icon(
             onPressed: onTestOllama,
-            icon: const Icon(LucideIcons.play, size: 12),
+            icon: const Icon(AppIcons.run, size: 12),
             label: const Text('Test Connection', style: TextStyle(fontSize: 11)),
           ),
           const SizedBox(height: 16),
@@ -644,7 +644,7 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
                   ),
                   const Spacer(),
                   Icon(
-                    _expanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                    _expanded ? AppIcons.chevronUp : AppIcons.chevronDown,
                     size: 14,
                     color: ThemeConstants.mutedFg,
                   ),
@@ -670,7 +670,7 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
                         hintText: 'API key',
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscure ? LucideIcons.eyeOff : LucideIcons.eye,
+                            _obscure ? AppIcons.hideSecret : AppIcons.showSecret,
                             size: 14,
                           ),
                           onPressed: () => setState(() => _obscure = !_obscure),
@@ -680,7 +680,7 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(LucideIcons.x, size: 14, color: ThemeConstants.error),
+                    icon: const Icon(AppIcons.close, size: 14, color: ThemeConstants.error),
                     tooltip: 'Remove key',
                     onPressed: widget.onDelete,
                   ),
@@ -867,7 +867,7 @@ class _AppDropdown<T> extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (item == value) const Icon(LucideIcons.check, size: 11, color: ThemeConstants.accent),
+                    if (item == value) const Icon(AppIcons.check, size: 11, color: ThemeConstants.accent),
                   ],
                 ),
               ))
@@ -900,7 +900,7 @@ class _AppDropdown<T> extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(LucideIcons.chevronDown, size: 10, color: ThemeConstants.mutedFg),
+            const Icon(AppIcons.chevronDown, size: 10, color: ThemeConstants.mutedFg),
           ],
         ),
       ),

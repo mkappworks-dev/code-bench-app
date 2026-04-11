@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/constants/app_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../data/models/chat_session.dart';
@@ -28,7 +28,7 @@ class ArchiveScreen extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: const [
-                Icon(LucideIcons.archive, size: 32, color: ThemeConstants.mutedFg),
+                Icon(AppIcons.archive, size: 32, color: ThemeConstants.mutedFg),
                 SizedBox(height: 12),
                 Text(
                   'No archived conversations',
@@ -82,7 +82,7 @@ class _ProjectHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
       child: Row(
         children: [
-          const Icon(LucideIcons.folder, size: 12, color: ThemeConstants.mutedFg),
+          const Icon(AppIcons.folder, size: 12, color: ThemeConstants.mutedFg),
           const SizedBox(width: 6),
           Text(
             name.toUpperCase(),
@@ -154,7 +154,7 @@ class _ArchivedSessionCard extends StatelessWidget {
           const SizedBox(width: 12),
           OutlinedButton.icon(
             onPressed: onUnarchive,
-            icon: const Icon(LucideIcons.archiveRestore, size: 12),
+            icon: const Icon(AppIcons.archiveRestore, size: 12),
             label: const Text('Unarchive'),
             style: OutlinedButton.styleFrom(
               foregroundColor: ThemeConstants.textPrimary,

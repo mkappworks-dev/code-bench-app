@@ -8,7 +8,7 @@ import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/vs2015.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/constants/app_icons.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
@@ -537,19 +537,19 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
           if (widget.filename != null && _diffState == _DiffCardState.hidden)
             _HeaderButton(
               label: 'Diff',
-              icon: LucideIcons.gitCompare,
+              icon: AppIcons.gitDiff,
               onTap: _loadDiff,
             ),
           if (_diffState == _DiffCardState.loaded) ...[
             _HeaderButton(
               label: _applying ? 'Applying...' : 'Apply',
-              icon: _applying ? LucideIcons.hourglass : LucideIcons.download,
+              icon: _applying ? AppIcons.applying : AppIcons.apply,
               onTap: _applying ? null : _applyChange,
             ),
             const SizedBox(width: 8),
             _HeaderButton(
               label: 'Collapse',
-              icon: LucideIcons.chevronUp,
+              icon: AppIcons.chevronUp,
               onTap: () => setState(() {
                 _diffState = _DiffCardState.hidden;
                 _activeTab = 1;
@@ -758,7 +758,7 @@ class _CopyButtonState extends State<_CopyButton> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            _copied ? LucideIcons.check : LucideIcons.copy,
+            _copied ? AppIcons.check : AppIcons.copy,
             size: 12,
             color: ThemeConstants.mutedFg,
           ),

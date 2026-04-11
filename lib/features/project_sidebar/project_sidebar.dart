@@ -4,7 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/constants/app_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../core/utils/instant_menu.dart';
@@ -137,7 +137,7 @@ class ProjectSidebar extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
                       padding: const EdgeInsets.all(3),
-                      child: Icon(LucideIcons.arrowUpDown, size: 13, color: ThemeConstants.mutedFg),
+                      child: Icon(AppIcons.arrowUpDown, size: 13, color: ThemeConstants.mutedFg),
                     ),
                   ),
                 ),
@@ -148,7 +148,7 @@ class ProjectSidebar extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: Padding(
                     padding: const EdgeInsets.all(3),
-                    child: Icon(LucideIcons.plus, size: 13, color: ThemeConstants.mutedFg),
+                    child: Icon(AppIcons.add, size: 13, color: ThemeConstants.mutedFg),
                   ),
                 ),
               ],
@@ -176,7 +176,7 @@ class ProjectSidebar extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          LucideIcons.folder,
+                          AppIcons.folder,
                           size: 32,
                           color: ThemeConstants.faintFg,
                         ),
@@ -191,7 +191,7 @@ class ProjectSidebar extends ConsumerWidget {
                         const SizedBox(height: 12),
                         TextButton.icon(
                           onPressed: () => _addProject(context, ref),
-                          icon: Icon(LucideIcons.plus, size: 12),
+                          icon: Icon(AppIcons.add, size: 12),
                           label: const Text(
                             'Open folder',
                             style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall),
@@ -246,7 +246,7 @@ class ProjectSidebar extends ConsumerWidget {
               child: Row(
                 children: [
                   Icon(
-                    LucideIcons.settings,
+                    AppIcons.settings,
                     size: 14,
                     color: ThemeConstants.mutedFg,
                   ),
@@ -296,7 +296,7 @@ PopupMenuItem<String> _sortItem(String value, String label, bool selected) => Po
               ),
             ),
           ),
-          if (selected) const Icon(LucideIcons.check, size: 11, color: ThemeConstants.accent),
+          if (selected) const Icon(AppIcons.check, size: 11, color: ThemeConstants.accent),
         ],
       ),
     );

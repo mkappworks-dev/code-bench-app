@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/constants/app_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../data/models/project.dart';
@@ -40,7 +40,7 @@ class StatusBar extends ConsumerWidget {
         children: [
           // Left: Local indicator
           Icon(
-            LucideIcons.hardDrive,
+            AppIcons.storage,
             size: 10,
             color: ThemeConstants.faintFg,
           ),

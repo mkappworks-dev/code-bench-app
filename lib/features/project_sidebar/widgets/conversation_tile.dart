@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/constants/app_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/instant_menu.dart';
@@ -51,7 +51,7 @@ class ConversationTile extends StatelessWidget {
           height: 32,
           child: Row(
             children: [
-              Icon(LucideIcons.pencil, size: 13, color: ThemeConstants.textSecondary),
+              Icon(AppIcons.rename, size: 13, color: ThemeConstants.textSecondary),
               const SizedBox(width: 8),
               const Text(
                 'Rename',
@@ -65,7 +65,7 @@ class ConversationTile extends StatelessWidget {
           height: 32,
           child: Row(
             children: [
-              Icon(LucideIcons.archive, size: 13, color: ThemeConstants.textSecondary),
+              Icon(AppIcons.archive, size: 13, color: ThemeConstants.textSecondary),
               const SizedBox(width: 8),
               const Text(
                 'Archive',
@@ -80,7 +80,7 @@ class ConversationTile extends StatelessWidget {
           height: 32,
           child: Row(
             children: [
-              const Icon(LucideIcons.trash2, size: 13, color: ThemeConstants.error),
+              const Icon(AppIcons.trash, size: 13, color: ThemeConstants.error),
               const SizedBox(width: 8),
               const Text(
                 'Delete',

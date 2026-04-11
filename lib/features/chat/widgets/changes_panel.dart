@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/constants/app_icons.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
@@ -127,7 +127,7 @@ class ChangesPanel extends ConsumerWidget {
                   ),
                   SizedBox(width: 4),
                   Icon(
-                    LucideIcons.arrowRight,
+                    AppIcons.arrowRight,
                     size: 11,
                     color: ThemeConstants.textSecondary,
                   ),
@@ -244,7 +244,7 @@ class _ChangeEntry extends StatelessWidget {
               }
             },
             child: const Icon(
-              LucideIcons.undo2,
+              AppIcons.revert,
               size: 12,
               color: ThemeConstants.mutedFg,
             ),
