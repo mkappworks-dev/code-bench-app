@@ -529,6 +529,8 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     final canPush = (liveState?.aheadCount ?? 0) > 0;
     final canPull = (behind ?? 0) > 0;
     final canPr = !(liveState?.isOnDefaultBranch ?? true);
+    final hasRemotes = _remotes.isNotEmpty;
+    final canDropdown = canPush || canPull || canPr || hasRemotes;
 
     final String badgeLabel;
     if (behind == null) {
@@ -584,126 +586,130 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
           message: 'Git actions',
           child: Builder(
             builder: (btnContext) => GestureDetector(
-              onTap: () async {
-                final action = await showInstantMenuAnchoredTo<String>(
-                  buttonContext: btnContext,
-                  color: ThemeConstants.panelBackground,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(7),
-                    side: const BorderSide(color: Color(0xFF333333)),
-                  ),
-                  items: [
-                    // Multi-remote picker. Only rendered when the repo
-                    // has more than one remote — single-origin repos
-                    // keep the flat Push/Pull/Create-PR menu unchanged.
-                    if (_remotes.length > 1) ...[
-                      for (final remote in _remotes)
-                        CheckedPopupMenuItem<String>(
-                          value: 'select_${remote.name}',
-                          checked: _selectedRemote == remote.name,
-                          height: 40,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                remote.name,
-                                style: const TextStyle(
+              onTap: canDropdown
+                  ? () async {
+                      final action = await showInstantMenuAnchoredTo<String>(
+                        buttonContext: btnContext,
+                        color: ThemeConstants.panelBackground,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(7),
+                          side: const BorderSide(color: Color(0xFF333333)),
+                        ),
+                        items: [
+                          // Multi-remote picker. Only rendered when the repo
+                          // has more than one remote — single-origin repos
+                          // keep the flat Push/Pull/Create-PR menu unchanged.
+                          if (_remotes.length > 1) ...[
+                            for (final remote in _remotes)
+                              CheckedPopupMenuItem<String>(
+                                value: 'select_${remote.name}',
+                                checked: _selectedRemote == remote.name,
+                                height: 40,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      remote.name,
+                                      style: const TextStyle(
+                                        color: ThemeConstants.textSecondary,
+                                        fontSize: ThemeConstants.uiFontSizeSmall,
+                                      ),
+                                    ),
+                                    Text(
+                                      remote.url,
+                                      style: const TextStyle(
+                                        color: ThemeConstants.faintFg,
+                                        fontSize: ThemeConstants.uiFontSizeLabel,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            const PopupMenuDivider(),
+                            const PopupMenuItem(
+                              value: 'push_all',
+                              height: 32,
+                              child: Text(
+                                'Push to all remotes',
+                                style: TextStyle(
                                   color: ThemeConstants.textSecondary,
                                   fontSize: ThemeConstants.uiFontSizeSmall,
                                 ),
                               ),
-                              Text(
-                                remote.url,
-                                style: const TextStyle(
-                                  color: ThemeConstants.faintFg,
-                                  fontSize: ThemeConstants.uiFontSizeLabel,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                            ),
+                            const PopupMenuDivider(),
+                          ],
+                          PopupMenuItem(
+                            value: 'push',
+                            height: 32,
+                            enabled: canPush && !busy,
+                            child: Text(
+                              _pushing
+                                  ? '● Pushing…'
+                                  : _remotes.length > 1
+                                  ? 'Push ↑ ($_selectedRemote)'
+                                  : 'Push ↑',
+                              style: TextStyle(
+                                color: (canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                fontSize: ThemeConstants.uiFontSizeSmall,
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      const PopupMenuDivider(),
-                      const PopupMenuItem(
-                        value: 'push_all',
-                        height: 32,
-                        child: Text(
-                          'Push to all remotes',
-                          style: TextStyle(
-                            color: ThemeConstants.textSecondary,
-                            fontSize: ThemeConstants.uiFontSizeSmall,
+                          PopupMenuItem(
+                            value: 'pull',
+                            height: 32,
+                            enabled: canPull && !busy,
+                            child: Text(
+                              canPull ? 'Pull ↓${behind ?? ''}' : 'Pull',
+                              style: TextStyle(
+                                color: canPull ? ThemeConstants.accent : ThemeConstants.faintFg,
+                                fontSize: ThemeConstants.uiFontSizeSmall,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      const PopupMenuDivider(),
-                    ],
-                    PopupMenuItem(
-                      value: 'push',
-                      height: 32,
-                      enabled: canPush && !busy,
-                      child: Text(
-                        _pushing
-                            ? '● Pushing…'
-                            : _remotes.length > 1
-                            ? 'Push ↑ ($_selectedRemote)'
-                            : 'Push ↑',
-                        style: TextStyle(
-                          color: (canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
-                          fontSize: ThemeConstants.uiFontSizeSmall,
-                        ),
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'pull',
-                      height: 32,
-                      enabled: canPull && !busy,
-                      child: Text(
-                        canPull ? 'Pull ↓${behind ?? ''}' : 'Pull',
-                        style: TextStyle(
-                          color: canPull ? ThemeConstants.accent : ThemeConstants.faintFg,
-                          fontSize: ThemeConstants.uiFontSizeSmall,
-                        ),
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    PopupMenuItem(
-                      value: 'create_pr',
-                      height: 32,
-                      enabled: canPr,
-                      child: Text(
-                        'Create PR',
-                        style: TextStyle(
-                          color: canPr ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
-                          fontSize: ThemeConstants.uiFontSizeSmall,
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-                if (action == null) return;
-                switch (action) {
-                  case 'push':
-                    unawaited(_doPush());
-                  case 'push_all':
-                    unawaited(_doPushAll());
-                  case 'pull':
-                    unawaited(_doPull());
-                  case 'create_pr':
-                    unawaited(_showCreatePrDialog());
-                  // Remote picker entries carry a dynamic `select_<name>`
-                  // value so the switch pattern uses a guarded wildcard
-                  // rather than a literal case per remote.
-                  case final String s when s.startsWith('select_'):
-                    setState(() => _selectedRemote = s.substring('select_'.length));
-                }
-              },
+                          const PopupMenuDivider(),
+                          PopupMenuItem(
+                            value: 'create_pr',
+                            height: 32,
+                            enabled: canPr,
+                            child: Text(
+                              'Create PR',
+                              style: TextStyle(
+                                color: canPr ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                fontSize: ThemeConstants.uiFontSizeSmall,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                      if (action == null) return;
+                      switch (action) {
+                        case 'push':
+                          unawaited(_doPush());
+                        case 'push_all':
+                          unawaited(_doPushAll());
+                        case 'pull':
+                          unawaited(_doPull());
+                        case 'create_pr':
+                          unawaited(_showCreatePrDialog());
+                        // Remote picker entries carry a dynamic `select_<name>`
+                        // value so the switch pattern uses a guarded wildcard
+                        // rather than a literal case per remote.
+                        case final String s when s.startsWith('select_'):
+                          setState(() => _selectedRemote = s.substring('select_'.length));
+                      }
+                    }
+                  : null,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7),
                 constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
                 decoration: BoxDecoration(
-                  color: ThemeConstants.accentLight,
-                  border: const Border(left: BorderSide(color: ThemeConstants.accentDark)),
+                  color: canDropdown ? ThemeConstants.accentLight : ThemeConstants.inputSurface,
+                  border: Border(
+                    left: BorderSide(color: canDropdown ? ThemeConstants.accentDark : ThemeConstants.deepBorder),
+                  ),
                   borderRadius: const BorderRadius.horizontal(right: Radius.circular(5)),
                 ),
                 child: Center(
@@ -714,9 +720,12 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                       if (badgeLabel.isNotEmpty)
                         Text(
                           badgeLabel,
-                          style: const TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeLabel),
+                          style: TextStyle(
+                            color: canDropdown ? Colors.white : ThemeConstants.mutedFg,
+                            fontSize: ThemeConstants.uiFontSizeLabel,
+                          ),
                         ),
-                      const Icon(AppIcons.chevronDown, size: 11, color: Colors.white),
+                      Icon(AppIcons.chevronDown, size: 11, color: canDropdown ? Colors.white : ThemeConstants.mutedFg),
                     ],
                   ),
                 ),
