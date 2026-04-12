@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/constants/api_constants.dart';
@@ -9,6 +11,7 @@ import '../../services/ai/api_key_test_service.dart';
 import '../../services/project/project_service.dart';
 import '../../services/session/session_service.dart';
 import '../../services/settings/settings_service.dart';
+import 'settings_actions_failure.dart';
 
 part 'settings_notifier.g.dart';
 
@@ -165,14 +168,39 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
 @Riverpod(keepAlive: true)
 class SettingsActions extends _$SettingsActions {
   @override
-  void build() {}
+  FutureOr<void> build() {}
 
-  Future<bool> testApiKey(AIProvider provider, String key) =>
-      ref.read(apiKeyTestServiceProvider).testApiKey(provider, key);
+  SettingsActionsFailure _asFailure(Object e, String providerName) => switch (e) {
+    StorageException() => SettingsActionsFailure.storageFailed(providerName),
+    _ => SettingsActionsFailure.unknown(e),
+  };
+
+  /// Returns `true` when [key] is valid for [provider]. Never throws —
+  /// returns `false` on any exception so the UI can show an inline error
+  /// without crashing.
+  Future<bool> testApiKey(AIProvider provider, String key) async {
+    try {
+      return await ref.read(apiKeyTestServiceProvider).testApiKey(provider, key);
+    } catch (e, st) {
+      dLog('[SettingsActions] testApiKey failed: $e\n$st');
+      return false;
+    }
+  }
 
   Future<bool> testOllamaUrl(String url) => ref.read(apiKeyTestServiceProvider).testOllamaUrl(url);
 
-  Future<void> saveApiKey(String provider, String key) => ref.read(settingsServiceProvider).writeApiKey(provider, key);
+  /// Persists [key] for [provider]. Emits [SettingsStorageFailed] on error.
+  Future<void> saveApiKey(String provider, String key) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await ref.read(settingsServiceProvider).writeApiKey(provider, key);
+      } catch (e, st) {
+        dLog('[SettingsActions] saveApiKey failed: $e');
+        Error.throwWithStackTrace(_asFailure(e, provider), st);
+      }
+    });
+  }
 
   Future<void> unarchiveSession(String id) => ref.read(sessionServiceProvider).unarchiveSession(id);
 

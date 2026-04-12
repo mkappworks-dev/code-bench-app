@@ -123,7 +123,7 @@ final settingsActionsProvider = SettingsActionsProvider._();
 
 /// Imperative actions that don't own observable state: wipe all data,
 /// unarchive sessions, save a single API key, mark onboarding complete.
-final class SettingsActionsProvider extends $NotifierProvider<SettingsActions, void> {
+final class SettingsActionsProvider extends $AsyncNotifierProvider<SettingsActions, void> {
   /// Imperative actions that don't own observable state: wipe all data,
   /// unarchive sessions, save a single API key, mark onboarding complete.
   SettingsActionsProvider._()
@@ -143,25 +143,21 @@ final class SettingsActionsProvider extends $NotifierProvider<SettingsActions, v
   @$internal
   @override
   SettingsActions create() => SettingsActions();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(void value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<void>(value));
-  }
 }
 
-String _$settingsActionsHash() => r'571fb8f3ffdb5b3bb280b7ec79eaeacf08f08b5a';
+String _$settingsActionsHash() => r'bb64a9a4681a27827ecc649f5a51cae8d509cbf0';
 
 /// Imperative actions that don't own observable state: wipe all data,
 /// unarchive sessions, save a single API key, mark onboarding complete.
 
-abstract class _$SettingsActions extends $Notifier<void> {
-  void build();
+abstract class _$SettingsActions extends $AsyncNotifier<void> {
+  FutureOr<void> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<void, void>;
-    final element = ref.element as $ClassProviderElement<AnyNotifier<void, void>, void, Object?, Object?>;
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
+    final element =
+        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }
