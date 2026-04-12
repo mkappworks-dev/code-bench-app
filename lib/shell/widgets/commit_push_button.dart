@@ -8,7 +8,6 @@ import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../core/utils/instant_menu.dart';
 import '../../data/models/project.dart';
-import '../../data/datasources/local/general_preferences.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/chat/notifiers/create_pr_actions.dart';
 import '../../features/chat/widgets/commit_dialog.dart';
@@ -42,21 +41,11 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
 
   Future<void> _doCommit() async {
     if (!ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
-    final prefs = ref.read(generalPreferencesProvider);
-    final autoCommit = await prefs.getAutoCommit();
-
-    final sessionId = ref.read(activeSessionIdProvider);
-    final changedFiles = sessionId != null
-        ? ref.read(appliedChangesProvider.notifier).changesForSession(sessionId).map((c) => c.filePath).toList()
-        : <String>[];
-
-    final message = await ref.read(commitMessageActionsProvider.notifier).generateCommitMessage(changedFiles);
-
+    final (:message, :autoCommit) = await ref.read(commitMessageActionsProvider.notifier).prepareCommit();
     if (autoCommit) {
       await _runCommit(message);
       return;
     }
-
     if (!mounted) return;
     final confirmed = await CommitDialog.show(context, message);
     if (confirmed != null) await _runCommit(confirmed);

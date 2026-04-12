@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/errors/app_exception.dart';
 import '../../core/utils/debug_logger.dart';
+import '../../data/datasources/local/general_preferences.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../services/ai/ai_service_factory.dart';
 import 'commit_message_failure.dart';
@@ -22,6 +23,19 @@ part 'commit_message_actions.g.dart';
 class CommitMessageActions extends _$CommitMessageActions {
   @override
   FutureOr<void> build() {}
+
+  /// Reads the active session's changed files and the autoCommit preference,
+  /// then generates a commit message. Callers receive both values so they can
+  /// decide whether to show the commit dialog or commit automatically.
+  Future<({String message, bool autoCommit})> prepareCommit() async {
+    final sessionId = ref.read(activeSessionIdProvider);
+    final changedFiles = sessionId != null
+        ? ref.read(appliedChangesProvider.notifier).changesForSession(sessionId).map((c) => c.filePath).toList()
+        : <String>[];
+    final autoCommit = await ref.read(generalPreferencesProvider).getAutoCommit();
+    final message = await generateCommitMessage(changedFiles);
+    return (message: message, autoCommit: autoCommit);
+  }
 
   /// Generates a conventional commit message for [changedFiles] using the
   /// currently selected AI model. Returns `'chore: update files'` as a
