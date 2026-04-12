@@ -56,7 +56,7 @@ final class CommitMessageActionsProvider extends $AsyncNotifierProvider<CommitMe
   CommitMessageActions create() => CommitMessageActions();
 }
 
-String _$commitMessageActionsHash() => r'cf36842014733beaa343276dfbc0c16834dca470';
+String _$commitMessageActionsHash() => r'526027ad7b5e04ea835ff56efe0434b34f09e93a';
 
 /// Generates AI-assisted text for git workflows: commit messages and PR
 /// title / body. Both methods always return a usable value — the fallback

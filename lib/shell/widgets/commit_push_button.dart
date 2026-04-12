@@ -8,13 +8,13 @@ import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../core/utils/instant_menu.dart';
 import '../../data/models/project.dart';
-import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/chat/notifiers/create_pr_actions.dart';
 import '../../features/chat/widgets/commit_dialog.dart';
 import '../../features/chat/widgets/create_pr_dialog.dart';
 import '../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../notifiers/commit_message_actions.dart';
 import '../notifiers/commit_message_failure.dart';
+import '../notifiers/pr_preflight_result.dart';
 import '../notifiers/commit_push_button_notifier.dart';
 import '../notifiers/git_actions.dart';
 import '../notifiers/git_actions_failure.dart';
@@ -122,83 +122,49 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
 
   Future<void> _showCreatePrDialog() async {
     if (!ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
-    final git = ref.read(gitActionsProvider.notifier);
-    final prActions = ref.read(createPrActionsProvider.notifier);
-
-    if (!await prActions.hasToken()) {
-      _snack('Connect GitHub in Settings → Providers');
-      return;
+    final preflight = await ref.read(commitMessageActionsProvider.notifier).preparePr(widget.project.path);
+    switch (preflight) {
+      case PrPreflightFailed(:final message):
+        _snack(message);
+        return;
+      case PrPreflightReady(
+        :final title,
+        :final body,
+        :final branches,
+        :final owner,
+        :final repo,
+        :final currentBranch,
+      ):
+        if (!mounted) return;
+        final result = await CreatePrDialog.show(context, initialTitle: title, initialBody: body, branches: branches);
+        if (result == null) return;
+        final prUrl = await ref
+            .read(createPrActionsProvider.notifier)
+            .createPullRequest(
+              owner: owner,
+              repo: repo,
+              title: result.title,
+              body: result.body,
+              head: currentBranch,
+              base: result.base,
+              draft: result.draft,
+            );
+        if (prUrl == null) {
+          _snack('Failed to create pull request — check your GitHub token and repo access.');
+          return;
+        }
+        final canAutoOpen = prUrl.startsWith('https://github.com/');
+        _snack(
+          'Pull request created: $prUrl',
+          duration: const Duration(seconds: 8),
+          action: canAutoOpen
+              ? SnackBarAction(
+                  label: 'Open',
+                  onPressed: () => unawaited(launchUrl(Uri.parse(prUrl), mode: LaunchMode.externalApplication)),
+                )
+              : null,
+        );
     }
-
-    final currentBranch = await git.currentBranch(widget.project.path);
-    if (currentBranch == null) {
-      _snack('Could not read current branch — is this a valid git repo?');
-      return;
-    }
-    if (currentBranch == 'main' || currentBranch == 'master') {
-      _snack("You're on the default branch — create a feature branch first.");
-      return;
-    }
-
-    final sessionId = ref.read(activeSessionIdProvider);
-    final changedFiles = sessionId != null
-        ? ref.read(appliedChangesProvider.notifier).changesForSession(sessionId).map((c) => c.filePath).toList()
-        : <String>[];
-
-    final (:title, :body) = await ref
-        .read(commitMessageActionsProvider.notifier)
-        .generatePrContent(changedFiles: changedFiles, branch: currentBranch);
-
-    final remoteUrl = await git.getOriginUrl(widget.project.path);
-    if (remoteUrl == null) {
-      _snack("No `origin` remote configured — run `git remote add origin <url>` first.");
-      return;
-    }
-    final repoMatch = RegExp(r'github\.com[:/]([^/]+)/([^/\.]+)').firstMatch(remoteUrl);
-    if (repoMatch == null) {
-      _snack('Could not detect GitHub owner/repo from remote');
-      return;
-    }
-    final owner = repoMatch.group(1)!;
-    final repo = repoMatch.group(2)!;
-
-    final branches = await prActions.listBranches(owner, repo);
-    if (branches == null) {
-      _snack('Could not list branches for $owner/$repo — check your GitHub token and repo access.');
-      return;
-    }
-
-    if (!mounted) return;
-
-    final result = await CreatePrDialog.show(context, initialTitle: title, initialBody: body, branches: branches);
-    if (result == null) return;
-
-    final prUrl = await prActions.createPullRequest(
-      owner: owner,
-      repo: repo,
-      title: result.title,
-      body: result.body,
-      head: currentBranch,
-      base: result.base,
-      draft: result.draft,
-    );
-    if (prUrl == null) {
-      _snack('Failed to create pull request — check your GitHub token and repo access.');
-      return;
-    }
-    final canAutoOpen = prUrl.startsWith('https://github.com/');
-    _snack(
-      'Pull request created: $prUrl',
-      duration: const Duration(seconds: 8),
-      action: canAutoOpen
-          ? SnackBarAction(
-              label: 'Open',
-              onPressed: () {
-                unawaited(launchUrl(Uri.parse(prUrl), mode: LaunchMode.externalApplication));
-              },
-            )
-          : null,
-    );
   }
 
   @override
