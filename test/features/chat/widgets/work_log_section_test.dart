@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 // `chatMessagesProvider` with this fake so widgets that `ref.watch` it see
 // the sequence of tool-event snapshots the test wants to assert on.
 
-class _FakeChatMessages extends ChatMessages {
+class _FakeChatMessages extends ChatMessagesNotifier {
   @override
   Future<List<ChatMessage>> build(String sessionId) async => _initialFor(sessionId);
 }

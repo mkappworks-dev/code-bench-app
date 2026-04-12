@@ -140,7 +140,18 @@ External (REST APIs / SQLite / OS)
 
 Widgets communicate with notifiers only via `ref.watch` / `ref.read(…notifier).method()`. They never reach into a service provider directly. `Process.run`, `dart:io`, and `Dio` are confined to `lib/services/`.
 
-**Command notifiers** (`*Actions`, e.g. `ProjectSidebarActions`, `CodeApplyActions`, `SettingsActions`) use `void build()` with `keepAlive: true` and expose imperative `Future<void>` methods. They are the bridge between the UI and the service layer.
+**Command notifiers** (`*Actions`, e.g. `ProjectSidebarActions`, `CodeApplyActions`, `GitActions`) use `void build()` with `keepAlive: true` and expose imperative `Future<void>` methods. They are the bridge between the UI and the service layer.
+
+**Naming conventions:**
+
+| Layer | Rule |
+|---|---|
+| Service class | ends in `Service` (`GitService`, `SessionService`) |
+| Service provider | `@riverpod` function placed before the class it instantiates |
+| Command notifier | ends in `Actions`; `void build()`, `keepAlive: true` |
+| State notifier | ends in `Notifier`; owns `AsyncValue` or value state |
+
+The Riverpod generator strips the `Notifier` suffix from provider names (`ActiveSessionIdNotifier` → `activeSessionIdProvider`). The `Actions` suffix is kept (`GitActions` → `gitActionsProvider`). Widgets must never call `ref.invalidate` directly — route through a notifier method instead.
 
 ### State management
 

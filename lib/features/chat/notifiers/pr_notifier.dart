@@ -50,7 +50,7 @@ class PrCardState {
 /// `DioException.toString()`, which serialises request headers and would
 /// leak the `Authorization: Bearer <PAT>` token. See `macos/Runner/README.md`.
 @riverpod
-class PrCard extends _$PrCard {
+class PrCardNotifier extends _$PrCardNotifier {
   @override
   Future<PrCardState> build(String owner, String repo, int prNumber) async {
     final svc = await ref.read(githubApiServiceProvider.future);
@@ -77,7 +77,7 @@ class PrCard extends _$PrCard {
         ),
       );
     } catch (e) {
-      dLog('[PrCard] poll failed: ${e.runtimeType}');
+      dLog('[PrCardNotifier] poll failed: ${e.runtimeType}');
       final current = state.value;
       if (current != null) {
         state = AsyncData(current.copyWith(pollError: _friendlyError(e)));

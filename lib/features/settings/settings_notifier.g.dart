@@ -11,15 +11,15 @@ part of 'settings_notifier.dart';
 /// Loads API keys on first watch and exposes save/delete actions.
 /// Auto-disposes when the settings screen is not in view.
 
-@ProviderFor(ApiKeys)
-final apiKeysProvider = ApiKeysProvider._();
+@ProviderFor(ApiKeysNotifier)
+final apiKeysProvider = ApiKeysNotifierProvider._();
 
 /// Loads API keys on first watch and exposes save/delete actions.
 /// Auto-disposes when the settings screen is not in view.
-final class ApiKeysProvider extends $AsyncNotifierProvider<ApiKeys, ApiKeysState> {
+final class ApiKeysNotifierProvider extends $AsyncNotifierProvider<ApiKeysNotifier, ApiKeysNotifierState> {
   /// Loads API keys on first watch and exposes save/delete actions.
   /// Auto-disposes when the settings screen is not in view.
-  ApiKeysProvider._()
+  ApiKeysNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -31,29 +31,29 @@ final class ApiKeysProvider extends $AsyncNotifierProvider<ApiKeys, ApiKeysState
       );
 
   @override
-  String debugGetCreateSourceHash() => _$apiKeysHash();
+  String debugGetCreateSourceHash() => _$apiKeysNotifierHash();
 
   @$internal
   @override
-  ApiKeys create() => ApiKeys();
+  ApiKeysNotifier create() => ApiKeysNotifier();
 }
 
-String _$apiKeysHash() => r'7b73607582580b8db097c46a7f7f0622f201b515';
+String _$apiKeysNotifierHash() => r'07a4080d3cde1cf6255e6f17195024e51075a798';
 
 /// Loads API keys on first watch and exposes save/delete actions.
 /// Auto-disposes when the settings screen is not in view.
 
-abstract class _$ApiKeys extends $AsyncNotifier<ApiKeysState> {
-  FutureOr<ApiKeysState> build();
+abstract class _$ApiKeysNotifier extends $AsyncNotifier<ApiKeysNotifierState> {
+  FutureOr<ApiKeysNotifierState> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<ApiKeysState>, ApiKeysState>;
+    final ref = this.ref as $Ref<AsyncValue<ApiKeysNotifierState>, ApiKeysNotifierState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<ApiKeysState>, ApiKeysState>,
-              AsyncValue<ApiKeysState>,
+              AnyNotifier<AsyncValue<ApiKeysNotifierState>, ApiKeysNotifierState>,
+              AsyncValue<ApiKeysNotifierState>,
               Object?,
               Object?
             >;
@@ -64,15 +64,16 @@ abstract class _$ApiKeys extends $AsyncNotifier<ApiKeysState> {
 /// Loads general preferences on first watch and exposes setters.
 /// Auto-disposes when the settings screen is not in view.
 
-@ProviderFor(GeneralPrefs)
-final generalPrefsProvider = GeneralPrefsProvider._();
+@ProviderFor(GeneralPrefsNotifier)
+final generalPrefsProvider = GeneralPrefsNotifierProvider._();
 
 /// Loads general preferences on first watch and exposes setters.
 /// Auto-disposes when the settings screen is not in view.
-final class GeneralPrefsProvider extends $AsyncNotifierProvider<GeneralPrefs, GeneralPrefsState> {
+final class GeneralPrefsNotifierProvider
+    extends $AsyncNotifierProvider<GeneralPrefsNotifier, GeneralPrefsNotifierState> {
   /// Loads general preferences on first watch and exposes setters.
   /// Auto-disposes when the settings screen is not in view.
-  GeneralPrefsProvider._()
+  GeneralPrefsNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -84,29 +85,29 @@ final class GeneralPrefsProvider extends $AsyncNotifierProvider<GeneralPrefs, Ge
       );
 
   @override
-  String debugGetCreateSourceHash() => _$generalPrefsHash();
+  String debugGetCreateSourceHash() => _$generalPrefsNotifierHash();
 
   @$internal
   @override
-  GeneralPrefs create() => GeneralPrefs();
+  GeneralPrefsNotifier create() => GeneralPrefsNotifier();
 }
 
-String _$generalPrefsHash() => r'48d70efb752b24c440837a2e0a3cd465870b8105';
+String _$generalPrefsNotifierHash() => r'97a314b6c01be854700f5fb6661b29c7a4562025';
 
 /// Loads general preferences on first watch and exposes setters.
 /// Auto-disposes when the settings screen is not in view.
 
-abstract class _$GeneralPrefs extends $AsyncNotifier<GeneralPrefsState> {
-  FutureOr<GeneralPrefsState> build();
+abstract class _$GeneralPrefsNotifier extends $AsyncNotifier<GeneralPrefsNotifierState> {
+  FutureOr<GeneralPrefsNotifierState> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<GeneralPrefsState>, GeneralPrefsState>;
+    final ref = this.ref as $Ref<AsyncValue<GeneralPrefsNotifierState>, GeneralPrefsNotifierState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<GeneralPrefsState>, GeneralPrefsState>,
-              AsyncValue<GeneralPrefsState>,
+              AnyNotifier<AsyncValue<GeneralPrefsNotifierState>, GeneralPrefsNotifierState>,
+              AsyncValue<GeneralPrefsNotifierState>,
               Object?,
               Object?
             >;

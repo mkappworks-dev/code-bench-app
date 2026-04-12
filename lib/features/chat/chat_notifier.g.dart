@@ -9,11 +9,12 @@ part of 'chat_notifier.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(SessionSystemPrompt)
-final sessionSystemPromptProvider = SessionSystemPromptProvider._();
+@ProviderFor(SessionSystemPromptNotifier)
+final sessionSystemPromptProvider = SessionSystemPromptNotifierProvider._();
 
-final class SessionSystemPromptProvider extends $NotifierProvider<SessionSystemPrompt, Map<String, String>> {
-  SessionSystemPromptProvider._()
+final class SessionSystemPromptNotifierProvider
+    extends $NotifierProvider<SessionSystemPromptNotifier, Map<String, String>> {
+  SessionSystemPromptNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -25,11 +26,11 @@ final class SessionSystemPromptProvider extends $NotifierProvider<SessionSystemP
       );
 
   @override
-  String debugGetCreateSourceHash() => _$sessionSystemPromptHash();
+  String debugGetCreateSourceHash() => _$sessionSystemPromptNotifierHash();
 
   @$internal
   @override
-  SessionSystemPrompt create() => SessionSystemPrompt();
+  SessionSystemPromptNotifier create() => SessionSystemPromptNotifier();
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(Map<String, String> value) {
@@ -37,9 +38,9 @@ final class SessionSystemPromptProvider extends $NotifierProvider<SessionSystemP
   }
 }
 
-String _$sessionSystemPromptHash() => r'cbf00e1c70fcc8c90707dd1122dea62958d5be1e';
+String _$sessionSystemPromptNotifierHash() => r'5f1b78b2480e40042244ebc172d7e54fef83145b';
 
-abstract class _$SessionSystemPrompt extends $Notifier<Map<String, String>> {
+abstract class _$SessionSystemPromptNotifier extends $Notifier<Map<String, String>> {
   Map<String, String> build();
   @$mustCallSuper
   @override
@@ -57,11 +58,11 @@ abstract class _$SessionSystemPrompt extends $Notifier<Map<String, String>> {
   }
 }
 
-@ProviderFor(ActiveSessionId)
-final activeSessionIdProvider = ActiveSessionIdProvider._();
+@ProviderFor(ActiveSessionIdNotifier)
+final activeSessionIdProvider = ActiveSessionIdNotifierProvider._();
 
-final class ActiveSessionIdProvider extends $NotifierProvider<ActiveSessionId, String?> {
-  ActiveSessionIdProvider._()
+final class ActiveSessionIdNotifierProvider extends $NotifierProvider<ActiveSessionIdNotifier, String?> {
+  ActiveSessionIdNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -73,11 +74,11 @@ final class ActiveSessionIdProvider extends $NotifierProvider<ActiveSessionId, S
       );
 
   @override
-  String debugGetCreateSourceHash() => _$activeSessionIdHash();
+  String debugGetCreateSourceHash() => _$activeSessionIdNotifierHash();
 
   @$internal
   @override
-  ActiveSessionId create() => ActiveSessionId();
+  ActiveSessionIdNotifier create() => ActiveSessionIdNotifier();
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(String? value) {
@@ -85,9 +86,9 @@ final class ActiveSessionIdProvider extends $NotifierProvider<ActiveSessionId, S
   }
 }
 
-String _$activeSessionIdHash() => r'6bbf5f2b584ffb0f12be4776b38c2f3a6ca6575e';
+String _$activeSessionIdNotifierHash() => r'97b2e50007213b69dca36097c5699bc476f3103f';
 
-abstract class _$ActiveSessionId extends $Notifier<String?> {
+abstract class _$ActiveSessionIdNotifier extends $Notifier<String?> {
   String? build();
   @$mustCallSuper
   @override
@@ -98,11 +99,11 @@ abstract class _$ActiveSessionId extends $Notifier<String?> {
   }
 }
 
-@ProviderFor(SelectedModel)
-final selectedModelProvider = SelectedModelProvider._();
+@ProviderFor(SelectedModelNotifier)
+final selectedModelProvider = SelectedModelNotifierProvider._();
 
-final class SelectedModelProvider extends $NotifierProvider<SelectedModel, AIModel> {
-  SelectedModelProvider._()
+final class SelectedModelNotifierProvider extends $NotifierProvider<SelectedModelNotifier, AIModel> {
+  SelectedModelNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -114,11 +115,11 @@ final class SelectedModelProvider extends $NotifierProvider<SelectedModel, AIMod
       );
 
   @override
-  String debugGetCreateSourceHash() => _$selectedModelHash();
+  String debugGetCreateSourceHash() => _$selectedModelNotifierHash();
 
   @$internal
   @override
-  SelectedModel create() => SelectedModel();
+  SelectedModelNotifier create() => SelectedModelNotifier();
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(AIModel value) {
@@ -126,9 +127,9 @@ final class SelectedModelProvider extends $NotifierProvider<SelectedModel, AIMod
   }
 }
 
-String _$selectedModelHash() => r'23dfb6790a1851dce12997ba05dd7e1b89da9fcc';
+String _$selectedModelNotifierHash() => r'382cf38aee67c2ca393daaf537412b1c6dedb799';
 
-abstract class _$SelectedModel extends $Notifier<AIModel> {
+abstract class _$SelectedModelNotifier extends $Notifier<AIModel> {
   AIModel build();
   @$mustCallSuper
   @override
@@ -139,11 +140,11 @@ abstract class _$SelectedModel extends $Notifier<AIModel> {
   }
 }
 
-@ProviderFor(ChatMessages)
-final chatMessagesProvider = ChatMessagesFamily._();
+@ProviderFor(ChatMessagesNotifier)
+final chatMessagesProvider = ChatMessagesNotifierFamily._();
 
-final class ChatMessagesProvider extends $AsyncNotifierProvider<ChatMessages, List<ChatMessage>> {
-  ChatMessagesProvider._({required ChatMessagesFamily super.from, required String super.argument})
+final class ChatMessagesNotifierProvider extends $AsyncNotifierProvider<ChatMessagesNotifier, List<ChatMessage>> {
+  ChatMessagesNotifierProvider._({required ChatMessagesNotifierFamily super.from, required String super.argument})
     : super(
         retry: null,
         name: r'chatMessagesProvider',
@@ -153,7 +154,7 @@ final class ChatMessagesProvider extends $AsyncNotifierProvider<ChatMessages, Li
       );
 
   @override
-  String debugGetCreateSourceHash() => _$chatMessagesHash();
+  String debugGetCreateSourceHash() => _$chatMessagesNotifierHash();
 
   @override
   String toString() {
@@ -164,11 +165,11 @@ final class ChatMessagesProvider extends $AsyncNotifierProvider<ChatMessages, Li
 
   @$internal
   @override
-  ChatMessages create() => ChatMessages();
+  ChatMessagesNotifier create() => ChatMessagesNotifier();
 
   @override
   bool operator ==(Object other) {
-    return other is ChatMessagesProvider && other.argument == argument;
+    return other is ChatMessagesNotifierProvider && other.argument == argument;
   }
 
   @override
@@ -177,18 +178,18 @@ final class ChatMessagesProvider extends $AsyncNotifierProvider<ChatMessages, Li
   }
 }
 
-String _$chatMessagesHash() => r'56dd04d7d6dfb300cca21c430b8064691f4a0be2';
+String _$chatMessagesNotifierHash() => r'd56992281c7983e240fad2ed5f5ea88e67d5c061';
 
-final class ChatMessagesFamily extends $Family
+final class ChatMessagesNotifierFamily extends $Family
     with
         $ClassFamilyOverride<
-          ChatMessages,
+          ChatMessagesNotifier,
           AsyncValue<List<ChatMessage>>,
           List<ChatMessage>,
           FutureOr<List<ChatMessage>>,
           String
         > {
-  ChatMessagesFamily._()
+  ChatMessagesNotifierFamily._()
     : super(
         retry: null,
         name: r'chatMessagesProvider',
@@ -197,13 +198,14 @@ final class ChatMessagesFamily extends $Family
         isAutoDispose: true,
       );
 
-  ChatMessagesProvider call(String sessionId) => ChatMessagesProvider._(argument: sessionId, from: this);
+  ChatMessagesNotifierProvider call(String sessionId) =>
+      ChatMessagesNotifierProvider._(argument: sessionId, from: this);
 
   @override
   String toString() => r'chatMessagesProvider';
 }
 
-abstract class _$ChatMessages extends $AsyncNotifier<List<ChatMessage>> {
+abstract class _$ChatMessagesNotifier extends $AsyncNotifier<List<ChatMessage>> {
   late final _$args = ref.$arg as String;
   String get sessionId => _$args;
 
@@ -352,11 +354,12 @@ final class ArchivedSessionsProvider
 
 String _$archivedSessionsHash() => r'ac4a8fe2f5367fe1e8d70a0b1ccde35be9c98173';
 
-@ProviderFor(AppliedChanges)
-final appliedChangesProvider = AppliedChangesProvider._();
+@ProviderFor(AppliedChangesNotifier)
+final appliedChangesProvider = AppliedChangesNotifierProvider._();
 
-final class AppliedChangesProvider extends $NotifierProvider<AppliedChanges, Map<String, List<AppliedChange>>> {
-  AppliedChangesProvider._()
+final class AppliedChangesNotifierProvider
+    extends $NotifierProvider<AppliedChangesNotifier, Map<String, List<AppliedChange>>> {
+  AppliedChangesNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -368,11 +371,11 @@ final class AppliedChangesProvider extends $NotifierProvider<AppliedChanges, Map
       );
 
   @override
-  String debugGetCreateSourceHash() => _$appliedChangesHash();
+  String debugGetCreateSourceHash() => _$appliedChangesNotifierHash();
 
   @$internal
   @override
-  AppliedChanges create() => AppliedChanges();
+  AppliedChangesNotifier create() => AppliedChangesNotifier();
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(Map<String, List<AppliedChange>> value) {
@@ -383,9 +386,9 @@ final class AppliedChangesProvider extends $NotifierProvider<AppliedChanges, Map
   }
 }
 
-String _$appliedChangesHash() => r'2f1446537e686532ec607fd36b2475b2adf7d9f9';
+String _$appliedChangesNotifierHash() => r'0e5aeb94b129df8fe39ebbaeb1757e5c84ea497f';
 
-abstract class _$AppliedChanges extends $Notifier<Map<String, List<AppliedChange>>> {
+abstract class _$AppliedChangesNotifier extends $Notifier<Map<String, List<AppliedChange>>> {
   Map<String, List<AppliedChange>> build();
   @$mustCallSuper
   @override
@@ -403,11 +406,11 @@ abstract class _$AppliedChanges extends $Notifier<Map<String, List<AppliedChange
   }
 }
 
-@ProviderFor(ActiveMessageId)
-final activeMessageIdProvider = ActiveMessageIdProvider._();
+@ProviderFor(ActiveMessageIdNotifier)
+final activeMessageIdProvider = ActiveMessageIdNotifierProvider._();
 
-final class ActiveMessageIdProvider extends $NotifierProvider<ActiveMessageId, String?> {
-  ActiveMessageIdProvider._()
+final class ActiveMessageIdNotifierProvider extends $NotifierProvider<ActiveMessageIdNotifier, String?> {
+  ActiveMessageIdNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -419,11 +422,11 @@ final class ActiveMessageIdProvider extends $NotifierProvider<ActiveMessageId, S
       );
 
   @override
-  String debugGetCreateSourceHash() => _$activeMessageIdHash();
+  String debugGetCreateSourceHash() => _$activeMessageIdNotifierHash();
 
   @$internal
   @override
-  ActiveMessageId create() => ActiveMessageId();
+  ActiveMessageIdNotifier create() => ActiveMessageIdNotifier();
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(String? value) {
@@ -431,9 +434,9 @@ final class ActiveMessageIdProvider extends $NotifierProvider<ActiveMessageId, S
   }
 }
 
-String _$activeMessageIdHash() => r'd627282d12802c332c95db784dade7149af8531a';
+String _$activeMessageIdNotifierHash() => r'd3115d948a71ff4bfe5b208f9ad17fdf809c5ce7';
 
-abstract class _$ActiveMessageId extends $Notifier<String?> {
+abstract class _$ActiveMessageIdNotifier extends $Notifier<String?> {
   String? build();
   @$mustCallSuper
   @override
@@ -444,11 +447,11 @@ abstract class _$ActiveMessageId extends $Notifier<String?> {
   }
 }
 
-@ProviderFor(ChangesPanelVisible)
-final changesPanelVisibleProvider = ChangesPanelVisibleProvider._();
+@ProviderFor(ChangesPanelVisibleNotifier)
+final changesPanelVisibleProvider = ChangesPanelVisibleNotifierProvider._();
 
-final class ChangesPanelVisibleProvider extends $NotifierProvider<ChangesPanelVisible, bool> {
-  ChangesPanelVisibleProvider._()
+final class ChangesPanelVisibleNotifierProvider extends $NotifierProvider<ChangesPanelVisibleNotifier, bool> {
+  ChangesPanelVisibleNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -460,11 +463,11 @@ final class ChangesPanelVisibleProvider extends $NotifierProvider<ChangesPanelVi
       );
 
   @override
-  String debugGetCreateSourceHash() => _$changesPanelVisibleHash();
+  String debugGetCreateSourceHash() => _$changesPanelVisibleNotifierHash();
 
   @$internal
   @override
-  ChangesPanelVisible create() => ChangesPanelVisible();
+  ChangesPanelVisibleNotifier create() => ChangesPanelVisibleNotifier();
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(bool value) {
@@ -472,9 +475,9 @@ final class ChangesPanelVisibleProvider extends $NotifierProvider<ChangesPanelVi
   }
 }
 
-String _$changesPanelVisibleHash() => r'f81f3dbb0aeb38ffb87bbd472846a33f732504e3';
+String _$changesPanelVisibleNotifierHash() => r'61485d0b98c5342c00a038a1fa8f096407586301';
 
-abstract class _$ChangesPanelVisible extends $Notifier<bool> {
+abstract class _$ChangesPanelVisibleNotifier extends $Notifier<bool> {
   bool build();
   @$mustCallSuper
   @override

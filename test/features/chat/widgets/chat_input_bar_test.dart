@@ -51,7 +51,7 @@ Widget _wrap(
   );
 }
 
-class _FakeActiveProjectId extends ActiveProjectId {
+class _FakeActiveProjectId extends ActiveProjectIdNotifier {
   _FakeActiveProjectId(this._initial);
   final String _initial;
   @override

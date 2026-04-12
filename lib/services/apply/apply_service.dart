@@ -48,7 +48,7 @@ ApplyService applyService(Ref ref) {
 class ApplyService {
   ApplyService({
     required FilesystemService fs,
-    required AppliedChanges notifier,
+    required AppliedChangesNotifier notifier,
     String Function()? uuidGen,
     ProcessRunner? processRunner,
   }) : _fs = fs,
@@ -57,7 +57,7 @@ class ApplyService {
        _processRunner = processRunner ?? Process.run;
 
   final FilesystemService _fs;
-  final AppliedChanges _notifier;
+  final AppliedChangesNotifier _notifier;
   final String Function() _uuidGen;
   final ProcessRunner _processRunner;
 

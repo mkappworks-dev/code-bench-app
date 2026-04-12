@@ -8,9 +8,9 @@ part 'github_auth_notifier.g.dart';
 /// Holds the currently authenticated GitHub account and exposes auth actions.
 ///
 /// Widgets read `gitHubAuthProvider` for account state and call methods on
-/// its notifier for auth flows — they never touch [GitHubAuthService] directly.
+/// its notifier for auth flows — they never touch [GitHubAuthNotifierService] directly.
 @Riverpod(keepAlive: true)
-class GitHubAuth extends _$GitHubAuth {
+class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   @override
   Future<GitHubAccount?> build() => ref.read(githubAuthServiceProvider).getStoredAccount();
 

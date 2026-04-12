@@ -11,21 +11,21 @@ part of 'github_auth_notifier.dart';
 /// Holds the currently authenticated GitHub account and exposes auth actions.
 ///
 /// Widgets read `gitHubAuthProvider` for account state and call methods on
-/// its notifier for auth flows — they never touch [GitHubAuthService] directly.
+/// its notifier for auth flows — they never touch [GitHubAuthNotifierService] directly.
 
-@ProviderFor(GitHubAuth)
-final gitHubAuthProvider = GitHubAuthProvider._();
+@ProviderFor(GitHubAuthNotifier)
+final gitHubAuthProvider = GitHubAuthNotifierProvider._();
 
 /// Holds the currently authenticated GitHub account and exposes auth actions.
 ///
 /// Widgets read `gitHubAuthProvider` for account state and call methods on
-/// its notifier for auth flows — they never touch [GitHubAuthService] directly.
-final class GitHubAuthProvider extends $AsyncNotifierProvider<GitHubAuth, GitHubAccount?> {
+/// its notifier for auth flows — they never touch [GitHubAuthNotifierService] directly.
+final class GitHubAuthNotifierProvider extends $AsyncNotifierProvider<GitHubAuthNotifier, GitHubAccount?> {
   /// Holds the currently authenticated GitHub account and exposes auth actions.
   ///
   /// Widgets read `gitHubAuthProvider` for account state and call methods on
-  /// its notifier for auth flows — they never touch [GitHubAuthService] directly.
-  GitHubAuthProvider._()
+  /// its notifier for auth flows — they never touch [GitHubAuthNotifierService] directly.
+  GitHubAuthNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -37,21 +37,21 @@ final class GitHubAuthProvider extends $AsyncNotifierProvider<GitHubAuth, GitHub
       );
 
   @override
-  String debugGetCreateSourceHash() => _$gitHubAuthHash();
+  String debugGetCreateSourceHash() => _$gitHubAuthNotifierHash();
 
   @$internal
   @override
-  GitHubAuth create() => GitHubAuth();
+  GitHubAuthNotifier create() => GitHubAuthNotifier();
 }
 
-String _$gitHubAuthHash() => r'eb890af57b392176d7ace5b31e81335595454411';
+String _$gitHubAuthNotifierHash() => r'210c9cb49d9ca555131de6924575c146b81f93f9';
 
 /// Holds the currently authenticated GitHub account and exposes auth actions.
 ///
 /// Widgets read `gitHubAuthProvider` for account state and call methods on
-/// its notifier for auth flows — they never touch [GitHubAuthService] directly.
+/// its notifier for auth flows — they never touch [GitHubAuthNotifierService] directly.
 
-abstract class _$GitHubAuth extends $AsyncNotifier<GitHubAccount?> {
+abstract class _$GitHubAuthNotifier extends $AsyncNotifier<GitHubAccount?> {
   FutureOr<GitHubAccount?> build();
   @$mustCallSuper
   @override

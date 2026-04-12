@@ -8,26 +8,11 @@ part of 'git_actions.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Command notifier that delegates all git write operations to [GitService].
-///
-/// Widgets never instantiate [GitService] directly — they call methods here
-/// instead. Each method is a thin passthrough; error handling and UI feedback
-/// (snackbars, spinners) remain the widget's responsibility.
 
 @ProviderFor(GitActions)
 final gitActionsProvider = GitActionsProvider._();
 
-/// Command notifier that delegates all git write operations to [GitService].
-///
-/// Widgets never instantiate [GitService] directly — they call methods here
-/// instead. Each method is a thin passthrough; error handling and UI feedback
-/// (snackbars, spinners) remain the widget's responsibility.
 final class GitActionsProvider extends $NotifierProvider<GitActions, void> {
-  /// Command notifier that delegates all git write operations to [GitService].
-  ///
-  /// Widgets never instantiate [GitService] directly — they call methods here
-  /// instead. Each method is a thin passthrough; error handling and UI feedback
-  /// (snackbars, spinners) remain the widget's responsibility.
   GitActionsProvider._()
     : super(
         from: null,
@@ -53,12 +38,6 @@ final class GitActionsProvider extends $NotifierProvider<GitActions, void> {
 }
 
 String _$gitActionsHash() => r'608c70d3b711150c80af22b4113a98afd9e6ec2a';
-
-/// Command notifier that delegates all git write operations to [GitService].
-///
-/// Widgets never instantiate [GitService] directly — they call methods here
-/// instead. Each method is a thin passthrough; error handling and UI feedback
-/// (snackbars, spinners) remain the widget's responsibility.
 
 abstract class _$GitActions extends $Notifier<void> {
   void build();

@@ -10,13 +10,13 @@ part of 'project_sidebar_notifier.dart';
 // ignore_for_file: type=lint, type=warning
 /// Currently active project ID
 
-@ProviderFor(ActiveProjectId)
-final activeProjectIdProvider = ActiveProjectIdProvider._();
+@ProviderFor(ActiveProjectIdNotifier)
+final activeProjectIdProvider = ActiveProjectIdNotifierProvider._();
 
 /// Currently active project ID
-final class ActiveProjectIdProvider extends $NotifierProvider<ActiveProjectId, String?> {
+final class ActiveProjectIdNotifierProvider extends $NotifierProvider<ActiveProjectIdNotifier, String?> {
   /// Currently active project ID
-  ActiveProjectIdProvider._()
+  ActiveProjectIdNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -28,11 +28,11 @@ final class ActiveProjectIdProvider extends $NotifierProvider<ActiveProjectId, S
       );
 
   @override
-  String debugGetCreateSourceHash() => _$activeProjectIdHash();
+  String debugGetCreateSourceHash() => _$activeProjectIdNotifierHash();
 
   @$internal
   @override
-  ActiveProjectId create() => ActiveProjectId();
+  ActiveProjectIdNotifier create() => ActiveProjectIdNotifier();
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(String? value) {
@@ -40,11 +40,11 @@ final class ActiveProjectIdProvider extends $NotifierProvider<ActiveProjectId, S
   }
 }
 
-String _$activeProjectIdHash() => r'9166eb23f2a190859c51c0f097b8e07b131ecd9c';
+String _$activeProjectIdNotifierHash() => r'032bad49dc96f9a471be8df596a2fdd7dee6737a';
 
 /// Currently active project ID
 
-abstract class _$ActiveProjectId extends $Notifier<String?> {
+abstract class _$ActiveProjectIdNotifier extends $Notifier<String?> {
   String? build();
   @$mustCallSuper
   @override
@@ -57,13 +57,13 @@ abstract class _$ActiveProjectId extends $Notifier<String?> {
 
 /// Set of expanded project IDs in the sidebar
 
-@ProviderFor(ExpandedProjectIds)
-final expandedProjectIdsProvider = ExpandedProjectIdsProvider._();
+@ProviderFor(ExpandedProjectIdsNotifier)
+final expandedProjectIdsProvider = ExpandedProjectIdsNotifierProvider._();
 
 /// Set of expanded project IDs in the sidebar
-final class ExpandedProjectIdsProvider extends $NotifierProvider<ExpandedProjectIds, Set<String>> {
+final class ExpandedProjectIdsNotifierProvider extends $NotifierProvider<ExpandedProjectIdsNotifier, Set<String>> {
   /// Set of expanded project IDs in the sidebar
-  ExpandedProjectIdsProvider._()
+  ExpandedProjectIdsNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -75,11 +75,11 @@ final class ExpandedProjectIdsProvider extends $NotifierProvider<ExpandedProject
       );
 
   @override
-  String debugGetCreateSourceHash() => _$expandedProjectIdsHash();
+  String debugGetCreateSourceHash() => _$expandedProjectIdsNotifierHash();
 
   @$internal
   @override
-  ExpandedProjectIds create() => ExpandedProjectIds();
+  ExpandedProjectIdsNotifier create() => ExpandedProjectIdsNotifier();
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(Set<String> value) {
@@ -87,11 +87,11 @@ final class ExpandedProjectIdsProvider extends $NotifierProvider<ExpandedProject
   }
 }
 
-String _$expandedProjectIdsHash() => r'ba128c593215ffa366e3ced754f30b3551a7d111';
+String _$expandedProjectIdsNotifierHash() => r'b3106ff766a9bc2d09a4d5e1112b2311e21bf9d9';
 
 /// Set of expanded project IDs in the sidebar
 
-abstract class _$ExpandedProjectIds extends $Notifier<Set<String>> {
+abstract class _$ExpandedProjectIdsNotifier extends $Notifier<Set<String>> {
   Set<String> build();
   @$mustCallSuper
   @override
@@ -103,11 +103,11 @@ abstract class _$ExpandedProjectIds extends $Notifier<Set<String>> {
   }
 }
 
-@ProviderFor(ProjectSort)
-final projectSortProvider = ProjectSortProvider._();
+@ProviderFor(ProjectSortNotifier)
+final projectSortProvider = ProjectSortNotifierProvider._();
 
-final class ProjectSortProvider extends $AsyncNotifierProvider<ProjectSort, ProjectSortState> {
-  ProjectSortProvider._()
+final class ProjectSortNotifierProvider extends $AsyncNotifierProvider<ProjectSortNotifier, ProjectSortState> {
+  ProjectSortNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -119,16 +119,16 @@ final class ProjectSortProvider extends $AsyncNotifierProvider<ProjectSort, Proj
       );
 
   @override
-  String debugGetCreateSourceHash() => _$projectSortHash();
+  String debugGetCreateSourceHash() => _$projectSortNotifierHash();
 
   @$internal
   @override
-  ProjectSort create() => ProjectSort();
+  ProjectSortNotifier create() => ProjectSortNotifier();
 }
 
-String _$projectSortHash() => r'4e71b840509f03a4e46fcaaffa3b696b3544dbac';
+String _$projectSortNotifierHash() => r'de1aa25f10417f8a4f6be433b0613438fb1fcaff';
 
-abstract class _$ProjectSort extends $AsyncNotifier<ProjectSortState> {
+abstract class _$ProjectSortNotifier extends $AsyncNotifier<ProjectSortState> {
   FutureOr<ProjectSortState> build();
   @$mustCallSuper
   @override

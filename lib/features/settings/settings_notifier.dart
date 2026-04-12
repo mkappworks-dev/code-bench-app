@@ -14,8 +14,8 @@ part 'settings_notifier.g.dart';
 
 // ── API keys ──────────────────────────────────────────────────────────────────
 
-class ApiKeysState {
-  const ApiKeysState({
+class ApiKeysNotifierState {
+  const ApiKeysNotifierState({
     required this.openai,
     required this.anthropic,
     required this.gemini,
@@ -31,14 +31,14 @@ class ApiKeysState {
   final String customEndpoint;
   final String customApiKey;
 
-  ApiKeysState copyWith({
+  ApiKeysNotifierState copyWith({
     String? openai,
     String? anthropic,
     String? gemini,
     String? ollamaUrl,
     String? customEndpoint,
     String? customApiKey,
-  }) => ApiKeysState(
+  }) => ApiKeysNotifierState(
     openai: openai ?? this.openai,
     anthropic: anthropic ?? this.anthropic,
     gemini: gemini ?? this.gemini,
@@ -51,11 +51,11 @@ class ApiKeysState {
 /// Loads API keys on first watch and exposes save/delete actions.
 /// Auto-disposes when the settings screen is not in view.
 @riverpod
-class ApiKeys extends _$ApiKeys {
+class ApiKeysNotifier extends _$ApiKeysNotifier {
   @override
-  Future<ApiKeysState> build() async {
+  Future<ApiKeysNotifierState> build() async {
     final svc = ref.read(settingsServiceProvider);
-    return ApiKeysState(
+    return ApiKeysNotifierState(
       openai: await svc.readApiKey('openai') ?? '',
       anthropic: await svc.readApiKey('anthropic') ?? '',
       gemini: await svc.readApiKey('gemini') ?? '',
@@ -94,28 +94,33 @@ class ApiKeys extends _$ApiKeys {
 
 // ── General preferences ───────────────────────────────────────────────────────
 
-class GeneralPrefsState {
-  const GeneralPrefsState({required this.autoCommit, required this.deleteConfirmation, required this.terminalApp});
+class GeneralPrefsNotifierState {
+  const GeneralPrefsNotifierState({
+    required this.autoCommit,
+    required this.deleteConfirmation,
+    required this.terminalApp,
+  });
 
   final bool autoCommit;
   final bool deleteConfirmation;
   final String terminalApp;
 
-  GeneralPrefsState copyWith({bool? autoCommit, bool? deleteConfirmation, String? terminalApp}) => GeneralPrefsState(
-    autoCommit: autoCommit ?? this.autoCommit,
-    deleteConfirmation: deleteConfirmation ?? this.deleteConfirmation,
-    terminalApp: terminalApp ?? this.terminalApp,
-  );
+  GeneralPrefsNotifierState copyWith({bool? autoCommit, bool? deleteConfirmation, String? terminalApp}) =>
+      GeneralPrefsNotifierState(
+        autoCommit: autoCommit ?? this.autoCommit,
+        deleteConfirmation: deleteConfirmation ?? this.deleteConfirmation,
+        terminalApp: terminalApp ?? this.terminalApp,
+      );
 }
 
 /// Loads general preferences on first watch and exposes setters.
 /// Auto-disposes when the settings screen is not in view.
 @riverpod
-class GeneralPrefs extends _$GeneralPrefs {
+class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
   @override
-  Future<GeneralPrefsState> build() async {
+  Future<GeneralPrefsNotifierState> build() async {
     final svc = ref.read(settingsServiceProvider);
-    return GeneralPrefsState(
+    return GeneralPrefsNotifierState(
       autoCommit: await svc.getAutoCommit(),
       deleteConfirmation: await svc.getDeleteConfirmation(),
       terminalApp: await svc.getTerminalApp(),
@@ -147,7 +152,7 @@ class GeneralPrefs extends _$GeneralPrefs {
     ref.invalidateSelf();
   }
 
-  void _update(GeneralPrefsState Function(GeneralPrefsState) fn) {
+  void _update(GeneralPrefsNotifierState Function(GeneralPrefsNotifierState) fn) {
     final current = state.value;
     if (current != null) state = AsyncData(fn(current));
   }

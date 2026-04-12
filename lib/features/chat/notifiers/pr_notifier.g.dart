@@ -18,8 +18,8 @@ part of 'pr_notifier.dart';
 /// `DioException.toString()`, which serialises request headers and would
 /// leak the `Authorization: Bearer <PAT>` token. See `macos/Runner/README.md`.
 
-@ProviderFor(PrCard)
-final prCardProvider = PrCardFamily._();
+@ProviderFor(PrCardNotifier)
+final prCardProvider = PrCardNotifierFamily._();
 
 /// Manages live state for a single GitHub pull request card.
 ///
@@ -30,7 +30,7 @@ final prCardProvider = PrCardFamily._();
 /// Only `e.runtimeType` is ever logged. A full `$e` could invoke
 /// `DioException.toString()`, which serialises request headers and would
 /// leak the `Authorization: Bearer <PAT>` token. See `macos/Runner/README.md`.
-final class PrCardProvider extends $AsyncNotifierProvider<PrCard, PrCardState> {
+final class PrCardNotifierProvider extends $AsyncNotifierProvider<PrCardNotifier, PrCardState> {
   /// Manages live state for a single GitHub pull request card.
   ///
   /// Widgets call [refresh] from their poll timer, [approve] and [merge] from
@@ -40,7 +40,7 @@ final class PrCardProvider extends $AsyncNotifierProvider<PrCard, PrCardState> {
   /// Only `e.runtimeType` is ever logged. A full `$e` could invoke
   /// `DioException.toString()`, which serialises request headers and would
   /// leak the `Authorization: Bearer <PAT>` token. See `macos/Runner/README.md`.
-  PrCardProvider._({required PrCardFamily super.from, required (String, String, int) super.argument})
+  PrCardNotifierProvider._({required PrCardNotifierFamily super.from, required (String, String, int) super.argument})
     : super(
         retry: null,
         name: r'prCardProvider',
@@ -50,7 +50,7 @@ final class PrCardProvider extends $AsyncNotifierProvider<PrCard, PrCardState> {
       );
 
   @override
-  String debugGetCreateSourceHash() => _$prCardHash();
+  String debugGetCreateSourceHash() => _$prCardNotifierHash();
 
   @override
   String toString() {
@@ -61,11 +61,11 @@ final class PrCardProvider extends $AsyncNotifierProvider<PrCard, PrCardState> {
 
   @$internal
   @override
-  PrCard create() => PrCard();
+  PrCardNotifier create() => PrCardNotifier();
 
   @override
   bool operator ==(Object other) {
-    return other is PrCardProvider && other.argument == argument;
+    return other is PrCardNotifierProvider && other.argument == argument;
   }
 
   @override
@@ -74,7 +74,7 @@ final class PrCardProvider extends $AsyncNotifierProvider<PrCard, PrCardState> {
   }
 }
 
-String _$prCardHash() => r'ccf1714ef1890527fc9d0c168abaaac40d06a62d';
+String _$prCardNotifierHash() => r'c1dda8d0254046115479f619fc3f0505065b127b';
 
 /// Manages live state for a single GitHub pull request card.
 ///
@@ -86,16 +86,16 @@ String _$prCardHash() => r'ccf1714ef1890527fc9d0c168abaaac40d06a62d';
 /// `DioException.toString()`, which serialises request headers and would
 /// leak the `Authorization: Bearer <PAT>` token. See `macos/Runner/README.md`.
 
-final class PrCardFamily extends $Family
+final class PrCardNotifierFamily extends $Family
     with
         $ClassFamilyOverride<
-          PrCard,
+          PrCardNotifier,
           AsyncValue<PrCardState>,
           PrCardState,
           FutureOr<PrCardState>,
           (String, String, int)
         > {
-  PrCardFamily._()
+  PrCardNotifierFamily._()
     : super(
         retry: null,
         name: r'prCardProvider',
@@ -114,8 +114,8 @@ final class PrCardFamily extends $Family
   /// `DioException.toString()`, which serialises request headers and would
   /// leak the `Authorization: Bearer <PAT>` token. See `macos/Runner/README.md`.
 
-  PrCardProvider call(String owner, String repo, int prNumber) =>
-      PrCardProvider._(argument: (owner, repo, prNumber), from: this);
+  PrCardNotifierProvider call(String owner, String repo, int prNumber) =>
+      PrCardNotifierProvider._(argument: (owner, repo, prNumber), from: this);
 
   @override
   String toString() => r'prCardProvider';
@@ -131,7 +131,7 @@ final class PrCardFamily extends $Family
 /// `DioException.toString()`, which serialises request headers and would
 /// leak the `Authorization: Bearer <PAT>` token. See `macos/Runner/README.md`.
 
-abstract class _$PrCard extends $AsyncNotifier<PrCardState> {
+abstract class _$PrCardNotifier extends $AsyncNotifier<PrCardState> {
   late final _$args = ref.$arg as (String, String, int);
   String get owner => _$args.$1;
   String get repo => _$args.$2;

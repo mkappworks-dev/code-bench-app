@@ -58,7 +58,7 @@ class _PRCardState extends ConsumerState<PRCard> {
     super.dispose();
   }
 
-  PrCardProvider get _provider => prCardProvider(widget.owner, widget.repo, widget.prNumber);
+  PrCardNotifierProvider get _provider => prCardProvider(widget.owner, widget.repo, widget.prNumber);
 
   Future<void> _poll() async {
     await ref.read(_provider.notifier).refresh();

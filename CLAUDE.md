@@ -79,12 +79,17 @@ Widgets / Screens
 | `url_launcher` (`launchUrl`) for opening URLs/files | `Process.run(...)` |
 | Path string operations (`p.join`, etc.) | `Directory(...).existsSync()` or any `dart:io` I/O |
 
-**Notifier naming conventions:**
+**Naming conventions — strictly enforced:**
 
-| Suffix | Role |
-|---|---|
-| `*Actions` (`SettingsActions`, `ProjectSidebarActions`, `CodeApplyActions`) | Command notifiers — `void build()`, imperative methods only, `keepAlive: true` |
-| `*Notifier` (`ChatNotifier`, `GitHubAuthNotifier`) | State-owning `AsyncNotifier` or `Notifier` |
+| Layer | Suffix rule | Examples |
+|---|---|---|
+| Service class | must end in `Service` | `GitService`, `SessionService` |
+| Service provider | `@riverpod` / `@Riverpod` placed **before** the class it instantiates | `gitServiceProvider`, `sessionServiceProvider` |
+| Command notifier | must end in `Actions` — `void build()`, imperative methods, `keepAlive: true` | `ProjectSidebarActions`, `CodeApplyActions`, `GitActions` |
+| State notifier | must end in `Notifier` — owns `AsyncValue` or value state | `ChatNotifier`, `GitHubAuthNotifier`, `ActiveSessionIdNotifier` |
+| `ref.invalidate` in widgets | **forbidden** — route through a notifier method instead | `refreshGitState()`, `refreshArchivedSessions()` |
+
+The Riverpod generator strips the `Notifier` suffix when producing the provider variable name (`class ActiveSessionIdNotifier` → `activeSessionIdProvider`). The `Actions` suffix is kept (`class GitActions` → `gitActionsProvider`).
 
 **Where services live:** `lib/services/` only. Services are instantiated via `@riverpod` / `@Riverpod(keepAlive: true)` provider functions — never constructed directly in widgets or notifiers.
 

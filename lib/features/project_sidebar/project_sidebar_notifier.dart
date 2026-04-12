@@ -8,7 +8,7 @@ part 'project_sidebar_notifier.g.dart';
 
 /// Currently active project ID
 @Riverpod(keepAlive: true)
-class ActiveProjectId extends _$ActiveProjectId {
+class ActiveProjectIdNotifier extends _$ActiveProjectIdNotifier {
   @override
   String? build() => null;
 
@@ -17,7 +17,7 @@ class ActiveProjectId extends _$ActiveProjectId {
 
 /// Set of expanded project IDs in the sidebar
 @Riverpod(keepAlive: true)
-class ExpandedProjectIds extends _$ExpandedProjectIds {
+class ExpandedProjectIdsNotifier extends _$ExpandedProjectIdsNotifier {
   @override
   Set<String> build() => {};
 
@@ -51,7 +51,7 @@ class ProjectSortState {
 }
 
 @Riverpod(keepAlive: true)
-class ProjectSort extends _$ProjectSort {
+class ProjectSortNotifier extends _$ProjectSortNotifier {
   static const _projectKey = 'project_sort_order';
   static const _threadKey = 'thread_sort_order';
 

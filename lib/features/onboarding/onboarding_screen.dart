@@ -26,7 +26,7 @@ class OnboardingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final step = ref.watch(onboardingControllerProvider);
+    final step = ref.watch(onboardingProvider);
 
     return Scaffold(
       backgroundColor: ThemeConstants.background,
@@ -152,8 +152,8 @@ class _ContentPanel extends ConsumerWidget {
   }
 
   void _next(BuildContext context, WidgetRef ref) {
-    final controller = ref.read(onboardingControllerProvider.notifier);
-    if (step < OnboardingController.totalSteps - 1) {
+    final controller = ref.read(onboardingProvider.notifier);
+    if (step < OnboardingNotifier.totalSteps - 1) {
       controller.next();
     } else {
       // `_finish` catches its own errors and navigates on every path, so
@@ -177,7 +177,7 @@ class _ContentPanel extends ConsumerWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
-                onPressed: () => ref.read(onboardingControllerProvider.notifier).back(),
+                onPressed: () => ref.read(onboardingProvider.notifier).back(),
                 icon: const Icon(Icons.chevron_left, size: 16, color: Color(0xFF888888)),
                 label: const Text('Back', style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
                 style: TextButton.styleFrom(
@@ -192,7 +192,7 @@ class _ContentPanel extends ConsumerWidget {
           const SizedBox(height: 16),
           StepProgressIndicator(
             currentStep: step,
-            totalSteps: OnboardingController.totalSteps,
+            totalSteps: OnboardingNotifier.totalSteps,
             stepTitle: stepTitles[step],
             stepSubtitle: stepSubtitles[step],
           ),

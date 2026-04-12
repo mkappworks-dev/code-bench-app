@@ -11,7 +11,7 @@ part 'chat_notifier.g.dart';
 
 // System prompt per session (in-memory only, keyed by sessionId)
 @Riverpod(keepAlive: true)
-class SessionSystemPrompt extends _$SessionSystemPrompt {
+class SessionSystemPromptNotifier extends _$SessionSystemPromptNotifier {
   @override
   Map<String, String> build() => {};
 
@@ -24,7 +24,7 @@ class SessionSystemPrompt extends _$SessionSystemPrompt {
 
 // Currently active session ID
 @Riverpod(keepAlive: true)
-class ActiveSessionId extends _$ActiveSessionId {
+class ActiveSessionIdNotifier extends _$ActiveSessionIdNotifier {
   @override
   String? build() => null;
 
@@ -33,7 +33,7 @@ class ActiveSessionId extends _$ActiveSessionId {
 
 // Currently selected model
 @Riverpod(keepAlive: true)
-class SelectedModel extends _$SelectedModel {
+class SelectedModelNotifier extends _$SelectedModelNotifier {
   @override
   AIModel build() => AIModels.claude35Sonnet;
 
@@ -42,7 +42,7 @@ class SelectedModel extends _$SelectedModel {
 
 // Messages for the current session
 @riverpod
-class ChatMessages extends _$ChatMessages {
+class ChatMessagesNotifier extends _$ChatMessagesNotifier {
   @override
   Future<List<ChatMessage>> build(String sessionId) async {
     final service = ref.watch(sessionServiceProvider);
@@ -131,7 +131,7 @@ Stream<List<ChatSession>> archivedSessions(Ref ref) {
 // ── Applied changes (in-memory, keyed by sessionId) ─────────────────────────
 
 @Riverpod(keepAlive: true)
-class AppliedChanges extends _$AppliedChanges {
+class AppliedChangesNotifier extends _$AppliedChangesNotifier {
   @override
   Map<String, List<AppliedChange>> build() => {};
 
@@ -151,7 +151,7 @@ class AppliedChanges extends _$AppliedChanges {
 // ── Active message ID (for the status bar "Working for Xs" pill) ─────────────
 
 @Riverpod(keepAlive: true)
-class ActiveMessageId extends _$ActiveMessageId {
+class ActiveMessageIdNotifier extends _$ActiveMessageIdNotifier {
   @override
   String? build() => null;
 
@@ -161,7 +161,7 @@ class ActiveMessageId extends _$ActiveMessageId {
 // ── Changes panel visibility ─────────────────────────────────────────────────
 
 @Riverpod(keepAlive: true)
-class ChangesPanelVisible extends _$ChangesPanelVisible {
+class ChangesPanelVisibleNotifier extends _$ChangesPanelVisibleNotifier {
   @override
   bool build() => false;
 

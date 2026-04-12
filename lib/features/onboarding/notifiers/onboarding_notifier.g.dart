@@ -9,27 +9,27 @@ part of 'onboarding_notifier.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(OnboardingController)
-final onboardingControllerProvider = OnboardingControllerProvider._();
+@ProviderFor(OnboardingNotifier)
+final onboardingProvider = OnboardingNotifierProvider._();
 
-final class OnboardingControllerProvider extends $NotifierProvider<OnboardingController, int> {
-  OnboardingControllerProvider._()
+final class OnboardingNotifierProvider extends $NotifierProvider<OnboardingNotifier, int> {
+  OnboardingNotifierProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'onboardingControllerProvider',
+        name: r'onboardingProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$onboardingControllerHash();
+  String debugGetCreateSourceHash() => _$onboardingNotifierHash();
 
   @$internal
   @override
-  OnboardingController create() => OnboardingController();
+  OnboardingNotifier create() => OnboardingNotifier();
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(int value) {
@@ -37,9 +37,9 @@ final class OnboardingControllerProvider extends $NotifierProvider<OnboardingCon
   }
 }
 
-String _$onboardingControllerHash() => r'3bf3055b0f209970cf0ae794a39cbe0088efa01f';
+String _$onboardingNotifierHash() => r'44e7ec86531554bfd639e411f8501ace89aa6e38';
 
-abstract class _$OnboardingController extends $Notifier<int> {
+abstract class _$OnboardingNotifier extends $Notifier<int> {
   int build();
   @$mustCallSuper
   @override
