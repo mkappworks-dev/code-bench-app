@@ -22,15 +22,16 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
     state = await AsyncValue.guard(() => ref.read(githubAuthServiceProvider).authenticate());
   }
 
-  /// Clears the account state optimistically before the async delete so the
-  /// UI reflects "signed out" immediately even if the token delete is slow.
+  /// Clears account state optimistically. If the token delete fails,
+  /// logs and swallows — the UI already shows "signed out" and there is
+  /// no recovery action available to the user.
   Future<void> signOut() async {
     state = const AsyncData(null);
     try {
       await ref.read(githubAuthServiceProvider).signOut();
     } catch (e, st) {
-      dLog('[GitHubAuthNotifier] signOut failed: $e\n$st');
-      rethrow;
+      dLog('[GitHubAuthNotifier] signOut cleanup failed: $e\n$st');
+      // State already cleared — swallow so the widget sees clean state.
     }
   }
 
