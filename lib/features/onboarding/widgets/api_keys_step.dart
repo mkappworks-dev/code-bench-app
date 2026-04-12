@@ -83,9 +83,6 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
       final success = await ref.read(settingsActionsProvider.notifier).testApiKey(provider, key);
       if (!mounted) return;
       setState(() => _testResults[provider] = success);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _testResults[provider] = false);
     } finally {
       // Guard the finally as well: tests have a 10s connect timeout, so the
       // user can easily hit Skip and unmount the widget before the await
@@ -97,37 +94,36 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
 
   Future<void> _saveAll() async {
     setState(() => _saving = true);
-    AIProvider? failedProvider;
+    var allSaved = true;
     try {
       final actions = ref.read(settingsActionsProvider.notifier);
       for (final entry in _controllers.entries) {
         final key = entry.value.text.trim();
         if (key.isEmpty) continue;
-        failedProvider = entry.key;
         await actions.saveApiKey(entry.key.name, key);
-        failedProvider = null;
+        if (!mounted) return;
+        if (ref.read(settingsActionsProvider).hasError) {
+          allSaved = false;
+          break;
+        }
       }
-    } catch (_) {
-      // Keychain failure (locked, denied, quota, corruption). Do NOT interpolate
-      // the exception into user-visible text — it may contain the key material
-      // or request context. Name the provider so the user knows which key to
-      // retry, and leave any earlier successful writes in place.
-      if (mounted) {
-        final providerName = failedProvider?.name ?? 'provider';
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to save $providerName API key — please try again')));
-        setState(() => _saving = false);
-      }
-      return;
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
     if (!mounted) return;
-    setState(() => _saving = false);
-    widget.onContinue();
+    if (allSaved) widget.onContinue();
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(settingsActionsProvider, (_, next) {
+      if (!_saving) return;
+      if (next is! AsyncError || !mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to save API key — please try again')),
+      );
+    });
+
     final allAdded = _addedProviders.length == AIProvider.values.length;
 
     return Column(

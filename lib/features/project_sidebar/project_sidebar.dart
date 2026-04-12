@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,10 +11,10 @@ import '../../core/constants/theme_constants.dart';
 import '../../core/utils/instant_menu.dart';
 import '../../core/utils/platform_utils.dart';
 import '../../features/chat/chat_notifier.dart';
-import '../../services/project/project_service.dart' show DuplicateProjectPathException;
 import 'project_sidebar_actions.dart';
 import 'project_sidebar_notifier.dart';
 import 'widgets/project_tile.dart';
+import 'project_sidebar_failure.dart';
 import 'widgets/relocate_project_dialog.dart';
 import 'widgets/remove_project_dialog.dart';
 
@@ -25,6 +26,8 @@ class ProjectSidebar extends ConsumerStatefulWidget {
 }
 
 class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBindingObserver {
+  bool _adding = false;
+
   @override
   void initState() {
     super.initState();
@@ -57,20 +60,23 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
   }
 
   Future<void> _addProject() async {
-    final messenger = ScaffoldMessenger.of(context);
     final result = await FilePicker.getDirectoryPath(dialogTitle: 'Select project folder');
     if (result == null) return;
 
+    setState(() => _adding = true);
     try {
-      final project = await ref.read(projectSidebarActionsProvider.notifier).addExistingFolder(result);
-      ref.read(activeProjectIdProvider.notifier).set(project.id);
-      ref.read(expandedProjectIdsProvider.notifier).expand(project.id);
-    } on DuplicateProjectPathException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
-    } on ArgumentError {
-      messenger.showSnackBar(const SnackBar(content: Text('The selected folder does not exist.')));
-    } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text('Failed to add project. Please try again.')));
+      await ref.read(projectSidebarActionsProvider.notifier).addExistingFolder(result);
+      if (!mounted) return;
+      if (!ref.read(projectSidebarActionsProvider).hasError) {
+        // Find the newly added project by its path.
+        final added = ref.read(projectsProvider).value?.firstWhereOrNull((p) => p.path == result);
+        if (added != null) {
+          ref.read(activeProjectIdProvider.notifier).set(added.id);
+          ref.read(expandedProjectIdsProvider.notifier).expand(added.id);
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _adding = false);
     }
   }
 
@@ -137,6 +143,20 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(projectSidebarActionsProvider, (_, next) {
+      if (!_adding) return;
+      if (next is! AsyncError || !mounted) return;
+      final failure = next.error;
+      final message = switch (failure) {
+        ProjectSidebarDuplicatePath() => 'This project is already added.',
+        ProjectSidebarInvalidPath() => 'Invalid folder path.',
+        ProjectSidebarStorageError() => 'Failed to save project — please try again.',
+        ProjectSidebarUnknownError() => 'Failed to add project — please try again.',
+        _ => 'Failed to add project — please try again.',
+      };
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    });
+
     final projectsAsync = ref.watch(projectsProvider);
     final expandedIds = ref.watch(expandedProjectIdsProvider);
     final activeSessionId = ref.watch(activeSessionIdProvider);

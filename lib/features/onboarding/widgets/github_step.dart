@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/repository.dart';
 import '../notifiers/github_auth_notifier.dart';
@@ -29,25 +28,11 @@ class _GithubStepState extends ConsumerState<GithubStep> {
   }
 
   Future<void> _connectOAuth() async {
-    try {
-      await ref.read(gitHubAuthProvider.notifier).authenticate();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('GitHub auth failed: $e')));
-      }
-    }
+    await ref.read(gitHubAuthProvider.notifier).authenticate();
   }
 
   Future<void> _disconnect() async {
-    try {
-      await ref.read(gitHubAuthProvider.notifier).signOut();
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Signed out locally, but some data may still be stored')));
-      }
-    }
+    await ref.read(gitHubAuthProvider.notifier).signOut();
   }
 
   Future<void> _openTokenCreationPage() async {
@@ -76,14 +61,9 @@ class _GithubStepState extends ConsumerState<GithubStep> {
     final token = _patController.text.trim();
     if (token.isEmpty) return;
     setState(() => _patValid = null);
-    try {
-      await ref.read(gitHubAuthProvider.notifier).signInWithPat(token);
-      if (mounted) setState(() => _patValid = true);
-    } on AuthException {
-      if (mounted) setState(() => _patValid = false);
-    } catch (_) {
-      if (mounted) setState(() => _patValid = false);
-    }
+    await ref.read(gitHubAuthProvider.notifier).signInWithPat(token);
+    if (!mounted) return;
+    setState(() => _patValid = !ref.read(gitHubAuthProvider).hasError);
   }
 
   @override

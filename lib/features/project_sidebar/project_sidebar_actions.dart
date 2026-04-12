@@ -7,7 +7,6 @@ import '../../core/errors/app_exception.dart';
 import '../../core/utils/debug_logger.dart';
 import '../../data/models/ai_model.dart';
 import '../../data/models/chat_session.dart';
-import '../../data/models/project.dart';
 import '../../data/models/project_action.dart';
 import '../../features/chat/chat_notifier.dart';
 import '../../services/git/git_live_state_provider.dart';
@@ -61,22 +60,16 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     });
   }
 
-  Future<Project> addExistingFolder(String path) async {
+  Future<void> addExistingFolder(String path) async {
     state = const AsyncLoading();
-    late Project result;
     state = await AsyncValue.guard(() async {
       try {
-        result = await _projects.addExistingFolder(path);
+        await _projects.addExistingFolder(path);
       } catch (e, st) {
         dLog('[ProjectSidebarActions] addExistingFolder failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
       }
     });
-    // If state is now AsyncError the result was never assigned — rethrow so
-    // callers that still use try/catch (pending widget migration) see a typed
-    // failure rather than a LateInitializationError.
-    if (state is AsyncError) throw (state as AsyncError).error;
-    return result;
   }
 
   Future<void> relocateProject(String id, String path) async {

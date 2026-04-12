@@ -9,6 +9,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../services/project/git_detector.dart';
 import '../../project_sidebar/project_sidebar_actions.dart';
+import '../../project_sidebar/project_sidebar_failure.dart';
 
 class AddProjectStep extends ConsumerStatefulWidget {
   const AddProjectStep({super.key, required this.onComplete, required this.onSkip});
@@ -64,10 +65,9 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
     setState(() => _adding = true);
     try {
       await ref.read(projectSidebarActionsProvider.notifier).addExistingFolder(_selectedPath!);
-      if (mounted) widget.onComplete();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add project: $e')));
+      if (!mounted) return;
+      if (!ref.read(projectSidebarActionsProvider).hasError) {
+        widget.onComplete();
       }
     } finally {
       if (mounted) setState(() => _adding = false);
@@ -76,6 +76,20 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(projectSidebarActionsProvider, (_, next) {
+      if (!_adding) return;
+      if (next is! AsyncError || !mounted) return;
+      final failure = next.error;
+      final message = switch (failure) {
+        ProjectSidebarDuplicatePath() => 'This project is already added.',
+        ProjectSidebarInvalidPath() => 'Invalid folder path.',
+        ProjectSidebarStorageError() => 'Failed to save project — please try again.',
+        ProjectSidebarUnknownError() => 'Failed to add project — please try again.',
+        _ => 'Failed to add project — please try again.',
+      };
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    });
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
