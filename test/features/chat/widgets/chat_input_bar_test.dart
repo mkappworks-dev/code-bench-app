@@ -7,9 +7,9 @@ import 'package:mockito/mockito.dart';
 import 'package:code_bench_app/core/constants/app_icons.dart';
 import 'package:code_bench_app/data/models/chat_message.dart';
 import 'package:code_bench_app/data/models/project.dart';
-import 'package:code_bench_app/features/chat/chat_notifier.dart';
+import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/widgets/chat_input_bar.dart';
-import 'package:code_bench_app/features/project_sidebar/project_sidebar_notifier.dart';
+import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'package:code_bench_app/services/project/project_service.dart';
 
 /// Minimal stub so the missing-project guard's `_isProjectAvailable` helper

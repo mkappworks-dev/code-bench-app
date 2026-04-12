@@ -8,10 +8,10 @@ import 'package:path/path.dart' as p;
 import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/applied_change.dart';
 import '../../../data/models/project.dart';
-import '../../../features/project_sidebar/project_sidebar_notifier.dart';
+import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../../../services/apply/apply_service.dart';
 import '../../../services/project/git_detector.dart';
-import '../chat_notifier.dart';
+import '../notifiers/chat_notifier.dart';
 import '../notifiers/code_apply_actions.dart';
 import '../notifiers/code_apply_failure.dart';
 import 'conflict_merge_view.dart';
@@ -91,12 +91,7 @@ class ChangesPanel extends ConsumerWidget {
                             ),
                           ),
                         ),
-                        ...entry.value.map(
-                          (change) => _ChangeEntry(
-                            change: change,
-                            project: project,
-                          ),
-                        ),
+                        ...entry.value.map((change) => _ChangeEntry(change: change, project: project)),
                       ];
                     }).toList(),
                   ),
@@ -181,9 +176,7 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
     }
 
     // File was modified out-of-band — show conflict merge view.
-    final currentContent = await ref
-        .read(codeApplyActionsProvider.notifier)
-        .readFileContent(widget.change.filePath);
+    final currentContent = await ref.read(codeApplyActionsProvider.notifier).readFileContent(widget.change.filePath);
     if (!mounted) return;
 
     final isGit = GitDetector.isGitRepo(project.path);

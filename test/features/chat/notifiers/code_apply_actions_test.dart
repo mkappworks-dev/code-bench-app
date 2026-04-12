@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/models/applied_change.dart';
 import 'package:code_bench_app/features/chat/notifiers/code_apply_actions.dart';
 import 'package:code_bench_app/features/chat/notifiers/code_apply_failure.dart';
-import 'package:code_bench_app/features/project_sidebar/project_sidebar_actions.dart';
+import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
 
 // ── Fake ApplyService ─────────────────────────────────────────────────────────

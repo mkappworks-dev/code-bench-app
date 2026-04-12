@@ -13,10 +13,10 @@ import '../../core/utils/instant_menu.dart';
 import '../../data/models/chat_session.dart';
 import '../../data/models/project.dart';
 import '../../data/models/project_action.dart';
-import '../../features/chat/chat_notifier.dart';
+import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/chat/notifiers/create_pr_actions.dart';
 import '../../features/chat/widgets/commit_dialog.dart';
-import '../../features/project_sidebar/project_sidebar_notifier.dart';
+import '../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/action_output_notifier.dart';
 import '../notifiers/ide_launch_actions.dart';
 import '../../services/ai/ai_service_factory.dart';
@@ -26,7 +26,7 @@ import '../notifiers/git_actions.dart';
 import '../notifiers/git_actions_failure.dart';
 import '../../data/datasources/local/general_preferences.dart';
 import '../../features/chat/widgets/create_pr_dialog.dart';
-import '../../features/project_sidebar/project_sidebar_actions.dart';
+import '../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 
 /// Returns `true` if the project folder exists on disk. If the folder is
 /// missing, shows a snackbar, kicks off a targeted status refresh so the

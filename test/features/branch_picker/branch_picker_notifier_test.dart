@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:code_bench_app/features/branch_picker/branch_picker_failure.dart';
-import 'package:code_bench_app/features/branch_picker/branch_picker_notifier.dart';
+import 'package:code_bench_app/features/branch_picker/notifiers/branch_picker_failure.dart';
+import 'package:code_bench_app/features/branch_picker/notifiers/branch_picker_notifier.dart';
 import 'package:code_bench_app/services/git/git_service.dart';
 
 Future<Directory> _initRepo({String branchName = 'main'}) async {

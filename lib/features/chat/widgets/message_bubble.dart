@@ -17,12 +17,12 @@ import '../../../core/utils/debug_logger.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/models/project.dart';
-import '../../../features/project_sidebar/project_sidebar_notifier.dart';
+import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/code_apply_actions.dart';
 import '../notifiers/code_apply_failure.dart';
 import '../notifiers/code_diff_provider.dart';
 import '../notifiers/project_file_scan_actions.dart';
-import '../chat_notifier.dart';
+import '../notifiers/chat_notifier.dart';
 import '../notifiers/ask_question_notifier.dart';
 import 'ask_user_question_card.dart';
 import 'tool_call_row.dart';
@@ -407,13 +407,16 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
   @override
   Widget build(BuildContext context) {
     ref.listen(codeApplyActionsProvider, (_, next) {
-      if (!_applying) return;  // not our operation
+      if (!_applying) return; // not our operation
       if (next is! AsyncError || !mounted) return;
       final failure = next.error;
       if (failure is! CodeApplyFailure) return;
       switch (failure) {
         case CodeApplyProjectMissing():
-          showErrorSnackBar(context, 'Project folder is missing. Right-click the project in the sidebar to Relocate or Remove it.');
+          showErrorSnackBar(
+            context,
+            'Project folder is missing. Right-click the project in the sidebar to Relocate or Remove it.',
+          );
         case CodeApplyOutsideProject():
           showErrorSnackBar(context, 'This file is outside the current project.');
         case CodeApplyDiskWrite(:final message):
@@ -430,11 +433,9 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
     AsyncValue<DiffResult?>? diffAsync;
     if (_diffRequested && _effectiveFilename != null && project != null) {
       final absolutePath = p.join(project.path, _effectiveFilename!);
-      diffAsync = ref.watch(codeDiffProvider(
-        absolutePath: absolutePath,
-        projectPath: project.path,
-        newContent: widget.code,
-      ));
+      diffAsync = ref.watch(
+        codeDiffProvider(absolutePath: absolutePath, projectPath: project.path, newContent: widget.code),
+      );
     }
     final bool diffLoaded = diffAsync?.asData?.value != null;
 
@@ -464,17 +465,19 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
           else if (diffAsync != null)
             switch (diffAsync) {
               AsyncLoading() => const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Center(child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5))),
+                padding: EdgeInsets.all(12),
+                child: Center(
+                  child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5)),
                 ),
+              ),
               AsyncData(:final value) when value != null => _buildDiffCard(value),
               _ => Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: const Text(
-                    'Unable to compute diff.',
-                    style: TextStyle(color: ThemeConstants.error, fontSize: ThemeConstants.uiFontSizeSmall),
-                  ),
+                padding: const EdgeInsets.all(12),
+                child: const Text(
+                  'Unable to compute diff.',
+                  style: TextStyle(color: ThemeConstants.error, fontSize: ThemeConstants.uiFontSizeSmall),
                 ),
+              ),
             }
           else
             SingleChildScrollView(

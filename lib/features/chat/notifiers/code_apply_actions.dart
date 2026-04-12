@@ -5,7 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/applied_change.dart';
-import '../../../features/project_sidebar/project_sidebar_actions.dart';
+import '../../project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../../services/apply/apply_service.dart';
 import 'code_apply_failure.dart';
 
@@ -90,6 +90,5 @@ class CodeApplyActions extends _$CodeApplyActions {
 
   /// Reads raw file content for the conflict-merge view.
   /// Returns `'(file unreadable)'` if the file cannot be read.
-  Future<String> readFileContent(String path) =>
-      ref.read(applyServiceProvider).readFileContent(path);
+  Future<String> readFileContent(String path) => ref.read(applyServiceProvider).readFileContent(path);
 }

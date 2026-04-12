@@ -10,9 +10,9 @@ import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../data/models/ai_model.dart';
 import '../../../data/models/project.dart';
-import '../../../features/project_sidebar/project_sidebar_actions.dart';
-import '../../../features/project_sidebar/project_sidebar_notifier.dart';
-import '../chat_notifier.dart';
+import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
+import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
+import '../notifiers/chat_notifier.dart';
 
 /// Private in-memory store of per-session chat-input drafts.
 ///

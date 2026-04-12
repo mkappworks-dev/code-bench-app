@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/errors/app_exception.dart';
-import '../chat_notifier.dart';
+import '../notifiers/chat_notifier.dart';
 import 'message_bubble.dart';
 
 const _pageSize = 50;

@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/project.dart';
-import '../project_sidebar_actions.dart';
-import '../project_sidebar_failure.dart';
+import '../notifiers/project_sidebar_actions.dart';
+import '../notifiers/project_sidebar_failure.dart';
 
 class RemoveProjectDialog extends ConsumerStatefulWidget {
   const RemoveProjectDialog({super.key, required this.project});

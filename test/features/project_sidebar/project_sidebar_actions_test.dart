@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/data/models/project.dart';
-import 'package:code_bench_app/features/project_sidebar/project_sidebar_actions.dart';
-import 'package:code_bench_app/features/project_sidebar/project_sidebar_failure.dart';
+import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_actions.dart';
+import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_failure.dart';
 import 'package:code_bench_app/services/project/project_service.dart';
 
 // ── Fake ProjectService ───────────────────────────────────────────────────────

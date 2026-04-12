@@ -8,8 +8,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../services/project/git_detector.dart';
-import '../../project_sidebar/project_sidebar_actions.dart';
-import '../../project_sidebar/project_sidebar_failure.dart';
+import '../../project_sidebar/notifiers/project_sidebar_actions.dart';
+import '../../project_sidebar/notifiers/project_sidebar_failure.dart';
 
 class AddProjectStep extends ConsumerStatefulWidget {
   const AddProjectStep({super.key, required this.onComplete, required this.onSkip});

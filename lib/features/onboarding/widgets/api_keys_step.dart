@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../data/models/ai_model.dart';
-import '../../settings/settings_notifier.dart';
+import '../../settings/notifiers/settings_notifier.dart';
 
 class ApiKeysStep extends ConsumerStatefulWidget {
   const ApiKeysStep({super.key, required this.onContinue, required this.onSkip});
@@ -119,9 +119,9 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
     ref.listen(settingsActionsProvider, (_, next) {
       if (!_saving) return;
       if (next is! AsyncError || !mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save API key — please try again')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to save API key — please try again')));
     });
 
     final allAdded = _addedProviders.length == AIProvider.values.length;

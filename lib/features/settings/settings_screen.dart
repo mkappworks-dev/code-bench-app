@@ -12,7 +12,7 @@ import '../../core/utils/instant_menu.dart';
 import '../../core/utils/platform_utils.dart';
 import '../../data/models/ai_model.dart';
 import 'archive_screen.dart';
-import 'settings_notifier.dart';
+import 'notifiers/settings_notifier.dart';
 
 enum _SettingsNav { general, providers, archive }
 

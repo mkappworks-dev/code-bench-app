@@ -1,6 +1,6 @@
 import 'package:code_bench_app/data/models/chat_message.dart';
 import 'package:code_bench_app/data/models/tool_event.dart';
-import 'package:code_bench_app/features/chat/chat_notifier.dart';
+import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/widgets/work_log_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

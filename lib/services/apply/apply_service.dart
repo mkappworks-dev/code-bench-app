@@ -10,7 +10,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/utils/debug_logger.dart';
 import '../../data/models/applied_change.dart';
-import '../../features/chat/chat_notifier.dart';
+import '../../features/chat/notifiers/chat_notifier.dart';
 import '../filesystem/filesystem_service.dart';
 
 part 'apply_service.g.dart';

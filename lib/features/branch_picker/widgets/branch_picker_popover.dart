@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../features/project_sidebar/project_sidebar_actions.dart';
-import '../branch_picker_failure.dart';
-import '../branch_picker_notifier.dart';
+import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
+import '../notifiers/branch_picker_failure.dart';
+import '../notifiers/branch_picker_notifier.dart';
 
 class BranchPickerPopover extends ConsumerStatefulWidget {
   const BranchPickerPopover({

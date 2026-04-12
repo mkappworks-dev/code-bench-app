@@ -4,11 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/constants/theme_constants.dart';
-import '../features/chat/chat_notifier.dart';
+import '../features/chat/notifiers/chat_notifier.dart';
 import '../features/chat/widgets/changes_panel.dart';
 import '../features/project_sidebar/project_sidebar.dart';
-import '../features/project_sidebar/project_sidebar_actions.dart';
-import '../features/project_sidebar/project_sidebar_notifier.dart';
+import '../features/project_sidebar/notifiers/project_sidebar_actions.dart';
+import '../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'widgets/action_output_panel.dart';
 import 'widgets/app_lifecycle_observer.dart';
 import 'widgets/status_bar.dart';
