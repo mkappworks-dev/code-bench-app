@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -128,14 +127,6 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     }
   }
 
-  /// Resolves the active project for this session. Returns null if no project
-  /// is selected or the project row has not loaded yet.
-  Project? _resolveActiveProject() {
-    final projectId = ref.read(activeProjectIdProvider);
-    final projects = ref.read(projectsProvider).value ?? <Project>[];
-    return projects.firstWhereOrNull((p) => p.id == projectId);
-  }
-
   /// Defense-in-depth check run at send time: the freezed `status` field only
   /// reflects state at the last Drift stream re-emission, so we hit the
   /// filesystem directly here as the source of truth. On any drift between
@@ -169,7 +160,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     // The gate defers entirely to the filesystem via `_isProjectAvailable`;
     // `project.status` is only read for rendering (button dim, hint text),
     // never for blocking, because it can be stale in either direction.
-    final project = _resolveActiveProject();
+    final project = ref.read(activeProjectProvider);
     if (project == null) {
       showErrorSnackBar(context, 'No active project.');
       return;
@@ -306,9 +297,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     // Re-render whenever the active project or its status changes so the
     // send button + Enter key disable the moment the folder goes missing
     // (e.g. app-resume refresh, write-button guard, or ApplyService catch).
-    final projectId = ref.watch(activeProjectIdProvider);
-    final projectsAsync = ref.watch(projectsProvider);
-    final project = projectsAsync.value?.firstWhereOrNull((p) => p.id == projectId);
+    final project = ref.watch(activeProjectProvider);
     final isMissing = project?.status == ProjectStatus.missing;
     final canSend = !_isSending && !isMissing;
     return Container(

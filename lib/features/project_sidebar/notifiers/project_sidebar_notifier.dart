@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -89,4 +90,14 @@ class ProjectSortNotifier extends _$ProjectSortNotifier {
 Stream<List<Project>> projects(Ref ref) {
   final service = ref.watch(projectServiceProvider);
   return service.watchAllProjects();
+}
+
+/// Derives the currently active [Project] from [activeProjectIdProvider] and
+/// [projectsProvider]. Returns null while projects are loading or if no project
+/// is selected. Use `ref.watch` in build for reactivity; `ref.read` in handlers.
+@riverpod
+Project? activeProject(Ref ref) {
+  final projectId = ref.watch(activeProjectIdProvider);
+  final projects = ref.watch(projectsProvider).value ?? const [];
+  return projects.firstWhereOrNull((p) => p.id == projectId);
 }

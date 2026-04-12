@@ -8,26 +8,26 @@ part of 'project_file_scan_actions.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Command notifier for the @-mention file picker's project scan.
+/// Command notifier for the file picker's project scan.
 ///
-/// Widgets never touch [ProjectFileScanService] directly — they call
-/// [scanCodeFiles] here, which owns the FileSystemException logging so the
-/// widget can render a plain error string without a second log site.
+/// On [FileSystemException] the notifier emits [AsyncError] carrying a
+/// [ProjectFileScanFailure] so widgets can surface an inline error message
+/// via [ref.listen] without catching exceptions themselves.
 
 @ProviderFor(ProjectFileScanActions)
 final projectFileScanActionsProvider = ProjectFileScanActionsProvider._();
 
-/// Command notifier for the @-mention file picker's project scan.
+/// Command notifier for the file picker's project scan.
 ///
-/// Widgets never touch [ProjectFileScanService] directly — they call
-/// [scanCodeFiles] here, which owns the FileSystemException logging so the
-/// widget can render a plain error string without a second log site.
-final class ProjectFileScanActionsProvider extends $NotifierProvider<ProjectFileScanActions, void> {
-  /// Command notifier for the @-mention file picker's project scan.
+/// On [FileSystemException] the notifier emits [AsyncError] carrying a
+/// [ProjectFileScanFailure] so widgets can surface an inline error message
+/// via [ref.listen] without catching exceptions themselves.
+final class ProjectFileScanActionsProvider extends $AsyncNotifierProvider<ProjectFileScanActions, void> {
+  /// Command notifier for the file picker's project scan.
   ///
-  /// Widgets never touch [ProjectFileScanService] directly — they call
-  /// [scanCodeFiles] here, which owns the FileSystemException logging so the
-  /// widget can render a plain error string without a second log site.
+  /// On [FileSystemException] the notifier emits [AsyncError] carrying a
+  /// [ProjectFileScanFailure] so widgets can surface an inline error message
+  /// via [ref.listen] without catching exceptions themselves.
   ProjectFileScanActionsProvider._()
     : super(
         from: null,
@@ -45,28 +45,24 @@ final class ProjectFileScanActionsProvider extends $NotifierProvider<ProjectFile
   @$internal
   @override
   ProjectFileScanActions create() => ProjectFileScanActions();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(void value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<void>(value));
-  }
 }
 
-String _$projectFileScanActionsHash() => r'a3f8c3b048ad5b698ee45a7ab1987f1416ed7b4c';
+String _$projectFileScanActionsHash() => r'92799547fea6642be3445fb88c1e265809d66afd';
 
-/// Command notifier for the @-mention file picker's project scan.
+/// Command notifier for the file picker's project scan.
 ///
-/// Widgets never touch [ProjectFileScanService] directly — they call
-/// [scanCodeFiles] here, which owns the FileSystemException logging so the
-/// widget can render a plain error string without a second log site.
+/// On [FileSystemException] the notifier emits [AsyncError] carrying a
+/// [ProjectFileScanFailure] so widgets can surface an inline error message
+/// via [ref.listen] without catching exceptions themselves.
 
-abstract class _$ProjectFileScanActions extends $Notifier<void> {
-  void build();
+abstract class _$ProjectFileScanActions extends $AsyncNotifier<void> {
+  FutureOr<void> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<void, void>;
-    final element = ref.element as $ClassProviderElement<AnyNotifier<void, void>, void, Object?, Object?>;
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
+    final element =
+        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }

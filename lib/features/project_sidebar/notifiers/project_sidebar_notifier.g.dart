@@ -182,3 +182,49 @@ final class ProjectsProvider
 }
 
 String _$projectsHash() => r'0be3045c68894954fca99a743e530ae28a245a27';
+
+/// Derives the currently active [Project] from [activeProjectIdProvider] and
+/// [projectsProvider]. Returns null while projects are loading or if no project
+/// is selected. Use `ref.watch` in build for reactivity; `ref.read` in handlers.
+
+@ProviderFor(activeProject)
+final activeProjectProvider = ActiveProjectProvider._();
+
+/// Derives the currently active [Project] from [activeProjectIdProvider] and
+/// [projectsProvider]. Returns null while projects are loading or if no project
+/// is selected. Use `ref.watch` in build for reactivity; `ref.read` in handlers.
+
+final class ActiveProjectProvider extends $FunctionalProvider<Project?, Project?, Project?> with $Provider<Project?> {
+  /// Derives the currently active [Project] from [activeProjectIdProvider] and
+  /// [projectsProvider]. Returns null while projects are loading or if no project
+  /// is selected. Use `ref.watch` in build for reactivity; `ref.read` in handlers.
+  ActiveProjectProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'activeProjectProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$activeProjectHash();
+
+  @$internal
+  @override
+  $ProviderElement<Project?> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+
+  @override
+  Project? create(Ref ref) {
+    return activeProject(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Project? value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<Project?>(value));
+  }
+}
+
+String _$activeProjectHash() => r'50cfe3f344265aaa023cd311a587d048deaeeadd';
