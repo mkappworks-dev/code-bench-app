@@ -153,6 +153,26 @@ Widgets communicate with notifiers only via `ref.watch` / `ref.read(…notifier)
 
 The Riverpod generator strips the `Notifier` suffix from provider names (`ActiveSessionIdNotifier` → `activeSessionIdProvider`). The `Actions` suffix is kept (`GitActions` → `gitActionsProvider`). Widgets must never call `ref.invalidate` directly — route through a notifier method instead.
 
+### Layered architecture
+
+Code Bench enforces a strict one-way dependency graph:
+
+```
+Widgets / Screens
+      ↓  (ref.watch / ref.read notifier)
+  Notifiers   ← the only layer widgets may reach
+      ↓  (ref.read service)
+  Services    ← Dio, SQLite, Process.run, filesystem
+```
+
+**Widgets** are pure state-renderers. They call notifier methods and listen for `AsyncError` state to show snackbars — they never try/catch business-logic calls or import service exception types.
+
+**Notifiers** mediate all commands. `*Actions` notifiers extend `AsyncNotifier<void>`; failures are emitted as `AsyncError` carrying a typed `sealed class {Notifier}Failure`. `*Notifier` classes own reactive `AsyncValue<T>` data state.
+
+**Services** own all I/O: Dio calls, SQLite queries, `Process.run`, `File` reads. They are instantiated via `@riverpod` / `@Riverpod(keepAlive: true)` providers and never constructed directly in widgets or notifiers.
+
+The full rules — naming conventions, error-handling patterns, logging matrix, security guards — are in [`CLAUDE.md`](CLAUDE.md).
+
 ### State management
 
 | Pattern                                     | Used for                                                                                          |
