@@ -7,13 +7,12 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../data/models/chat_message.dart';
-import '../../data/models/project.dart';
 import '../../data/models/tool_event.dart';
+import '../../data/models/project.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
-import '../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../../features/branch_picker/widgets/branch_picker_popover.dart';
 import '../../services/git/git_live_state.dart';
-import '../../services/git/git_live_state_provider.dart';
+import '../notifiers/status_bar_notifier.dart';
 
 class StatusBar extends ConsumerStatefulWidget {
   const StatusBar({super.key});
@@ -39,25 +38,11 @@ class _StatusBarState extends ConsumerState<StatusBar> {
 
   @override
   Widget build(BuildContext context) {
-    final projectId = ref.watch(activeProjectIdProvider);
-    final projectsAsync = ref.watch(projectsProvider);
-    final activeSessionId = ref.watch(activeSessionIdProvider);
+    final s = ref.watch(statusBarStateProvider);
+    final activeProject = s.activeProject;
+    final changeCount = s.changeCount;
+    final liveState = s.liveState;
     final panelVisible = ref.watch(changesPanelVisibleProvider);
-
-    Project? activeProject;
-    if (projectId != null) {
-      activeProject = projectsAsync.whenOrNull(data: (list) => list.firstWhereOrNull((p) => p.id == projectId));
-    }
-
-    final allChanges = ref.watch(appliedChangesProvider);
-    final changeCount = activeSessionId != null ? (allChanges[activeSessionId]?.length ?? 0) : 0;
-
-    // Watch live git state for the active project
-    final liveStateAsync = activeProject != null ? ref.watch(gitLiveStateProvider(activeProject.path)) : null;
-    final liveState = switch (liveStateAsync) {
-      AsyncData(:final value) => value,
-      _ => null,
-    };
 
     return Container(
       height: 22,
@@ -128,7 +113,7 @@ class _StatusBarState extends ConsumerState<StatusBar> {
             CompositedTransformTarget(
               link: _branchLabelLink,
               child: GestureDetector(
-                onTap: () => _openPicker(activeProject!, liveState),
+                onTap: () => _openPicker(activeProject, liveState),
                 child: Text(
                   liveState.branch ?? '(detached)',
                   style: const TextStyle(
