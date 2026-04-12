@@ -1,10 +1,18 @@
 import 'dart:io';
 
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../../core/utils/debug_logger.dart';
 import '../../services/git/git_service.dart';
 
-/// Plain Dart class that handles git operations for the branch picker.
-/// Instantiated per-popover; not a Riverpod provider.
+part 'branch_picker_notifier.g.dart';
+
+/// Returns the [BranchPickerNotifier] scoped to [projectPath].
+/// Auto-disposes when no widget is watching (i.e. when the popover closes).
+@riverpod
+BranchPickerNotifier branchPicker(Ref ref, String projectPath) => BranchPickerNotifier(projectPath);
+
+/// Handles git branch operations for the branch-picker popover.
 class BranchPickerNotifier {
   BranchPickerNotifier(this.projectPath);
 

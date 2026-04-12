@@ -31,7 +31,6 @@ class BranchPickerPopover extends ConsumerStatefulWidget {
 }
 
 class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
-  late final BranchPickerNotifier _notifier;
   final _filterController = TextEditingController();
   final _createController = TextEditingController();
   final _filterFocus = FocusNode();
@@ -46,7 +45,6 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
   @override
   void initState() {
     super.initState();
-    _notifier = BranchPickerNotifier(widget.projectPath);
     _filterController.addListener(() => setState(() {}));
     _load();
   }
@@ -66,9 +64,10 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
   /// forever — the popover would otherwise be stuck at an infinite spinner
   /// with no way to recover short of closing and reopening.
   Future<void> _load() async {
+    final notifier = ref.read(branchPickerProvider(widget.projectPath));
     try {
-      final branches = await _notifier.listLocalBranches();
-      final wtBranches = await _notifier.worktreeBranches();
+      final branches = await notifier.listLocalBranches();
+      final wtBranches = await notifier.worktreeBranches();
       if (mounted) {
         setState(() {
           _branches = branches;
@@ -93,7 +92,7 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
 
   Future<void> _checkout(String branch) async {
     try {
-      await _notifier.checkout(branch);
+      await ref.read(branchPickerProvider(widget.projectPath)).checkout(branch);
       if (mounted) {
         ref.invalidate(gitLiveStateProvider(widget.projectPath));
         widget.onClose();
@@ -139,7 +138,7 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
   Future<void> _createBranch() async {
     final name = _createController.text.trim();
     try {
-      await _notifier.createBranch(name);
+      await ref.read(branchPickerProvider(widget.projectPath)).createBranch(name);
       if (mounted) {
         ref.invalidate(gitLiveStateProvider(widget.projectPath));
         widget.onClose();

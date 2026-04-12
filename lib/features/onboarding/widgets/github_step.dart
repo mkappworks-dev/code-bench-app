@@ -90,8 +90,11 @@ class _GithubStepState extends ConsumerState<GithubStep> {
   @override
   Widget build(BuildContext context) {
     final authAsync = ref.watch(gitHubAuthProvider);
-    final account = authAsync.asData?.value;
-    final isLoading = authAsync.isLoading;
+    final (account, isLoading) = switch (authAsync) {
+      AsyncLoading() => (null, true),
+      AsyncError() => (null, false),
+      AsyncData(:final value) => (value, false),
+    };
 
     if (account != null) {
       return _ConnectedView(

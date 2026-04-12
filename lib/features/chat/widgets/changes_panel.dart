@@ -39,7 +39,10 @@ class ChangesPanel extends ConsumerWidget {
     // would fall back to `false` during loading/error and silently degrade
     // the revert mechanism — a destructive mismatch if this gate is wrong.
     final projectId = ref.watch(activeProjectIdProvider);
-    final project = ref.watch(projectsProvider).value?.firstWhereOrNull((proj) => proj.id == projectId);
+    final project = switch (ref.watch(projectsProvider)) {
+      AsyncData(:final value) => value.firstWhereOrNull((proj) => proj.id == projectId),
+      _ => null,
+    };
     final isGit = project != null ? GitDetector.isGitRepo(project.path) : false;
 
     return Container(
