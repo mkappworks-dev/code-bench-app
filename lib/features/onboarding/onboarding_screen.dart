@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/theme_constants.dart';
-import '../settings/notifiers/settings_notifier.dart';
+import '../settings/notifiers/settings_actions.dart';
 import 'notifiers/onboarding_notifier.dart';
 import 'widgets/step_progress_indicator.dart';
 import 'widgets/api_keys_step.dart';

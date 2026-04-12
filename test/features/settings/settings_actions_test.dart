@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/core/errors/app_exception.dart';
 import 'package:code_bench_app/data/models/ai_model.dart';
 import 'package:code_bench_app/features/settings/notifiers/settings_actions_failure.dart';
-import 'package:code_bench_app/features/settings/notifiers/settings_notifier.dart';
+import 'package:code_bench_app/features/settings/notifiers/settings_actions.dart';
 import 'package:code_bench_app/services/ai/api_key_test_service.dart';
 import 'package:code_bench_app/services/settings/settings_service.dart';
 

@@ -6,7 +6,7 @@ import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../data/models/ai_model.dart';
 import 'notifiers/providers_notifier.dart';
-import 'notifiers/settings_notifier.dart';
+import 'notifiers/settings_actions.dart';
 import 'settings_widgets.dart';
 
 class ProvidersScreen extends ConsumerStatefulWidget {
