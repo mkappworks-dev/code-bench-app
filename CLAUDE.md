@@ -102,6 +102,27 @@ The Riverpod generator strips the `Notifier` suffix when producing the provider 
 - `.notifier` → required when calling a method on the notifier class: `ref.read(fooProvider.notifier).doThing()`, not `ref.read(fooProvider).doThing()`.
 - `AsyncValue` unwrapping → prefer exhaustive `switch` over `AsyncData` / `AsyncLoading` / `AsyncError` in `build()`. Only use `.value` for intentional "latest known" reads inside event handlers.
 
+## Logging
+
+Two helpers live in [lib/core/utils/debug_logger.dart](lib/core/utils/debug_logger.dart):
+
+| Helper | Survives release builds? | Use for |
+|---|---|---|
+| `dLog` | No — stripped via `kDebugMode` | Debug breadcrumbs, triage for swallowed exceptions |
+| `sLog` | Yes — `dart:developer` structured log | Security events (path-traversal, auth failures, flag-shaped argument rejections, sandbox violations) |
+
+**Where to log:**
+
+| Layer | Logs? | What to log |
+|---|---|---|
+| Services (`lib/services/`) | Yes | Raw I/O failures — `ProcessException`, Dio errors, `FileSystemException`, security-guard rejections (`sLog`) |
+| Notifiers (`*Actions`, `*Notifier`) | Yes | Caught exceptions being turned into `AsyncError` or swallowed; semantic operation failures ("pushToRemote failed") |
+| Widgets / screens | **No, with two exceptions** | (1) `AsyncValue.when(error:)` branches that render an error view, (2) widget-layer APIs the arch rule permits in widgets — `launchUrl` failures and `Clipboard` failures |
+
+Log **once**, at the layer that holds the useful context. If a service already `dLog`s a `ProcessException`, the notifier rethrowing it should not log again — it should only log if it's doing additional recovery worth tracing.
+
+Never `dLog` raw HTTP headers, tokens, or response bodies — see [github_api_service.dart](lib/services/github/github_api_service.dart) for the GitHub PAT redaction pattern.
+
 ## macOS notes
 
 App Sandbox is **intentionally disabled** on macOS because `ActionRunnerService`, `GitService`, and `IdeLaunchService` all shell out to external binaries. See [macos/Runner/README.md](macos/Runner/README.md) for the rationale, contributor rules (no `runInShell: true`, no PAT header logging), and distribution implications. Any change to `macos/Runner/*.entitlements` or to the process-execution services must be weighed against that threat model.
