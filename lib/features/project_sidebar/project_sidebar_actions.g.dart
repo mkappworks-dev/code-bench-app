@@ -18,7 +18,7 @@ final projectSidebarActionsProvider = ProjectSidebarActionsProvider._();
 /// Command notifier that mediates every imperative project/session mutation
 /// triggered from the sidebar. Widgets never reach into [ProjectService] or
 /// [SessionService] directly — they call methods here instead.
-final class ProjectSidebarActionsProvider extends $NotifierProvider<ProjectSidebarActions, void> {
+final class ProjectSidebarActionsProvider extends $AsyncNotifierProvider<ProjectSidebarActions, void> {
   /// Command notifier that mediates every imperative project/session mutation
   /// triggered from the sidebar. Widgets never reach into [ProjectService] or
   /// [SessionService] directly — they call methods here instead.
@@ -39,26 +39,22 @@ final class ProjectSidebarActionsProvider extends $NotifierProvider<ProjectSideb
   @$internal
   @override
   ProjectSidebarActions create() => ProjectSidebarActions();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(void value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<void>(value));
-  }
 }
 
-String _$projectSidebarActionsHash() => r'1c18545d1b602d76c656775b7f854660633c0fa5';
+String _$projectSidebarActionsHash() => r'5fd11fa09004717881b1b6d9e1288cbed4f1ab22';
 
 /// Command notifier that mediates every imperative project/session mutation
 /// triggered from the sidebar. Widgets never reach into [ProjectService] or
 /// [SessionService] directly — they call methods here instead.
 
-abstract class _$ProjectSidebarActions extends $Notifier<void> {
-  void build();
+abstract class _$ProjectSidebarActions extends $AsyncNotifier<void> {
+  FutureOr<void> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<void, void>;
-    final element = ref.element as $ClassProviderElement<AnyNotifier<void, void>, void, Object?, Object?>;
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
+    final element =
+        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }
