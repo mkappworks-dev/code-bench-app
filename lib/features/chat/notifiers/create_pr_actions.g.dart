@@ -34,7 +34,7 @@ final createPrActionsProvider = CreatePrActionsProvider._();
 /// `DioException.toString()`, which serialises request headers and would
 /// leak the `Authorization: Bearer <PAT>` token. Same discipline as
 /// [PrCardNotifier]; see `macos/Runner/README.md`.
-final class CreatePrActionsProvider extends $NotifierProvider<CreatePrActions, void> {
+final class CreatePrActionsProvider extends $AsyncNotifierProvider<CreatePrActions, void> {
   /// Command notifier mediating every GitHub-API call the "Create PR"
   /// dialog flow makes. Widgets never touch [GitHubApiService] or
   /// [SecureStorageSource] directly — they go through here so the
@@ -63,14 +63,9 @@ final class CreatePrActionsProvider extends $NotifierProvider<CreatePrActions, v
   @$internal
   @override
   CreatePrActions create() => CreatePrActions();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(void value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<void>(value));
-  }
 }
 
-String _$createPrActionsHash() => r'cfeac02f291e07579a51ef0dec63396df84593f6';
+String _$createPrActionsHash() => r'af479231451f5fe37aa50e42b57ec5241fcee63b';
 
 /// Command notifier mediating every GitHub-API call the "Create PR"
 /// dialog flow makes. Widgets never touch [GitHubApiService] or
@@ -84,13 +79,14 @@ String _$createPrActionsHash() => r'cfeac02f291e07579a51ef0dec63396df84593f6';
 /// leak the `Authorization: Bearer <PAT>` token. Same discipline as
 /// [PrCardNotifier]; see `macos/Runner/README.md`.
 
-abstract class _$CreatePrActions extends $Notifier<void> {
-  void build();
+abstract class _$CreatePrActions extends $AsyncNotifier<void> {
+  FutureOr<void> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<void, void>;
-    final element = ref.element as $ClassProviderElement<AnyNotifier<void, void>, void, Object?, Object?>;
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
+    final element =
+        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }

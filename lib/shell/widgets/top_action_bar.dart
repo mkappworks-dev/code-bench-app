@@ -818,10 +818,8 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     //    instead of silently defaulting to ['main', 'master'] — otherwise
     //    the user's real problem (bad token, 404, offline) is masked until
     //    the PR submission fails with an opaque error.
-    List<String> branches;
-    try {
-      branches = await prActions.listBranches(owner, repo);
-    } catch (_) {
+    final branches = await prActions.listBranches(owner, repo);
+    if (branches == null) {
       _snack('Could not list branches for $owner/$repo — check your GitHub token and repo access.');
       return;
     }
@@ -833,7 +831,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     if (result == null) return;
 
     // 7. Create PR and surface the URL to the user.
-    try {
+    {
       final prUrl = await prActions.createPullRequest(
         owner: owner,
         repo: repo,
@@ -843,6 +841,10 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         base: result.base,
         draft: result.draft,
       );
+      if (prUrl == null) {
+        _snack('Failed to create pull request — check your GitHub token and repo access.');
+        return;
+      }
       // Defence-in-depth on the GitHub API response: `prUrl` comes from
       // `data['html_url']` and is sent to `open`. The `--` separator
       // already blocks flag parsing, but it does NOT constrain URL
@@ -869,15 +871,6 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       // Note: no eager auto-open. The SnackBarAction is the single
       // source of truth so the user isn't surprised by a browser launch,
       // and we don't double-fire `open` on a successful create.
-    } on NetworkException catch (e) {
-      // `NetworkException.toString()` only renders `message`
-      // (see `AppException.toString()`), but use `e.message` directly
-      // so that a future subclass which leaks `originalError` in its
-      // `toString()` cannot expose the request `Authorization` header.
-      // A non-`NetworkException` (TypeError, StateError, etc.) is a real
-      // bug and is intentionally left to propagate as an uncaught future
-      // so it's visible in logs rather than masked as "failed to create".
-      _snack('Failed to create PR: ${e.message}');
     }
   }
 }

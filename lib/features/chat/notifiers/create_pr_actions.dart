@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../services/github/github_api_service.dart';
+import 'create_pr_failure.dart';
 
 part 'create_pr_actions.g.dart';
 
@@ -20,7 +23,14 @@ part 'create_pr_actions.g.dart';
 @Riverpod(keepAlive: true)
 class CreatePrActions extends _$CreatePrActions {
   @override
-  void build() {}
+  FutureOr<void> build() {}
+
+  CreatePrFailure _asFailure(Object e) => switch (e) {
+    AuthException() => const CreatePrFailure.notAuthenticated(),
+    NetworkException(:final statusCode) when statusCode == 403 => const CreatePrFailure.permissionDenied(),
+    NetworkException(:final message) => CreatePrFailure.network(message),
+    _ => CreatePrFailure.unknown(e),
+  };
 
   /// Returns `true` when a GitHub token is available (PAT or OAuth).
   /// Resolves the shared [githubApiServiceProvider] rather than reading
@@ -30,23 +40,27 @@ class CreatePrActions extends _$CreatePrActions {
     return svc != null;
   }
 
-  /// Lists branches for [owner]/[repo]. Throws [AuthException] when
-  /// no token is configured; other network errors propagate as-is so
-  /// the caller can map them to a user-facing message.
-  Future<List<String>> listBranches(String owner, String repo) async {
-    final svc = await ref.read(githubApiServiceProvider.future);
-    if (svc == null) throw const AuthException('Not signed in to GitHub');
-    try {
-      return await svc.listBranches(owner, repo);
-    } catch (e) {
-      dLog('[CreatePrActions] listBranches failed: ${e.runtimeType}');
-      rethrow;
-    }
+  /// Lists branches for [owner]/[repo]. Returns `null` and emits
+  /// [AsyncError] carrying a [CreatePrFailure] when the call fails.
+  Future<List<String>?> listBranches(String owner, String repo) async {
+    state = const AsyncLoading();
+    List<String>? result;
+    state = await AsyncValue.guard(() async {
+      try {
+        final svc = await ref.read(githubApiServiceProvider.future);
+        if (svc == null) throw const AuthException('Not signed in to GitHub');
+        result = await svc.listBranches(owner, repo);
+      } catch (e, st) {
+        dLog('[CreatePrActions] listBranches failed: ${e.runtimeType}');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+    return result;
   }
 
-  /// Creates a pull request and returns the PR's html_url.
-  /// Throws [AuthException] when no token is configured.
-  Future<String> createPullRequest({
+  /// Creates a pull request and returns the PR's html_url, or `null`
+  /// and emits [AsyncError] carrying a [CreatePrFailure] on failure.
+  Future<String?> createPullRequest({
     required String owner,
     required String repo,
     required String title,
@@ -55,21 +69,26 @@ class CreatePrActions extends _$CreatePrActions {
     required String base,
     required bool draft,
   }) async {
-    final svc = await ref.read(githubApiServiceProvider.future);
-    if (svc == null) throw const AuthException('Not signed in to GitHub');
-    try {
-      return await svc.createPullRequest(
-        owner: owner,
-        repo: repo,
-        title: title,
-        body: body,
-        head: head,
-        base: base,
-        draft: draft,
-      );
-    } catch (e) {
-      dLog('[CreatePrActions] createPullRequest failed: ${e.runtimeType}');
-      rethrow;
-    }
+    state = const AsyncLoading();
+    String? result;
+    state = await AsyncValue.guard(() async {
+      try {
+        final svc = await ref.read(githubApiServiceProvider.future);
+        if (svc == null) throw const AuthException('Not signed in to GitHub');
+        result = await svc.createPullRequest(
+          owner: owner,
+          repo: repo,
+          title: title,
+          body: body,
+          head: head,
+          base: base,
+          draft: draft,
+        );
+      } catch (e, st) {
+        dLog('[CreatePrActions] createPullRequest failed: ${e.runtimeType}');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+    return result;
   }
 }
