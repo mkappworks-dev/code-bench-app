@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:code_bench_app/core/constants/app_icons.dart';
+import 'package:code_bench_app/data/models/chat_message.dart';
 import 'package:code_bench_app/data/models/project.dart';
+import 'package:code_bench_app/features/chat/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/widgets/chat_input_bar.dart';
 import 'package:code_bench_app/features/project_sidebar/project_sidebar_notifier.dart';
 import 'package:code_bench_app/services/project/project_service.dart';
@@ -45,6 +47,7 @@ Widget _wrap(
     overrides: [
       projectsProvider.overrideWith((ref) => Stream<List<Project>>.value(projects)),
       projectServiceProvider.overrideWith((ref) => fakeService),
+      chatMessagesProvider.overrideWith2((_) => _FakeChatMessages()),
       if (activeProjectId != null) activeProjectIdProvider.overrideWith(() => _FakeActiveProjectId(activeProjectId)),
     ],
     child: MaterialApp(home: Scaffold(body: child)),
@@ -56,6 +59,13 @@ class _FakeActiveProjectId extends ActiveProjectIdNotifier {
   final String _initial;
   @override
   String? build() => _initial;
+}
+
+/// Prevents the real ChatMessagesNotifier from touching the Drift DB in tests
+/// that only care about the input bar UI, not message sending.
+class _FakeChatMessages extends ChatMessagesNotifier {
+  @override
+  Future<List<ChatMessage>> build(String sessionId) async => const [];
 }
 
 /// Test harness that keeps a single ProviderScope alive while the caller

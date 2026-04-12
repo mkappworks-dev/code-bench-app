@@ -55,12 +55,7 @@ void main() {
       fakeService.throwOnAdd(DuplicateProjectPathException('/some/path'));
 
       final c = _makeContainer(fakeService);
-      // addExistingFolder rethrows the typed failure so existing callers using
-      // try/catch still work while the widget migration is pending.
-      await expectLater(
-        () => c.read(projectSidebarActionsProvider.notifier).addExistingFolder('/some/path'),
-        throwsA(isA<ProjectSidebarDuplicatePath>()),
-      );
+      await c.read(projectSidebarActionsProvider.notifier).addExistingFolder('/some/path');
 
       expect(c.read(projectSidebarActionsProvider).error, isA<ProjectSidebarDuplicatePath>());
     });
@@ -69,10 +64,7 @@ void main() {
       fakeService.throwOnAdd(ArgumentError('Directory does not exist: /bad/path'));
 
       final c = _makeContainer(fakeService);
-      await expectLater(
-        () => c.read(projectSidebarActionsProvider.notifier).addExistingFolder('/bad/path'),
-        throwsA(isA<ProjectSidebarInvalidPath>()),
-      );
+      await c.read(projectSidebarActionsProvider.notifier).addExistingFolder('/bad/path');
 
       expect(c.read(projectSidebarActionsProvider).error, isA<ProjectSidebarInvalidPath>());
     });

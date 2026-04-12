@@ -33,6 +33,15 @@ class _FakeApplyService extends Fake implements ApplyService {
   Future<void> revertChange({required AppliedChange change, required bool isGit, required String projectPath}) async {
     if (_revertError != null) throw _revertError!;
   }
+
+  @override
+  Future<String> readFileContent(String path) async {
+    try {
+      return await File(path).readAsString();
+    } on IOException {
+      return '(file unreadable)';
+    }
+  }
 }
 
 // ── Fake ProjectSidebarActions ────────────────────────────────────────────────
@@ -225,12 +234,10 @@ void main() {
       expect(content, equals('hello'));
     });
 
-    test('throws CodeApplyFileRead for missing file', () async {
+    test('returns fallback string for missing file', () async {
       final c = makeContainer();
-      expect(
-        () => c.read(codeApplyActionsProvider.notifier).readFileContent('/nonexistent/file.dart'),
-        throwsA(isA<CodeApplyFileRead>()),
-      );
+      final content = await c.read(codeApplyActionsProvider.notifier).readFileContent('/nonexistent/file.dart');
+      expect(content, equals('(file unreadable)'));
     });
   });
 }
