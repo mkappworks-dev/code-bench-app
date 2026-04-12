@@ -176,7 +176,14 @@ class SettingsActions extends _$SettingsActions {
 
   Future<void> unarchiveSession(String id) => ref.read(sessionServiceProvider).unarchiveSession(id);
 
-  Future<void> markOnboardingCompleted() => ref.read(settingsServiceProvider).markOnboardingCompleted();
+  Future<void> markOnboardingCompleted() async {
+    try {
+      await ref.read(settingsServiceProvider).markOnboardingCompleted();
+    } catch (e, st) {
+      dLog('[SettingsActions] markOnboardingCompleted failed: $e\n$st');
+      rethrow;
+    }
+  }
 
   Future<void> replayOnboarding() => ref.read(settingsServiceProvider).resetOnboarding();
 

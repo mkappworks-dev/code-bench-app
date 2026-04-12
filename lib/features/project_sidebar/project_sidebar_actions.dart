@@ -36,7 +36,14 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     }
   }
 
-  Future<void> refreshProjectStatus(String id) => _projects.refreshProjectStatus(id);
+  Future<void> refreshProjectStatus(String id) async {
+    try {
+      await _projects.refreshProjectStatus(id);
+    } catch (e) {
+      dLog('[ProjectSidebarActions] refreshProjectStatus($id) failed: $e');
+      rethrow;
+    }
+  }
 
   Future<Project> addExistingFolder(String path) async {
     try {

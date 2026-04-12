@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/theme_constants.dart';
-import '../../core/utils/debug_logger.dart';
 import '../settings/settings_notifier.dart';
 import 'notifiers/onboarding_notifier.dart';
 import 'widgets/step_progress_indicator.dart';
@@ -140,8 +139,7 @@ class _ContentPanel extends ConsumerWidget {
   Future<void> _finish(BuildContext context, WidgetRef ref) async {
     try {
       await ref.read(settingsActionsProvider.notifier).markOnboardingCompleted();
-    } catch (e, st) {
-      dLog('[OnboardingScreen] markCompleted failed: $e\n$st');
+    } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Could not save onboarding progress — you may see this screen again')),

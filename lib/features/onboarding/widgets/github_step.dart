@@ -41,8 +41,7 @@ class _GithubStepState extends ConsumerState<GithubStep> {
   Future<void> _disconnect() async {
     try {
       await ref.read(gitHubAuthProvider.notifier).signOut();
-    } catch (e, st) {
-      dLog('[GithubStep] signOut failed: $e\n$st');
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,

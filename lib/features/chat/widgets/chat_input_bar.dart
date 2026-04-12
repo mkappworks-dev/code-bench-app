@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
-import '../../../core/utils/debug_logger.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../data/models/ai_model.dart';
@@ -150,11 +149,10 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     final existsOnDisk = ref.read(projectSidebarActionsProvider.notifier).projectExistsOnDisk(project.path);
     final cachedAsAvailable = project.status == ProjectStatus.available;
     if (existsOnDisk != cachedAsAvailable) {
+      // The notifier logs its own failures; swallow here so this background
+      // refresh never surfaces as an uncaught exception.
       unawaited(
-        ref
-            .read(projectSidebarActionsProvider.notifier)
-            .refreshProjectStatus(project.id)
-            .catchError((Object e) => dLog('[ChatInputBar] refresh after stale folder-status check failed: $e')),
+        ref.read(projectSidebarActionsProvider.notifier).refreshProjectStatus(project.id).catchError((Object _) {}),
       );
     }
     return existsOnDisk;
