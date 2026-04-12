@@ -132,8 +132,14 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
 
   // ── Session mutations ──────────────────────────────────────────────────────
 
-  Future<String> createSession({required AIModel model, required String projectId}) =>
-      _sessions.createSession(model: model, projectId: projectId);
+  Future<String> createSession({required AIModel model, required String projectId}) async {
+    try {
+      return await _sessions.createSession(model: model, projectId: projectId);
+    } catch (e, st) {
+      dLog('[ProjectSidebarActions] createSession failed: $e\n$st');
+      rethrow;
+    }
+  }
 
   Future<void> archiveSession(String id) => _sessions.archiveSession(id);
 

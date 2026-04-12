@@ -60,6 +60,12 @@ class CodeApplyActions extends _$CodeApplyActions {
   /// Reverts a previously applied change.
   ///
   /// Throws on failure — callers should catch and surface appropriate UI.
-  Future<void> revertChange({required AppliedChange change, required bool isGit, required String projectPath}) =>
-      ref.read(applyServiceProvider).revertChange(change: change, isGit: isGit, projectPath: projectPath);
+  Future<void> revertChange({required AppliedChange change, required bool isGit, required String projectPath}) async {
+    try {
+      await ref.read(applyServiceProvider).revertChange(change: change, isGit: isGit, projectPath: projectPath);
+    } catch (e, st) {
+      dLog('[CodeApplyActions] revertChange failed: $e\n$st');
+      rethrow;
+    }
+  }
 }

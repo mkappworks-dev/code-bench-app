@@ -114,7 +114,6 @@ class _PRCardState extends ConsumerState<PRCard> {
       if (!mounted) return;
       _showSnack('Approved');
     } catch (e) {
-      dLog('[PRCard] approve failed: ${e.runtimeType}');
       if (!mounted) return;
       _showSnack('Approve failed: ${_friendlyError(e)}');
     }
@@ -137,7 +136,6 @@ class _PRCardState extends ConsumerState<PRCard> {
       // Notifier's merge() already calls refresh(); stop timer for terminal state.
       _pollTimer?.cancel();
     } catch (e) {
-      dLog('[PRCard] merge failed: ${e.runtimeType}');
       if (!mounted) return;
       _showSnack('Merge failed: ${_friendlyError(e)}');
     }

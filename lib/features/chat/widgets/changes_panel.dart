@@ -174,8 +174,7 @@ class _ChangeEntryState extends State<_ChangeEntry> {
       // No conflict — delegate straight to the service-backed revert.
       try {
         await widget.onRevert();
-      } catch (e, st) {
-        dLog('[revert] error: $e\n$st');
+      } catch (_) {
         if (mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');
       }
       return;
@@ -206,8 +205,7 @@ class _ChangeEntryState extends State<_ChangeEntry> {
             Navigator.of(dialogCtx).pop();
             try {
               await widget.onRevert();
-            } catch (e, st) {
-              dLog('[revert] error after accept: $e\n$st');
+            } catch (_) {
               if (mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');
             }
           },

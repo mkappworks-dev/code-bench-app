@@ -88,7 +88,12 @@ class PrCardNotifier extends _$PrCardNotifier {
   Future<void> approve() async {
     final svc = await ref.read(githubApiServiceProvider.future);
     if (svc == null) return;
-    await svc.approvePullRequest(owner, repo, prNumber);
+    try {
+      await svc.approvePullRequest(owner, repo, prNumber);
+    } catch (e) {
+      dLog('[PrCardNotifier] approve failed: ${e.runtimeType}');
+      rethrow;
+    }
     final current = state.value;
     if (current != null) state = AsyncData(current.copyWith(approved: true));
   }
@@ -96,7 +101,12 @@ class PrCardNotifier extends _$PrCardNotifier {
   Future<void> merge() async {
     final svc = await ref.read(githubApiServiceProvider.future);
     if (svc == null) return;
-    await svc.mergePullRequest(owner, repo, prNumber);
+    try {
+      await svc.mergePullRequest(owner, repo, prNumber);
+    } catch (e) {
+      dLog('[PrCardNotifier] merge failed: ${e.runtimeType}');
+      rethrow;
+    }
     final current = state.value;
     if (current != null) state = AsyncData(current.copyWith(merged: true));
     await refresh();
