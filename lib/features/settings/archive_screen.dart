@@ -9,11 +9,10 @@ import '../../data/models/project.dart';
 import '../chat/notifiers/chat_notifier.dart';
 import '../project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../project_sidebar/notifiers/project_sidebar_notifier.dart';
+import 'notifiers/archive_actions.dart';
 
 class ArchiveScreen extends ConsumerWidget {
-  const ArchiveScreen({super.key, required this.onUnarchive});
-
-  final void Function(String sessionId) onUnarchive;
+  const ArchiveScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,8 +57,7 @@ class ArchiveScreen extends ConsumerWidget {
           children: [
             for (final entry in groups.entries) ...[
               _ProjectHeader(name: projectMap[entry.key] ?? 'No Project'),
-              for (final s in entry.value)
-                _ArchivedSessionCard(session: s, onUnarchive: () => onUnarchive(s.sessionId)),
+              for (final s in entry.value) _ArchivedSessionCard(session: s),
               const SizedBox(height: 8),
             ],
           ],
@@ -128,11 +126,10 @@ class _ProjectHeader extends StatelessWidget {
   }
 }
 
-class _ArchivedSessionCard extends StatelessWidget {
-  const _ArchivedSessionCard({required this.session, required this.onUnarchive});
+class _ArchivedSessionCard extends ConsumerWidget {
+  const _ArchivedSessionCard({required this.session});
 
   final ChatSession session;
-  final VoidCallback onUnarchive;
 
   String _relativeTime(DateTime dt) {
     final diff = DateTime.now().difference(dt);
@@ -142,7 +139,7 @@ class _ArchivedSessionCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -172,7 +169,7 @@ class _ArchivedSessionCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           OutlinedButton.icon(
-            onPressed: onUnarchive,
+            onPressed: () => ref.read(archiveActionsProvider.notifier).unarchiveSession(session.sessionId),
             icon: const Icon(AppIcons.archiveRestore, size: 12),
             label: const Text('Unarchive'),
             style: OutlinedButton.styleFrom(
