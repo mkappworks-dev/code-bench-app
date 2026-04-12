@@ -13,6 +13,7 @@ class PrCardState {
     required this.approved,
     required this.merged,
     this.pollError,
+    this.actionError,
   });
 
   final Map<String, dynamic> pr;
@@ -24,6 +25,11 @@ class PrCardState {
   /// show. Rendered as an inline warning banner on the card.
   final String? pollError;
 
+  /// Non-null when [approve] or [merge] failed. Widgets render this as an
+  /// inline error message next to the button that triggered the action.
+  /// Cleared at the start of the next action attempt.
+  final String? actionError;
+
   PrCardState copyWith({
     Map<String, dynamic>? pr,
     List<Map<String, dynamic>>? checkRuns,
@@ -31,12 +37,15 @@ class PrCardState {
     bool? merged,
     String? pollError,
     bool clearPollError = false,
+    String? actionError,
+    bool clearActionError = false,
   }) => PrCardState(
     pr: pr ?? this.pr,
     checkRuns: checkRuns ?? this.checkRuns,
     approved: approved ?? this.approved,
     merged: merged ?? this.merged,
     pollError: clearPollError ? null : (pollError ?? this.pollError),
+    actionError: clearActionError ? null : (actionError ?? this.actionError),
   );
 }
 
@@ -86,30 +95,44 @@ class PrCardNotifier extends _$PrCardNotifier {
   }
 
   Future<void> approve() async {
+    // Clear any previous action error optimistically.
+    final current = state.value;
+    if (current != null) state = AsyncData(current.copyWith(clearActionError: true));
+
     final svc = await ref.read(githubApiServiceProvider.future);
     if (svc == null) return;
     try {
       await svc.approvePullRequest(owner, repo, prNumber);
+      final updated = state.value;
+      if (updated != null) state = AsyncData(updated.copyWith(approved: true));
     } catch (e) {
       dLog('[PrCardNotifier] approve failed: ${e.runtimeType}');
-      rethrow;
+      final updated = state.value;
+      if (updated != null) {
+        state = AsyncData(updated.copyWith(actionError: _friendlyError(e)));
+      }
     }
-    final current = state.value;
-    if (current != null) state = AsyncData(current.copyWith(approved: true));
   }
 
   Future<void> merge() async {
+    // Clear any previous action error optimistically.
+    final current = state.value;
+    if (current != null) state = AsyncData(current.copyWith(clearActionError: true));
+
     final svc = await ref.read(githubApiServiceProvider.future);
     if (svc == null) return;
     try {
       await svc.mergePullRequest(owner, repo, prNumber);
+      final updated = state.value;
+      if (updated != null) state = AsyncData(updated.copyWith(merged: true));
+      await refresh();
     } catch (e) {
       dLog('[PrCardNotifier] merge failed: ${e.runtimeType}');
-      rethrow;
+      final updated = state.value;
+      if (updated != null) {
+        state = AsyncData(updated.copyWith(actionError: _friendlyError(e)));
+      }
     }
-    final current = state.value;
-    if (current != null) state = AsyncData(current.copyWith(merged: true));
-    await refresh();
   }
 
   Future<PrCardState> _fetch(GitHubApiService svc) async {
