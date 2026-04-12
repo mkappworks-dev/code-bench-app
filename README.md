@@ -150,6 +150,7 @@ Widgets communicate with notifiers only via `ref.watch` / `ref.read(…notifier)
 | Service provider | `@riverpod` function placed before the class it instantiates |
 | Command notifier | ends in `Actions`; `void build()`, `keepAlive: true` |
 | State notifier | ends in `Notifier`; owns `AsyncValue` or value state |
+| Notifier file placement | `*_notifier.dart`, `*_actions.dart`, and `*_failure.dart` all live in `{feature}/notifiers/` |
 
 The Riverpod generator strips the `Notifier` suffix from provider names (`ActiveSessionIdNotifier` → `activeSessionIdProvider`). The `Actions` suffix is kept (`GitActions` → `gitActionsProvider`). Widgets must never call `ref.invalidate` directly — route through a notifier method instead.
 

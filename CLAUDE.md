@@ -87,6 +87,7 @@ Widgets / Screens
 | Service provider            | `@riverpod` / `@Riverpod` placed **before** the class it instantiates         | `gitServiceProvider`, `sessionServiceProvider`                  |
 | Command notifier            | must end in `Actions` — `void build()`, imperative methods, `keepAlive: true` | `ProjectSidebarActions`, `CodeApplyActions`, `GitActions`       |
 | State notifier              | must end in `Notifier` — owns `AsyncValue` or value state                     | `ChatNotifier`, `GitHubAuthNotifier`, `ActiveSessionIdNotifier` |
+| Notifier file placement     | `*_notifier.dart`, `*_actions.dart`, `*_failure.dart` all live in `{feature}/notifiers/` | `features/chat/notifiers/chat_notifier.dart` |
 | `ref.invalidate` in widgets | **forbidden** — route through a notifier method instead                       | `refreshGitState()`, `refreshArchivedSessions()`                |
 
 The Riverpod generator strips the `Notifier` suffix when producing the provider variable name (`class ActiveSessionIdNotifier` → `activeSessionIdProvider`). The `Actions` suffix is kept (`class GitActions` → `gitActionsProvider`).
@@ -162,7 +163,7 @@ ref.listen(fooActionsProvider, (prev, next) {
 
 Each Actions/Notifier that can fail owns a `freezed` sealed class named `{Notifier}Failure`:
 
-**Convention:** Strip the `Actions` or `Notifier` suffix from the class name. `FooActions` → `FooFailure`; `BranchPickerNotifier` → `BranchPickerFailure`. The failure class lives in `{feature}/notifiers/{name}_failure.dart` (for Actions) or `{feature}/{name}_failure.dart` (for Notifiers).
+**Convention:** Strip the `Actions` or `Notifier` suffix from the class name. `FooActions` → `FooFailure`; `BranchPickerNotifier` → `BranchPickerFailure`. The failure class lives in `{feature}/notifiers/{name}_failure.dart` — the same subfolder as the notifier that owns it.
 
 ```dart
 @freezed

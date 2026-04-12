@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/constants/api_constants.dart';
-import '../../core/utils/debug_logger.dart';
-import '../../core/errors/app_exception.dart';
-import '../../data/models/ai_model.dart';
-import '../../services/ai/ai_service_factory.dart';
-import '../../services/ai/api_key_test_service.dart';
-import '../../services/project/project_service.dart';
-import '../../services/session/session_service.dart';
-import '../../services/settings/settings_service.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../core/errors/app_exception.dart';
+import '../../../data/models/ai_model.dart';
+import '../../../services/ai/ai_service_factory.dart';
+import '../../../services/ai/api_key_test_service.dart';
+import '../../../services/project/project_service.dart';
+import '../../../services/session/session_service.dart';
+import '../../../services/settings/settings_service.dart';
 import 'settings_actions_failure.dart';
 
 part 'settings_notifier.g.dart';

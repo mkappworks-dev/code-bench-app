@@ -3,15 +3,15 @@ import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/errors/app_exception.dart';
-import '../../core/utils/debug_logger.dart';
-import '../../data/models/ai_model.dart';
-import '../../data/models/chat_session.dart';
-import '../../data/models/project_action.dart';
-import '../../features/chat/chat_notifier.dart';
-import '../../services/git/git_live_state_provider.dart';
-import '../../services/project/project_service.dart';
-import '../../services/session/session_service.dart';
+import '../../../core/errors/app_exception.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../data/models/ai_model.dart';
+import '../../../data/models/chat_session.dart';
+import '../../../data/models/project_action.dart';
+import '../../chat/notifiers/chat_notifier.dart';
+import '../../../services/git/git_live_state_provider.dart';
+import '../../../services/project/project_service.dart';
+import '../../../services/session/session_service.dart';
 import 'project_sidebar_failure.dart';
 
 part 'project_sidebar_actions.g.dart';

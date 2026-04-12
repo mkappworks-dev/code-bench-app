@@ -1,11 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/utils/debug_logger.dart';
-import '../../data/models/ai_model.dart';
-import '../../data/models/applied_change.dart';
-import '../../data/models/chat_message.dart';
-import '../../data/models/chat_session.dart';
-import '../../services/session/session_service.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../data/models/ai_model.dart';
+import '../../../data/models/applied_change.dart';
+import '../../../data/models/chat_message.dart';
+import '../../../data/models/chat_session.dart';
+import '../../../services/session/session_service.dart';
 
 part 'chat_notifier.g.dart';
 

@@ -1,9 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/utils/debug_logger.dart';
-import '../../services/git/git_service.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../services/git/git_service.dart';
 import 'branch_picker_failure.dart';
-import 'branch_picker_state.dart';
+import '../branch_picker_state.dart';
 
 part 'branch_picker_notifier.g.dart';
 
