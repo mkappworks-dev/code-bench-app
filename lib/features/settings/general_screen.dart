@@ -7,7 +7,9 @@ import '../../core/constants/theme_constants.dart';
 import '../../core/utils/instant_menu.dart';
 import 'notifiers/general_prefs_notifier.dart';
 import 'notifiers/settings_actions.dart';
-import 'settings_widgets.dart';
+import 'widgets/inline_text_field.dart';
+import 'widgets/section_label.dart';
+import 'widgets/settings_group.dart';
 
 class GeneralScreen extends ConsumerStatefulWidget {
   const GeneralScreen({super.key});

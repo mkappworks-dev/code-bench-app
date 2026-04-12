@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/utils/relative_time.dart';
 import '../../core/utils/debug_logger.dart';
 import '../../data/models/chat_session.dart';
 import '../../data/models/project.dart';
@@ -131,13 +132,6 @@ class _ArchivedSessionCard extends ConsumerWidget {
 
   final ChatSession session;
 
-  String _relativeTime(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
@@ -161,7 +155,7 @@ class _ArchivedSessionCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Archived ${_relativeTime(session.updatedAt)} · Created ${_relativeTime(session.createdAt)}',
+                  'Archived ${session.updatedAt.relativeTime} · Created ${session.createdAt.relativeTime}',
                   style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11),
                 ),
               ],

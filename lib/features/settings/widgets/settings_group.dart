@@ -1,29 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/theme_constants.dart';
-
-// Shared primitive widgets used by SettingsScreen, ProvidersScreen, and
-// any other settings sub-screen. These are deliberately stateless and
-// layout-only so they stay trivially testable and easy to move.
-
-class SectionLabel extends StatelessWidget {
-  const SectionLabel(this.label, {super.key});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label.toUpperCase(),
-      style: const TextStyle(
-        color: ThemeConstants.mutedFg,
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.8,
-      ),
-    );
-  }
-}
+import '../../../core/constants/theme_constants.dart';
 
 class SettingsGroup extends StatelessWidget {
   const SettingsGroup({super.key, required this.rows});
@@ -85,30 +62,6 @@ class SettingsRow extends StatelessWidget {
           const SizedBox(width: 16),
           trailing,
         ],
-      ),
-    );
-  }
-}
-
-class InlineTextField extends StatelessWidget {
-  const InlineTextField({super.key, required this.controller, this.obscureText = false});
-
-  final TextEditingController controller;
-  final bool obscureText;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      style: const TextStyle(
-        color: ThemeConstants.textPrimary,
-        fontSize: 12,
-        fontFamily: ThemeConstants.editorFontFamily,
-      ),
-      decoration: const InputDecoration(
-        isDense: true,
-        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       ),
     );
   }

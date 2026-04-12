@@ -7,7 +7,9 @@ import '../../core/constants/theme_constants.dart';
 import '../../data/models/ai_model.dart';
 import 'notifiers/providers_notifier.dart';
 import 'notifiers/settings_actions.dart';
-import 'settings_widgets.dart';
+import 'widgets/inline_text_field.dart';
+import 'widgets/section_label.dart';
+import 'widgets/settings_group.dart';
 
 class ProvidersScreen extends ConsumerStatefulWidget {
   const ProvidersScreen({super.key});
