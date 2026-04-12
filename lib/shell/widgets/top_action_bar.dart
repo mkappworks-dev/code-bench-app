@@ -19,8 +19,10 @@ import '../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../notifiers/action_output_notifier.dart';
 import '../../services/ai/ai_service_factory.dart';
 import '../../services/git/git_live_state_provider.dart';
-import '../../services/git/git_service.dart';
+import '../../services/git/git_service.dart'
+    show GitException, GitNoUpstreamException, GitAuthException, GitConflictException, GitRemote;
 import '../../services/ide/ide_launch_service.dart';
+import '../notifiers/git_actions.dart';
 import '../../data/datasources/local/general_preferences.dart';
 import '../../data/datasources/local/secure_storage_source.dart';
 import '../../features/chat/widgets/create_pr_dialog.dart';
@@ -260,9 +262,8 @@ class _InitGitButton extends ConsumerWidget {
       label: 'Initialize Git',
       onTap: () async {
         if (!_ensureProjectAvailable(context, ref, project.id, project.path)) return;
-        final gitSvc = GitService(project.path);
         try {
-          await gitSvc.initGit();
+          await ref.read(gitActionsProvider.notifier).initGit(project.path);
         } on GitException catch (e) {
           dLog('[_InitGitButton] initGit failed: $e');
           if (context.mounted) {
@@ -322,7 +323,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     // single-remote Push.
     List<GitRemote> remotes;
     try {
-      remotes = await GitService(widget.project.path).listRemotes();
+      remotes = await ref.read(gitActionsProvider.notifier).listRemotes(widget.project.path);
     } on Exception catch (e) {
       dLog('[_CommitPushButton] listRemotes threw: $e');
       return;
@@ -394,7 +395,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
 
   Future<void> _runCommit(String message) async {
     try {
-      final sha = await GitService(widget.project.path).commit(message);
+      final sha = await ref.read(gitActionsProvider.notifier).commit(widget.project.path, message);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Committed — $sha')));
         ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
@@ -410,21 +411,21 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     if (!_ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
     setState(() => _pushing = true);
     try {
-      final gitSvc = GitService(widget.project.path);
+      final git = ref.read(gitActionsProvider.notifier);
       // Single-remote (or unknown) repos keep the classic `push()` path
       // because it also handles the "set upstream on first push" nicety.
       // A multi-remote repo explicitly targets `_selectedRemote` — the
       // one the user picked in the dropdown (or defaulted to `origin`).
       final String target;
       if (_remotes.length <= 1) {
-        final branch = await gitSvc.push();
+        final branch = await git.push(widget.project.path);
         target = 'origin/$branch';
       } else {
-        await gitSvc.pushToRemote(_selectedRemote);
+        await git.pushToRemote(widget.project.path, _selectedRemote);
         // `currentBranch()` can return null in detached-HEAD or transient
         // git failure modes. Show the remote on its own rather than a
         // dangling "remote/" with empty suffix.
-        final branch = await gitSvc.currentBranch();
+        final branch = await git.currentBranch(widget.project.path);
         target = (branch == null || branch.isEmpty) ? _selectedRemote : '$_selectedRemote/$branch';
       }
       if (mounted) {
@@ -459,34 +460,12 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     if (!_ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
     if (_remotes.isEmpty) return;
     setState(() => _pushing = true);
-    final gitSvc = GitService(widget.project.path);
-    final pushed = <String>[];
-    final failed = <String>[];
-    try {
-      // Sequential rather than parallel: git can legitimately reject a
-      // push on one remote (non-fast-forward) without that telling us
-      // anything about the others, and a parallel `Future.wait` would
-      // obscure which remote failed in the user-facing message.
-      //
-      // Catch `Exception` (not just `GitException`) so a missing git
-      // binary or a deleted cwd — both `ProcessException`/`FileSystemException`
-      // rather than our typed subclass — still counts the remote as
-      // "failed" and keeps the loop going instead of escaping the whole
-      // method and leaving the button stuck on "Pushing…" forever.
-      for (final remote in _remotes) {
-        try {
-          await gitSvc.pushToRemote(remote.name);
-          pushed.add(remote.name);
-        } on Exception catch (e) {
-          dLog('[_CommitPushButton] pushToRemote(${remote.name}) failed: ${e.runtimeType}');
-          failed.add(remote.name);
-        }
-      }
-    } finally {
-      // Guarantee the spinner clears even if something truly unexpected
-      // (an `Error`, not an `Exception`) escapes the loop.
-      if (mounted) setState(() => _pushing = false);
-    }
+    final (:pushed, :failed) = await ref
+        .read(gitActionsProvider.notifier)
+        .pushAllRemotes(widget.project.path, _remotes)
+        .whenComplete(() {
+          if (mounted) setState(() => _pushing = false);
+        });
     if (!mounted) return;
     final parts = <String>[];
     if (pushed.isNotEmpty) parts.add('Pushed: ${pushed.join(", ")}');
@@ -501,7 +480,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     if (!_ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
     setState(() => _pulling = true);
     try {
-      final n = await GitService(widget.project.path).pull();
+      final n = await ref.read(gitActionsProvider.notifier).pull(widget.project.path);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pulled — $n new commit(s) from origin')));
         ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
@@ -777,7 +756,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
 
   Future<void> _showCreatePrDialog() async {
     if (!_ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
-    final gitSvc = GitService(widget.project.path);
+    final git = ref.read(gitActionsProvider.notifier);
 
     // 1. Check GitHub token.
     final storage = ref.read(secureStorageSourceProvider);
@@ -787,10 +766,8 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       return;
     }
 
-    // 2. Ensure we're not on the default branch. Use GitService so the
-    //    error path (git missing, corrupt repo) is surfaced rather than
-    //    defaulting to an empty branch name.
-    final currentBranch = await gitSvc.currentBranch();
+    // 2. Ensure we're not on the default branch.
+    final currentBranch = await git.currentBranch(widget.project.path);
     if (currentBranch == null) {
       _snack('Could not read current branch — is this a valid git repo?');
       return;
@@ -832,7 +809,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     }
 
     // 4. Parse owner/repo from git remote URL.
-    final remoteUrl = await gitSvc.getOriginUrl();
+    final remoteUrl = await git.getOriginUrl(widget.project.path);
     if (remoteUrl == null) {
       _snack("No `origin` remote configured — run `git remote add origin <url>` first.");
       return;

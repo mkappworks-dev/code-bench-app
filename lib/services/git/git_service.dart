@@ -1,6 +1,13 @@
 import 'dart:io';
 
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../../core/utils/debug_logger.dart';
+
+part 'git_service.g.dart';
+
+@riverpod
+GitService gitService(Ref ref, String projectPath) => GitService(projectPath);
 
 class GitRemote {
   const GitRemote({required this.name, required this.url});
