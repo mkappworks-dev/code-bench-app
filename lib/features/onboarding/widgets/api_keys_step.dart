@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -81,17 +80,7 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
     if (key.isEmpty) return;
     setState(() => _testing[provider] = true);
     try {
-      bool success = false;
-      switch (provider) {
-        case AIProvider.openai:
-          success = await _testOpenAI(key);
-        case AIProvider.anthropic:
-          success = await _testAnthropic(key);
-        case AIProvider.gemini:
-          success = await _testGemini(key);
-        default:
-          success = false;
-      }
+      final success = await ref.read(settingsActionsProvider.notifier).testApiKey(provider, key);
       if (!mounted) return;
       setState(() => _testResults[provider] = success);
     } catch (_) {
@@ -103,74 +92,6 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
       // resolves. Without the check Flutter logs "setState called after
       // dispose" in debug and throws in release.
       if (mounted) setState(() => _testing[provider] = false);
-    }
-  }
-
-  Future<bool> _testOpenAI(String key) async {
-    try {
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: 'https://api.openai.com/v1',
-          connectTimeout: const Duration(seconds: 10),
-          headers: {'Authorization': 'Bearer $key'},
-        ),
-      );
-      await dio.get('/models');
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<bool> _testAnthropic(String key) async {
-    try {
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: 'https://api.anthropic.com/v1',
-          connectTimeout: const Duration(seconds: 10),
-          headers: {'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
-        ),
-      );
-      await dio.post(
-        '/messages',
-        data: {
-          'model': 'claude-3-haiku-20240307',
-          'max_tokens': 1,
-          'messages': [
-            {'role': 'user', 'content': 'hi'},
-          ],
-        },
-      );
-      return true;
-    } on DioException catch (e) {
-      // Inspect the typed status code rather than searching e.toString() for
-      // "400" — a URL fragment or unrelated error message containing "400"
-      // would otherwise flip a broken key to "valid".
-      //   400 → key accepted, request body rejected → key is valid
-      //   401/403 → key rejected → key is invalid
-      //   anything else (timeout, 5xx, no response) → can't verify → invalid
-      return e.response?.statusCode == 400;
-    }
-  }
-
-  Future<bool> _testGemini(String key) async {
-    try {
-      // SECURITY: Send the key via the `x-goog-api-key` header, NOT as a
-      // query-string parameter. Query strings get logged by reverse proxies,
-      // CDN edges, and — most importantly — Dio's own DioException.toString()
-      // includes the request URL, which would leak the key if anything ever
-      // prints the exception. See macos/Runner/README.md threat model.
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-          connectTimeout: const Duration(seconds: 10),
-          headers: {'x-goog-api-key': key},
-        ),
-      );
-      await dio.get('/models');
-      return true;
-    } catch (_) {
-      return false;
     }
   }
 

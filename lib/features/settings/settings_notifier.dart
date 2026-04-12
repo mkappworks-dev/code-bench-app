@@ -5,6 +5,7 @@ import '../../core/utils/debug_logger.dart';
 import '../../core/errors/app_exception.dart';
 import '../../data/models/ai_model.dart';
 import '../../services/ai/ai_service_factory.dart';
+import '../../services/ai/api_key_test_service.dart';
 import '../../services/project/project_service.dart';
 import '../../services/session/session_service.dart';
 import '../../services/settings/settings_service.dart';
@@ -160,6 +161,11 @@ class GeneralPrefs extends _$GeneralPrefs {
 class SettingsActions extends _$SettingsActions {
   @override
   void build() {}
+
+  Future<bool> testApiKey(AIProvider provider, String key) =>
+      ref.read(apiKeyTestServiceProvider).testApiKey(provider, key);
+
+  Future<bool> testOllamaUrl(String url) => ref.read(apiKeyTestServiceProvider).testOllamaUrl(url);
 
   Future<void> saveApiKey(String provider, String key) => ref.read(settingsServiceProvider).writeApiKey(provider, key);
 

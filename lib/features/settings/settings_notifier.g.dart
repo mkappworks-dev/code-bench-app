@@ -149,7 +149,7 @@ final class SettingsActionsProvider extends $NotifierProvider<SettingsActions, v
   }
 }
 
-String _$settingsActionsHash() => r'5549063ed607a10188be18757d3a0d996c46891c';
+String _$settingsActionsHash() => r'dc6da5928ff4a8d4f05d3198e32cc01f2992cad0';
 
 /// Imperative actions that don't own observable state: wipe all data,
 /// unarchive sessions, save a single API key, mark onboarding complete.

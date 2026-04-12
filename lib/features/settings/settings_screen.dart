@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,21 +84,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _testOllama() async {
     final url = _ollamaController.text.trim();
-    try {
-      final testDio = Dio(BaseOptions(baseUrl: url, connectTimeout: const Duration(seconds: 5)));
-      await testDio.get('/api/tags');
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Ollama is running!'), backgroundColor: ThemeConstants.success));
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cannot connect to Ollama.'), backgroundColor: ThemeConstants.error),
-        );
-      }
-    }
+    final ok = await ref.read(settingsActionsProvider.notifier).testOllamaUrl(url);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      ok
+          ? const SnackBar(content: Text('Ollama is running!'), backgroundColor: ThemeConstants.success)
+          : const SnackBar(content: Text('Cannot connect to Ollama.'), backgroundColor: ThemeConstants.error),
+    );
   }
 
   @override
