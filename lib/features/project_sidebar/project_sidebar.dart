@@ -11,8 +11,8 @@ import '../../core/constants/theme_constants.dart';
 import '../../core/utils/instant_menu.dart';
 import '../../core/utils/platform_utils.dart';
 import '../../features/chat/chat_notifier.dart';
-import '../../services/project/project_service.dart';
-import '../../services/session/session_service.dart';
+import '../../services/project/project_service.dart' show DuplicateProjectPathException;
+import 'project_sidebar_actions.dart';
 import 'project_sidebar_notifier.dart';
 import 'widgets/project_tile.dart';
 import 'widgets/relocate_project_dialog.dart';
@@ -51,7 +51,7 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
 
   Future<void> _safeRefresh() async {
     try {
-      await ref.read(projectServiceProvider).refreshProjectStatuses();
+      await ref.read(projectSidebarActionsProvider.notifier).refreshProjectStatuses();
     } catch (e) {
       dLog('[ProjectSidebar] refreshProjectStatuses failed: $e');
     }
@@ -63,8 +63,7 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
     if (result == null) return;
 
     try {
-      final service = ref.read(projectServiceProvider);
-      final project = await service.addExistingFolder(result);
+      final project = await ref.read(projectSidebarActionsProvider.notifier).addExistingFolder(result);
       ref.read(activeProjectIdProvider.notifier).set(project.id);
       ref.read(expandedProjectIdsProvider.notifier).expand(project.id);
     } on DuplicateProjectPathException catch (e) {
@@ -79,8 +78,9 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
 
   Future<void> _newConversation(BuildContext context, String projectId) async {
     final model = ref.read(selectedModelProvider);
-    final service = ref.read(sessionServiceProvider);
-    final sessionId = await service.createSession(model: model, projectId: projectId);
+    final sessionId = await ref
+        .read(projectSidebarActionsProvider.notifier)
+        .createSession(model: model, projectId: projectId);
     ref.read(activeSessionIdProvider.notifier).set(sessionId);
     ref.read(activeProjectIdProvider.notifier).set(projectId);
     if (context.mounted) context.go('/chat/$sessionId');
@@ -258,8 +258,10 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
                           await RelocateProjectDialog.show(context, p);
                         },
                         onNewConversation: (id) => _newConversation(context, id),
-                        onArchive: (sessionId) => unawaited(ref.read(sessionServiceProvider).archiveSession(sessionId)),
-                        onDelete: (sessionId) => unawaited(ref.read(sessionServiceProvider).deleteSession(sessionId)),
+                        onArchive: (sessionId) =>
+                            unawaited(ref.read(projectSidebarActionsProvider.notifier).archiveSession(sessionId)),
+                        onDelete: (sessionId) =>
+                            unawaited(ref.read(projectSidebarActionsProvider.notifier).deleteSession(sessionId)),
                       ),
                     );
                   },

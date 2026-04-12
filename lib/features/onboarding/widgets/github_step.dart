@@ -6,7 +6,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/repository.dart';
-import '../../../services/github/github_auth_service.dart';
+import '../notifiers/github_auth_notifier.dart';
 
 class GithubStep extends ConsumerStatefulWidget {
   const GithubStep({super.key, required this.onContinue, required this.onSkip});
@@ -18,18 +18,9 @@ class GithubStep extends ConsumerStatefulWidget {
 }
 
 class _GithubStepState extends ConsumerState<GithubStep> {
-  bool _connecting = false;
-  GitHubAccount? _account;
   bool _showPat = false;
   final _patController = TextEditingController();
-  bool _testingPat = false;
   bool? _patValid;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkExistingAccount();
-  }
 
   @override
   void dispose() {
@@ -37,33 +28,19 @@ class _GithubStepState extends ConsumerState<GithubStep> {
     super.dispose();
   }
 
-  Future<void> _checkExistingAccount() async {
-    final account = await ref.read(githubAuthServiceProvider).getStoredAccount();
-    if (mounted && account != null) setState(() => _account = account);
-  }
-
   Future<void> _connectOAuth() async {
-    setState(() => _connecting = true);
     try {
-      final account = await ref.read(githubAuthServiceProvider).authenticate();
-      if (mounted) setState(() => _account = account);
+      await ref.read(gitHubAuthProvider.notifier).authenticate();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('GitHub auth failed: $e')));
       }
-    } finally {
-      if (mounted) setState(() => _connecting = false);
     }
   }
 
   Future<void> _disconnect() async {
-    // Optimistically drop the account from UI state *before* the await: if
-    // signOut() throws partway (e.g. token delete succeeds but a subsequent
-    // cleanup fails), the user still sees the UI reflect "signed out" rather
-    // than being stuck looking at a Connected card with a stale token.
-    setState(() => _account = null);
     try {
-      await ref.read(githubAuthServiceProvider).signOut();
+      await ref.read(gitHubAuthProvider.notifier).signOut();
     } catch (e, st) {
       dLog('[GithubStep] signOut failed: $e\n$st');
       if (mounted) {
@@ -99,32 +76,26 @@ class _GithubStepState extends ConsumerState<GithubStep> {
   Future<void> _testPat() async {
     final token = _patController.text.trim();
     if (token.isEmpty) return;
-    setState(() => _testingPat = true);
+    setState(() => _patValid = null);
     try {
-      // signInWithPat validates the token, persists it to secure storage on
-      // success, and returns the full account. Doing the persist inside the
-      // service keeps the token out of the widget layer and guarantees the
-      // "connected" UI state always matches what is actually on disk.
-      final account = await ref.read(githubAuthServiceProvider).signInWithPat(token);
-      if (!mounted) return;
-      setState(() {
-        _patValid = true;
-        _account = account;
-      });
+      await ref.read(gitHubAuthProvider.notifier).signInWithPat(token);
+      if (mounted) setState(() => _patValid = true);
     } on AuthException {
       if (mounted) setState(() => _patValid = false);
     } catch (_) {
       if (mounted) setState(() => _patValid = false);
-    } finally {
-      if (mounted) setState(() => _testingPat = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_account != null) {
+    final authAsync = ref.watch(gitHubAuthProvider);
+    final account = authAsync.asData?.value;
+    final isLoading = authAsync.isLoading;
+
+    if (account != null) {
       return _ConnectedView(
-        account: _account!,
+        account: account,
         onDisconnect: _disconnect,
         onContinue: widget.onContinue,
         onSkip: widget.onSkip,
@@ -141,15 +112,15 @@ class _GithubStepState extends ConsumerState<GithubStep> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
-          onPressed: _connecting ? null : _connectOAuth,
-          icon: _connecting
+          onPressed: isLoading ? null : _connectOAuth,
+          icon: isLoading
               ? const SizedBox(
                   width: 14,
                   height: 14,
                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
               : const Icon(Icons.link, size: 16),
-          label: Text(_connecting ? 'Connecting…' : 'Continue with GitHub', style: const TextStyle(fontSize: 13)),
+          label: Text(isLoading ? 'Connecting…' : 'Continue with GitHub', style: const TextStyle(fontSize: 13)),
         ),
         const SizedBox(height: 20),
 
@@ -203,8 +174,8 @@ class _GithubStepState extends ConsumerState<GithubStep> {
               ),
               const SizedBox(width: 8),
               TextButton(
-                onPressed: _testingPat ? null : _testPat,
-                child: _testingPat
+                onPressed: isLoading ? null : _testPat,
+                child: isLoading
                     ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
                     : Text('Test', style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall)),
               ),

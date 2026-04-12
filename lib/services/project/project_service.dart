@@ -126,6 +126,9 @@ class ProjectService {
     await _db.projectDao.updateProject(projectId, WorkspaceProjectsCompanion(path: Value(newPath)));
   }
 
+  /// Deletes every project row. Used by the "Wipe all data" action.
+  Future<void> deleteAllProjects() => _db.projectDao.deleteAllProjects();
+
   Project _projectFromRow(WorkspaceProjectRow row) {
     List<ProjectAction> actions = const [];
     // We write this column ourselves as jsonEncode(...) in

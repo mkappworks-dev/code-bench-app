@@ -6,7 +6,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/chat_session.dart';
 import '../../../data/models/project.dart';
 import '../../../services/git/git_live_state_provider.dart';
-import '../../../services/session/session_service.dart';
+import '../project_sidebar_actions.dart';
 import '../project_sidebar_notifier.dart';
 import 'conversation_tile.dart';
 import 'project_context_menu.dart';
@@ -177,7 +177,9 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                         if (!context.mounted) return;
                         final newTitle = await RenameConversationDialog.show(context, s.title);
                         if (newTitle != null) {
-                          await ref.read(sessionServiceProvider).updateSessionTitle(s.sessionId, newTitle);
+                          await ref
+                              .read(projectSidebarActionsProvider.notifier)
+                              .updateSessionTitle(s.sessionId, newTitle);
                         }
                       },
                     ),

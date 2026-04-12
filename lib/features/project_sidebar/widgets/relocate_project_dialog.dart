@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/project.dart';
-import '../../../services/project/project_service.dart';
+import '../../../services/project/project_service.dart' show DuplicateProjectPathException;
+import '../project_sidebar_actions.dart';
 
 class RelocateProjectDialog extends ConsumerStatefulWidget {
   const RelocateProjectDialog({super.key, required this.project});
@@ -45,7 +46,7 @@ class _RelocateProjectDialogState extends ConsumerState<RelocateProjectDialog> {
       _error = null;
     });
     try {
-      await ref.read(projectServiceProvider).relocateProject(widget.project.id, _newPath!);
+      await ref.read(projectSidebarActionsProvider.notifier).relocateProject(widget.project.id, _newPath!);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e, st) {
       dLog('[RelocateProjectDialog] relocate failed: $e\n$st');

@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/instant_menu.dart';
-import '../../../data/datasources/local/secure_storage_source.dart';
 import '../../../data/models/ai_model.dart';
+import '../../settings/settings_notifier.dart';
 
 class ApiKeysStep extends ConsumerStatefulWidget {
   const ApiKeysStep({super.key, required this.onContinue, required this.onSkip});
@@ -178,12 +178,12 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
     setState(() => _saving = true);
     AIProvider? failedProvider;
     try {
-      final storage = ref.read(secureStorageSourceProvider);
+      final actions = ref.read(settingsActionsProvider.notifier);
       for (final entry in _controllers.entries) {
         final key = entry.value.text.trim();
         if (key.isEmpty) continue;
         failedProvider = entry.key;
-        await storage.writeApiKey(entry.key.name, key);
+        await actions.saveApiKey(entry.key.name, key);
         failedProvider = null;
       }
     } catch (_) {

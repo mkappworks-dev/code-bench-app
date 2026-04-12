@@ -9,18 +9,11 @@ import '../../core/constants/app_icons.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/theme_constants.dart';
-import '../../core/errors/app_exception.dart';
-import '../../core/utils/debug_logger.dart';
 import '../../core/utils/instant_menu.dart';
 import '../../core/utils/platform_utils.dart';
-import '../../data/datasources/local/app_database.dart';
-import '../../data/datasources/local/general_preferences.dart';
-import '../../data/datasources/local/onboarding_preferences.dart';
-import '../../data/datasources/local/secure_storage_source.dart';
 import '../../data/models/ai_model.dart';
-import '../../services/ai/ai_service_factory.dart';
-import '../../services/session/session_service.dart';
 import 'archive_screen.dart';
+import 'settings_notifier.dart';
 
 enum _SettingsNav { general, providers, archive }
 
@@ -58,35 +51,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _loadKeys() async {
-    final storage = ref.read(secureStorageSourceProvider);
-    for (final provider in _controllers.keys) {
-      final key = await storage.readApiKey(provider.name);
-      if (key != null) _controllers[provider]!.text = key;
-    }
-    final ollamaUrl = await storage.readOllamaUrl();
-    _ollamaController.text = ollamaUrl ?? ApiConstants.ollamaDefaultBaseUrl;
-    final customEndpoint = await storage.readCustomEndpoint();
-    if (customEndpoint != null) _customEndpointController.text = customEndpoint;
-    final customApiKey = await storage.readCustomApiKey();
-    if (customApiKey != null) _customApiKeyController.text = customApiKey;
+    final state = await ref.read(apiKeysProvider.future);
+    if (!mounted) return;
+    _controllers[AIProvider.openai]!.text = state.openai;
+    _controllers[AIProvider.anthropic]!.text = state.anthropic;
+    _controllers[AIProvider.gemini]!.text = state.gemini;
+    _ollamaController.text = state.ollamaUrl;
+    _customEndpointController.text = state.customEndpoint;
+    _customApiKeyController.text = state.customApiKey;
     setState(() {});
   }
 
   Future<void> _saveKeys() async {
-    final storage = ref.read(secureStorageSourceProvider);
-    for (final entry in _controllers.entries) {
-      final key = entry.value.text.trim();
-      if (key.isNotEmpty) {
-        await storage.writeApiKey(entry.key.name, key);
-      } else {
-        await storage.deleteApiKey(entry.key.name);
-      }
-    }
-    final ollamaUrl = _ollamaController.text.trim();
-    if (ollamaUrl.isNotEmpty) await storage.writeOllamaUrl(ollamaUrl);
-    await storage.writeCustomEndpoint(_customEndpointController.text.trim());
-    await storage.writeCustomApiKey(_customApiKeyController.text.trim());
-    ref.invalidate(aiServiceProvider);
+    await ref
+        .read(apiKeysProvider.notifier)
+        .saveAll(
+          providerKeys: {for (final entry in _controllers.entries) entry.key: entry.value.text},
+          ollamaUrl: _ollamaController.text.trim(),
+          customEndpoint: _customEndpointController.text.trim(),
+          customApiKey: _customApiKeyController.text.trim(),
+        );
     if (mounted) {
       ScaffoldMessenger.of(
         context,
@@ -95,10 +79,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _deleteKey(AIProvider provider) async {
-    final storage = ref.read(secureStorageSourceProvider);
-    await storage.deleteApiKey(provider.name);
+    await ref.read(apiKeysProvider.notifier).deleteKey(provider);
     _controllers[provider]!.clear();
-    ref.invalidate(aiServiceProvider);
   }
 
   Future<void> _testOllama() async {
@@ -160,11 +142,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _buildContent() {
     switch (_activeNav) {
       case _SettingsNav.general:
-        return _GeneralSection(
-          key: ValueKey('general-$_generalVersion'),
-          generalPrefs: ref.read(generalPreferencesProvider),
-          onboardingPrefs: ref.read(onboardingPreferencesProvider),
-        );
+        return _GeneralSection(key: ValueKey('general-$_generalVersion'));
       case _SettingsNav.providers:
         return _ProvidersSection(
           controllers: _controllers,
@@ -176,7 +154,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           onTestOllama: _testOllama,
         );
       case _SettingsNav.archive:
-        return ArchiveScreen(onUnarchive: (id) => unawaited(ref.read(sessionServiceProvider).unarchiveSession(id)));
+        return ArchiveScreen(
+          onUnarchive: (id) => unawaited(ref.read(settingsActionsProvider.notifier).unarchiveSession(id)),
+        );
     }
   }
 
@@ -201,10 +181,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
     if (confirmed != true) return;
-    final prefs = ref.read(generalPreferencesProvider);
-    await prefs.setAutoCommit(false);
-    await prefs.setTerminalApp('Terminal');
-    await prefs.setDeleteConfirmation(true);
+    await ref.read(generalPrefsProvider.notifier).restoreDefaults();
     // Bump the version so _GeneralSection rebuilds with a fresh ValueKey and
     // re-runs its initState → _load(). A bare `setState(() {})` is not
     // enough: Flutter reuses _GeneralSectionState across props-only rebuilds,
@@ -322,10 +299,7 @@ class _NavItem extends StatelessWidget {
 // ── General section ───────────────────────────────────────────────────────────
 
 class _GeneralSection extends ConsumerStatefulWidget {
-  const _GeneralSection({super.key, required this.generalPrefs, required this.onboardingPrefs});
-
-  final GeneralPreferences generalPrefs;
-  final OnboardingPreferences onboardingPrefs;
+  const _GeneralSection({super.key});
 
   @override
   ConsumerState<_GeneralSection> createState() => _GeneralSectionState();
@@ -340,17 +314,18 @@ class _GeneralSectionState extends ConsumerState<_GeneralSection> {
   void initState() {
     super.initState();
     _load();
-    _terminalAppController.addListener(() => widget.generalPrefs.setTerminalApp(_terminalAppController.text));
+    _terminalAppController.addListener(
+      () => ref.read(generalPrefsProvider.notifier).setTerminalApp(_terminalAppController.text),
+    );
   }
 
   Future<void> _load() async {
-    final autoCommit = await widget.generalPrefs.getAutoCommit();
-    final deleteConfirm = await widget.generalPrefs.getDeleteConfirmation();
-    final terminalApp = await widget.generalPrefs.getTerminalApp();
+    final state = await ref.read(generalPrefsProvider.future);
+    if (!mounted) return;
     setState(() {
-      _autoCommit = autoCommit;
-      _deleteConfirmation = deleteConfirm;
-      _terminalAppController.text = terminalApp;
+      _autoCommit = state.autoCommit;
+      _deleteConfirmation = state.deleteConfirmation;
+      _terminalAppController.text = state.terminalApp;
     });
   }
 
@@ -358,20 +333,6 @@ class _GeneralSectionState extends ConsumerState<_GeneralSection> {
   void dispose() {
     _terminalAppController.dispose();
     super.dispose();
-  }
-
-  /// Logs a wipe-step failure with the underlying cause.
-  ///
-  /// For [AppException]s, also prints `originalError` — otherwise the log
-  /// would only show the wrapper message ("Failed to wipe secure storage")
-  /// and you'd have no idea whether the real cause was a PlatformException,
-  /// a locked keychain, an auth denial, or something else.
-  void _logWipeFailure(String step, Object e, StackTrace st) {
-    if (e is AppException && e.originalError != null) {
-      dLog('[Settings] wipe $step failed: ${e.message} (cause: ${e.originalError})\n$st');
-    } else {
-      dLog('[Settings] wipe $step failed: $e\n$st');
-    }
   }
 
   Future<void> _confirmWipeAllData() async {
@@ -402,53 +363,8 @@ class _GeneralSectionState extends ConsumerState<_GeneralSection> {
     await _wipeAllData();
   }
 
-  /// Runs the wipe steps in sequence. Each step is isolated in its own
-  /// try/catch so a keychain failure (locked, denied) does not block the
-  /// chat DB wipe, and a DB failure does not block the projects wipe. Any
-  /// failures are logged via [dLog] and surfaced in a summary SnackBar so
-  /// the dev knows what still needs manual cleanup.
-  ///
-  /// Logging deliberately includes `originalError` for [AppException]s —
-  /// `AppException.toString()` only prints its `message`, so a bare `$e`
-  /// log hides the platform-level cause (e.g. the PlatformException from
-  /// flutter_secure_storage) which is what you actually need to debug.
   Future<void> _wipeAllData() async {
-    final failures = <String>[];
-
-    try {
-      await ref.read(secureStorageSourceProvider).deleteAll();
-    } catch (e, st) {
-      _logWipeFailure('secure storage', e, st);
-      failures.add('secure storage');
-    }
-
-    try {
-      final db = ref.read(appDatabaseProvider);
-      await db.sessionDao.deleteAllSessionsAndMessages();
-    } catch (e, st) {
-      _logWipeFailure('chat history', e, st);
-      failures.add('chat history');
-    }
-
-    try {
-      final db = ref.read(appDatabaseProvider);
-      await db.projectDao.deleteAllProjects();
-    } catch (e, st) {
-      _logWipeFailure('projects', e, st);
-      failures.add('projects');
-    }
-
-    try {
-      await widget.onboardingPrefs.reset();
-    } catch (e, st) {
-      _logWipeFailure('onboarding flag', e, st);
-      failures.add('onboarding flag');
-    }
-
-    // Drop cached in-memory AI clients so they don't keep serving requests
-    // with keys that have just been wiped from disk.
-    ref.invalidate(aiServiceProvider);
-
+    final failures = await ref.read(settingsActionsProvider.notifier).wipeAllData();
     if (!mounted) return;
     if (failures.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -499,7 +415,7 @@ class _GeneralSectionState extends ConsumerState<_GeneralSection> {
                     items: const [true, false],
                     label: (v) => v ? 'Enabled' : 'Disabled',
                     onChanged: (v) async {
-                      await widget.generalPrefs.setDeleteConfirmation(v);
+                      await ref.read(generalPrefsProvider.notifier).setDeleteConfirmation(v);
                       setState(() => _deleteConfirmation = v);
                     },
                     context: ctx,
@@ -515,7 +431,7 @@ class _GeneralSectionState extends ConsumerState<_GeneralSection> {
                     items: const [true, false],
                     label: (v) => v ? 'Enabled' : 'Disabled',
                     onChanged: (v) async {
-                      await widget.generalPrefs.setAutoCommit(v);
+                      await ref.read(generalPrefsProvider.notifier).setAutoCommit(v);
                       setState(() => _autoCommit = v);
                     },
                     context: ctx,
@@ -568,7 +484,7 @@ class _GeneralSectionState extends ConsumerState<_GeneralSection> {
                   trailing: Builder(
                     builder: (ctx) => InkWell(
                       onTap: () async {
-                        await widget.onboardingPrefs.reset();
+                        await ref.read(settingsActionsProvider.notifier).replayOnboarding();
                         if (ctx.mounted) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             const SnackBar(

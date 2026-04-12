@@ -8,7 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../services/project/git_detector.dart';
-import '../../../services/project/project_service.dart';
+import '../../project_sidebar/project_sidebar_actions.dart';
 
 class AddProjectStep extends ConsumerStatefulWidget {
   const AddProjectStep({super.key, required this.onComplete, required this.onSkip});
@@ -73,7 +73,7 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
     if (_selectedPath == null) return;
     setState(() => _adding = true);
     try {
-      await ref.read(projectServiceProvider).addExistingFolder(_selectedPath!);
+      await ref.read(projectSidebarActionsProvider.notifier).addExistingFolder(_selectedPath!);
       if (mounted) widget.onComplete();
     } catch (e) {
       if (mounted) {

@@ -4,8 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/project.dart';
-import '../../../services/project/project_service.dart';
-import '../../../services/session/session_service.dart';
+import '../project_sidebar_actions.dart';
 
 class RemoveProjectDialog extends ConsumerStatefulWidget {
   const RemoveProjectDialog({super.key, required this.project});
@@ -37,7 +36,7 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
 
   Future<void> _loadSessionCount() async {
     try {
-      final sessions = await ref.read(sessionServiceProvider).watchSessionsByProject(widget.project.id).first;
+      final sessions = await ref.read(projectSidebarActionsProvider.notifier).getSessionsByProject(widget.project.id);
       if (!mounted) return;
       setState(() {
         _sessionCount = sessions.length;
@@ -59,13 +58,9 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
   Future<void> _submit() async {
     setState(() => _submitting = true);
     try {
-      if (_alsoDeleteSessions) {
-        final sessions = await ref.read(sessionServiceProvider).watchSessionsByProject(widget.project.id).first;
-        for (final s in sessions) {
-          await ref.read(sessionServiceProvider).deleteSession(s.sessionId);
-        }
-      }
-      await ref.read(projectServiceProvider).removeProject(widget.project.id);
+      await ref
+          .read(projectSidebarActionsProvider.notifier)
+          .removeProject(widget.project.id, deleteSessions: _alsoDeleteSessions);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e, st) {
       dLog('[RemoveProjectDialog] remove failed: $e\n$st');

@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../core/utils/debug_logger.dart';
-import '../../data/datasources/local/onboarding_preferences.dart';
+import '../settings/settings_notifier.dart';
 import 'notifiers/onboarding_notifier.dart';
 import 'widgets/step_progress_indicator.dart';
 import 'widgets/api_keys_step.dart';
@@ -139,7 +139,7 @@ class _ContentPanel extends ConsumerWidget {
   /// Callers can safely fire-and-forget this future.
   Future<void> _finish(BuildContext context, WidgetRef ref) async {
     try {
-      await ref.read(onboardingPreferencesProvider).markCompleted();
+      await ref.read(settingsActionsProvider.notifier).markOnboardingCompleted();
     } catch (e, st) {
       dLog('[OnboardingScreen] markCompleted failed: $e\n$st');
       if (context.mounted) {

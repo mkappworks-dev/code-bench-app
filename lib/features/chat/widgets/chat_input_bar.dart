@@ -12,8 +12,8 @@ import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../data/models/ai_model.dart';
 import '../../../data/models/project.dart';
+import '../../../features/project_sidebar/project_sidebar_actions.dart';
 import '../../../features/project_sidebar/project_sidebar_notifier.dart';
-import '../../../services/project/project_service.dart';
 import '../chat_notifier.dart';
 
 /// Private in-memory store of per-session chat-input drafts.
@@ -153,7 +153,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     if (existsOnDisk != cachedAsAvailable) {
       unawaited(
         ref
-            .read(projectServiceProvider)
+            .read(projectSidebarActionsProvider.notifier)
             .refreshProjectStatus(project.id)
             .catchError((Object e) => dLog('[ChatInputBar] refresh after stale folder-status check failed: $e')),
       );
