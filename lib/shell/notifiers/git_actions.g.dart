@@ -8,11 +8,26 @@ part of 'git_actions.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Command notifier for all git operations.
+///
+/// Widgets never reach [GitService] directly — they call methods here.
+/// State is [AsyncValue<void>]: loading/error/data are driven by each method.
+/// Typed failures are emitted as [AsyncError] carrying a [GitActionsFailure].
 
 @ProviderFor(GitActions)
 final gitActionsProvider = GitActionsProvider._();
 
-final class GitActionsProvider extends $NotifierProvider<GitActions, void> {
+/// Command notifier for all git operations.
+///
+/// Widgets never reach [GitService] directly — they call methods here.
+/// State is [AsyncValue<void>]: loading/error/data are driven by each method.
+/// Typed failures are emitted as [AsyncError] carrying a [GitActionsFailure].
+final class GitActionsProvider extends $AsyncNotifierProvider<GitActions, void> {
+  /// Command notifier for all git operations.
+  ///
+  /// Widgets never reach [GitService] directly — they call methods here.
+  /// State is [AsyncValue<void>]: loading/error/data are driven by each method.
+  /// Typed failures are emitted as [AsyncError] carrying a [GitActionsFailure].
   GitActionsProvider._()
     : super(
         from: null,
@@ -30,22 +45,24 @@ final class GitActionsProvider extends $NotifierProvider<GitActions, void> {
   @$internal
   @override
   GitActions create() => GitActions();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(void value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<void>(value));
-  }
 }
 
-String _$gitActionsHash() => r'db5997c32f00db17d09c36290a86cbd0153a6dcd';
+String _$gitActionsHash() => r'1c43fc55048417ac46885f839ec4c9b83eaea610';
 
-abstract class _$GitActions extends $Notifier<void> {
-  void build();
+/// Command notifier for all git operations.
+///
+/// Widgets never reach [GitService] directly — they call methods here.
+/// State is [AsyncValue<void>]: loading/error/data are driven by each method.
+/// Typed failures are emitted as [AsyncError] carrying a [GitActionsFailure].
+
+abstract class _$GitActions extends $AsyncNotifier<void> {
+  FutureOr<void> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<void, void>;
-    final element = ref.element as $ClassProviderElement<AnyNotifier<void, void>, void, Object?, Object?>;
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
+    final element =
+        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }
