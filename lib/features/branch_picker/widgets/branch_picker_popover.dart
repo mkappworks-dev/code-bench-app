@@ -8,7 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/debug_logger.dart';
-import '../../../services/git/git_live_state_provider.dart';
+import '../../../features/project_sidebar/project_sidebar_actions.dart';
 import '../../../services/git/git_service.dart';
 import '../branch_picker_notifier.dart';
 
@@ -94,7 +94,7 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
     try {
       await ref.read(branchPickerProvider(widget.projectPath)).checkout(branch);
       if (mounted) {
-        ref.invalidate(gitLiveStateProvider(widget.projectPath));
+        ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
         widget.onClose();
       }
     } on ArgumentError catch (e) {
@@ -140,7 +140,7 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
     try {
       await ref.read(branchPickerProvider(widget.projectPath)).createBranch(name);
       if (mounted) {
-        ref.invalidate(gitLiveStateProvider(widget.projectPath));
+        ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
         widget.onClose();
       }
     } on ArgumentError catch (e) {

@@ -16,7 +16,7 @@ import '../../data/models/project_action.dart';
 import '../../features/chat/chat_notifier.dart';
 import '../../features/chat/widgets/commit_dialog.dart';
 import '../../features/project_sidebar/project_sidebar_notifier.dart';
-import '../../services/actions/action_runner_service.dart';
+import '../notifiers/action_output_notifier.dart';
 import '../../services/ai/ai_service_factory.dart';
 import '../../services/git/git_live_state_provider.dart';
 import '../../services/git/git_service.dart';
@@ -275,7 +275,7 @@ class _InitGitButton extends ConsumerWidget {
           return;
         }
 
-        ref.invalidate(gitLiveStateProvider(project.path));
+        ref.read(projectSidebarActionsProvider.notifier).refreshGitState(project.path);
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Git repository initialized')));
@@ -397,7 +397,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       final sha = await GitService(widget.project.path).commit(message);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Committed — $sha')));
-        ref.invalidate(gitLiveStateProvider(widget.project.path));
+        ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
       }
     } on GitException catch (e) {
       if (mounted) {
@@ -429,8 +429,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pushed to $target')));
-        ref.invalidate(gitLiveStateProvider(widget.project.path));
-        ref.invalidate(behindCountProvider(widget.project.path));
+        ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
       }
     } on GitNoUpstreamException {
       if (mounted) {
@@ -494,8 +493,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     if (failed.isNotEmpty) parts.add('Failed: ${failed.join(", ")}');
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(parts.join(' · '))));
     if (pushed.isNotEmpty) {
-      ref.invalidate(gitLiveStateProvider(widget.project.path));
-      ref.invalidate(behindCountProvider(widget.project.path));
+      ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
     }
   }
 
@@ -506,8 +504,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
       final n = await GitService(widget.project.path).pull();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pulled — $n new commit(s) from origin')));
-        ref.invalidate(gitLiveStateProvider(widget.project.path));
-        ref.invalidate(behindCountProvider(widget.project.path));
+        ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
       }
     } on GitConflictException {
       if (mounted) {

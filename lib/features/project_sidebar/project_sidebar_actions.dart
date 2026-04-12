@@ -6,6 +6,8 @@ import '../../data/models/ai_model.dart';
 import '../../data/models/chat_session.dart';
 import '../../data/models/project.dart';
 import '../../data/models/project_action.dart';
+import '../../features/chat/chat_notifier.dart';
+import '../../services/git/git_live_state_provider.dart';
 import '../../services/project/project_service.dart';
 import '../../services/session/session_service.dart';
 
@@ -47,6 +49,18 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     await _projects.removeProject(id);
   }
 
+  // ── Git state ─────────────────────────────────────────────────────────────
+
+  /// Invalidates all cached git state for [projectPath].
+  ///
+  /// Call this after any in-app git mutation (commit, push, pull, checkout,
+  /// init-git, create-branch). Widgets must not call [ref.invalidate] on git
+  /// providers directly — that would couple them to the provider topology.
+  void refreshGitState(String projectPath) {
+    ref.invalidate(gitLiveStateProvider(projectPath));
+    ref.invalidate(behindCountProvider(projectPath));
+  }
+
   // ── Filesystem helpers ─────────────────────────────────────────────────────
 
   /// Returns `true` when the folder at [path] currently exists on disk.
@@ -86,4 +100,10 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
   Future<void> updateSessionTitle(String id, String title) => _sessions.updateSessionTitle(id, title);
 
   Future<List<ChatSession>> getSessionsByProject(String projectId) => _sessions.getSessionsByProject(projectId);
+
+  /// Forces [archivedSessionsProvider] to re-fetch from the DB.
+  ///
+  /// Widgets must not call [ref.invalidate] on [archivedSessionsProvider]
+  /// directly — use this method so the provider topology stays encapsulated.
+  void refreshArchivedSessions() => ref.invalidate(archivedSessionsProvider);
 }

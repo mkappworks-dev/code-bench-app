@@ -5,8 +5,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/models/project_action.dart';
 
-part 'action_runner_service.freezed.dart';
-part 'action_runner_service.g.dart';
+part 'action_output_notifier.freezed.dart';
+part 'action_output_notifier.g.dart';
 
 enum ActionStatus { idle, running, done, failed }
 
@@ -20,6 +20,12 @@ abstract class ActionOutputState with _$ActionOutputState {
   }) = _ActionOutputState;
 }
 
+/// Notifier that runs a user-defined [ProjectAction] as a subprocess and
+/// streams its stdout/stderr lines into [ActionOutputState].
+///
+/// Lives in `lib/shell/notifiers/` because [ActionOutputPanel] (the widget
+/// that displays it) is a shell-level widget. The actual process lifecycle
+/// (`Process.start`) is confined here — widgets only call [run] and [clear].
 @Riverpod(keepAlive: true)
 class ActionOutputNotifier extends _$ActionOutputNotifier {
   Process? _currentProcess;
