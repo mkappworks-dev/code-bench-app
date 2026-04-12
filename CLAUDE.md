@@ -72,22 +72,22 @@ Widgets / Screens
 
 **Hard rules — enforced in code review:**
 
-| Allowed | Forbidden in widgets/screens |
-|---|---|
-| `ref.watch(someNotifierProvider)` | `ref.read(someServiceProvider)` |
-| `ref.read(someNotifierProvider.notifier).method()` | `ref.read(applyServiceProvider)`, `ref.read(projectServiceProvider)`, etc. |
-| `url_launcher` (`launchUrl`) for opening URLs/files | `Process.run(...)` |
-| Path string operations (`p.join`, etc.) | `Directory(...).existsSync()` or any `dart:io` I/O |
+| Allowed                                             | Forbidden in widgets/screens                                               |
+| --------------------------------------------------- | -------------------------------------------------------------------------- |
+| `ref.watch(someNotifierProvider)`                   | `ref.read(someServiceProvider)`                                            |
+| `ref.read(someNotifierProvider.notifier).method()`  | `ref.read(applyServiceProvider)`, `ref.read(projectServiceProvider)`, etc. |
+| `url_launcher` (`launchUrl`) for opening URLs/files | `Process.run(...)`                                                         |
+| Path string operations (`p.join`, etc.)             | `Directory(...).existsSync()` or any `dart:io` I/O                         |
 
 **Naming conventions — strictly enforced:**
 
-| Layer | Suffix rule | Examples |
-|---|---|---|
-| Service class | must end in `Service` | `GitService`, `SessionService` |
-| Service provider | `@riverpod` / `@Riverpod` placed **before** the class it instantiates | `gitServiceProvider`, `sessionServiceProvider` |
-| Command notifier | must end in `Actions` — `void build()`, imperative methods, `keepAlive: true` | `ProjectSidebarActions`, `CodeApplyActions`, `GitActions` |
-| State notifier | must end in `Notifier` — owns `AsyncValue` or value state | `ChatNotifier`, `GitHubAuthNotifier`, `ActiveSessionIdNotifier` |
-| `ref.invalidate` in widgets | **forbidden** — route through a notifier method instead | `refreshGitState()`, `refreshArchivedSessions()` |
+| Layer                       | Suffix rule                                                                   | Examples                                                        |
+| --------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Service class               | must end in `Service`                                                         | `GitService`, `SessionService`                                  |
+| Service provider            | `@riverpod` / `@Riverpod` placed **before** the class it instantiates         | `gitServiceProvider`, `sessionServiceProvider`                  |
+| Command notifier            | must end in `Actions` — `void build()`, imperative methods, `keepAlive: true` | `ProjectSidebarActions`, `CodeApplyActions`, `GitActions`       |
+| State notifier              | must end in `Notifier` — owns `AsyncValue` or value state                     | `ChatNotifier`, `GitHubAuthNotifier`, `ActiveSessionIdNotifier` |
+| `ref.invalidate` in widgets | **forbidden** — route through a notifier method instead                       | `refreshGitState()`, `refreshArchivedSessions()`                |
 
 The Riverpod generator strips the `Notifier` suffix when producing the provider variable name (`class ActiveSessionIdNotifier` → `activeSessionIdProvider`). The `Actions` suffix is kept (`class GitActions` → `gitActionsProvider`).
 
@@ -102,22 +102,103 @@ The Riverpod generator strips the `Notifier` suffix when producing the provider 
 - `.notifier` → required when calling a method on the notifier class: `ref.read(fooProvider.notifier).doThing()`, not `ref.read(fooProvider).doThing()`.
 - `AsyncValue` unwrapping → prefer exhaustive `switch` over `AsyncData` / `AsyncLoading` / `AsyncError` in `build()`. Only use `.value` for intentional "latest known" reads inside event handlers.
 
+## Error Handling & State Emission
+
+### Rule 1 — Widget try/catch policy
+
+**Forbidden** in `lib/features/**/widgets/**` and `lib/shell/widgets/**` around any business-logic call (notifier method calls, service calls, async I/O).
+
+**Permitted only** around these widget-layer APIs:
+
+- `launchUrl(...)` from `url_launcher`
+- `Clipboard.setData(...)` / `Clipboard.getData()`
+
+Enforcement: code review greps for `try\s*\{` in widget files. Any match must wrap a `launchUrl` or `Clipboard` call — no exceptions.
+
+### Rule 2 — Actions notifier shape
+
+Every command notifier (`*Actions` suffix) extends `AsyncNotifier<void>`. Template:
+
+```dart
+@Riverpod(keepAlive: true)
+class FooActions extends _$FooActions {
+  @override
+  FutureOr<void> build() {}
+
+  FooFailure _asFailure(Object e) => switch (e) {
+    SpecificException() => const FooFailure.specificError(),
+    _ => FooFailure.unknown(e),
+  };
+
+  Future<void> doThing(String arg) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await ref.read(someServiceProvider).doThing(arg);
+      } catch (e, st) {
+        dLog('[FooActions] doThing failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+}
+```
+
+Widgets drive loading via `ref.watch(fooActionsProvider).isLoading` and errors via `ref.listen`:
+
+```dart
+ref.listen(fooActionsProvider, (prev, next) {
+  if (next is! AsyncError) return;
+  final failure = next.error;
+  if (failure is! FooFailure) return;
+  switch (failure) {
+    case FooSpecificError(): showErrorSnackBar(context, 'Specific error message'); break;
+    case FooUnknownError(): showErrorSnackBar(context, 'Unexpected error'); break;
+  }
+});
+```
+
+### Rule 3 — Typed failure unions
+
+Each Actions/Notifier that can fail owns a `freezed` sealed class named `{Notifier}Failure`:
+
+**Convention:** Strip the `Actions` or `Notifier` suffix from the class name. `FooActions` → `FooFailure`; `BranchPickerNotifier` → `BranchPickerFailure`. The failure class lives in `{feature}/notifiers/{name}_failure.dart` (for Actions) or `{feature}/{name}_failure.dart` (for Notifiers).
+
+```dart
+@freezed
+sealed class FooFailure with _$FooFailure {
+  const factory FooFailure.specificError([String? detail]) = FooSpecificError;
+  const factory FooFailure.unknown(Object error) = FooUnknownError;
+}
+```
+
+Widgets never `import '../../services/...'` for exception types — they only `switch` on the local failure type. The `switch` must be exhaustive (Dart enforces this at compile time).
+
+### Rule 4 — Family-provider escalation
+
+Default to a single `AsyncValue<void>` slot per Actions notifier. Only escalate to a `family` provider when a **named, concrete** concurrency scenario exists (documented in the notifier's doc comment). Unapproved family usage is rejected in code review.
+
+See canonical examples:
+
+- Actions: `lib/features/chat/notifiers/code_apply_actions.dart`
+- Widget: `lib/features/chat/widgets/message_bubble.dart` (`ref.listen` pattern)
+
 ## Logging
 
 Two helpers live in [lib/core/utils/debug_logger.dart](lib/core/utils/debug_logger.dart):
 
-| Helper | Survives release builds? | Use for |
-|---|---|---|
-| `dLog` | No — stripped via `kDebugMode` | Debug breadcrumbs, triage for swallowed exceptions |
+| Helper | Survives release builds?              | Use for                                                                                              |
+| ------ | ------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `dLog` | No — stripped via `kDebugMode`        | Debug breadcrumbs, triage for swallowed exceptions                                                   |
 | `sLog` | Yes — `dart:developer` structured log | Security events (path-traversal, auth failures, flag-shaped argument rejections, sandbox violations) |
 
 **Where to log:**
 
-| Layer | Logs? | What to log |
-|---|---|---|
-| Services (`lib/services/`) | Yes | Raw I/O failures — `ProcessException`, Dio errors, `FileSystemException`, security-guard rejections (`sLog`) |
-| Notifiers (`*Actions`, `*Notifier`) | Yes | Caught exceptions being turned into `AsyncError` or swallowed; semantic operation failures ("pushToRemote failed") |
-| Widgets / screens | **No, with two exceptions** | (1) `AsyncValue.when(error:)` branches that render an error view, (2) widget-layer APIs the arch rule permits in widgets — `launchUrl` failures and `Clipboard` failures |
+| Layer                               | Logs?                       | What to log                                                                                                                                                              |
+| ----------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Services (`lib/services/`)          | Yes                         | Raw I/O failures — `ProcessException`, Dio errors, `FileSystemException`, security-guard rejections (`sLog`)                                                             |
+| Notifiers (`*Actions`, `*Notifier`) | Yes                         | Caught exceptions being turned into `AsyncError` or swallowed; semantic operation failures ("pushToRemote failed")                                                       |
+| Widgets / screens                   | **No, with two exceptions** | (1) `AsyncValue.when(error:)` branches that render an error view, (2) widget-layer APIs the arch rule permits in widgets — `launchUrl` failures and `Clipboard` failures |
 
 Log **once**, at the layer that holds the useful context. If a service already `dLog`s a `ProcessException`, the notifier rethrowing it should not log again — it should only log if it's doing additional recovery worth tracing.
 
@@ -130,6 +211,7 @@ App Sandbox is **intentionally disabled** on macOS because `ActionRunnerService`
 ## Brainstorming Options
 
 When presenting multiple-choice options (A/B/C etc.) during brainstorming:
+
 - Always include a short concrete example for each option
 - Always mark the recommended option with a ★ symbol
 - If the options involve UI (layouts, components, interactions), always show a visual mockup in the browser companion without waiting to be asked
