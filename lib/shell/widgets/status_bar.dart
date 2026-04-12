@@ -1,18 +1,14 @@
-import 'dart:async';
-
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
-import '../../data/models/chat_message.dart';
-import '../../data/models/tool_event.dart';
 import '../../data/models/project.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/branch_picker/widgets/branch_picker_popover.dart';
 import '../../services/git/git_live_state.dart';
 import '../notifiers/status_bar_notifier.dart';
+import 'working_pill.dart';
 
 class StatusBar extends ConsumerStatefulWidget {
   const StatusBar({super.key});
@@ -70,7 +66,7 @@ class _StatusBarState extends ConsumerState<StatusBar> {
               if (messageId == null) return const SizedBox.shrink();
               return Padding(
                 padding: const EdgeInsets.only(right: 10),
-                child: _WorkingPill(sessionId: sessionId, messageId: messageId),
+                child: WorkingPill(sessionId: sessionId, messageId: messageId),
               );
             },
           ),
@@ -152,83 +148,5 @@ class _StatusBarState extends ConsumerState<StatusBar> {
     );
     Overlay.of(context).insert(_pickerEntry!);
     setState(() {}); // rebuild so the branch label stays visible under the overlay
-  }
-}
-
-/// Status bar pill that shows "Working for Xs" while the agent runs tool calls.
-///
-/// Watches [chatMessagesProvider] for [sessionId] and checks whether the
-/// message with [messageId] has any [ToolStatus.running] events, avoiding
-/// a parallel WorkLogNotifier after Phase 10 landed.
-class _WorkingPill extends ConsumerStatefulWidget {
-  const _WorkingPill({required this.sessionId, required this.messageId});
-
-  final String sessionId;
-  final String messageId;
-
-  @override
-  ConsumerState<_WorkingPill> createState() => _WorkingPillState();
-}
-
-class _WorkingPillState extends ConsumerState<_WorkingPill> {
-  Timer? _ticker;
-
-  /// Seconds elapsed in the current running burst. Incremented on each
-  /// ticker fire, reset to 0 on every running→idle transition so the
-  /// next burst's "Working for Xs" pill starts fresh — each tool call
-  /// is its own timer. Using an integer counter (rather than
-  /// `DateTime.now()` minus a start time) keeps the value deterministic
-  /// under `tester.pump` — Flutter's fake async advances `Timer`
-  /// callbacks but not the system wall clock.
-  int _elapsedSeconds = 0;
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
-
-  /// Idempotent ticker lifecycle, driven from [build]. Starts a 1Hz
-  /// rebuild ticker on the first running observation, cancels it when
-  /// none are running. A running→idle transition also zeroes
-  /// [_elapsedSeconds] so the next burst starts fresh at 0s — matches
-  /// the "Working for Xs" UX: each burst is its own timer.
-  void _syncTicker({required bool anyRunning}) {
-    if (anyRunning) {
-      _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
-        if (mounted) setState(() => _elapsedSeconds++);
-      });
-    } else {
-      _ticker?.cancel();
-      _ticker = null;
-      _elapsedSeconds = 0;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final anyRunning = ref.watch(
-      chatMessagesProvider(widget.sessionId).select((async) {
-        final messages = async.asData?.value ?? const <ChatMessage>[];
-        final msg = messages.firstWhereOrNull((m) => m.id == widget.messageId);
-        return msg?.toolEvents.any((e) => e.status == ToolStatus.running) ?? false;
-      }),
-    );
-
-    _syncTicker(anyRunning: anyRunning);
-
-    if (!anyRunning) return const SizedBox.shrink();
-
-    final seconds = _elapsedSeconds;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: ThemeConstants.selectionBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: ThemeConstants.selectionBorder),
-      ),
-      child: Text('Working for ${seconds}s', style: const TextStyle(color: ThemeConstants.blueAccent, fontSize: 10)),
-    );
   }
 }
