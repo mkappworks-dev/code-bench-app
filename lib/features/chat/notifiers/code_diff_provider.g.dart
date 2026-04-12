@@ -17,13 +17,20 @@ final codeDiffProvider = CodeDiffFamily._();
 /// Computes a diff between the on-disk file and [newContent].
 /// Returns `null` on any error (outside-project, unreadable file, etc.).
 
-final class CodeDiffProvider extends $FunctionalProvider<AsyncValue<DiffResult?>, DiffResult?, FutureOr<DiffResult?>>
+final class CodeDiffProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<DiffResult?>,
+          DiffResult?,
+          FutureOr<DiffResult?>
+        >
     with $FutureModifier<DiffResult?>, $FutureProvider<DiffResult?> {
   /// Computes a diff between the on-disk file and [newContent].
   /// Returns `null` on any error (outside-project, unreadable file, etc.).
   CodeDiffProvider._({
     required CodeDiffFamily super.from,
-    required ({String absolutePath, String projectPath, String newContent}) super.argument,
+    required ({String absolutePath, String projectPath, String newContent})
+    super.argument,
   }) : super(
          retry: null,
          name: r'codeDiffProvider',
@@ -44,11 +51,15 @@ final class CodeDiffProvider extends $FunctionalProvider<AsyncValue<DiffResult?>
 
   @$internal
   @override
-  $FutureProviderElement<DiffResult?> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+  $FutureProviderElement<DiffResult?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<DiffResult?> create(Ref ref) {
-    final argument = this.argument as ({String absolutePath, String projectPath, String newContent});
+    final argument =
+        this.argument
+            as ({String absolutePath, String projectPath, String newContent});
     return codeDiff(
       ref,
       absolutePath: argument.absolutePath,
@@ -91,11 +102,18 @@ final class CodeDiffFamily extends $Family
   /// Computes a diff between the on-disk file and [newContent].
   /// Returns `null` on any error (outside-project, unreadable file, etc.).
 
-  CodeDiffProvider call({required String absolutePath, required String projectPath, required String newContent}) =>
-      CodeDiffProvider._(
-        argument: (absolutePath: absolutePath, projectPath: projectPath, newContent: newContent),
-        from: this,
-      );
+  CodeDiffProvider call({
+    required String absolutePath,
+    required String projectPath,
+    required String newContent,
+  }) => CodeDiffProvider._(
+    argument: (
+      absolutePath: absolutePath,
+      projectPath: projectPath,
+      newContent: newContent,
+    ),
+    from: this,
+  );
 
   @override
   String toString() => r'codeDiffProvider';

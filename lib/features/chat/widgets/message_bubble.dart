@@ -18,8 +18,9 @@ import '../../../core/utils/snackbar_helper.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/project_sidebar_notifier.dart';
-import '../../../services/apply/apply_service.dart';
 import '../notifiers/code_apply_actions.dart';
+import '../notifiers/code_apply_failure.dart';
+import '../notifiers/code_diff_provider.dart';
 import '../notifiers/project_file_scan_actions.dart';
 import '../chat_notifier.dart';
 import '../notifiers/ask_question_notifier.dart';
@@ -330,8 +331,6 @@ class _CodeBlockBuilder extends MarkdownElementBuilder {
 
 // ── Code block widget ─────────────────────────────────────────────────────────
 
-enum _DiffCardState { hidden, loading, loaded, error }
-
 class _CodeBlockWidget extends ConsumerStatefulWidget {
   const _CodeBlockWidget({
     required this.code,
@@ -351,10 +350,7 @@ class _CodeBlockWidget extends ConsumerStatefulWidget {
 }
 
 class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
-  _DiffCardState _diffState = _DiffCardState.hidden;
-  String? _originalContent;
-  List<Diff>? _diffs;
-  String? _diffError;
+  bool _diffRequested = false;
   int _activeTab = 1; // 0=Before, 1=Diff, 2=After
   bool _applying = false;
 
@@ -378,75 +374,15 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
     return projects.firstWhereOrNull((p) => p.id == projectId);
   }
 
-  Future<void> _loadDiff() async {
-    final project = _resolveActiveProject();
-    if (project == null) {
-      setState(() {
-        _diffError = 'No active project.';
-        _diffState = _DiffCardState.error;
-      });
-      return;
-    }
-    final filename = _effectiveFilename;
-    if (filename == null) {
-      setState(() {
-        _diffError = 'No filename set for this code block.';
-        _diffState = _DiffCardState.error;
-      });
-      return;
-    }
-
-    setState(() => _diffState = _DiffCardState.loading);
-    try {
-      final absolutePath = p.join(project.path, filename);
-      final original = await ApplyService.readOriginalForDiff(absolutePath, project.path);
-
-      final dmp = DiffMatchPatch();
-      final diffs = dmp.diff(original ?? '', widget.code);
-      dmp.diffCleanupSemantic(diffs);
-
-      if (!mounted) return;
-      setState(() {
-        _originalContent = original;
-        _diffs = diffs;
-        _diffState = _DiffCardState.loaded;
-      });
-    } on StateError {
-      if (!mounted) return;
-      setState(() {
-        _diffError = 'This file is outside the current project.';
-        _diffState = _DiffCardState.error;
-      });
-    } on FileSystemException {
-      if (!mounted) return;
-      setState(() {
-        _diffError = 'Could not read file from disk.';
-        _diffState = _DiffCardState.error;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _diffError = 'Unable to compute diff.';
-        _diffState = _DiffCardState.error;
-      });
-    }
-  }
-
   Future<void> _applyChange() async {
     final project = _resolveActiveProject();
-    if (project == null) {
-      _showApplyError('No active project.');
-      return;
-    }
+    if (project == null) return;
     final filename = _effectiveFilename;
-    if (filename == null) {
-      _showApplyError('No filename set for this code block.');
-      return;
-    }
+    if (filename == null) return;
 
+    final absolutePath = p.join(project.path, filename);
     setState(() => _applying = true);
     try {
-      final absolutePath = p.join(project.path, filename);
       await ref
           .read(codeApplyActionsProvider.notifier)
           .applyChange(
@@ -457,32 +393,51 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
             sessionId: widget.sessionId,
             messageId: widget.messageId,
           );
-
       if (!mounted) return;
-      // Auto-open the changes panel on first apply
-      ref.read(changesPanelVisibleProvider.notifier).show();
-      setState(() => _diffState = _DiffCardState.hidden);
-    } on ProjectMissingException {
-      // The notifier already triggered refreshProjectStatus — just show the error.
-      _showApplyError('Project folder is missing. Right-click the project in the sidebar to Relocate or Remove it.');
-    } on StateError {
-      _showApplyError('This file is outside the current project.');
-    } on FileSystemException {
-      _showApplyError('Could not write file to disk.');
-    } catch (_) {
-      _showApplyError('Unable to apply change.');
+      final applyState = ref.read(codeApplyActionsProvider);
+      if (!applyState.hasError) {
+        ref.read(changesPanelVisibleProvider.notifier).show();
+        setState(() => _diffRequested = false);
+      }
     } finally {
       if (mounted) setState(() => _applying = false);
     }
   }
 
-  void _showApplyError(String message) {
-    if (!mounted) return;
-    showErrorSnackBar(context, message);
-  }
-
   @override
   Widget build(BuildContext context) {
+    ref.listen(codeApplyActionsProvider, (_, next) {
+      if (!_applying) return;  // not our operation
+      if (next is! AsyncError || !mounted) return;
+      final failure = next.error;
+      if (failure is! CodeApplyFailure) return;
+      switch (failure) {
+        case CodeApplyProjectMissing():
+          showErrorSnackBar(context, 'Project folder is missing. Right-click the project in the sidebar to Relocate or Remove it.');
+        case CodeApplyOutsideProject():
+          showErrorSnackBar(context, 'This file is outside the current project.');
+        case CodeApplyDiskWrite(:final message):
+          showErrorSnackBar(context, 'Could not write file to disk: $message');
+        case CodeApplyFileRead(:final path):
+          showErrorSnackBar(context, 'Could not read file: $path');
+        case CodeApplyUnknownError():
+          showErrorSnackBar(context, 'Unable to apply change.');
+      }
+    });
+
+    final project = _resolveActiveProject();
+
+    AsyncValue<DiffResult?>? diffAsync;
+    if (_diffRequested && _effectiveFilename != null && project != null) {
+      final absolutePath = p.join(project.path, _effectiveFilename!);
+      diffAsync = ref.watch(codeDiffProvider(
+        absolutePath: absolutePath,
+        projectPath: project.path,
+        newContent: widget.code,
+      ));
+    }
+    final bool diffLoaded = diffAsync?.asData?.value != null;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
@@ -493,34 +448,34 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildHeader(),
+          _buildHeader(diffLoaded),
           if (_showingPicker)
             _FilePickerPanel(
-              project: _resolveActiveProject(),
+              project: project,
               onCancel: () => setState(() => _showingPicker = false),
               onPicked: (picked) {
                 setState(() {
                   _pickedFilename = picked;
                   _showingPicker = false;
+                  _diffRequested = true;
                 });
-                _loadDiff();
               },
             )
-          else if (_diffState == _DiffCardState.loading)
-            const Padding(
-              padding: EdgeInsets.all(12),
-              child: Center(child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5))),
-            )
-          else if (_diffState == _DiffCardState.loaded)
-            _buildDiffCard()
-          else if (_diffState == _DiffCardState.error)
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                _diffError ?? 'Error computing diff',
-                style: const TextStyle(color: ThemeConstants.error, fontSize: ThemeConstants.uiFontSizeSmall),
-              ),
-            )
+          else if (diffAsync != null)
+            switch (diffAsync) {
+              AsyncLoading() => const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Center(child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5))),
+                ),
+              AsyncData(:final value) when value != null => _buildDiffCard(value),
+              _ => Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: const Text(
+                    'Unable to compute diff.',
+                    style: TextStyle(color: ThemeConstants.error, fontSize: ThemeConstants.uiFontSizeSmall),
+                  ),
+                ),
+            }
           else
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -541,7 +496,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool diffLoaded) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: const BoxDecoration(
@@ -572,11 +527,11 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
             ),
           ] else
             const Spacer(),
-          if (_effectiveFilename != null && _diffState == _DiffCardState.hidden && !_showingPicker)
-            _HeaderButton(label: 'Diff', icon: AppIcons.gitDiff, onTap: _loadDiff),
+          if (_effectiveFilename != null && !_diffRequested && !_showingPicker)
+            _HeaderButton(label: 'Diff', icon: AppIcons.gitDiff, onTap: () => setState(() => _diffRequested = true)),
           if (_effectiveFilename == null && !_showingPicker)
             _HeaderButton(label: 'Diff…', icon: AppIcons.gitDiff, onTap: () => setState(() => _showingPicker = true)),
-          if (_diffState == _DiffCardState.loaded) ...[
+          if (diffLoaded) ...[
             _HeaderButton(
               label: _applying ? 'Applying...' : 'Apply',
               icon: _applying ? AppIcons.applying : AppIcons.apply,
@@ -587,7 +542,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
               label: 'Collapse',
               icon: AppIcons.chevronUp,
               onTap: () => setState(() {
-                _diffState = _DiffCardState.hidden;
+                _diffRequested = false;
                 _activeTab = 1;
               }),
             ),
@@ -599,7 +554,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
     );
   }
 
-  Widget _buildDiffCard() {
+  Widget _buildDiffCard(DiffResult diffResult) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -621,10 +576,10 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
           constraints: const BoxConstraints(maxHeight: 320),
           child: SingleChildScrollView(
             child: _activeTab == 0
-                ? _buildPlainContent(_originalContent ?? '(new file)')
+                ? _buildPlainContent(diffResult.originalContent ?? '(new file)')
                 : _activeTab == 2
                 ? _buildPlainContent(widget.code)
-                : _buildDiffContent(),
+                : _buildDiffContent(diffResult.diffs),
           ),
         ),
       ],
@@ -648,8 +603,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
     );
   }
 
-  Widget _buildDiffContent() {
-    final diffs = _diffs ?? [];
+  Widget _buildDiffContent(List<Diff> diffs) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Padding(
