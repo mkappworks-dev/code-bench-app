@@ -36,11 +36,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.chat_bubble_outline, size: 48, color: Color(0xFF333333)),
+              Icon(Icons.chat_bubble_outline, size: 48, color: ThemeConstants.faintFg),
               SizedBox(height: 16),
               Text(
                 'Select a project and start a conversation',
-                style: TextStyle(color: Color(0xFF555555), fontSize: 13),
+                style: TextStyle(color: ThemeConstants.mutedFg, fontSize: 13),
               ),
             ],
           ),

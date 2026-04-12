@@ -80,7 +80,9 @@ class _BrandingPanel extends StatelessWidget {
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(8),
-                    boxShadow: const [BoxShadow(color: Color(0x99000000), blurRadius: 10, offset: Offset(0, 2))],
+                    boxShadow: const [
+                      BoxShadow(color: ThemeConstants.shadowDark, blurRadius: 10, offset: Offset(0, 2)),
+                    ],
                   ),
                   alignment: Alignment.center,
                   child: const Text(
@@ -176,8 +178,8 @@ class _ContentPanel extends ConsumerWidget {
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 onPressed: () => ref.read(onboardingProvider.notifier).back(),
-                icon: const Icon(Icons.chevron_left, size: 16, color: Color(0xFF888888)),
-                label: const Text('Back', style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
+                icon: const Icon(Icons.chevron_left, size: 16, color: ThemeConstants.dimFg),
+                label: const Text('Back', style: TextStyle(color: ThemeConstants.dimFg, fontSize: 12)),
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,

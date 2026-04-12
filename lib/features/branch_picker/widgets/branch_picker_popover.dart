@@ -149,7 +149,9 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
                   color: ThemeConstants.panelBackground,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: ThemeConstants.deepBorder),
-                  boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 20, offset: Offset(0, -4))],
+                  boxShadow: const [
+                    BoxShadow(color: ThemeConstants.shadowMedium, blurRadius: 20, offset: Offset(0, -4)),
+                  ],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -342,8 +344,11 @@ class _BranchRow extends StatelessWidget {
                 Container(
                   margin: const EdgeInsets.only(left: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(color: const Color(0xFF2A1F0A), borderRadius: BorderRadius.circular(3)),
-                  child: const Text('worktree', style: TextStyle(color: Color(0xFFE8A228), fontSize: 9)),
+                  decoration: BoxDecoration(
+                    color: ThemeConstants.worktreeBadgeBg,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: const Text('worktree', style: TextStyle(color: ThemeConstants.worktreeBadgeFg, fontSize: 9)),
                 ),
             ],
           ),

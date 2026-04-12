@@ -615,9 +615,9 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: diffs.map((diff) {
             final bg = diff.operation == DIFF_INSERT
-                ? const Color(0x3300CC66)
+                ? ThemeConstants.diffAdditionBg
                 : diff.operation == DIFF_DELETE
-                ? const Color(0x33FF4444)
+                ? ThemeConstants.diffDeletionBg
                 : Colors.transparent;
             final prefix = diff.operation == DIFF_INSERT
                 ? '+'

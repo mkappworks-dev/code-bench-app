@@ -239,11 +239,11 @@ class _WorkingPillState extends ConsumerState<_WorkingPill> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2540),
+        color: ThemeConstants.selectionBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF2A3550)),
+        border: Border.all(color: ThemeConstants.selectionBorder),
       ),
-      child: Text('Working for ${seconds}s', style: const TextStyle(color: Color(0xFF4A7CFF), fontSize: 10)),
+      child: Text('Working for ${seconds}s', style: const TextStyle(color: ThemeConstants.blueAccent, fontSize: 10)),
     );
   }
 }

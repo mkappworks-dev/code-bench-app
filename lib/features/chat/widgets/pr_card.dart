@@ -139,7 +139,7 @@ class _PRCardState extends ConsumerState<PRCard> {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: ThemeConstants.inputSurface,
         title: Text(title, style: const TextStyle(color: ThemeConstants.textPrimary)),
         content: Text(body, style: const TextStyle(color: ThemeConstants.textSecondary)),
         actions: [
@@ -214,7 +214,7 @@ class _PRCardState extends ConsumerState<PRCard> {
     final htmlUrl = s.pr['html_url'] as String? ?? '';
     final badgeText = s.merged ? 'merged' : (s.pr['state'] as String? ?? 'open');
     final badgeColor = switch (badgeText) {
-      'merged' => const Color(0xFF6E40C9),
+      'merged' => ThemeConstants.prMergedColor,
       'closed' => ThemeConstants.error,
       _ => ThemeConstants.success,
     };
@@ -222,7 +222,7 @@ class _PRCardState extends ConsumerState<PRCard> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        color: ThemeConstants.inputSurface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: ThemeConstants.borderColor),
       ),
@@ -348,7 +348,7 @@ class _PRCardState extends ConsumerState<PRCard> {
     final (icon, color) = switch (conclusion) {
       'success' => ('✓', ThemeConstants.success),
       'failure' => ('✗', ThemeConstants.error),
-      _ => ('⏳', const Color(0xFFFFAA00)),
+      _ => ('⏳', ThemeConstants.pendingAmber),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

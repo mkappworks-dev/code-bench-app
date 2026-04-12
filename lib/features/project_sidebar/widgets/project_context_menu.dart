@@ -22,10 +22,10 @@ class ProjectContextMenu {
         overlay.size.width - position.dx,
         overlay.size.height - position.dy,
       ),
-      color: const Color(0xFF1E1E1E),
+      color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(6),
-        side: const BorderSide(color: Color(0xFF333333)),
+        side: const BorderSide(color: ThemeConstants.faintFg),
       ),
       items: [
         if (!isMissing) ...[

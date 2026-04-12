@@ -73,7 +73,7 @@ class _RelocateProjectDialogState extends ConsumerState<RelocateProjectDialog> {
     });
 
     return AlertDialog(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: ThemeConstants.panelBackground,
       title: Text(
         'Relocate "${widget.project.name}"',
         style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 14),

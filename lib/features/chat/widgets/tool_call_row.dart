@@ -55,7 +55,7 @@ class _ToolCallRowState extends State<ToolCallRow> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
+              color: ThemeConstants.inputSurface,
               borderRadius: BorderRadius.circular(_expanded ? 0 : 6),
               border: Border.all(color: ThemeConstants.borderColor),
             ),
@@ -83,7 +83,7 @@ class _ToolCallRowState extends State<ToolCallRow> {
                   ToolStatus.running => const SizedBox(
                     width: 10,
                     height: 10,
-                    child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF4A7CFF)),
+                    child: CircularProgressIndicator(strokeWidth: 1.5, color: ThemeConstants.blueAccent),
                   ),
                   ToolStatus.success => const Icon(Icons.check_circle, size: 11, color: Colors.green),
                   ToolStatus.error => Tooltip(
@@ -92,7 +92,7 @@ class _ToolCallRowState extends State<ToolCallRow> {
                   ),
                   ToolStatus.cancelled => Tooltip(
                     message: '${widget.event.toolName} — cancelled',
-                    child: const Icon(Icons.cancel_outlined, size: 11, color: Color(0xFF888888)),
+                    child: const Icon(Icons.cancel_outlined, size: 11, color: ThemeConstants.dimFg),
                   ),
                 },
                 if (widget.event.durationMs != null) ...[
@@ -120,7 +120,7 @@ class _ToolCallRowState extends State<ToolCallRow> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFF131313),
+              color: ThemeConstants.sidebarBackground,
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(6)),
               border: Border.all(color: ThemeConstants.borderColor),
             ),
@@ -230,7 +230,7 @@ class _ExpandableOutputState extends State<_ExpandableOutput> {
         if (truncated)
           GestureDetector(
             onTap: () => setState(() => _showAll = true),
-            child: const Text('Show more…', style: TextStyle(color: Color(0xFF4A7CFF), fontSize: 10)),
+            child: const Text('Show more…', style: TextStyle(color: ThemeConstants.blueAccent, fontSize: 10)),
           ),
       ],
     );

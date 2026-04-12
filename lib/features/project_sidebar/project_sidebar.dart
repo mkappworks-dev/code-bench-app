@@ -111,7 +111,7 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
       color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
-        side: const BorderSide(color: Color(0xFF333333)),
+        side: const BorderSide(color: ThemeConstants.faintFg),
       ),
       items: [
         _sortHeader('SORT PROJECTS'),
@@ -165,7 +165,7 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
 
     return Container(
       width: 224,
-      color: const Color(0xFF0A0A0A),
+      color: ThemeConstants.activityBar,
       child: Column(
         children: [
           // Traffic-light clearance on macOS (TitleBarStyle.hidden)

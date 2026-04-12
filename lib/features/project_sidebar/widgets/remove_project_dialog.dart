@@ -83,7 +83,7 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
 
     final isMissing = widget.project.status == ProjectStatus.missing;
     return AlertDialog(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: ThemeConstants.panelBackground,
       title: Text(
         'Remove "${widget.project.name}"?',
         style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 14),

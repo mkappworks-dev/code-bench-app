@@ -90,7 +90,7 @@ class _GithubStepState extends ConsumerState<GithubStep> {
         // OAuth button
         FilledButton.icon(
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF24292E), // GitHub brand colour
+            backgroundColor: ThemeConstants.githubBrandColor, // GitHub brand colour
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),

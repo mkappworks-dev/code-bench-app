@@ -279,7 +279,7 @@ class _AppDropdown<T> extends StatelessWidget {
       color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(6),
-        side: const BorderSide(color: Color(0xFF333333)),
+        side: const BorderSide(color: ThemeConstants.faintFg),
       ),
       items: items
           .map(

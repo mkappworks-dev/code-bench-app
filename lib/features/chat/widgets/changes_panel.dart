@@ -183,7 +183,7 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
     await showDialog<void>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: ThemeConstants.inputSurface,
         title: const Text(
           'File externally modified',
           style: TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
@@ -267,11 +267,14 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
                           margin: const EdgeInsets.only(left: 6),
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF3D2900),
+                            color: ThemeConstants.editedBadgeBg,
                             borderRadius: BorderRadius.circular(3),
-                            border: Border.all(color: const Color(0xFFAA7700)),
+                            border: Border.all(color: ThemeConstants.editedBadgeBorder),
                           ),
-                          child: const Text('edited', style: TextStyle(color: Color(0xFFFFAA00), fontSize: 9)),
+                          child: const Text(
+                            'edited',
+                            style: TextStyle(color: ThemeConstants.pendingAmber, fontSize: 9),
+                          ),
                         );
                       },
                     ),

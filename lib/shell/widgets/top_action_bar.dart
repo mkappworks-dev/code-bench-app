@@ -120,11 +120,14 @@ class TopActionBar extends ConsumerWidget {
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(color: const Color(0xFF2A1F0A), borderRadius: BorderRadius.circular(4)),
+                decoration: BoxDecoration(
+                  color: ThemeConstants.worktreeBadgeBg,
+                  borderRadius: BorderRadius.circular(4),
+                ),
                 child: const Text(
                   'No Git',
                   style: TextStyle(
-                    color: Color(0xFFE8A228),
+                    color: ThemeConstants.worktreeBadgeFg,
                     fontSize: ThemeConstants.uiFontSizeLabel,
                     fontWeight: FontWeight.w600,
                   ),
@@ -185,7 +188,7 @@ class _VsCodeDropdown extends ConsumerWidget {
               color: ThemeConstants.panelBackground,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(7),
-                side: const BorderSide(color: Color(0xFF333333)),
+                side: const BorderSide(color: ThemeConstants.faintFg),
               ),
               items: [
                 _menuItem('vscode', AppIcons.code, 'VS Code'),
@@ -572,7 +575,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
                         color: ThemeConstants.panelBackground,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(7),
-                          side: const BorderSide(color: Color(0xFF333333)),
+                          side: const BorderSide(color: ThemeConstants.faintFg),
                         ),
                         items: [
                           // Multi-remote picker. Only rendered when the repo
@@ -922,7 +925,7 @@ class _ActionsDropdown extends ConsumerWidget {
               color: ThemeConstants.panelBackground,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(7),
-                side: const BorderSide(color: Color(0xFF333333)),
+                side: const BorderSide(color: ThemeConstants.faintFg),
               ),
               items: [
                 for (final action in project.actions)
@@ -1042,13 +1045,13 @@ class _AddActionDialogState extends State<_AddActionDialog> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
-              Icon(AppIcons.warning, size: 12, color: Color(0xFFE8A228)),
+              Icon(AppIcons.warning, size: 12, color: ThemeConstants.worktreeBadgeFg),
               SizedBox(width: 6),
               Expanded(
                 child: Text(
                   'Commands run with your full user privileges. Only add actions '
                   'you would run in a terminal yourself.',
-                  style: TextStyle(color: Color(0xFFE8A228), fontSize: ThemeConstants.uiFontSizeLabel),
+                  style: TextStyle(color: ThemeConstants.worktreeBadgeFg, fontSize: ThemeConstants.uiFontSizeLabel),
                 ),
               ),
             ],

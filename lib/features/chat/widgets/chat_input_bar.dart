@@ -232,7 +232,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
       color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
-        side: const BorderSide(color: Color(0xFF333333)),
+        side: const BorderSide(color: ThemeConstants.faintFg),
       ),
       items: items
           .map(
@@ -272,7 +272,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
       color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
-        side: const BorderSide(color: Color(0xFF333333)),
+        side: const BorderSide(color: ThemeConstants.faintFg),
       ),
       items: models
           .map(

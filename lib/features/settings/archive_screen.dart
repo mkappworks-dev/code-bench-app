@@ -144,7 +144,7 @@ class _ArchivedSessionCard extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF141414),
+        color: ThemeConstants.background,
         border: Border.all(color: ThemeConstants.borderColor),
         borderRadius: BorderRadius.circular(8),
       ),
