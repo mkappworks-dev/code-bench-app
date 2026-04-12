@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../features/project_sidebar/project_sidebar_actions.dart';
-import '../../../services/git/git_service.dart';
+import '../branch_picker_failure.dart';
 import '../branch_picker_notifier.dart';
 
 class BranchPickerPopover extends ConsumerStatefulWidget {
@@ -35,17 +32,12 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
   final _filterFocus = FocusNode();
   final _createFocus = FocusNode();
 
-  List<String> _branches = [];
-  Set<String> _worktreeBranches = {};
-  bool _loading = true;
-  String? _loadError;
   bool _createMode = false;
 
   @override
   void initState() {
     super.initState();
     _filterController.addListener(() => setState(() {}));
-    _load();
   }
 
   @override
@@ -57,118 +49,79 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
     super.dispose();
   }
 
-  /// Loads local and worktree branch lists. Wrapped in try/catch so a
-  /// synchronous `Process.run` throw (git binary missing, cwd deleted)
-  /// cannot escape `initState`'s async zone and leave `_loading == true`
-  /// forever — the popover would otherwise be stuck at an infinite spinner
-  /// with no way to recover short of closing and reopening.
-  Future<void> _load() async {
-    final notifier = ref.read(branchPickerProvider(widget.projectPath));
-    try {
-      final branches = await notifier.listLocalBranches();
-      final wtBranches = await notifier.worktreeBranches();
-      if (mounted) {
-        setState(() {
-          _branches = branches;
-          _worktreeBranches = wtBranches;
-          _loading = false;
-          _loadError = null;
-        });
-        _filterFocus.requestFocus();
-      }
-    } on Exception {
-      if (mounted) {
-        setState(() {
-          _branches = const [];
-          _worktreeBranches = const {};
-          _loading = false;
-          _loadError = 'Could not read branches — is git installed and the folder available?';
-        });
-      }
-    }
-  }
-
   Future<void> _checkout(String branch) async {
-    try {
-      await ref.read(branchPickerProvider(widget.projectPath)).checkout(branch);
-      if (mounted) {
-        ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
-        widget.onClose();
+    await ref.read(branchPickerProvider(widget.projectPath).notifier).checkout(branch);
+    if (!mounted) return;
+    final state = ref.read(branchPickerProvider(widget.projectPath));
+    if (state.hasError) {
+      final failure = state.error;
+      if (failure is! BranchPickerFailure) return;
+      switch (failure) {
+        case BranchPickerInvalidName(:final reason):
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reason)));
+        case BranchPickerCheckoutConflict(:final message):
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message), duration: const Duration(seconds: 4)));
+          // Reload so the branch list is restored from the error state.
+          ref.read(branchPickerProvider(widget.projectPath).notifier).reload();
+        case BranchPickerCreateFailed(:final message):
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Checkout failed: $message')));
+        case BranchPickerGitUnavailable():
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Checkout failed — git binary unavailable.')));
+        case BranchPickerUnknownError():
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Checkout failed — project folder unavailable.')));
       }
-    } on ArgumentError catch (e) {
-      // Leading-dash / empty branch guard from BranchPickerNotifier —
-      // surface as a snackbar rather than letting it crash the zone.
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message.toString())));
-      }
-    } on GitException catch (e) {
-      if (mounted) {
-        final msg = e.message.contains('would be overwritten')
-            ? 'Checkout failed — stash or commit your changes first.'
-            : 'Checkout failed: ${e.message}';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), duration: const Duration(seconds: 4)));
-        // Reload the branch list so "current branch" highlighting reflects
-        // reality (another worktree may have moved the ref between _load
-        // and tap, and the stale list would mislead the next click).
-        unawaited(_load());
-      }
-    } on ProcessException {
-      // Thrown when `git` isn't on PATH or the cwd was deleted out from
-      // under us. The notifier logs the underlying ProcessException; we
-      // keep the typed catch here purely to route to the right snackbar.
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Checkout failed — git binary unavailable.')));
-      }
-    } on FileSystemException {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Checkout failed — project folder unavailable.')));
-      }
+    } else {
+      ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
+      widget.onClose();
     }
   }
 
   Future<void> _createBranch() async {
     final name = _createController.text.trim();
-    try {
-      await ref.read(branchPickerProvider(widget.projectPath)).createBranch(name);
-      if (mounted) {
-        ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
-        widget.onClose();
+    await ref.read(branchPickerProvider(widget.projectPath).notifier).createBranch(name);
+    if (!mounted) return;
+    final state = ref.read(branchPickerProvider(widget.projectPath));
+    if (state.hasError) {
+      final failure = state.error;
+      if (failure is! BranchPickerFailure) return;
+      switch (failure) {
+        case BranchPickerInvalidName(:final reason):
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reason)));
+        case BranchPickerCreateFailed(:final message):
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $message')));
+        case BranchPickerCheckoutConflict(:final message):
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        case BranchPickerGitUnavailable():
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Create branch failed — git binary unavailable.')));
+        case BranchPickerUnknownError():
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Create branch failed — project folder unavailable.')));
       }
-    } on ArgumentError catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message.toString())));
-      }
-    } on GitException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: ${e.message}')));
-      }
-    } on ProcessException {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Create branch failed — git binary unavailable.')));
-      }
-    } on FileSystemException {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Create branch failed — project folder unavailable.')));
-      }
+    } else {
+      ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
+      widget.onClose();
     }
   }
 
-  List<String> get _filtered {
+  List<String> _filtered(List<String> branches) {
     final q = _filterController.text.toLowerCase();
-    if (q.isEmpty) return _branches;
-    return _branches.where((b) => b.toLowerCase().contains(q)).toList();
+    if (q.isEmpty) return branches;
+    return branches.where((b) => b.toLowerCase().contains(q)).toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    final asyncState = ref.watch(branchPickerProvider(widget.projectPath));
+
     return Stack(
       children: [
         // Dismiss on outside tap
@@ -203,36 +156,40 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
                   children: [
                     _SearchBar(controller: _filterController, focusNode: _filterFocus),
                     Flexible(
-                      child: _loading
-                          ? const Padding(
-                              padding: EdgeInsets.all(16),
-                              child: Center(
-                                child: SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(strokeWidth: 1.5),
-                                ),
-                              ),
-                            )
-                          : _loadError != null
-                          ? Padding(
-                              padding: const EdgeInsets.all(14),
-                              child: Text(
-                                _loadError!,
-                                style: const TextStyle(
-                                  color: ThemeConstants.warning,
-                                  fontSize: ThemeConstants.uiFontSizeLabel,
-                                ),
-                              ),
-                            )
-                          : ListView.builder(
+                      child: switch (asyncState) {
+                        AsyncLoading() => const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(
+                            child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5)),
+                          ),
+                        ),
+                        AsyncError(:final error) => Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Text(
+                            _errorMessage(error),
+                            style: const TextStyle(
+                              color: ThemeConstants.warning,
+                              fontSize: ThemeConstants.uiFontSizeLabel,
+                            ),
+                          ),
+                        ),
+                        AsyncData(:final value) => Builder(
+                          builder: (context) {
+                            // Request focus after the first successful data load.
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted && !_filterFocus.hasFocus && !_createFocus.hasFocus) {
+                                _filterFocus.requestFocus();
+                              }
+                            });
+                            final filtered = _filtered(value.branches);
+                            return ListView.builder(
                               shrinkWrap: true,
                               padding: const EdgeInsets.symmetric(vertical: 4),
-                              itemCount: _filtered.length,
+                              itemCount: filtered.length,
                               itemBuilder: (ctx, i) {
-                                final branch = _filtered[i];
+                                final branch = filtered[i];
                                 final isCurrent = branch == widget.currentBranch;
-                                final isWorktree = _worktreeBranches.contains(branch);
+                                final isWorktree = value.worktreeBranches.contains(branch);
                                 return _BranchRow(
                                   branch: branch,
                                   isCurrent: isCurrent,
@@ -240,7 +197,10 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
                                   onTap: (isCurrent || isWorktree) ? null : () => _checkout(branch),
                                 );
                               },
-                            ),
+                            );
+                          },
+                        ),
+                      },
                     ),
                     _Footer(
                       createMode: _createMode,
@@ -268,6 +228,19 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
         ),
       ],
     );
+  }
+
+  String _errorMessage(Object? error) {
+    if (error is BranchPickerFailure) {
+      return switch (error) {
+        BranchPickerGitUnavailable() => 'Could not read branches — is git installed and the folder available?',
+        BranchPickerInvalidName(:final reason) => reason,
+        BranchPickerCheckoutConflict(:final message) => message,
+        BranchPickerCreateFailed(:final message) => message,
+        BranchPickerUnknownError() => 'Could not read branches — is git installed and the folder available?',
+      };
+    }
+    return 'Could not read branches — is git installed and the folder available?';
   }
 }
 
