@@ -95,6 +95,13 @@ The Riverpod generator strips the `Notifier` suffix when producing the provider 
 
 **`Process.run` / `dart:io` / Dio** — allowed only inside `lib/services/`. The one exception is `ApplyService.assertWithinProject` (a static security guard), which may be called from widgets that perform their own file reads (e.g. `_loadDiff` in `message_bubble.dart`).
 
+## Riverpod usage rules
+
+- `ref.watch` → widget `build()` methods **and** `@riverpod` provider bodies (both are reactive). Never in event handlers, notifier methods, or async callbacks.
+- `ref.read` → everywhere else: event handlers, notifier methods, `initState`. One-shot, no subscription.
+- `.notifier` → required when calling a method on the notifier class: `ref.read(fooProvider.notifier).doThing()`, not `ref.read(fooProvider).doThing()`.
+- `AsyncValue` unwrapping → prefer exhaustive `switch` over `AsyncData` / `AsyncLoading` / `AsyncError` in `build()`. Only use `.value` for intentional "latest known" reads inside event handlers.
+
 ## macOS notes
 
 App Sandbox is **intentionally disabled** on macOS because `ActionRunnerService`, `GitService`, and `IdeLaunchService` all shell out to external binaries. See [macos/Runner/README.md](macos/Runner/README.md) for the rationale, contributor rules (no `runInShell: true`, no PAT header logging), and distribution implications. Any change to `macos/Runner/*.entitlements` or to the process-execution services must be weighed against that threat model.

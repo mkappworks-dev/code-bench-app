@@ -5,6 +5,7 @@ import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../core/utils/debug_logger.dart';
 import '../../data/models/chat_session.dart';
+import '../../data/models/project.dart';
 import '../chat/chat_notifier.dart';
 import '../project_sidebar/project_sidebar_actions.dart';
 import '../project_sidebar/project_sidebar_notifier.dart';
@@ -41,7 +42,10 @@ class ArchiveScreen extends ConsumerWidget {
           );
         }
 
-        final projects = projectsAsync.value ?? [];
+        final projects = switch (projectsAsync) {
+          AsyncData(:final value) => value,
+          _ => const <Project>[],
+        };
         final projectMap = {for (final p in projects) p.id: p.name};
 
         // Group sessions by projectId

@@ -54,7 +54,10 @@ class _StatusBarState extends ConsumerState<StatusBar> {
 
     // Watch live git state for the active project
     final liveStateAsync = activeProject != null ? ref.watch(gitLiveStateProvider(activeProject.path)) : null;
-    final liveState = liveStateAsync?.value;
+    final liveState = switch (liveStateAsync) {
+      AsyncData(:final value) => value,
+      _ => null,
+    };
 
     return Container(
       height: 22,

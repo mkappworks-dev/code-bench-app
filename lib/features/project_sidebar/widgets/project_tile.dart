@@ -55,7 +55,10 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
     // isGitRepo check returns false (no `.git` entry), so it resolves to
     // GitLiveState.notGit without spawning any git processes.
     final liveStateAsync = ref.watch(gitLiveStateProvider(widget.project.path));
-    final liveState = liveStateAsync.value;
+    final liveState = switch (liveStateAsync) {
+      AsyncData(:final value) => value,
+      _ => null,
+    };
     final isActive = widget.project.id == activeProjectId;
     final isGit = !isMissing && (liveState?.isGit ?? false);
 
