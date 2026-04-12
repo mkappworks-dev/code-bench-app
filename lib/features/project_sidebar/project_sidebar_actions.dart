@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../core/utils/debug_logger.dart';
 import '../../data/models/ai_model.dart';
 import '../../data/models/chat_session.dart';
 import '../../data/models/project.dart';
@@ -26,13 +27,42 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
 
   // ── Project mutations ──────────────────────────────────────────────────────
 
-  Future<void> refreshProjectStatuses() => _projects.refreshProjectStatuses();
+  Future<void> refreshProjectStatuses() async {
+    try {
+      await _projects.refreshProjectStatuses();
+    } catch (e) {
+      dLog('[ProjectSidebarActions] refreshProjectStatuses failed: $e');
+      rethrow;
+    }
+  }
 
   Future<void> refreshProjectStatus(String id) => _projects.refreshProjectStatus(id);
 
-  Future<Project> addExistingFolder(String path) => _projects.addExistingFolder(path);
+  Future<Project> addExistingFolder(String path) async {
+    try {
+      return await _projects.addExistingFolder(path);
+    } on DuplicateProjectPathException {
+      rethrow; // expected — widget renders a user-facing message
+    } on ArgumentError {
+      rethrow; // expected — folder does not exist
+    } catch (e, st) {
+      dLog('[ProjectSidebarActions] addExistingFolder failed: $e\n$st');
+      rethrow;
+    }
+  }
 
-  Future<void> relocateProject(String id, String path) => _projects.relocateProject(id, path);
+  Future<void> relocateProject(String id, String path) async {
+    try {
+      await _projects.relocateProject(id, path);
+    } on DuplicateProjectPathException {
+      rethrow; // expected — widget renders a user-facing message
+    } on ArgumentError {
+      rethrow; // expected — folder does not exist
+    } catch (e, st) {
+      dLog('[ProjectSidebarActions] relocateProject failed: $e\n$st');
+      rethrow;
+    }
+  }
 
   Future<void> updateProjectActions(String id, List<ProjectAction> actions) =>
       _projects.updateProjectActions(id, actions);
@@ -40,13 +70,18 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
   /// Removes the project from Code Bench. If [deleteSessions] is true, all
   /// conversations linked to the project are deleted first.
   Future<void> removeProject(String id, {bool deleteSessions = false}) async {
-    if (deleteSessions) {
-      final sessions = await _sessions.getSessionsByProject(id);
-      for (final s in sessions) {
-        await _sessions.deleteSession(s.sessionId);
+    try {
+      if (deleteSessions) {
+        final sessions = await _sessions.getSessionsByProject(id);
+        for (final s in sessions) {
+          await _sessions.deleteSession(s.sessionId);
+        }
       }
+      await _projects.removeProject(id);
+    } catch (e, st) {
+      dLog('[ProjectSidebarActions] removeProject failed: $e\n$st');
+      rethrow;
     }
-    await _projects.removeProject(id);
   }
 
   // ── Git state ─────────────────────────────────────────────────────────────
@@ -99,7 +134,14 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
 
   Future<void> updateSessionTitle(String id, String title) => _sessions.updateSessionTitle(id, title);
 
-  Future<List<ChatSession>> getSessionsByProject(String projectId) => _sessions.getSessionsByProject(projectId);
+  Future<List<ChatSession>> getSessionsByProject(String projectId) async {
+    try {
+      return await _sessions.getSessionsByProject(projectId);
+    } catch (e) {
+      dLog('[ProjectSidebarActions] getSessionsByProject failed: $e');
+      rethrow;
+    }
+  }
 
   /// Forces [archivedSessionsProvider] to re-fetch from the DB.
   ///

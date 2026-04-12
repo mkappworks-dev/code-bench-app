@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/project.dart';
 import '../project_sidebar_actions.dart';
 
@@ -42,8 +41,7 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
         _sessionCount = sessions.length;
         _sessionCountLoaded = true;
       });
-    } catch (e) {
-      dLog('[RemoveProjectDialog] loadSessionCount failed: $e');
+    } catch (_) {
       if (!mounted) return;
       // Mark loaded so the dialog remains usable. Sessions are not deleted
       // without an explicit checkbox, so this is safe — the user just won't
@@ -62,8 +60,7 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
           .read(projectSidebarActionsProvider.notifier)
           .removeProject(widget.project.id, deleteSessions: _alsoDeleteSessions);
       if (mounted) Navigator.of(context).pop(true);
-    } catch (e, st) {
-      dLog('[RemoveProjectDialog] remove failed: $e\n$st');
+    } catch (e) {
       if (mounted) {
         setState(() => _submitting = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to remove project: $e')));

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_icons.dart';
-import '../../core/utils/debug_logger.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../core/utils/instant_menu.dart';
@@ -50,11 +49,11 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
   }
 
   Future<void> _safeRefresh() async {
+    // Swallow errors at the widget edge — the notifier already logs them.
+    // The lifecycle trigger must not surface failures as uncaught exceptions.
     try {
       await ref.read(projectSidebarActionsProvider.notifier).refreshProjectStatuses();
-    } catch (e) {
-      dLog('[ProjectSidebar] refreshProjectStatuses failed: $e');
-    }
+    } catch (_) {}
   }
 
   Future<void> _addProject() async {
@@ -70,8 +69,7 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
       messenger.showSnackBar(SnackBar(content: Text(e.toString())));
     } on ArgumentError {
       messenger.showSnackBar(const SnackBar(content: Text('The selected folder does not exist.')));
-    } catch (e) {
-      dLog('[ProjectSidebar] addProject failed: $e');
+    } catch (_) {
       messenger.showSnackBar(const SnackBar(content: Text('Failed to add project. Please try again.')));
     }
   }
