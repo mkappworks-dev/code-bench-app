@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/project.dart';
-import '../../../services/project/project_service.dart' show DuplicateProjectPathException;
 import '../project_sidebar_actions.dart';
+import '../project_sidebar_failure.dart';
 
 class RelocateProjectDialog extends ConsumerStatefulWidget {
   const RelocateProjectDialog({super.key, required this.project});
@@ -46,21 +46,32 @@ class _RelocateProjectDialogState extends ConsumerState<RelocateProjectDialog> {
     });
     try {
       await ref.read(projectSidebarActionsProvider.notifier).relocateProject(widget.project.id, _newPath!);
-      if (mounted) Navigator.of(context).pop(true);
-    } catch (e) {
-      setState(() {
-        _submitting = false;
-        _error = e is ArgumentError
-            ? 'The selected folder does not exist. Please choose a valid folder.'
-            : e is DuplicateProjectPathException
-            ? e.toString()
-            : 'Could not relocate project. Please try again.';
-      });
+      if (!mounted) return;
+      if (!ref.read(projectSidebarActionsProvider).hasError) {
+        Navigator.of(context).pop(true);
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(projectSidebarActionsProvider, (_, next) {
+      if (!_submitting) return;
+      if (next is! AsyncError || !mounted) return;
+      final failure = next.error;
+      if (failure is! ProjectSidebarFailure) return;
+      setState(
+        () => _error = switch (failure) {
+          ProjectSidebarInvalidPath() => 'The selected folder does not exist. Please choose a valid folder.',
+          ProjectSidebarDuplicatePath() => 'A project at that path is already added.',
+          ProjectSidebarStorageError() => 'Could not relocate project. Please try again.',
+          ProjectSidebarUnknownError() => 'Could not relocate project. Please try again.',
+        },
+      );
+    });
+
     return AlertDialog(
       backgroundColor: const Color(0xFF1E1E1E),
       title: Text(

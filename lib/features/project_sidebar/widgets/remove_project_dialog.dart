@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/project.dart';
 import '../project_sidebar_actions.dart';
+import '../project_sidebar_failure.dart';
 
 class RemoveProjectDialog extends ConsumerStatefulWidget {
   const RemoveProjectDialog({super.key, required this.project});
@@ -59,17 +60,27 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
       await ref
           .read(projectSidebarActionsProvider.notifier)
           .removeProject(widget.project.id, deleteSessions: _alsoDeleteSessions);
-      if (mounted) Navigator.of(context).pop(true);
-    } catch (e) {
-      if (mounted) {
-        setState(() => _submitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to remove project: $e')));
+      if (!mounted) return;
+      if (!ref.read(projectSidebarActionsProvider).hasError) {
+        Navigator.of(context).pop(true);
       }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(projectSidebarActionsProvider, (_, next) {
+      if (!_submitting) return;
+      if (next is! AsyncError || !mounted) return;
+      final failure = next.error;
+      if (failure is! ProjectSidebarFailure) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to remove project — please try again.')));
+    });
+
     final isMissing = widget.project.status == ProjectStatus.missing;
     return AlertDialog(
       backgroundColor: const Color(0xFF1E1E1E),

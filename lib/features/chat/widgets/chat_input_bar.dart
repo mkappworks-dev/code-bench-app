@@ -195,8 +195,6 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
       await ref
           .read(chatMessagesProvider(widget.sessionId).notifier)
           .sendMessage(text, systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty) ? systemPrompt : null);
-    } catch (e) {
-      if (mounted) showErrorSnackBar(context, 'Failed to send message. Please try again.');
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
@@ -298,6 +296,12 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(chatMessagesProvider(widget.sessionId), (_, next) {
+      if (!_isSending) return;
+      if (next is! AsyncError || !mounted) return;
+      showErrorSnackBar(context, 'Failed to send message. Please try again.');
+    });
+
     final model = ref.watch(selectedModelProvider);
     // Re-render whenever the active project or its status changes so the
     // send button + Enter key disable the moment the folder goes missing
