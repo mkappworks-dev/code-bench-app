@@ -110,6 +110,31 @@ class ApplyService {
     }
   }
 
+  /// Reads the current on-disk content of [absolutePath] for diff rendering.
+  ///
+  /// Returns `null` when the file does not yet exist (a new-file apply),
+  /// so callers can render an all-additions diff.
+  ///
+  /// Runs [assertWithinProject] first — propagates [StateError] and
+  /// [ProjectMissingException] unchanged so the caller can show distinct
+  /// UI for each. Logs [FileSystemException] as a triage breadcrumb
+  /// before rethrowing.
+  ///
+  /// This helper exists so widgets that own their diff state (e.g.
+  /// `message_bubble.dart`'s `_loadDiff`) don't need to call `dart:io`
+  /// directly — the path guard + I/O lives in this service.
+  static Future<String?> readOriginalForDiff(String absolutePath, String projectPath) async {
+    assertWithinProject(absolutePath, projectPath);
+    try {
+      return await File(absolutePath).readAsString();
+    } on PathNotFoundException {
+      return null;
+    } on FileSystemException catch (e) {
+      dLog('[ApplyService] readOriginalForDiff failed: ${e.message}');
+      rethrow;
+    }
+  }
+
   Future<void> applyChange({
     required String filePath,
     required String projectPath,

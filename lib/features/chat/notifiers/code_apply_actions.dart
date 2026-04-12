@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -53,6 +54,15 @@ class CodeApplyActions extends _$CodeApplyActions {
             .refreshProjectStatus(projectId)
             .catchError((Object e) => dLog('[CodeApplyActions] refresh after ProjectMissingException failed: $e')),
       );
+      rethrow;
+    } on StateError catch (e) {
+      dLog('[CodeApplyActions] applyChange rejected: ${e.message}');
+      rethrow;
+    } on FileSystemException catch (e) {
+      dLog('[CodeApplyActions] applyChange io failure: ${e.message}');
+      rethrow;
+    } catch (e, st) {
+      dLog('[CodeApplyActions] applyChange unexpected: $e\n$st');
       rethrow;
     }
   }

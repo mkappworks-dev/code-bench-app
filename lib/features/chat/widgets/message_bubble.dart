@@ -20,6 +20,7 @@ import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../../../services/apply/apply_service.dart';
 import '../notifiers/code_apply_actions.dart';
+import '../notifiers/project_file_scan_actions.dart';
 import '../chat_notifier.dart';
 import '../notifiers/ask_question_notifier.dart';
 import 'ask_user_question_card.dart';
@@ -398,16 +399,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
     setState(() => _diffState = _DiffCardState.loading);
     try {
       final absolutePath = p.join(project.path, filename);
-      ApplyService.assertWithinProject(absolutePath, project.path);
-
-      // TOCTOU-safe read: attempt the read directly and treat a missing
-      // file as "new file" instead of stat-then-read.
-      String? original;
-      try {
-        original = await File(absolutePath).readAsString();
-      } on PathNotFoundException {
-        original = null;
-      }
+      final original = await ApplyService.readOriginalForDiff(absolutePath, project.path);
 
       final dmp = DiffMatchPatch();
       final diffs = dmp.diff(original ?? '', widget.code);
@@ -419,24 +411,19 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
         _diffs = diffs;
         _diffState = _DiffCardState.loaded;
       });
-    } on StateError catch (e) {
-      // assertWithinProject rejection — security event already logged via
-      // sLog at the guard. This dLog is a triage breadcrumb only.
-      dLog('[_loadDiff] path rejected: $e');
+    } on StateError {
       if (!mounted) return;
       setState(() {
         _diffError = 'This file is outside the current project.';
         _diffState = _DiffCardState.error;
       });
-    } on FileSystemException catch (e) {
-      dLog('[_loadDiff] filesystem: $e');
+    } on FileSystemException {
       if (!mounted) return;
       setState(() {
         _diffError = 'Could not read file from disk.';
         _diffState = _DiffCardState.error;
       });
-    } catch (e, st) {
-      dLog('[_loadDiff] unexpected: $e\n$st');
+    } catch (_) {
       if (!mounted) return;
       setState(() {
         _diffError = 'Unable to compute diff.';
@@ -475,18 +462,14 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
       // Auto-open the changes panel on first apply
       ref.read(changesPanelVisibleProvider.notifier).show();
       setState(() => _diffState = _DiffCardState.hidden);
-    } on ProjectMissingException catch (e) {
-      dLog('[_applyChange] project missing: $e');
+    } on ProjectMissingException {
       // The notifier already triggered refreshProjectStatus — just show the error.
       _showApplyError('Project folder is missing. Right-click the project in the sidebar to Relocate or Remove it.');
-    } on StateError catch (e) {
-      dLog('[_applyChange] path rejected: $e');
+    } on StateError {
       _showApplyError('This file is outside the current project.');
-    } on FileSystemException catch (e) {
-      dLog('[_applyChange] filesystem: $e');
+    } on FileSystemException {
       _showApplyError('Could not write file to disk.');
-    } catch (e, st) {
-      dLog('[_applyChange] unexpected: $e\n$st');
+    } catch (_) {
       _showApplyError('Unable to apply change.');
     } finally {
       if (mounted) setState(() => _applying = false);
@@ -771,61 +754,21 @@ class _Tab extends StatelessWidget {
 /// substring-filters them as the user types, similar to a fuzzy file
 /// opener. On pick, [onPicked] is called with the project-relative path.
 ///
-/// The scan is deliberately eager but bounded ([_kMaxScanFiles]) — a huge
+/// The scan is deliberately eager but bounded ([kMaxScanFiles]) — a huge
 /// project would otherwise pause the UI on open. We pick bounded-eager
 /// over streamed-lazy because the suggestion list is tiny and users expect
 /// instant filtering after the first keystroke.
-class _FilePickerPanel extends StatefulWidget {
+class _FilePickerPanel extends ConsumerStatefulWidget {
   const _FilePickerPanel({required this.project, required this.onCancel, required this.onPicked});
   final Project? project;
   final VoidCallback onCancel;
   final void Function(String relativePath) onPicked;
 
   @override
-  State<_FilePickerPanel> createState() => _FilePickerPanelState();
+  ConsumerState<_FilePickerPanel> createState() => _FilePickerPanelState();
 }
 
-class _FilePickerPanelState extends State<_FilePickerPanel> {
-  static const int _kMaxScanFiles = 2000;
-  static const Set<String> _kCodeExtensions = {
-    '.dart',
-    '.ts',
-    '.tsx',
-    '.js',
-    '.jsx',
-    '.py',
-    '.go',
-    '.rs',
-    '.java',
-    '.kt',
-    '.swift',
-    '.rb',
-    '.c',
-    '.cpp',
-    '.cc',
-    '.h',
-    '.hpp',
-    '.cs',
-    '.json',
-    '.yaml',
-    '.yml',
-    '.toml',
-    '.md',
-    '.sh',
-    '.html',
-    '.css',
-    '.scss',
-  };
-  static const Set<String> _kSkipDirs = {
-    '.git',
-    '.dart_tool',
-    'build',
-    'node_modules',
-    '.worktrees',
-    '.idea',
-    '.vscode',
-  };
-
+class _FilePickerPanelState extends ConsumerState<_FilePickerPanel> {
   final _controller = TextEditingController();
   List<String> _allFiles = const [];
   List<String> _suggestions = const [];
@@ -850,17 +793,15 @@ class _FilePickerPanelState extends State<_FilePickerPanel> {
       setState(() => _scanning = false);
       return;
     }
-    final files = <String>[];
+    var files = const <String>[];
     String? error;
     try {
-      await _walk(Directory(project.path), project.path, files);
+      files = await ref.read(projectFileScanActionsProvider.notifier).scanCodeFiles(project.path);
     } on FileSystemException catch (e) {
       // Surface the reason in the UI instead of producing an empty
       // picker that looks identical to "project has no code files".
-      dLog('[_FilePickerPanel] scan failed: ${e.runtimeType}');
       error = 'Couldn\'t scan project — ${e.message}';
-    } on Exception catch (e) {
-      dLog('[_FilePickerPanel] scan failed: ${e.runtimeType}');
+    } on Exception {
       error = 'Couldn\'t scan project.';
     }
     if (!mounted) return;
@@ -869,41 +810,6 @@ class _FilePickerPanelState extends State<_FilePickerPanel> {
       _scanning = false;
       _scanError = error;
     });
-  }
-
-  /// Recursive directory walk that prunes [_kSkipDirs] at the directory
-  /// level rather than filtering yielded files after the fact.
-  ///
-  /// `Directory.list(recursive: true)` walks the entire tree unconditionally
-  /// at the OS level, so on a repo with `node_modules` or a populated
-  /// `.dart_tool` that can mean stat-ing tens of thousands of files only
-  /// to discard them. This walker skips entire subtrees when the directory
-  /// basename matches a known heavy folder, and short-circuits as soon as
-  /// [_kMaxScanFiles] results have been collected.
-  Future<void> _walk(Directory dir, String rootPath, List<String> out) async {
-    if (out.length >= _kMaxScanFiles) return;
-    final List<FileSystemEntity> entries;
-    try {
-      entries = await dir.list(followLinks: false).toList();
-    } on FileSystemException catch (e) {
-      // Permission-denied on a subdirectory: skip it but continue the
-      // walk. Only a root-level failure should bubble up as a scan error.
-      if (dir.path == rootPath) rethrow;
-      dLog('[_FilePickerPanel] skipping ${dir.path}: ${e.runtimeType}');
-      return;
-    }
-    for (final entity in entries) {
-      if (out.length >= _kMaxScanFiles) return;
-      if (entity is Directory) {
-        final base = p.basename(entity.path);
-        if (_kSkipDirs.contains(base)) continue;
-        await _walk(entity, rootPath, out);
-      } else if (entity is File) {
-        final ext = p.extension(entity.path).toLowerCase();
-        if (!_kCodeExtensions.contains(ext)) continue;
-        out.add(p.relative(entity.path, from: rootPath));
-      }
-    }
   }
 
   void _filter(String query) {

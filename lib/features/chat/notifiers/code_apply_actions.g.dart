@@ -55,7 +55,7 @@ final class CodeApplyActionsProvider extends $NotifierProvider<CodeApplyActions,
   }
 }
 
-String _$codeApplyActionsHash() => r'0c361c5ab727de7e45c78062e0e06034ce9061b6';
+String _$codeApplyActionsHash() => r'146bfd4131856a2dea231fc6bee0d285c2cef038';
 
 /// Command notifier for code-apply and revert operations.
 ///
