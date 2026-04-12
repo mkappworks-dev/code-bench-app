@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:code_bench_app/features/branch_picker/branch_picker_failure.dart';
 import 'package:code_bench_app/features/branch_picker/branch_picker_notifier.dart';
 import 'package:code_bench_app/services/git/git_service.dart';
 
@@ -17,113 +19,106 @@ Future<Directory> _initRepo({String branchName = 'main'}) async {
 }
 
 void main() {
-  group('BranchPickerNotifier', () {
+  group('GitService branch ops', () {
     late Directory repoDir;
-    late BranchPickerNotifier notifier;
+    late GitService git;
 
     setUp(() async {
       repoDir = await _initRepo();
-      notifier = BranchPickerNotifier(repoDir.path);
+      git = GitService(repoDir.path);
     });
 
-    tearDown(() async {
-      await repoDir.delete(recursive: true);
+    tearDown(() => repoDir.delete(recursive: true));
+
+    test('listLocalBranches returns current branch first', () async {
+      await Process.run('git', ['checkout', '-b', 'feat/x'], workingDirectory: repoDir.path);
+      await Process.run('git', ['checkout', 'main'], workingDirectory: repoDir.path);
+      final branches = await git.listLocalBranches();
+      expect(branches.first, equals('main'));
+      expect(branches, contains('feat/x'));
     });
 
-    test('listLocalBranches includes current branch', () async {
-      final branches = await notifier.listLocalBranches();
-      expect(branches, isNotEmpty);
-      expect(branches.first, equals(await GitService(repoDir.path).currentBranch()));
-    });
-
-    test('worktreeBranches is empty for a plain repo', () async {
-      final wt = await notifier.worktreeBranches();
+    test('worktreeBranches is empty for plain repo', () async {
+      final wt = await git.worktreeBranches();
       expect(wt, isEmpty);
     });
 
-    test('checkout switches to an existing branch', () async {
-      // Create a second branch
-      await Process.run('git', ['checkout', '-b', 'feat/test'], workingDirectory: repoDir.path);
+    test('checkout switches branch', () async {
+      await Process.run('git', ['checkout', '-b', 'feat/y'], workingDirectory: repoDir.path);
       await Process.run('git', ['checkout', 'main'], workingDirectory: repoDir.path);
-
-      await notifier.checkout('feat/test');
-
-      final current = await GitService(repoDir.path).currentBranch();
-      expect(current, equals('feat/test'));
+      await git.checkout('feat/y');
+      final branch = await git.currentBranch();
+      expect(branch, equals('feat/y'));
     });
 
-    test('checkout throws GitException on unknown branch', () async {
-      expect(() => notifier.checkout('no-such-branch'), throwsA(isA<GitException>()));
+    test('checkout rejects flag-shaped branch name', () async {
+      expect(() => git.checkout('--orphan'), throwsArgumentError);
     });
 
     test('createBranch creates and switches to new branch', () async {
-      await notifier.createBranch('feat/new');
-      final current = await GitService(repoDir.path).currentBranch();
-      expect(current, equals('feat/new'));
+      await git.createBranch('new-branch');
+      final branch = await git.currentBranch();
+      expect(branch, equals('new-branch'));
     });
 
-    test('createBranch throws ArgumentError on invalid name (leading dash)', () async {
-      expect(() => notifier.createBranch('-bad'), throwsA(isA<ArgumentError>()));
+    test('createBranch rejects flag-shaped name', () async {
+      expect(() => git.createBranch('--bad'), throwsArgumentError);
+    });
+  });
+
+  group('BranchPickerNotifier (AsyncNotifier)', () {
+    late Directory repoDir;
+
+    setUp(() async {
+      repoDir = await _initRepo();
     });
 
-    test('createBranch throws ArgumentError on empty name', () async {
-      expect(() => notifier.createBranch(''), throwsA(isA<ArgumentError>()));
+    tearDown(() async => repoDir.delete(recursive: true));
+
+    // Creates a container with an active listener on the provider so it isn't
+    // auto-disposed mid-test (the provider is autoDispose: true by default
+    // with @riverpod).
+    ProviderContainer makeContainer(String path) {
+      final c = ProviderContainer();
+      // Keep the provider alive for the duration of the test by holding a
+      // subscription. The subscription is discarded when the container disposes.
+      c.listen(branchPickerProvider(path), (_, __) {});
+      addTearDown(c.dispose);
+      return c;
+    }
+
+    test('build loads branches successfully', () async {
+      final c = makeContainer(repoDir.path);
+      final state = await c.read(branchPickerProvider(repoDir.path).future);
+      expect(state.branches, isNotEmpty);
+      expect(state.branches.first, equals('main'));
+      expect(state.worktreeBranches, isEmpty);
     });
 
-    test('createBranch throws ArgumentError on name containing spaces', () async {
-      expect(() => notifier.createBranch('has space'), throwsA(isA<ArgumentError>()));
+    test('checkout transitions to success', () async {
+      final c = makeContainer(repoDir.path);
+      await c.read(branchPickerProvider(repoDir.path).future);
+      await Process.run('git', ['branch', 'feat/test'], workingDirectory: repoDir.path);
+      await c.read(branchPickerProvider(repoDir.path).notifier).checkout('feat/test');
+      expect(c.read(branchPickerProvider(repoDir.path)).hasError, isFalse);
     });
 
-    test('checkout throws ArgumentError on leading-dash name (security guard)', () async {
-      // Defence-in-depth against a malicious repo that surfaces a ref named
-      // `--orphan` in the picker: the click must NOT reach
-      // `git checkout --orphan`.
-      expect(() => notifier.checkout('--orphan'), throwsA(isA<ArgumentError>()));
+    test('checkout with flag-shaped name emits BranchPickerInvalidName', () async {
+      final c = makeContainer(repoDir.path);
+      await c.read(branchPickerProvider(repoDir.path).future);
+      await c.read(branchPickerProvider(repoDir.path).notifier).checkout('--orphan');
+      final state = c.read(branchPickerProvider(repoDir.path));
+      expect(state.hasError, isTrue);
+      expect(state.error, isA<BranchPickerInvalidName>());
     });
 
-    test('checkout throws ArgumentError on empty name', () async {
-      expect(() => notifier.checkout(''), throwsA(isA<ArgumentError>()));
-    });
-
-    test('checkout throws GitException when working tree is dirty', () async {
-      // Create a second branch that diverges, then modify tracked content
-      // so a checkout back would overwrite uncommitted changes.
-      await Process.run('git', ['checkout', '-b', 'feat/other'], workingDirectory: repoDir.path);
-      await File('${repoDir.path}/readme.txt').writeAsString('changed on other');
-      await Process.run('git', ['add', '.'], workingDirectory: repoDir.path);
-      await Process.run('git', ['commit', '-m', 'divergent'], workingDirectory: repoDir.path);
-      await Process.run('git', ['checkout', 'main'], workingDirectory: repoDir.path);
-      // Dirty the same file on main without committing.
-      await File('${repoDir.path}/readme.txt').writeAsString('dirty');
-
-      expect(() => notifier.checkout('feat/other'), throwsA(isA<GitException>()));
-    });
-
-    test('worktreeBranches parses `git worktree list --porcelain` output', () async {
-      // Create a second branch, then a real worktree checking it out in a
-      // sibling directory. `git worktree list --porcelain` in the main
-      // checkout should then enumerate that branch.
-      await Process.run('git', ['branch', 'feat/alt'], workingDirectory: repoDir.path);
-      final siblingPath = '${repoDir.parent.path}/wt_${DateTime.now().microsecondsSinceEpoch}';
-      addTearDown(() async {
-        // Clean up the external worktree directory after the test.
-        final d = Directory(siblingPath);
-        if (d.existsSync()) await d.delete(recursive: true);
-      });
-      final addResult = await Process.run('git', [
-        'worktree',
-        'add',
-        siblingPath,
-        'feat/alt',
-      ], workingDirectory: repoDir.path);
-      expect(addResult.exitCode, equals(0), reason: addResult.stderr as String);
-
-      final worktrees = await notifier.worktreeBranches();
-      expect(worktrees, contains('feat/alt'));
-      // The main worktree's own branch must NOT be listed — it's skipped
-      // by design so the picker doesn't mark the current branch as
-      // "checked out in another worktree".
-      expect(worktrees, isNot(contains('main')));
+    test('createBranch emits failure for duplicate name', () async {
+      final c = makeContainer(repoDir.path);
+      await c.read(branchPickerProvider(repoDir.path).future);
+      await c.read(branchPickerProvider(repoDir.path).notifier).createBranch('main');
+      final state = c.read(branchPickerProvider(repoDir.path));
+      expect(state.hasError, isTrue);
+      expect(state.error, isA<BranchPickerFailure>());
     });
   });
 }

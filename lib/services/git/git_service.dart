@@ -194,6 +194,67 @@ class GitService {
     return remotes;
   }
 
+  /// Returns local branch names, current branch first, then alphabetical.
+  Future<List<String>> listLocalBranches() async {
+    final result = await Process.run('git', ['branch', '--format=%(refname:short)'], workingDirectory: projectPath);
+    if (result.exitCode != 0) return const [];
+    final all = (result.stdout as String).trim().split('\n').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    final current = await _currentBranch();
+    if (current != null) {
+      all.remove(current);
+      return [current, ...all..sort()];
+    }
+    return all..sort();
+  }
+
+  /// Returns the set of branch names checked out in other git worktrees.
+  Future<Set<String>> worktreeBranches() async {
+    final result = await Process.run('git', ['worktree', 'list', '--porcelain'], workingDirectory: projectPath);
+    if (result.exitCode != 0) return const {};
+    final blocks = (result.stdout as String).trim().split(RegExp(r'\n\n+'));
+    final branches = <String>{};
+    for (int i = 1; i < blocks.length; i++) {
+      for (final line in blocks[i].split('\n')) {
+        if (line.startsWith('branch ')) {
+          final ref = line.substring('branch '.length).trim();
+          branches.add(ref.replaceFirst('refs/heads/', ''));
+        }
+      }
+    }
+    return branches;
+  }
+
+  /// Runs `git checkout [branch]`.
+  /// Throws [ArgumentError] for flag-shaped names, [GitException] on git failure.
+  Future<void> checkout(String branch) async {
+    if (branch.isEmpty) throw ArgumentError('Branch name must not be empty.');
+    if (branch.startsWith('-')) {
+      sLog('[GitService] flag-shaped checkout branch rejected: "$branch"');
+      throw ArgumentError('Branch name must not start with a dash.');
+    }
+    final result = await Process.run('git', ['checkout', branch], workingDirectory: projectPath);
+    if (result.exitCode != 0) {
+      throw GitException(
+        (result.stderr as String).trim().isNotEmpty ? (result.stderr as String).trim() : 'git checkout failed',
+      );
+    }
+  }
+
+  /// Validates [name] and runs `git checkout -b [name]`.
+  /// Throws [ArgumentError] for flag-shaped names, [GitException] on git failure.
+  Future<void> createBranch(String name) async {
+    if (name.isEmpty) throw ArgumentError('Branch name must not be empty.');
+    if (name.startsWith('-')) {
+      sLog('[GitService] flag-shaped createBranch name rejected: "$name"');
+      throw ArgumentError('Branch name must not start with a dash.');
+    }
+    if (name.contains(' ')) throw ArgumentError('Branch name must not contain spaces.');
+    final result = await Process.run('git', ['checkout', '-b', name], workingDirectory: projectPath);
+    if (result.exitCode != 0) {
+      throw GitException((result.stderr as String).trim());
+    }
+  }
+
   /// Pushes current branch to a named [remote].
   Future<void> pushToRemote(String remote) async {
     // Defense-in-depth: reject remotes that look like flags so a remote
