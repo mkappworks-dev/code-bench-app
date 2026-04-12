@@ -14,17 +14,19 @@ import '../../features/chat/notifiers/create_pr_actions.dart';
 import '../../features/chat/widgets/commit_dialog.dart';
 import '../../features/chat/widgets/create_pr_dialog.dart';
 import '../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
-import '../../services/git/git_live_state_provider.dart';
-import '../../services/git/git_service.dart' show GitRemote;
 import '../notifiers/commit_message_actions.dart';
 import '../notifiers/commit_message_failure.dart';
+import '../notifiers/commit_push_button_notifier.dart';
 import '../notifiers/git_actions.dart';
 import '../notifiers/git_actions_failure.dart';
+import '../notifiers/git_remotes_notifier.dart';
 import 'project_guard.dart';
 
-/// Split button that handles Commit, Push, Pull, and Create PR for the
-/// active project. Remote list is loaded once on [initState] and drives
-/// the multi-remote picker in the dropdown.
+/// Split button: left half commits, right half opens Push / Pull / PR dropdown.
+///
+/// All display state (can-flags, badge label, remote list) comes from
+/// [commitPushButtonStateProvider]. The widget keeps only [_pushing] and
+/// [_pulling] to label the busy state correctly ("Pushing…" vs "Pulling…").
 class CommitPushButton extends ConsumerStatefulWidget {
   const CommitPushButton({super.key, required this.project});
 
@@ -37,37 +39,6 @@ class CommitPushButton extends ConsumerStatefulWidget {
 class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
   bool _pushing = false;
   bool _pulling = false;
-
-  // Configured remotes for this repo. Empty list = single-origin (or
-  // non-git) project; the dropdown collapses to the classic Push/Pull
-  // items without a remote picker. `_selectedRemote` is the one the
-  // next `Push` click targets — defaults to `origin` so first render
-  // matches the pre-multi-remote behaviour.
-  List<GitRemote> _remotes = const [];
-  String _selectedRemote = 'origin';
-
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_loadRemotes());
-  }
-
-  Future<void> _loadRemotes() async {
-    // `listRemotes` already swallows a non-zero exit code into `[]`, so
-    // the only thing that can throw here is a missing git binary or a
-    // deleted working directory. Mirror that soft-failure behaviour: leave
-    // `_remotes` as the empty list so the UI falls back to classic
-    // single-remote Push.
-    final remotes = await ref.read(gitActionsProvider.notifier).listRemotes(widget.project.path);
-    if (ref.read(gitActionsProvider).hasError) return;
-    if (!mounted) return;
-    setState(() {
-      _remotes = remotes;
-      if (remotes.isNotEmpty && !remotes.any((r) => r.name == _selectedRemote)) {
-        _selectedRemote = remotes.first.name;
-      }
-    });
-  }
 
   Future<void> _doCommit() async {
     if (!ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
@@ -88,9 +59,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
 
     if (!mounted) return;
     final confirmed = await CommitDialog.show(context, message);
-    if (confirmed != null) {
-      await _runCommit(confirmed);
-    }
+    if (confirmed != null) await _runCommit(confirmed);
   }
 
   Future<void> _runCommit(String message) async {
@@ -102,19 +71,19 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
     }
   }
 
-  Future<void> _doPush() async {
+  Future<void> _doPush(CommitPushButtonState s) async {
     if (!ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
     setState(() => _pushing = true);
     try {
       final git = ref.read(gitActionsProvider.notifier);
       final String target;
-      if (_remotes.length <= 1) {
+      if (s.remotes.length <= 1) {
         final branch = await git.push(widget.project.path);
         target = 'origin/$branch';
       } else {
-        await git.pushToRemote(widget.project.path, _selectedRemote);
+        await git.pushToRemote(widget.project.path, s.selectedRemote);
         final branch = await git.currentBranch(widget.project.path);
-        target = (branch == null || branch.isEmpty) ? _selectedRemote : '$_selectedRemote/$branch';
+        target = (branch == null || branch.isEmpty) ? s.selectedRemote : '${s.selectedRemote}/$branch';
       }
       if (!ref.read(gitActionsProvider).hasError && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pushed to $target')));
@@ -125,13 +94,13 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
     }
   }
 
-  Future<void> _doPushAll() async {
+  Future<void> _doPushAll(CommitPushButtonState s) async {
     if (!ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
-    if (_remotes.isEmpty) return;
+    if (s.remotes.isEmpty) return;
     setState(() => _pushing = true);
     final (:pushed, :failed) = await ref
         .read(gitActionsProvider.notifier)
-        .pushAllRemotes(widget.project.path, _remotes)
+        .pushAllRemotes(widget.project.path, s.remotes)
         .whenComplete(() {
           if (mounted) setState(() => _pushing = false);
         });
@@ -140,9 +109,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
     if (pushed.isNotEmpty) parts.add('Pushed: ${pushed.join(", ")}');
     if (failed.isNotEmpty) parts.add('Failed: ${failed.join(", ")}');
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(parts.join(' · '))));
-    if (pushed.isNotEmpty) {
-      ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
-    }
+    if (pushed.isNotEmpty) ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
   }
 
   Future<void> _doPull() async {
@@ -230,8 +197,6 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
       _snack('Failed to create pull request — check your GitHub token and repo access.');
       return;
     }
-    // Only offer auto-open for canonical github.com URLs; otherwise just
-    // show the text so the user can copy it manually.
     final canAutoOpen = prUrl.startsWith('https://github.com/');
     _snack(
       'Pull request created: $prUrl',
@@ -275,31 +240,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     });
 
-    final liveStateAsync = ref.watch(gitLiveStateProvider(widget.project.path));
-    final behindAsync = ref.watch(behindCountProvider(widget.project.path));
-
-    final liveState = liveStateAsync.value;
-    final behind = behindAsync.value;
-
-    final canCommit = liveState?.hasUncommitted == true;
-    final canPush = (liveState?.aheadCount ?? 0) > 0;
-    final canPull = (behind ?? 0) > 0;
-    final canPr = liveState?.branch != null && !(liveState?.isOnDefaultBranch ?? true);
-    final hasRemotes = _remotes.isNotEmpty;
-    final canDropdown = canPush || canPull || canPr || hasRemotes;
-
-    final bool hasUnknownProbe =
-        liveState?.isGit == true && (liveState?.hasUncommitted == null || liveState?.aheadCount == null);
-    final String badgeLabel;
-    if (hasUnknownProbe) {
-      badgeLabel = ' !';
-    } else if (behind == null) {
-      badgeLabel = ' ↓?';
-    } else if (behind > 0) {
-      badgeLabel = ' ↓$behind';
-    } else {
-      badgeLabel = '';
-    }
+    final s = ref.watch(commitPushButtonStateProvider(widget.project.path));
     final busy = _pushing || _pulling;
 
     return Row(
@@ -307,20 +248,20 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
       children: [
         // Left: Commit
         Tooltip(
-          message: hasUnknownProbe
+          message: s.hasUnknownProbe
               ? 'Git status unavailable — run `git status` in a terminal to diagnose'
-              : canCommit
+              : s.canCommit
               ? 'Commit staged & unstaged changes'
               : 'No changes to commit',
           child: GestureDetector(
-            onTap: (busy || !canCommit) ? null : _doCommit,
+            onTap: (busy || !s.canCommit) ? null : _doCommit,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
               decoration: BoxDecoration(
                 color: busy
                     ? ThemeConstants.accentDark
-                    : canCommit
+                    : s.canCommit
                     ? ThemeConstants.accent
                     : ThemeConstants.inputSurface,
                 borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
@@ -330,7 +271,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(AppIcons.gitCommit, size: 12, color: canCommit ? Colors.white : ThemeConstants.mutedFg),
+                    Icon(AppIcons.gitCommit, size: 12, color: s.canCommit ? Colors.white : ThemeConstants.mutedFg),
                     const SizedBox(width: 5),
                     Text(
                       _pushing
@@ -339,7 +280,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                           ? '● Pulling…'
                           : 'Commit',
                       style: TextStyle(
-                        color: canCommit ? Colors.white : ThemeConstants.mutedFg,
+                        color: s.canCommit ? Colors.white : ThemeConstants.mutedFg,
                         fontSize: ThemeConstants.uiFontSizeSmall,
                       ),
                     ),
@@ -354,7 +295,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
           message: 'Git actions',
           child: Builder(
             builder: (btnContext) => GestureDetector(
-              onTap: canDropdown
+              onTap: s.canDropdown
                   ? () async {
                       final action = await showInstantMenuAnchoredTo<String>(
                         buttonContext: btnContext,
@@ -364,11 +305,11 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                           side: const BorderSide(color: ThemeConstants.faintFg),
                         ),
                         items: [
-                          if (_remotes.length > 1) ...[
-                            for (final remote in _remotes)
+                          if (s.remotes.length > 1) ...[
+                            for (final remote in s.remotes)
                               CheckedPopupMenuItem<String>(
                                 value: 'select_${remote.name}',
-                                checked: _selectedRemote == remote.name,
+                                checked: s.selectedRemote == remote.name,
                                 height: 40,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,15 +350,15 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                           PopupMenuItem(
                             value: 'push',
                             height: 32,
-                            enabled: canPush && !busy,
+                            enabled: s.canPush && !busy,
                             child: Text(
                               _pushing
                                   ? '● Pushing…'
-                                  : _remotes.length > 1
-                                  ? 'Push ↑ ($_selectedRemote)'
+                                  : s.remotes.length > 1
+                                  ? 'Push ↑ (${s.selectedRemote})'
                                   : 'Push ↑',
                               style: TextStyle(
-                                color: (canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                color: (s.canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
                                 fontSize: ThemeConstants.uiFontSizeSmall,
                               ),
                             ),
@@ -425,11 +366,11 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                           PopupMenuItem(
                             value: 'pull',
                             height: 32,
-                            enabled: canPull && !busy,
+                            enabled: s.canPull && !busy,
                             child: Text(
-                              canPull ? 'Pull ↓${behind ?? ''}' : 'Pull',
+                              s.canPull ? 'Pull${s.badgeLabel}' : 'Pull',
                               style: TextStyle(
-                                color: canPull ? ThemeConstants.accent : ThemeConstants.faintFg,
+                                color: s.canPull ? ThemeConstants.accent : ThemeConstants.faintFg,
                                 fontSize: ThemeConstants.uiFontSizeSmall,
                               ),
                             ),
@@ -438,11 +379,11 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                           PopupMenuItem(
                             value: 'create_pr',
                             height: 32,
-                            enabled: canPr,
+                            enabled: s.canPr,
                             child: Text(
                               'Create PR',
                               style: TextStyle(
-                                color: canPr ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                color: s.canPr ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
                                 fontSize: ThemeConstants.uiFontSizeSmall,
                               ),
                             ),
@@ -452,15 +393,17 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                       if (action == null) return;
                       switch (action) {
                         case 'push':
-                          unawaited(_doPush());
+                          unawaited(_doPush(s));
                         case 'push_all':
-                          unawaited(_doPushAll());
+                          unawaited(_doPushAll(s));
                         case 'pull':
                           unawaited(_doPull());
                         case 'create_pr':
                           unawaited(_showCreatePrDialog());
-                        case final String s when s.startsWith('select_'):
-                          setState(() => _selectedRemote = s.substring('select_'.length));
+                        case final String sel when sel.startsWith('select_'):
+                          ref
+                              .read(gitRemotesProvider(widget.project.path).notifier)
+                              .selectRemote(sel.substring('select_'.length));
                       }
                     }
                   : null,
@@ -468,9 +411,9 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                 padding: const EdgeInsets.symmetric(horizontal: 7),
                 constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
                 decoration: BoxDecoration(
-                  color: canDropdown ? ThemeConstants.accentLight : ThemeConstants.inputSurface,
+                  color: s.canDropdown ? ThemeConstants.accentLight : ThemeConstants.inputSurface,
                   border: Border(
-                    left: BorderSide(color: canDropdown ? ThemeConstants.accentDark : ThemeConstants.deepBorder),
+                    left: BorderSide(color: s.canDropdown ? ThemeConstants.accentDark : ThemeConstants.deepBorder),
                   ),
                   borderRadius: const BorderRadius.horizontal(right: Radius.circular(5)),
                 ),
@@ -479,15 +422,19 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (badgeLabel.isNotEmpty)
+                      if (s.badgeLabel.isNotEmpty)
                         Text(
-                          badgeLabel,
+                          s.badgeLabel,
                           style: TextStyle(
-                            color: canDropdown ? Colors.white : ThemeConstants.mutedFg,
+                            color: s.canDropdown ? Colors.white : ThemeConstants.mutedFg,
                             fontSize: ThemeConstants.uiFontSizeLabel,
                           ),
                         ),
-                      Icon(AppIcons.chevronDown, size: 11, color: canDropdown ? Colors.white : ThemeConstants.mutedFg),
+                      Icon(
+                        AppIcons.chevronDown,
+                        size: 11,
+                        color: s.canDropdown ? Colors.white : ThemeConstants.mutedFg,
+                      ),
                     ],
                   ),
                 ),

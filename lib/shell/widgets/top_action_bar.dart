@@ -7,7 +7,7 @@ import '../notifiers/top_action_bar_notifier.dart';
 import 'actions_dropdown.dart';
 import 'commit_push_button.dart';
 import 'init_git_button.dart';
-import 'vs_code_dropdown.dart';
+import 'code_dropdown.dart';
 
 /// Top bar showing the active session title, project badges, and action
 /// buttons (Actions dropdown, VS Code, Commit & Push / Initialize Git).
