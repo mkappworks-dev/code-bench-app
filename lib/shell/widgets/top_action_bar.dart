@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:flutter/material.dart';
@@ -20,9 +21,9 @@ import '../notifiers/action_output_notifier.dart';
 import '../notifiers/ide_launch_actions.dart';
 import '../../services/ai/ai_service_factory.dart';
 import '../../services/git/git_live_state_provider.dart';
-import '../../services/git/git_service.dart'
-    show GitException, GitNoUpstreamException, GitAuthException, GitConflictException, GitRemote;
+import '../../services/git/git_service.dart' show GitRemote;
 import '../notifiers/git_actions.dart';
+import '../notifiers/git_actions_failure.dart';
 import '../../data/datasources/local/general_preferences.dart';
 import '../../features/chat/widgets/create_pr_dialog.dart';
 import '../../features/project_sidebar/project_sidebar_actions.dart';
@@ -65,11 +66,7 @@ class TopActionBar extends ConsumerWidget {
         sessionsAsync.whenOrNull(
           data: (List<ChatSession> list) {
             if (sessionId == null) return 'Code Bench';
-            try {
-              return list.firstWhere((s) => s.sessionId == sessionId).title;
-            } catch (_) {
-              return 'New Chat';
-            }
+            return list.firstWhereOrNull((s) => s.sessionId == sessionId)?.title ?? 'New Chat';
           },
         ) ??
         'Code Bench';
@@ -77,11 +74,7 @@ class TopActionBar extends ConsumerWidget {
     final project = projectsAsync.whenOrNull(
       data: (List<Project> list) {
         if (projectId == null) return null;
-        try {
-          return list.firstWhere((p) => p.id == projectId);
-        } catch (_) {
-          return null;
-        }
+        return list.firstWhereOrNull((p) => p.id == projectId);
       },
     );
 
@@ -252,23 +245,29 @@ class _InitGitButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(gitActionsProvider, (prev, next) {
+      if (next is! AsyncError || !context.mounted) return;
+      final failure = next.error;
+      if (failure is! GitActionsFailure) return;
+      final msg = switch (failure) {
+        GitActionsNoUpstream(:final branch) =>
+          'No upstream branch for $branch. Run `git push -u origin <branch>` in your terminal.',
+        GitActionsAuthFailed() => 'Push failed — check your git credentials.',
+        GitActionsConflict() => 'Pull failed — merge conflict detected. Resolve conflicts in your editor.',
+        GitActionsGitError(:final message) => message,
+        GitActionsUnknownError() => 'Git operation failed.',
+      };
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    });
+
     return _ActionButton(
       icon: AppIcons.gitMerge,
       label: 'Initialize Git',
       onTap: () async {
         if (!_ensureProjectAvailable(context, ref, project.id, project.path)) return;
-        try {
-          await ref.read(gitActionsProvider.notifier).initGit(project.path);
-        } on GitException catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              // Include the underlying reason (git stderr) so the user
-              // sees "fatal: ..." instead of a generic "Failed to ...".
-              SnackBar(content: Text('Failed to initialize git: ${e.message}')),
-            );
-          }
-          return;
-        }
+        await ref.read(gitActionsProvider.notifier).initGit(project.path);
+
+        if (ref.read(gitActionsProvider).hasError) return;
 
         ref.read(projectSidebarActionsProvider.notifier).refreshGitState(project.path);
 
@@ -315,13 +314,11 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     // `_checkBehindCount`. Mirror that soft-failure behaviour: leave
     // `_remotes` as the empty list so the UI falls back to classic
     // single-remote Push.
-    List<GitRemote> remotes;
-    try {
-      remotes = await ref.read(gitActionsProvider.notifier).listRemotes(widget.project.path);
-    } on Exception {
-      // Notifier already logged the underlying cause.
-      return;
-    }
+    final remotes = await ref.read(gitActionsProvider.notifier).listRemotes(widget.project.path);
+    // Notifier already logged the underlying cause and set AsyncError state;
+    // the ref.listen in build() will surface it. Return early without
+    // updating _remotes so the UI falls back to single-remote Push.
+    if (ref.read(gitActionsProvider).hasError) return;
     if (!mounted) return;
     setState(() {
       _remotes = remotes;
@@ -355,6 +352,9 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
 
     String message = 'chore: update files';
     if (aiSvc != null) {
+      // ARCH-NOTE: Deliberate exception to the no-widget-catch rule.
+      // Swallows NetworkException from a non-critical AI commit-message call.
+      // Moving this into a notifier is tracked as a follow-up.
       try {
         final response = await aiSvc.sendMessage(history: const [], prompt: prompt, model: model);
         final text = response.content;
@@ -387,16 +387,11 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   }
 
   Future<void> _runCommit(String message) async {
-    try {
-      final sha = await ref.read(gitActionsProvider.notifier).commit(widget.project.path, message);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Committed — $sha')));
-        ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
-      }
-    } on GitException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Commit failed: ${e.message}')));
-      }
+    final sha = await ref.read(gitActionsProvider.notifier).commit(widget.project.path, message);
+    if (ref.read(gitActionsProvider).hasError) return;
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Committed — $sha')));
+      ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
     }
   }
 
@@ -421,28 +416,9 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         final branch = await git.currentBranch(widget.project.path);
         target = (branch == null || branch.isEmpty) ? _selectedRemote : '$_selectedRemote/$branch';
       }
-      if (mounted) {
+      if (!ref.read(gitActionsProvider).hasError && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pushed to $target')));
         ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
-      }
-    } on GitNoUpstreamException {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No upstream branch. Run `git push -u origin <branch>` in your terminal.'),
-            duration: Duration(seconds: 5),
-          ),
-        );
-      }
-    } on GitAuthException {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Push failed — check your git credentials.')));
-      }
-    } on GitException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Push failed: ${e.message}')));
       }
     } finally {
       if (mounted) setState(() => _pushing = false);
@@ -474,26 +450,9 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     setState(() => _pulling = true);
     try {
       final n = await ref.read(gitActionsProvider.notifier).pull(widget.project.path);
-      if (mounted) {
+      if (!ref.read(gitActionsProvider).hasError && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pulled — $n new commit(s) from origin')));
         ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
-      }
-    } on GitConflictException {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Pull failed — merge conflict detected. Resolve conflicts in your editor.'),
-            duration: Duration(seconds: 5),
-          ),
-        );
-      }
-    } on GitNoUpstreamException {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No upstream branch set.')));
-      }
-    } on GitException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pull failed: ${e.message}')));
       }
     } finally {
       if (mounted) setState(() => _pulling = false);
@@ -502,6 +461,21 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(gitActionsProvider, (prev, next) {
+      if (next is! AsyncError || !mounted) return;
+      final failure = next.error;
+      if (failure is! GitActionsFailure) return;
+      final msg = switch (failure) {
+        GitActionsNoUpstream(:final branch) =>
+          'No upstream branch for $branch. Run `git push -u origin <branch>` in your terminal.',
+        GitActionsAuthFailed() => 'Push failed — check your git credentials.',
+        GitActionsConflict() => 'Pull failed — merge conflict detected. Resolve conflicts in your editor.',
+        GitActionsGitError(:final message) => message,
+        GitActionsUnknownError() => 'Git operation failed.',
+      };
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    });
+
     final liveStateAsync = ref.watch(gitLiveStateProvider(widget.project.path));
     final behindAsync = ref.watch(behindCountProvider(widget.project.path));
 
@@ -781,6 +755,9 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     String prTitle = currentBranch.replaceAll('-', ' ');
     String prBody = '';
     if (aiSvc != null) {
+      // ARCH-NOTE: Deliberate exception to the no-widget-catch rule.
+      // Swallows NetworkException from a non-critical AI PR title/body call.
+      // Moving this into a notifier is tracked as a follow-up.
       try {
         final prompt =
             'Generate a PR title (max 70 chars) and bullet-point body for these '
