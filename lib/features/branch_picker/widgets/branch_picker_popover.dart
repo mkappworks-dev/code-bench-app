@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../core/utils/debug_logger.dart';
 import '../../../features/project_sidebar/project_sidebar_actions.dart';
 import '../../../services/git/git_service.dart';
 import '../branch_picker_notifier.dart';
@@ -77,8 +76,7 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
         });
         _filterFocus.requestFocus();
       }
-    } on Exception catch (e) {
-      dLog('[BranchPickerPopover] _load failed: $e');
+    } on Exception {
       if (mounted) {
         setState(() {
           _branches = const [];
@@ -114,19 +112,16 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
         // and tap, and the stale list would mislead the next click).
         unawaited(_load());
       }
-    } on ProcessException catch (e) {
+    } on ProcessException {
       // Thrown when `git` isn't on PATH or the cwd was deleted out from
-      // under us. `on Exception` would swallow this too, but being
-      // explicit guarantees we won't accidentally hide a programmer-error
-      // `Error` subclass.
-      dLog('[BranchPickerPopover] checkout ProcessException: ${e.message}');
+      // under us. The notifier logs the underlying ProcessException; we
+      // keep the typed catch here purely to route to the right snackbar.
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Checkout failed — git binary unavailable.')));
       }
-    } on FileSystemException catch (e) {
-      dLog('[BranchPickerPopover] checkout FileSystemException: ${e.message}');
+    } on FileSystemException {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -151,15 +146,13 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: ${e.message}')));
       }
-    } on ProcessException catch (e) {
-      dLog('[BranchPickerPopover] createBranch ProcessException: ${e.message}');
+    } on ProcessException {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Create branch failed — git binary unavailable.')));
       }
-    } on FileSystemException catch (e) {
-      dLog('[BranchPickerPopover] createBranch FileSystemException: ${e.message}');
+    } on FileSystemException {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
