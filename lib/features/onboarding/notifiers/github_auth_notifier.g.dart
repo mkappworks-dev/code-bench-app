@@ -44,7 +44,7 @@ final class GitHubAuthNotifierProvider extends $AsyncNotifierProvider<GitHubAuth
   GitHubAuthNotifier create() => GitHubAuthNotifier();
 }
 
-String _$gitHubAuthNotifierHash() => r'210c9cb49d9ca555131de6924575c146b81f93f9';
+String _$gitHubAuthNotifierHash() => r'534fdf51fbf8251be4b7983256cd600984ec076b';
 
 /// Holds the currently authenticated GitHub account and exposes auth actions.
 ///

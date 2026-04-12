@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_icons.dart';
-import '../../core/utils/debug_logger.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../core/errors/app_exception.dart';
@@ -14,20 +13,19 @@ import '../../data/models/chat_session.dart';
 import '../../data/models/project.dart';
 import '../../data/models/project_action.dart';
 import '../../features/chat/chat_notifier.dart';
+import '../../features/chat/notifiers/create_pr_actions.dart';
 import '../../features/chat/widgets/commit_dialog.dart';
 import '../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../notifiers/action_output_notifier.dart';
+import '../notifiers/ide_launch_actions.dart';
 import '../../services/ai/ai_service_factory.dart';
 import '../../services/git/git_live_state_provider.dart';
 import '../../services/git/git_service.dart'
     show GitException, GitNoUpstreamException, GitAuthException, GitConflictException, GitRemote;
-import '../../services/ide/ide_launch_service.dart';
 import '../notifiers/git_actions.dart';
 import '../../data/datasources/local/general_preferences.dart';
-import '../../data/datasources/local/secure_storage_source.dart';
 import '../../features/chat/widgets/create_pr_dialog.dart';
 import '../../features/project_sidebar/project_sidebar_actions.dart';
-import '../../services/github/github_api_service.dart';
 
 /// Returns `true` if the project folder exists on disk. If the folder is
 /// missing, shows a snackbar, kicks off a targeted status refresh so the
@@ -38,12 +36,9 @@ bool _ensureProjectAvailable(BuildContext context, WidgetRef ref, String project
   if (ref.read(projectSidebarActionsProvider.notifier).projectExistsOnDisk(projectPath)) return true;
   // Fire-and-forget: the snackbar should show immediately; the sidebar
   // re-render follows on the next Drift stream emission.
-  unawaited(
-    ref
-        .read(projectSidebarActionsProvider.notifier)
-        .refreshProjectStatus(projectId)
-        .catchError((Object e) => dLog('[_ensureProjectAvailable] refresh failed: $e')),
-  );
+  // Notifier already logs its own failures; swallow here so this
+  // background refresh cannot surface as an uncaught exception.
+  unawaited(ref.read(projectSidebarActionsProvider.notifier).refreshProjectStatus(projectId).catchError((Object _) {}));
   ScaffoldMessenger.of(context).showSnackBar(
     const SnackBar(
       content: Text(
@@ -184,7 +179,6 @@ class _VsCodeDropdown extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final svc = ref.watch(ideLaunchServiceProvider);
     return Tooltip(
       message: 'Open in…',
       child: Builder(
@@ -210,18 +204,19 @@ class _VsCodeDropdown extends ConsumerWidget {
             );
             if (action == null) return;
             if (!btnContext.mounted) return;
+            final launcher = ref.read(ideLaunchActionsProvider.notifier);
             String? error;
             switch (action) {
               case 'vscode':
                 if (!_ensureProjectAvailable(btnContext, ref, projectId, projectPath)) return;
-                error = await svc.openVsCode(projectPath);
+                error = await launcher.openVsCode(projectPath);
               case 'cursor':
                 if (!_ensureProjectAvailable(btnContext, ref, projectId, projectPath)) return;
-                error = await svc.openCursor(projectPath);
+                error = await launcher.openCursor(projectPath);
               case 'finder':
-                error = await svc.openInFinder(projectPath);
+                error = await launcher.openInFinder(projectPath);
               case 'terminal':
-                error = await svc.openInTerminal(projectPath);
+                error = await launcher.openInTerminal(projectPath);
             }
             if (error != null && btnContext.mounted) {
               ScaffoldMessenger.of(
@@ -265,7 +260,6 @@ class _InitGitButton extends ConsumerWidget {
         try {
           await ref.read(gitActionsProvider.notifier).initGit(project.path);
         } on GitException catch (e) {
-          dLog('[_InitGitButton] initGit failed: $e');
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               // Include the underlying reason (git stderr) so the user
@@ -324,8 +318,8 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     List<GitRemote> remotes;
     try {
       remotes = await ref.read(gitActionsProvider.notifier).listRemotes(widget.project.path);
-    } on Exception catch (e) {
-      dLog('[_CommitPushButton] listRemotes threw: $e');
+    } on Exception {
+      // Notifier already logged the underlying cause.
       return;
     }
     if (!mounted) return;
@@ -367,12 +361,11 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         if (text.isNotEmpty) {
           message = text.trim().replaceAll('"', '').split('\n').first.trim();
         }
-      } on NetworkException catch (e) {
+      } on NetworkException {
         // Only swallow provider-side failures (offline, bad key, rate limit).
         // A TypeError from malformed provider JSON, or any other
         // `Error`/`Exception`, is a real bug and should propagate so we
         // see it instead of masking it as "provider unavailable".
-        dLog('[_CommitPushButton] AI commit message failed: ${e.message}');
         if (mounted) {
           ScaffoldMessenger.of(
             context,
@@ -757,11 +750,11 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
   Future<void> _showCreatePrDialog() async {
     if (!_ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
     final git = ref.read(gitActionsProvider.notifier);
+    final prActions = ref.read(createPrActionsProvider.notifier);
 
-    // 1. Check GitHub token.
-    final storage = ref.read(secureStorageSourceProvider);
-    final token = await storage.readGitHubToken();
-    if (token == null) {
+    // 1. Check GitHub token. The notifier resolves it via the shared
+    //    githubApiServiceProvider so the raw PAT never crosses this layer.
+    if (!await prActions.hasToken()) {
       _snack('Connect GitHub in Settings → Providers');
       return;
     }
@@ -799,11 +792,10 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
         final bodyMatch = RegExp(r'BODY:\n([\s\S]+)').firstMatch(text);
         if (titleMatch != null) prTitle = titleMatch.group(1)!.trim();
         if (bodyMatch != null) prBody = bodyMatch.group(1)!.trim();
-      } on NetworkException catch (e) {
+      } on NetworkException {
         // As in `_doCommit`: narrow to provider-side failures so a real
         // bug in the regex / response shape propagates instead of being
         // explained away as "AI unavailable".
-        dLog('[_CommitPushButton] AI PR title/body failed: ${e.message}');
         _snack('AI title/body unavailable — using a default. Check your model provider.');
       }
     }
@@ -826,12 +818,10 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
     //    instead of silently defaulting to ['main', 'master'] — otherwise
     //    the user's real problem (bad token, 404, offline) is masked until
     //    the PR submission fails with an opaque error.
-    final api = GitHubApiService(token);
     List<String> branches;
     try {
-      branches = await api.listBranches(owner, repo);
-    } catch (e, st) {
-      dLog('[_CommitPushButton] listBranches failed: $e\n$st');
+      branches = await prActions.listBranches(owner, repo);
+    } catch (_) {
       _snack('Could not list branches for $owner/$repo — check your GitHub token and repo access.');
       return;
     }
@@ -844,7 +834,7 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
 
     // 7. Create PR and surface the URL to the user.
     try {
-      final prUrl = await api.createPullRequest(
+      final prUrl = await prActions.createPullRequest(
         owner: owner,
         repo: repo,
         title: result.title,

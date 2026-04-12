@@ -37,7 +37,7 @@ final class GitActionsProvider extends $NotifierProvider<GitActions, void> {
   }
 }
 
-String _$gitActionsHash() => r'608c70d3b711150c80af22b4113a98afd9e6ec2a';
+String _$gitActionsHash() => r'db5997c32f00db17d09c36290a86cbd0153a6dcd';
 
 abstract class _$GitActions extends $Notifier<void> {
   void build();

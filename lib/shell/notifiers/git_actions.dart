@@ -12,7 +12,14 @@ class GitActions extends _$GitActions {
 
   GitService _git(String projectPath) => ref.read(gitServiceProvider(projectPath));
 
-  Future<void> initGit(String projectPath) => _git(projectPath).initGit();
+  Future<void> initGit(String projectPath) async {
+    try {
+      await _git(projectPath).initGit();
+    } catch (e, st) {
+      dLog('[GitActions] initGit failed: $e\n$st');
+      rethrow;
+    }
+  }
 
   Future<String> commit(String projectPath, String message) => _git(projectPath).commit(message);
 
@@ -41,7 +48,14 @@ class GitActions extends _$GitActions {
 
   Future<int> pull(String projectPath) => _git(projectPath).pull();
 
-  Future<List<GitRemote>> listRemotes(String projectPath) => _git(projectPath).listRemotes();
+  Future<List<GitRemote>> listRemotes(String projectPath) async {
+    try {
+      return await _git(projectPath).listRemotes();
+    } catch (e) {
+      dLog('[GitActions] listRemotes failed: $e');
+      rethrow;
+    }
+  }
 
   Future<String?> currentBranch(String projectPath) => _git(projectPath).currentBranch();
 
