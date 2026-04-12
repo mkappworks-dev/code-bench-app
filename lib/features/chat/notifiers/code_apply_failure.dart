@@ -1,0 +1,20 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'code_apply_failure.freezed.dart';
+
+@freezed
+sealed class CodeApplyFailure with _$CodeApplyFailure {
+  /// Project folder was deleted or moved off disk.
+  const factory CodeApplyFailure.projectMissing() = CodeApplyProjectMissing;
+
+  /// Attempted to write outside the project root.
+  const factory CodeApplyFailure.outsideProject() = CodeApplyOutsideProject;
+
+  /// Low-level disk write failure.
+  const factory CodeApplyFailure.diskWrite(String message) = CodeApplyDiskWrite;
+
+  /// File could not be read for conflict view.
+  const factory CodeApplyFailure.fileRead(String path) = CodeApplyFileRead;
+
+  const factory CodeApplyFailure.unknown(Object error) = CodeApplyUnknownError;
+}

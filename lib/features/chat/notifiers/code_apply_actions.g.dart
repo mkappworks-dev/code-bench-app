@@ -11,6 +11,9 @@ part of 'code_apply_actions.dart';
 /// Command notifier for code-apply and revert operations.
 ///
 /// Widgets never reach [ApplyService] directly — they call methods here.
+/// State is [AsyncValue<void>]: loading/error/data are driven by each method.
+/// Typed failures are emitted as [AsyncError] carrying a [CodeApplyFailure].
+///
 /// On [ProjectMissingException], [applyChange] also triggers a project-status
 /// refresh so the sidebar reflects the missing state without the widget needing
 /// to know about [ProjectSidebarActions].
@@ -21,13 +24,19 @@ final codeApplyActionsProvider = CodeApplyActionsProvider._();
 /// Command notifier for code-apply and revert operations.
 ///
 /// Widgets never reach [ApplyService] directly — they call methods here.
+/// State is [AsyncValue<void>]: loading/error/data are driven by each method.
+/// Typed failures are emitted as [AsyncError] carrying a [CodeApplyFailure].
+///
 /// On [ProjectMissingException], [applyChange] also triggers a project-status
 /// refresh so the sidebar reflects the missing state without the widget needing
 /// to know about [ProjectSidebarActions].
-final class CodeApplyActionsProvider extends $NotifierProvider<CodeApplyActions, void> {
+final class CodeApplyActionsProvider extends $AsyncNotifierProvider<CodeApplyActions, void> {
   /// Command notifier for code-apply and revert operations.
   ///
   /// Widgets never reach [ApplyService] directly — they call methods here.
+  /// State is [AsyncValue<void>]: loading/error/data are driven by each method.
+  /// Typed failures are emitted as [AsyncError] carrying a [CodeApplyFailure].
+  ///
   /// On [ProjectMissingException], [applyChange] also triggers a project-status
   /// refresh so the sidebar reflects the missing state without the widget needing
   /// to know about [ProjectSidebarActions].
@@ -48,29 +57,28 @@ final class CodeApplyActionsProvider extends $NotifierProvider<CodeApplyActions,
   @$internal
   @override
   CodeApplyActions create() => CodeApplyActions();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(void value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<void>(value));
-  }
 }
 
-String _$codeApplyActionsHash() => r'146bfd4131856a2dea231fc6bee0d285c2cef038';
+String _$codeApplyActionsHash() => r'0fe9642e30c998a4ca8f019fceed3abf0bcb5a9d';
 
 /// Command notifier for code-apply and revert operations.
 ///
 /// Widgets never reach [ApplyService] directly — they call methods here.
+/// State is [AsyncValue<void>]: loading/error/data are driven by each method.
+/// Typed failures are emitted as [AsyncError] carrying a [CodeApplyFailure].
+///
 /// On [ProjectMissingException], [applyChange] also triggers a project-status
 /// refresh so the sidebar reflects the missing state without the widget needing
 /// to know about [ProjectSidebarActions].
 
-abstract class _$CodeApplyActions extends $Notifier<void> {
-  void build();
+abstract class _$CodeApplyActions extends $AsyncNotifier<void> {
+  FutureOr<void> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<void, void>;
-    final element = ref.element as $ClassProviderElement<AnyNotifier<void, void>, void, Object?, Object?>;
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
+    final element =
+        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }
