@@ -56,6 +56,40 @@ cd .worktrees/feat/2026-04-07-sign-features-flag
 
 All implementation work happens inside that worktree.
 
+## Architecture — Dependency Rule
+
+The dependency graph is strictly one-directional:
+
+```
+Widgets / Screens
+      ↓  (ref.watch / ref.read notifier)
+  Notifiers          ← the only layer widgets may reach
+      ↓  (ref.read service)
+  Services           ← Dio, DB, Process.run, filesystem live here
+      ↓
+ External (API / SQLite / OS)
+```
+
+**Hard rules — enforced in code review:**
+
+| Allowed | Forbidden in widgets/screens |
+|---|---|
+| `ref.watch(someNotifierProvider)` | `ref.read(someServiceProvider)` |
+| `ref.read(someNotifierProvider.notifier).method()` | `ref.read(applyServiceProvider)`, `ref.read(projectServiceProvider)`, etc. |
+| `url_launcher` (`launchUrl`) for opening URLs/files | `Process.run(...)` |
+| Path string operations (`p.join`, etc.) | `Directory(...).existsSync()` or any `dart:io` I/O |
+
+**Notifier naming conventions:**
+
+| Suffix | Role |
+|---|---|
+| `*Actions` (`SettingsActions`, `ProjectSidebarActions`, `CodeApplyActions`) | Command notifiers — `void build()`, imperative methods only, `keepAlive: true` |
+| `*Notifier` (`ChatNotifier`, `GitHubAuthNotifier`) | State-owning `AsyncNotifier` or `Notifier` |
+
+**Where services live:** `lib/services/` only. Services are instantiated via `@riverpod` / `@Riverpod(keepAlive: true)` provider functions — never constructed directly in widgets or notifiers.
+
+**`Process.run` / `dart:io` / Dio** — allowed only inside `lib/services/`. The one exception is `ApplyService.assertWithinProject` (a static security guard), which may be called from widgets that perform their own file reads (e.g. `_loadDiff` in `message_bubble.dart`).
+
 ## macOS notes
 
 App Sandbox is **intentionally disabled** on macOS because `ActionRunnerService`, `GitService`, and `IdeLaunchService` all shell out to external binaries. See [macos/Runner/README.md](macos/Runner/README.md) for the rationale, contributor rules (no `runInShell: true`, no PAT header logging), and distribution implications. Any change to `macos/Runner/*.entitlements` or to the process-execution services must be weighed against that threat model.

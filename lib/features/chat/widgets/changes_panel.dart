@@ -15,6 +15,7 @@ import '../../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../../../services/apply/apply_service.dart';
 import '../../../services/project/git_detector.dart';
 import '../chat_notifier.dart';
+import '../notifiers/code_apply_actions.dart';
 import 'conflict_merge_view.dart';
 
 class ChangesPanel extends ConsumerWidget {
@@ -100,7 +101,7 @@ class ChangesPanel extends ConsumerWidget {
                             onRevert: () async {
                               if (project == null) throw StateError('No active project');
                               await ref
-                                  .read(applyServiceProvider)
+                                  .read(codeApplyActionsProvider.notifier)
                                   .revertChange(change: change, isGit: isGit, projectPath: project.path);
                             },
                           ),

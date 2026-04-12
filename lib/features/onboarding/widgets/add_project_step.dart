@@ -46,22 +46,12 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
     }
 
     final path = detail.files.first.path;
-    String resolved;
     try {
-      // resolveSymbolicLinksSync throws on broken or non-existent paths, which
-      // is the behaviour we want — a dangling symlink must not become a project.
-      resolved = Directory(path).resolveSymbolicLinksSync();
-    } catch (_) {
-      _showDropError('That path could not be opened');
-      return;
+      final resolved = ref.read(projectSidebarActionsProvider.notifier).resolveDroppedDirectory(path);
+      setState(() => _selectedPath = resolved);
+    } on ArgumentError catch (e) {
+      _showDropError(e.message as String);
     }
-
-    if (!FileSystemEntity.isDirectorySync(resolved)) {
-      _showDropError('Please drop a folder, not a file');
-      return;
-    }
-
-    setState(() => _selectedPath = resolved);
   }
 
   void _showDropError(String message) {

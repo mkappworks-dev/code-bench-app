@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:io';
+
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,8 +24,8 @@ import '../../services/ide/ide_launch_service.dart';
 import '../../data/datasources/local/general_preferences.dart';
 import '../../data/datasources/local/secure_storage_source.dart';
 import '../../features/chat/widgets/create_pr_dialog.dart';
+import '../../features/project_sidebar/project_sidebar_actions.dart';
 import '../../services/github/github_api_service.dart';
-import '../../services/project/project_service.dart';
 
 /// Returns `true` if the project folder exists on disk. If the folder is
 /// missing, shows a snackbar, kicks off a targeted status refresh so the
@@ -32,12 +33,12 @@ import '../../services/project/project_service.dart';
 /// Checks the filesystem directly — does NOT rely on cached
 /// `project.status` which may be stale.
 bool _ensureProjectAvailable(BuildContext context, WidgetRef ref, String projectId, String projectPath) {
-  if (Directory(projectPath).existsSync()) return true;
+  if (ref.read(projectSidebarActionsProvider.notifier).projectExistsOnDisk(projectPath)) return true;
   // Fire-and-forget: the snackbar should show immediately; the sidebar
   // re-render follows on the next Drift stream emission.
   unawaited(
     ref
-        .read(projectServiceProvider)
+        .read(projectSidebarActionsProvider.notifier)
         .refreshProjectStatus(projectId)
         .catchError((Object e) => dLog('[_ensureProjectAvailable] refresh failed: $e')),
   );
@@ -894,11 +895,9 @@ class _CommitPushButtonState extends ConsumerState<_CommitPushButton> {
             ? SnackBarAction(
                 label: 'Open',
                 onPressed: () {
-                  // Fire-and-forget. `.catchError` prevents a
-                  // `ProcessException` (e.g. no `open` binary on
-                  // non-macOS) from escaping as an unhandled future —
-                  // the URL is already visible in the snackbar.
-                  unawaited(Process.run('open', ['--', prUrl]).catchError((Object _) => ProcessResult(0, -1, '', '')));
+                  // Fire-and-forget. `launchUrl` works cross-platform and
+                  // does not depend on the `open` binary being available.
+                  unawaited(launchUrl(Uri.parse(prUrl), mode: LaunchMode.externalApplication));
                 },
               )
             : null,
@@ -1035,7 +1034,7 @@ class _ActionsDropdown extends ConsumerWidget {
               final action = await _showAddActionDialog(btnContext);
               if (action != null) {
                 final newActions = [...project.actions, action];
-                await ref.read(projectServiceProvider).updateProjectActions(project.id, newActions);
+                await ref.read(projectSidebarActionsProvider.notifier).updateProjectActions(project.id, newActions);
               }
             } else if (value is ProjectAction) {
               await ref.read(actionOutputProvider.notifier).run(value, project.path);

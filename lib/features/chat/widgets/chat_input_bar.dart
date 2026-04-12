@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -148,7 +147,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
   ///  - cached `missing` but folder was restored by the user out-of-band →
   ///    allow send + heal back to available
   bool _isProjectAvailable(Project project) {
-    final existsOnDisk = Directory(project.path).existsSync();
+    final existsOnDisk = ref.read(projectSidebarActionsProvider.notifier).projectExistsOnDisk(project.path);
     final cachedAsAvailable = project.status == ProjectStatus.available;
     if (existsOnDisk != cachedAsAvailable) {
       unawaited(

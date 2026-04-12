@@ -8,8 +8,8 @@ import '../core/utils/debug_logger.dart';
 import '../features/chat/chat_notifier.dart';
 import '../features/chat/widgets/changes_panel.dart';
 import '../features/project_sidebar/project_sidebar.dart';
+import '../features/project_sidebar/project_sidebar_actions.dart';
 import '../features/project_sidebar/project_sidebar_notifier.dart';
-import '../services/session/session_service.dart';
 import 'widgets/action_output_panel.dart';
 import 'widgets/app_lifecycle_observer.dart';
 import 'widgets/status_bar.dart';
@@ -24,8 +24,9 @@ class ChatShell extends ConsumerWidget {
     final projectId = ref.read(activeProjectIdProvider);
     if (projectId == null) return;
     final model = ref.read(selectedModelProvider);
-    final service = ref.read(sessionServiceProvider);
-    final sessionId = await service.createSession(model: model, projectId: projectId);
+    final sessionId = await ref
+        .read(projectSidebarActionsProvider.notifier)
+        .createSession(model: model, projectId: projectId);
     ref.read(activeSessionIdProvider.notifier).set(sessionId);
     if (context.mounted) context.go('/chat/$sessionId');
   }

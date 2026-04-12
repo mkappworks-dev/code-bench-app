@@ -19,7 +19,7 @@ import '../../../data/models/chat_message.dart';
 import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/project_sidebar_notifier.dart';
 import '../../../services/apply/apply_service.dart';
-import '../../../services/project/project_service.dart';
+import '../notifiers/code_apply_actions.dart';
 import '../chat_notifier.dart';
 import '../notifiers/ask_question_notifier.dart';
 import 'ask_user_question_card.dart';
@@ -460,10 +460,10 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
     setState(() => _applying = true);
     try {
       final absolutePath = p.join(project.path, filename);
-      ApplyService.assertWithinProject(absolutePath, project.path);
       await ref
-          .read(applyServiceProvider)
+          .read(codeApplyActionsProvider.notifier)
           .applyChange(
+            projectId: project.id,
             filePath: absolutePath,
             projectPath: project.path,
             newContent: widget.code,
@@ -477,17 +477,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
       setState(() => _diffState = _DiffCardState.hidden);
     } on ProjectMissingException catch (e) {
       dLog('[_applyChange] project missing: $e');
-      // Flip the sidebar tile to the "missing" visual state immediately
-      // rather than waiting for the next app-resume refresh.
-      unawaited(
-        ref
-            .read(projectServiceProvider)
-            .refreshProjectStatus(project.id)
-            .catchError(
-              (Object refreshError) =>
-                  dLog('[_applyChange] refresh after ProjectMissingException failed: $refreshError'),
-            ),
-      );
+      // The notifier already triggered refreshProjectStatus — just show the error.
       _showApplyError('Project folder is missing. Right-click the project in the sidebar to Relocate or Remove it.');
     } on StateError catch (e) {
       dLog('[_applyChange] path rejected: $e');
