@@ -74,7 +74,7 @@ final class PrCardNotifierProvider extends $AsyncNotifierProvider<PrCardNotifier
   }
 }
 
-String _$prCardNotifierHash() => r'2660b69e3e472757faec184bd70904b716df8296';
+String _$prCardNotifierHash() => r'4921a5679015637f222d2c40f67deaa8abaeda66';
 
 /// Manages live state for a single GitHub pull request card.
 ///

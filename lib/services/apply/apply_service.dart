@@ -135,6 +135,17 @@ class ApplyService {
     }
   }
 
+  /// Reads raw file content for the conflict-merge view.
+  /// Returns `'(file unreadable)'` if the file cannot be read.
+  Future<String> readFileContent(String path) async {
+    try {
+      return await File(path).readAsString();
+    } on IOException catch (e) {
+      dLog('[ApplyService] readFileContent failed: $e');
+      return '(file unreadable)';
+    }
+  }
+
   Future<void> applyChange({
     required String filePath,
     required String projectPath,

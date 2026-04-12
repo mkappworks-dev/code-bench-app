@@ -89,13 +89,7 @@ class CodeApplyActions extends _$CodeApplyActions {
   }
 
   /// Reads raw file content for the conflict-merge view.
-  ///
-  /// Throws [CodeApplyFileRead] on IO failure.
-  Future<String> readFileContent(String path) async {
-    try {
-      return await File(path).readAsString();
-    } on IOException {
-      throw CodeApplyFailure.fileRead(path);
-    }
-  }
+  /// Returns `'(file unreadable)'` if the file cannot be read.
+  Future<String> readFileContent(String path) =>
+      ref.read(applyServiceProvider).readFileContent(path);
 }

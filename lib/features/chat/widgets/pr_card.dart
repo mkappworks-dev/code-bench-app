@@ -109,14 +109,9 @@ class _PRCardState extends ConsumerState<PRCard> {
       actionLabel: 'Approve',
     );
     if (confirmed != true) return;
-    try {
-      await ref.read(_provider.notifier).approve();
-      if (!mounted) return;
-      _showSnack('Approved');
-    } catch (e) {
-      if (!mounted) return;
-      _showSnack('Approve failed: ${_friendlyError(e)}');
-    }
+    await ref.read(_provider.notifier).approve();
+    if (!mounted) return;
+    _showSnack('Approved');
   }
 
   Future<void> _merge() async {
@@ -129,16 +124,10 @@ class _PRCardState extends ConsumerState<PRCard> {
       destructive: true,
     );
     if (confirmed != true) return;
-    try {
-      await ref.read(_provider.notifier).merge();
-      if (!mounted) return;
-      _showSnack('Merged');
-      // Notifier's merge() already calls refresh(); stop timer for terminal state.
-      _pollTimer?.cancel();
-    } catch (e) {
-      if (!mounted) return;
-      _showSnack('Merge failed: ${_friendlyError(e)}');
-    }
+    await ref.read(_provider.notifier).merge();
+    if (!mounted) return;
+    _showSnack('Merged');
+    _pollTimer?.cancel();
   }
 
   Future<bool?> _confirm({
@@ -255,6 +244,26 @@ class _PRCardState extends ConsumerState<PRCard> {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(s.pollError!, style: const TextStyle(color: ThemeConstants.error, fontSize: 10)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (s.actionError != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: ThemeConstants.error.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: ThemeConstants.error.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, size: 11, color: ThemeConstants.error),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(s.actionError!, style: const TextStyle(color: ThemeConstants.error, fontSize: 10)),
                   ),
                 ],
               ),
