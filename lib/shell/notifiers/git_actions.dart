@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/utils/debug_logger.dart';
-import '../../data/git/repository/git_repository.dart';
-import '../../data/git/repository/git_repository_impl.dart';
+import '../../data/git/datasource/git_datasource.dart';
+import '../../services/git/git_service.dart';
 import 'git_actions_failure.dart';
 
 part 'git_actions.g.dart';
@@ -19,7 +19,7 @@ class GitActions extends _$GitActions {
   @override
   FutureOr<void> build() {}
 
-  GitRepository _git() => ref.read(gitRepositoryProvider);
+  GitService _git() => ref.read(gitServiceProvider);
 
   GitActionsFailure _asFailure(Object e) => switch (e) {
     GitNoUpstreamException(:final message) => GitActionsFailure.noUpstream(message),

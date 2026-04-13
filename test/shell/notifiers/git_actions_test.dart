@@ -1,15 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:code_bench_app/data/git/git_live_state.dart';
-import 'package:code_bench_app/data/git/repository/git_repository.dart';
-import 'package:code_bench_app/data/git/repository/git_repository_impl.dart';
+import 'package:code_bench_app/data/git/datasource/git_datasource.dart';
+import 'package:code_bench_app/services/git/git_service.dart';
 import 'package:code_bench_app/shell/notifiers/git_actions.dart';
 import 'package:code_bench_app/shell/notifiers/git_actions_failure.dart';
 
-// ── Fake GitRepository ─────────────────────────────────────────────────────────
+// ── Fake GitService ───────────────────────────────────────────────────────────
 
-class _FakeGitRepository extends Fake implements GitRepository {
+class _FakeGitService extends Fake implements GitService {
   Object? _commitError;
   final String _commitSha = 'abc1234';
 
@@ -86,14 +85,14 @@ class _FakeGitRepository extends Fake implements GitRepository {
 const _kPath = '/fake/project';
 
 void main() {
-  late _FakeGitRepository fakeRepo;
+  late _FakeGitService fakeService;
 
   setUp(() {
-    fakeRepo = _FakeGitRepository();
+    fakeService = _FakeGitService();
   });
 
   ProviderContainer makeContainer() {
-    final c = ProviderContainer(overrides: [gitRepositoryProvider.overrideWithValue(fakeRepo)]);
+    final c = ProviderContainer(overrides: [gitServiceProvider.overrideWithValue(fakeService)]);
     addTearDown(c.dispose);
     return c;
   }
@@ -109,7 +108,7 @@ void main() {
     });
 
     test('GitException → GitActionsGitError', () async {
-      fakeRepo.throwOnCommit(const GitException('git commit failed'));
+      fakeService.throwOnCommit(const GitException('git commit failed'));
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).commit(_kPath, 'init');
@@ -117,7 +116,7 @@ void main() {
     });
 
     test('unknown exception → GitActionsUnknownError', () async {
-      fakeRepo.throwOnCommit(Exception('unexpected'));
+      fakeService.throwOnCommit(Exception('unexpected'));
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).commit(_kPath, 'init');
@@ -136,7 +135,7 @@ void main() {
     });
 
     test('GitNoUpstreamException → GitActionsNoUpstream', () async {
-      fakeRepo.throwOnPush(const GitNoUpstreamException('main'));
+      fakeService.throwOnPush(const GitNoUpstreamException('main'));
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).push(_kPath);
@@ -144,7 +143,7 @@ void main() {
     });
 
     test('GitAuthException → GitActionsAuthFailed', () async {
-      fakeRepo.throwOnPush(const GitAuthException());
+      fakeService.throwOnPush(const GitAuthException());
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).push(_kPath);
@@ -152,7 +151,7 @@ void main() {
     });
 
     test('GitException → GitActionsGitError', () async {
-      fakeRepo.throwOnPush(const GitException('remote rejected'));
+      fakeService.throwOnPush(const GitException('remote rejected'));
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).push(_kPath);
@@ -171,7 +170,7 @@ void main() {
     });
 
     test('GitConflictException → GitActionsConflict', () async {
-      fakeRepo.throwOnPull(const GitConflictException());
+      fakeService.throwOnPull(const GitConflictException());
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).pull(_kPath);
@@ -179,7 +178,7 @@ void main() {
     });
 
     test('GitNoUpstreamException → GitActionsNoUpstream', () async {
-      fakeRepo.throwOnPull(const GitNoUpstreamException(''));
+      fakeService.throwOnPull(const GitNoUpstreamException(''));
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).pull(_kPath);

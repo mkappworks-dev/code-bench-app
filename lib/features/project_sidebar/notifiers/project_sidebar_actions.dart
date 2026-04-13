@@ -9,7 +9,7 @@ import '../../../data/models/ai_model.dart';
 import '../../../data/models/chat_session.dart';
 import '../../../data/models/project_action.dart';
 import '../../chat/notifiers/chat_notifier.dart';
-import '../../../data/git/repository/git_repository_impl.dart';
+import '../../../services/git/git_service.dart';
 import '../../../data/project/repository/project_repository.dart';
 import '../../../data/project/repository/project_repository_impl.dart';
 import '../../../data/session/repository/session_repository.dart';

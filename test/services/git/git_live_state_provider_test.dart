@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:code_bench_app/data/git/repository/git_repository_impl.dart';
+import 'package:code_bench_app/services/git/git_service.dart';
 
 Future<Directory> _initGitRepo() async {
   final dir = await Directory.systemTemp.createTemp('git_live_test_');

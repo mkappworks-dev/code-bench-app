@@ -64,10 +64,9 @@ void main() {
     // Widgets and screens must not import from lib/services/, lib/data/**/datasource/,
     // or lib/data/**/repository/ directly. Documented exceptions:
     //   • apply_service.dart — static assertWithinProject security guard
-    //   • project_tile.dart — imports git_repository_impl.dart solely for
-    //     gitLiveStateProvider, a @riverpod family provider whose definition
-    //     currently lives in the repository layer. Moving it to a shell
-    //     notifier file is tracked as follow-up work.
+    //   • project_tile.dart — imports git_service.dart solely for
+    //     gitLiveStateProvider (a @riverpod family provider). Moving it to a
+    //     shell notifier file is tracked as follow-up work.
     test('widgets do not import services or datasources directly', () {
       final widgetFiles = _dartFiles(
         'lib/',

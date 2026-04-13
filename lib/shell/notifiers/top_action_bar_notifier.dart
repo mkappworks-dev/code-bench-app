@@ -6,7 +6,7 @@ import '../../data/models/chat_session.dart';
 import '../../data/models/project.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
-import '../../data/git/repository/git_repository_impl.dart';
+import '../../services/git/git_service.dart';
 
 part 'top_action_bar_notifier.freezed.dart';
 part 'top_action_bar_notifier.g.dart';
