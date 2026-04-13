@@ -53,8 +53,6 @@ class SettingsService {
   Future<void> markOnboardingCompleted() => _settings.markOnboardingCompleted();
   Future<void> resetOnboarding() => _settings.resetOnboarding();
 
-  // ── Orchestration (moved from SettingsActions) ────────────────────────────
-
   /// Wipes all user data in sequence. Returns step names that failed
   /// (empty = full success). Each step is isolated so a keychain failure
   /// does not block the DB wipe.

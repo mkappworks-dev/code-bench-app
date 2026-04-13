@@ -34,11 +34,9 @@ class ApplyService {
   final ApplyRepository _repo;
   final String Function() _uuidGen;
 
-  // ── Static utilities ─────────────────────────────────────────────────────
-
-  /// Throws [PathEscapeException] if [filePath] is not lexically and
-  /// physically inside [projectPath]. Guards against path-traversal attacks
-  /// from AI-controlled filenames. Permitted in widgets per CLAUDE.md.
+  /// Throws [PathEscapeException] if [filePath] escapes [projectPath]
+  /// (lexical and symlink checks). Also throws [ProjectMissingException]
+  /// if the project root is gone.
   static void assertWithinProject(String filePath, String projectPath) {
     final lexFile = p.normalize(p.absolute(filePath));
     final lexRoot = p.normalize(p.absolute(projectPath));
@@ -80,16 +78,9 @@ class ApplyService {
     return sha256.convert(bytes).toString();
   }
 
-  // ── Core operations ──────────────────────────────────────────────────────
-
   /// Applies [newContent] to [filePath], snapshots the original for revert,
-  /// and returns the recorded [AppliedChange].
-  ///
-  /// Throws:
-  /// - [PathEscapeException] for path-traversal violations.
-  /// - [ProjectMissingException] when the project root is gone.
-  /// - [ApplyTooLargeException] when content exceeds [kMaxApplyContentBytes].
-  /// - [FileSystemException] on disk write failure.
+  /// and returns the recorded [AppliedChange]. Throws [PathEscapeException],
+  /// [ProjectMissingException], or [ApplyTooLargeException] on guard failures.
   Future<AppliedChange> applyChange({
     required String filePath,
     required String projectPath,
@@ -194,8 +185,6 @@ class ApplyService {
       return true;
     }
   }
-
-  // ── Private helpers ──────────────────────────────────────────────────────
 
   static (int additions, int deletions) _computeLineCounts(String? original, String newContent) {
     final a = original ?? '';

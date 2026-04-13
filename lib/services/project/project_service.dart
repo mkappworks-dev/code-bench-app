@@ -63,15 +63,11 @@ class ProjectService {
 
   Future<void> deleteAllProjects() => _repo.deleteAllProjects();
 
-  // ── Filesystem helpers ────────────────────────────────────────────────────
-
   /// Returns `true` when the folder at [path] currently exists on disk.
   bool projectExistsOnDisk(String path) => Directory(path).existsSync();
 
-  /// Resolves [path] to its canonical real path and confirms it is a
-  /// directory. Returns the resolved path on success.
-  ///
-  /// Throws [ArgumentError] with a user-facing message on failure.
+  /// Resolves [path] to its canonical real path. Throws [ArgumentError] if
+  /// the path can't be read or is not a directory.
   String resolveDroppedDirectory(String path) {
     final String resolved;
     try {

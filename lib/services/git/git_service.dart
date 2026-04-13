@@ -18,25 +18,18 @@ GitService gitService(Ref ref) {
 }
 
 /// Owns all git business logic: composite operations, live-state queries, and
-/// branch management. [GitRepository] is reduced to 4 primitives only.
-///
-/// The per-call [_ds] factory mirrors the pattern that existed in
-/// [GitRepositoryImpl] and is explicitly sanctioned — [GitDatasourceProcess]
-/// is this feature's own datasource.
+/// branch management. [GitRepository] handles 4 cheap primitives; heavier
+/// operations go directly to [GitDatasourceProcess] via [_ds].
 class GitService {
   GitService({required GitRepository repo, GitLiveStateDatasource? liveState}) : _repo = repo, _liveState = liveState;
 
   final GitRepository _repo;
   final GitLiveStateDatasource? _liveState;
 
-  // ── Primitives (delegate to repository) ───────────────────────────────────
-
   Future<void> initGit(String path) => _repo.initGit(path);
   bool isGitRepo(String path) => _repo.isGitRepo(path);
   Future<String?> currentBranch(String path) => _repo.currentBranch(path);
   Future<String?> getOriginUrl(String path) => _repo.getOriginUrl(path);
-
-  // ── Compositions (previously on GitRepository, now owned by service) ──────
 
   GitDatasource _ds(String path) => GitDatasourceProcess(path);
 

@@ -43,8 +43,6 @@ class SessionService {
   Future<void> persistMessage(String sessionId, ChatMessage message) => _session.persistMessage(sessionId, message);
   Future<List<ChatSession>> getSessionsByProject(String projectId) => _session.getSessionsByProject(projectId);
 
-  // ── Orchestration (moved from SessionRepositoryImpl) ──────────────────────
-
   Stream<ChatMessage> sendAndStream({
     required String sessionId,
     required String userInput,
