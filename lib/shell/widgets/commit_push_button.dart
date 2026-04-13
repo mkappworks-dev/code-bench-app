@@ -227,7 +227,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(AppIcons.gitCommit, size: 12, color: s.canCommit ? Colors.white : ThemeConstants.mutedFg),
+                    Icon(AppIcons.gitCommit, size: 12, color: s.canCommit ? const Color(0xFF0A0A0A) : ThemeConstants.mutedFg),
                     const SizedBox(width: 5),
                     Text(
                       _pushing
@@ -236,7 +236,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                           ? '● Pulling…'
                           : 'Commit',
                       style: TextStyle(
-                        color: s.canCommit ? Colors.white : ThemeConstants.mutedFg,
+                        color: s.canCommit ? const Color(0xFF0A0A0A) : ThemeConstants.mutedFg,
                         fontSize: ThemeConstants.uiFontSizeSmall,
                       ),
                     ),
@@ -304,42 +304,13 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                             const PopupMenuDivider(),
                           ],
                           PopupMenuItem(
-                            value: 'push',
-                            height: 32,
-                            enabled: s.canPush && !busy,
-                            child: Text(
-                              _pushing
-                                  ? '● Pushing…'
-                                  : s.remotes.length > 1
-                                  ? 'Push ↑ (${s.selectedRemote})'
-                                  : 'Push ↑',
-                              style: TextStyle(
-                                color: (s.canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
-                                fontSize: ThemeConstants.uiFontSizeSmall,
-                              ),
-                            ),
-                          ),
-                          PopupMenuItem(
                             value: 'pull',
                             height: 32,
                             enabled: s.canPull && !busy,
                             child: Text(
-                              s.canPull ? 'Pull${s.badgeLabel}' : 'Pull',
+                              _pulling ? '● Pulling…' : s.canPull ? 'Pull${s.badgeLabel}' : 'Pull',
                               style: TextStyle(
                                 color: s.canPull ? ThemeConstants.accent : ThemeConstants.faintFg,
-                                fontSize: ThemeConstants.uiFontSizeSmall,
-                              ),
-                            ),
-                          ),
-                          const PopupMenuDivider(),
-                          PopupMenuItem(
-                            value: 'create_pr',
-                            height: 32,
-                            enabled: s.canPr,
-                            child: Text(
-                              'Create PR',
-                              style: TextStyle(
-                                color: s.canPr ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
                                 fontSize: ThemeConstants.uiFontSizeSmall,
                               ),
                             ),
@@ -348,14 +319,10 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                       );
                       if (action == null) return;
                       switch (action) {
-                        case 'push':
-                          unawaited(_doPush(s));
                         case 'push_all':
                           unawaited(_doPushAll(s));
                         case 'pull':
                           unawaited(_doPull());
-                        case 'create_pr':
-                          unawaited(_showCreatePrDialog());
                         case final String sel when sel.startsWith('select_'):
                           ref
                               .read(gitRemotesProvider(widget.project.path).notifier)
@@ -367,7 +334,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                 padding: const EdgeInsets.symmetric(horizontal: 7),
                 constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
                 decoration: BoxDecoration(
-                  color: s.canDropdown ? ThemeConstants.accentLight : ThemeConstants.inputSurface,
+                  color: s.canDropdown ? ThemeConstants.accentHover : ThemeConstants.inputSurface,
                   border: Border(
                     left: BorderSide(color: s.canDropdown ? ThemeConstants.accentDark : ThemeConstants.deepBorder),
                   ),
@@ -382,18 +349,88 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                         Text(
                           s.badgeLabel,
                           style: TextStyle(
-                            color: s.canDropdown ? Colors.white : ThemeConstants.mutedFg,
+                            color: s.canDropdown ? const Color(0xFF0A0A0A) : ThemeConstants.mutedFg,
                             fontSize: ThemeConstants.uiFontSizeLabel,
                           ),
                         ),
                       Icon(
                         AppIcons.chevronDown,
                         size: 11,
-                        color: s.canDropdown ? Colors.white : ThemeConstants.mutedFg,
+                        color: s.canDropdown ? const Color(0xFF0A0A0A) : ThemeConstants.mutedFg,
                       ),
                     ],
                   ),
                 ),
+              ),
+            ),
+          ),
+        ),
+        // ── Push ghost button ──────────────────────────────────────────────
+        const SizedBox(width: 4),
+        Tooltip(
+          message: 'Push to remote',
+          child: GestureDetector(
+            onTap: (busy || !s.canPush) ? null : () => unawaited(_doPush(s)),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
+              decoration: BoxDecoration(
+                color: ThemeConstants.inputSurface,
+                border: Border.all(color: ThemeConstants.deepBorder),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    AppIcons.cloudUpload,
+                    size: 10,
+                    color: (busy || !s.canPush) ? ThemeConstants.faintFg : ThemeConstants.textSecondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _pushing ? '…' : 'Push',
+                    style: TextStyle(
+                      color: (busy || !s.canPush) ? ThemeConstants.faintFg : ThemeConstants.textSecondary,
+                      fontSize: ThemeConstants.uiFontSizeSmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // ── Create PR ghost button ─────────────────────────────────────────
+        const SizedBox(width: 4),
+        Tooltip(
+          message: 'Create pull request',
+          child: GestureDetector(
+            onTap: (busy || !s.canPr) ? null : () => unawaited(_showCreatePrDialog()),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
+              decoration: BoxDecoration(
+                color: ThemeConstants.inputSurface,
+                border: Border.all(color: ThemeConstants.deepBorder),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    AppIcons.gitPullRequest,
+                    size: 10,
+                    color: (busy || !s.canPr) ? ThemeConstants.faintFg : ThemeConstants.textSecondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'PR',
+                    style: TextStyle(
+                      color: (busy || !s.canPr) ? ThemeConstants.faintFg : ThemeConstants.textSecondary,
+                      fontSize: ThemeConstants.uiFontSizeSmall,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
