@@ -47,7 +47,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
       return;
     }
     if (!mounted) return;
-    final confirmed = await CommitDialog.show(context, message);
+    final confirmed = await CommitDialog.show(context, message, projectPath: widget.project.path);
     if (confirmed != null) await _runCommit(confirmed);
   }
 
