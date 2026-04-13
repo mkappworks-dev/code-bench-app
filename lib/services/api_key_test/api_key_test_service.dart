@@ -19,8 +19,7 @@ class ApiKeyTestService {
 
   final ApiKeyTestRepository _repo;
 
-  Future<bool> testApiKey(AIProvider provider, String key) =>
-      _repo.testApiKey(provider, key);
+  Future<bool> testApiKey(AIProvider provider, String key) => _repo.testApiKey(provider, key);
 
   Future<bool> testOllamaUrl(String url) => _repo.testOllamaUrl(url);
 }

@@ -39,7 +39,7 @@ final class GeneralPrefsNotifierProvider
   GeneralPrefsNotifier create() => GeneralPrefsNotifier();
 }
 
-String _$generalPrefsNotifierHash() => r'349e13a5bee5dc743ac7255a01fcd5a447cbade4';
+String _$generalPrefsNotifierHash() => r'0bc699b62da4fabaed10e6077169b97ba2b85eb3';
 
 /// Loads general preferences on first watch and exposes setters.
 /// Auto-disposes when the settings screen is not in view.
