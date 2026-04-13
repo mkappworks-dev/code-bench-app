@@ -102,6 +102,21 @@ class ThemeConstants {
   static const Color diffAdditionBg = Color(0x3300CC66);
   static const Color diffDeletionBg = Color(0x33FF4444);
 
+  // Foreground on accent-coloured surfaces (near-black for contrast on teal)
+  static const Color onAccent = Color(0xFF0A0A0A);
+
+  // Frosted surface (dialogs, snackbars — near-black with high opacity)
+  static const Color frostedSurface = Color(0xF7161616);
+
+  // Destructive action border (dark red outline for destructive buttons)
+  static const Color destructiveBorder = Color(0xFF3D1515);
+
+  // Panel/footer separator (divider between content area and footer)
+  static const Color panelSeparator = Color(0xFF242424);
+
+  // Icon in empty / inactive state (between mutedFg and faintFg)
+  static const Color iconInactive = Color(0xFF444444);
+
   // Box shadow colours
   static const Color shadowDark = Color(0x99000000);
   static const Color shadowMedium = Color(0x66000000);

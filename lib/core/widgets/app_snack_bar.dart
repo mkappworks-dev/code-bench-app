@@ -20,10 +20,10 @@ class AppSnackBar extends StatelessWidget {
   final VoidCallback? onAction;
 
   static const _typeColor = {
-    AppSnackBarType.success: Color(0xFF4EC9B0),
-    AppSnackBarType.error: Color(0xFFF44747),
-    AppSnackBarType.warning: Color(0xFFCCA700),
-    AppSnackBarType.info: Color(0xFF4FC1FF),
+    AppSnackBarType.success: ThemeConstants.success,
+    AppSnackBarType.error: ThemeConstants.error,
+    AppSnackBarType.warning: ThemeConstants.warning,
+    AppSnackBarType.info: ThemeConstants.info,
   };
 
   static const _typeIconBg = {
@@ -80,7 +80,7 @@ class AppSnackBar extends StatelessWidget {
     return Container(
       width: 320,
       decoration: BoxDecoration(
-        color: const Color(0xF7161616),
+        color: ThemeConstants.frostedSurface,
         borderRadius: BorderRadius.circular(8),
         border: Border(
           top: BorderSide(color: ThemeConstants.borderColor),
@@ -88,9 +88,7 @@ class AppSnackBar extends StatelessWidget {
           bottom: BorderSide(color: ThemeConstants.borderColor),
           left: BorderSide(color: typeColor, width: 3),
         ),
-        boxShadow: const [
-          BoxShadow(color: Color(0xB3000000), blurRadius: 32, offset: Offset(0, 8)),
-        ],
+        boxShadow: const [BoxShadow(color: Color(0xB3000000), blurRadius: 32, offset: Offset(0, 8))],
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -111,17 +109,14 @@ class AppSnackBar extends StatelessWidget {
                   Text(
                     label,
                     style: const TextStyle(
-                      color: Color(0xFFE0E0E0),
+                      color: ThemeConstants.headingText,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   if (message != null) ...[
                     const SizedBox(height: 1),
-                    Text(
-                      message!,
-                      style: const TextStyle(color: ThemeConstants.dimFg, fontSize: 10),
-                    ),
+                    Text(message!, style: const TextStyle(color: ThemeConstants.dimFg, fontSize: 10)),
                   ],
                 ],
               ),
@@ -132,18 +127,14 @@ class AppSnackBar extends StatelessWidget {
                 onTap: onAction,
                 child: Text(
                   actionLabel!,
-                  style: TextStyle(
-                    color: typeColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(color: typeColor, fontSize: 10, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
             const SizedBox(width: 8),
             GestureDetector(
               onTap: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
-              child: const Icon(Icons.close, size: 13, color: Color(0xFF555555)),
+              child: const Icon(Icons.close, size: 13, color: ThemeConstants.mutedFg),
             ),
           ],
         ),

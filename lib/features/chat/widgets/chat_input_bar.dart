@@ -412,7 +412,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                         final hasText = _controller.text.trim().isNotEmpty;
                         final Color bg;
                         if (_isSending) {
-                          bg = const Color(0xFF267A68);
+                          bg = ThemeConstants.accentDark;
                         } else if (hasText && !isMissing) {
                           bg = ThemeConstants.accent;
                         } else {
@@ -440,7 +440,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                                           width: 9,
                                           height: 9,
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFF0A0A0A),
+                                            color: ThemeConstants.onAccent,
                                             borderRadius: BorderRadius.circular(2),
                                           ),
                                         ),
@@ -450,8 +450,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                                       AppIcons.arrowUp,
                                       size: 14,
                                       color: (hasText && !isMissing)
-                                          ? const Color(0xFF0A0A0A)
-                                          : const Color(0xFF444444),
+                                          ? ThemeConstants.onAccent
+                                          : ThemeConstants.iconInactive,
                                     ),
                             ),
                           ),

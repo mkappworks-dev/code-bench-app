@@ -227,7 +227,11 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(AppIcons.gitCommit, size: 12, color: s.canCommit ? const Color(0xFF0A0A0A) : ThemeConstants.mutedFg),
+                    Icon(
+                      AppIcons.gitCommit,
+                      size: 12,
+                      color: s.canCommit ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
+                    ),
                     const SizedBox(width: 5),
                     Text(
                       _pushing
@@ -236,7 +240,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                           ? '● Pulling…'
                           : 'Commit',
                       style: TextStyle(
-                        color: s.canCommit ? const Color(0xFF0A0A0A) : ThemeConstants.mutedFg,
+                        color: s.canCommit ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
                         fontSize: ThemeConstants.uiFontSizeSmall,
                       ),
                     ),
@@ -308,7 +312,11 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                             height: 32,
                             enabled: s.canPull && !busy,
                             child: Text(
-                              _pulling ? '● Pulling…' : s.canPull ? 'Pull${s.badgeLabel}' : 'Pull',
+                              _pulling
+                                  ? '● Pulling…'
+                                  : s.canPull
+                                  ? 'Pull${s.badgeLabel}'
+                                  : 'Pull',
                               style: TextStyle(
                                 color: s.canPull ? ThemeConstants.accent : ThemeConstants.faintFg,
                                 fontSize: ThemeConstants.uiFontSizeSmall,
@@ -349,14 +357,14 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                         Text(
                           s.badgeLabel,
                           style: TextStyle(
-                            color: s.canDropdown ? const Color(0xFF0A0A0A) : ThemeConstants.mutedFg,
+                            color: s.canDropdown ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
                             fontSize: ThemeConstants.uiFontSizeLabel,
                           ),
                         ),
                       Icon(
                         AppIcons.chevronDown,
                         size: 11,
-                        color: s.canDropdown ? const Color(0xFF0A0A0A) : ThemeConstants.mutedFg,
+                        color: s.canDropdown ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
                       ),
                     ],
                   ),

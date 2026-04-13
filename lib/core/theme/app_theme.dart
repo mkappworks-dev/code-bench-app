@@ -11,9 +11,9 @@ class AppTheme {
       scaffoldBackgroundColor: ThemeConstants.background,
       colorScheme: const ColorScheme.dark(
         primary: ThemeConstants.accent,
-        onPrimary: Color(0xFF0A0A0A),
+        onPrimary: ThemeConstants.onAccent,
         secondary: ThemeConstants.accentLight,
-        onSecondary: Color(0xFF0A0A0A),
+        onSecondary: ThemeConstants.onAccent,
         surface: ThemeConstants.sidebarBackground,
         onSurface: ThemeConstants.textPrimary,
         error: ThemeConstants.error,
@@ -55,7 +55,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: ThemeConstants.accent,
-          foregroundColor: const Color(0xFF0A0A0A),
+          foregroundColor: ThemeConstants.onAccent,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           elevation: 0,

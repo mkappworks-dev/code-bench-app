@@ -4,11 +4,7 @@ import '../constants/theme_constants.dart';
 enum AppDialogIconType { teal, destructive }
 
 class AppDialogAction {
-  const AppDialogAction._({
-    required this.label,
-    required this.onPressed,
-    required _ActionStyle style,
-  }) : _style = style;
+  const AppDialogAction._({required this.label, required this.onPressed, required _ActionStyle style}) : _style = style;
 
   factory AppDialogAction.cancel({required VoidCallback onPressed}) =>
       AppDialogAction._(label: 'Cancel', onPressed: onPressed, style: _ActionStyle.ghost);
@@ -72,7 +68,7 @@ class AppDialog extends StatelessWidget {
         constraints: BoxConstraints(minWidth: minWidth, maxWidth: maxWidth),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xF7161616),
+            color: ThemeConstants.frostedSurface,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: ThemeConstants.borderColor),
             boxShadow: const [
@@ -92,10 +88,7 @@ class AppDialog extends StatelessWidget {
                     Container(
                       width: badgeSize,
                       height: badgeSize,
-                      decoration: BoxDecoration(
-                        color: iconBg,
-                        borderRadius: BorderRadius.circular(badgeRadius),
-                      ),
+                      decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(badgeRadius)),
                       child: Icon(icon, size: badgeSize * 0.5, color: iconFg),
                     ),
                     const SizedBox(width: 12),
@@ -118,10 +111,7 @@ class AppDialog extends StatelessWidget {
                               const SizedBox(height: 3),
                               Text(
                                 subtitle!,
-                                style: const TextStyle(
-                                  color: ThemeConstants.textSecondary,
-                                  fontSize: 11,
-                                ),
+                                style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11),
                               ),
                             ],
                           ],
@@ -131,15 +121,12 @@ class AppDialog extends StatelessWidget {
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: content,
-              ),
+              Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: content),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 11, 16, 11),
                 decoration: const BoxDecoration(
-                  border: Border(top: BorderSide(color: Color(0xFF242424))),
+                  border: Border(top: BorderSide(color: ThemeConstants.panelSeparator)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -168,11 +155,7 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, border, textColor) = switch (action._style) {
-      _ActionStyle.primary => (
-        ThemeConstants.accent,
-        Border.all(color: Colors.transparent),
-        const Color(0xFF0A0A0A),
-      ),
+      _ActionStyle.primary => (ThemeConstants.accent, Border.all(color: Colors.transparent), ThemeConstants.onAccent),
       _ActionStyle.ghost => (
         Colors.transparent,
         Border.all(color: ThemeConstants.borderColor),
@@ -180,7 +163,7 @@ class _ActionButton extends StatelessWidget {
       ),
       _ActionStyle.destructive => (
         Colors.transparent,
-        Border.all(color: const Color(0xFF3D1515)),
+        Border.all(color: ThemeConstants.destructiveBorder),
         ThemeConstants.error,
       ),
     };
@@ -191,11 +174,7 @@ class _ActionButton extends StatelessWidget {
         opacity: action.onPressed == null ? 0.5 : 1.0,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(6),
-            border: border,
-          ),
+          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6), border: border),
           child: Text(
             action.label,
             style: TextStyle(

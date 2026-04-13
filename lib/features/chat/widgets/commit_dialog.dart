@@ -16,11 +16,7 @@ class CommitDialog extends ConsumerStatefulWidget {
   final String projectPath;
 
   /// Shows the commit dialog and returns the confirmed message, or null if cancelled.
-  static Future<String?> show(
-    BuildContext context,
-    String initialMessage, {
-    required String projectPath,
-  }) {
+  static Future<String?> show(BuildContext context, String initialMessage, {required String projectPath}) {
     return showDialog<String>(
       context: context,
       builder: (_) => CommitDialog(initialMessage: initialMessage, projectPath: projectPath),
@@ -87,9 +83,7 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
             if (_changedFiles.isNotEmpty) ...[
               Container(
                 constraints: const BoxConstraints(maxHeight: 160),
-                child: SingleChildScrollView(
-                  child: Column(children: _changedFiles.map(_buildFileRow).toList()),
-                ),
+                child: SingleChildScrollView(child: Column(children: _changedFiles.map(_buildFileRow).toList())),
               ),
               const SizedBox(height: 10),
             ],
@@ -99,15 +93,9 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
               maxLength: 72,
               decoration: const InputDecoration(
                 labelText: 'Commit message',
-                labelStyle: TextStyle(
-                  color: ThemeConstants.textSecondary,
-                  fontSize: ThemeConstants.uiFontSizeSmall,
-                ),
+                labelStyle: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
               ),
-              style: const TextStyle(
-                color: ThemeConstants.textPrimary,
-                fontSize: ThemeConstants.uiFontSize,
-              ),
+              style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
             ),
             const SizedBox(height: 4),
             Row(
@@ -122,10 +110,7 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
                 const SizedBox(width: 8),
                 const Text(
                   '⚡ Auto-commit future commits',
-                  style: TextStyle(
-                    color: ThemeConstants.textSecondary,
-                    fontSize: ThemeConstants.uiFontSizeSmall,
-                  ),
+                  style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                 ),
               ],
             ),
@@ -133,10 +118,7 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
         ),
         actions: [
           AppDialogAction.cancel(onPressed: () => Navigator.of(context).pop()),
-          AppDialogAction.primary(
-            label: 'Commit',
-            onPressed: _controller.text.trim().isEmpty ? null : _submit,
-          ),
+          AppDialogAction.primary(label: 'Commit', onPressed: _controller.text.trim().isEmpty ? null : _submit),
         ],
       ),
     );
@@ -144,7 +126,7 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
 
   Widget _buildFileRow(GitChangedFile file) {
     final (badgeColor, badgeBg) = switch (file.status) {
-      GitChangedFileStatus.modified => (const Color(0xFFCCA700), const Color(0x1ACCA700)),
+      GitChangedFileStatus.modified => (ThemeConstants.warning, const Color(0x1ACCA700)),
       GitChangedFileStatus.added => (ThemeConstants.accent, const Color(0x1A4EC9B0)),
       GitChangedFileStatus.deleted => (ThemeConstants.error, const Color(0x1AF44747)),
       GitChangedFileStatus.renamed => (ThemeConstants.textSecondary, ThemeConstants.inputSurface),
