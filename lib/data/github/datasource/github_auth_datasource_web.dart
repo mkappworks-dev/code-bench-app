@@ -2,21 +2,21 @@ import 'package:dio/dio.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/constants/api_constants.dart';
-import '../../core/constants/app_constants.dart';
-import '../../core/errors/app_exception.dart';
-import '../../data/_core/secure_storage.dart';
-import '../../data/models/repository.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/errors/app_exception.dart';
+import '../../../data/_core/secure_storage.dart';
+import '../../models/repository.dart';
+import 'github_auth_datasource.dart';
 
-part 'github_auth_service.g.dart';
+part 'github_auth_datasource_web.g.dart';
 
 @Riverpod(keepAlive: true)
-GitHubAuthService githubAuthService(Ref ref) {
-  return GitHubAuthService(ref.watch(secureStorageProvider));
-}
+GitHubAuthDatasource githubAuthDatasource(Ref ref) => GitHubAuthDatasourceWeb(ref.watch(secureStorageProvider));
 
-class GitHubAuthService {
-  GitHubAuthService(this._storage);
+/// Web/OAuth-backed implementation of [GitHubAuthDatasource].
+class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
+  GitHubAuthDatasourceWeb(this._storage);
 
   final SecureStorage _storage;
 
@@ -24,6 +24,7 @@ class GitHubAuthService {
   // For this desktop app they are embedded (common for desktop OAuth apps).
   static const _clientId = 'YOUR_GITHUB_CLIENT_ID';
 
+  @override
   Future<GitHubAccount> authenticate() async {
     try {
       // Build authorization URL
@@ -94,6 +95,7 @@ class GitHubAuthService {
   /// on success, and returns the populated account. Throws [AuthException]
   /// if the token is rejected or the request fails — callers must handle
   /// errors and must not persist the token themselves.
+  @override
   Future<GitHubAccount> signInWithPat(String token) async {
     try {
       final account = await _fetchUserInfo(token);
@@ -109,6 +111,7 @@ class GitHubAuthService {
     }
   }
 
+  @override
   Future<GitHubAccount?> getStoredAccount() async {
     final token = await _storage.readGitHubToken();
     if (token == null) return null;
@@ -119,11 +122,13 @@ class GitHubAuthService {
     }
   }
 
+  @override
   Future<bool> isAuthenticated() async {
     final token = await _storage.readGitHubToken();
     return token != null && token.isNotEmpty;
   }
 
+  @override
   Future<void> signOut() async {
     await _storage.deleteGitHubToken();
   }

@@ -9,7 +9,7 @@ part of 'create_pr_actions.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Command notifier mediating every GitHub-API call the "Create PR"
-/// dialog flow makes. Widgets never touch [GitHubApiService] or
+/// dialog flow makes. Widgets never touch [GitHubRepository] or
 /// [SecureStorage] directly — they go through here so the
 /// GitHub PAT never crosses the widget layer.
 ///
@@ -24,7 +24,7 @@ part of 'create_pr_actions.dart';
 final createPrActionsProvider = CreatePrActionsProvider._();
 
 /// Command notifier mediating every GitHub-API call the "Create PR"
-/// dialog flow makes. Widgets never touch [GitHubApiService] or
+/// dialog flow makes. Widgets never touch [GitHubRepository] or
 /// [SecureStorage] directly — they go through here so the
 /// GitHub PAT never crosses the widget layer.
 ///
@@ -36,7 +36,7 @@ final createPrActionsProvider = CreatePrActionsProvider._();
 /// [PrCardNotifier]; see `macos/Runner/README.md`.
 final class CreatePrActionsProvider extends $AsyncNotifierProvider<CreatePrActions, void> {
   /// Command notifier mediating every GitHub-API call the "Create PR"
-  /// dialog flow makes. Widgets never touch [GitHubApiService] or
+  /// dialog flow makes. Widgets never touch [GitHubRepository] or
   /// [SecureStorage] directly — they go through here so the
   /// GitHub PAT never crosses the widget layer.
   ///
@@ -65,10 +65,10 @@ final class CreatePrActionsProvider extends $AsyncNotifierProvider<CreatePrActio
   CreatePrActions create() => CreatePrActions();
 }
 
-String _$createPrActionsHash() => r'af479231451f5fe37aa50e42b57ec5241fcee63b';
+String _$createPrActionsHash() => r'a15370145b53f3be2533a732a8bbc2051a9d626b';
 
 /// Command notifier mediating every GitHub-API call the "Create PR"
-/// dialog flow makes. Widgets never touch [GitHubApiService] or
+/// dialog flow makes. Widgets never touch [GitHubRepository] or
 /// [SecureStorage] directly — they go through here so the
 /// GitHub PAT never crosses the widget layer.
 ///

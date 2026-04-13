@@ -1,42 +1,50 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/constants/api_constants.dart';
-import '../../core/utils/debug_logger.dart';
-import '../../core/errors/app_exception.dart';
-import '../../data/_core/secure_storage.dart';
-import '../../data/models/repository.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/errors/app_exception.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../data/_core/http/dio_factory.dart';
+import '../../../data/_core/secure_storage.dart';
+import '../../models/repository.dart';
+import 'github_api_datasource.dart';
 
-part 'github_api_service.g.dart';
+part 'github_api_datasource_dio.g.dart';
 
+/// Provides a [GitHubApiDatasource] initialised with the stored token,
+/// or `null` when no token is available.
 @Riverpod(keepAlive: true)
-Future<GitHubApiService?> githubApiService(Ref ref) async {
+Future<GitHubApiDatasource?> githubApiDatasource(Ref ref) async {
   final storage = ref.watch(secureStorageProvider);
   final token = await storage.readGitHubToken();
   if (token == null) return null;
-  return GitHubApiService(token);
+  return GitHubApiDatasourceDio(token);
 }
 
-class GitHubApiService {
-  GitHubApiService(String token, {Dio? dio})
-    : _dio =
-          dio ??
-          Dio(
-            BaseOptions(
-              baseUrl: ApiConstants.githubApiBaseUrl,
-              headers: {'Authorization': 'Bearer $token', 'Accept': 'application/vnd.github.v3+json'},
-            ),
-          );
+/// Dio-backed implementation of [GitHubApiDatasource].
+///
+/// SECURITY: Do NOT attach `LogInterceptor(requestHeader: true)` or any
+/// logger that dumps request headers. The `Authorization` header contains
+/// the user's GitHub Personal Access Token, and anything that prints it
+/// to the console is one `debugPrint` away from a leak.
+class GitHubApiDatasourceDio implements GitHubApiDatasource {
+  GitHubApiDatasourceDio(String token)
+    : _dio = DioFactory.create(
+        baseUrl: ApiConstants.githubApiBaseUrl,
+        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/vnd.github.v3+json'},
+      );
 
-  // SECURITY: Do NOT attach `LogInterceptor(requestHeader: true)` or any
-  // logger that dumps request headers. The `Authorization` header above
-  // contains the user's GitHub Personal Access Token, and anything that
-  // prints it to the console is one `debugPrint` away from a leak.
+  /// Test-only constructor that accepts a pre-configured [Dio] instance so
+  /// tests can inject a fake [HttpClientAdapter] without hitting real GitHub.
+  @visibleForTesting
+  GitHubApiDatasourceDio.withDio(Dio dio) : _dio = dio;
 
   final Dio _dio;
 
+  @override
   Future<List<Repository>> listRepositories({int page = 1}) async {
     try {
       final response = await _dio.get(
@@ -49,6 +57,7 @@ class GitHubApiService {
     }
   }
 
+  @override
   Future<List<Repository>> searchRepositories(String query) async {
     try {
       final response = await _dio.get('/search/repositories', queryParameters: {'q': query, 'per_page': 20});
@@ -63,6 +72,7 @@ class GitHubApiService {
   /// Only catches [DioException] — a malformed response (bad JSON shape,
   /// missing `login` field) will propagate so the caller can distinguish
   /// "token rejected" from "GitHub returned something unexpected".
+  @override
   Future<String?> validateToken() async {
     try {
       final response = await _dio.get('/user');
@@ -71,7 +81,7 @@ class GitHubApiService {
     } on DioException catch (e) {
       // Only log the exception type to avoid any risk of a future
       // `toString()` override leaking the Authorization header.
-      dLog('[GitHubApiService] validateToken failed: ${e.type} ${e.response?.statusCode}');
+      dLog('[GitHubApiDatasourceDio] validateToken failed: ${e.type} ${e.response?.statusCode}');
       return null;
     }
   }
@@ -92,6 +102,7 @@ class GitHubApiService {
     );
   }
 
+  @override
   Future<List<GitTreeItem>> getRepositoryTree(String owner, String repo, String branch) async {
     try {
       final response = await _dio.get('/repos/$owner/$repo/git/trees/$branch', queryParameters: {'recursive': '1'});
@@ -102,6 +113,7 @@ class GitHubApiService {
     }
   }
 
+  @override
   Future<String> getFileContent(String owner, String repo, String path, String branch) async {
     try {
       final response = await _dio.get('/repos/$owner/$repo/contents/$path', queryParameters: {'ref': branch});
@@ -121,6 +133,7 @@ class GitHubApiService {
   // the next time a caller wires these into a Process.run call.
   static final _safeBranchName = RegExp(r'^[A-Za-z0-9._/-]{1,255}$');
 
+  @override
   Future<List<String>> listBranches(String owner, String repo) async {
     try {
       final response = await _dio.get('/repos/$owner/$repo/branches', queryParameters: {'per_page': 50});
@@ -133,6 +146,7 @@ class GitHubApiService {
     }
   }
 
+  @override
   Future<List<Map<String, dynamic>>> listPullRequests(String owner, String repo, {String state = 'open'}) async {
     try {
       final response = await _dio.get('/repos/$owner/$repo/pulls', queryParameters: {'state': state, 'per_page': 50});
@@ -146,6 +160,7 @@ class GitHubApiService {
   /// payload — callers that only need a handful of fields are cheaper
   /// to feed raw maps than to maintain a typed PR model for fields we
   /// don't strongly typecheck yet.
+  @override
   Future<Map<String, dynamic>> getPullRequest(String owner, String repo, int number) async {
     try {
       final response = await _dio.get('/repos/$owner/$repo/pulls/$number');
@@ -157,6 +172,7 @@ class GitHubApiService {
 
   /// Lists check-runs (CI statuses) for a commit SHA. Used by the PR card
   /// to render CI chips next to the PR title.
+  @override
   Future<List<Map<String, dynamic>>> getCheckRuns(String owner, String repo, String sha) async {
     try {
       final response = await _dio.get('/repos/$owner/$repo/commits/$sha/check-runs');
@@ -168,6 +184,7 @@ class GitHubApiService {
   }
 
   /// Posts an APPROVE review on a pull request.
+  @override
   Future<void> approvePullRequest(String owner, String repo, int number) async {
     try {
       await _dio.post('/repos/$owner/$repo/pulls/$number/reviews', data: {'event': 'APPROVE'});
@@ -179,6 +196,7 @@ class GitHubApiService {
   /// Merges a pull request. Uses the default merge strategy configured
   /// on the repo — we deliberately don't expose strategy as a parameter
   /// until there is UI that lets the user pick one.
+  @override
   Future<void> mergePullRequest(String owner, String repo, int number) async {
     try {
       await _dio.put('/repos/$owner/$repo/pulls/$number/merge');
@@ -188,6 +206,7 @@ class GitHubApiService {
   }
 
   /// Creates a pull request. Returns the HTML URL of the created PR.
+  @override
   Future<String> createPullRequest({
     required String owner,
     required String repo,
