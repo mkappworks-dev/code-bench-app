@@ -25,9 +25,9 @@ class StepProgressIndicator extends StatelessWidget {
           children: List.generate(totalSteps, (i) {
             Color dotColor;
             if (i < currentStep) {
-              dotColor = ThemeConstants.blueAccent; // completed
+              dotColor = ThemeConstants.accent; // completed
             } else if (i == currentStep) {
-              dotColor = ThemeConstants.blueAccent.withValues(alpha: 0.5); // current
+              dotColor = ThemeConstants.accent.withValues(alpha: 0.45); // current
             } else {
               dotColor = ThemeConstants.borderColor; // upcoming
             }
