@@ -6,8 +6,8 @@ import '../../../core/utils/snackbar_helper.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../data/models/applied_change.dart';
-import '../../../data/models/project.dart';
+import '../../../data/apply/models/applied_change.dart';
+import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../../../shell/notifiers/git_actions.dart';
 import '../notifiers/chat_notifier.dart';
@@ -94,29 +94,6 @@ class ChangesPanel extends ConsumerWidget {
                       ];
                     }).toList(),
                   ),
-          ),
-          // Footer — stub "Commit all" button (Phase 3 wires this to git flow)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: ThemeConstants.borderColor)),
-            ),
-            child: GestureDetector(
-              onTap: () {
-                // Phase 3: wire to git commit flow
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text(
-                    'Commit all',
-                    style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(AppIcons.arrowRight, size: 11, color: ThemeConstants.textSecondary),
-                ],
-              ),
-            ),
           ),
         ],
       ),
@@ -227,8 +204,8 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
       showErrorSnackBar(context, switch (failure) {
         CodeApplyProjectMissing() => 'Project folder is missing.',
         CodeApplyOutsideProject() => 'This file is outside the current project.',
+        CodeApplyTooLarge(:final bytes) => 'Content too large to apply ($bytes bytes).',
         CodeApplyDiskWrite(:final message) => 'Could not write file: $message',
-        CodeApplyFileRead(:final path) => 'Could not read file: $path',
         CodeApplyUnknownError() => 'Revert failed. Please try again.',
       });
     });

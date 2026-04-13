@@ -1,8 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../data/models/chat_message.dart';
-import '../../data/models/tool_event.dart';
+import '../../data/shared/chat_message.dart';
+import '../../data/session/models/tool_event.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
 
 part 'working_pill_notifier.g.dart';

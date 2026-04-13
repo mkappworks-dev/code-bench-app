@@ -65,7 +65,7 @@ final class CreatePrActionsProvider extends $AsyncNotifierProvider<CreatePrActio
   CreatePrActions create() => CreatePrActions();
 }
 
-String _$createPrActionsHash() => r'a15370145b53f3be2533a732a8bbc2051a9d626b';
+String _$createPrActionsHash() => r'72233580ef2733554d9158a40fafbe2ac458ebdc';
 
 /// Command notifier mediating every GitHub-API call the "Create PR"
 /// dialog flow makes. Widgets never touch [GitHubRepository] or

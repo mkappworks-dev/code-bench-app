@@ -4,7 +4,8 @@ import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../data/apply/repository/apply_repository_impl.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../services/apply/apply_service.dart';
 
 part 'code_diff_provider.freezed.dart';
 part 'code_diff_provider.g.dart';
@@ -24,16 +25,17 @@ Future<DiffResult?> codeDiff(
   required String newContent,
 }) async {
   try {
-    final original = await ref.watch(applyRepositoryProvider).readOriginalForDiff(absolutePath, projectPath);
+    final original = await ref.watch(applyServiceProvider).readOriginalForDiff(absolutePath, projectPath);
     final dmp = DiffMatchPatch();
     final diffs = dmp.diff(original ?? '', newContent);
     dmp.diffCleanupSemantic(diffs);
     return DiffResult(originalContent: original, diffs: diffs);
-  } on StateError {
+  } on PathEscapeException {
     return null;
   } on IOException {
     return null;
-  } catch (_) {
+  } catch (e, st) {
+    dLog('[codeDiff] unexpected error for $absolutePath: $e\n$st');
     return null;
   }
 }

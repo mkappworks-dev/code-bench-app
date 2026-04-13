@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../data/models/tool_event.dart';
+import '../../../data/session/models/tool_event.dart';
 
 /// A compact, expandable card that renders a single agent tool-use event
 /// inline in the chat stream. Collapsed state shows the tool name, primary
@@ -42,8 +42,6 @@ class _ToolCallRowState extends State<ToolCallRow> {
   @override
   Widget build(BuildContext context) {
     final arg = _primaryArg(widget.event);
-    // Explicit status replaces the Phase-6 "infer from field presence"
-    // heuristic. See Phase 10 plan for the eternal-spinner bug rationale.
     final status = widget.event.status;
 
     return Column(

@@ -18,7 +18,7 @@ class IdeLaunchDatasourceProcess implements IdeLaunchDatasource {
       "Cursor CLI not found — install it from the Command Palette "
       "(Shell Command: Install 'cursor' in PATH)";
 
-  static List<String> buildVsCodeArgs(String path) => [path];
+  static List<String> buildVsCodeArgs(String path) => ['--', path];
   static List<String> buildFinderArgs(String path) => ['--', path];
   static List<String> buildTerminalArgs(String path, String terminalApp) => ['-a', terminalApp, '--', path];
 

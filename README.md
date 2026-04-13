@@ -102,15 +102,26 @@ lib/
 │   ├── theme/                   # AppTheme
 │   └── utils/                   # PlatformUtils
 ├── data/
-│   ├── models/                  # Freezed DTOs: AIModel, ChatMessage, ChatSession, Repository, WorkspaceProject
-│   └── datasources/local/
-│       ├── app_database.dart    # Drift DB — tables + DAOs
-│       └── secure_storage_source.dart  # flutter_secure_storage wrapper
+│   ├── shared/                  # Cross-cutting models: AIModel, ChatMessage (used by both AI and session domains)
+│   ├── ai/                      # AI datasources (Dio), repository, models/
+│   ├── session/                 # Session datasource (Drift), repository, models/ (ChatSession, ToolEvent, …)
+│   ├── project/                 # Project datasource (Drift), repository, models/ (Project, WorkspaceProject, …)
+│   ├── github/                  # GitHub datasources (Dio), repository, models/ (Repository, GitHubAccount, …)
+│   ├── git/                     # Git datasource (Process), repository, models/ (GitLiveState), exceptions
+│   ├── apply/                   # Apply datasource (filesystem), repository, models/ (AppliedChange)
+│   ├── settings/                # Settings datasource (SecureStorage), repository
+│   ├── filesystem/              # Filesystem datasource (dart:io)
+│   └── _core/                   # Drift AppDatabase, DioFactory, SecureStorageSource
 ├── services/
-│   ├── ai/                      # AIService interface + OpenAI/Anthropic/Gemini/Ollama/Custom impls
-│   ├── github/                  # OAuth (flutter_web_auth_2) + REST API (Dio)
-│   ├── filesystem/              # Local file read/write (path_provider + file_picker)
-│   └── session/                 # Chat session lifecycle, streaming, history pagination
+│   ├── ai/                      # AIService — stream buffering, model selection
+│   ├── github/                  # GitHubService — OAuth + REST composition
+│   ├── git/                     # GitService — composite git operations
+│   ├── session/                 # SessionService — send-and-stream, history
+│   ├── project/                 # ProjectService — add/relocate policy
+│   ├── apply/                   # ApplyService — patch orchestration + security guard
+│   ├── settings/                # SettingsService — wipe cascade, onboarding
+│   ├── ide/                     # IdeService — editor/terminal launch
+│   └── api_key_test/            # ApiKeyTestService — provider connectivity checks
 └── features/
     ├── onboarding/              # First-run API key entry
     ├── dashboard/               # Home screen with session list
@@ -130,47 +141,48 @@ The dependency graph is strictly one-directional. Violating it is a build-review
 
 ```
 Widgets / Screens
+      ↓  (ref.watch / ref.read notifier)
+  Notifiers          ← the only layer widgets may reach
+      ↓  (ref.read service)
+  Services           ← business logic, composition, typed exceptions
+      ↓  (constructor injection)
+  Repositories       ← domain interfaces; no I/O
       ↓
-  Notifiers   ← only layer widgets may call
-      ↓
-  Services    ← all Dio / DB / Process.run / dart:io live here
+  Datasources        ← Dio, DB, Process.run, filesystem live here
       ↓
 External (REST APIs / SQLite / OS)
 ```
 
-Widgets communicate with notifiers only via `ref.watch` / `ref.read(…notifier).method()`. They never reach into a service provider directly. `Process.run`, `dart:io`, and `Dio` are confined to `lib/services/`.
+Widgets communicate with notifiers only via `ref.watch` / `ref.read(…notifier).method()`. They never reach into a service or repository provider directly. `Process.run`, `dart:io`, and `Dio` are confined to `lib/data/**/datasource/`.
 
 **Command notifiers** (`*Actions`, e.g. `ProjectSidebarActions`, `CodeApplyActions`, `GitActions`) use `void build()` with `keepAlive: true` and expose imperative `Future<void>` methods. They are the bridge between the UI and the service layer.
 
 **Naming conventions:**
 
-| Layer | Rule |
-|---|---|
-| Service class | ends in `Service` (`GitService`, `SessionService`) |
-| Service provider | `@riverpod` function placed before the class it instantiates |
-| Command notifier | ends in `Actions`; `void build()`, `keepAlive: true` |
-| State notifier | ends in `Notifier`; owns `AsyncValue` or value state |
-| Notifier file placement | `*_notifier.dart`, `*_actions.dart`, and `*_failure.dart` all live in `{feature}/notifiers/` |
+| Layer                      | Rule                                                                                         |
+| -------------------------- | -------------------------------------------------------------------------------------------- |
+| Service class              | ends in `Service` (`GitService`, `SessionService`)                                           |
+| Service provider           | `@riverpod` function placed before the class it instantiates                                 |
+| Repository interface       | ends in `Repository` (`GitRepository`, `AIRepository`)                                       |
+| Repository impl + provider | class ends in `RepositoryImpl`; `@riverpod` before it                                        |
+| Datasource file naming     | suffix encodes I/O type: `*_dio.dart`, `*_process.dart`, `*_io.dart`, `*_drift.dart`         |
+| Command notifier           | ends in `Actions`; `void build()`, `keepAlive: true`                                         |
+| State notifier             | ends in `Notifier`; owns `AsyncValue` or value state                                         |
+| Notifier file placement    | `*_notifier.dart`, `*_actions.dart`, and `*_failure.dart` all live in `{feature}/notifiers/` |
 
 The Riverpod generator strips the `Notifier` suffix from provider names (`ActiveSessionIdNotifier` → `activeSessionIdProvider`). The `Actions` suffix is kept (`GitActions` → `gitActionsProvider`). Widgets must never call `ref.invalidate` directly — route through a notifier method instead.
 
 ### Layered architecture
 
-Code Bench enforces a strict one-way dependency graph:
-
-```
-Widgets / Screens
-      ↓  (ref.watch / ref.read notifier)
-  Notifiers   ← the only layer widgets may reach
-      ↓  (ref.read service)
-  Services    ← Dio, SQLite, Process.run, filesystem
-```
-
-**Widgets** are pure state-renderers. They call notifier methods and listen for `AsyncError` state to show snackbars — they never try/catch business-logic calls or import service exception types.
+**Widgets** are pure state-renderers. They call notifier methods and listen for `AsyncError` state to show snackbars — they never try/catch business-logic calls or import service/repository exception types.
 
 **Notifiers** mediate all commands. `*Actions` notifiers extend `AsyncNotifier<void>`; failures are emitted as `AsyncError` carrying a typed `sealed class {Notifier}Failure`. `*Notifier` classes own reactive `AsyncValue<T>` data state.
 
-**Services** own all I/O: Dio calls, SQLite queries, `Process.run`, `File` reads. They are instantiated via `@riverpod` / `@Riverpod(keepAlive: true)` providers and never constructed directly in widgets or notifiers.
+**Services** own business logic and composition. They receive repositories via constructor injection, convert low-level I/O errors into typed domain exceptions, and expose a clean API to notifiers. Services are instantiated via `@riverpod` / `@Riverpod(keepAlive: true)` providers and never constructed directly.
+
+**Repositories** are domain interfaces (`lib/data/**/repository/`). Implementations (`*RepositoryImpl`) are wired up via Riverpod providers and injected into services.
+
+**Datasources** (`lib/data/**/datasource/`) are where all I/O lives: Dio HTTP calls, SQLite via Drift, `Process.run`, and `dart:io` filesystem access. File suffix encodes the I/O type: `*_dio.dart`, `*_process.dart`, `*_io.dart`, `*_drift.dart`.
 
 The full rules — naming conventions, error-handling patterns, logging matrix, security guards — are in [`CLAUDE.md`](CLAUDE.md).
 

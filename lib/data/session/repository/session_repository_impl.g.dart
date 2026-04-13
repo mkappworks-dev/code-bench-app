@@ -13,8 +13,8 @@ part of 'session_repository_impl.dart';
 final sessionRepositoryProvider = SessionRepositoryProvider._();
 
 final class SessionRepositoryProvider
-    extends $FunctionalProvider<AsyncValue<SessionRepository>, SessionRepository, FutureOr<SessionRepository>>
-    with $FutureModifier<SessionRepository>, $FutureProvider<SessionRepository> {
+    extends $FunctionalProvider<SessionRepository, SessionRepository, SessionRepository>
+    with $Provider<SessionRepository> {
   SessionRepositoryProvider._()
     : super(
         from: null,
@@ -31,12 +31,17 @@ final class SessionRepositoryProvider
 
   @$internal
   @override
-  $FutureProviderElement<SessionRepository> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+  $ProviderElement<SessionRepository> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
-  FutureOr<SessionRepository> create(Ref ref) {
+  SessionRepository create(Ref ref) {
     return sessionRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SessionRepository value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<SessionRepository>(value));
   }
 }
 
-String _$sessionRepositoryHash() => r'7d335deb453cc749ceeba72d5b5d3ec28f48e3b6';
+String _$sessionRepositoryHash() => r'5edd6af364bc5522d0c0fb16ebaf8c8d821aa8ca';

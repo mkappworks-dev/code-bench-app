@@ -2,11 +2,11 @@ import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../data/models/chat_session.dart';
-import '../../data/models/project.dart';
+import '../../data/session/models/chat_session.dart';
+import '../../data/project/models/project.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
-import '../../data/git/repository/git_repository_impl.dart';
+import 'git_live_state_notifier.dart';
 
 part 'top_action_bar_notifier.freezed.dart';
 part 'top_action_bar_notifier.g.dart';

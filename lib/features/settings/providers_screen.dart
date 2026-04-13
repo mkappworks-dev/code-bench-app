@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
-import '../../data/models/ai_model.dart';
+import '../../data/shared/ai_model.dart';
 import 'notifiers/providers_notifier.dart';
 import 'notifiers/settings_actions.dart';
 import 'widgets/inline_text_field.dart';

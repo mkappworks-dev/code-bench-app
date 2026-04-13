@@ -68,7 +68,7 @@ final class CodeDiffProvider extends $FunctionalProvider<AsyncValue<DiffResult?>
   }
 }
 
-String _$codeDiffHash() => r'596aa98afd0cf33da5da01682799815666f59302';
+String _$codeDiffHash() => r'6d58ff89374b95faa73c0217b98228637140a9ed';
 
 /// Computes a diff between the on-disk file and [newContent].
 /// Returns `null` on any error (outside-project, unreadable file, etc.).

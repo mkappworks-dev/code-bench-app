@@ -5,8 +5,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../_core/app_database.dart';
-import '../../models/chat_message.dart' as msg;
-import '../../models/chat_session.dart';
+import '../../shared/chat_message.dart' as msg;
+import '../models/chat_session.dart';
 import 'session_datasource.dart';
 
 part 'session_datasource_drift.g.dart';

@@ -2,14 +2,11 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/utils/debug_logger.dart';
 import '../../../core/errors/app_exception.dart';
-import '../../../data/models/ai_model.dart';
-import '../../../data/ai/repository/ai_repository_impl.dart';
-import '../../../data/ai/repository/api_key_test_repository_impl.dart';
-import '../../../data/project/repository/project_repository_impl.dart';
-import '../../../data/session/repository/session_repository_impl.dart';
-import '../../../data/settings/repository/settings_repository_impl.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../services/ai/ai_service.dart';
+import '../../../services/api_key_test/api_key_test_service.dart';
+import '../../../services/settings/settings_service.dart';
 import 'settings_actions_failure.dart';
 
 part 'settings_actions.g.dart';
@@ -31,21 +28,31 @@ class SettingsActions extends _$SettingsActions {
   /// without crashing.
   Future<bool> testApiKey(AIProvider provider, String key) async {
     try {
-      return await ref.read(apiKeyTestRepositoryProvider).testApiKey(provider, key);
+      return await ref.read(apiKeyTestServiceProvider).testApiKey(provider, key);
     } catch (e, st) {
       dLog('[SettingsActions] testApiKey failed: $e\n$st');
       return false;
     }
   }
 
-  Future<bool> testOllamaUrl(String url) => ref.read(apiKeyTestRepositoryProvider).testOllamaUrl(url);
+  /// Returns `true` when [url] is reachable as an Ollama endpoint. Never
+  /// throws — returns `false` on any exception so the UI can show an inline
+  /// error without crashing.
+  Future<bool> testOllamaUrl(String url) async {
+    try {
+      return await ref.read(apiKeyTestServiceProvider).testOllamaUrl(url);
+    } catch (e, st) {
+      dLog('[SettingsActions] testOllamaUrl failed: $e\n$st');
+      return false;
+    }
+  }
 
   /// Persists [key] for [provider]. Emits [SettingsStorageFailed] on error.
   Future<void> saveApiKey(String provider, String key) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        await ref.read(settingsRepositoryProvider).writeApiKey(provider, key);
+        await ref.read(settingsServiceProvider).writeApiKey(provider, key);
       } catch (e, st) {
         dLog('[SettingsActions] saveApiKey failed: $e');
         Error.throwWithStackTrace(_asFailure(e, provider), st);
@@ -55,59 +62,20 @@ class SettingsActions extends _$SettingsActions {
 
   Future<void> markOnboardingCompleted() async {
     try {
-      await ref.read(settingsRepositoryProvider).markOnboardingCompleted();
+      await ref.read(settingsServiceProvider).markOnboardingCompleted();
     } catch (e, st) {
       dLog('[SettingsActions] markOnboardingCompleted failed: $e\n$st');
       rethrow;
     }
   }
 
-  Future<void> replayOnboarding() => ref.read(settingsRepositoryProvider).resetOnboarding();
+  Future<void> replayOnboarding() => ref.read(settingsServiceProvider).resetOnboarding();
 
   /// Wipes all user data in sequence. Returns a list of step names that
-  /// failed (empty means full success). Each step is isolated so a keychain
-  /// failure doesn't block the DB wipe.
+  /// failed (empty means full success).
   Future<List<String>> wipeAllData() async {
-    final failures = <String>[];
-
-    try {
-      await ref.read(settingsRepositoryProvider).deleteAllSecureStorage();
-    } catch (e, st) {
-      _logWipeFailure('secure storage', e, st);
-      failures.add('secure storage');
-    }
-
-    try {
-      final sessionRepo = await ref.read(sessionRepositoryProvider.future);
-      await sessionRepo.deleteAllSessionsAndMessages();
-    } catch (e, st) {
-      _logWipeFailure('chat history', e, st);
-      failures.add('chat history');
-    }
-
-    try {
-      await ref.read(projectRepositoryProvider).deleteAllProjects();
-    } catch (e, st) {
-      _logWipeFailure('projects', e, st);
-      failures.add('projects');
-    }
-
-    try {
-      await ref.read(settingsRepositoryProvider).resetOnboarding();
-    } catch (e, st) {
-      _logWipeFailure('onboarding flag', e, st);
-      failures.add('onboarding flag');
-    }
-
+    final failures = await ref.read(settingsServiceProvider).wipeAllData();
     ref.invalidate(aiRepositoryProvider);
     return failures;
-  }
-
-  void _logWipeFailure(String step, Object e, StackTrace st) {
-    if (e is AppException && e.originalError != null) {
-      dLog('[SettingsActions] wipe $step failed: ${e.message} (cause: ${e.originalError})\n$st');
-    } else {
-      dLog('[SettingsActions] wipe $step failed: $e\n$st');
-    }
   }
 }

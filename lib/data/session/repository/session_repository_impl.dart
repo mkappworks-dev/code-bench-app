@@ -1,11 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:uuid/uuid.dart';
 
-import '../../ai/repository/ai_repository.dart';
-import '../../ai/repository/ai_repository_impl.dart';
-import '../../models/ai_model.dart';
-import '../../models/chat_message.dart';
-import '../../models/chat_session.dart';
+import '../../shared/ai_model.dart';
+import '../../shared/chat_message.dart';
+import '../models/chat_session.dart';
 import '../datasource/session_datasource.dart';
 import '../datasource/session_datasource_drift.dart';
 import 'session_repository.dart';
@@ -13,17 +10,14 @@ import 'session_repository.dart';
 part 'session_repository_impl.g.dart';
 
 @Riverpod(keepAlive: true)
-Future<SessionRepository> sessionRepository(Ref ref) async {
-  final ai = await ref.watch(aiRepositoryProvider.future);
-  return SessionRepositoryImpl(datasource: ref.watch(sessionDatasourceProvider), ai: ai);
+SessionRepository sessionRepository(Ref ref) {
+  return SessionRepositoryImpl(datasource: ref.watch(sessionDatasourceProvider));
 }
 
 class SessionRepositoryImpl implements SessionRepository {
-  SessionRepositoryImpl({required SessionDatasource datasource, required AIRepository ai}) : _ds = datasource, _ai = ai;
+  SessionRepositoryImpl({required SessionDatasource datasource}) : _ds = datasource;
 
   final SessionDatasource _ds;
-  final AIRepository _ai;
-  static const _uuid = Uuid();
 
   // ── CRUD — delegate to datasource ─────────────────────────────────────────
 
@@ -67,62 +61,4 @@ class SessionRepositoryImpl implements SessionRepository {
 
   @override
   Future<List<ChatSession>> getSessionsByProject(String projectId) => watchSessionsByProject(projectId).first;
-
-  // ── Streaming ──────────────────────────────────────────────────────────────
-
-  @override
-  Stream<ChatMessage> sendAndStream({
-    required String sessionId,
-    required String userInput,
-    required AIModel model,
-    String? systemPrompt,
-  }) async* {
-    final userMsg = ChatMessage(
-      id: _uuid.v4(),
-      sessionId: sessionId,
-      role: MessageRole.user,
-      content: userInput,
-      timestamp: DateTime.now(),
-    );
-    await persistMessage(sessionId, userMsg);
-    yield userMsg;
-
-    final history = await loadHistory(sessionId, limit: 20);
-    final historyExcludingCurrent = history.where((m) => m.id != userMsg.id).toList();
-
-    final assistantId = _uuid.v4();
-    final buffer = StringBuffer();
-
-    await for (final chunk in _ai.streamMessage(
-      history: historyExcludingCurrent,
-      prompt: userInput,
-      model: model,
-      systemPrompt: systemPrompt,
-    )) {
-      buffer.write(chunk);
-      yield ChatMessage(
-        id: assistantId,
-        sessionId: sessionId,
-        role: MessageRole.assistant,
-        content: buffer.toString(),
-        timestamp: DateTime.now(),
-        isStreaming: true,
-      );
-    }
-
-    final finalMsg = ChatMessage(
-      id: assistantId,
-      sessionId: sessionId,
-      role: MessageRole.assistant,
-      content: buffer.toString(),
-      timestamp: DateTime.now(),
-    );
-    await persistMessage(sessionId, finalMsg);
-    yield finalMsg;
-
-    if (history.isEmpty) {
-      final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
-      await updateSessionTitle(sessionId, shortTitle);
-    }
-  }
 }

@@ -1,6 +1,6 @@
-import '../../models/ai_model.dart';
-import '../../models/chat_message.dart';
-import '../../models/chat_session.dart';
+import '../../shared/ai_model.dart';
+import '../../shared/chat_message.dart';
+import '../models/chat_session.dart';
 
 abstract interface class SessionRepository {
   Stream<List<ChatSession>> watchAllSessions();
@@ -18,13 +18,4 @@ abstract interface class SessionRepository {
 
   /// One-shot fetch of all non-archived sessions for [projectId].
   Future<List<ChatSession>> getSessionsByProject(String projectId);
-
-  /// Streams a user message followed by streamed assistant chunks, then the
-  /// final persisted assistant message.
-  Stream<ChatMessage> sendAndStream({
-    required String sessionId,
-    required String userInput,
-    required AIModel model,
-    String? systemPrompt,
-  });
 }

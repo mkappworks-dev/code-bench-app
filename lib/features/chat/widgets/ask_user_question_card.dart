@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../data/models/ask_user_question.dart';
+import '../../../data/session/models/ask_user_question.dart';
 import '../notifiers/ask_question_notifier.dart';
 
 class AskUserQuestionCard extends ConsumerStatefulWidget {

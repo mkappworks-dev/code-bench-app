@@ -11,7 +11,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../core/utils/snackbar_helper.dart';
-import '../../../data/models/project.dart';
+import '../../../data/project/models/project.dart';
 import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/chat_notifier.dart';
 import '../notifiers/code_apply_actions.dart';
@@ -145,8 +145,8 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
           showErrorSnackBar(context, 'This file is outside the current project.');
         case CodeApplyDiskWrite(:final message):
           showErrorSnackBar(context, 'Could not write file to disk: $message');
-        case CodeApplyFileRead(:final path):
-          showErrorSnackBar(context, 'Could not read file: $path');
+        case CodeApplyTooLarge(:final bytes):
+          showErrorSnackBar(context, 'Content too large to apply ($bytes bytes).');
         case CodeApplyUnknownError():
           showErrorSnackBar(context, 'Unable to apply change.');
       }

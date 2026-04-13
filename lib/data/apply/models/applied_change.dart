@@ -14,12 +14,11 @@ abstract class AppliedChange with _$AppliedChange {
     required DateTime appliedAt,
     // Line counts derived at apply-time from a char-level diff so the
     // changes-panel indicator reflects real additions/deletions instead of
-    // a signed line delta. 0 when no diff was computed (e.g. legacy rows).
+    // a signed line delta.
     @Default(0) int additions,
     @Default(0) int deletions,
     // SHA-256 of [newContent] captured at apply-time. Used to detect
-    // external modification before revert (Phase 6 conflict detection).
-    // Null on legacy rows written before the field existed.
+    // external modification before revert.
     String? contentChecksum,
   }) = _AppliedChange;
 }

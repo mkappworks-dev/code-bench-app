@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:code_bench_app/data/models/applied_change.dart';
+import 'package:code_bench_app/data/apply/models/applied_change.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 
 AppliedChange _change({

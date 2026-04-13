@@ -1,4 +1,4 @@
-import '../../models/repository.dart';
+import '../models/repository.dart';
 
 abstract interface class GitHubApiDatasource {
   Future<List<Repository>> listRepositories({int page = 1});

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
-import '../../data/models/project_action.dart';
+import '../../data/project/models/project_action.dart';
 
 /// Dialog for adding a new project action (name + shell command).
 ///

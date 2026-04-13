@@ -150,28 +150,6 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => 5;
-
-  @override
-  MigrationStrategy get migration => MigrationStrategy(
-    onUpgrade: (migrator, from, to) async {
-      if (from < 2) {
-        await migrator.addColumn(chatSessions, chatSessions.projectId);
-        await migrator.deleteTable('workspace_projects');
-        await migrator.createTable(workspaceProjects);
-      }
-      if (from < 3) {
-        await migrator.addColumn(chatSessions, chatSessions.isArchived);
-      }
-      if (from < 4) {
-        await migrator.addColumn(workspaceProjects, workspaceProjects.actionsJson);
-      }
-      if (from < 5) {
-        // isGit and currentBranch removed from the Dart model.
-        // Columns are left as orphans in the SQLite file — harmless,
-        // as Drift only selects declared columns.
-      }
-    },
-  );
 }
 
 QueryExecutor _openConnection() {

@@ -1,5 +1,5 @@
-import 'package:code_bench_app/data/models/applied_change.dart';
-import 'package:code_bench_app/data/models/project.dart';
+import 'package:code_bench_app/data/apply/models/applied_change.dart';
+import 'package:code_bench_app/data/project/models/project.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/widgets/changes_panel.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';

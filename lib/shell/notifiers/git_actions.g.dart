@@ -47,7 +47,7 @@ final class GitActionsProvider extends $AsyncNotifierProvider<GitActions, void> 
   GitActions create() => GitActions();
 }
 
-String _$gitActionsHash() => r'304b248cbb178d2dd7432905de70a46f6091e62f';
+String _$gitActionsHash() => r'c5e18e4c124159615208c969ca865371cb6a9767';
 
 /// Command notifier for all git operations.
 ///

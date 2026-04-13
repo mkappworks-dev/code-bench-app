@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
-import '../../../data/models/ai_model.dart';
+import '../../../data/shared/ai_model.dart';
 
 /// HTTP probes for validating AI provider API keys.
 /// Called by [ApiKeyTestRepositoryImpl] — this file owns all Dio usage.

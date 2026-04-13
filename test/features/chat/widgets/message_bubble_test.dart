@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:code_bench_app/data/models/chat_message.dart';
+import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/features/chat/widgets/message_bubble.dart'
     show MessageBubble, StreamingDot, parseCodeFenceInfo;
 

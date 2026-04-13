@@ -1,4 +1,4 @@
-import '../git_live_state.dart';
+import '../models/git_live_state.dart';
 
 abstract interface class GitLiveStateDatasource {
   Future<GitLiveState> fetchLiveState(String projectPath);

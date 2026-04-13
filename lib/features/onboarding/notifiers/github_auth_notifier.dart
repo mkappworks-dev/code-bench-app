@@ -1,7 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../data/github/repository/github_repository_impl.dart';
-import '../../../data/models/repository.dart';
+import '../../../services/github/github_service.dart';
 
 part 'github_auth_notifier.g.dart';
 
@@ -13,7 +12,7 @@ part 'github_auth_notifier.g.dart';
 class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   @override
   Future<GitHubAccount?> build() async {
-    final repo = await ref.watch(githubRepositoryProvider.future);
+    final repo = await ref.watch(githubServiceProvider.future);
     return repo.getStoredAccount();
   }
 
@@ -22,7 +21,7 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   Future<void> authenticate() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      final repo = await ref.read(githubRepositoryProvider.future);
+      final repo = await ref.read(githubServiceProvider.future);
       return repo.authenticate();
     });
   }
@@ -37,7 +36,7 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   Future<void> signOut() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      final repo = await ref.read(githubRepositoryProvider.future);
+      final repo = await ref.read(githubServiceProvider.future);
       await repo.signOut();
       return null;
     });
@@ -48,7 +47,7 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   Future<void> signInWithPat(String token) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      final repo = await ref.read(githubRepositoryProvider.future);
+      final repo = await ref.read(githubServiceProvider.future);
       return repo.signInWithPat(token);
     });
   }

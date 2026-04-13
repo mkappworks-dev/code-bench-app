@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:code_bench_app/data/models/ask_user_question.dart';
+import 'package:code_bench_app/data/session/models/ask_user_question.dart';
 
 void main() {
   group('AskUserQuestion', () {

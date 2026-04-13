@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../datasource/api_key_test_datasource_dio.dart';
-import '../../../data/models/ai_model.dart';
+import '../../../data/shared/ai_model.dart';
 import 'api_key_test_repository.dart';
 
 part 'api_key_test_repository_impl.g.dart';

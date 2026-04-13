@@ -5,15 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../data/models/chat_message.dart';
-import '../../../data/models/tool_event.dart';
+import '../../../data/shared/chat_message.dart';
+import '../../../data/session/models/tool_event.dart';
 import '../notifiers/chat_notifier.dart';
 
 /// Collapsible in-message tool-call log.
 ///
 /// Reads [ToolEvent]s from [chatMessagesProvider] for [sessionId]/[messageId]
 /// rather than maintaining a parallel WorkLogNotifier — [ToolEvent] is the
-/// single source of truth after Phase 10 added explicit [ToolStatus].
+/// single source of truth for tool status.
 class WorkLogSection extends ConsumerStatefulWidget {
   const WorkLogSection({super.key, required this.sessionId, required this.messageId});
 

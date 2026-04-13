@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
-import '../git_live_state.dart';
+import '../models/git_live_state.dart';
 import 'git_datasource_process.dart';
 import 'git_live_state_datasource.dart';
 

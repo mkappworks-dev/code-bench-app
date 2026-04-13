@@ -4,7 +4,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../core/utils/relative_time.dart';
-import '../../../data/models/chat_session.dart';
+import '../../../data/session/models/chat_session.dart';
 
 class ConversationTile extends StatelessWidget {
   const ConversationTile({

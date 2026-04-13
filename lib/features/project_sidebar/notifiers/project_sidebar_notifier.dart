@@ -2,8 +2,8 @@ import 'package:collection/collection.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../data/models/project.dart';
-import '../../../data/project/repository/project_repository_impl.dart';
+import '../../../data/project/models/project.dart';
+import '../../../services/project/project_service.dart';
 
 part 'project_sidebar_notifier.g.dart';
 
@@ -88,8 +88,8 @@ class ProjectSortNotifier extends _$ProjectSortNotifier {
 /// Watch all projects from the database
 @riverpod
 Stream<List<Project>> projects(Ref ref) {
-  final repo = ref.watch(projectRepositoryProvider);
-  return repo.watchAllProjects();
+  final svc = ref.watch(projectServiceProvider);
+  return svc.watchAllProjects();
 }
 
 /// Derives the currently active [Project] from [activeProjectIdProvider] and

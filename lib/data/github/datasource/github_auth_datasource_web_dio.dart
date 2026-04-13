@@ -8,7 +8,7 @@ import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../_core/http/dio_factory.dart';
 import '../../_core/secure_storage.dart';
-import '../../models/repository.dart';
+import '../models/repository.dart';
 import 'github_auth_datasource.dart';
 
 part 'github_auth_datasource_web_dio.g.dart';

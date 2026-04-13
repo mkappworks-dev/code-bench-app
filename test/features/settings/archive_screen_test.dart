@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:code_bench_app/data/models/chat_session.dart';
-import 'package:code_bench_app/data/models/project.dart';
+import 'package:code_bench_app/data/session/models/chat_session.dart';
+import 'package:code_bench_app/data/project/models/project.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'package:code_bench_app/features/settings/archive_screen.dart';

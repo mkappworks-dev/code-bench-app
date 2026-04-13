@@ -4,7 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/debug_logger.dart';
-import '../../../data/models/repository.dart';
+import '../../../data/github/models/repository.dart';
 import '../notifiers/github_auth_notifier.dart';
 
 class GithubStep extends ConsumerStatefulWidget {

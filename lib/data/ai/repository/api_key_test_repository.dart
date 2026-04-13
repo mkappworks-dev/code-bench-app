@@ -1,4 +1,4 @@
-import '../../models/ai_model.dart';
+import '../../shared/ai_model.dart';
 
 /// Domain interface for validating AI provider credentials and Ollama
 /// connectivity via live HTTP probes.

@@ -2,9 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/core/errors/app_exception.dart';
-import 'package:code_bench_app/data/models/ai_model.dart';
-import 'package:code_bench_app/data/settings/repository/settings_repository.dart';
-import 'package:code_bench_app/data/settings/repository/settings_repository_impl.dart';
+import 'package:code_bench_app/data/shared/ai_model.dart';
+import 'package:code_bench_app/services/settings/settings_service.dart';
 import 'package:code_bench_app/features/settings/notifiers/settings_actions_failure.dart';
 import 'package:code_bench_app/features/settings/notifiers/settings_actions.dart';
 import 'package:code_bench_app/data/ai/repository/api_key_test_repository.dart';
@@ -29,9 +28,9 @@ class _FakeApiKeyTestRepository extends Fake implements ApiKeyTestRepository {
   Future<bool> testOllamaUrl(String url) async => true;
 }
 
-// ── Fake SettingsRepository ───────────────────────────────────────────────────
+// ── Fake SettingsService ──────────────────────────────────────────────────────
 
-class _FakeSettingsRepository extends Fake implements SettingsRepository {
+class _FakeSettingsService extends Fake implements SettingsService {
   Object? _writeError;
 
   void throwOnWrite(Object error) => _writeError = error;
@@ -41,30 +40,32 @@ class _FakeSettingsRepository extends Fake implements SettingsRepository {
     if (_writeError != null) throw _writeError!;
   }
 
-  // Stubs for methods SettingsActions may call during teardown / other paths.
   @override
   Future<void> markOnboardingCompleted() async {}
 
   @override
   Future<void> resetOnboarding() async {}
+
+  @override
+  Future<List<String>> wipeAllData() async => [];
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 void main() {
   late _FakeApiKeyTestRepository fakeTestSvc;
-  late _FakeSettingsRepository fakeSettingsRepo;
+  late _FakeSettingsService fakeSettingsSvc;
 
   setUp(() {
     fakeTestSvc = _FakeApiKeyTestRepository();
-    fakeSettingsRepo = _FakeSettingsRepository();
+    fakeSettingsSvc = _FakeSettingsService();
   });
 
   ProviderContainer makeContainer() {
     final c = ProviderContainer(
       overrides: [
         apiKeyTestRepositoryProvider.overrideWithValue(fakeTestSvc),
-        settingsRepositoryProvider.overrideWithValue(fakeSettingsRepo),
+        settingsServiceProvider.overrideWithValue(fakeSettingsSvc),
       ],
     );
     addTearDown(c.dispose);
@@ -104,7 +105,7 @@ void main() {
     });
 
     test('StorageException → SettingsStorageFailed error', () async {
-      fakeSettingsRepo.throwOnWrite(const StorageException('keychain denied'));
+      fakeSettingsSvc.throwOnWrite(const StorageException('keychain denied'));
 
       final c = makeContainer();
       await c.read(settingsActionsProvider.notifier).saveApiKey('openai', 'sk-bad');
@@ -113,7 +114,7 @@ void main() {
     });
 
     test('generic exception → SettingsUnknownError', () async {
-      fakeSettingsRepo.throwOnWrite(Exception('unexpected'));
+      fakeSettingsSvc.throwOnWrite(Exception('unexpected'));
 
       final c = makeContainer();
       await c.read(settingsActionsProvider.notifier).saveApiKey('anthropic', 'key');
@@ -122,7 +123,7 @@ void main() {
     });
 
     test('failure carries provider name in SettingsStorageFailed', () async {
-      fakeSettingsRepo.throwOnWrite(const StorageException('keychain denied'));
+      fakeSettingsSvc.throwOnWrite(const StorageException('keychain denied'));
 
       final c = makeContainer();
       await c.read(settingsActionsProvider.notifier).saveApiKey('gemini', 'bad-key');

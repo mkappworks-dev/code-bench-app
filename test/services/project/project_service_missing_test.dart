@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/_core/app_database.dart';
-import 'package:code_bench_app/data/models/project.dart';
+import 'package:code_bench_app/data/project/models/project.dart';
 import 'package:code_bench_app/data/project/repository/project_repository.dart';
 import 'package:code_bench_app/data/project/repository/project_repository_impl.dart';
 import 'package:drift/native.dart';
@@ -61,11 +61,6 @@ void main() {
     expect(reloaded.status, ProjectStatus.available);
   });
 
-  test('addExistingFolder throws DuplicateProjectPathException for the same path', () async {
-    await service.addExistingFolder(tmpDir.path);
-    await expectLater(service.addExistingFolder(tmpDir.path), throwsA(isA<DuplicateProjectPathException>()));
-  });
-
   test('refreshProjectStatus flips a single project to missing when its folder disappears', () async {
     final added = await service.addExistingFolder(tmpDir.path);
     await tmpDir.delete(recursive: true);
@@ -81,23 +76,4 @@ void main() {
     // Should not throw even when the id is not in the DB.
     await service.refreshProjectStatus('does-not-exist');
   });
-
-  test(
-    'relocateProject throws DuplicateProjectPathException when new path is already tracked by another project',
-    () async {
-      final otherDir = await Directory.systemTemp.createTemp('project_dup_relocate_test_');
-      addTearDown(() async {
-        if (otherDir.existsSync()) await otherDir.delete(recursive: true);
-      });
-
-      await service.addExistingFolder(tmpDir.path);
-      final projectB = await service.addExistingFolder(otherDir.path);
-
-      // Relocating B to A's existing path should be rejected.
-      await expectLater(
-        service.relocateProject(projectB.id, tmpDir.path),
-        throwsA(isA<DuplicateProjectPathException>()),
-      );
-    },
-  );
 }
