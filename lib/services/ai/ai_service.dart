@@ -6,6 +6,7 @@ import '../../data/ai/repository/ai_repository_impl.dart';
 import '../../data/models/ai_model.dart';
 import '../../data/models/chat_message.dart';
 
+export '../../data/ai/repository/ai_repository_impl.dart' show aiRepositoryProvider;
 export '../../data/models/ai_model.dart' show AIProvider;
 
 part 'ai_service.g.dart';

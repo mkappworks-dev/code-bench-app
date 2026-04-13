@@ -4,7 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
-import '../../../data/ai/repository/ai_repository_impl.dart';
+import '../../../services/ai/ai_service.dart';
 import '../../../services/api_key_test/api_key_test_service.dart';
 import '../../../services/settings/settings_service.dart';
 import 'settings_actions_failure.dart';

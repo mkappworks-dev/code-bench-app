@@ -2,8 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/utils/debug_logger.dart';
-import '../../../data/models/ai_model.dart';
-import '../../../data/ai/repository/ai_repository_impl.dart';
+import '../../../services/ai/ai_service.dart';
 import '../../../services/settings/settings_service.dart';
 
 part 'providers_notifier.g.dart';
