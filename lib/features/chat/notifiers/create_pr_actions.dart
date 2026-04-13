@@ -4,7 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
-import '../../../data/github/repository/github_repository_impl.dart';
+import '../../../services/github/github_service.dart';
 import 'create_pr_failure.dart';
 
 part 'create_pr_actions.g.dart';
@@ -36,7 +36,7 @@ class CreatePrActions extends _$CreatePrActions {
   /// Resolves the shared [githubRepositoryProvider] rather than reading
   /// secure storage directly, so the widget never sees the token.
   Future<bool> hasToken() async {
-    final repo = await ref.read(githubRepositoryProvider.future);
+    final repo = await ref.read(githubServiceProvider.future);
     return repo.isAuthenticated();
   }
 
@@ -47,7 +47,7 @@ class CreatePrActions extends _$CreatePrActions {
     List<String>? result;
     state = await AsyncValue.guard(() async {
       try {
-        final repository = await ref.read(githubRepositoryProvider.future);
+        final repository = await ref.read(githubServiceProvider.future);
         result = await repository.listBranches(owner, repo);
       } catch (e, st) {
         dLog('[CreatePrActions] listBranches failed: ${e.runtimeType}');
@@ -72,7 +72,7 @@ class CreatePrActions extends _$CreatePrActions {
     String? result;
     state = await AsyncValue.guard(() async {
       try {
-        final repository = await ref.read(githubRepositoryProvider.future);
+        final repository = await ref.read(githubServiceProvider.future);
         result = await repository.createPullRequest(
           owner: owner,
           repo: repo,

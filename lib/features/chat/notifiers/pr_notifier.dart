@@ -2,8 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
-import '../../../data/github/repository/github_repository.dart';
-import '../../../data/github/repository/github_repository_impl.dart';
+import '../../../services/github/github_service.dart';
 
 part 'pr_notifier.g.dart';
 
@@ -71,7 +70,7 @@ class PrCardState {
 class PrCardNotifier extends _$PrCardNotifier {
   @override
   Future<PrCardState> build(String owner, String repo, int prNumber) async {
-    final repository = await ref.read(githubRepositoryProvider.future);
+    final repository = await ref.read(githubServiceProvider.future);
     final authenticated = await repository.isAuthenticated();
     if (!authenticated) throw const AuthException('Not signed in to GitHub');
     return _fetch(repository);
@@ -81,7 +80,7 @@ class PrCardNotifier extends _$PrCardNotifier {
   /// failure shows a warning banner rather than replacing the whole card with
   /// an error widget.
   Future<void> refresh() async {
-    final repository = await ref.read(githubRepositoryProvider.future);
+    final repository = await ref.read(githubServiceProvider.future);
     final authenticated = await repository.isAuthenticated();
     if (!authenticated) return;
     try {
@@ -111,7 +110,7 @@ class PrCardNotifier extends _$PrCardNotifier {
     final current = state.value;
     if (current != null) state = AsyncData(current.copyWith(clearActionError: true));
 
-    final repository = await ref.read(githubRepositoryProvider.future);
+    final repository = await ref.read(githubServiceProvider.future);
     final authenticated = await repository.isAuthenticated();
     if (!authenticated) return;
     try {
@@ -132,7 +131,7 @@ class PrCardNotifier extends _$PrCardNotifier {
     final current = state.value;
     if (current != null) state = AsyncData(current.copyWith(clearActionError: true));
 
-    final repository = await ref.read(githubRepositoryProvider.future);
+    final repository = await ref.read(githubServiceProvider.future);
     final authenticated = await repository.isAuthenticated();
     if (!authenticated) return;
     try {
@@ -149,7 +148,7 @@ class PrCardNotifier extends _$PrCardNotifier {
     }
   }
 
-  Future<PrCardState> _fetch(GitHubRepository repository) async {
+  Future<PrCardState> _fetch(GitHubService repository) async {
     final pr = await repository.getPullRequest(owner, repo, prNumber);
     final sha = (pr['head'] as Map<String, dynamic>?)?['sha'] as String?;
     final checks = sha != null ? await repository.getCheckRuns(owner, repo, sha) : const <Map<String, dynamic>>[];
