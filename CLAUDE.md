@@ -64,7 +64,9 @@ The dependency graph is strictly one-directional:
 Widgets / Screens
       ↓  (ref.watch / ref.read notifier)
   Notifiers          ← the only layer widgets may reach
-      ↓  (ref.read repository)
+      ↓  (ref.read service)
+  Services           ← business logic, composition, typed exceptions
+      ↓  (constructor injection)
   Repositories       ← domain interfaces; no I/O
       ↓
   Datasources        ← Dio, DB, Process.run, filesystem live here
@@ -74,27 +76,27 @@ Widgets / Screens
 
 **Hard rules — enforced in code review:**
 
-| Allowed                                             | Forbidden in widgets/screens                                               |
-| --------------------------------------------------- | -------------------------------------------------------------------------- |
-| `ref.watch(someNotifierProvider)`                   | `ref.read(someServiceProvider)`                                            |
+| Allowed                                             | Forbidden in widgets/screens                                                                               |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `ref.watch(someNotifierProvider)`                   | `ref.read(someServiceProvider)`                                                                            |
 | `ref.read(someNotifierProvider.notifier).method()`  | `ref.read(applyServiceProvider)`, `ref.read(gitRepositoryProvider)`, `ref.read(someServiceProvider)`, etc. |
-| `url_launcher` (`launchUrl`) for opening URLs/files | `Process.run(...)`                                                         |
-| Path string operations (`p.join`, etc.)             | `Directory(...).existsSync()` or any `dart:io` I/O                         |
+| `url_launcher` (`launchUrl`) for opening URLs/files | `Process.run(...)`                                                                                         |
+| Path string operations (`p.join`, etc.)             | `Directory(...).existsSync()` or any `dart:io` I/O                                                         |
 
 **Naming conventions — strictly enforced:**
 
-| Layer                       | Suffix rule                                                                   | Examples                                                        |
-| --------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Service class               | must end in `Service`                                                         | `GitService`, `SessionService`                                  |
-| Service provider            | `@riverpod` / `@Riverpod` placed **before** the class it instantiates         | `gitServiceProvider`, `sessionServiceProvider`                  |
-| Repository interface        | must end in `Repository`                                                      | `GitRepository`, `AIRepository`                                 |
-| Repository impl + provider  | class ends in `RepositoryImpl`; `@riverpod` / `@Riverpod` before it            | `GitRepositoryImpl`, `gitRepositoryProvider`                    |
-| Datasource interface        | descriptive name matching file suffix convention                              | `GitDatasource`, `GitLiveStateDatasource`                       |
-| Datasource file naming      | suffix encodes I/O type: `*_dio.dart`, `*_process.dart`, `*_io.dart`, `*_drift.dart` | `git_datasource_process.dart`, `github_api_datasource_dio.dart` |
-| Command notifier            | must end in `Actions` — `void build()`, imperative methods, `keepAlive: true` | `ProjectSidebarActions`, `CodeApplyActions`, `GitActions`       |
-| State notifier              | must end in `Notifier` — owns `AsyncValue` or value state                     | `ChatNotifier`, `GitHubAuthNotifier`, `ActiveSessionIdNotifier` |
-| Notifier file placement     | `*_notifier.dart`, `*_actions.dart`, `*_failure.dart` all live in `{feature}/notifiers/` | `features/chat/notifiers/chat_notifier.dart` |
-| `ref.invalidate` in widgets | **forbidden** — route through a notifier method instead                       | `refreshGitState()`, `refreshArchivedSessions()`                |
+| Layer                       | Suffix rule                                                                              | Examples                                                        |
+| --------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Service class               | must end in `Service`                                                                    | `GitService`, `SessionService`                                  |
+| Service provider            | `@riverpod` / `@Riverpod` placed **before** the class it instantiates                    | `gitServiceProvider`, `sessionServiceProvider`                  |
+| Repository interface        | must end in `Repository`                                                                 | `GitRepository`, `AIRepository`                                 |
+| Repository impl + provider  | class ends in `RepositoryImpl`; `@riverpod` / `@Riverpod` before it                      | `GitRepositoryImpl`, `gitRepositoryProvider`                    |
+| Datasource interface        | descriptive name matching file suffix convention                                         | `GitDatasource`, `GitLiveStateDatasource`                       |
+| Datasource file naming      | suffix encodes I/O type: `*_dio.dart`, `*_process.dart`, `*_io.dart`, `*_drift.dart`     | `git_datasource_process.dart`, `github_api_datasource_dio.dart` |
+| Command notifier            | must end in `Actions` — `void build()`, imperative methods, `keepAlive: true`            | `ProjectSidebarActions`, `CodeApplyActions`, `GitActions`       |
+| State notifier              | must end in `Notifier` — owns `AsyncValue` or value state                                | `ChatNotifier`, `GitHubAuthNotifier`, `ActiveSessionIdNotifier` |
+| Notifier file placement     | `*_notifier.dart`, `*_actions.dart`, `*_failure.dart` all live in `{feature}/notifiers/` | `features/chat/notifiers/chat_notifier.dart`                    |
+| `ref.invalidate` in widgets | **forbidden** — route through a notifier method instead                                  | `refreshGitState()`, `refreshArchivedSessions()`                |
 
 The Riverpod generator strips the `Notifier` suffix when producing the provider variable name (`class ActiveSessionIdNotifier` → `activeSessionIdProvider`). The `Actions` suffix is kept (`class GitActions` → `gitActionsProvider`).
 
@@ -201,11 +203,11 @@ Two helpers live in [lib/core/utils/debug_logger.dart](lib/core/utils/debug_logg
 
 **Where to log:**
 
-| Layer                               | Logs?                       | What to log                                                                                                                                                              |
-| ----------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Services & Datasources (`lib/services/`, `lib/data/**/datasource/`) | Yes | Raw I/O failures — `ProcessException`, Dio errors, `FileSystemException`, security-guard rejections (`sLog`)                                                             |
-| Notifiers (`*Actions`, `*Notifier`) | Yes                         | Caught exceptions being turned into `AsyncError` or swallowed; semantic operation failures ("pushToRemote failed")                                                       |
-| Widgets / screens                   | **No, with two exceptions** | (1) `AsyncValue.when(error:)` branches that render an error view, (2) widget-layer APIs the arch rule permits in widgets — `launchUrl` failures and `Clipboard` failures |
+| Layer                                                               | Logs?                       | What to log                                                                                                                                                              |
+| ------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Services & Datasources (`lib/services/`, `lib/data/**/datasource/`) | Yes                         | Raw I/O failures — `ProcessException`, Dio errors, `FileSystemException`, security-guard rejections (`sLog`)                                                             |
+| Notifiers (`*Actions`, `*Notifier`)                                 | Yes                         | Caught exceptions being turned into `AsyncError` or swallowed; semantic operation failures ("pushToRemote failed")                                                       |
+| Widgets / screens                                                   | **No, with two exceptions** | (1) `AsyncValue.when(error:)` branches that render an error view, (2) widget-layer APIs the arch rule permits in widgets — `launchUrl` failures and `Clipboard` failures |
 
 Log **once**, at the layer that holds the useful context. If a service already `dLog`s a `ProcessException`, the notifier rethrowing it should not log again — it should only log if it's doing additional recovery worth tracing.
 
