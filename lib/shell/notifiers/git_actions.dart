@@ -134,9 +134,23 @@ class GitActions extends _$GitActions {
     return remotes ?? [];
   }
 
-  Future<String?> currentBranch(String projectPath) => _git().currentBranch(projectPath);
+  Future<String?> currentBranch(String projectPath) async {
+    try {
+      return await _git().currentBranch(projectPath);
+    } catch (e) {
+      dLog('[GitActions] currentBranch failed: ${e.runtimeType}');
+      return null;
+    }
+  }
 
-  Future<String?> getOriginUrl(String projectPath) => _git().getOriginUrl(projectPath);
+  Future<String?> getOriginUrl(String projectPath) async {
+    try {
+      return await _git().getOriginUrl(projectPath);
+    } catch (e) {
+      dLog('[GitActions] getOriginUrl failed: ${e.runtimeType}');
+      return null;
+    }
+  }
 
   bool isGitRepo(String path) => _git().isGitRepo(path);
 }

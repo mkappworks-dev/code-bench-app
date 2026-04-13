@@ -29,7 +29,7 @@ class ProjectFileScanActions extends _$ProjectFileScanActions {
       } on FileSystemException catch (e, st) {
         dLog('[ProjectFileScanActions] scan failed: ${e.runtimeType}');
         Error.throwWithStackTrace(ProjectFileScanFailure.scan(e.message), st);
-      } on Exception catch (_, st) {
+      } catch (_, st) {
         dLog('[ProjectFileScanActions] scan failed with unknown error');
         Error.throwWithStackTrace(const ProjectFileScanFailure.scan('Couldn\'t scan project.'), st);
       }
