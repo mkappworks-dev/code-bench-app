@@ -13,7 +13,7 @@ import '../notifiers/chat_notifier.dart';
 ///
 /// Reads [ToolEvent]s from [chatMessagesProvider] for [sessionId]/[messageId]
 /// rather than maintaining a parallel WorkLogNotifier — [ToolEvent] is the
-/// single source of truth after Phase 10 added explicit [ToolStatus].
+/// single source of truth for tool status.
 class WorkLogSection extends ConsumerStatefulWidget {
   const WorkLogSection({super.key, required this.sessionId, required this.messageId});
 

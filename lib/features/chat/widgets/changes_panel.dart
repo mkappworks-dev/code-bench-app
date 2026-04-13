@@ -95,29 +95,6 @@ class ChangesPanel extends ConsumerWidget {
                     }).toList(),
                   ),
           ),
-          // Footer — stub "Commit all" button (Phase 3 wires this to git flow)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: ThemeConstants.borderColor)),
-            ),
-            child: GestureDetector(
-              onTap: () {
-                // Phase 3: wire to git commit flow
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text(
-                    'Commit all',
-                    style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(AppIcons.arrowRight, size: 11, color: ThemeConstants.textSecondary),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );

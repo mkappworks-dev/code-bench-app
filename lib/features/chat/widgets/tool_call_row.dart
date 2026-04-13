@@ -42,8 +42,6 @@ class _ToolCallRowState extends State<ToolCallRow> {
   @override
   Widget build(BuildContext context) {
     final arg = _primaryArg(widget.event);
-    // Explicit status replaces the Phase-6 "infer from field presence"
-    // heuristic. See Phase 10 plan for the eternal-spinner bug rationale.
     final status = widget.event.status;
 
     return Column(
