@@ -1,7 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
-import '../../../services/git/git_service.dart';
+import '../../../data/git/repository/git_repository.dart';
+import '../../../data/git/repository/git_repository_impl.dart';
 import 'branch_picker_failure.dart';
 import 'branch_picker_state.dart';
 
@@ -11,9 +12,9 @@ part 'branch_picker_notifier.g.dart';
 class BranchPickerNotifier extends _$BranchPickerNotifier {
   @override
   Future<BranchPickerState> build(String projectPath) async {
-    final git = ref.read(gitServiceProvider(projectPath));
-    final branches = await git.listLocalBranches();
-    final wtBranches = await git.worktreeBranches();
+    final git = ref.read(gitRepositoryProvider);
+    final branches = await git.listLocalBranches(projectPath);
+    final wtBranches = await git.worktreeBranches(projectPath);
     return BranchPickerState(branches: branches, worktreeBranches: wtBranches);
   }
 
@@ -30,10 +31,10 @@ class BranchPickerNotifier extends _$BranchPickerNotifier {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        final git = ref.read(gitServiceProvider(projectPath));
-        await git.checkout(branch);
-        final branches = await git.listLocalBranches();
-        final wt = await git.worktreeBranches();
+        final git = ref.read(gitRepositoryProvider);
+        await git.checkout(projectPath, branch);
+        final branches = await git.listLocalBranches(projectPath);
+        final wt = await git.worktreeBranches(projectPath);
         return BranchPickerState(branches: branches, worktreeBranches: wt);
       } catch (e, st) {
         dLog('[BranchPickerNotifier] checkout failed: $e');
@@ -50,10 +51,10 @@ class BranchPickerNotifier extends _$BranchPickerNotifier {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        final git = ref.read(gitServiceProvider(projectPath));
-        await git.createBranch(name);
-        final branches = await git.listLocalBranches();
-        final wt = await git.worktreeBranches();
+        final git = ref.read(gitRepositoryProvider);
+        await git.createBranch(projectPath, name);
+        final branches = await git.listLocalBranches(projectPath);
+        final wt = await git.worktreeBranches(projectPath);
         return BranchPickerState(branches: branches, worktreeBranches: wt);
       } catch (e, st) {
         dLog('[BranchPickerNotifier] createBranch failed: $e');

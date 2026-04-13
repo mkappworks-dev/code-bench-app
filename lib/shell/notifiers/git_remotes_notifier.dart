@@ -1,7 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../services/git/git_service.dart';
+import '../../data/git/repository/git_repository.dart';
+import '../../data/git/repository/git_repository_impl.dart';
 
 part 'git_remotes_notifier.freezed.dart';
 part 'git_remotes_notifier.g.dart';
@@ -20,8 +21,7 @@ abstract class GitRemotesState with _$GitRemotesState {
 class GitRemotesNotifier extends _$GitRemotesNotifier {
   @override
   Future<GitRemotesState> build(String path) async {
-    final gitService = ref.watch(gitServiceProvider(path));
-    final remotes = await gitService.listRemotes();
+    final remotes = await ref.watch(gitRepositoryProvider).listRemotes(path);
     // Default to `origin` if present; otherwise fall back to the first
     // remote so `push` always has a valid target on first render.
     final selected = (remotes.isNotEmpty && !remotes.any((r) => r.name == 'origin')) ? remotes.first.name : 'origin';

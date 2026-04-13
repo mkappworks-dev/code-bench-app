@@ -62,7 +62,7 @@ final class GitRemotesNotifierProvider extends $AsyncNotifierProvider<GitRemotes
   }
 }
 
-String _$gitRemotesNotifierHash() => r'de3353acc785ecc252d972bfea8366a085343cc4';
+String _$gitRemotesNotifierHash() => r'53d54d84d335998fbf1b44accbf01099af8ad2d8';
 
 /// Loads the configured git remotes for [path] once on mount and tracks
 /// which remote the user has selected for the next Push.

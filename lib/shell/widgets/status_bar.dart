@@ -6,7 +6,7 @@ import '../../core/constants/theme_constants.dart';
 import '../../data/models/project.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/branch_picker/widgets/branch_picker_popover.dart';
-import '../../services/git/git_live_state.dart';
+import '../../data/git/git_live_state.dart';
 import '../notifiers/status_bar_notifier.dart';
 import 'working_pill.dart';
 

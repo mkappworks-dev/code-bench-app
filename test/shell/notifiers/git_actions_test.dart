@@ -1,13 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:code_bench_app/services/git/git_service.dart';
+import 'package:code_bench_app/data/git/git_live_state.dart';
+import 'package:code_bench_app/data/git/repository/git_repository.dart';
+import 'package:code_bench_app/data/git/repository/git_repository_impl.dart';
 import 'package:code_bench_app/shell/notifiers/git_actions.dart';
 import 'package:code_bench_app/shell/notifiers/git_actions_failure.dart';
 
-// ── Fake GitService ────────────────────────────────────────────────────────────
+// ── Fake GitRepository ─────────────────────────────────────────────────────────
 
-class _FakeGitService extends Fake implements GitService {
+class _FakeGitRepository extends Fake implements GitRepository {
   Object? _commitError;
   final String _commitSha = 'abc1234';
 
@@ -22,37 +24,61 @@ class _FakeGitService extends Fake implements GitService {
   void throwOnPull(Object error) => _pullError = error;
 
   @override
-  Future<String> commit(String message) async {
+  Future<String> commit(String projectPath, String message) async {
     if (_commitError != null) throw _commitError!;
     return _commitSha;
   }
 
   @override
-  Future<String> push() async {
+  Future<String> push(String projectPath) async {
     if (_pushError != null) throw _pushError!;
     return _pushBranch;
   }
 
   @override
-  Future<int> pull() async {
+  Future<int> pull(String projectPath) async {
     if (_pullError != null) throw _pullError!;
     return _pullCount;
   }
 
   @override
-  Future<void> initGit() async {}
+  Future<void> initGit(String projectPath) async {}
 
   @override
-  Future<void> pushToRemote(String remote) async {}
+  Future<void> pushToRemote(String projectPath, String remote) async {}
 
   @override
-  Future<List<GitRemote>> listRemotes() async => [];
+  Future<List<GitRemote>> listRemotes(String projectPath) async => [];
 
   @override
-  Future<String?> currentBranch() async => 'main';
+  Future<String?> currentBranch(String projectPath) async => 'main';
 
   @override
-  Future<String?> getOriginUrl() async => null;
+  Future<String?> getOriginUrl(String projectPath) async => null;
+
+  @override
+  Future<int?> fetchBehindCount(String projectPath) async => null;
+
+  @override
+  Future<List<String>> listLocalBranches(String projectPath) async => [];
+
+  @override
+  Future<Set<String>> worktreeBranches(String projectPath) async => {};
+
+  @override
+  Future<void> checkout(String projectPath, String branch) async {}
+
+  @override
+  Future<void> createBranch(String projectPath, String name) async {}
+
+  @override
+  Future<GitLiveState> fetchLiveState(String projectPath) async => GitLiveState.notGit;
+
+  @override
+  Future<int?> behindCount(String projectPath) async => null;
+
+  @override
+  bool isGitRepo(String projectPath) => false;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -60,14 +86,14 @@ class _FakeGitService extends Fake implements GitService {
 const _kPath = '/fake/project';
 
 void main() {
-  late _FakeGitService fakeService;
+  late _FakeGitRepository fakeRepo;
 
   setUp(() {
-    fakeService = _FakeGitService();
+    fakeRepo = _FakeGitRepository();
   });
 
   ProviderContainer makeContainer() {
-    final c = ProviderContainer(overrides: [gitServiceProvider(_kPath).overrideWithValue(fakeService)]);
+    final c = ProviderContainer(overrides: [gitRepositoryProvider.overrideWithValue(fakeRepo)]);
     addTearDown(c.dispose);
     return c;
   }
@@ -83,7 +109,7 @@ void main() {
     });
 
     test('GitException → GitActionsGitError', () async {
-      fakeService.throwOnCommit(const GitException('git commit failed'));
+      fakeRepo.throwOnCommit(const GitException('git commit failed'));
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).commit(_kPath, 'init');
@@ -91,7 +117,7 @@ void main() {
     });
 
     test('unknown exception → GitActionsUnknownError', () async {
-      fakeService.throwOnCommit(Exception('unexpected'));
+      fakeRepo.throwOnCommit(Exception('unexpected'));
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).commit(_kPath, 'init');
@@ -110,7 +136,7 @@ void main() {
     });
 
     test('GitNoUpstreamException → GitActionsNoUpstream', () async {
-      fakeService.throwOnPush(const GitNoUpstreamException('main'));
+      fakeRepo.throwOnPush(const GitNoUpstreamException('main'));
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).push(_kPath);
@@ -118,7 +144,7 @@ void main() {
     });
 
     test('GitAuthException → GitActionsAuthFailed', () async {
-      fakeService.throwOnPush(const GitAuthException());
+      fakeRepo.throwOnPush(const GitAuthException());
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).push(_kPath);
@@ -126,7 +152,7 @@ void main() {
     });
 
     test('GitException → GitActionsGitError', () async {
-      fakeService.throwOnPush(const GitException('remote rejected'));
+      fakeRepo.throwOnPush(const GitException('remote rejected'));
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).push(_kPath);
@@ -145,7 +171,7 @@ void main() {
     });
 
     test('GitConflictException → GitActionsConflict', () async {
-      fakeService.throwOnPull(const GitConflictException());
+      fakeRepo.throwOnPull(const GitConflictException());
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).pull(_kPath);
@@ -153,7 +179,7 @@ void main() {
     });
 
     test('GitNoUpstreamException → GitActionsNoUpstream', () async {
-      fakeService.throwOnPull(const GitNoUpstreamException(''));
+      fakeRepo.throwOnPull(const GitNoUpstreamException(''));
 
       final c = makeContainer();
       await c.read(gitActionsProvider.notifier).pull(_kPath);

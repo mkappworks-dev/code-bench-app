@@ -1,24 +1,31 @@
 import 'dart:io';
 
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../core/utils/debug_logger.dart';
+import 'git_datasource.dart';
 
-import '../../core/utils/debug_logger.dart';
-
-part 'git_service.g.dart';
-
-@riverpod
-GitService gitService(Ref ref, String projectPath) => GitService(projectPath);
-
-class GitRemote {
-  const GitRemote({required this.name, required this.url});
-  final String name;
-  final String url;
+class GitException implements Exception {
+  const GitException(this.message);
+  final String message;
+  @override
+  String toString() => 'GitException: $message';
 }
 
-class GitService {
-  GitService(this.projectPath);
+class GitNoUpstreamException extends GitException {
+  const GitNoUpstreamException(String branch) : super('No upstream branch for $branch');
+}
 
-  final String projectPath;
+class GitAuthException extends GitException {
+  const GitAuthException() : super('Authentication failed');
+}
+
+class GitConflictException extends GitException {
+  const GitConflictException() : super('Merge conflict detected');
+}
+
+class GitDatasourceProcess implements GitDatasource {
+  GitDatasourceProcess(this._projectPath);
+
+  final String _projectPath;
 
   /// Strips GitHub tokens and embedded basic-auth credentials from [input]
   /// so git stderr can be safely rendered in the UI and logs.
@@ -36,9 +43,10 @@ class GitService {
     return out;
   }
 
-  /// Runs `git init` in [projectPath]. Throws [GitException] on failure.
+  /// Runs `git init` in [_projectPath]. Throws [GitException] on failure.
+  @override
   Future<void> initGit() async {
-    final result = await Process.run('git', ['init'], workingDirectory: projectPath);
+    final result = await Process.run('git', ['init'], workingDirectory: _projectPath);
     if (result.exitCode != 0) {
       throw GitException('git init failed: ${_sanitizeGitStderr(result.stderr as String)}');
     }
@@ -46,12 +54,13 @@ class GitService {
 
   /// Stages all changes and commits with [message].
   /// Returns the short SHA of the new commit.
+  @override
   Future<String> commit(String message) async {
-    final addResult = await Process.run('git', ['add', '-A'], workingDirectory: projectPath);
+    final addResult = await Process.run('git', ['add', '-A'], workingDirectory: _projectPath);
     if (addResult.exitCode != 0) {
       throw GitException('git add failed: ${_sanitizeGitStderr(addResult.stderr as String)}');
     }
-    final commitResult = await Process.run('git', ['commit', '-m', message], workingDirectory: projectPath);
+    final commitResult = await Process.run('git', ['commit', '-m', message], workingDirectory: _projectPath);
     if (commitResult.exitCode != 0) {
       throw GitException('git commit failed: ${_sanitizeGitStderr(commitResult.stderr as String)}');
     }
@@ -62,7 +71,7 @@ class GitService {
     final match = RegExp(r'\[[^\s\]]+(?:\s+\([^)]+\))?\s+([a-f0-9]+)\]').firstMatch(out);
     if (match == null) {
       // Fall back to `git rev-parse HEAD` if parsing fails — never return ''.
-      final rev = await Process.run('git', ['rev-parse', '--short', 'HEAD'], workingDirectory: projectPath);
+      final rev = await Process.run('git', ['rev-parse', '--short', 'HEAD'], workingDirectory: _projectPath);
       if (rev.exitCode == 0) return (rev.stdout as String).trim();
       throw GitException('Commit succeeded but could not parse SHA');
     }
@@ -70,10 +79,11 @@ class GitService {
   }
 
   /// Runs `git push`. Returns the branch name pushed to.
+  @override
   Future<String> push() async {
     final branch = await _currentBranch() ?? '';
 
-    final result = await Process.run('git', ['push'], workingDirectory: projectPath);
+    final result = await Process.run('git', ['push'], workingDirectory: _projectPath);
     if (result.exitCode != 0) {
       final stderr = result.stderr as String;
       if (stderr.contains('no upstream')) {
@@ -89,12 +99,13 @@ class GitService {
 
   /// Runs `git pull`. Returns number of new commits pulled (computed by
   /// diffing HEAD before and after).
+  @override
   Future<int> pull() async {
     // Capture HEAD before the pull so we can count commits accurately.
     // (git pull's summary line reports *files* changed, not *commits*.)
     final preSha = await _headSha();
 
-    final result = await Process.run('git', ['pull'], workingDirectory: projectPath);
+    final result = await Process.run('git', ['pull'], workingDirectory: _projectPath);
     if (result.exitCode != 0) {
       final stderr = result.stderr as String;
       if (stderr.contains('CONFLICT') || (result.stdout as String).contains('CONFLICT')) {
@@ -111,7 +122,7 @@ class GitService {
       'git',
       // `--` separates the revision range from any accidental pathspec.
       ['rev-list', '--count', '$preSha..HEAD', '--'],
-      workingDirectory: projectPath,
+      workingDirectory: _projectPath,
     );
     if (countResult.exitCode != 0) return 0;
     return int.tryParse((countResult.stdout as String).trim()) ?? 0;
@@ -121,6 +132,7 @@ class GitService {
   /// Returns `null` if the count could not be determined (no remote, no
   /// upstream, offline, or any other failure). Callers should render this
   /// as an unknown/unavailable state rather than as "up to date".
+  @override
   Future<int?> fetchBehindCount() async {
     final branch = await _currentBranch();
     if (branch == null) return null;
@@ -130,24 +142,25 @@ class GitService {
     // normally rejects these, but don't rely on that guarantee.
     if (branch.startsWith('-')) return null;
 
-    final fetchResult = await Process.run('git', ['fetch', '--quiet'], workingDirectory: projectPath);
+    final fetchResult = await Process.run('git', ['fetch', '--quiet'], workingDirectory: _projectPath);
     if (fetchResult.exitCode != 0) return null;
 
     final countResult = await Process.run(
       'git',
       // `--` guards against a branch literally named `-x` being parsed as a flag.
       ['rev-list', '--count', 'HEAD..origin/$branch', '--'],
-      workingDirectory: projectPath,
+      workingDirectory: _projectPath,
     );
     if (countResult.exitCode != 0) return null;
     return int.tryParse((countResult.stdout as String).trim());
   }
 
   /// Returns the current branch name, or `null` if it cannot be determined.
+  @override
   Future<String?> currentBranch() => _currentBranch();
 
   Future<String?> _currentBranch() async {
-    final result = await Process.run('git', ['rev-parse', '--abbrev-ref', 'HEAD'], workingDirectory: projectPath);
+    final result = await Process.run('git', ['rev-parse', '--abbrev-ref', 'HEAD'], workingDirectory: _projectPath);
     if (result.exitCode != 0) return null;
     final branch = (result.stdout as String).trim();
     if (branch.isEmpty) return null;
@@ -161,22 +174,24 @@ class GitService {
   }
 
   Future<String?> _headSha() async {
-    final result = await Process.run('git', ['rev-parse', 'HEAD'], workingDirectory: projectPath);
+    final result = await Process.run('git', ['rev-parse', 'HEAD'], workingDirectory: _projectPath);
     if (result.exitCode != 0) return null;
     return (result.stdout as String).trim();
   }
 
   /// Returns the URL of the configured `origin` remote, or `null` if unset.
+  @override
   Future<String?> getOriginUrl() async {
-    final result = await Process.run('git', ['remote', 'get-url', 'origin'], workingDirectory: projectPath);
+    final result = await Process.run('git', ['remote', 'get-url', 'origin'], workingDirectory: _projectPath);
     if (result.exitCode != 0) return null;
     final url = (result.stdout as String).trim();
     return url.isEmpty ? null : url;
   }
 
   /// Returns list of configured git remotes.
+  @override
   Future<List<GitRemote>> listRemotes() async {
-    final result = await Process.run('git', ['remote', '-v'], workingDirectory: projectPath);
+    final result = await Process.run('git', ['remote', '-v'], workingDirectory: _projectPath);
     if (result.exitCode != 0) return [];
     final lines = (result.stdout as String).trim().split('\n');
     final seen = <String>{};
@@ -195,8 +210,9 @@ class GitService {
   }
 
   /// Returns local branch names, current branch first, then alphabetical.
+  @override
   Future<List<String>> listLocalBranches() async {
-    final result = await Process.run('git', ['branch', '--format=%(refname:short)'], workingDirectory: projectPath);
+    final result = await Process.run('git', ['branch', '--format=%(refname:short)'], workingDirectory: _projectPath);
     if (result.exitCode != 0) return const [];
     final all = (result.stdout as String).trim().split('\n').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
     final current = await _currentBranch();
@@ -208,8 +224,9 @@ class GitService {
   }
 
   /// Returns the set of branch names checked out in other git worktrees.
+  @override
   Future<Set<String>> worktreeBranches() async {
-    final result = await Process.run('git', ['worktree', 'list', '--porcelain'], workingDirectory: projectPath);
+    final result = await Process.run('git', ['worktree', 'list', '--porcelain'], workingDirectory: _projectPath);
     if (result.exitCode != 0) return const {};
     final blocks = (result.stdout as String).trim().split(RegExp(r'\n\n+'));
     final branches = <String>{};
@@ -231,13 +248,14 @@ class GitService {
   /// through to "restore this file" semantics — `switch` only operates on
   /// refs, never pathspecs.
   /// Throws [ArgumentError] for flag-shaped names, [GitException] on git failure.
+  @override
   Future<void> checkout(String branch) async {
     if (branch.isEmpty) throw ArgumentError('Branch name must not be empty.');
     if (branch.startsWith('-')) {
-      sLog('[GitService] flag-shaped checkout branch rejected: "$branch"');
+      sLog('[GitDatasourceProcess] flag-shaped checkout branch rejected: "$branch"');
       throw ArgumentError('Branch name must not start with a dash.');
     }
-    final result = await Process.run('git', ['switch', branch], workingDirectory: projectPath);
+    final result = await Process.run('git', ['switch', branch], workingDirectory: _projectPath);
     if (result.exitCode != 0) {
       throw GitException(
         (result.stderr as String).trim().isNotEmpty ? (result.stderr as String).trim() : 'git switch failed',
@@ -247,57 +265,40 @@ class GitService {
 
   /// Validates [name] and runs `git checkout -b [name]`.
   /// Throws [ArgumentError] for flag-shaped names, [GitException] on git failure.
+  @override
   Future<void> createBranch(String name) async {
     if (name.isEmpty) throw ArgumentError('Branch name must not be empty.');
     if (name.startsWith('-')) {
-      sLog('[GitService] flag-shaped createBranch name rejected: "$name"');
+      sLog('[GitDatasourceProcess] flag-shaped createBranch name rejected: "$name"');
       throw ArgumentError('Branch name must not start with a dash.');
     }
     if (name.contains(' ')) throw ArgumentError('Branch name must not contain spaces.');
-    final result = await Process.run('git', ['checkout', '-b', name], workingDirectory: projectPath);
+    final result = await Process.run('git', ['checkout', '-b', name], workingDirectory: _projectPath);
     if (result.exitCode != 0) {
       throw GitException((result.stderr as String).trim());
     }
   }
 
   /// Pushes current branch to a named [remote].
+  @override
   Future<void> pushToRemote(String remote) async {
     // Defense-in-depth: reject remotes that look like flags so a remote
     // literally named `-d` or `--delete` cannot alter `git push` semantics.
     if (remote.startsWith('-')) {
-      sLog('[pushToRemote] flag-shaped remote rejected: "$remote"');
+      sLog('[GitDatasourceProcess] flag-shaped remote rejected: "$remote"');
       throw GitException('Invalid remote name: $remote');
     }
     final branch = await _currentBranch() ?? '';
     // Same reasoning for the branch name — a hostile ref baked into
     // `.git/HEAD` could otherwise reach `git push <remote> <branch>` argv.
     if (branch.startsWith('-')) {
-      sLog('[pushToRemote] flag-shaped branch rejected: "$branch"');
+      sLog('[GitDatasourceProcess] flag-shaped branch rejected: "$branch"');
       throw GitException('Invalid branch name: $branch');
     }
 
-    final result = await Process.run('git', ['push', remote, branch], workingDirectory: projectPath);
+    final result = await Process.run('git', ['push', remote, branch], workingDirectory: _projectPath);
     if (result.exitCode != 0) {
       throw GitException(_sanitizeGitStderr((result.stderr as String).trim()));
     }
   }
-}
-
-class GitException implements Exception {
-  const GitException(this.message);
-  final String message;
-  @override
-  String toString() => 'GitException: $message';
-}
-
-class GitNoUpstreamException extends GitException {
-  const GitNoUpstreamException(String branch) : super('No upstream branch for $branch');
-}
-
-class GitAuthException extends GitException {
-  const GitAuthException() : super('Authentication failed');
-}
-
-class GitConflictException extends GitException {
-  const GitConflictException() : super('Merge conflict detected');
 }
