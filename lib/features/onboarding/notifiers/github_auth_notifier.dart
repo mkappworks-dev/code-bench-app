@@ -13,7 +13,7 @@ part 'github_auth_notifier.g.dart';
 class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   @override
   Future<GitHubAccount?> build() async {
-    final repo = await ref.read(githubRepositoryProvider.future);
+    final repo = await ref.watch(githubRepositoryProvider.future);
     return repo.getStoredAccount();
   }
 
