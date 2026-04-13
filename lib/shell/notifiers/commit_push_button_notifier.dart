@@ -1,8 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../data/git/datasource/git_datasource.dart';
 import '../../services/git/git_service.dart';
+import 'git_live_state_notifier.dart';
 import 'git_remotes_notifier.dart';
 
 part 'commit_push_button_notifier.freezed.dart';

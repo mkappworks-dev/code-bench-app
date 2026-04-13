@@ -5,7 +5,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/chat_session.dart';
 import '../../../data/models/project.dart';
-import '../../../services/git/git_service.dart';
+import '../../../shell/notifiers/git_live_state_notifier.dart';
 import '../notifiers/project_sidebar_actions.dart';
 import '../notifiers/project_sidebar_notifier.dart';
 import 'conversation_tile.dart';

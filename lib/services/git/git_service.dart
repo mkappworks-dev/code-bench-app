@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/git/datasource/git_datasource.dart';
@@ -10,24 +8,13 @@ import '../../data/git/repository/git_repository.dart';
 import '../../data/git/repository/git_repository_impl.dart';
 
 export '../../data/git/git_exceptions.dart';
+export '../../data/git/datasource/git_datasource.dart' show GitRemote;
 
 part 'git_service.g.dart';
 
 @Riverpod(keepAlive: true)
 GitService gitService(Ref ref) {
   return GitService(repo: ref.watch(gitRepositoryProvider), liveState: ref.watch(gitLiveStateDatasourceProvider));
-}
-
-/// Convenience providers consumed by notifiers and widgets.
-@riverpod
-Future<GitLiveState> gitLiveState(Ref ref, String projectPath) =>
-    ref.watch(gitServiceProvider).fetchLiveState(projectPath);
-
-@riverpod
-Future<int?> behindCount(Ref ref, String projectPath) async {
-  final timer = Timer.periodic(const Duration(minutes: 5), (_) => ref.invalidateSelf());
-  ref.onDispose(timer.cancel);
-  return ref.watch(gitServiceProvider).behindCount(projectPath);
 }
 
 /// Owns all git business logic: composite operations, live-state queries, and

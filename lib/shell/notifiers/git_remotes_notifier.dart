@@ -1,7 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../data/git/datasource/git_datasource.dart';
 import '../../services/git/git_service.dart';
 
 part 'git_remotes_notifier.freezed.dart';
