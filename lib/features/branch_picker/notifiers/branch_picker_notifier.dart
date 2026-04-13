@@ -12,7 +12,7 @@ part 'branch_picker_notifier.g.dart';
 class BranchPickerNotifier extends _$BranchPickerNotifier {
   @override
   Future<BranchPickerState> build(String projectPath) async {
-    final git = ref.read(gitRepositoryProvider);
+    final git = ref.watch(gitRepositoryProvider);
     final branches = await git.listLocalBranches(projectPath);
     final wtBranches = await git.worktreeBranches(projectPath);
     return BranchPickerState(branches: branches, worktreeBranches: wtBranches);
