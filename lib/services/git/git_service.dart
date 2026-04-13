@@ -9,7 +9,7 @@ import '../../data/git/datasource/git_live_state_datasource_process.dart';
 import '../../data/git/repository/git_repository.dart';
 import '../../data/git/repository/git_repository_impl.dart';
 
-export 'git_exceptions.dart';
+export '../../data/git/git_exceptions.dart';
 
 part 'git_service.g.dart';
 

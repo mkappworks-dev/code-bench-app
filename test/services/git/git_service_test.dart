@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/data/git/datasource/git_datasource_process.dart';
+import 'package:code_bench_app/data/git/git_exceptions.dart';
 
 void main() {
   late Directory tempDir;

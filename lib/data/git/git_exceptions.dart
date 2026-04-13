@@ -1,5 +1,4 @@
 // Domain exceptions for git operations.
-// Relocated from lib/data/git/datasource/git_datasource_process.dart.
 
 class GitException implements Exception {
   const GitException(this.message);

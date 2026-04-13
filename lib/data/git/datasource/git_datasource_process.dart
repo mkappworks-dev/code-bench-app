@@ -1,10 +1,8 @@
 import 'dart:io';
 
 import '../../../core/utils/debug_logger.dart';
-import '../../../services/git/git_exceptions.dart';
+import '../git_exceptions.dart';
 import 'git_datasource.dart';
-
-export '../../../services/git/git_exceptions.dart';
 
 class GitDatasourceProcess implements GitDatasource {
   GitDatasourceProcess(this._projectPath);
