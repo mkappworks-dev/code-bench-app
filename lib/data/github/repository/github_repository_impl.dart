@@ -4,7 +4,7 @@ import '../../models/repository.dart';
 import '../datasource/github_api_datasource.dart';
 import '../datasource/github_api_datasource_dio.dart';
 import '../datasource/github_auth_datasource.dart';
-import '../datasource/github_auth_datasource_web.dart';
+import '../datasource/github_auth_datasource_web_dio.dart';
 import 'github_repository.dart';
 
 part 'github_repository_impl.g.dart';

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'github_auth_datasource_web.dart';
+part of 'github_auth_datasource_web_dio.dart';
 
 // **************************************************************************
 // RiverpodGenerator

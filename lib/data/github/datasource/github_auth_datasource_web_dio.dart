@@ -5,11 +5,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/errors/app_exception.dart';
-import '../../../data/_core/secure_storage.dart';
+import '../../_core/http/dio_factory.dart';
+import '../../_core/secure_storage.dart';
 import '../../models/repository.dart';
 import 'github_auth_datasource.dart';
 
-part 'github_auth_datasource_web.g.dart';
+part 'github_auth_datasource_web_dio.g.dart';
 
 @Riverpod(keepAlive: true)
 GitHubAuthDatasource githubAuthDatasource(Ref ref) => GitHubAuthDatasourceWeb(ref.watch(secureStorageProvider));
@@ -60,9 +61,9 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
   }
 
   Future<String> _exchangeCodeForToken(String code) async {
-    final dio = Dio();
+    final dio = DioFactory.create(baseUrl: 'https://github.com');
     final response = await dio.post(
-      ApiConstants.githubTokenUrl,
+      '/login/oauth/access_token',
       data: {'client_id': _clientId, 'code': code, 'redirect_uri': AppConstants.oauthCallbackUrl},
       options: Options(headers: {'Accept': 'application/json'}),
     );
@@ -75,9 +76,9 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
   }
 
   Future<GitHubAccount> _fetchUserInfo(String token) async {
-    final dio = Dio();
+    final dio = DioFactory.create(baseUrl: ApiConstants.githubApiBaseUrl);
     final response = await dio.get(
-      '${ApiConstants.githubApiBaseUrl}/user',
+      '/user',
       options: Options(headers: {'Authorization': 'Bearer $token', 'Accept': 'application/vnd.github.v3+json'}),
     );
     final data = response.data as Map<String, dynamic>;
