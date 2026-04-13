@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../services/session/session_service.dart';
+import '../../../data/session/repository/session_repository_impl.dart';
 
 part 'archive_actions.g.dart';
 
@@ -10,5 +10,8 @@ class ArchiveActions extends _$ArchiveActions {
   @override
   FutureOr<void> build() {}
 
-  Future<void> unarchiveSession(String id) => ref.read(sessionServiceProvider).unarchiveSession(id);
+  Future<void> unarchiveSession(String id) async {
+    final repo = await ref.read(sessionRepositoryProvider.future);
+    return repo.unarchiveSession(id);
+  }
 }

@@ -11,7 +11,8 @@ import 'package:uuid/uuid.dart';
 import '../../core/utils/debug_logger.dart';
 import '../../data/models/applied_change.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
-import '../filesystem/filesystem_service.dart';
+import '../../data/filesystem/repository/filesystem_repository.dart';
+import '../../data/filesystem/repository/filesystem_repository_impl.dart';
 
 part 'apply_service.g.dart';
 
@@ -42,12 +43,15 @@ const Duration kGitCheckoutTimeout = Duration(seconds: 15);
 
 @Riverpod(keepAlive: true)
 ApplyService applyService(Ref ref) {
-  return ApplyService(fs: ref.watch(filesystemServiceProvider), notifier: ref.watch(appliedChangesProvider.notifier));
+  return ApplyService(
+    fs: ref.watch(filesystemRepositoryProvider),
+    notifier: ref.watch(appliedChangesProvider.notifier),
+  );
 }
 
 class ApplyService {
   ApplyService({
-    required FilesystemService fs,
+    required FilesystemRepository fs,
     required AppliedChangesNotifier notifier,
     String Function()? uuidGen,
     ProcessRunner? processRunner,
@@ -56,7 +60,7 @@ class ApplyService {
        _uuidGen = uuidGen ?? (() => const Uuid().v4()),
        _processRunner = processRunner ?? Process.run;
 
-  final FilesystemService _fs;
+  final FilesystemRepository _fs;
   final AppliedChangesNotifier _notifier;
   final String Function() _uuidGen;
   final ProcessRunner _processRunner;

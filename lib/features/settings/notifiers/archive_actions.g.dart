@@ -35,7 +35,7 @@ final class ArchiveActionsProvider extends $AsyncNotifierProvider<ArchiveActions
   ArchiveActions create() => ArchiveActions();
 }
 
-String _$archiveActionsHash() => r'6df12cd39241f2d3e664af225ff0970c1d3f7cbc';
+String _$archiveActionsHash() => r'2efe6f7a9518d541f95de58215afa91aec1d513e';
 
 /// Imperative actions for the Archive screen.
 

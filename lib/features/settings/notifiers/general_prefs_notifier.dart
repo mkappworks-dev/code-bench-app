@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../services/settings/settings_service.dart';
+import '../../../data/settings/repository/settings_repository_impl.dart';
 
 part 'general_prefs_notifier.g.dart';
 
@@ -29,7 +29,7 @@ class GeneralPrefsNotifierState {
 class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
   @override
   Future<GeneralPrefsNotifierState> build() async {
-    final svc = ref.read(settingsServiceProvider);
+    final svc = ref.read(settingsRepositoryProvider);
     return GeneralPrefsNotifierState(
       autoCommit: await svc.getAutoCommit(),
       deleteConfirmation: await svc.getDeleteConfirmation(),
@@ -38,24 +38,24 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
   }
 
   Future<void> setAutoCommit(bool value) async {
-    await ref.read(settingsServiceProvider).setAutoCommit(value);
+    await ref.read(settingsRepositoryProvider).setAutoCommit(value);
     _update((s) => s.copyWith(autoCommit: value));
   }
 
   Future<void> setDeleteConfirmation(bool value) async {
-    await ref.read(settingsServiceProvider).setDeleteConfirmation(value);
+    await ref.read(settingsRepositoryProvider).setDeleteConfirmation(value);
     _update((s) => s.copyWith(deleteConfirmation: value));
   }
 
   Future<void> setTerminalApp(String value) async {
-    await ref.read(settingsServiceProvider).setTerminalApp(value);
+    await ref.read(settingsRepositoryProvider).setTerminalApp(value);
     _update((s) => s.copyWith(terminalApp: value));
   }
 
   /// Resets all general settings to their defaults and invalidates this
   /// provider so the settings UI rebuilds with fresh values.
   Future<void> restoreDefaults() async {
-    final svc = ref.read(settingsServiceProvider);
+    final svc = ref.read(settingsRepositoryProvider);
     await svc.setAutoCommit(false);
     await svc.setTerminalApp('Terminal');
     await svc.setDeleteConfirmation(true);

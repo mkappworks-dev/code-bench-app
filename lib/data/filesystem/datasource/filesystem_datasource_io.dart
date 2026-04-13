@@ -3,25 +3,16 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/errors/app_exception.dart' as app_errors;
+import '../../../core/errors/app_exception.dart' as app_errors;
+import 'filesystem_datasource.dart';
 
-part 'filesystem_service.g.dart';
+part 'filesystem_datasource_io.g.dart';
 
 @Riverpod(keepAlive: true)
-FilesystemService filesystemService(Ref ref) => FilesystemService();
+FilesystemDatasource filesystemDatasource(Ref ref) => FilesystemDatasourceIo();
 
-class FileNode {
-  const FileNode({required this.path, required this.name, required this.isDirectory, this.children});
-
-  final String path;
-  final String name;
-  final bool isDirectory;
-  final List<FileNode>? children;
-
-  bool get isExpanded => children != null;
-}
-
-class FilesystemService {
+class FilesystemDatasourceIo implements FilesystemDatasource {
+  @override
   Future<List<FileNode>> listDirectory(String dirPath) async {
     try {
       final dir = Directory(dirPath);
@@ -46,6 +37,7 @@ class FilesystemService {
     }
   }
 
+  @override
   Future<String> readFile(String filePath) async {
     try {
       return await File(filePath).readAsString();
@@ -54,6 +46,7 @@ class FilesystemService {
     }
   }
 
+  @override
   Future<void> writeFile(String filePath, String content) async {
     try {
       await File(filePath).writeAsString(content);
@@ -62,6 +55,7 @@ class FilesystemService {
     }
   }
 
+  @override
   Future<void> createFile(String filePath) async {
     try {
       await File(filePath).create(recursive: true);
@@ -70,6 +64,7 @@ class FilesystemService {
     }
   }
 
+  @override
   Future<void> createDirectory(String dirPath) async {
     try {
       await Directory(dirPath).create(recursive: true);
@@ -78,6 +73,7 @@ class FilesystemService {
     }
   }
 
+  @override
   Future<void> deleteFile(String filePath) async {
     try {
       await File(filePath).delete();
@@ -86,6 +82,7 @@ class FilesystemService {
     }
   }
 
+  @override
   Future<void> renameFile(String oldPath, String newPath) async {
     try {
       await File(oldPath).rename(newPath);
@@ -94,10 +91,12 @@ class FilesystemService {
     }
   }
 
-  Stream<FileSystemEvent> watchDirectory(String dirPath) {
+  @override
+  Stream<dynamic> watchDirectory(String dirPath) {
     return Directory(dirPath).watch(recursive: false);
   }
 
+  @override
   String detectLanguage(String filePath) {
     final ext = p.extension(filePath).toLowerCase();
     const map = {
