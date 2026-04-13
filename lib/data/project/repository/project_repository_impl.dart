@@ -14,16 +14,6 @@ import 'project_repository.dart';
 
 part 'project_repository_impl.g.dart';
 
-/// Thrown when attempting to add a project whose folder path is already
-/// tracked by another project entry.
-class DuplicateProjectPathException implements Exception {
-  DuplicateProjectPathException(this.path);
-  final String path;
-
-  @override
-  String toString() => 'A project at "$path" already exists in Code Bench.';
-}
-
 @Riverpod(keepAlive: true)
 ProjectRepository projectRepository(Ref ref) {
   return ProjectRepositoryImpl(db: ref.watch(projectDatasourceProvider), fs: ref.watch(projectFsDatasourceProvider));
@@ -75,11 +65,6 @@ class ProjectRepositoryImpl implements ProjectRepository {
   Future<Project> addExistingFolder(String directoryPath) async {
     if (!_fs.exists(directoryPath)) {
       throw ArgumentError('Directory does not exist: $directoryPath');
-    }
-
-    final existing = await _db.getProjectRowByPath(directoryPath);
-    if (existing != null) {
-      throw DuplicateProjectPathException(directoryPath);
     }
 
     final id = _uuid.v4();
@@ -145,12 +130,6 @@ class ProjectRepositoryImpl implements ProjectRepository {
     if (!_fs.exists(newPath)) {
       throw ArgumentError('Directory does not exist: $newPath');
     }
-
-    final existing = await _db.getProjectRowByPath(newPath);
-    if (existing != null && existing.id != projectId) {
-      throw DuplicateProjectPathException(newPath);
-    }
-
     await _db.updateProjectPath(projectId, newPath);
   }
 

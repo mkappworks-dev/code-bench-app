@@ -3,14 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/data/models/project.dart';
 import 'package:code_bench_app/data/models/project_action.dart';
-import 'package:code_bench_app/data/project/repository/project_repository.dart';
-import 'package:code_bench_app/data/project/repository/project_repository_impl.dart';
+import 'package:code_bench_app/services/project/project_service.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_failure.dart';
 
-// ── Fake ProjectRepository ────────────────────────────────────────────────────
+// ── Fake ProjectService ───────────────────────────────────────────────────────
 
-class _FakeProjectRepository extends Fake implements ProjectRepository {
+class _FakeProjectService extends Fake implements ProjectService {
   Object? _addError;
   Object? _removeError;
 
@@ -52,17 +51,17 @@ class _FakeProjectRepository extends Fake implements ProjectRepository {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-ProviderContainer _makeContainer(_FakeProjectRepository fakeRepo) {
-  final c = ProviderContainer(overrides: [projectRepositoryProvider.overrideWithValue(fakeRepo)]);
+ProviderContainer _makeContainer(_FakeProjectService fakeService) {
+  final c = ProviderContainer(overrides: [projectServiceProvider.overrideWithValue(fakeService)]);
   addTearDown(c.dispose);
   return c;
 }
 
 void main() {
-  late _FakeProjectRepository fakeService;
+  late _FakeProjectService fakeService;
 
   setUp(() {
-    fakeService = _FakeProjectRepository();
+    fakeService = _FakeProjectService();
   });
 
   // ── addExistingFolder ────────────────────────────────────────────────────────

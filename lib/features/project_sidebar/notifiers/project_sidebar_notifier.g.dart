@@ -181,7 +181,7 @@ final class ProjectsProvider
   }
 }
 
-String _$projectsHash() => r'a896cf869d4995dac5eb23236678c0b6c3b20160';
+String _$projectsHash() => r'4f937a9e5fc03054ae7f22ce9343e0519b76fb71';
 
 /// Derives the currently active [Project] from [activeProjectIdProvider] and
 /// [projectsProvider]. Returns null while projects are loading or if no project
