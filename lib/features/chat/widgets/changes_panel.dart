@@ -227,6 +227,7 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
       showErrorSnackBar(context, switch (failure) {
         CodeApplyProjectMissing() => 'Project folder is missing.',
         CodeApplyOutsideProject() => 'This file is outside the current project.',
+        CodeApplyTooLarge(:final bytes) => 'Content too large to apply ($bytes bytes).',
         CodeApplyDiskWrite(:final message) => 'Could not write file: $message',
         CodeApplyFileRead(:final path) => 'Could not read file: $path',
         CodeApplyUnknownError() => 'Revert failed. Please try again.',

@@ -4,9 +4,8 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
-import '../../../data/apply/repository/apply_repository.dart';
-import '../../../data/apply/repository/apply_repository_impl.dart';
 import '../../../data/models/applied_change.dart';
+import '../../../services/apply/apply_service.dart';
 import '../../project_sidebar/notifiers/project_sidebar_actions.dart';
 import 'chat_notifier.dart';
 import 'code_apply_failure.dart';
@@ -15,7 +14,7 @@ part 'code_apply_actions.g.dart';
 
 /// Command notifier for code-apply and revert operations.
 ///
-/// Widgets never reach [ApplyRepository] directly — they call methods here.
+/// Widgets never reach [ApplyService] directly — they call methods here.
 /// State is [AsyncValue<void>]: loading/error/data are driven by each method.
 /// Typed failures are emitted as [AsyncError] carrying a [CodeApplyFailure].
 ///
@@ -29,7 +28,8 @@ class CodeApplyActions extends _$CodeApplyActions {
 
   CodeApplyFailure _asApplyFailure(Object e) => switch (e) {
     ProjectMissingException() => const CodeApplyFailure.projectMissing(),
-    StateError() => const CodeApplyFailure.outsideProject(),
+    PathEscapeException() => const CodeApplyFailure.outsideProject(),
+    ApplyTooLargeException(:final bytes) => CodeApplyFailure.tooLarge(bytes),
     FileSystemException(:final message) => CodeApplyFailure.diskWrite(message),
     _ => CodeApplyFailure.unknown(e),
   };
@@ -46,7 +46,7 @@ class CodeApplyActions extends _$CodeApplyActions {
     state = await AsyncValue.guard(() async {
       try {
         final change = await ref
-            .read(applyRepositoryProvider)
+            .read(applyServiceProvider)
             .applyChange(
               filePath: filePath,
               projectPath: projectPath,
@@ -70,7 +70,7 @@ class CodeApplyActions extends _$CodeApplyActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        await ref.read(applyRepositoryProvider).revertChange(change: change, isGit: isGit, projectPath: projectPath);
+        await ref.read(applyServiceProvider).revertChange(change: change, isGit: isGit, projectPath: projectPath);
         ref.read(appliedChangesProvider.notifier).revert(change.id);
       } catch (e, st) {
         dLog('[CodeApplyActions] revertChange failed: $e');
@@ -80,11 +80,11 @@ class CodeApplyActions extends _$CodeApplyActions {
   }
 
   Future<String?> readFileContent(String filePath, String projectPath) =>
-      ref.read(applyRepositoryProvider).readFileContent(filePath, projectPath);
+      ref.read(applyServiceProvider).readFileContent(filePath, projectPath);
 
   /// Checks whether [filePath] has been modified since [storedChecksum] was
   /// recorded. Called from [ChangesPanel] via `ref.read(.notifier)` in
   /// `initState` — routing through the notifier keeps dart:io out of widgets.
   Future<bool> isExternallyModified(String filePath, String storedChecksum) =>
-      ref.read(applyRepositoryProvider).isExternallyModified(filePath, storedChecksum);
+      ref.read(applyServiceProvider).isExternallyModified(filePath, storedChecksum);
 }

@@ -10,7 +10,7 @@ part of 'code_apply_actions.dart';
 // ignore_for_file: type=lint, type=warning
 /// Command notifier for code-apply and revert operations.
 ///
-/// Widgets never reach [ApplyRepository] directly — they call methods here.
+/// Widgets never reach [ApplyService] directly — they call methods here.
 /// State is [AsyncValue<void>]: loading/error/data are driven by each method.
 /// Typed failures are emitted as [AsyncError] carrying a [CodeApplyFailure].
 ///
@@ -23,7 +23,7 @@ final codeApplyActionsProvider = CodeApplyActionsProvider._();
 
 /// Command notifier for code-apply and revert operations.
 ///
-/// Widgets never reach [ApplyRepository] directly — they call methods here.
+/// Widgets never reach [ApplyService] directly — they call methods here.
 /// State is [AsyncValue<void>]: loading/error/data are driven by each method.
 /// Typed failures are emitted as [AsyncError] carrying a [CodeApplyFailure].
 ///
@@ -33,7 +33,7 @@ final codeApplyActionsProvider = CodeApplyActionsProvider._();
 final class CodeApplyActionsProvider extends $AsyncNotifierProvider<CodeApplyActions, void> {
   /// Command notifier for code-apply and revert operations.
   ///
-  /// Widgets never reach [ApplyRepository] directly — they call methods here.
+  /// Widgets never reach [ApplyService] directly — they call methods here.
   /// State is [AsyncValue<void>]: loading/error/data are driven by each method.
   /// Typed failures are emitted as [AsyncError] carrying a [CodeApplyFailure].
   ///
@@ -59,11 +59,11 @@ final class CodeApplyActionsProvider extends $AsyncNotifierProvider<CodeApplyAct
   CodeApplyActions create() => CodeApplyActions();
 }
 
-String _$codeApplyActionsHash() => r'02b62ca5d33359334bcdfe9e4caa1dd7c455b234';
+String _$codeApplyActionsHash() => r'2834f7bb48a7ed64ed51ea158bc8c123bfde6cfb';
 
 /// Command notifier for code-apply and revert operations.
 ///
-/// Widgets never reach [ApplyRepository] directly — they call methods here.
+/// Widgets never reach [ApplyService] directly — they call methods here.
 /// State is [AsyncValue<void>]: loading/error/data are driven by each method.
 /// Typed failures are emitted as [AsyncError] carrying a [CodeApplyFailure].
 ///

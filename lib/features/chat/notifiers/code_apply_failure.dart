@@ -10,6 +10,9 @@ sealed class CodeApplyFailure with _$CodeApplyFailure {
   /// Attempted to write outside the project root.
   const factory CodeApplyFailure.outsideProject() = CodeApplyOutsideProject;
 
+  /// Content or original file exceeded the size limit.
+  const factory CodeApplyFailure.tooLarge(int bytes) = CodeApplyTooLarge;
+
   /// Low-level disk write failure.
   const factory CodeApplyFailure.diskWrite(String message) = CodeApplyDiskWrite;
 

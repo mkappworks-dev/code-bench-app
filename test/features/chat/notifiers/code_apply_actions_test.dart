@@ -3,17 +3,16 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:code_bench_app/data/apply/repository/apply_repository.dart';
-import 'package:code_bench_app/data/apply/repository/apply_repository_impl.dart';
 import 'package:code_bench_app/data/models/applied_change.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/notifiers/code_apply_actions.dart';
 import 'package:code_bench_app/features/chat/notifiers/code_apply_failure.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_actions.dart';
+import 'package:code_bench_app/services/apply/apply_service.dart';
 
-// ── Fake ApplyRepository ──────────────────────────────────────────────────────
+// ── Fake ApplyService ─────────────────────────────────────────────────────────
 
-class _FakeApplyRepository extends Fake implements ApplyRepository {
+class _FakeApplyService extends Fake implements ApplyService {
   Object? _applyError;
   Object? _revertError;
 
@@ -89,18 +88,18 @@ AppliedChange _makeChange() => AppliedChange(
 );
 
 void main() {
-  late _FakeApplyRepository fakeRepo;
+  late _FakeApplyService fakeService;
   late _FakeProjectSidebarActions fakeSidebar;
 
   setUp(() {
-    fakeRepo = _FakeApplyRepository();
+    fakeService = _FakeApplyService();
     fakeSidebar = _FakeProjectSidebarActions();
   });
 
   ProviderContainer makeContainer() {
     final c = ProviderContainer(
       overrides: [
-        applyRepositoryProvider.overrideWithValue(fakeRepo),
+        applyServiceProvider.overrideWithValue(fakeService),
         projectSidebarActionsProvider.overrideWith(() => fakeSidebar),
       ],
     );
@@ -129,7 +128,7 @@ void main() {
     });
 
     test('ProjectMissingException → CodeApplyProjectMissing', () async {
-      fakeRepo.throwOnApply(ProjectMissingException('p'));
+      fakeService.throwOnApply(ProjectMissingException('p'));
 
       final c = makeContainer();
       await c
@@ -146,7 +145,7 @@ void main() {
     });
 
     test('ProjectMissingException triggers refreshProjectStatus', () async {
-      fakeRepo.throwOnApply(ProjectMissingException('p'));
+      fakeService.throwOnApply(ProjectMissingException('p'));
 
       final c = makeContainer();
       // Pre-read so fakeSidebar is the active notifier instance.
@@ -168,8 +167,8 @@ void main() {
       expect(fakeSidebar.refreshCalls, equals(1));
     });
 
-    test('StateError → CodeApplyOutsideProject', () async {
-      fakeRepo.throwOnApply(StateError('outside'));
+    test('PathEscapeException → CodeApplyOutsideProject', () async {
+      fakeService.throwOnApply(PathEscapeException('/p/f.dart', '/other'));
 
       final c = makeContainer();
       await c
@@ -185,8 +184,25 @@ void main() {
       expect(c.read(codeApplyActionsProvider).error, isA<CodeApplyOutsideProject>());
     });
 
+    test('ApplyTooLargeException → CodeApplyTooLarge', () async {
+      fakeService.throwOnApply(ApplyTooLargeException(2 * 1024 * 1024));
+
+      final c = makeContainer();
+      await c
+          .read(codeApplyActionsProvider.notifier)
+          .applyChange(
+            projectId: 'p',
+            filePath: '/p/f.dart',
+            projectPath: '/p',
+            newContent: 'x',
+            sessionId: 's',
+            messageId: 'm',
+          );
+      expect(c.read(codeApplyActionsProvider).error, isA<CodeApplyTooLarge>());
+    });
+
     test('FileSystemException → CodeApplyDiskWrite', () async {
-      fakeRepo.throwOnApply(const FileSystemException('disk full', '/p/f.dart'));
+      fakeService.throwOnApply(const FileSystemException('disk full', '/p/f.dart'));
 
       final c = makeContainer();
       await c
@@ -203,7 +219,7 @@ void main() {
     });
 
     test('generic exception → CodeApplyUnknownError', () async {
-      fakeRepo.throwOnApply(Exception('boom'));
+      fakeService.throwOnApply(Exception('boom'));
 
       final c = makeContainer();
       await c
@@ -254,7 +270,7 @@ void main() {
     });
 
     test('exception → CodeApplyUnknownError', () async {
-      fakeRepo.throwOnRevert(Exception('boom'));
+      fakeService.throwOnRevert(Exception('boom'));
 
       final c = makeContainer();
       await c
