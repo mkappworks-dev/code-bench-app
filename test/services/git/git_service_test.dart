@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/data/git/datasource/git_datasource_process.dart';
 import 'package:code_bench_app/data/git/datasource/git_live_state_datasource.dart';
-import 'package:code_bench_app/data/git/git_live_state.dart';
+import 'package:code_bench_app/data/git/models/git_live_state.dart';
 import 'package:code_bench_app/data/git/repository/git_repository.dart';
 import 'package:code_bench_app/services/git/git_service.dart';
 

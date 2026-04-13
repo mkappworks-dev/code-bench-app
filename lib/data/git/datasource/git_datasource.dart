@@ -1,4 +1,4 @@
-export '../git_live_state.dart';
+export '../models/git_live_state.dart';
 
 abstract interface class GitDatasource {
   Future<void> initGit();
