@@ -5,7 +5,7 @@ import '../../../data/models/ai_model.dart';
 import '../../../data/models/applied_change.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/models/chat_session.dart';
-import '../../../data/session/repository/session_repository_impl.dart';
+import '../../../services/session/session_service.dart';
 
 part 'chat_notifier.g.dart';
 
@@ -45,8 +45,8 @@ class SelectedModelNotifier extends _$SelectedModelNotifier {
 class ChatMessagesNotifier extends _$ChatMessagesNotifier {
   @override
   Future<List<ChatMessage>> build(String sessionId) async {
-    final repo = await ref.watch(sessionRepositoryProvider.future);
-    return repo.loadHistory(sessionId);
+    final svc = await ref.watch(sessionServiceProvider.future);
+    return svc.loadHistory(sessionId);
   }
 
   Future<void> sendMessage(String input, {String? systemPrompt}) async {
@@ -56,7 +56,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     }
 
     final model = ref.read(selectedModelProvider);
-    final service = await ref.read(sessionRepositoryProvider.future);
+    final service = await ref.read(sessionServiceProvider.future);
 
     // Optimistically add user message
     final currentMessages = state.value ?? [];
@@ -101,7 +101,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
   }
 
   Future<void> loadMore(String sessionId, int offset) async {
-    final service = await ref.read(sessionRepositoryProvider.future);
+    final service = await ref.read(sessionServiceProvider.future);
     final older = await service.loadHistory(sessionId, limit: 50, offset: offset);
     final current = state.value ?? [];
     state = AsyncData([...older, ...current]);
@@ -112,24 +112,24 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
 @riverpod
 Stream<List<ChatSession>> chatSessions(Ref ref) {
   return ref
-      .watch(sessionRepositoryProvider)
-      .maybeWhen(data: (repo) => repo.watchAllSessions(), orElse: () => const Stream.empty());
+      .watch(sessionServiceProvider)
+      .maybeWhen(data: (svc) => svc.watchAllSessions(), orElse: () => const Stream.empty());
 }
 
 // Sessions for a specific project
 @riverpod
 Stream<List<ChatSession>> projectSessions(Ref ref, String projectId) {
   return ref
-      .watch(sessionRepositoryProvider)
-      .maybeWhen(data: (repo) => repo.watchSessionsByProject(projectId), orElse: () => const Stream.empty());
+      .watch(sessionServiceProvider)
+      .maybeWhen(data: (svc) => svc.watchSessionsByProject(projectId), orElse: () => const Stream.empty());
 }
 
 // Archived sessions
 @riverpod
 Stream<List<ChatSession>> archivedSessions(Ref ref) {
   return ref
-      .watch(sessionRepositoryProvider)
-      .maybeWhen(data: (repo) => repo.watchArchivedSessions(), orElse: () => const Stream.empty());
+      .watch(sessionServiceProvider)
+      .maybeWhen(data: (svc) => svc.watchArchivedSessions(), orElse: () => const Stream.empty());
 }
 
 // ── Applied changes (in-memory, keyed by sessionId) ─────────────────────────

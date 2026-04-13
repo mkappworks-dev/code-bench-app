@@ -38,7 +38,7 @@ final class SettingsActionsProvider extends $AsyncNotifierProvider<SettingsActio
   SettingsActions create() => SettingsActions();
 }
 
-String _$settingsActionsHash() => r'9b88abfa20473026f98a29c18171731b5400b3bb';
+String _$settingsActionsHash() => r'ba8e7a5cf0dcabee449601d153f0081581d07826';
 
 /// Imperative actions that don't own observable state: wipe all data,
 /// save a single API key, mark onboarding complete.

@@ -11,8 +11,7 @@ import '../../../data/models/project_action.dart';
 import '../../chat/notifiers/chat_notifier.dart';
 import '../../../services/git/git_service.dart';
 import '../../../services/project/project_service.dart';
-import '../../../data/session/repository/session_repository.dart';
-import '../../../data/session/repository/session_repository_impl.dart';
+import '../../../services/session/session_service.dart';
 import 'project_sidebar_failure.dart';
 
 part 'project_sidebar_actions.g.dart';
@@ -26,7 +25,7 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
   FutureOr<void> build() {}
 
   ProjectService get _projects => ref.read(projectServiceProvider);
-  Future<SessionRepository> get _sessions => ref.read(sessionRepositoryProvider.future);
+  Future<SessionService> get _sessions => ref.read(sessionServiceProvider.future);
 
   ProjectSidebarFailure _asFailure(Object e) => switch (e) {
     DuplicateProjectPathException(:final path) => ProjectSidebarFailure.duplicatePath(path),

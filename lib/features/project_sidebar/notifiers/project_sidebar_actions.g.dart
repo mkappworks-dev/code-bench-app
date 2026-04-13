@@ -41,7 +41,7 @@ final class ProjectSidebarActionsProvider extends $AsyncNotifierProvider<Project
   ProjectSidebarActions create() => ProjectSidebarActions();
 }
 
-String _$projectSidebarActionsHash() => r'd4aefb1608c0b22d36424b4596ff483f2b2c0ba4';
+String _$projectSidebarActionsHash() => r'd63fb9987db5941366f23ccf55e04bbf744f2f1c';
 
 /// Command notifier that mediates every imperative project/session mutation
 /// triggered from the sidebar. Widgets never reach into [ProjectService] or

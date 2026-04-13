@@ -8,7 +8,7 @@ import '../../../data/models/ai_model.dart';
 import '../../../data/ai/repository/ai_repository_impl.dart';
 import '../../../data/ai/repository/api_key_test_repository_impl.dart';
 import '../../../services/project/project_service.dart';
-import '../../../data/session/repository/session_repository_impl.dart';
+import '../../../services/session/session_service.dart';
 import '../../../data/settings/repository/settings_repository_impl.dart';
 import 'settings_actions_failure.dart';
 
@@ -78,8 +78,8 @@ class SettingsActions extends _$SettingsActions {
     }
 
     try {
-      final sessionRepo = await ref.read(sessionRepositoryProvider.future);
-      await sessionRepo.deleteAllSessionsAndMessages();
+      final sessionSvc = await ref.read(sessionServiceProvider.future);
+      await sessionSvc.deleteAllSessionsAndMessages();
     } catch (e, st) {
       _logWipeFailure('chat history', e, st);
       failures.add('chat history');

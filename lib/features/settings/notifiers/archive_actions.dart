@@ -2,7 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
-import '../../../data/session/repository/session_repository_impl.dart';
+import '../../../services/session/session_service.dart';
 import 'archive_failure.dart';
 
 part 'archive_actions.g.dart';
@@ -22,8 +22,8 @@ class ArchiveActions extends _$ArchiveActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        final repo = await ref.read(sessionRepositoryProvider.future);
-        await repo.unarchiveSession(id);
+        final svc = await ref.read(sessionServiceProvider.future);
+        await svc.unarchiveSession(id);
       } catch (e, st) {
         dLog('[ArchiveActions] unarchiveSession failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
