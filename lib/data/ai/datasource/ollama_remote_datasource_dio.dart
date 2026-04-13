@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/models/ai_model.dart';
 import '../../../data/models/chat_message.dart';
@@ -72,7 +73,8 @@ class OllamaRemoteDatasourceDio implements AIRemoteDatasource {
     try {
       await _dio.get(ApiConstants.ollamaTagsEndpoint);
       return true;
-    } catch (_) {
+    } on DioException catch (e) {
+      dLog('[OllamaRemoteDatasource] testConnection failed: ${e.type} ${e.response?.statusCode}');
       return false;
     }
   }
@@ -93,7 +95,8 @@ class OllamaRemoteDatasourceDio implements AIRemoteDatasource {
         );
       }).toList();
       return models;
-    } catch (_) {
+    } on DioException catch (e) {
+      dLog('[OllamaRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode}');
       return [];
     }
   }

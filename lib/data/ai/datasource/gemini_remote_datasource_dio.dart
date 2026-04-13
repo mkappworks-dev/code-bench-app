@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/models/ai_model.dart';
 import '../../../data/models/chat_message.dart';
@@ -82,7 +83,8 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource {
     try {
       await _dio.get('/models?key=$apiKey');
       return true;
-    } catch (_) {
+    } on DioException catch (e) {
+      dLog('[GeminiRemoteDatasource] testConnection failed: ${e.type} ${e.response?.statusCode}');
       return false;
     }
   }
@@ -98,7 +100,8 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource {
         return AIModel(id: id, provider: AIProvider.gemini, name: m['displayName'] as String? ?? id, modelId: id);
       }).toList();
       return models;
-    } catch (_) {
+    } on DioException catch (e) {
+      dLog('[GeminiRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode}');
       return AIModels.defaults.where((m) => m.provider == AIProvider.gemini).toList();
     }
   }

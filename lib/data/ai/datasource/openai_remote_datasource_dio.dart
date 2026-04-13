@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/models/ai_model.dart';
 import '../../../data/models/chat_message.dart';
@@ -82,7 +83,8 @@ class OpenAIRemoteDatasourceDio implements AIRemoteDatasource {
       );
       await testDio.get(ApiConstants.openAiModelsEndpoint);
       return true;
-    } catch (_) {
+    } on DioException catch (e) {
+      dLog('[OpenAIRemoteDatasource] testConnection failed: ${e.type} ${e.response?.statusCode}');
       return false;
     }
   }
@@ -102,7 +104,8 @@ class OpenAIRemoteDatasourceDio implements AIRemoteDatasource {
           .map((id) => AIModel(id: id, provider: AIProvider.openai, name: id, modelId: id))
           .toList();
       return models;
-    } catch (_) {
+    } on DioException catch (e) {
+      dLog('[OpenAIRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode}');
       return AIModels.defaults.where((m) => m.provider == AIProvider.openai).toList();
     }
   }

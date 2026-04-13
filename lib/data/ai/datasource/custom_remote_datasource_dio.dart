@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 
 import '../../../core/errors/app_exception.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/models/ai_model.dart';
 import '../../../data/models/chat_message.dart';
@@ -78,7 +79,8 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
     try {
       await _dio.get('/models');
       return true;
-    } catch (_) {
+    } on DioException catch (e) {
+      dLog('[CustomRemoteDatasource] testConnection failed: ${e.type} ${e.response?.statusCode}');
       return false;
     }
   }
@@ -99,7 +101,8 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
           )
           .toList();
       return models;
-    } catch (_) {
+    } on DioException catch (e) {
+      dLog('[CustomRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode}');
       return [];
     }
   }

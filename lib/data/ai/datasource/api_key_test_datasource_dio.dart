@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/models/ai_model.dart';
 
@@ -20,7 +21,8 @@ class ApiKeyTestDatasourceDio {
       final dio = DioFactory.create(baseUrl: url, connectTimeout: const Duration(seconds: 5));
       await dio.get('/api/tags');
       return true;
-    } catch (_) {
+    } on DioException catch (e) {
+      dLog('[ApiKeyTestDatasource] testOllamaUrl failed: ${e.type} ${e.response?.statusCode}');
       return false;
     }
   }
@@ -34,7 +36,8 @@ class ApiKeyTestDatasourceDio {
       );
       await dio.get('/models');
       return true;
-    } catch (_) {
+    } on DioException catch (e) {
+      dLog('[ApiKeyTestDatasource] testOpenAI failed: ${e.type} ${e.response?.statusCode}');
       return false;
     }
   }
@@ -79,7 +82,8 @@ class ApiKeyTestDatasourceDio {
       );
       await dio.get('/models');
       return true;
-    } catch (_) {
+    } on DioException catch (e) {
+      dLog('[ApiKeyTestDatasource] testGemini failed: ${e.type} ${e.response?.statusCode}');
       return false;
     }
   }
