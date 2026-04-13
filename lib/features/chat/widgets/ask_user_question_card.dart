@@ -132,6 +132,7 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
                 FilledButton(
                   style: FilledButton.styleFrom(
                     backgroundColor: ThemeConstants.blueAccent,
+                    foregroundColor: ThemeConstants.onAccent,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                   ),
                   onPressed: _canSubmit ? _handleSubmit : null,
@@ -141,6 +142,7 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
                 FilledButton(
                   style: FilledButton.styleFrom(
                     backgroundColor: ThemeConstants.blueAccent,
+                    foregroundColor: ThemeConstants.onAccent,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                   ),
                   onPressed: _canSubmit ? _handleSubmit : null,
