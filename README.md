@@ -102,15 +102,26 @@ lib/
 │   ├── theme/                   # AppTheme
 │   └── utils/                   # PlatformUtils
 ├── data/
-│   ├── models/                  # Freezed DTOs: AIModel, ChatMessage, ChatSession, Repository, WorkspaceProject
-│   └── datasources/local/
-│       ├── app_database.dart    # Drift DB — tables + DAOs
-│       └── secure_storage_source.dart  # flutter_secure_storage wrapper
+│   ├── shared/                  # Cross-cutting models: AIModel, ChatMessage (used by both AI and session domains)
+│   ├── ai/                      # AI datasources (Dio), repository, models/
+│   ├── session/                 # Session datasource (Drift), repository, models/ (ChatSession, ToolEvent, …)
+│   ├── project/                 # Project datasource (Drift), repository, models/ (Project, WorkspaceProject, …)
+│   ├── github/                  # GitHub datasources (Dio), repository, models/ (Repository, GitHubAccount, …)
+│   ├── git/                     # Git datasource (Process), repository, models/ (GitLiveState), exceptions
+│   ├── apply/                   # Apply datasource (filesystem), repository, models/ (AppliedChange)
+│   ├── settings/                # Settings datasource (SecureStorage), repository
+│   ├── filesystem/              # Filesystem datasource (dart:io)
+│   └── _core/                   # Drift AppDatabase, DioFactory, SecureStorageSource
 ├── services/
-│   ├── ai/                      # AIService interface + OpenAI/Anthropic/Gemini/Ollama/Custom impls
-│   ├── github/                  # OAuth (flutter_web_auth_2) + REST API (Dio)
-│   ├── filesystem/              # Local file read/write (path_provider + file_picker)
-│   └── session/                 # Chat session lifecycle, streaming, history pagination
+│   ├── ai/                      # AIService — stream buffering, model selection
+│   ├── github/                  # GitHubService — OAuth + REST composition
+│   ├── git/                     # GitService — composite git operations
+│   ├── session/                 # SessionService — send-and-stream, history
+│   ├── project/                 # ProjectService — add/relocate policy
+│   ├── apply/                   # ApplyService — patch orchestration + security guard
+│   ├── settings/                # SettingsService — wipe cascade, onboarding
+│   ├── ide/                     # IdeService — editor/terminal launch
+│   └── api_key_test/            # ApiKeyTestService — provider connectivity checks
 └── features/
     ├── onboarding/              # First-run API key entry
     ├── dashboard/               # Home screen with session list
@@ -148,16 +159,16 @@ Widgets communicate with notifiers only via `ref.watch` / `ref.read(…notifier)
 
 **Naming conventions:**
 
-| Layer | Rule |
-|---|---|
-| Service class | ends in `Service` (`GitService`, `SessionService`) |
-| Service provider | `@riverpod` function placed before the class it instantiates |
-| Repository interface | ends in `Repository` (`GitRepository`, `AIRepository`) |
-| Repository impl + provider | class ends in `RepositoryImpl`; `@riverpod` before it |
-| Datasource file naming | suffix encodes I/O type: `*_dio.dart`, `*_process.dart`, `*_io.dart`, `*_drift.dart` |
-| Command notifier | ends in `Actions`; `void build()`, `keepAlive: true` |
-| State notifier | ends in `Notifier`; owns `AsyncValue` or value state |
-| Notifier file placement | `*_notifier.dart`, `*_actions.dart`, and `*_failure.dart` all live in `{feature}/notifiers/` |
+| Layer                      | Rule                                                                                         |
+| -------------------------- | -------------------------------------------------------------------------------------------- |
+| Service class              | ends in `Service` (`GitService`, `SessionService`)                                           |
+| Service provider           | `@riverpod` function placed before the class it instantiates                                 |
+| Repository interface       | ends in `Repository` (`GitRepository`, `AIRepository`)                                       |
+| Repository impl + provider | class ends in `RepositoryImpl`; `@riverpod` before it                                        |
+| Datasource file naming     | suffix encodes I/O type: `*_dio.dart`, `*_process.dart`, `*_io.dart`, `*_drift.dart`         |
+| Command notifier           | ends in `Actions`; `void build()`, `keepAlive: true`                                         |
+| State notifier             | ends in `Notifier`; owns `AsyncValue` or value state                                         |
+| Notifier file placement    | `*_notifier.dart`, `*_actions.dart`, and `*_failure.dart` all live in `{feature}/notifiers/` |
 
 The Riverpod generator strips the `Notifier` suffix from provider names (`ActiveSessionIdNotifier` → `activeSessionIdProvider`). The `Actions` suffix is kept (`GitActions` → `gitActionsProvider`). Widgets must never call `ref.invalidate` directly — route through a notifier method instead.
 
