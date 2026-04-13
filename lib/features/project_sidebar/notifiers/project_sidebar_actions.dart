@@ -169,6 +169,20 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
 
   Future<void> updateSessionTitle(String id, String title) => _sessions.updateSessionTitle(id, title);
 
+  /// Non-throwing read of the session count for [projectId]. Returns 0 on any
+  /// error so widgets can show "did not load" UI without needing try/catch.
+  /// Widgets that need this count (e.g. RemoveProjectDialog) rely on the
+  /// safe default — a failed query simply hides the cascade-delete option.
+  Future<int> fetchSessionCount(String projectId) async {
+    try {
+      final sessions = await _sessions.getSessionsByProject(projectId);
+      return sessions.length;
+    } catch (e) {
+      dLog('[ProjectSidebarActions] fetchSessionCount failed: $e');
+      return 0;
+    }
+  }
+
   Future<List<ChatSession>> getSessionsByProject(String projectId) async {
     state = const AsyncLoading();
     late List<ChatSession> sessions;

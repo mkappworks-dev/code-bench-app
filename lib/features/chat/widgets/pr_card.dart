@@ -73,6 +73,12 @@ class _PRCardState extends ConsumerState<PRCard> {
     if (cardState == null) return;
 
     if (cardState.pollError != null) {
+      // Fatal errors (revoked token, deleted PR) will keep failing — bail now
+      // instead of spending _kMaxConsecutiveFailures requests confirming it.
+      if (cardState.pollFatal) {
+        _pollTimer?.cancel();
+        return;
+      }
       _consecutiveFailures++;
       if (_consecutiveFailures >= _kMaxConsecutiveFailures) _pollTimer?.cancel();
     } else {
@@ -111,6 +117,9 @@ class _PRCardState extends ConsumerState<PRCard> {
     if (confirmed != true) return;
     await ref.read(_provider.notifier).approve();
     if (!mounted) return;
+    // The notifier stores failures on state.actionError instead of rethrowing;
+    // the inline error banner renders from that — don't also toast success.
+    if (ref.read(_provider).value?.actionError != null) return;
     _showSnack('Approved');
   }
 
@@ -126,6 +135,7 @@ class _PRCardState extends ConsumerState<PRCard> {
     if (confirmed != true) return;
     await ref.read(_provider.notifier).merge();
     if (!mounted) return;
+    if (ref.read(_provider).value?.actionError != null) return;
     _showSnack('Merged');
     _pollTimer?.cancel();
   }

@@ -13,6 +13,7 @@ class PrCardState {
     required this.approved,
     required this.merged,
     this.pollError,
+    this.pollFatal = false,
     this.actionError,
   });
 
@@ -24,6 +25,11 @@ class PrCardState {
   /// Non-null when a background poll failed but we still have stale data to
   /// show. Rendered as an inline warning banner on the card.
   final String? pollError;
+
+  /// True when the last poll failed with a non-recoverable error (revoked
+  /// token, deleted PR). Widgets use this to stop polling immediately instead
+  /// of burning the PAT rate limit on requests that will keep failing.
+  final bool pollFatal;
 
   /// Non-null when [approve] or [merge] failed. Widgets render this as an
   /// inline error message next to the button that triggered the action.
@@ -37,6 +43,7 @@ class PrCardState {
     bool? merged,
     String? pollError,
     bool clearPollError = false,
+    bool? pollFatal,
     String? actionError,
     bool clearActionError = false,
   }) => PrCardState(
@@ -45,6 +52,7 @@ class PrCardState {
     approved: approved ?? this.approved,
     merged: merged ?? this.merged,
     pollError: clearPollError ? null : (pollError ?? this.pollError),
+    pollFatal: pollFatal ?? this.pollFatal,
     actionError: clearActionError ? null : (actionError ?? this.actionError),
   );
 }
@@ -83,13 +91,14 @@ class PrCardNotifier extends _$PrCardNotifier {
           approved: current?.approved ?? false,
           merged: fresh.merged || (current?.merged ?? false),
           clearPollError: true,
+          pollFatal: false,
         ),
       );
     } catch (e) {
       dLog('[PrCardNotifier] poll failed: ${e.runtimeType}');
       final current = state.value;
       if (current != null) {
-        state = AsyncData(current.copyWith(pollError: _friendlyError(e)));
+        state = AsyncData(current.copyWith(pollError: _friendlyError(e), pollFatal: isFatalError(e)));
       }
     }
   }

@@ -35,23 +35,12 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
   }
 
   Future<void> _loadSessionCount() async {
-    try {
-      final sessions = await ref.read(projectSidebarActionsProvider.notifier).getSessionsByProject(widget.project.id);
-      if (!mounted) return;
-      setState(() {
-        _sessionCount = sessions.length;
-        _sessionCountLoaded = true;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      // Mark loaded so the dialog remains usable. Sessions are not deleted
-      // without an explicit checkbox, so this is safe — the user just won't
-      // see the cascade-delete option if the count query failed.
-      setState(() {
-        _sessionCount = 0;
-        _sessionCountLoaded = true;
-      });
-    }
+    final count = await ref.read(projectSidebarActionsProvider.notifier).fetchSessionCount(widget.project.id);
+    if (!mounted) return;
+    setState(() {
+      _sessionCount = count;
+      _sessionCountLoaded = true;
+    });
   }
 
   Future<void> _submit() async {
