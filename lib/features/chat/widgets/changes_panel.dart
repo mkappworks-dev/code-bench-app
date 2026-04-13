@@ -176,8 +176,18 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
     }
 
     // File was modified out-of-band — show conflict merge view.
-    final currentContent = await ref.read(codeApplyActionsProvider.notifier).readFileContent(widget.change.filePath);
+    final currentContent = await ref
+        .read(codeApplyActionsProvider.notifier)
+        .readFileContent(widget.change.filePath, project.path);
     if (!mounted) return;
+    if (currentContent == null) {
+      // Refuse to open the merge view on an unreadable file — accepting the
+      // merge would overwrite the real file with an empty / placeholder body.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not read current file contents — try again after resolving file access.')),
+      );
+      return;
+    }
 
     final isGit = GitDetector.isGitRepo(project.path);
     await showDialog<void>(

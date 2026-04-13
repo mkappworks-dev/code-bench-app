@@ -55,12 +55,13 @@ extension CommitMessageFailurePatterns on CommitMessageFailure {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( CommitMessageUnavailable value)?  commitMessageUnavailable,TResult Function( PrContentUnavailable value)?  prContentUnavailable,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( CommitMessageUnavailable value)?  commitMessageUnavailable,TResult Function( PrContentUnavailable value)?  prContentUnavailable,TResult Function( CommitMessageUnknown value)?  unknown,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case CommitMessageUnavailable() when commitMessageUnavailable != null:
 return commitMessageUnavailable(_that);case PrContentUnavailable() when prContentUnavailable != null:
-return prContentUnavailable(_that);case _:
+return prContentUnavailable(_that);case CommitMessageUnknown() when unknown != null:
+return unknown(_that);case _:
   return orElse();
 
 }
@@ -78,12 +79,13 @@ return prContentUnavailable(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( CommitMessageUnavailable value)  commitMessageUnavailable,required TResult Function( PrContentUnavailable value)  prContentUnavailable,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( CommitMessageUnavailable value)  commitMessageUnavailable,required TResult Function( PrContentUnavailable value)  prContentUnavailable,required TResult Function( CommitMessageUnknown value)  unknown,}){
 final _that = this;
 switch (_that) {
 case CommitMessageUnavailable():
 return commitMessageUnavailable(_that);case PrContentUnavailable():
-return prContentUnavailable(_that);}
+return prContentUnavailable(_that);case CommitMessageUnknown():
+return unknown(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -97,12 +99,13 @@ return prContentUnavailable(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( CommitMessageUnavailable value)?  commitMessageUnavailable,TResult? Function( PrContentUnavailable value)?  prContentUnavailable,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( CommitMessageUnavailable value)?  commitMessageUnavailable,TResult? Function( PrContentUnavailable value)?  prContentUnavailable,TResult? Function( CommitMessageUnknown value)?  unknown,}){
 final _that = this;
 switch (_that) {
 case CommitMessageUnavailable() when commitMessageUnavailable != null:
 return commitMessageUnavailable(_that);case PrContentUnavailable() when prContentUnavailable != null:
-return prContentUnavailable(_that);case _:
+return prContentUnavailable(_that);case CommitMessageUnknown() when unknown != null:
+return unknown(_that);case _:
   return null;
 
 }
@@ -119,11 +122,12 @@ return prContentUnavailable(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  commitMessageUnavailable,TResult Function()?  prContentUnavailable,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  commitMessageUnavailable,TResult Function()?  prContentUnavailable,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case CommitMessageUnavailable() when commitMessageUnavailable != null:
 return commitMessageUnavailable();case PrContentUnavailable() when prContentUnavailable != null:
-return prContentUnavailable();case _:
+return prContentUnavailable();case CommitMessageUnknown() when unknown != null:
+return unknown(_that.error);case _:
   return orElse();
 
 }
@@ -141,11 +145,12 @@ return prContentUnavailable();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  commitMessageUnavailable,required TResult Function()  prContentUnavailable,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  commitMessageUnavailable,required TResult Function()  prContentUnavailable,required TResult Function( Object error)  unknown,}) {final _that = this;
 switch (_that) {
 case CommitMessageUnavailable():
 return commitMessageUnavailable();case PrContentUnavailable():
-return prContentUnavailable();}
+return prContentUnavailable();case CommitMessageUnknown():
+return unknown(_that.error);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -159,11 +164,12 @@ return prContentUnavailable();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  commitMessageUnavailable,TResult? Function()?  prContentUnavailable,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  commitMessageUnavailable,TResult? Function()?  prContentUnavailable,TResult? Function( Object error)?  unknown,}) {final _that = this;
 switch (_that) {
 case CommitMessageUnavailable() when commitMessageUnavailable != null:
 return commitMessageUnavailable();case PrContentUnavailable() when prContentUnavailable != null:
-return prContentUnavailable();case _:
+return prContentUnavailable();case CommitMessageUnknown() when unknown != null:
+return unknown(_that.error);case _:
   return null;
 
 }
@@ -234,5 +240,70 @@ String toString() {
 
 
 
+
+/// @nodoc
+
+
+class CommitMessageUnknown implements CommitMessageFailure {
+  const CommitMessageUnknown(this.error);
+  
+
+ final  Object error;
+
+/// Create a copy of CommitMessageFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CommitMessageUnknownCopyWith<CommitMessageUnknown> get copyWith => _$CommitMessageUnknownCopyWithImpl<CommitMessageUnknown>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CommitMessageUnknown&&const DeepCollectionEquality().equals(other.error, error));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(error));
+
+@override
+String toString() {
+  return 'CommitMessageFailure.unknown(error: $error)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CommitMessageUnknownCopyWith<$Res> implements $CommitMessageFailureCopyWith<$Res> {
+  factory $CommitMessageUnknownCopyWith(CommitMessageUnknown value, $Res Function(CommitMessageUnknown) _then) = _$CommitMessageUnknownCopyWithImpl;
+@useResult
+$Res call({
+ Object error
+});
+
+
+
+
+}
+/// @nodoc
+class _$CommitMessageUnknownCopyWithImpl<$Res>
+    implements $CommitMessageUnknownCopyWith<$Res> {
+  _$CommitMessageUnknownCopyWithImpl(this._self, this._then);
+
+  final CommitMessageUnknown _self;
+  final $Res Function(CommitMessageUnknown) _then;
+
+/// Create a copy of CommitMessageFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? error = null,}) {
+  return _then(CommitMessageUnknown(
+null == error ? _self.error : error ,
+  ));
+}
+
+
+}
 
 // dart format on

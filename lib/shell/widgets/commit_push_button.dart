@@ -191,6 +191,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
       final msg = switch (failure) {
         CommitMessageUnavailable() => 'AI commit message unavailable — using default.',
         PrContentUnavailable() => 'AI title/body unavailable — using a default. Check your model provider.',
+        CommitMessageUnknown() => 'AI unavailable — using a default. Check your API key and model provider.',
       };
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     });

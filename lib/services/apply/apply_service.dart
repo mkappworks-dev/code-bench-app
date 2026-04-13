@@ -136,13 +136,22 @@ class ApplyService {
   }
 
   /// Reads raw file content for the conflict-merge view.
-  /// Returns `'(file unreadable)'` if the file cannot be read.
-  Future<String> readFileContent(String path) async {
+  ///
+  /// Runs [assertWithinProject] first so a poisoned [AppliedChange] row (or a
+  /// future caller passing an attacker-controlled path) cannot read arbitrary
+  /// files outside the project root.
+  ///
+  /// Returns `null` if the file cannot be read — callers render a
+  /// "cannot read" UI and block destructive actions rather than letting a
+  /// fallback string flow into the conflict-merge pane (which would
+  /// clobber the user's real file if they accepted the merge).
+  Future<String?> readFileContent(String filePath, String projectPath) async {
+    assertWithinProject(filePath, projectPath);
     try {
-      return await File(path).readAsString();
+      return await File(filePath).readAsString();
     } on IOException catch (e) {
       dLog('[ApplyService] readFileContent failed: $e');
-      return '(file unreadable)';
+      return null;
     }
   }
 

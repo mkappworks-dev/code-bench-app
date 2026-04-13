@@ -28,6 +28,10 @@ class ProjectSidebar extends ConsumerStatefulWidget {
 
 class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBindingObserver {
   bool _adding = false;
+  // Set while an archive/delete-session mutation is in flight so the
+  // provider-level listener knows which in-flight op the AsyncError belongs
+  // to. Dialog-scoped flows (add/remove/relocate) have their own gates.
+  bool _mutating = false;
 
   @override
   void initState() {
@@ -80,6 +84,15 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
     }
   }
 
+  Future<void> _runSessionMutation(Future<void> Function() op) async {
+    setState(() => _mutating = true);
+    try {
+      await op();
+    } finally {
+      if (mounted) setState(() => _mutating = false);
+    }
+  }
+
   Future<void> _newConversation(BuildContext context, String projectId) async {
     final model = ref.read(selectedModelProvider);
     final sessionId = await ref
@@ -93,15 +106,18 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
   @override
   Widget build(BuildContext context) {
     ref.listen(projectSidebarActionsProvider, (_, next) {
-      if (!_adding) return;
+      if (!_adding && !_mutating) return;
       if (next is! AsyncError || !mounted) return;
       final failure = next.error;
+      final inAddFlow = _adding;
       final message = switch (failure) {
         ProjectSidebarDuplicatePath() => 'This project is already added.',
         ProjectSidebarInvalidPath() => 'Invalid folder path.',
-        ProjectSidebarStorageError() => 'Failed to save project — please try again.',
-        ProjectSidebarUnknownError() => 'Failed to add project — please try again.',
-        _ => 'Failed to add project — please try again.',
+        ProjectSidebarStorageError() =>
+          inAddFlow ? 'Failed to save project — please try again.' : 'Operation failed — please try again.',
+        ProjectSidebarUnknownError() =>
+          inAddFlow ? 'Failed to add project — please try again.' : 'Operation failed — please try again.',
+        _ => inAddFlow ? 'Failed to add project — please try again.' : 'Operation failed — please try again.',
       };
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     });
@@ -161,10 +177,16 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
                           await RelocateProjectDialog.show(context, p);
                         },
                         onNewConversation: (id) => _newConversation(context, id),
-                        onArchive: (sessionId) =>
-                            unawaited(ref.read(projectSidebarActionsProvider.notifier).archiveSession(sessionId)),
-                        onDelete: (sessionId) =>
-                            unawaited(ref.read(projectSidebarActionsProvider.notifier).deleteSession(sessionId)),
+                        onArchive: (sessionId) => unawaited(
+                          _runSessionMutation(
+                            () => ref.read(projectSidebarActionsProvider.notifier).archiveSession(sessionId),
+                          ),
+                        ),
+                        onDelete: (sessionId) => unawaited(
+                          _runSessionMutation(
+                            () => ref.read(projectSidebarActionsProvider.notifier).deleteSession(sessionId),
+                          ),
+                        ),
                       ),
                     );
                   },

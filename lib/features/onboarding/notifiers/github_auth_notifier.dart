@@ -1,6 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/repository.dart';
 import '../../../services/github/github_auth_service.dart';
 
@@ -22,17 +21,19 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
     state = await AsyncValue.guard(() => ref.read(githubAuthServiceProvider).authenticate());
   }
 
-  /// Clears account state optimistically. If the token delete fails,
-  /// logs and swallows — the UI already shows "signed out" and there is
-  /// no recovery action available to the user.
+  /// Deletes the stored PAT, then clears account state on success.
+  ///
+  /// We must delete before clearing: an optimistic `AsyncData(null)` followed
+  /// by a failed keychain delete would leave the token on disk while the UI
+  /// reports "signed out", and the next `build()` would silently
+  /// re-authenticate from the leaked credential. On cleanup failure the
+  /// notifier surfaces an [AsyncError] so a listener can warn the user.
   Future<void> signOut() async {
-    state = const AsyncData(null);
-    try {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
       await ref.read(githubAuthServiceProvider).signOut();
-    } catch (e, st) {
-      dLog('[GitHubAuthNotifier] signOut cleanup failed: $e\n$st');
-      // State already cleared — swallow so the widget sees clean state.
-    }
+      return null;
+    });
   }
 
   /// Validates [token] against the GitHub API, persists it on success, and

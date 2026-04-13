@@ -58,12 +58,10 @@ class CodeApplyActions extends _$CodeApplyActions {
             );
       } on ProjectMissingException catch (e, st) {
         dLog('[CodeApplyActions] applyChange projectMissing: $e');
-        unawaited(
-          ref
-              .read(projectSidebarActionsProvider.notifier)
-              .refreshProjectStatus(projectId)
-              .catchError((Object err) => dLog('[CodeApplyActions] sidebar refresh failed: $err')),
-        );
+        // Fire-and-forget — refreshProjectStatus has its own AsyncError path
+        // on projectSidebarActionsProvider; swallowing here would hide the
+        // sidebar-badge failure that the user needs to see.
+        unawaited(ref.read(projectSidebarActionsProvider.notifier).refreshProjectStatus(projectId));
         Error.throwWithStackTrace(_asApplyFailure(e), st);
       } catch (e, st) {
         dLog('[CodeApplyActions] applyChange failed: $e');
@@ -88,7 +86,9 @@ class CodeApplyActions extends _$CodeApplyActions {
     });
   }
 
-  /// Reads raw file content for the conflict-merge view.
-  /// Returns `'(file unreadable)'` if the file cannot be read.
-  Future<String> readFileContent(String path) => ref.read(applyServiceProvider).readFileContent(path);
+  /// Reads raw file content for the conflict-merge view. Returns `null`
+  /// when the file cannot be read — callers must block destructive merges
+  /// on null rather than treating it as an empty file.
+  Future<String?> readFileContent(String filePath, String projectPath) =>
+      ref.read(applyServiceProvider).readFileContent(filePath, projectPath);
 }

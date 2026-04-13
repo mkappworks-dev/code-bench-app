@@ -58,7 +58,7 @@ void main() {
   }
 
   group('signOut', () {
-    test('sets state to AsyncData(null) even when service throws', () async {
+    test('surfaces AsyncError when service throws', () async {
       fakeService.setStoredAccount(null);
       fakeService.throwOnSignOut(Exception('token delete failed'));
 
@@ -69,8 +69,8 @@ void main() {
       await c.read(gitHubAuthProvider.notifier).signOut();
 
       final result = c.read(gitHubAuthProvider);
-      expect(result, isA<AsyncData<GitHubAccount?>>());
-      expect(result.value, isNull);
+      expect(result, isA<AsyncError<GitHubAccount?>>());
+      expect(result.error, isA<Exception>());
     });
 
     test('sets state to AsyncData(null) on success', () async {

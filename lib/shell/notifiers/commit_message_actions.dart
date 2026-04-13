@@ -118,6 +118,9 @@ class CommitMessageActions extends _$CommitMessageActions {
       } on NetworkException catch (e, st) {
         dLog('[CommitMessageActions] generateCommitMessage network error: $e');
         Error.throwWithStackTrace(const CommitMessageFailure.commitMessageUnavailable(), st);
+      } catch (e, st) {
+        dLog('[CommitMessageActions] generateCommitMessage failed: $e');
+        Error.throwWithStackTrace(CommitMessageFailure.unknown(e), st);
       }
     });
     return message;
@@ -154,6 +157,9 @@ class CommitMessageActions extends _$CommitMessageActions {
       } on NetworkException catch (e, st) {
         dLog('[CommitMessageActions] generatePrContent network error: $e');
         Error.throwWithStackTrace(const CommitMessageFailure.prContentUnavailable(), st);
+      } catch (e, st) {
+        dLog('[CommitMessageActions] generatePrContent failed: $e');
+        Error.throwWithStackTrace(CommitMessageFailure.unknown(e), st);
       }
     });
     return result;

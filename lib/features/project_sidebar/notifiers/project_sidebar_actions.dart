@@ -84,8 +84,17 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     });
   }
 
-  Future<void> updateProjectActions(String id, List<ProjectAction> actions) =>
-      _projects.updateProjectActions(id, actions);
+  Future<void> updateProjectActions(String id, List<ProjectAction> actions) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await _projects.updateProjectActions(id, actions);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] updateProjectActions failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
 
   /// Removes the project from Code Bench. If [deleteSessions] is true, all
   /// conversations linked to the project are deleted first.
@@ -163,11 +172,41 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     return sessionId;
   }
 
-  Future<void> archiveSession(String id) => _sessions.archiveSession(id);
+  Future<void> archiveSession(String id) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await _sessions.archiveSession(id);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] archiveSession failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
 
-  Future<void> deleteSession(String id) => _sessions.deleteSession(id);
+  Future<void> deleteSession(String id) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await _sessions.deleteSession(id);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] deleteSession failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
 
-  Future<void> updateSessionTitle(String id, String title) => _sessions.updateSessionTitle(id, title);
+  Future<void> updateSessionTitle(String id, String title) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await _sessions.updateSessionTitle(id, title);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] updateSessionTitle failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
 
   /// Non-throwing read of the session count for [projectId]. Returns 0 on any
   /// error so widgets can show "did not load" UI without needing try/catch.

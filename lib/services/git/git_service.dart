@@ -224,7 +224,12 @@ class GitService {
     return branches;
   }
 
-  /// Runs `git checkout [branch]`.
+  /// Switches the working tree to [branch] using `git switch`.
+  ///
+  /// Uses `git switch` (git 2.23+, 2019) rather than `git checkout` so a
+  /// branch name that happens to match a tracked file path cannot fall
+  /// through to "restore this file" semantics — `switch` only operates on
+  /// refs, never pathspecs.
   /// Throws [ArgumentError] for flag-shaped names, [GitException] on git failure.
   Future<void> checkout(String branch) async {
     if (branch.isEmpty) throw ArgumentError('Branch name must not be empty.');
@@ -232,10 +237,10 @@ class GitService {
       sLog('[GitService] flag-shaped checkout branch rejected: "$branch"');
       throw ArgumentError('Branch name must not start with a dash.');
     }
-    final result = await Process.run('git', ['checkout', branch], workingDirectory: projectPath);
+    final result = await Process.run('git', ['switch', branch], workingDirectory: projectPath);
     if (result.exitCode != 0) {
       throw GitException(
-        (result.stderr as String).trim().isNotEmpty ? (result.stderr as String).trim() : 'git checkout failed',
+        (result.stderr as String).trim().isNotEmpty ? (result.stderr as String).trim() : 'git switch failed',
       );
     }
   }
