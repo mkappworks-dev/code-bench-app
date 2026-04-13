@@ -57,11 +57,7 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
   }
 
   Future<void> _safeRefresh() async {
-    // Swallow errors at the widget edge — the notifier already logs them.
-    // The lifecycle trigger must not surface failures as uncaught exceptions.
-    try {
-      await ref.read(projectSidebarActionsProvider.notifier).refreshProjectStatuses();
-    } catch (_) {}
+    await ref.read(projectSidebarActionsProvider.notifier).refreshProjectStatuses();
   }
 
   Future<void> _addProject() async {

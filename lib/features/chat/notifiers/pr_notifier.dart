@@ -2,7 +2,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
-import '../../../services/github/github_api_service.dart';
+import '../../../data/github/repository/github_repository.dart';
+import '../../../data/github/repository/github_repository_impl.dart';
 
 part 'pr_notifier.g.dart';
 
@@ -60,7 +61,7 @@ class PrCardState {
 /// Manages live state for a single GitHub pull request card.
 ///
 /// Widgets call [refresh] from their poll timer, [approve] and [merge] from
-/// button taps — they never touch [GitHubApiService] directly.
+/// button taps — they never touch [GitHubRepository] directly.
 ///
 /// ### Security
 /// Only `e.runtimeType` is ever logged. A full `$e` could invoke
@@ -70,19 +71,21 @@ class PrCardState {
 class PrCardNotifier extends _$PrCardNotifier {
   @override
   Future<PrCardState> build(String owner, String repo, int prNumber) async {
-    final svc = await ref.read(githubApiServiceProvider.future);
-    if (svc == null) throw const AuthException('Not signed in to GitHub');
-    return _fetch(svc);
+    final repository = await ref.read(githubRepositoryProvider.future);
+    final authenticated = await repository.isAuthenticated();
+    if (!authenticated) throw const AuthException('Not signed in to GitHub');
+    return _fetch(repository);
   }
 
   /// Called by the widget's poll timer. Updates state in-place so a poll
   /// failure shows a warning banner rather than replacing the whole card with
   /// an error widget.
   Future<void> refresh() async {
-    final svc = await ref.read(githubApiServiceProvider.future);
-    if (svc == null) return;
+    final repository = await ref.read(githubRepositoryProvider.future);
+    final authenticated = await repository.isAuthenticated();
+    if (!authenticated) return;
     try {
-      final fresh = await _fetch(svc);
+      final fresh = await _fetch(repository);
       // Preserve the local approved/merged flags — once set they should not
       // flip back to false just because a poll returns a stale snapshot.
       final current = state.value;
@@ -108,10 +111,11 @@ class PrCardNotifier extends _$PrCardNotifier {
     final current = state.value;
     if (current != null) state = AsyncData(current.copyWith(clearActionError: true));
 
-    final svc = await ref.read(githubApiServiceProvider.future);
-    if (svc == null) return;
+    final repository = await ref.read(githubRepositoryProvider.future);
+    final authenticated = await repository.isAuthenticated();
+    if (!authenticated) return;
     try {
-      await svc.approvePullRequest(owner, repo, prNumber);
+      await repository.approvePullRequest(owner, repo, prNumber);
       final updated = state.value;
       if (updated != null) state = AsyncData(updated.copyWith(approved: true));
     } catch (e) {
@@ -128,10 +132,11 @@ class PrCardNotifier extends _$PrCardNotifier {
     final current = state.value;
     if (current != null) state = AsyncData(current.copyWith(clearActionError: true));
 
-    final svc = await ref.read(githubApiServiceProvider.future);
-    if (svc == null) return;
+    final repository = await ref.read(githubRepositoryProvider.future);
+    final authenticated = await repository.isAuthenticated();
+    if (!authenticated) return;
     try {
-      await svc.mergePullRequest(owner, repo, prNumber);
+      await repository.mergePullRequest(owner, repo, prNumber);
       final updated = state.value;
       if (updated != null) state = AsyncData(updated.copyWith(merged: true));
       await refresh();
@@ -144,10 +149,10 @@ class PrCardNotifier extends _$PrCardNotifier {
     }
   }
 
-  Future<PrCardState> _fetch(GitHubApiService svc) async {
-    final pr = await svc.getPullRequest(owner, repo, prNumber);
+  Future<PrCardState> _fetch(GitHubRepository repository) async {
+    final pr = await repository.getPullRequest(owner, repo, prNumber);
     final sha = (pr['head'] as Map<String, dynamic>?)?['sha'] as String?;
-    final checks = sha != null ? await svc.getCheckRuns(owner, repo, sha) : const <Map<String, dynamic>>[];
+    final checks = sha != null ? await repository.getCheckRuns(owner, repo, sha) : const <Map<String, dynamic>>[];
     final merged = pr['merged'] as bool? ?? (pr['merged_at'] != null);
     return PrCardState(pr: pr, checkRuns: checks, approved: false, merged: merged);
   }

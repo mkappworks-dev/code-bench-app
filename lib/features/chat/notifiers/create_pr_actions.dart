@@ -4,14 +4,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
-import '../../../services/github/github_api_service.dart';
+import '../../../data/github/repository/github_repository_impl.dart';
 import 'create_pr_failure.dart';
 
 part 'create_pr_actions.g.dart';
 
 /// Command notifier mediating every GitHub-API call the "Create PR"
-/// dialog flow makes. Widgets never touch [GitHubApiService] or
-/// [SecureStorageSource] directly — they go through here so the
+/// dialog flow makes. Widgets never touch [GitHubRepository] or
+/// [SecureStorage] directly — they go through here so the
 /// GitHub PAT never crosses the widget layer.
 ///
 /// ### Security
@@ -33,11 +33,11 @@ class CreatePrActions extends _$CreatePrActions {
   };
 
   /// Returns `true` when a GitHub token is available (PAT or OAuth).
-  /// Resolves the shared [githubApiServiceProvider] rather than reading
+  /// Resolves the shared [githubRepositoryProvider] rather than reading
   /// secure storage directly, so the widget never sees the token.
   Future<bool> hasToken() async {
-    final svc = await ref.read(githubApiServiceProvider.future);
-    return svc != null;
+    final repo = await ref.read(githubRepositoryProvider.future);
+    return repo.isAuthenticated();
   }
 
   /// Lists branches for [owner]/[repo]. Returns `null` and emits
@@ -47,9 +47,8 @@ class CreatePrActions extends _$CreatePrActions {
     List<String>? result;
     state = await AsyncValue.guard(() async {
       try {
-        final svc = await ref.read(githubApiServiceProvider.future);
-        if (svc == null) throw const AuthException('Not signed in to GitHub');
-        result = await svc.listBranches(owner, repo);
+        final repository = await ref.read(githubRepositoryProvider.future);
+        result = await repository.listBranches(owner, repo);
       } catch (e, st) {
         dLog('[CreatePrActions] listBranches failed: ${e.runtimeType}');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -73,9 +72,8 @@ class CreatePrActions extends _$CreatePrActions {
     String? result;
     state = await AsyncValue.guard(() async {
       try {
-        final svc = await ref.read(githubApiServiceProvider.future);
-        if (svc == null) throw const AuthException('Not signed in to GitHub');
-        result = await svc.createPullRequest(
+        final repository = await ref.read(githubRepositoryProvider.future);
+        result = await repository.createPullRequest(
           owner: owner,
           repo: repo,
           title: title,

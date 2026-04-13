@@ -5,11 +5,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../data/models/ai_model.dart';
-import '../../../services/ai/ai_service_factory.dart';
-import '../../../services/ai/api_key_test_service.dart';
-import '../../../services/project/project_service.dart';
-import '../../../services/session/session_service.dart';
-import '../../../services/settings/settings_service.dart';
+import '../../../data/ai/repository/ai_repository_impl.dart';
+import '../../../services/api_key_test_service.dart';
+import '../../../data/project/repository/project_repository_impl.dart';
+import '../../../data/session/repository/session_repository_impl.dart';
+import '../../../data/settings/repository/settings_repository_impl.dart';
 import 'settings_actions_failure.dart';
 
 part 'settings_actions.g.dart';
@@ -45,7 +45,7 @@ class SettingsActions extends _$SettingsActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        await ref.read(settingsServiceProvider).writeApiKey(provider, key);
+        await ref.read(settingsRepositoryProvider).writeApiKey(provider, key);
       } catch (e, st) {
         dLog('[SettingsActions] saveApiKey failed: $e');
         Error.throwWithStackTrace(_asFailure(e, provider), st);
@@ -55,14 +55,14 @@ class SettingsActions extends _$SettingsActions {
 
   Future<void> markOnboardingCompleted() async {
     try {
-      await ref.read(settingsServiceProvider).markOnboardingCompleted();
+      await ref.read(settingsRepositoryProvider).markOnboardingCompleted();
     } catch (e, st) {
       dLog('[SettingsActions] markOnboardingCompleted failed: $e\n$st');
       rethrow;
     }
   }
 
-  Future<void> replayOnboarding() => ref.read(settingsServiceProvider).resetOnboarding();
+  Future<void> replayOnboarding() => ref.read(settingsRepositoryProvider).resetOnboarding();
 
   /// Wipes all user data in sequence. Returns a list of step names that
   /// failed (empty means full success). Each step is isolated so a keychain
@@ -71,34 +71,35 @@ class SettingsActions extends _$SettingsActions {
     final failures = <String>[];
 
     try {
-      await ref.read(settingsServiceProvider).deleteAllSecureStorage();
+      await ref.read(settingsRepositoryProvider).deleteAllSecureStorage();
     } catch (e, st) {
       _logWipeFailure('secure storage', e, st);
       failures.add('secure storage');
     }
 
     try {
-      await ref.read(sessionServiceProvider).deleteAllSessionsAndMessages();
+      final sessionRepo = await ref.read(sessionRepositoryProvider.future);
+      await sessionRepo.deleteAllSessionsAndMessages();
     } catch (e, st) {
       _logWipeFailure('chat history', e, st);
       failures.add('chat history');
     }
 
     try {
-      await ref.read(projectServiceProvider).deleteAllProjects();
+      await ref.read(projectRepositoryProvider).deleteAllProjects();
     } catch (e, st) {
       _logWipeFailure('projects', e, st);
       failures.add('projects');
     }
 
     try {
-      await ref.read(settingsServiceProvider).resetOnboarding();
+      await ref.read(settingsRepositoryProvider).resetOnboarding();
     } catch (e, st) {
       _logWipeFailure('onboarding flag', e, st);
       failures.add('onboarding flag');
     }
 
-    ref.invalidate(aiServiceProvider);
+    ref.invalidate(aiRepositoryProvider);
     return failures;
   }
 

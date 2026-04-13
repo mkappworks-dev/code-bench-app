@@ -2,13 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/data/models/project.dart';
+import 'package:code_bench_app/data/models/project_action.dart';
+import 'package:code_bench_app/data/project/repository/project_repository.dart';
+import 'package:code_bench_app/data/project/repository/project_repository_impl.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_failure.dart';
-import 'package:code_bench_app/services/project/project_service.dart';
 
-// ── Fake ProjectService ───────────────────────────────────────────────────────
+// ── Fake ProjectRepository ────────────────────────────────────────────────────
 
-class _FakeProjectService extends Fake implements ProjectService {
+class _FakeProjectRepository extends Fake implements ProjectRepository {
   Object? _addError;
   Object? _removeError;
 
@@ -25,21 +27,42 @@ class _FakeProjectService extends Fake implements ProjectService {
   Future<void> removeProject(String projectId) async {
     if (_removeError != null) throw _removeError!;
   }
+
+  @override
+  Stream<List<Project>> watchAllProjects() => const Stream.empty();
+
+  @override
+  Future<Project> createNewFolder(String parentPath, String folderName) => throw UnimplementedError();
+
+  @override
+  Future<void> updateProjectActions(String projectId, List<ProjectAction> actions) => throw UnimplementedError();
+
+  @override
+  Future<void> refreshProjectStatuses() => throw UnimplementedError();
+
+  @override
+  Future<void> refreshProjectStatus(String projectId) => throw UnimplementedError();
+
+  @override
+  Future<void> relocateProject(String projectId, String newPath) => throw UnimplementedError();
+
+  @override
+  Future<void> deleteAllProjects() => throw UnimplementedError();
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-ProviderContainer _makeContainer(_FakeProjectService fakeService) {
-  final c = ProviderContainer(overrides: [projectServiceProvider.overrideWithValue(fakeService)]);
+ProviderContainer _makeContainer(_FakeProjectRepository fakeRepo) {
+  final c = ProviderContainer(overrides: [projectRepositoryProvider.overrideWithValue(fakeRepo)]);
   addTearDown(c.dispose);
   return c;
 }
 
 void main() {
-  late _FakeProjectService fakeService;
+  late _FakeProjectRepository fakeService;
 
   setUp(() {
-    fakeService = _FakeProjectService();
+    fakeService = _FakeProjectRepository();
   });
 
   // ── addExistingFolder ────────────────────────────────────────────────────────

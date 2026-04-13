@@ -1,13 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:code_bench_app/data/github/repository/github_repository.dart';
+import 'package:code_bench_app/data/github/repository/github_repository_impl.dart';
 import 'package:code_bench_app/data/models/repository.dart';
 import 'package:code_bench_app/features/onboarding/notifiers/github_auth_notifier.dart';
-import 'package:code_bench_app/services/github/github_auth_service.dart';
 
-// ── Fake GitHubAuthService ────────────────────────────────────────────────────
+// ── Fake GitHubRepository ────────────────────────────────────────────────────
 
-class _FakeGitHubAuthService extends Fake implements GitHubAuthService {
+class _FakeGitHubRepository extends Fake implements GitHubRepository {
   Object? _signOutError;
   Object? _authenticateError;
   GitHubAccount? _authenticateResult;
@@ -45,22 +46,22 @@ GitHubAccount _fakeAccount() => const GitHubAccount(username: 'testuser', avatar
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 void main() {
-  late _FakeGitHubAuthService fakeService;
+  late _FakeGitHubRepository fakeRepo;
 
   setUp(() {
-    fakeService = _FakeGitHubAuthService();
+    fakeRepo = _FakeGitHubRepository();
   });
 
   ProviderContainer makeContainer() {
-    final c = ProviderContainer(overrides: [githubAuthServiceProvider.overrideWithValue(fakeService)]);
+    final c = ProviderContainer(overrides: [githubRepositoryProvider.overrideWith((_) async => fakeRepo)]);
     addTearDown(c.dispose);
     return c;
   }
 
   group('signOut', () {
     test('surfaces AsyncError when service throws', () async {
-      fakeService.setStoredAccount(null);
-      fakeService.throwOnSignOut(Exception('token delete failed'));
+      fakeRepo.setStoredAccount(null);
+      fakeRepo.throwOnSignOut(Exception('token delete failed'));
 
       final c = makeContainer();
       // Wait for build() to complete.
@@ -74,7 +75,7 @@ void main() {
     });
 
     test('sets state to AsyncData(null) on success', () async {
-      fakeService.setStoredAccount(_fakeAccount());
+      fakeRepo.setStoredAccount(_fakeAccount());
 
       final c = makeContainer();
       await c.read(gitHubAuthProvider.future);
@@ -89,8 +90,8 @@ void main() {
 
   group('authenticate', () {
     test('failure sets AsyncError state', () async {
-      fakeService.setStoredAccount(null);
-      fakeService.throwOnAuthenticate(Exception('oauth failed'));
+      fakeRepo.setStoredAccount(null);
+      fakeRepo.throwOnAuthenticate(Exception('oauth failed'));
 
       final c = makeContainer();
       await c.read(gitHubAuthProvider.future);
@@ -101,8 +102,8 @@ void main() {
     });
 
     test('success sets AsyncData with account', () async {
-      fakeService.setStoredAccount(null);
-      fakeService.setAuthenticateResult(_fakeAccount());
+      fakeRepo.setStoredAccount(null);
+      fakeRepo.setAuthenticateResult(_fakeAccount());
 
       final c = makeContainer();
       await c.read(gitHubAuthProvider.future);

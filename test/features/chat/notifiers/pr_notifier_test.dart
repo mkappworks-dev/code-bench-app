@@ -2,17 +2,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/core/errors/app_exception.dart';
+import 'package:code_bench_app/data/github/repository/github_repository.dart';
+import 'package:code_bench_app/data/github/repository/github_repository_impl.dart';
 import 'package:code_bench_app/features/chat/notifiers/pr_notifier.dart';
-import 'package:code_bench_app/services/github/github_api_service.dart';
 
-// ── Fake GitHubApiService ─────────────────────────────────────────────────────
+// ── Fake GitHubRepository ─────────────────────────────────────────────────────
 
-class _FakeGitHubApiService extends Fake implements GitHubApiService {
+class _FakeGitHubRepository extends Fake implements GitHubRepository {
   Object? _approveError;
   Object? _mergeError;
 
   void throwOnApprove(Object error) => _approveError = error;
   void throwOnMerge(Object error) => _mergeError = error;
+
+  @override
+  Future<bool> isAuthenticated() async => true;
 
   @override
   Future<void> approvePullRequest(String owner, String repo, int prNumber) async {
@@ -43,8 +47,8 @@ class _FakeGitHubApiService extends Fake implements GitHubApiService {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-ProviderContainer _makeContainer(_FakeGitHubApiService fakeService) {
-  final c = ProviderContainer(overrides: [githubApiServiceProvider.overrideWith((_) async => fakeService)]);
+ProviderContainer _makeContainer(_FakeGitHubRepository fakeRepo) {
+  final c = ProviderContainer(overrides: [githubRepositoryProvider.overrideWith((_) async => fakeRepo)]);
   addTearDown(c.dispose);
   return c;
 }
@@ -54,17 +58,17 @@ const _repo = 'widgets';
 const _prNumber = 42;
 
 void main() {
-  late _FakeGitHubApiService fakeService;
+  late _FakeGitHubRepository fakeRepo;
 
   setUp(() {
-    fakeService = _FakeGitHubApiService();
+    fakeRepo = _FakeGitHubRepository();
   });
 
   // ── approve() ───────────────────────────────────────────────────────────────
 
   group('approve()', () {
     test('happy path — approved is true, actionError is null', () async {
-      final c = _makeContainer(fakeService);
+      final c = _makeContainer(fakeRepo);
       // Initialise the notifier.
       await c.read(prCardProvider(_owner, _repo, _prNumber).future);
 
@@ -77,9 +81,9 @@ void main() {
     });
 
     test('failure — state stays AsyncData, actionError is non-null', () async {
-      fakeService.throwOnApprove(const NetworkException('Forbidden', statusCode: 403));
+      fakeRepo.throwOnApprove(const NetworkException('Forbidden', statusCode: 403));
 
-      final c = _makeContainer(fakeService);
+      final c = _makeContainer(fakeRepo);
       await c.read(prCardProvider(_owner, _repo, _prNumber).future);
 
       await c.read(prCardProvider(_owner, _repo, _prNumber).notifier).approve();
@@ -94,9 +98,9 @@ void main() {
 
   group('merge()', () {
     test('failure — state stays AsyncData, actionError is non-null', () async {
-      fakeService.throwOnMerge(const NetworkException('Conflict', statusCode: 409));
+      fakeRepo.throwOnMerge(const NetworkException('Conflict', statusCode: 409));
 
-      final c = _makeContainer(fakeService);
+      final c = _makeContainer(fakeRepo);
       await c.read(prCardProvider(_owner, _repo, _prNumber).future);
 
       await c.read(prCardProvider(_owner, _repo, _prNumber).notifier).merge();

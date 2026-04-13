@@ -11,7 +11,7 @@ part of 'pr_notifier.dart';
 /// Manages live state for a single GitHub pull request card.
 ///
 /// Widgets call [refresh] from their poll timer, [approve] and [merge] from
-/// button taps — they never touch [GitHubApiService] directly.
+/// button taps — they never touch [GitHubRepository] directly.
 ///
 /// ### Security
 /// Only `e.runtimeType` is ever logged. A full `$e` could invoke
@@ -24,7 +24,7 @@ final prCardProvider = PrCardNotifierFamily._();
 /// Manages live state for a single GitHub pull request card.
 ///
 /// Widgets call [refresh] from their poll timer, [approve] and [merge] from
-/// button taps — they never touch [GitHubApiService] directly.
+/// button taps — they never touch [GitHubRepository] directly.
 ///
 /// ### Security
 /// Only `e.runtimeType` is ever logged. A full `$e` could invoke
@@ -34,7 +34,7 @@ final class PrCardNotifierProvider extends $AsyncNotifierProvider<PrCardNotifier
   /// Manages live state for a single GitHub pull request card.
   ///
   /// Widgets call [refresh] from their poll timer, [approve] and [merge] from
-  /// button taps — they never touch [GitHubApiService] directly.
+  /// button taps — they never touch [GitHubRepository] directly.
   ///
   /// ### Security
   /// Only `e.runtimeType` is ever logged. A full `$e` could invoke
@@ -74,12 +74,12 @@ final class PrCardNotifierProvider extends $AsyncNotifierProvider<PrCardNotifier
   }
 }
 
-String _$prCardNotifierHash() => r'76ea8e5abeafcf29de572b47df291f9901a30d5c';
+String _$prCardNotifierHash() => r'0d455dced59f55048d1c06ec98ce0ae4efdf5be1';
 
 /// Manages live state for a single GitHub pull request card.
 ///
 /// Widgets call [refresh] from their poll timer, [approve] and [merge] from
-/// button taps — they never touch [GitHubApiService] directly.
+/// button taps — they never touch [GitHubRepository] directly.
 ///
 /// ### Security
 /// Only `e.runtimeType` is ever logged. A full `$e` could invoke
@@ -107,7 +107,7 @@ final class PrCardNotifierFamily extends $Family
   /// Manages live state for a single GitHub pull request card.
   ///
   /// Widgets call [refresh] from their poll timer, [approve] and [merge] from
-  /// button taps — they never touch [GitHubApiService] directly.
+  /// button taps — they never touch [GitHubRepository] directly.
   ///
   /// ### Security
   /// Only `e.runtimeType` is ever logged. A full `$e` could invoke
@@ -124,7 +124,7 @@ final class PrCardNotifierFamily extends $Family
 /// Manages live state for a single GitHub pull request card.
 ///
 /// Widgets call [refresh] from their poll timer, [approve] and [merge] from
-/// button taps — they never touch [GitHubApiService] directly.
+/// button taps — they never touch [GitHubRepository] directly.
 ///
 /// ### Security
 /// Only `e.runtimeType` is ever logged. A full `$e` could invoke

@@ -10,7 +10,7 @@ import '../../../data/models/applied_change.dart';
 import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../../../services/apply/apply_service.dart';
-import '../../../services/project/git_detector.dart';
+import '../../../shell/notifiers/git_actions.dart';
 import '../notifiers/chat_notifier.dart';
 import '../notifiers/code_apply_actions.dart';
 import '../notifiers/code_apply_failure.dart';
@@ -33,7 +33,7 @@ class ChangesPanel extends ConsumerWidget {
     }
 
     // Resolve active project for path.
-    // Revert uses a *synchronous* `GitDetector.isGitRepo` check rather than
+    // Revert uses a *synchronous* `gitRepositoryProvider.isGitRepo` check rather than
     // reading `gitLiveStateProvider`. The provider's `AsyncValue.value`
     // would fall back to `false` during loading/error and silently degrade
     // the revert mechanism — a destructive mismatch if this gate is wrong.
@@ -163,7 +163,7 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
 
     if (!isEdited) {
       // No conflict — revert directly.
-      final isGit = GitDetector.isGitRepo(project.path);
+      final isGit = ref.read(gitActionsProvider.notifier).isGitRepo(project.path);
       setState(() => _reverting = true);
       try {
         await ref
@@ -189,7 +189,7 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
       return;
     }
 
-    final isGit = GitDetector.isGitRepo(project.path);
+    final isGit = ref.read(gitActionsProvider.notifier).isGitRepo(project.path);
     await showDialog<void>(
       context: context,
       builder: (dialogCtx) => AlertDialog(

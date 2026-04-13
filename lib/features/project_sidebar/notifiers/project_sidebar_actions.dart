@@ -9,9 +9,11 @@ import '../../../data/models/ai_model.dart';
 import '../../../data/models/chat_session.dart';
 import '../../../data/models/project_action.dart';
 import '../../chat/notifiers/chat_notifier.dart';
-import '../../../services/git/git_live_state_provider.dart';
-import '../../../services/project/project_service.dart';
-import '../../../services/session/session_service.dart';
+import '../../../data/git/repository/git_repository_impl.dart';
+import '../../../data/project/repository/project_repository.dart';
+import '../../../data/project/repository/project_repository_impl.dart';
+import '../../../data/session/repository/session_repository.dart';
+import '../../../data/session/repository/session_repository_impl.dart';
 import 'project_sidebar_failure.dart';
 
 part 'project_sidebar_actions.g.dart';
@@ -24,8 +26,8 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
   @override
   FutureOr<void> build() {}
 
-  ProjectService get _projects => ref.read(projectServiceProvider);
-  SessionService get _sessions => ref.read(sessionServiceProvider);
+  ProjectRepository get _projects => ref.read(projectRepositoryProvider);
+  Future<SessionRepository> get _sessions => ref.read(sessionRepositoryProvider.future);
 
   ProjectSidebarFailure _asFailure(Object e) => switch (e) {
     DuplicateProjectPathException(:final path) => ProjectSidebarFailure.duplicatePath(path),
@@ -103,9 +105,10 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     state = await AsyncValue.guard(() async {
       try {
         if (deleteSessions) {
-          final sessions = await _sessions.getSessionsByProject(id);
+          final repo = await _sessions;
+          final sessions = await repo.getSessionsByProject(id);
           for (final s in sessions) {
-            await _sessions.deleteSession(s.sessionId);
+            await repo.deleteSession(s.sessionId);
           }
         }
         await _projects.removeProject(id);
@@ -162,7 +165,7 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     late String sessionId;
     state = await AsyncValue.guard(() async {
       try {
-        sessionId = await _sessions.createSession(model: model, projectId: projectId);
+        sessionId = await (await _sessions).createSession(model: model, projectId: projectId);
       } catch (e, st) {
         dLog('[ProjectSidebarActions] createSession failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -176,7 +179,7 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        await _sessions.archiveSession(id);
+        await (await _sessions).archiveSession(id);
       } catch (e, st) {
         dLog('[ProjectSidebarActions] archiveSession failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -188,7 +191,7 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        await _sessions.deleteSession(id);
+        await (await _sessions).deleteSession(id);
       } catch (e, st) {
         dLog('[ProjectSidebarActions] deleteSession failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -200,7 +203,7 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        await _sessions.updateSessionTitle(id, title);
+        await (await _sessions).updateSessionTitle(id, title);
       } catch (e, st) {
         dLog('[ProjectSidebarActions] updateSessionTitle failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -214,7 +217,7 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
   /// safe default — a failed query simply hides the cascade-delete option.
   Future<int> fetchSessionCount(String projectId) async {
     try {
-      final sessions = await _sessions.getSessionsByProject(projectId);
+      final sessions = await (await _sessions).getSessionsByProject(projectId);
       return sessions.length;
     } catch (e) {
       dLog('[ProjectSidebarActions] fetchSessionCount failed: $e');
@@ -227,7 +230,7 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     late List<ChatSession> sessions;
     state = await AsyncValue.guard(() async {
       try {
-        sessions = await _sessions.getSessionsByProject(projectId);
+        sessions = await (await _sessions).getSessionsByProject(projectId);
       } catch (e, st) {
         dLog('[ProjectSidebarActions] getSessionsByProject failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);

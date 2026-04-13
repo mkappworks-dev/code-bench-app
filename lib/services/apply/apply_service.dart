@@ -8,10 +8,12 @@ import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/errors/app_exception.dart' as app_errors;
 import '../../core/utils/debug_logger.dart';
 import '../../data/models/applied_change.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
-import '../filesystem/filesystem_service.dart';
+import '../../data/filesystem/repository/filesystem_repository.dart';
+import '../../data/filesystem/repository/filesystem_repository_impl.dart';
 
 part 'apply_service.g.dart';
 
@@ -42,12 +44,15 @@ const Duration kGitCheckoutTimeout = Duration(seconds: 15);
 
 @Riverpod(keepAlive: true)
 ApplyService applyService(Ref ref) {
-  return ApplyService(fs: ref.watch(filesystemServiceProvider), notifier: ref.watch(appliedChangesProvider.notifier));
+  return ApplyService(
+    fs: ref.watch(filesystemRepositoryProvider),
+    notifier: ref.watch(appliedChangesProvider.notifier),
+  );
 }
 
 class ApplyService {
   ApplyService({
-    required FilesystemService fs,
+    required FilesystemRepository fs,
     required AppliedChangesNotifier notifier,
     String Function()? uuidGen,
     ProcessRunner? processRunner,
@@ -56,7 +61,7 @@ class ApplyService {
        _uuidGen = uuidGen ?? (() => const Uuid().v4()),
        _processRunner = processRunner ?? Process.run;
 
-  final FilesystemService _fs;
+  final FilesystemRepository _fs;
   final AppliedChangesNotifier _notifier;
   final String Function() _uuidGen;
   final ProcessRunner _processRunner;
@@ -148,8 +153,8 @@ class ApplyService {
   Future<String?> readFileContent(String filePath, String projectPath) async {
     assertWithinProject(filePath, projectPath);
     try {
-      return await File(filePath).readAsString();
-    } on IOException catch (e) {
+      return await _fs.readFile(filePath);
+    } on app_errors.FileSystemException catch (e) {
       dLog('[ApplyService] readFileContent failed: $e');
       return null;
     }
@@ -178,14 +183,18 @@ class ApplyService {
     // TOCTOU-safe read: attempt the read directly and fall back to "new
     // file" on PathNotFoundException. A plain `existsSync` + `readFile`
     // races the filesystem between the stat and the read; a file that
-    // vanishes in between would surface as a confusing error. We bypass
-    // [FilesystemService.readFile] here because its wrapping hides the
-    // native exception type we need to discriminate on.
+    // vanishes in between would surface as a confusing error.
     String? originalContent;
     try {
-      originalContent = await File(filePath).readAsString();
-    } on PathNotFoundException {
-      originalContent = null;
+      originalContent = await _fs.readFile(filePath);
+    } on app_errors.FileSystemException catch (e) {
+      // File doesn't exist yet — treat as new file. FilesystemRepository
+      // wraps dart:io exceptions, so we check originalError to discriminate.
+      if (e.originalError is PathNotFoundException) {
+        originalContent = null;
+      } else {
+        rethrow;
+      }
     }
 
     if (originalContent != null && originalContent.length > kMaxApplyContentBytes) {

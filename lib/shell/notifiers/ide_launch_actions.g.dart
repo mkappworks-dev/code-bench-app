@@ -9,9 +9,9 @@ part of 'ide_launch_actions.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Command notifier mediating every IDE / Finder / terminal launch from
-/// the top action bar. Widgets never reach [IdeLaunchService] directly.
+/// the top action bar. Widgets never reach [IdeLaunchRepository] directly.
 ///
-/// The service already returns a user-facing error message (or `null` on
+/// The repository already returns a user-facing error message (or `null` on
 /// success), so these methods are thin passthroughs — no extra logging
 /// is needed at this layer.
 
@@ -19,16 +19,16 @@ part of 'ide_launch_actions.dart';
 final ideLaunchActionsProvider = IdeLaunchActionsProvider._();
 
 /// Command notifier mediating every IDE / Finder / terminal launch from
-/// the top action bar. Widgets never reach [IdeLaunchService] directly.
+/// the top action bar. Widgets never reach [IdeLaunchRepository] directly.
 ///
-/// The service already returns a user-facing error message (or `null` on
+/// The repository already returns a user-facing error message (or `null` on
 /// success), so these methods are thin passthroughs — no extra logging
 /// is needed at this layer.
 final class IdeLaunchActionsProvider extends $NotifierProvider<IdeLaunchActions, void> {
   /// Command notifier mediating every IDE / Finder / terminal launch from
-  /// the top action bar. Widgets never reach [IdeLaunchService] directly.
+  /// the top action bar. Widgets never reach [IdeLaunchRepository] directly.
   ///
-  /// The service already returns a user-facing error message (or `null` on
+  /// The repository already returns a user-facing error message (or `null` on
   /// success), so these methods are thin passthroughs — no extra logging
   /// is needed at this layer.
   IdeLaunchActionsProvider._()
@@ -55,12 +55,12 @@ final class IdeLaunchActionsProvider extends $NotifierProvider<IdeLaunchActions,
   }
 }
 
-String _$ideLaunchActionsHash() => r'2c780be9fe3a83e7c9b7715639e15330046aa02e';
+String _$ideLaunchActionsHash() => r'e086fe7c2efcb8708bbe1353c619f92dbe5884f1';
 
 /// Command notifier mediating every IDE / Finder / terminal launch from
-/// the top action bar. Widgets never reach [IdeLaunchService] directly.
+/// the top action bar. Widgets never reach [IdeLaunchRepository] directly.
 ///
-/// The service already returns a user-facing error message (or `null` on
+/// The repository already returns a user-facing error message (or `null` on
 /// success), so these methods are thin passthroughs — no extra logging
 /// is needed at this layer.
 

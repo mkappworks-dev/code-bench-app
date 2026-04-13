@@ -3,14 +3,15 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/utils/debug_logger.dart';
-import '../../services/git/git_service.dart';
+import '../../data/git/repository/git_repository.dart';
+import '../../data/git/repository/git_repository_impl.dart';
 import 'git_actions_failure.dart';
 
 part 'git_actions.g.dart';
 
 /// Command notifier for all git operations.
 ///
-/// Widgets never reach [GitService] directly — they call methods here.
+/// Widgets never reach [GitRepository] directly — they call methods here.
 /// State is [AsyncValue<void>]: loading/error/data are driven by each method.
 /// Typed failures are emitted as [AsyncError] carrying a [GitActionsFailure].
 @Riverpod(keepAlive: true)
@@ -18,7 +19,7 @@ class GitActions extends _$GitActions {
   @override
   FutureOr<void> build() {}
 
-  GitService _git(String projectPath) => ref.read(gitServiceProvider(projectPath));
+  GitRepository _git() => ref.read(gitRepositoryProvider);
 
   GitActionsFailure _asFailure(Object e) => switch (e) {
     GitNoUpstreamException(:final message) => GitActionsFailure.noUpstream(message),
@@ -32,7 +33,7 @@ class GitActions extends _$GitActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        await _git(projectPath).initGit();
+        await _git().initGit(projectPath);
       } catch (e, st) {
         dLog('[GitActions] initGit failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -45,7 +46,7 @@ class GitActions extends _$GitActions {
     String? sha;
     state = await AsyncValue.guard(() async {
       try {
-        sha = await _git(projectPath).commit(message);
+        sha = await _git().commit(projectPath, message);
       } catch (e, st) {
         dLog('[GitActions] commit failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -59,7 +60,7 @@ class GitActions extends _$GitActions {
     String? branch;
     state = await AsyncValue.guard(() async {
       try {
-        branch = await _git(projectPath).push();
+        branch = await _git().push(projectPath);
       } catch (e, st) {
         dLog('[GitActions] push failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -72,7 +73,7 @@ class GitActions extends _$GitActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        await _git(projectPath).pushToRemote(remote);
+        await _git().pushToRemote(projectPath, remote);
       } catch (e, st) {
         dLog('[GitActions] pushToRemote($remote) failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -94,7 +95,7 @@ class GitActions extends _$GitActions {
     state = await AsyncValue.guard(() async {
       for (final remote in remotes) {
         try {
-          await _git(projectPath).pushToRemote(remote.name);
+          await _git().pushToRemote(projectPath, remote.name);
           pushed.add(remote.name);
         } on Exception catch (e) {
           dLog('[GitActions] pushToRemote(${remote.name}) failed: ${e.runtimeType}');
@@ -110,7 +111,7 @@ class GitActions extends _$GitActions {
     int? count;
     state = await AsyncValue.guard(() async {
       try {
-        count = await _git(projectPath).pull();
+        count = await _git().pull(projectPath);
       } catch (e, st) {
         dLog('[GitActions] pull failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -124,7 +125,7 @@ class GitActions extends _$GitActions {
     List<GitRemote>? remotes;
     state = await AsyncValue.guard(() async {
       try {
-        remotes = await _git(projectPath).listRemotes();
+        remotes = await _git().listRemotes(projectPath);
       } catch (e, st) {
         dLog('[GitActions] listRemotes failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -133,7 +134,23 @@ class GitActions extends _$GitActions {
     return remotes ?? [];
   }
 
-  Future<String?> currentBranch(String projectPath) => _git(projectPath).currentBranch();
+  Future<String?> currentBranch(String projectPath) async {
+    try {
+      return await _git().currentBranch(projectPath);
+    } catch (e) {
+      dLog('[GitActions] currentBranch failed: ${e.runtimeType}');
+      return null;
+    }
+  }
 
-  Future<String?> getOriginUrl(String projectPath) => _git(projectPath).getOriginUrl();
+  Future<String?> getOriginUrl(String projectPath) async {
+    try {
+      return await _git().getOriginUrl(projectPath);
+    } catch (e) {
+      dLog('[GitActions] getOriginUrl failed: ${e.runtimeType}');
+      return null;
+    }
+  }
+
+  bool isGitRepo(String path) => _git().isGitRepo(path);
 }

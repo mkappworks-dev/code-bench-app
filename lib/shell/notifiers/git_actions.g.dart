@@ -10,7 +10,7 @@ part of 'git_actions.dart';
 // ignore_for_file: type=lint, type=warning
 /// Command notifier for all git operations.
 ///
-/// Widgets never reach [GitService] directly — they call methods here.
+/// Widgets never reach [GitRepository] directly — they call methods here.
 /// State is [AsyncValue<void>]: loading/error/data are driven by each method.
 /// Typed failures are emitted as [AsyncError] carrying a [GitActionsFailure].
 
@@ -19,13 +19,13 @@ final gitActionsProvider = GitActionsProvider._();
 
 /// Command notifier for all git operations.
 ///
-/// Widgets never reach [GitService] directly — they call methods here.
+/// Widgets never reach [GitRepository] directly — they call methods here.
 /// State is [AsyncValue<void>]: loading/error/data are driven by each method.
 /// Typed failures are emitted as [AsyncError] carrying a [GitActionsFailure].
 final class GitActionsProvider extends $AsyncNotifierProvider<GitActions, void> {
   /// Command notifier for all git operations.
   ///
-  /// Widgets never reach [GitService] directly — they call methods here.
+  /// Widgets never reach [GitRepository] directly — they call methods here.
   /// State is [AsyncValue<void>]: loading/error/data are driven by each method.
   /// Typed failures are emitted as [AsyncError] carrying a [GitActionsFailure].
   GitActionsProvider._()
@@ -47,11 +47,11 @@ final class GitActionsProvider extends $AsyncNotifierProvider<GitActions, void> 
   GitActions create() => GitActions();
 }
 
-String _$gitActionsHash() => r'1c43fc55048417ac46885f839ec4c9b83eaea610';
+String _$gitActionsHash() => r'8b81d10d799ef61e24b7a644edc6caeb7a69e5b9';
 
 /// Command notifier for all git operations.
 ///
-/// Widgets never reach [GitService] directly — they call methods here.
+/// Widgets never reach [GitRepository] directly — they call methods here.
 /// State is [AsyncValue<void>]: loading/error/data are driven by each method.
 /// Typed failures are emitted as [AsyncError] carrying a [GitActionsFailure].
 

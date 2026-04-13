@@ -178,7 +178,7 @@ final class ChatMessagesNotifierProvider extends $AsyncNotifierProvider<ChatMess
   }
 }
 
-String _$chatMessagesNotifierHash() => r'd56992281c7983e240fad2ed5f5ea88e67d5c061';
+String _$chatMessagesNotifierHash() => r'6dcb306b3ef9e713bfa3180711f022379a06a9f2';
 
 final class ChatMessagesNotifierFamily extends $Family
     with
@@ -256,7 +256,7 @@ final class ChatSessionsProvider
   }
 }
 
-String _$chatSessionsHash() => r'bd92b56150cdba1b0318a6538773f19e9755be19';
+String _$chatSessionsHash() => r'2b3adf378007cacf93350887ee3bfb1ca20a9201';
 
 @ProviderFor(projectSessions)
 final projectSessionsProvider = ProjectSessionsFamily._();
@@ -304,7 +304,7 @@ final class ProjectSessionsProvider
   }
 }
 
-String _$projectSessionsHash() => r'035aba6e7325f7e246c3dc25c052fcc4cee5a5a0';
+String _$projectSessionsHash() => r'c9d32710f532397923e696273912bd33f57d3482';
 
 final class ProjectSessionsFamily extends $Family with $FunctionalFamilyOverride<Stream<List<ChatSession>>, String> {
   ProjectSessionsFamily._()
@@ -352,7 +352,7 @@ final class ArchivedSessionsProvider
   }
 }
 
-String _$archivedSessionsHash() => r'ac4a8fe2f5367fe1e8d70a0b1ccde35be9c98173';
+String _$archivedSessionsHash() => r'3ccb69355c702cbbbe129c376852ce2e943b5ab4';
 
 @ProviderFor(AppliedChangesNotifier)
 final appliedChangesProvider = AppliedChangesNotifierProvider._();

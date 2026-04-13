@@ -11,7 +11,7 @@ part of 'github_auth_notifier.dart';
 /// Holds the currently authenticated GitHub account and exposes auth actions.
 ///
 /// Widgets read `gitHubAuthProvider` for account state and call methods on
-/// its notifier for auth flows — they never touch [GitHubAuthNotifierService] directly.
+/// its notifier for auth flows — they never touch [GitHubRepository] directly.
 
 @ProviderFor(GitHubAuthNotifier)
 final gitHubAuthProvider = GitHubAuthNotifierProvider._();
@@ -19,12 +19,12 @@ final gitHubAuthProvider = GitHubAuthNotifierProvider._();
 /// Holds the currently authenticated GitHub account and exposes auth actions.
 ///
 /// Widgets read `gitHubAuthProvider` for account state and call methods on
-/// its notifier for auth flows — they never touch [GitHubAuthNotifierService] directly.
+/// its notifier for auth flows — they never touch [GitHubRepository] directly.
 final class GitHubAuthNotifierProvider extends $AsyncNotifierProvider<GitHubAuthNotifier, GitHubAccount?> {
   /// Holds the currently authenticated GitHub account and exposes auth actions.
   ///
   /// Widgets read `gitHubAuthProvider` for account state and call methods on
-  /// its notifier for auth flows — they never touch [GitHubAuthNotifierService] directly.
+  /// its notifier for auth flows — they never touch [GitHubRepository] directly.
   GitHubAuthNotifierProvider._()
     : super(
         from: null,
@@ -44,12 +44,12 @@ final class GitHubAuthNotifierProvider extends $AsyncNotifierProvider<GitHubAuth
   GitHubAuthNotifier create() => GitHubAuthNotifier();
 }
 
-String _$gitHubAuthNotifierHash() => r'2830a56bd4f4d467103ff9b5bd94f1c702decc36';
+String _$gitHubAuthNotifierHash() => r'bdd011200a318907d81d3dce6e0838d1c5dfe8d3';
 
 /// Holds the currently authenticated GitHub account and exposes auth actions.
 ///
 /// Widgets read `gitHubAuthProvider` for account state and call methods on
-/// its notifier for auth flows — they never touch [GitHubAuthNotifierService] directly.
+/// its notifier for auth flows — they never touch [GitHubRepository] directly.
 
 abstract class _$GitHubAuthNotifier extends $AsyncNotifier<GitHubAccount?> {
   FutureOr<GitHubAccount?> build();

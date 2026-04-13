@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
-import '../../../services/project/project_file_scan_service.dart';
+import '../../../data/project/datasource/project_file_scan_datasource_io.dart';
 import 'project_file_scan_failure.dart';
 
 part 'project_file_scan_actions.g.dart';
@@ -25,11 +25,11 @@ class ProjectFileScanActions extends _$ProjectFileScanActions {
     List<String> result = const [];
     state = await AsyncValue.guard(() async {
       try {
-        result = await ref.read(projectFileScanServiceProvider).scanCodeFiles(rootPath);
+        result = await ref.read(projectFileScanDatasourceProvider).scanCodeFiles(rootPath);
       } on FileSystemException catch (e, st) {
         dLog('[ProjectFileScanActions] scan failed: ${e.runtimeType}');
         Error.throwWithStackTrace(ProjectFileScanFailure.scan(e.message), st);
-      } on Exception catch (_, st) {
+      } catch (_, st) {
         dLog('[ProjectFileScanActions] scan failed with unknown error');
         Error.throwWithStackTrace(const ProjectFileScanFailure.scan('Couldn\'t scan project.'), st);
       }

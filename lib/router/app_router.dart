@@ -1,7 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../data/datasources/local/onboarding_preferences.dart';
+import '../data/_core/preferences/onboarding_preferences.dart';
 import '../features/chat/chat_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/settings/settings_screen.dart';

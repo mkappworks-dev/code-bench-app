@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:code_bench_app/data/datasources/local/onboarding_preferences.dart';
+import 'package:code_bench_app/data/_core/preferences/onboarding_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

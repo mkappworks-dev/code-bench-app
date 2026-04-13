@@ -1,24 +1,30 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../data/github/repository/github_repository_impl.dart';
 import '../../../data/models/repository.dart';
-import '../../../services/github/github_auth_service.dart';
 
 part 'github_auth_notifier.g.dart';
 
 /// Holds the currently authenticated GitHub account and exposes auth actions.
 ///
 /// Widgets read `gitHubAuthProvider` for account state and call methods on
-/// its notifier for auth flows — they never touch [GitHubAuthNotifierService] directly.
+/// its notifier for auth flows — they never touch [GitHubRepository] directly.
 @Riverpod(keepAlive: true)
 class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   @override
-  Future<GitHubAccount?> build() => ref.read(githubAuthServiceProvider).getStoredAccount();
+  Future<GitHubAccount?> build() async {
+    final repo = await ref.watch(githubRepositoryProvider.future);
+    return repo.getStoredAccount();
+  }
 
   /// Launches the OAuth browser flow. Updates state optimistically to loading
   /// then resolves to the new account or an error.
   Future<void> authenticate() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(githubAuthServiceProvider).authenticate());
+    state = await AsyncValue.guard(() async {
+      final repo = await ref.read(githubRepositoryProvider.future);
+      return repo.authenticate();
+    });
   }
 
   /// Deletes the stored PAT, then clears account state on success.
@@ -31,7 +37,8 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   Future<void> signOut() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref.read(githubAuthServiceProvider).signOut();
+      final repo = await ref.read(githubRepositoryProvider.future);
+      await repo.signOut();
       return null;
     });
   }
@@ -40,6 +47,9 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   /// updates state. The token never leaves the service layer.
   Future<void> signInWithPat(String token) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(githubAuthServiceProvider).signInWithPat(token));
+    state = await AsyncValue.guard(() async {
+      final repo = await ref.read(githubRepositoryProvider.future);
+      return repo.signInWithPat(token);
+    });
   }
 }

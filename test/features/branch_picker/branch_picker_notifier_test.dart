@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:code_bench_app/data/git/datasource/git_datasource_process.dart';
 import 'package:code_bench_app/features/branch_picker/notifiers/branch_picker_failure.dart';
 import 'package:code_bench_app/features/branch_picker/notifiers/branch_picker_notifier.dart';
-import 'package:code_bench_app/services/git/git_service.dart';
 
 Future<Directory> _initRepo({String branchName = 'main'}) async {
   final dir = await Directory.systemTemp.createTemp('bp_notifier_test_');
@@ -19,13 +19,13 @@ Future<Directory> _initRepo({String branchName = 'main'}) async {
 }
 
 void main() {
-  group('GitService branch ops', () {
+  group('GitDatasourceProcess branch ops', () {
     late Directory repoDir;
-    late GitService git;
+    late GitDatasourceProcess git;
 
     setUp(() async {
       repoDir = await _initRepo();
-      git = GitService(repoDir.path);
+      git = GitDatasourceProcess(repoDir.path);
     });
 
     tearDown(() => repoDir.delete(recursive: true));
@@ -82,7 +82,7 @@ void main() {
       final c = ProviderContainer();
       // Keep the provider alive for the duration of the test by holding a
       // subscription. The subscription is discarded when the container disposes.
-      c.listen(branchPickerProvider(path), (_, __) {});
+      c.listen(branchPickerProvider(path), (prev, next) {});
       addTearDown(c.dispose);
       return c;
     }

@@ -64,8 +64,10 @@ The dependency graph is strictly one-directional:
 Widgets / Screens
       ↓  (ref.watch / ref.read notifier)
   Notifiers          ← the only layer widgets may reach
-      ↓  (ref.read service)
-  Services           ← Dio, DB, Process.run, filesystem live here
+      ↓  (ref.read repository)
+  Repositories       ← domain interfaces; no I/O
+      ↓
+  Datasources        ← Dio, DB, Process.run, filesystem live here
       ↓
  External (API / SQLite / OS)
 ```
@@ -75,7 +77,7 @@ Widgets / Screens
 | Allowed                                             | Forbidden in widgets/screens                                               |
 | --------------------------------------------------- | -------------------------------------------------------------------------- |
 | `ref.watch(someNotifierProvider)`                   | `ref.read(someServiceProvider)`                                            |
-| `ref.read(someNotifierProvider.notifier).method()`  | `ref.read(applyServiceProvider)`, `ref.read(projectServiceProvider)`, etc. |
+| `ref.read(someNotifierProvider.notifier).method()`  | `ref.read(applyServiceProvider)`, `ref.read(gitRepositoryProvider)`, `ref.read(someServiceProvider)`, etc. |
 | `url_launcher` (`launchUrl`) for opening URLs/files | `Process.run(...)`                                                         |
 | Path string operations (`p.join`, etc.)             | `Directory(...).existsSync()` or any `dart:io` I/O                         |
 
@@ -85,6 +87,10 @@ Widgets / Screens
 | --------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------- |
 | Service class               | must end in `Service`                                                         | `GitService`, `SessionService`                                  |
 | Service provider            | `@riverpod` / `@Riverpod` placed **before** the class it instantiates         | `gitServiceProvider`, `sessionServiceProvider`                  |
+| Repository interface        | must end in `Repository`                                                      | `GitRepository`, `AIRepository`                                 |
+| Repository impl + provider  | class ends in `RepositoryImpl`; `@riverpod` / `@Riverpod` before it            | `GitRepositoryImpl`, `gitRepositoryProvider`                    |
+| Datasource interface        | descriptive name matching file suffix convention                              | `GitDatasource`, `GitLiveStateDatasource`                       |
+| Datasource file naming      | suffix encodes I/O type: `*_dio.dart`, `*_process.dart`, `*_io.dart`, `*_drift.dart` | `git_datasource_process.dart`, `github_api_datasource_dio.dart` |
 | Command notifier            | must end in `Actions` — `void build()`, imperative methods, `keepAlive: true` | `ProjectSidebarActions`, `CodeApplyActions`, `GitActions`       |
 | State notifier              | must end in `Notifier` — owns `AsyncValue` or value state                     | `ChatNotifier`, `GitHubAuthNotifier`, `ActiveSessionIdNotifier` |
 | Notifier file placement     | `*_notifier.dart`, `*_actions.dart`, `*_failure.dart` all live in `{feature}/notifiers/` | `features/chat/notifiers/chat_notifier.dart` |
@@ -94,7 +100,7 @@ The Riverpod generator strips the `Notifier` suffix when producing the provider 
 
 **Where services live:** `lib/services/` only. Services are instantiated via `@riverpod` / `@Riverpod(keepAlive: true)` provider functions — never constructed directly in widgets or notifiers.
 
-**`Process.run` / `dart:io` / Dio** — allowed only inside `lib/services/`. The one exception is `ApplyService.assertWithinProject` (a static security guard), which may be called from widgets that perform their own file reads (e.g. `_loadDiff` in `message_bubble.dart`).
+**`Process.run` / `dart:io` / Dio** — allowed only inside `lib/data/**/datasource/` and `lib/services/`. Datasource files encode their I/O type in their filename suffix: `*_dio.dart` for HTTP, `*_process.dart` for shell-outs, `*_io.dart` for filesystem, `*_drift.dart` for SQLite. The one exception is `ApplyService.assertWithinProject` (a static security guard), which may be called from widgets that perform their own file reads (e.g. `_loadDiff` in `message_bubble.dart`).
 
 ## Riverpod usage rules
 
@@ -197,7 +203,7 @@ Two helpers live in [lib/core/utils/debug_logger.dart](lib/core/utils/debug_logg
 
 | Layer                               | Logs?                       | What to log                                                                                                                                                              |
 | ----------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Services (`lib/services/`)          | Yes                         | Raw I/O failures — `ProcessException`, Dio errors, `FileSystemException`, security-guard rejections (`sLog`)                                                             |
+| Services & Datasources (`lib/services/`, `lib/data/**/datasource/`) | Yes | Raw I/O failures — `ProcessException`, Dio errors, `FileSystemException`, security-guard rejections (`sLog`)                                                             |
 | Notifiers (`*Actions`, `*Notifier`) | Yes                         | Caught exceptions being turned into `AsyncError` or swallowed; semantic operation failures ("pushToRemote failed")                                                       |
 | Widgets / screens                   | **No, with two exceptions** | (1) `AsyncValue.when(error:)` branches that render an error view, (2) widget-layer APIs the arch rule permits in widgets — `launchUrl` failures and `Clipboard` failures |
 

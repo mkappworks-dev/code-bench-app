@@ -6,8 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:code_bench_app/data/models/applied_change.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
+import 'package:code_bench_app/data/filesystem/datasource/filesystem_datasource_io.dart';
+import 'package:code_bench_app/data/filesystem/repository/filesystem_repository_impl.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
-import 'package:code_bench_app/services/filesystem/filesystem_service.dart';
 
 void main() {
   late Directory tmpDir;
@@ -18,7 +19,7 @@ void main() {
     tmpDir = await Directory.systemTemp.createTemp('apply_test_');
     container = ProviderContainer();
     service = ApplyService(
-      fs: FilesystemService(),
+      fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()),
       notifier: container.read(appliedChangesProvider.notifier),
       uuidGen: () => 'test-uuid',
     );
@@ -221,7 +222,7 @@ void main() {
     var capturedArgs = <String>[];
     String? capturedWorkingDir;
     final gitService = ApplyService(
-      fs: FilesystemService(),
+      fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()),
       notifier: container.read(appliedChangesProvider.notifier),
       uuidGen: () => 'git-uuid',
       processRunner: (exe, args, {workingDirectory}) async {
@@ -253,7 +254,7 @@ void main() {
     File(filePath).writeAsStringSync('original');
 
     final timeoutService = ApplyService(
-      fs: FilesystemService(),
+      fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()),
       notifier: container.read(appliedChangesProvider.notifier),
       uuidGen: () => 'timeout-direct-uuid',
       // Throw TimeoutException directly to exercise the catch branch
@@ -286,7 +287,7 @@ void main() {
     File(filePath).writeAsStringSync('original');
 
     final gitService = ApplyService(
-      fs: FilesystemService(),
+      fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()),
       notifier: container.read(appliedChangesProvider.notifier),
       uuidGen: () => 'git-fail-uuid',
       processRunner: (exe, args, {workingDirectory}) async => ProcessResult(0, 1, '', 'error: pathspec did not match'),
