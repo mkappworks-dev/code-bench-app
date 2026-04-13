@@ -6,7 +6,7 @@ import '../../../core/utils/debug_logger.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../data/models/ai_model.dart';
 import '../../../data/ai/repository/ai_repository_impl.dart';
-import '../../../services/api_key_test_service.dart';
+import '../../../data/ai/repository/api_key_test_repository_impl.dart';
 import '../../../data/project/repository/project_repository_impl.dart';
 import '../../../data/session/repository/session_repository_impl.dart';
 import '../../../data/settings/repository/settings_repository_impl.dart';
@@ -31,14 +31,14 @@ class SettingsActions extends _$SettingsActions {
   /// without crashing.
   Future<bool> testApiKey(AIProvider provider, String key) async {
     try {
-      return await ref.read(apiKeyTestServiceProvider).testApiKey(provider, key);
+      return await ref.read(apiKeyTestRepositoryProvider).testApiKey(provider, key);
     } catch (e, st) {
       dLog('[SettingsActions] testApiKey failed: $e\n$st');
       return false;
     }
   }
 
-  Future<bool> testOllamaUrl(String url) => ref.read(apiKeyTestServiceProvider).testOllamaUrl(url);
+  Future<bool> testOllamaUrl(String url) => ref.read(apiKeyTestRepositoryProvider).testOllamaUrl(url);
 
   /// Persists [key] for [provider]. Emits [SettingsStorageFailed] on error.
   Future<void> saveApiKey(String provider, String key) async {

@@ -4,7 +4,7 @@ import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../services/apply/apply_service.dart';
+import '../../../data/apply/repository/apply_repository_impl.dart';
 
 part 'code_diff_provider.freezed.dart';
 part 'code_diff_provider.g.dart';
@@ -24,7 +24,7 @@ Future<DiffResult?> codeDiff(
   required String newContent,
 }) async {
   try {
-    final original = await ApplyService.readOriginalForDiff(absolutePath, projectPath);
+    final original = await ref.watch(applyRepositoryProvider).readOriginalForDiff(absolutePath, projectPath);
     final dmp = DiffMatchPatch();
     final diffs = dmp.diff(original ?? '', newContent);
     dmp.diffCleanupSemantic(diffs);
