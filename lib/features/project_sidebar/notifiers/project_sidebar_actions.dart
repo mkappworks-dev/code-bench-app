@@ -1,0 +1,245 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../../../core/errors/app_exception.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../data/models/ai_model.dart';
+import '../../../data/models/chat_session.dart';
+import '../../../data/models/project_action.dart';
+import '../../chat/notifiers/chat_notifier.dart';
+import '../../../services/git/git_live_state_provider.dart';
+import '../../../services/project/project_service.dart';
+import '../../../services/session/session_service.dart';
+import 'project_sidebar_failure.dart';
+
+part 'project_sidebar_actions.g.dart';
+
+/// Command notifier that mediates every imperative project/session mutation
+/// triggered from the sidebar. Widgets never reach into [ProjectService] or
+/// [SessionService] directly — they call methods here instead.
+@Riverpod(keepAlive: true)
+class ProjectSidebarActions extends _$ProjectSidebarActions {
+  @override
+  FutureOr<void> build() {}
+
+  ProjectService get _projects => ref.read(projectServiceProvider);
+  SessionService get _sessions => ref.read(sessionServiceProvider);
+
+  ProjectSidebarFailure _asFailure(Object e) => switch (e) {
+    DuplicateProjectPathException(:final path) => ProjectSidebarFailure.duplicatePath(path),
+    ArgumentError(:final message) => ProjectSidebarFailure.invalidPath(message?.toString() ?? ''),
+    StorageException(:final message) => ProjectSidebarFailure.storageError(message),
+    _ => ProjectSidebarFailure.unknown(e),
+  };
+
+  // ── Project mutations ──────────────────────────────────────────────────────
+
+  Future<void> refreshProjectStatuses() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await _projects.refreshProjectStatuses();
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] refreshProjectStatuses failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+
+  Future<void> refreshProjectStatus(String id) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await _projects.refreshProjectStatus(id);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] refreshProjectStatus($id) failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+
+  Future<void> addExistingFolder(String path) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await _projects.addExistingFolder(path);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] addExistingFolder failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+
+  Future<void> relocateProject(String id, String path) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await _projects.relocateProject(id, path);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] relocateProject failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+
+  Future<void> updateProjectActions(String id, List<ProjectAction> actions) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await _projects.updateProjectActions(id, actions);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] updateProjectActions failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+
+  /// Removes the project from Code Bench. If [deleteSessions] is true, all
+  /// conversations linked to the project are deleted first.
+  Future<void> removeProject(String id, {bool deleteSessions = false}) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        if (deleteSessions) {
+          final sessions = await _sessions.getSessionsByProject(id);
+          for (final s in sessions) {
+            await _sessions.deleteSession(s.sessionId);
+          }
+        }
+        await _projects.removeProject(id);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] removeProject failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+
+  // ── Git state ─────────────────────────────────────────────────────────────
+
+  /// Invalidates all cached git state for [projectPath].
+  ///
+  /// Call this after any in-app git mutation (commit, push, pull, checkout,
+  /// init-git, create-branch). Widgets must not call [ref.invalidate] on git
+  /// providers directly — that would couple them to the provider topology.
+  void refreshGitState(String projectPath) {
+    ref.invalidate(gitLiveStateProvider(projectPath));
+    ref.invalidate(behindCountProvider(projectPath));
+  }
+
+  // ── Filesystem helpers ─────────────────────────────────────────────────────
+
+  /// Returns `true` when the folder at [path] currently exists on disk.
+  /// Used by widgets that need a fast availability check without async I/O.
+  bool projectExistsOnDisk(String path) => Directory(path).existsSync();
+
+  /// Resolves [path] to its canonical real path and confirms it is a
+  /// directory. Returns the resolved path on success.
+  ///
+  /// Throws [ArgumentError] with a user-facing message on failure:
+  /// - broken / non-existent path → `'That path could not be opened'`
+  /// - resolved path is a file, not a directory → `'Please drop a folder, not a file'`
+  String resolveDroppedDirectory(String path) {
+    final String resolved;
+    try {
+      // resolveSymbolicLinksSync throws on broken or non-existent paths —
+      // a dangling symlink must not become a project root.
+      resolved = Directory(path).resolveSymbolicLinksSync();
+    } catch (_) {
+      throw ArgumentError('That path could not be opened');
+    }
+    if (!FileSystemEntity.isDirectorySync(resolved)) {
+      throw ArgumentError('Please drop a folder, not a file');
+    }
+    return resolved;
+  }
+
+  // ── Session mutations ──────────────────────────────────────────────────────
+
+  Future<String> createSession({required AIModel model, required String projectId}) async {
+    state = const AsyncLoading();
+    late String sessionId;
+    state = await AsyncValue.guard(() async {
+      try {
+        sessionId = await _sessions.createSession(model: model, projectId: projectId);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] createSession failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+    if (state is AsyncError) throw (state as AsyncError).error;
+    return sessionId;
+  }
+
+  Future<void> archiveSession(String id) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await _sessions.archiveSession(id);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] archiveSession failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+
+  Future<void> deleteSession(String id) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await _sessions.deleteSession(id);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] deleteSession failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+
+  Future<void> updateSessionTitle(String id, String title) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await _sessions.updateSessionTitle(id, title);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] updateSessionTitle failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+
+  /// Non-throwing read of the session count for [projectId]. Returns 0 on any
+  /// error so widgets can show "did not load" UI without needing try/catch.
+  /// Widgets that need this count (e.g. RemoveProjectDialog) rely on the
+  /// safe default — a failed query simply hides the cascade-delete option.
+  Future<int> fetchSessionCount(String projectId) async {
+    try {
+      final sessions = await _sessions.getSessionsByProject(projectId);
+      return sessions.length;
+    } catch (e) {
+      dLog('[ProjectSidebarActions] fetchSessionCount failed: $e');
+      return 0;
+    }
+  }
+
+  Future<List<ChatSession>> getSessionsByProject(String projectId) async {
+    state = const AsyncLoading();
+    late List<ChatSession> sessions;
+    state = await AsyncValue.guard(() async {
+      try {
+        sessions = await _sessions.getSessionsByProject(projectId);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] getSessionsByProject failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+    if (state is AsyncError) throw (state as AsyncError).error;
+    return sessions;
+  }
+
+  /// Forces [archivedSessionsProvider] to re-fetch from the DB.
+  ///
+  /// Widgets must not call [ref.invalidate] on [archivedSessionsProvider]
+  /// directly — use this method so the provider topology stays encapsulated.
+  void refreshArchivedSessions() => ref.invalidate(archivedSessionsProvider);
+}

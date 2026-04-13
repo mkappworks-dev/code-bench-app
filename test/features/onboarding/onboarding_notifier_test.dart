@@ -11,33 +11,33 @@ void main() {
 
   test('starts at step 0', () {
     final c = makeContainer();
-    expect(c.read(onboardingControllerProvider), 0);
+    expect(c.read(onboardingProvider), 0);
   });
 
   test('next advances step', () {
     final c = makeContainer();
-    c.read(onboardingControllerProvider.notifier).next();
-    expect(c.read(onboardingControllerProvider), 1);
+    c.read(onboardingProvider.notifier).next();
+    expect(c.read(onboardingProvider), 1);
   });
 
   test('next clamps at step 2', () {
     final c = makeContainer();
-    c.read(onboardingControllerProvider.notifier).next();
-    c.read(onboardingControllerProvider.notifier).next();
-    c.read(onboardingControllerProvider.notifier).next();
-    expect(c.read(onboardingControllerProvider), 2);
+    c.read(onboardingProvider.notifier).next();
+    c.read(onboardingProvider.notifier).next();
+    c.read(onboardingProvider.notifier).next();
+    expect(c.read(onboardingProvider), 2);
   });
 
   test('back decrements step', () {
     final c = makeContainer();
-    c.read(onboardingControllerProvider.notifier).next();
-    c.read(onboardingControllerProvider.notifier).back();
-    expect(c.read(onboardingControllerProvider), 0);
+    c.read(onboardingProvider.notifier).next();
+    c.read(onboardingProvider.notifier).back();
+    expect(c.read(onboardingProvider), 0);
   });
 
   test('back clamps at step 0', () {
     final c = makeContainer();
-    c.read(onboardingControllerProvider.notifier).back();
-    expect(c.read(onboardingControllerProvider), 0);
+    c.read(onboardingProvider.notifier).back();
+    expect(c.read(onboardingProvider), 0);
   });
 }

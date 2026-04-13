@@ -1,7 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/instant_menu.dart';
@@ -23,10 +22,10 @@ class ProjectContextMenu {
         overlay.size.width - position.dx,
         overlay.size.height - position.dy,
       ),
-      color: const Color(0xFF1E1E1E),
+      color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(6),
-        side: const BorderSide(color: Color(0xFF333333)),
+        side: const BorderSide(color: ThemeConstants.faintFg),
       ),
       items: [
         if (!isMissing) ...[
@@ -85,8 +84,8 @@ class ProjectContextMenu {
   }) async {
     switch (action) {
       case 'open_finder':
-        final result = await Process.run('open', [projectPath]);
-        if (result.exitCode != 0 && context.mounted) {
+        final launched = await launchUrl(Uri.file(projectPath), mode: LaunchMode.platformDefault);
+        if (!launched && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open in Finder.')));
         }
       case 'copy_path':

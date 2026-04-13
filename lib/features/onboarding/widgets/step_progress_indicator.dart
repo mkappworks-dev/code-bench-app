@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/theme_constants.dart';
 
 class StepProgressIndicator extends StatelessWidget {
   const StepProgressIndicator({
@@ -24,11 +25,11 @@ class StepProgressIndicator extends StatelessWidget {
           children: List.generate(totalSteps, (i) {
             Color dotColor;
             if (i < currentStep) {
-              dotColor = const Color(0xFF4A7CFF); // completed
+              dotColor = ThemeConstants.blueAccent; // completed
             } else if (i == currentStep) {
-              dotColor = const Color(0xFF4A7CFF).withValues(alpha: 0.5); // current
+              dotColor = ThemeConstants.blueAccent.withValues(alpha: 0.5); // current
             } else {
-              dotColor = const Color(0xFF2A2A2A); // upcoming
+              dotColor = ThemeConstants.borderColor; // upcoming
             }
             return Padding(
               padding: EdgeInsets.only(right: i < totalSteps - 1 ? 6 : 0),
@@ -46,7 +47,7 @@ class StepProgressIndicator extends StatelessWidget {
         Text(
           'STEP ${currentStep + 1} OF $totalSteps',
           style: const TextStyle(
-            color: Color(0xFF666666),
+            color: ThemeConstants.textMuted,
             fontSize: 10,
             letterSpacing: 1.2,
             fontWeight: FontWeight.w600,
@@ -56,11 +57,11 @@ class StepProgressIndicator extends StatelessWidget {
         // Step title
         Text(
           stepTitle,
-          style: const TextStyle(color: Color(0xFFE0E0E0), fontSize: 18, fontWeight: FontWeight.w600),
+          style: const TextStyle(color: ThemeConstants.headingText, fontSize: 18, fontWeight: FontWeight.w600),
         ),
         if (stepSubtitle.isNotEmpty) ...[
           const SizedBox(height: 4),
-          Text(stepSubtitle, style: const TextStyle(color: Color(0xFF666666), fontSize: 12)),
+          Text(stepSubtitle, style: const TextStyle(color: ThemeConstants.textMuted, fontSize: 12)),
         ],
       ],
     );

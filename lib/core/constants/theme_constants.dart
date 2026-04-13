@@ -69,6 +69,43 @@ class ThemeConstants {
   static const Color mutedFg = Color(0xFF555555);
   static const Color faintFg = Color(0xFF333333);
 
+  // Interactive blue (step dots, spinners, links — distinct from accent/007ACC)
+  static const Color blueAccent = Color(0xFF4A7CFF);
+
+  // Dim foreground (between textSecondary and textMuted — dim icons, labels)
+  static const Color dimFg = Color(0xFF888888);
+
+  // Heading text (brighter than textPrimary, used in onboarding titles)
+  static const Color headingText = Color(0xFFE0E0E0);
+
+  // Worktree badge
+  static const Color worktreeBadgeBg = Color(0xFF2A1F0A);
+  static const Color worktreeBadgeFg = Color(0xFFE8A228);
+
+  // Selection / active-state surfaces
+  static const Color selectionBg = Color(0xFF1A2540);
+  static const Color selectionBorder = Color(0xFF2A3550);
+  static const Color questionCardBg = Color(0xFF1A1F2E);
+
+  // PR status
+  static const Color prMergedColor = Color(0xFF6E40C9);
+  static const Color pendingAmber = Color(0xFFFFAA00);
+
+  // "Edited" badge (pending local edits on a file)
+  static const Color editedBadgeBg = Color(0xFF3D2900);
+  static const Color editedBadgeBorder = Color(0xFFAA7700);
+
+  // GitHub brand
+  static const Color githubBrandColor = Color(0xFF24292E);
+
+  // Diff highlights (20% opacity overlays)
+  static const Color diffAdditionBg = Color(0x3300CC66);
+  static const Color diffDeletionBg = Color(0x33FF4444);
+
+  // Box shadow colours
+  static const Color shadowDark = Color(0x99000000);
+  static const Color shadowMedium = Color(0x66000000);
+
   // Icon sizes
   static const double iconSizeSmall = 14;
   static const double iconSizeMedium = 18;

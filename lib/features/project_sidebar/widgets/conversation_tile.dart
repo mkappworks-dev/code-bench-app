@@ -3,6 +3,7 @@ import '../../../core/constants/app_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/instant_menu.dart';
+import '../../../core/utils/relative_time.dart';
 import '../../../data/models/chat_session.dart';
 
 class ConversationTile extends StatelessWidget {
@@ -23,13 +24,6 @@ class ConversationTile extends StatelessWidget {
   final VoidCallback? onArchive;
   final VoidCallback? onDelete;
 
-  String _relativeTime(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    return '${diff.inDays}d';
-  }
-
   void _showContextMenu(BuildContext context, Offset globalPosition) async {
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final action = await showInstantMenu<String>(
@@ -43,7 +37,7 @@ class ConversationTile extends StatelessWidget {
       color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(6),
-        side: const BorderSide(color: Color(0xFF333333)),
+        side: const BorderSide(color: ThemeConstants.faintFg),
       ),
       items: [
         PopupMenuItem<String>(
@@ -135,7 +129,7 @@ class ConversationTile extends StatelessWidget {
               ),
               // Time
               Text(
-                _relativeTime(session.updatedAt),
+                session.updatedAt.relativeTimeCompact,
                 style: const TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSizeBadge),
               ),
             ],

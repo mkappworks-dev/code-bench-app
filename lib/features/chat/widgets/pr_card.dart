@@ -7,14 +7,14 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
-import '../../../services/github/github_api_service.dart';
+import '../notifiers/pr_notifier.dart';
 
 /// Inline card rendering live status for a single GitHub pull request.
 ///
 /// Polls every 30 seconds via a Timer in state so CI results, merge
 /// status, and review state stay fresh while the card is on screen.
-/// Uses [githubApiServiceProvider] rather than constructing
-/// [GitHubApiService] by hand so the PAT never leaves the provider layer.
+/// Uses [prCardProvider] rather than touching [GitHubApiService] directly —
+/// all API access is mediated by the notifier.
 ///
 /// ### Error discipline
 ///
@@ -38,29 +38,18 @@ class PRCard extends ConsumerStatefulWidget {
 
 class _PRCardState extends ConsumerState<PRCard> {
   static const Duration _kPollInterval = Duration(seconds: 30);
-  // How many consecutive load failures we tolerate before giving up and
-  // parking the card in an error state. Tuned so a flaky connection with
-  // one dropped request every few minutes keeps working, but a revoked
-  // token or deleted PR stops burning GitHub's rate limit quickly.
+  // How many consecutive poll failures we tolerate before giving up.
+  // Tuned so a flaky connection keeps working, but a revoked token or
+  // deleted PR stops burning GitHub's rate limit quickly.
   static const int _kMaxConsecutiveFailures = 3;
 
-  Map<String, dynamic>? _pr;
-  List<Map<String, dynamic>> _checkRuns = const [];
-  bool _approved = false;
-  bool _merged = false;
-  // Rendered as an inline banner whenever non-null — whether or not the
-  // initial load has succeeded. Previously this was only shown in the
-  // pre-load placeholder, which meant any post-load poll failure froze
-  // the card on stale data with no user-visible signal.
-  String? _loadError;
   int _consecutiveFailures = 0;
   Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
-    _load();
-    _pollTimer = Timer.periodic(_kPollInterval, (_) => _load());
+    _pollTimer = Timer.periodic(_kPollInterval, (_) => _poll());
   }
 
   @override
@@ -69,9 +58,40 @@ class _PRCardState extends ConsumerState<PRCard> {
     super.dispose();
   }
 
-  /// Maps an exception from [GitHubApiService] into a short user-facing
-  /// string. Keep this in sync with the status codes GitHub can return
-  /// for the PR endpoints used by this card.
+  PrCardNotifierProvider get _provider => prCardProvider(widget.owner, widget.repo, widget.prNumber);
+
+  Future<void> _poll() async {
+    await ref.read(_provider.notifier).refresh();
+    if (!mounted) return;
+    final current = ref.read(_provider);
+    // If the provider is in error state (e.g. not signed in), stop polling.
+    if (current.hasError) {
+      _pollTimer?.cancel();
+      return;
+    }
+    final cardState = current.value;
+    if (cardState == null) return;
+
+    if (cardState.pollError != null) {
+      // Fatal errors (revoked token, deleted PR) will keep failing — bail now
+      // instead of spending _kMaxConsecutiveFailures requests confirming it.
+      if (cardState.pollFatal) {
+        _pollTimer?.cancel();
+        return;
+      }
+      _consecutiveFailures++;
+      if (_consecutiveFailures >= _kMaxConsecutiveFailures) _pollTimer?.cancel();
+    } else {
+      _consecutiveFailures = 0;
+    }
+
+    // Stop polling once the PR reaches a terminal state — avoids burning
+    // rate limit against a PR that will never change.
+    final prState = cardState.pr['state'] as String? ?? 'open';
+    if (cardState.merged || prState == 'closed') _pollTimer?.cancel();
+  }
+
+  /// Maps an exception into a short user-facing string.
   String _friendlyError(Object e) {
     if (e is NetworkException) {
       final s = e.statusCode;
@@ -88,69 +108,6 @@ class _PRCardState extends ConsumerState<PRCard> {
     return 'Unexpected error.';
   }
 
-  /// Returns `true` if the error represents a permanent condition where
-  /// retrying would be futile (revoked token, deleted PR). The polling
-  /// timer stops after seeing one of these rather than re-firing every
-  /// 30 seconds against a PAT rate limit it can't recover from.
-  bool _isFatal(Object e) {
-    if (e is! NetworkException) return false;
-    final s = e.statusCode;
-    return s == 401 || s == 403 || s == 404;
-  }
-
-  Future<void> _load() async {
-    // Use the shared keepAlive provider: it reads the token from secure
-    // storage, builds the Dio client, and returns null when no PAT is set.
-    // Reinventing that here would be both a duplication and a second place
-    // to forget a null check.
-    final svc = await ref.read(githubApiServiceProvider.future);
-    if (svc == null) {
-      if (!mounted) return;
-      setState(() => _loadError = 'Not signed in to GitHub.');
-      _pollTimer?.cancel();
-      return;
-    }
-    try {
-      final pr = await svc.getPullRequest(widget.owner, widget.repo, widget.prNumber);
-      final sha = (pr['head'] as Map<String, dynamic>?)?['sha'] as String?;
-      var checks = const <Map<String, dynamic>>[];
-      if (sha != null) {
-        checks = await svc.getCheckRuns(widget.owner, widget.repo, sha);
-      }
-      if (!mounted) return;
-      // `merged_at` is GitHub's canonical "this PR was merged" signal —
-      // `merged` is only present on `GET /pulls/:n` responses, not on
-      // list endpoints, and it's a derived field. Prefer `merged_at` so
-      // a stale-shape response can't flip `_merged` back to false.
-      final mergedNow = pr['merged'] as bool? ?? (pr['merged_at'] != null);
-      final state = pr['state'] as String? ?? 'open';
-      setState(() {
-        _pr = pr;
-        _checkRuns = checks;
-        _loadError = null;
-        _consecutiveFailures = 0;
-        // Once merged, stay merged. See above.
-        if (mergedNow) _merged = true;
-      });
-      // Stop polling once the PR reaches a terminal state. Without this
-      // a chat with 10 merged PR cards burns 20 requests/min indefinitely
-      // against a shared 5000/hr PAT quota, with no actionable change
-      // between ticks.
-      if (_merged || state == 'closed') {
-        _pollTimer?.cancel();
-      }
-    } catch (e) {
-      // SECURITY: only log runtimeType. See class-doc note on why.
-      dLog('[PRCard] load failed: ${e.runtimeType}');
-      if (!mounted) return;
-      _consecutiveFailures++;
-      setState(() => _loadError = _friendlyError(e));
-      if (_isFatal(e) || _consecutiveFailures >= _kMaxConsecutiveFailures) {
-        _pollTimer?.cancel();
-      }
-    }
-  }
-
   Future<void> _approve() async {
     final confirmed = await _confirm(
       title: 'Approve pull request?',
@@ -158,18 +115,12 @@ class _PRCardState extends ConsumerState<PRCard> {
       actionLabel: 'Approve',
     );
     if (confirmed != true) return;
-    final svc = await ref.read(githubApiServiceProvider.future);
-    if (svc == null) return;
-    try {
-      await svc.approvePullRequest(widget.owner, widget.repo, widget.prNumber);
-      if (!mounted) return;
-      setState(() => _approved = true);
-      _showSnack('Approved');
-    } catch (e) {
-      dLog('[PRCard] approve failed: ${e.runtimeType}');
-      if (!mounted) return;
-      _showSnack('Approve failed: ${_friendlyError(e)}');
-    }
+    await ref.read(_provider.notifier).approve();
+    if (!mounted) return;
+    // The notifier stores failures on state.actionError instead of rethrowing;
+    // the inline error banner renders from that — don't also toast success.
+    if (ref.read(_provider).value?.actionError != null) return;
+    _showSnack('Approved');
   }
 
   Future<void> _merge() async {
@@ -182,21 +133,11 @@ class _PRCardState extends ConsumerState<PRCard> {
       destructive: true,
     );
     if (confirmed != true) return;
-    final svc = await ref.read(githubApiServiceProvider.future);
-    if (svc == null) return;
-    try {
-      await svc.mergePullRequest(widget.owner, widget.repo, widget.prNumber);
-      if (!mounted) return;
-      setState(() => _merged = true);
-      _showSnack('Merged');
-      // Terminal state — kick an immediate refresh then stop polling.
-      _pollTimer?.cancel();
-      unawaited(_load());
-    } catch (e) {
-      dLog('[PRCard] merge failed: ${e.runtimeType}');
-      if (!mounted) return;
-      _showSnack('Merge failed: ${_friendlyError(e)}');
-    }
+    await ref.read(_provider.notifier).merge();
+    if (!mounted) return;
+    if (ref.read(_provider).value?.actionError != null) return;
+    _showSnack('Merged');
+    _pollTimer?.cancel();
   }
 
   Future<bool?> _confirm({
@@ -208,7 +149,7 @@ class _PRCardState extends ConsumerState<PRCard> {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: ThemeConstants.inputSurface,
         title: Text(title, style: const TextStyle(color: ThemeConstants.textPrimary)),
         content: Text(body, style: const TextStyle(color: ThemeConstants.textSecondary)),
         actions: [
@@ -238,71 +179,68 @@ class _PRCardState extends ConsumerState<PRCard> {
     }
     try {
       final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      // `launchUrl` signals "no handler" by returning false rather than
-      // throwing — which used to become a no-op click. Surface the URL
-      // in a snackbar so the user can copy it manually.
-      if (!launched) {
-        _showSnack('Could not open browser — $htmlUrl');
-      }
+      if (!launched) _showSnack('Could not open browser — $htmlUrl');
     } catch (e) {
       dLog('[PRCard] launchUrl failed: ${e.runtimeType}');
       _showSnack('Could not open browser — $htmlUrl');
     }
   }
 
-  String _badgeText() {
-    if (_merged) return 'merged';
-    final state = _pr?['state'] as String? ?? 'open';
-    return state;
-  }
-
-  Color _badgeColor() => switch (_badgeText()) {
-    'merged' => const Color(0xFF6E40C9),
-    'closed' => ThemeConstants.error,
-    _ => ThemeConstants.success,
-  };
-
   @override
   Widget build(BuildContext context) {
-    if (_pr == null) {
-      return Padding(
-        padding: const EdgeInsets.all(8),
+    final async = ref.watch(_provider);
+
+    return async.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(8),
         child: Row(
           children: [
-            const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5)),
-            const SizedBox(width: 8),
+            SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5)),
+            SizedBox(width: 8),
             Text(
-              _loadError ?? 'Loading PR…',
-              style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+              'Loading PR…',
+              style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
             ),
           ],
         ),
-      );
-    }
+      ),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.all(8),
+        child: Text(
+          _friendlyError(e),
+          style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+        ),
+      ),
+      data: (s) => _buildCard(s),
+    );
+  }
 
-    final title = _pr!['title'] as String? ?? '';
-    final prNum = _pr!['number'] as int? ?? widget.prNumber;
-    final base = (_pr!['base'] as Map<String, dynamic>?)?['ref'] as String? ?? '';
-    final head = (_pr!['head'] as Map<String, dynamic>?)?['ref'] as String? ?? '';
-    final commits = _pr!['commits'] as int? ?? 0;
-    final htmlUrl = _pr!['html_url'] as String? ?? '';
-    final badgeColor = _badgeColor();
+  Widget _buildCard(PrCardState s) {
+    final title = s.pr['title'] as String? ?? '';
+    final prNum = s.pr['number'] as int? ?? widget.prNumber;
+    final base = (s.pr['base'] as Map<String, dynamic>?)?['ref'] as String? ?? '';
+    final head = (s.pr['head'] as Map<String, dynamic>?)?['ref'] as String? ?? '';
+    final commits = s.pr['commits'] as int? ?? 0;
+    final htmlUrl = s.pr['html_url'] as String? ?? '';
+    final badgeText = s.merged ? 'merged' : (s.pr['state'] as String? ?? 'open');
+    final badgeColor = switch (badgeText) {
+      'merged' => ThemeConstants.prMergedColor,
+      'closed' => ThemeConstants.error,
+      _ => ThemeConstants.success,
+    };
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        color: ThemeConstants.inputSurface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: ThemeConstants.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Stale-data banner ─────────────────────────────────────────────
-          // When polling fails after an initial load, surface the reason
-          // above the card so the user knows why CI chips / merge state
-          // may be out of date. Without this the card silently froze.
-          if (_loadError != null) ...[
+          // ── Stale-data banner ──────────────────────────────────────────────
+          if (s.pollError != null) ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
@@ -315,7 +253,27 @@ class _PRCardState extends ConsumerState<PRCard> {
                   const Icon(Icons.warning_amber_rounded, size: 11, color: ThemeConstants.error),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Text(_loadError!, style: const TextStyle(color: ThemeConstants.error, fontSize: 10)),
+                    child: Text(s.pollError!, style: const TextStyle(color: ThemeConstants.error, fontSize: 10)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (s.actionError != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: ThemeConstants.error.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: ThemeConstants.error.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, size: 11, color: ThemeConstants.error),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(s.actionError!, style: const TextStyle(color: ThemeConstants.error, fontSize: 10)),
                   ),
                 ],
               ),
@@ -332,7 +290,7 @@ class _PRCardState extends ConsumerState<PRCard> {
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(color: badgeColor),
                 ),
-                child: Text(_badgeText(), style: TextStyle(color: badgeColor, fontSize: 9)),
+                child: Text(badgeText, style: TextStyle(color: badgeColor, fontSize: 9)),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -356,19 +314,19 @@ class _PRCardState extends ConsumerState<PRCard> {
             '$base ← $head · $commits commit${commits == 1 ? '' : 's'}',
             style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeLabel),
           ),
-          if (_checkRuns.isNotEmpty) ...[
+          if (s.checkRuns.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Wrap(spacing: 4, runSpacing: 4, children: _checkRuns.map(_buildCheckChip).toList()),
+            Wrap(spacing: 4, runSpacing: 4, children: s.checkRuns.map(_buildCheckChip).toList()),
           ],
           const SizedBox(height: 12),
           Row(
             children: [
-              if (!_approved && !_merged)
+              if (!s.approved && !s.merged)
                 TextButton(
                   onPressed: _approve,
                   child: const Text('✓ Approve', style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall)),
                 )
-              else if (_approved && !_merged)
+              else if (s.approved && !s.merged)
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
@@ -377,7 +335,7 @@ class _PRCardState extends ConsumerState<PRCard> {
                   ),
                 ),
               const SizedBox(width: 8),
-              if (!_merged)
+              if (!s.merged)
                 TextButton(
                   onPressed: _merge,
                   child: const Text('Merge ↓', style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall)),
@@ -400,7 +358,7 @@ class _PRCardState extends ConsumerState<PRCard> {
     final (icon, color) = switch (conclusion) {
       'success' => ('✓', ThemeConstants.success),
       'failure' => ('✗', ThemeConstants.error),
-      _ => ('⏳', const Color(0xFFFFAA00)),
+      _ => ('⏳', ThemeConstants.pendingAmber),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

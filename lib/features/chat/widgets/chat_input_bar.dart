@@ -1,20 +1,17 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
-import '../../../core/utils/debug_logger.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../data/models/ai_model.dart';
 import '../../../data/models/project.dart';
-import '../../../features/project_sidebar/project_sidebar_notifier.dart';
-import '../../../services/project/project_service.dart';
-import '../chat_notifier.dart';
+import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
+import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
+import '../notifiers/chat_notifier.dart';
 
 /// Private in-memory store of per-session chat-input drafts.
 ///
@@ -130,14 +127,6 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     }
   }
 
-  /// Resolves the active project for this session. Returns null if no project
-  /// is selected or the project row has not loaded yet.
-  Project? _resolveActiveProject() {
-    final projectId = ref.read(activeProjectIdProvider);
-    final projects = ref.read(projectsProvider).value ?? <Project>[];
-    return projects.firstWhereOrNull((p) => p.id == projectId);
-  }
-
   /// Defense-in-depth check run at send time: the freezed `status` field only
   /// reflects state at the last Drift stream re-emission, so we hit the
   /// filesystem directly here as the source of truth. On any drift between
@@ -148,14 +137,13 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
   ///  - cached `missing` but folder was restored by the user out-of-band →
   ///    allow send + heal back to available
   bool _isProjectAvailable(Project project) {
-    final existsOnDisk = Directory(project.path).existsSync();
+    final existsOnDisk = ref.read(projectSidebarActionsProvider.notifier).projectExistsOnDisk(project.path);
     final cachedAsAvailable = project.status == ProjectStatus.available;
     if (existsOnDisk != cachedAsAvailable) {
+      // The notifier logs its own failures; swallow here so this background
+      // refresh never surfaces as an uncaught exception.
       unawaited(
-        ref
-            .read(projectServiceProvider)
-            .refreshProjectStatus(project.id)
-            .catchError((Object e) => dLog('[ChatInputBar] refresh after stale folder-status check failed: $e')),
+        ref.read(projectSidebarActionsProvider.notifier).refreshProjectStatus(project.id).catchError((Object _) {}),
       );
     }
     return existsOnDisk;
@@ -172,7 +160,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     // The gate defers entirely to the filesystem via `_isProjectAvailable`;
     // `project.status` is only read for rendering (button dim, hint text),
     // never for blocking, because it can be stale in either direction.
-    final project = _resolveActiveProject();
+    final project = ref.read(activeProjectProvider);
     if (project == null) {
       showErrorSnackBar(context, 'No active project.');
       return;
@@ -198,8 +186,6 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
       await ref
           .read(chatMessagesProvider(widget.sessionId).notifier)
           .sendMessage(text, systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty) ? systemPrompt : null);
-    } catch (e) {
-      if (mounted) showErrorSnackBar(context, 'Failed to send message. Please try again.');
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
@@ -237,7 +223,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
       color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
-        side: const BorderSide(color: Color(0xFF333333)),
+        side: const BorderSide(color: ThemeConstants.faintFg),
       ),
       items: items
           .map(
@@ -277,7 +263,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
       color: ThemeConstants.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
-        side: const BorderSide(color: Color(0xFF333333)),
+        side: const BorderSide(color: ThemeConstants.faintFg),
       ),
       items: models
           .map(
@@ -301,13 +287,17 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(chatMessagesProvider(widget.sessionId), (_, next) {
+      if (!_isSending) return;
+      if (next is! AsyncError || !mounted) return;
+      showErrorSnackBar(context, 'Failed to send message. Please try again.');
+    });
+
     final model = ref.watch(selectedModelProvider);
     // Re-render whenever the active project or its status changes so the
     // send button + Enter key disable the moment the folder goes missing
     // (e.g. app-resume refresh, write-button guard, or ApplyService catch).
-    final projectId = ref.watch(activeProjectIdProvider);
-    final projectsAsync = ref.watch(projectsProvider);
-    final project = projectsAsync.value?.firstWhereOrNull((p) => p.id == projectId);
+    final project = ref.watch(activeProjectProvider);
     final isMissing = project?.status == ProjectStatus.missing;
     final canSend = !_isSending && !isMissing;
     return Container(

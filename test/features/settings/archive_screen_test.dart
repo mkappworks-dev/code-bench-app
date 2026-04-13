@@ -3,21 +3,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/models/chat_session.dart';
 import 'package:code_bench_app/data/models/project.dart';
-import 'package:code_bench_app/features/chat/chat_notifier.dart';
-import 'package:code_bench_app/features/project_sidebar/project_sidebar_notifier.dart';
+import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
+import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'package:code_bench_app/features/settings/archive_screen.dart';
+import 'package:code_bench_app/features/settings/notifiers/archive_actions.dart';
+
+class _FakeArchiveActions extends ArchiveActions {
+  final List<String> unarchiveCalls = [];
+
+  @override
+  Future<void> unarchiveSession(String id) async {
+    unarchiveCalls.add(id);
+  }
+}
 
 Widget _buildArchive({
   List<ChatSession> sessions = const [],
   List<Project> projects = const [],
-  void Function(String)? onUnarchive,
+  _FakeArchiveActions? archiveActions,
 }) {
   return ProviderScope(
     overrides: [
       archivedSessionsProvider.overrideWith((ref) => Stream.value(sessions)),
       projectsProvider.overrideWith((ref) => Stream.value(projects)),
+      if (archiveActions != null) archiveActionsProvider.overrideWith(() => archiveActions),
     ],
-    child: MaterialApp(home: ArchiveScreen(onUnarchive: onUnarchive ?? (_) {})),
+    child: const MaterialApp(home: ArchiveScreen()),
   );
 }
 
@@ -45,8 +56,8 @@ void main() {
     expect(find.text('Unarchive'), findsOneWidget);
   });
 
-  testWidgets('Unarchive button calls onUnarchive', (tester) async {
-    String? unarchived;
+  testWidgets('Unarchive button calls archiveActionsProvider.unarchiveSession', (tester) async {
+    final fake = _FakeArchiveActions();
     final session = ChatSession(
       sessionId: 's2',
       title: 'Another chat',
@@ -55,12 +66,12 @@ void main() {
       createdAt: DateTime(2025),
       updatedAt: DateTime(2025),
     );
-    await tester.pumpWidget(_buildArchive(sessions: [session], onUnarchive: (id) => unarchived = id));
+    await tester.pumpWidget(_buildArchive(sessions: [session], archiveActions: fake));
     await tester.pump();
 
     await tester.tap(find.text('Unarchive'));
     await tester.pump();
 
-    expect(unarchived, 's2');
+    expect(fake.unarchiveCalls, contains('s2'));
   });
 }

@@ -4,7 +4,7 @@ part 'onboarding_notifier.g.dart';
 
 // Not keepAlive — scoped to onboarding screen lifetime.
 @riverpod
-class OnboardingController extends _$OnboardingController {
+class OnboardingNotifier extends _$OnboardingNotifier {
   static const int totalSteps = 3;
 
   @override

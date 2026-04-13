@@ -1,8 +1,8 @@
 import 'package:code_bench_app/data/models/chat_message.dart';
 import 'package:code_bench_app/data/models/project.dart';
 import 'package:code_bench_app/data/models/tool_event.dart';
-import 'package:code_bench_app/features/chat/chat_notifier.dart';
-import 'package:code_bench_app/features/project_sidebar/project_sidebar_notifier.dart';
+import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
+import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'package:code_bench_app/shell/widgets/status_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 // it we mount the full StatusBar and override every provider it touches so
 // the real services (SessionService, ProjectService, …) stay out of the test.
 
-class _FakeChatMessages extends ChatMessages {
+class _FakeChatMessages extends ChatMessagesNotifier {
   @override
   Future<List<ChatMessage>> build(String sessionId) async => _initialFor(sessionId);
 }

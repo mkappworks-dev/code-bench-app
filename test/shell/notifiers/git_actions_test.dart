@@ -1,0 +1,163 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:code_bench_app/services/git/git_service.dart';
+import 'package:code_bench_app/shell/notifiers/git_actions.dart';
+import 'package:code_bench_app/shell/notifiers/git_actions_failure.dart';
+
+// ── Fake GitService ────────────────────────────────────────────────────────────
+
+class _FakeGitService extends Fake implements GitService {
+  Object? _commitError;
+  final String _commitSha = 'abc1234';
+
+  Object? _pushError;
+  final String _pushBranch = 'main';
+
+  Object? _pullError;
+  final int _pullCount = 3;
+
+  void throwOnCommit(Object error) => _commitError = error;
+  void throwOnPush(Object error) => _pushError = error;
+  void throwOnPull(Object error) => _pullError = error;
+
+  @override
+  Future<String> commit(String message) async {
+    if (_commitError != null) throw _commitError!;
+    return _commitSha;
+  }
+
+  @override
+  Future<String> push() async {
+    if (_pushError != null) throw _pushError!;
+    return _pushBranch;
+  }
+
+  @override
+  Future<int> pull() async {
+    if (_pullError != null) throw _pullError!;
+    return _pullCount;
+  }
+
+  @override
+  Future<void> initGit() async {}
+
+  @override
+  Future<void> pushToRemote(String remote) async {}
+
+  @override
+  Future<List<GitRemote>> listRemotes() async => [];
+
+  @override
+  Future<String?> currentBranch() async => 'main';
+
+  @override
+  Future<String?> getOriginUrl() async => null;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const _kPath = '/fake/project';
+
+void main() {
+  late _FakeGitService fakeService;
+
+  setUp(() {
+    fakeService = _FakeGitService();
+  });
+
+  ProviderContainer makeContainer() {
+    final c = ProviderContainer(overrides: [gitServiceProvider(_kPath).overrideWithValue(fakeService)]);
+    addTearDown(c.dispose);
+    return c;
+  }
+
+  // ── commit ─────────────────────────────────────────────────────────────────
+
+  group('commit', () {
+    test('happy path — returns sha and state becomes AsyncData', () async {
+      final c = makeContainer();
+      final sha = await c.read(gitActionsProvider.notifier).commit(_kPath, 'init');
+      expect(sha, equals('abc1234'));
+      expect(c.read(gitActionsProvider), isA<AsyncData<void>>());
+    });
+
+    test('GitException → GitActionsGitError', () async {
+      fakeService.throwOnCommit(const GitException('git commit failed'));
+
+      final c = makeContainer();
+      await c.read(gitActionsProvider.notifier).commit(_kPath, 'init');
+      expect(c.read(gitActionsProvider).error, isA<GitActionsGitError>());
+    });
+
+    test('unknown exception → GitActionsUnknownError', () async {
+      fakeService.throwOnCommit(Exception('unexpected'));
+
+      final c = makeContainer();
+      await c.read(gitActionsProvider.notifier).commit(_kPath, 'init');
+      expect(c.read(gitActionsProvider).error, isA<GitActionsUnknownError>());
+    });
+  });
+
+  // ── push ───────────────────────────────────────────────────────────────────
+
+  group('push', () {
+    test('happy path — returns branch and state becomes AsyncData', () async {
+      final c = makeContainer();
+      final branch = await c.read(gitActionsProvider.notifier).push(_kPath);
+      expect(branch, equals('main'));
+      expect(c.read(gitActionsProvider), isA<AsyncData<void>>());
+    });
+
+    test('GitNoUpstreamException → GitActionsNoUpstream', () async {
+      fakeService.throwOnPush(const GitNoUpstreamException('main'));
+
+      final c = makeContainer();
+      await c.read(gitActionsProvider.notifier).push(_kPath);
+      expect(c.read(gitActionsProvider).error, isA<GitActionsNoUpstream>());
+    });
+
+    test('GitAuthException → GitActionsAuthFailed', () async {
+      fakeService.throwOnPush(const GitAuthException());
+
+      final c = makeContainer();
+      await c.read(gitActionsProvider.notifier).push(_kPath);
+      expect(c.read(gitActionsProvider).error, isA<GitActionsAuthFailed>());
+    });
+
+    test('GitException → GitActionsGitError', () async {
+      fakeService.throwOnPush(const GitException('remote rejected'));
+
+      final c = makeContainer();
+      await c.read(gitActionsProvider.notifier).push(_kPath);
+      expect(c.read(gitActionsProvider).error, isA<GitActionsGitError>());
+    });
+  });
+
+  // ── pull ───────────────────────────────────────────────────────────────────
+
+  group('pull', () {
+    test('happy path — returns commit count and state becomes AsyncData', () async {
+      final c = makeContainer();
+      final count = await c.read(gitActionsProvider.notifier).pull(_kPath);
+      expect(count, equals(3));
+      expect(c.read(gitActionsProvider), isA<AsyncData<void>>());
+    });
+
+    test('GitConflictException → GitActionsConflict', () async {
+      fakeService.throwOnPull(const GitConflictException());
+
+      final c = makeContainer();
+      await c.read(gitActionsProvider.notifier).pull(_kPath);
+      expect(c.read(gitActionsProvider).error, isA<GitActionsConflict>());
+    });
+
+    test('GitNoUpstreamException → GitActionsNoUpstream', () async {
+      fakeService.throwOnPull(const GitNoUpstreamException(''));
+
+      final c = makeContainer();
+      await c.read(gitActionsProvider.notifier).pull(_kPath);
+      expect(c.read(gitActionsProvider).error, isA<GitActionsNoUpstream>());
+    });
+  });
+}

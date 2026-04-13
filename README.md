@@ -124,6 +124,56 @@ lib/
 
 ## Architecture
 
+### Dependency rule
+
+The dependency graph is strictly one-directional. Violating it is a build-review blocker:
+
+```
+Widgets / Screens
+      ↓
+  Notifiers   ← only layer widgets may call
+      ↓
+  Services    ← all Dio / DB / Process.run / dart:io live here
+      ↓
+External (REST APIs / SQLite / OS)
+```
+
+Widgets communicate with notifiers only via `ref.watch` / `ref.read(…notifier).method()`. They never reach into a service provider directly. `Process.run`, `dart:io`, and `Dio` are confined to `lib/services/`.
+
+**Command notifiers** (`*Actions`, e.g. `ProjectSidebarActions`, `CodeApplyActions`, `GitActions`) use `void build()` with `keepAlive: true` and expose imperative `Future<void>` methods. They are the bridge between the UI and the service layer.
+
+**Naming conventions:**
+
+| Layer | Rule |
+|---|---|
+| Service class | ends in `Service` (`GitService`, `SessionService`) |
+| Service provider | `@riverpod` function placed before the class it instantiates |
+| Command notifier | ends in `Actions`; `void build()`, `keepAlive: true` |
+| State notifier | ends in `Notifier`; owns `AsyncValue` or value state |
+| Notifier file placement | `*_notifier.dart`, `*_actions.dart`, and `*_failure.dart` all live in `{feature}/notifiers/` |
+
+The Riverpod generator strips the `Notifier` suffix from provider names (`ActiveSessionIdNotifier` → `activeSessionIdProvider`). The `Actions` suffix is kept (`GitActions` → `gitActionsProvider`). Widgets must never call `ref.invalidate` directly — route through a notifier method instead.
+
+### Layered architecture
+
+Code Bench enforces a strict one-way dependency graph:
+
+```
+Widgets / Screens
+      ↓  (ref.watch / ref.read notifier)
+  Notifiers   ← the only layer widgets may reach
+      ↓  (ref.read service)
+  Services    ← Dio, SQLite, Process.run, filesystem
+```
+
+**Widgets** are pure state-renderers. They call notifier methods and listen for `AsyncError` state to show snackbars — they never try/catch business-logic calls or import service exception types.
+
+**Notifiers** mediate all commands. `*Actions` notifiers extend `AsyncNotifier<void>`; failures are emitted as `AsyncError` carrying a typed `sealed class {Notifier}Failure`. `*Notifier` classes own reactive `AsyncValue<T>` data state.
+
+**Services** own all I/O: Dio calls, SQLite queries, `Process.run`, `File` reads. They are instantiated via `@riverpod` / `@Riverpod(keepAlive: true)` providers and never constructed directly in widgets or notifiers.
+
+The full rules — naming conventions, error-handling patterns, logging matrix, security guards — are in [`CLAUDE.md`](CLAUDE.md).
+
 ### State management
 
 | Pattern                                     | Used for                                                                                          |

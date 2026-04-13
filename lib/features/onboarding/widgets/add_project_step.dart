@@ -8,7 +8,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../services/project/git_detector.dart';
-import '../../../services/project/project_service.dart';
+import '../../project_sidebar/notifiers/project_sidebar_actions.dart';
+import '../../project_sidebar/notifiers/project_sidebar_failure.dart';
 
 class AddProjectStep extends ConsumerStatefulWidget {
   const AddProjectStep({super.key, required this.onComplete, required this.onSkip});
@@ -46,22 +47,12 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
     }
 
     final path = detail.files.first.path;
-    String resolved;
     try {
-      // resolveSymbolicLinksSync throws on broken or non-existent paths, which
-      // is the behaviour we want — a dangling symlink must not become a project.
-      resolved = Directory(path).resolveSymbolicLinksSync();
-    } catch (_) {
-      _showDropError('That path could not be opened');
-      return;
+      final resolved = ref.read(projectSidebarActionsProvider.notifier).resolveDroppedDirectory(path);
+      setState(() => _selectedPath = resolved);
+    } on ArgumentError catch (e) {
+      _showDropError(e.message as String);
     }
-
-    if (!FileSystemEntity.isDirectorySync(resolved)) {
-      _showDropError('Please drop a folder, not a file');
-      return;
-    }
-
-    setState(() => _selectedPath = resolved);
   }
 
   void _showDropError(String message) {
@@ -73,11 +64,10 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
     if (_selectedPath == null) return;
     setState(() => _adding = true);
     try {
-      await ref.read(projectServiceProvider).addExistingFolder(_selectedPath!);
-      if (mounted) widget.onComplete();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add project: $e')));
+      await ref.read(projectSidebarActionsProvider.notifier).addExistingFolder(_selectedPath!);
+      if (!mounted) return;
+      if (!ref.read(projectSidebarActionsProvider).hasError) {
+        widget.onComplete();
       }
     } finally {
       if (mounted) setState(() => _adding = false);
@@ -86,6 +76,20 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(projectSidebarActionsProvider, (_, next) {
+      if (!_adding) return;
+      if (next is! AsyncError || !mounted) return;
+      final failure = next.error;
+      final message = switch (failure) {
+        ProjectSidebarDuplicatePath() => 'This project is already added.',
+        ProjectSidebarInvalidPath() => 'Invalid folder path.',
+        ProjectSidebarStorageError() => 'Failed to save project — please try again.',
+        ProjectSidebarUnknownError() => 'Failed to add project — please try again.',
+        _ => 'Failed to add project — please try again.',
+      };
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    });
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

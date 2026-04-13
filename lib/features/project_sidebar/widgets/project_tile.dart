@@ -6,8 +6,8 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/chat_session.dart';
 import '../../../data/models/project.dart';
 import '../../../services/git/git_live_state_provider.dart';
-import '../../../services/session/session_service.dart';
-import '../project_sidebar_notifier.dart';
+import '../notifiers/project_sidebar_actions.dart';
+import '../notifiers/project_sidebar_notifier.dart';
 import 'conversation_tile.dart';
 import 'project_context_menu.dart';
 import 'rename_conversation_dialog.dart';
@@ -55,7 +55,10 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
     // isGitRepo check returns false (no `.git` entry), so it resolves to
     // GitLiveState.notGit without spawning any git processes.
     final liveStateAsync = ref.watch(gitLiveStateProvider(widget.project.path));
-    final liveState = liveStateAsync.value;
+    final liveState = switch (liveStateAsync) {
+      AsyncData(:final value) => value,
+      _ => null,
+    };
     final isActive = widget.project.id == activeProjectId;
     final isGit = !isMissing && (liveState?.isGit ?? false);
 
@@ -177,7 +180,9 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                         if (!context.mounted) return;
                         final newTitle = await RenameConversationDialog.show(context, s.title);
                         if (newTitle != null) {
-                          await ref.read(sessionServiceProvider).updateSessionTitle(s.sessionId, newTitle);
+                          await ref
+                              .read(projectSidebarActionsProvider.notifier)
+                              .updateSessionTitle(s.sessionId, newTitle);
                         }
                       },
                     ),

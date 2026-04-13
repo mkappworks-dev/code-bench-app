@@ -10,7 +10,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/utils/debug_logger.dart';
 import '../../data/models/applied_change.dart';
-import '../../features/chat/chat_notifier.dart';
+import '../../features/chat/notifiers/chat_notifier.dart';
 import '../filesystem/filesystem_service.dart';
 
 part 'apply_service.g.dart';
@@ -48,7 +48,7 @@ ApplyService applyService(Ref ref) {
 class ApplyService {
   ApplyService({
     required FilesystemService fs,
-    required AppliedChanges notifier,
+    required AppliedChangesNotifier notifier,
     String Function()? uuidGen,
     ProcessRunner? processRunner,
   }) : _fs = fs,
@@ -57,7 +57,7 @@ class ApplyService {
        _processRunner = processRunner ?? Process.run;
 
   final FilesystemService _fs;
-  final AppliedChanges _notifier;
+  final AppliedChangesNotifier _notifier;
   final String Function() _uuidGen;
   final ProcessRunner _processRunner;
 
@@ -107,6 +107,51 @@ class ApplyService {
     if (probeReal != rootReal && !probeReal.startsWith(rootRealWithSep)) {
       sLog('[assertWithinProject] symlink escape: "$filePath" → "$probeReal" outside "$rootReal"');
       throw StateError('Path "$filePath" resolves outside project root via a symlink');
+    }
+  }
+
+  /// Reads the current on-disk content of [absolutePath] for diff rendering.
+  ///
+  /// Returns `null` when the file does not yet exist (a new-file apply),
+  /// so callers can render an all-additions diff.
+  ///
+  /// Runs [assertWithinProject] first — propagates [StateError] and
+  /// [ProjectMissingException] unchanged so the caller can show distinct
+  /// UI for each. Logs [FileSystemException] as a triage breadcrumb
+  /// before rethrowing.
+  ///
+  /// This helper exists so widgets that own their diff state (e.g.
+  /// `message_bubble.dart`'s `_loadDiff`) don't need to call `dart:io`
+  /// directly — the path guard + I/O lives in this service.
+  static Future<String?> readOriginalForDiff(String absolutePath, String projectPath) async {
+    assertWithinProject(absolutePath, projectPath);
+    try {
+      return await File(absolutePath).readAsString();
+    } on PathNotFoundException {
+      return null;
+    } on FileSystemException catch (e) {
+      dLog('[ApplyService] readOriginalForDiff failed: ${e.message}');
+      rethrow;
+    }
+  }
+
+  /// Reads raw file content for the conflict-merge view.
+  ///
+  /// Runs [assertWithinProject] first so a poisoned [AppliedChange] row (or a
+  /// future caller passing an attacker-controlled path) cannot read arbitrary
+  /// files outside the project root.
+  ///
+  /// Returns `null` if the file cannot be read — callers render a
+  /// "cannot read" UI and block destructive actions rather than letting a
+  /// fallback string flow into the conflict-merge pane (which would
+  /// clobber the user's real file if they accepted the merge).
+  Future<String?> readFileContent(String filePath, String projectPath) async {
+    assertWithinProject(filePath, projectPath);
+    try {
+      return await File(filePath).readAsString();
+    } on IOException catch (e) {
+      dLog('[ApplyService] readFileContent failed: $e');
+      return null;
     }
   }
 

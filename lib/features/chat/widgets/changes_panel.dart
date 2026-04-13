@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,13 +6,14 @@ import '../../../core/utils/snackbar_helper.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/applied_change.dart';
 import '../../../data/models/project.dart';
-import '../../../features/project_sidebar/project_sidebar_notifier.dart';
+import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../../../services/apply/apply_service.dart';
 import '../../../services/project/git_detector.dart';
-import '../chat_notifier.dart';
+import '../notifiers/chat_notifier.dart';
+import '../notifiers/code_apply_actions.dart';
+import '../notifiers/code_apply_failure.dart';
 import 'conflict_merge_view.dart';
 
 class ChangesPanel extends ConsumerWidget {
@@ -39,8 +38,10 @@ class ChangesPanel extends ConsumerWidget {
     // would fall back to `false` during loading/error and silently degrade
     // the revert mechanism — a destructive mismatch if this gate is wrong.
     final projectId = ref.watch(activeProjectIdProvider);
-    final project = ref.watch(projectsProvider).value?.firstWhereOrNull((proj) => proj.id == projectId);
-    final isGit = project != null ? GitDetector.isGitRepo(project.path) : false;
+    final project = switch (ref.watch(projectsProvider)) {
+      AsyncData(:final value) => value.firstWhereOrNull((proj) => proj.id == projectId),
+      _ => null,
+    };
 
     return Container(
       decoration: const BoxDecoration(
@@ -90,18 +91,7 @@ class ChangesPanel extends ConsumerWidget {
                             ),
                           ),
                         ),
-                        ...entry.value.map(
-                          (change) => _ChangeEntry(
-                            change: change,
-                            project: project,
-                            onRevert: () async {
-                              if (project == null) throw StateError('No active project');
-                              await ref
-                                  .read(applyServiceProvider)
-                                  .revertChange(change: change, isGit: isGit, projectPath: project.path);
-                            },
-                          ),
-                        ),
+                        ...entry.value.map((change) => _ChangeEntry(change: change, project: project)),
                       ];
                     }).toList(),
                   ),
@@ -137,22 +127,23 @@ class ChangesPanel extends ConsumerWidget {
 
 // ── Single change entry ───────────────────────────────────────────────────────
 
-class _ChangeEntry extends StatefulWidget {
-  const _ChangeEntry({required this.change, required this.project, required this.onRevert});
+class _ChangeEntry extends ConsumerStatefulWidget {
+  const _ChangeEntry({required this.change, required this.project});
 
   final AppliedChange change;
   final Project? project;
-  final Future<void> Function() onRevert;
 
   @override
-  State<_ChangeEntry> createState() => _ChangeEntryState();
+  ConsumerState<_ChangeEntry> createState() => _ChangeEntryState();
 }
 
-class _ChangeEntryState extends State<_ChangeEntry> {
+class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
   // Cached once per widget lifecycle so the badge doesn't flicker between
   // rebuilds. The entry is short-lived — it goes away as soon as revert
   // succeeds — so a stale result is acceptable.
   late final Future<bool> _editedFuture;
+
+  bool _reverting = false;
 
   @override
   void initState() {
@@ -164,33 +155,45 @@ class _ChangeEntryState extends State<_ChangeEntry> {
   }
 
   Future<void> _handleRevert() async {
+    final project = widget.project;
+    if (project == null) return;
+
     final isEdited = await _editedFuture;
     if (!mounted) return;
+
     if (!isEdited) {
-      // No conflict — delegate straight to the service-backed revert.
+      // No conflict — revert directly.
+      final isGit = GitDetector.isGitRepo(project.path);
+      setState(() => _reverting = true);
       try {
-        await widget.onRevert();
-      } catch (e, st) {
-        dLog('[revert] error: $e\n$st');
-        if (mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');
+        await ref
+            .read(codeApplyActionsProvider.notifier)
+            .revertChange(change: widget.change, isGit: isGit, projectPath: project.path);
+      } finally {
+        if (mounted) setState(() => _reverting = false);
       }
       return;
     }
 
-    // File was modified out-of-band. Read the current content and show
-    // the three-way merge view so the user can decide.
-    String currentContent;
-    try {
-      currentContent = await File(widget.change.filePath).readAsString();
-    } on FileSystemException catch (e) {
-      dLog('[revert] could not read current content: $e');
-      currentContent = '(file unreadable)';
-    }
+    // File was modified out-of-band — show conflict merge view.
+    final currentContent = await ref
+        .read(codeApplyActionsProvider.notifier)
+        .readFileContent(widget.change.filePath, project.path);
     if (!mounted) return;
+    if (currentContent == null) {
+      // Refuse to open the merge view on an unreadable file — accepting the
+      // merge would overwrite the real file with an empty / placeholder body.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not read current file contents — try again after resolving file access.')),
+      );
+      return;
+    }
+
+    final isGit = GitDetector.isGitRepo(project.path);
     await showDialog<void>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: ThemeConstants.inputSurface,
         title: const Text(
           'File externally modified',
           style: TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
@@ -200,11 +203,13 @@ class _ChangeEntryState extends State<_ChangeEntry> {
           currentContent: currentContent,
           onAcceptRevert: () async {
             Navigator.of(dialogCtx).pop();
+            setState(() => _reverting = true);
             try {
-              await widget.onRevert();
-            } catch (e, st) {
-              dLog('[revert] error after accept: $e\n$st');
-              if (mounted) showErrorSnackBar(context, 'Revert failed. Please try again.');
+              await ref
+                  .read(codeApplyActionsProvider.notifier)
+                  .revertChange(change: widget.change, isGit: isGit, projectPath: project.path);
+            } finally {
+              if (mounted) setState(() => _reverting = false);
             }
           },
           onKeepCurrent: () => Navigator.of(dialogCtx).pop(),
@@ -215,6 +220,20 @@ class _ChangeEntryState extends State<_ChangeEntry> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(codeApplyActionsProvider, (_, next) {
+      if (!_reverting) return; // not our operation
+      if (next is! AsyncError || !mounted) return;
+      final failure = next.error;
+      if (failure is! CodeApplyFailure) return;
+      showErrorSnackBar(context, switch (failure) {
+        CodeApplyProjectMissing() => 'Project folder is missing.',
+        CodeApplyOutsideProject() => 'This file is outside the current project.',
+        CodeApplyDiskWrite(:final message) => 'Could not write file: $message',
+        CodeApplyFileRead(:final path) => 'Could not read file: $path',
+        CodeApplyUnknownError() => 'Revert failed. Please try again.',
+      });
+    });
+
     final change = widget.change;
     final project = widget.project;
     final filename = p.basename(change.filePath);
@@ -258,11 +277,14 @@ class _ChangeEntryState extends State<_ChangeEntry> {
                           margin: const EdgeInsets.only(left: 6),
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF3D2900),
+                            color: ThemeConstants.editedBadgeBg,
                             borderRadius: BorderRadius.circular(3),
-                            border: Border.all(color: const Color(0xFFAA7700)),
+                            border: Border.all(color: ThemeConstants.editedBadgeBorder),
                           ),
-                          child: const Text('edited', style: TextStyle(color: Color(0xFFFFAA00), fontSize: 9)),
+                          child: const Text(
+                            'edited',
+                            style: TextStyle(color: ThemeConstants.pendingAmber, fontSize: 9),
+                          ),
                         );
                       },
                     ),

@@ -72,9 +72,9 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1F2E),
+        color: ThemeConstants.questionCardBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF2A3550)),
+        border: Border.all(color: ThemeConstants.selectionBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -106,7 +106,7 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
               onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
                 hintText: 'Or describe your own approach…',
-                hintStyle: TextStyle(color: Color(0xFF555555), fontSize: 11),
+                hintStyle: TextStyle(color: ThemeConstants.mutedFg, fontSize: 11),
                 isDense: true,
                 border: OutlineInputBorder(),
               ),
@@ -131,7 +131,7 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
               if (!_isLastStep)
                 FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF4A7CFF),
+                    backgroundColor: ThemeConstants.blueAccent,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                   ),
                   onPressed: _canSubmit ? _handleSubmit : null,
@@ -140,7 +140,7 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
               else
                 FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF4A7CFF),
+                    backgroundColor: ThemeConstants.blueAccent,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                   ),
                   onPressed: _canSubmit ? _handleSubmit : null,
@@ -171,11 +171,11 @@ class _StepHeader extends StatelessWidget {
           children: List.generate(totalSteps, (i) {
             Color dotColor;
             if (i < currentStep) {
-              dotColor = const Color(0xFF4A7CFF);
+              dotColor = ThemeConstants.blueAccent;
             } else if (i == currentStep) {
-              dotColor = const Color(0xFF4A7CFF).withValues(alpha: 0.5);
+              dotColor = ThemeConstants.blueAccent.withValues(alpha: 0.5);
             } else {
-              dotColor = const Color(0xFF2A2A2A);
+              dotColor = ThemeConstants.borderColor;
             }
             return Padding(
               padding: EdgeInsets.only(right: i < totalSteps - 1 ? 4 : 0),
@@ -190,11 +190,16 @@ class _StepHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '${currentStep + 1} / $totalSteps',
-          style: const TextStyle(color: Color(0xFF666666), fontSize: 9, letterSpacing: 1, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: ThemeConstants.textMuted,
+            fontSize: 9,
+            letterSpacing: 1,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const Spacer(),
         if (sectionLabel != null)
-          Text(sectionLabel!, style: const TextStyle(color: Color(0xFF888888), fontSize: 9, letterSpacing: 0.5)),
+          Text(sectionLabel!, style: const TextStyle(color: ThemeConstants.dimFg, fontSize: 9, letterSpacing: 0.5)),
       ],
     );
   }
@@ -219,9 +224,9 @@ class _OptionRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1A2540) : const Color(0xFF151515),
+          color: isSelected ? ThemeConstants.selectionBg : ThemeConstants.background,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: isSelected ? const Color(0xFF4A7CFF) : const Color(0xFF2A2A2A)),
+          border: Border.all(color: isSelected ? ThemeConstants.blueAccent : ThemeConstants.borderColor),
         ),
         child: Row(
           children: [
@@ -229,14 +234,14 @@ class _OptionRow extends StatelessWidget {
               width: 20,
               height: 20,
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF4A7CFF) : const Color(0xFF2A2A2A),
+                color: isSelected ? ThemeConstants.blueAccent : ThemeConstants.borderColor,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Center(
                 child: Text(
                   '${index + 1}',
                   style: TextStyle(
-                    color: isSelected ? Colors.white : const Color(0xFF888888),
+                    color: isSelected ? Colors.white : ThemeConstants.dimFg,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),

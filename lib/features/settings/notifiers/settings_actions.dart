@@ -1,0 +1,112 @@
+import 'dart:async';
+
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../../../core/utils/debug_logger.dart';
+import '../../../core/errors/app_exception.dart';
+import '../../../data/models/ai_model.dart';
+import '../../../services/ai/ai_service_factory.dart';
+import '../../../services/ai/api_key_test_service.dart';
+import '../../../services/project/project_service.dart';
+import '../../../services/session/session_service.dart';
+import '../../../services/settings/settings_service.dart';
+import 'settings_actions_failure.dart';
+
+part 'settings_actions.g.dart';
+
+/// Imperative actions that don't own observable state: wipe all data,
+/// save a single API key, mark onboarding complete.
+@Riverpod(keepAlive: true)
+class SettingsActions extends _$SettingsActions {
+  @override
+  FutureOr<void> build() {}
+
+  SettingsActionsFailure _asFailure(Object e, String providerName) => switch (e) {
+    StorageException() => SettingsActionsFailure.storageFailed(providerName),
+    _ => SettingsActionsFailure.unknown(e),
+  };
+
+  /// Returns `true` when [key] is valid for [provider]. Never throws —
+  /// returns `false` on any exception so the UI can show an inline error
+  /// without crashing.
+  Future<bool> testApiKey(AIProvider provider, String key) async {
+    try {
+      return await ref.read(apiKeyTestServiceProvider).testApiKey(provider, key);
+    } catch (e, st) {
+      dLog('[SettingsActions] testApiKey failed: $e\n$st');
+      return false;
+    }
+  }
+
+  Future<bool> testOllamaUrl(String url) => ref.read(apiKeyTestServiceProvider).testOllamaUrl(url);
+
+  /// Persists [key] for [provider]. Emits [SettingsStorageFailed] on error.
+  Future<void> saveApiKey(String provider, String key) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await ref.read(settingsServiceProvider).writeApiKey(provider, key);
+      } catch (e, st) {
+        dLog('[SettingsActions] saveApiKey failed: $e');
+        Error.throwWithStackTrace(_asFailure(e, provider), st);
+      }
+    });
+  }
+
+  Future<void> markOnboardingCompleted() async {
+    try {
+      await ref.read(settingsServiceProvider).markOnboardingCompleted();
+    } catch (e, st) {
+      dLog('[SettingsActions] markOnboardingCompleted failed: $e\n$st');
+      rethrow;
+    }
+  }
+
+  Future<void> replayOnboarding() => ref.read(settingsServiceProvider).resetOnboarding();
+
+  /// Wipes all user data in sequence. Returns a list of step names that
+  /// failed (empty means full success). Each step is isolated so a keychain
+  /// failure doesn't block the DB wipe.
+  Future<List<String>> wipeAllData() async {
+    final failures = <String>[];
+
+    try {
+      await ref.read(settingsServiceProvider).deleteAllSecureStorage();
+    } catch (e, st) {
+      _logWipeFailure('secure storage', e, st);
+      failures.add('secure storage');
+    }
+
+    try {
+      await ref.read(sessionServiceProvider).deleteAllSessionsAndMessages();
+    } catch (e, st) {
+      _logWipeFailure('chat history', e, st);
+      failures.add('chat history');
+    }
+
+    try {
+      await ref.read(projectServiceProvider).deleteAllProjects();
+    } catch (e, st) {
+      _logWipeFailure('projects', e, st);
+      failures.add('projects');
+    }
+
+    try {
+      await ref.read(settingsServiceProvider).resetOnboarding();
+    } catch (e, st) {
+      _logWipeFailure('onboarding flag', e, st);
+      failures.add('onboarding flag');
+    }
+
+    ref.invalidate(aiServiceProvider);
+    return failures;
+  }
+
+  void _logWipeFailure(String step, Object e, StackTrace st) {
+    if (e is AppException && e.originalError != null) {
+      dLog('[SettingsActions] wipe $step failed: ${e.message} (cause: ${e.originalError})\n$st');
+    } else {
+      dLog('[SettingsActions] wipe $step failed: $e\n$st');
+    }
+  }
+}

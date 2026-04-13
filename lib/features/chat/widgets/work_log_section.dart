@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/models/tool_event.dart';
-import '../chat_notifier.dart';
+import '../notifiers/chat_notifier.dart';
 
 /// Collapsible in-message tool-call log.
 ///
@@ -97,7 +97,7 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
                   const SizedBox(
                     width: 10,
                     height: 10,
-                    child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF4A7CFF)),
+                    child: CircularProgressIndicator(strokeWidth: 1.5, color: ThemeConstants.blueAccent),
                   )
                 else
                   const Icon(Icons.check_circle, size: 11, color: Colors.green),
@@ -128,7 +128,7 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF111111),
+              color: ThemeConstants.sidebarBackground,
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: ThemeConstants.borderColor),
             ),
@@ -142,10 +142,10 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
                   ToolStatus.cancelled => '⊘',
                 };
                 final Color iconColor = switch (entry.status) {
-                  ToolStatus.running => const Color(0xFF4A7CFF),
+                  ToolStatus.running => ThemeConstants.blueAccent,
                   ToolStatus.success => Colors.green,
                   ToolStatus.error => Colors.red,
-                  ToolStatus.cancelled => const Color(0xFF888888),
+                  ToolStatus.cancelled => ThemeConstants.dimFg,
                 };
                 final arg =
                     entry.filePath ??

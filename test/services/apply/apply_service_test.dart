@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:code_bench_app/data/models/applied_change.dart';
-import 'package:code_bench_app/features/chat/chat_notifier.dart';
+import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
 import 'package:code_bench_app/services/filesystem/filesystem_service.dart';
 

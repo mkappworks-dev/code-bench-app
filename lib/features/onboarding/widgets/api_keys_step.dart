@@ -1,11 +1,10 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/instant_menu.dart';
-import '../../../data/datasources/local/secure_storage_source.dart';
 import '../../../data/models/ai_model.dart';
+import '../../settings/notifiers/settings_actions.dart';
 
 class ApiKeysStep extends ConsumerStatefulWidget {
   const ApiKeysStep({super.key, required this.onContinue, required this.onSkip});
@@ -81,22 +80,9 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
     if (key.isEmpty) return;
     setState(() => _testing[provider] = true);
     try {
-      bool success = false;
-      switch (provider) {
-        case AIProvider.openai:
-          success = await _testOpenAI(key);
-        case AIProvider.anthropic:
-          success = await _testAnthropic(key);
-        case AIProvider.gemini:
-          success = await _testGemini(key);
-        default:
-          success = false;
-      }
+      final success = await ref.read(settingsActionsProvider.notifier).testApiKey(provider, key);
       if (!mounted) return;
       setState(() => _testResults[provider] = success);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _testResults[provider] = false);
     } finally {
       // Guard the finally as well: tests have a 10s connect timeout, so the
       // user can easily hit Skip and unmount the widget before the await
@@ -106,107 +92,38 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
     }
   }
 
-  Future<bool> _testOpenAI(String key) async {
-    try {
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: 'https://api.openai.com/v1',
-          connectTimeout: const Duration(seconds: 10),
-          headers: {'Authorization': 'Bearer $key'},
-        ),
-      );
-      await dio.get('/models');
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<bool> _testAnthropic(String key) async {
-    try {
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: 'https://api.anthropic.com/v1',
-          connectTimeout: const Duration(seconds: 10),
-          headers: {'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
-        ),
-      );
-      await dio.post(
-        '/messages',
-        data: {
-          'model': 'claude-3-haiku-20240307',
-          'max_tokens': 1,
-          'messages': [
-            {'role': 'user', 'content': 'hi'},
-          ],
-        },
-      );
-      return true;
-    } on DioException catch (e) {
-      // Inspect the typed status code rather than searching e.toString() for
-      // "400" — a URL fragment or unrelated error message containing "400"
-      // would otherwise flip a broken key to "valid".
-      //   400 → key accepted, request body rejected → key is valid
-      //   401/403 → key rejected → key is invalid
-      //   anything else (timeout, 5xx, no response) → can't verify → invalid
-      return e.response?.statusCode == 400;
-    }
-  }
-
-  Future<bool> _testGemini(String key) async {
-    try {
-      // SECURITY: Send the key via the `x-goog-api-key` header, NOT as a
-      // query-string parameter. Query strings get logged by reverse proxies,
-      // CDN edges, and — most importantly — Dio's own DioException.toString()
-      // includes the request URL, which would leak the key if anything ever
-      // prints the exception. See macos/Runner/README.md threat model.
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-          connectTimeout: const Duration(seconds: 10),
-          headers: {'x-goog-api-key': key},
-        ),
-      );
-      await dio.get('/models');
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
   Future<void> _saveAll() async {
     setState(() => _saving = true);
-    AIProvider? failedProvider;
+    var allSaved = true;
     try {
-      final storage = ref.read(secureStorageSourceProvider);
+      final actions = ref.read(settingsActionsProvider.notifier);
       for (final entry in _controllers.entries) {
         final key = entry.value.text.trim();
         if (key.isEmpty) continue;
-        failedProvider = entry.key;
-        await storage.writeApiKey(entry.key.name, key);
-        failedProvider = null;
+        await actions.saveApiKey(entry.key.name, key);
+        if (!mounted) return;
+        if (ref.read(settingsActionsProvider).hasError) {
+          allSaved = false;
+          break;
+        }
       }
-    } catch (_) {
-      // Keychain failure (locked, denied, quota, corruption). Do NOT interpolate
-      // the exception into user-visible text — it may contain the key material
-      // or request context. Name the provider so the user knows which key to
-      // retry, and leave any earlier successful writes in place.
-      if (mounted) {
-        final providerName = failedProvider?.name ?? 'provider';
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to save $providerName API key — please try again')));
-        setState(() => _saving = false);
-      }
-      return;
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
     if (!mounted) return;
-    setState(() => _saving = false);
-    widget.onContinue();
+    if (allSaved) widget.onContinue();
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(settingsActionsProvider, (_, next) {
+      if (!_saving) return;
+      if (next is! AsyncError || !mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to save API key — please try again')));
+    });
+
     final allAdded = _addedProviders.length == AIProvider.values.length;
 
     return Column(

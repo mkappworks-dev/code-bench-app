@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/project.dart';
-import '../../../services/project/project_service.dart';
-import '../../../services/session/session_service.dart';
+import '../notifiers/project_sidebar_actions.dart';
+import '../notifiers/project_sidebar_failure.dart';
 
 class RemoveProjectDialog extends ConsumerStatefulWidget {
   const RemoveProjectDialog({super.key, required this.project});
@@ -36,51 +35,44 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
   }
 
   Future<void> _loadSessionCount() async {
-    try {
-      final sessions = await ref.read(sessionServiceProvider).watchSessionsByProject(widget.project.id).first;
-      if (!mounted) return;
-      setState(() {
-        _sessionCount = sessions.length;
-        _sessionCountLoaded = true;
-      });
-    } catch (e) {
-      dLog('[RemoveProjectDialog] loadSessionCount failed: $e');
-      if (!mounted) return;
-      // Mark loaded so the dialog remains usable. Sessions are not deleted
-      // without an explicit checkbox, so this is safe — the user just won't
-      // see the cascade-delete option if the count query failed.
-      setState(() {
-        _sessionCount = 0;
-        _sessionCountLoaded = true;
-      });
-    }
+    final count = await ref.read(projectSidebarActionsProvider.notifier).fetchSessionCount(widget.project.id);
+    if (!mounted) return;
+    setState(() {
+      _sessionCount = count;
+      _sessionCountLoaded = true;
+    });
   }
 
   Future<void> _submit() async {
     setState(() => _submitting = true);
     try {
-      if (_alsoDeleteSessions) {
-        final sessions = await ref.read(sessionServiceProvider).watchSessionsByProject(widget.project.id).first;
-        for (final s in sessions) {
-          await ref.read(sessionServiceProvider).deleteSession(s.sessionId);
-        }
+      await ref
+          .read(projectSidebarActionsProvider.notifier)
+          .removeProject(widget.project.id, deleteSessions: _alsoDeleteSessions);
+      if (!mounted) return;
+      if (!ref.read(projectSidebarActionsProvider).hasError) {
+        Navigator.of(context).pop(true);
       }
-      await ref.read(projectServiceProvider).removeProject(widget.project.id);
-      if (mounted) Navigator.of(context).pop(true);
-    } catch (e, st) {
-      dLog('[RemoveProjectDialog] remove failed: $e\n$st');
-      if (mounted) {
-        setState(() => _submitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to remove project: $e')));
-      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(projectSidebarActionsProvider, (_, next) {
+      if (!_submitting) return;
+      if (next is! AsyncError || !mounted) return;
+      final failure = next.error;
+      if (failure is! ProjectSidebarFailure) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to remove project — please try again.')));
+    });
+
     final isMissing = widget.project.status == ProjectStatus.missing;
     return AlertDialog(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: ThemeConstants.panelBackground,
       title: Text(
         'Remove "${widget.project.name}"?',
         style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 14),

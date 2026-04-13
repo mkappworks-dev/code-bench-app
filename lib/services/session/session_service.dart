@@ -81,6 +81,13 @@ class SessionService {
     await _db.sessionDao.unarchiveSession(sessionId);
   }
 
+  /// One-shot fetch of all non-archived sessions for [projectId].
+  Future<List<session_model.ChatSession>> getSessionsByProject(String projectId) =>
+      watchSessionsByProject(projectId).first;
+
+  /// Deletes every session and message row. Used by the "Wipe all data" action.
+  Future<void> deleteAllSessionsAndMessages() => _db.sessionDao.deleteAllSessionsAndMessages();
+
   // ── Messages ───────────────────────────────────────────────────────────────
 
   Future<List<msg_model.ChatMessage>> loadHistory(String sessionId, {int limit = 50, int offset = 0}) async {

@@ -11,6 +11,11 @@ part of 'git_live_state_provider.dart';
 /// Live git state for [projectPath]. Covers cheap, local-only operations.
 /// Refresh triggers: window focus (via [AppLifecycleObserver]) and after
 /// every in-app git mutation (commit, push, pull, checkout, init-git).
+///
+/// Probe failures are surfaced as `null` fields in [GitLiveState] — **not**
+/// as falsy defaults — so the UI never silently dims a button when git
+/// actually crashed. Every `null` is also logged via `sLog` so the cause is
+/// attributable from the platform log.
 
 @ProviderFor(gitLiveState)
 final gitLiveStateProvider = GitLiveStateFamily._();
@@ -18,6 +23,11 @@ final gitLiveStateProvider = GitLiveStateFamily._();
 /// Live git state for [projectPath]. Covers cheap, local-only operations.
 /// Refresh triggers: window focus (via [AppLifecycleObserver]) and after
 /// every in-app git mutation (commit, push, pull, checkout, init-git).
+///
+/// Probe failures are surfaced as `null` fields in [GitLiveState] — **not**
+/// as falsy defaults — so the UI never silently dims a button when git
+/// actually crashed. Every `null` is also logged via `sLog` so the cause is
+/// attributable from the platform log.
 
 final class GitLiveStateProvider
     extends $FunctionalProvider<AsyncValue<GitLiveState>, GitLiveState, FutureOr<GitLiveState>>
@@ -25,6 +35,11 @@ final class GitLiveStateProvider
   /// Live git state for [projectPath]. Covers cheap, local-only operations.
   /// Refresh triggers: window focus (via [AppLifecycleObserver]) and after
   /// every in-app git mutation (commit, push, pull, checkout, init-git).
+  ///
+  /// Probe failures are surfaced as `null` fields in [GitLiveState] — **not**
+  /// as falsy defaults — so the UI never silently dims a button when git
+  /// actually crashed. Every `null` is also logged via `sLog` so the cause is
+  /// attributable from the platform log.
   GitLiveStateProvider._({required GitLiveStateFamily super.from, required String super.argument})
     : super(
         retry: null,
@@ -65,11 +80,16 @@ final class GitLiveStateProvider
   }
 }
 
-String _$gitLiveStateHash() => r'4c14b4dba17cf708cf0a9935289cb459b413b662';
+String _$gitLiveStateHash() => r'203ced2c9ed852eb652396c29485a1a50cd81613';
 
 /// Live git state for [projectPath]. Covers cheap, local-only operations.
 /// Refresh triggers: window focus (via [AppLifecycleObserver]) and after
 /// every in-app git mutation (commit, push, pull, checkout, init-git).
+///
+/// Probe failures are surfaced as `null` fields in [GitLiveState] — **not**
+/// as falsy defaults — so the UI never silently dims a button when git
+/// actually crashed. Every `null` is also logged via `sLog` so the cause is
+/// attributable from the platform log.
 
 final class GitLiveStateFamily extends $Family with $FunctionalFamilyOverride<FutureOr<GitLiveState>, String> {
   GitLiveStateFamily._()
@@ -84,6 +104,11 @@ final class GitLiveStateFamily extends $Family with $FunctionalFamilyOverride<Fu
   /// Live git state for [projectPath]. Covers cheap, local-only operations.
   /// Refresh triggers: window focus (via [AppLifecycleObserver]) and after
   /// every in-app git mutation (commit, push, pull, checkout, init-git).
+  ///
+  /// Probe failures are surfaced as `null` fields in [GitLiveState] — **not**
+  /// as falsy defaults — so the UI never silently dims a button when git
+  /// actually crashed. Every `null` is also logged via `sLog` so the cause is
+  /// attributable from the platform log.
 
   GitLiveStateProvider call(String projectPath) => GitLiveStateProvider._(argument: projectPath, from: this);
 
@@ -93,17 +118,26 @@ final class GitLiveStateFamily extends $Family with $FunctionalFamilyOverride<Fu
 
 /// Behind count for [projectPath]. Runs `git fetch` — network call.
 /// Refreshes on a 5-minute timer and after post-push/pull mutations.
+///
+/// The `isGitRepo` gate sits **above** the timer setup so non-git projects
+/// don't pay for a perpetual self-invalidating timer.
 
 @ProviderFor(behindCount)
 final behindCountProvider = BehindCountFamily._();
 
 /// Behind count for [projectPath]. Runs `git fetch` — network call.
 /// Refreshes on a 5-minute timer and after post-push/pull mutations.
+///
+/// The `isGitRepo` gate sits **above** the timer setup so non-git projects
+/// don't pay for a perpetual self-invalidating timer.
 
 final class BehindCountProvider extends $FunctionalProvider<AsyncValue<int?>, int?, FutureOr<int?>>
     with $FutureModifier<int?>, $FutureProvider<int?> {
   /// Behind count for [projectPath]. Runs `git fetch` — network call.
   /// Refreshes on a 5-minute timer and after post-push/pull mutations.
+  ///
+  /// The `isGitRepo` gate sits **above** the timer setup so non-git projects
+  /// don't pay for a perpetual self-invalidating timer.
   BehindCountProvider._({required BehindCountFamily super.from, required String super.argument})
     : super(
         retry: null,
@@ -144,10 +178,13 @@ final class BehindCountProvider extends $FunctionalProvider<AsyncValue<int?>, in
   }
 }
 
-String _$behindCountHash() => r'b10b49920b2b18a3a86544d52b9f803831926d41';
+String _$behindCountHash() => r'9d298d457c9c3d7d3e15c83c78f73a140e0957aa';
 
 /// Behind count for [projectPath]. Runs `git fetch` — network call.
 /// Refreshes on a 5-minute timer and after post-push/pull mutations.
+///
+/// The `isGitRepo` gate sits **above** the timer setup so non-git projects
+/// don't pay for a perpetual self-invalidating timer.
 
 final class BehindCountFamily extends $Family with $FunctionalFamilyOverride<FutureOr<int?>, String> {
   BehindCountFamily._()
@@ -161,6 +198,9 @@ final class BehindCountFamily extends $Family with $FunctionalFamilyOverride<Fut
 
   /// Behind count for [projectPath]. Runs `git fetch` — network call.
   /// Refreshes on a 5-minute timer and after post-push/pull mutations.
+  ///
+  /// The `isGitRepo` gate sits **above** the timer setup so non-git projects
+  /// don't pay for a perpetual self-invalidating timer.
 
   BehindCountProvider call(String projectPath) => BehindCountProvider._(argument: projectPath, from: this);
 

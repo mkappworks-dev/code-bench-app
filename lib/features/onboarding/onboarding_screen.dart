@@ -5,8 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/theme_constants.dart';
-import '../../core/utils/debug_logger.dart';
-import '../../data/datasources/local/onboarding_preferences.dart';
+import '../settings/notifiers/settings_actions.dart';
 import 'notifiers/onboarding_notifier.dart';
 import 'widgets/step_progress_indicator.dart';
 import 'widgets/api_keys_step.dart';
@@ -26,7 +25,7 @@ class OnboardingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final step = ref.watch(onboardingControllerProvider);
+    final step = ref.watch(onboardingProvider);
 
     return Scaffold(
       backgroundColor: ThemeConstants.background,
@@ -81,7 +80,9 @@ class _BrandingPanel extends StatelessWidget {
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(8),
-                    boxShadow: const [BoxShadow(color: Color(0x99000000), blurRadius: 10, offset: Offset(0, 2))],
+                    boxShadow: const [
+                      BoxShadow(color: ThemeConstants.shadowDark, blurRadius: 10, offset: Offset(0, 2)),
+                    ],
                   ),
                   alignment: Alignment.center,
                   child: const Text(
@@ -139,9 +140,8 @@ class _ContentPanel extends ConsumerWidget {
   /// Callers can safely fire-and-forget this future.
   Future<void> _finish(BuildContext context, WidgetRef ref) async {
     try {
-      await ref.read(onboardingPreferencesProvider).markCompleted();
-    } catch (e, st) {
-      dLog('[OnboardingScreen] markCompleted failed: $e\n$st');
+      await ref.read(settingsActionsProvider.notifier).markOnboardingCompleted();
+    } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Could not save onboarding progress — you may see this screen again')),
@@ -152,8 +152,8 @@ class _ContentPanel extends ConsumerWidget {
   }
 
   void _next(BuildContext context, WidgetRef ref) {
-    final controller = ref.read(onboardingControllerProvider.notifier);
-    if (step < OnboardingController.totalSteps - 1) {
+    final controller = ref.read(onboardingProvider.notifier);
+    if (step < OnboardingNotifier.totalSteps - 1) {
       controller.next();
     } else {
       // `_finish` catches its own errors and navigates on every path, so
@@ -177,9 +177,9 @@ class _ContentPanel extends ConsumerWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
-                onPressed: () => ref.read(onboardingControllerProvider.notifier).back(),
-                icon: const Icon(Icons.chevron_left, size: 16, color: Color(0xFF888888)),
-                label: const Text('Back', style: TextStyle(color: Color(0xFF888888), fontSize: 12)),
+                onPressed: () => ref.read(onboardingProvider.notifier).back(),
+                icon: const Icon(Icons.chevron_left, size: 16, color: ThemeConstants.dimFg),
+                label: const Text('Back', style: TextStyle(color: ThemeConstants.dimFg, fontSize: 12)),
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,
@@ -192,7 +192,7 @@ class _ContentPanel extends ConsumerWidget {
           const SizedBox(height: 16),
           StepProgressIndicator(
             currentStep: step,
-            totalSteps: OnboardingController.totalSteps,
+            totalSteps: OnboardingNotifier.totalSteps,
             stepTitle: stepTitles[step],
             stepSubtitle: stepSubtitles[step],
           ),
