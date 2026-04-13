@@ -147,8 +147,6 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
           showErrorSnackBar(context, 'Could not write file to disk: $message');
         case CodeApplyTooLarge(:final bytes):
           showErrorSnackBar(context, 'Content too large to apply ($bytes bytes).');
-        case CodeApplyFileRead(:final path):
-          showErrorSnackBar(context, 'Could not read file: $path');
         case CodeApplyUnknownError():
           showErrorSnackBar(context, 'Unable to apply change.');
       }

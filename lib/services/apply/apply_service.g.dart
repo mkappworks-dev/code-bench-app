@@ -43,4 +43,4 @@ final class ApplyServiceProvider extends $FunctionalProvider<ApplyService, Apply
   }
 }
 
-String _$applyServiceHash() => r'b9badaf7d39768832b65b35ffba37f05659c331a';
+String _$applyServiceHash() => r'f16c22401ad81ba54499e2584a04e71f7d29e801';

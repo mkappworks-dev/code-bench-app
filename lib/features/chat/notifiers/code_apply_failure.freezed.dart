@@ -55,15 +55,14 @@ extension CodeApplyFailurePatterns on CodeApplyFailure {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( CodeApplyProjectMissing value)?  projectMissing,TResult Function( CodeApplyOutsideProject value)?  outsideProject,TResult Function( CodeApplyTooLarge value)?  tooLarge,TResult Function( CodeApplyDiskWrite value)?  diskWrite,TResult Function( CodeApplyFileRead value)?  fileRead,TResult Function( CodeApplyUnknownError value)?  unknown,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( CodeApplyProjectMissing value)?  projectMissing,TResult Function( CodeApplyOutsideProject value)?  outsideProject,TResult Function( CodeApplyTooLarge value)?  tooLarge,TResult Function( CodeApplyDiskWrite value)?  diskWrite,TResult Function( CodeApplyUnknownError value)?  unknown,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case CodeApplyProjectMissing() when projectMissing != null:
 return projectMissing(_that);case CodeApplyOutsideProject() when outsideProject != null:
 return outsideProject(_that);case CodeApplyTooLarge() when tooLarge != null:
 return tooLarge(_that);case CodeApplyDiskWrite() when diskWrite != null:
-return diskWrite(_that);case CodeApplyFileRead() when fileRead != null:
-return fileRead(_that);case CodeApplyUnknownError() when unknown != null:
+return diskWrite(_that);case CodeApplyUnknownError() when unknown != null:
 return unknown(_that);case _:
   return orElse();
 
@@ -82,15 +81,14 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( CodeApplyProjectMissing value)  projectMissing,required TResult Function( CodeApplyOutsideProject value)  outsideProject,required TResult Function( CodeApplyTooLarge value)  tooLarge,required TResult Function( CodeApplyDiskWrite value)  diskWrite,required TResult Function( CodeApplyFileRead value)  fileRead,required TResult Function( CodeApplyUnknownError value)  unknown,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( CodeApplyProjectMissing value)  projectMissing,required TResult Function( CodeApplyOutsideProject value)  outsideProject,required TResult Function( CodeApplyTooLarge value)  tooLarge,required TResult Function( CodeApplyDiskWrite value)  diskWrite,required TResult Function( CodeApplyUnknownError value)  unknown,}){
 final _that = this;
 switch (_that) {
 case CodeApplyProjectMissing():
 return projectMissing(_that);case CodeApplyOutsideProject():
 return outsideProject(_that);case CodeApplyTooLarge():
 return tooLarge(_that);case CodeApplyDiskWrite():
-return diskWrite(_that);case CodeApplyFileRead():
-return fileRead(_that);case CodeApplyUnknownError():
+return diskWrite(_that);case CodeApplyUnknownError():
 return unknown(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -105,15 +103,14 @@ return unknown(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( CodeApplyProjectMissing value)?  projectMissing,TResult? Function( CodeApplyOutsideProject value)?  outsideProject,TResult? Function( CodeApplyTooLarge value)?  tooLarge,TResult? Function( CodeApplyDiskWrite value)?  diskWrite,TResult? Function( CodeApplyFileRead value)?  fileRead,TResult? Function( CodeApplyUnknownError value)?  unknown,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( CodeApplyProjectMissing value)?  projectMissing,TResult? Function( CodeApplyOutsideProject value)?  outsideProject,TResult? Function( CodeApplyTooLarge value)?  tooLarge,TResult? Function( CodeApplyDiskWrite value)?  diskWrite,TResult? Function( CodeApplyUnknownError value)?  unknown,}){
 final _that = this;
 switch (_that) {
 case CodeApplyProjectMissing() when projectMissing != null:
 return projectMissing(_that);case CodeApplyOutsideProject() when outsideProject != null:
 return outsideProject(_that);case CodeApplyTooLarge() when tooLarge != null:
 return tooLarge(_that);case CodeApplyDiskWrite() when diskWrite != null:
-return diskWrite(_that);case CodeApplyFileRead() when fileRead != null:
-return fileRead(_that);case CodeApplyUnknownError() when unknown != null:
+return diskWrite(_that);case CodeApplyUnknownError() when unknown != null:
 return unknown(_that);case _:
   return null;
 
@@ -131,14 +128,13 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  projectMissing,TResult Function()?  outsideProject,TResult Function( int bytes)?  tooLarge,TResult Function( String message)?  diskWrite,TResult Function( String path)?  fileRead,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  projectMissing,TResult Function()?  outsideProject,TResult Function( int bytes)?  tooLarge,TResult Function( String message)?  diskWrite,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case CodeApplyProjectMissing() when projectMissing != null:
 return projectMissing();case CodeApplyOutsideProject() when outsideProject != null:
 return outsideProject();case CodeApplyTooLarge() when tooLarge != null:
 return tooLarge(_that.bytes);case CodeApplyDiskWrite() when diskWrite != null:
-return diskWrite(_that.message);case CodeApplyFileRead() when fileRead != null:
-return fileRead(_that.path);case CodeApplyUnknownError() when unknown != null:
+return diskWrite(_that.message);case CodeApplyUnknownError() when unknown != null:
 return unknown(_that.error);case _:
   return orElse();
 
@@ -157,14 +153,13 @@ return unknown(_that.error);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  projectMissing,required TResult Function()  outsideProject,required TResult Function( int bytes)  tooLarge,required TResult Function( String message)  diskWrite,required TResult Function( String path)  fileRead,required TResult Function( Object error)  unknown,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  projectMissing,required TResult Function()  outsideProject,required TResult Function( int bytes)  tooLarge,required TResult Function( String message)  diskWrite,required TResult Function( Object error)  unknown,}) {final _that = this;
 switch (_that) {
 case CodeApplyProjectMissing():
 return projectMissing();case CodeApplyOutsideProject():
 return outsideProject();case CodeApplyTooLarge():
 return tooLarge(_that.bytes);case CodeApplyDiskWrite():
-return diskWrite(_that.message);case CodeApplyFileRead():
-return fileRead(_that.path);case CodeApplyUnknownError():
+return diskWrite(_that.message);case CodeApplyUnknownError():
 return unknown(_that.error);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -179,14 +174,13 @@ return unknown(_that.error);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  projectMissing,TResult? Function()?  outsideProject,TResult? Function( int bytes)?  tooLarge,TResult? Function( String message)?  diskWrite,TResult? Function( String path)?  fileRead,TResult? Function( Object error)?  unknown,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  projectMissing,TResult? Function()?  outsideProject,TResult? Function( int bytes)?  tooLarge,TResult? Function( String message)?  diskWrite,TResult? Function( Object error)?  unknown,}) {final _that = this;
 switch (_that) {
 case CodeApplyProjectMissing() when projectMissing != null:
 return projectMissing();case CodeApplyOutsideProject() when outsideProject != null:
 return outsideProject();case CodeApplyTooLarge() when tooLarge != null:
 return tooLarge(_that.bytes);case CodeApplyDiskWrite() when diskWrite != null:
-return diskWrite(_that.message);case CodeApplyFileRead() when fileRead != null:
-return fileRead(_that.path);case CodeApplyUnknownError() when unknown != null:
+return diskWrite(_that.message);case CodeApplyUnknownError() when unknown != null:
 return unknown(_that.error);case _:
   return null;
 
@@ -384,72 +378,6 @@ class _$CodeApplyDiskWriteCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
   return _then(CodeApplyDiskWrite(
 null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String,
-  ));
-}
-
-
-}
-
-/// @nodoc
-
-
-class CodeApplyFileRead implements CodeApplyFailure {
-  const CodeApplyFileRead(this.path);
-  
-
- final  String path;
-
-/// Create a copy of CodeApplyFailure
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$CodeApplyFileReadCopyWith<CodeApplyFileRead> get copyWith => _$CodeApplyFileReadCopyWithImpl<CodeApplyFileRead>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CodeApplyFileRead&&(identical(other.path, path) || other.path == path));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,path);
-
-@override
-String toString() {
-  return 'CodeApplyFailure.fileRead(path: $path)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $CodeApplyFileReadCopyWith<$Res> implements $CodeApplyFailureCopyWith<$Res> {
-  factory $CodeApplyFileReadCopyWith(CodeApplyFileRead value, $Res Function(CodeApplyFileRead) _then) = _$CodeApplyFileReadCopyWithImpl;
-@useResult
-$Res call({
- String path
-});
-
-
-
-
-}
-/// @nodoc
-class _$CodeApplyFileReadCopyWithImpl<$Res>
-    implements $CodeApplyFileReadCopyWith<$Res> {
-  _$CodeApplyFileReadCopyWithImpl(this._self, this._then);
-
-  final CodeApplyFileRead _self;
-  final $Res Function(CodeApplyFileRead) _then;
-
-/// Create a copy of CodeApplyFailure
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? path = null,}) {
-  return _then(CodeApplyFileRead(
-null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

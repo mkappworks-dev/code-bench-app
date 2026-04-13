@@ -74,7 +74,7 @@ class CodeApplyActions extends _$CodeApplyActions {
         ref.read(appliedChangesProvider.notifier).revert(change.id);
       } catch (e, st) {
         dLog('[CodeApplyActions] revertChange failed: $e');
-        Error.throwWithStackTrace(CodeApplyFailure.unknown(e), st);
+        Error.throwWithStackTrace(_asApplyFailure(e), st);
       }
     });
   }

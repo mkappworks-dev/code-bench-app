@@ -19,7 +19,7 @@ part 'apply_service.g.dart';
 
 @Riverpod(keepAlive: true)
 ApplyService applyService(Ref ref) {
-  return ApplyService(repo: ref.read(applyRepositoryProvider));
+  return ApplyService(repo: ref.watch(applyRepositoryProvider));
 }
 
 /// Service owning all business logic for file apply operations:
@@ -99,8 +99,8 @@ class ApplyService {
   }) async {
     assertWithinProject(filePath, projectPath);
 
-    if (newContent.length > kMaxApplyContentBytes) {
-      throw ApplyTooLargeException(newContent.length);
+    if (utf8.encode(newContent).length > kMaxApplyContentBytes) {
+      throw ApplyTooLargeException(utf8.encode(newContent).length);
     }
 
     String? originalContent;
@@ -112,8 +112,8 @@ class ApplyService {
       rethrow;
     }
 
-    if (originalContent != null && originalContent.length > kMaxApplyContentBytes) {
-      throw ApplyTooLargeException(originalContent.length);
+    if (originalContent != null && utf8.encode(originalContent).length > kMaxApplyContentBytes) {
+      throw ApplyTooLargeException(utf8.encode(originalContent).length);
     }
 
     await _repo.writeFile(filePath, newContent);

@@ -16,8 +16,5 @@ sealed class CodeApplyFailure with _$CodeApplyFailure {
   /// Low-level disk write failure.
   const factory CodeApplyFailure.diskWrite(String message) = CodeApplyDiskWrite;
 
-  /// File could not be read for conflict view.
-  const factory CodeApplyFailure.fileRead(String path) = CodeApplyFileRead;
-
   const factory CodeApplyFailure.unknown(Object error) = CodeApplyUnknownError;
 }
