@@ -101,10 +101,15 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
   }
 
   Future<void> loadMore(String sessionId, int offset) async {
-    final service = await ref.read(sessionServiceProvider.future);
-    final older = await service.loadHistory(sessionId, limit: 50, offset: offset);
-    final current = state.value ?? [];
-    state = AsyncData([...older, ...current]);
+    try {
+      final service = await ref.read(sessionServiceProvider.future);
+      final older = await service.loadHistory(sessionId, limit: 50, offset: offset);
+      final current = state.value ?? [];
+      state = AsyncData([...older, ...current]);
+    } catch (e, st) {
+      dLog('[ChatMessagesNotifier] loadMore failed: $e');
+      state = AsyncError(e, st);
+    }
   }
 }
 

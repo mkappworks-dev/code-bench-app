@@ -43,6 +43,25 @@ class _ThrowingSettingsRepo extends Fake implements SettingsRepository {
   Future<void> resetOnboarding() async {}
 }
 
+class _ThrowingSessionRepo extends Fake implements SessionRepository {
+  bool deleted = false;
+  @override
+  Future<void> deleteAllSessionsAndMessages() => Future.error(Exception('db error'));
+}
+
+class _ThrowingProjectRepo extends Fake implements ProjectRepository {
+  @override
+  Future<void> deleteAllProjects() => Future.error(Exception('db error'));
+}
+
+class _ThrowingOnboardingSettingsRepo extends Fake implements SettingsRepository {
+  bool deletedSecureStorage = false;
+  @override
+  Future<void> deleteAllSecureStorage() async => deletedSecureStorage = true;
+  @override
+  Future<void> resetOnboarding() => Future.error(Exception('storage error'));
+}
+
 void main() {
   late _FakeSettingsRepo settings;
   late _FakeSessionRepo session;
@@ -65,9 +84,39 @@ void main() {
     expect(settings.resetOnboardingCalled, isTrue);
   });
 
-  test('wipeAllData returns failed step names when a step throws', () async {
+  test('wipeAllData returns failed step names when step 1 (secure storage) throws', () async {
     final svcWithError = SettingsService(settings: _ThrowingSettingsRepo(), session: session, project: project);
     final failures = await svcWithError.wipeAllData();
     expect(failures, contains('secure storage'));
+  });
+
+  test('wipeAllData step 2 failure is isolated — steps 3 and 4 still run', () async {
+    final throwingSession = _ThrowingSessionRepo();
+    final svcWithError = SettingsService(settings: settings, session: throwingSession, project: project);
+    final failures = await svcWithError.wipeAllData();
+    expect(failures, contains('chat history'));
+    // Steps 3 and 4 must still complete despite step 2 failing.
+    expect(project.deleted, isTrue);
+    expect(settings.resetOnboardingCalled, isTrue);
+  });
+
+  test('wipeAllData step 3 failure is isolated — step 4 still runs', () async {
+    final throwingProject = _ThrowingProjectRepo();
+    final svcWithError = SettingsService(settings: settings, session: session, project: throwingProject);
+    final failures = await svcWithError.wipeAllData();
+    expect(failures, contains('projects'));
+    // Step 4 must still complete despite step 3 failing.
+    expect(settings.resetOnboardingCalled, isTrue);
+  });
+
+  test('wipeAllData step 4 failure is isolated — earlier steps are not affected', () async {
+    final throwingOnboarding = _ThrowingOnboardingSettingsRepo();
+    final svcWithError = SettingsService(settings: throwingOnboarding, session: session, project: project);
+    final failures = await svcWithError.wipeAllData();
+    expect(failures, contains('onboarding flag'));
+    // Step 1 and earlier steps must have completed.
+    expect(throwingOnboarding.deletedSecureStorage, isTrue);
+    expect(session.deleted, isTrue);
+    expect(project.deleted, isTrue);
   });
 }

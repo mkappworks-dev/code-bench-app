@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../shell/notifiers/git_actions.dart';
@@ -37,7 +36,7 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
   /// SnackBar and leaves `_selectedPath` untouched — the previous behaviour
   /// of silently falling back to the dropped file's parent turned a stray
   /// file-drop (e.g. from `~/Downloads`) into "add Downloads as a project".
-  void _handleDrop(DropDoneDetails detail) {
+  Future<void> _handleDrop(DropDoneDetails detail) async {
     setState(() => _isDragOver = false);
 
     if (detail.files.isEmpty) return;
@@ -47,12 +46,9 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
     }
 
     final path = detail.files.first.path;
-    try {
-      final resolved = ref.read(projectSidebarActionsProvider.notifier).resolveDroppedDirectory(path);
-      setState(() => _selectedPath = resolved);
-    } on ArgumentError catch (e) {
-      _showDropError(e.message as String);
-    }
+    final resolved = await ref.read(projectSidebarActionsProvider.notifier).resolveDroppedDirectory(path);
+    if (resolved != null && mounted) setState(() => _selectedPath = resolved);
+    // Errors are surfaced through projectSidebarActionsProvider state via ref.listen.
   }
 
   void _showDropError(String message) {
@@ -77,12 +73,11 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
   @override
   Widget build(BuildContext context) {
     ref.listen(projectSidebarActionsProvider, (_, next) {
-      if (!_adding) return;
       if (next is! AsyncError || !mounted) return;
       final failure = next.error;
       final message = switch (failure) {
         ProjectSidebarDuplicatePath() => 'This project is already added.',
-        ProjectSidebarInvalidPath() => 'Invalid folder path.',
+        ProjectSidebarInvalidPath(:final reason) => reason,
         ProjectSidebarStorageError() => 'Failed to save project — please try again.',
         ProjectSidebarUnknownError() => 'Failed to add project — please try again.',
         _ => 'Failed to add project — please try again.',
@@ -185,10 +180,7 @@ class _SelectedFolderPreview extends StatelessWidget {
   final bool isGit;
   final VoidCallback onBrowse;
 
-  String get _projectName {
-    final segments = path.split(Platform.pathSeparator)..removeWhere((s) => s.isEmpty);
-    return segments.isNotEmpty ? segments.last : path;
-  }
+  String get _projectName => p.basename(path);
 
   @override
   Widget build(BuildContext context) {

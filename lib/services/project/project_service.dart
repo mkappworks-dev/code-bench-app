@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../core/utils/debug_logger.dart';
 import '../../data/models/project.dart';
 import '../../data/models/project_action.dart';
 import '../../data/project/repository/project_repository.dart';
@@ -59,4 +62,27 @@ class ProjectService {
   Future<void> refreshProjectStatus(String projectId) => _repo.refreshProjectStatus(projectId);
 
   Future<void> deleteAllProjects() => _repo.deleteAllProjects();
+
+  // ── Filesystem helpers ────────────────────────────────────────────────────
+
+  /// Returns `true` when the folder at [path] currently exists on disk.
+  bool projectExistsOnDisk(String path) => Directory(path).existsSync();
+
+  /// Resolves [path] to its canonical real path and confirms it is a
+  /// directory. Returns the resolved path on success.
+  ///
+  /// Throws [ArgumentError] with a user-facing message on failure.
+  String resolveDroppedDirectory(String path) {
+    final String resolved;
+    try {
+      resolved = Directory(path).resolveSymbolicLinksSync();
+    } catch (e) {
+      dLog('[ProjectService] resolveDroppedDirectory failed for "$path": $e');
+      throw ArgumentError('That path could not be opened');
+    }
+    if (!FileSystemEntity.isDirectorySync(resolved)) {
+      throw ArgumentError('Please drop a folder, not a file');
+    }
+    return resolved;
+  }
 }

@@ -1,7 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../services/settings/settings_service.dart';
+import 'general_prefs_failure.dart';
+
+export 'general_prefs_failure.dart';
 
 part 'general_prefs_notifier.g.dart';
 
@@ -38,53 +42,62 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
     );
   }
 
+  GeneralPrefsFailure _asFailure(Object e) => switch (e) {
+    StorageException() => const GeneralPrefsFailure.saveFailed(),
+    _ => GeneralPrefsFailure.unknown(e),
+  };
+
   Future<void> setAutoCommit(bool value) async {
-    try {
-      await ref.read(settingsServiceProvider).setAutoCommit(value);
-      _update((s) => s.copyWith(autoCommit: value));
-    } catch (e, st) {
-      dLog('[GeneralPrefsNotifier] setAutoCommit failed: $e');
-      state = AsyncError(e, st);
-    }
+    state = await AsyncValue.guard(() async {
+      try {
+        await ref.read(settingsServiceProvider).setAutoCommit(value);
+      } catch (e, st) {
+        dLog('[GeneralPrefsNotifier] setAutoCommit failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+      return (state.value ?? await build()).copyWith(autoCommit: value);
+    });
   }
 
   Future<void> setDeleteConfirmation(bool value) async {
-    try {
-      await ref.read(settingsServiceProvider).setDeleteConfirmation(value);
-      _update((s) => s.copyWith(deleteConfirmation: value));
-    } catch (e, st) {
-      dLog('[GeneralPrefsNotifier] setDeleteConfirmation failed: $e');
-      state = AsyncError(e, st);
-    }
+    state = await AsyncValue.guard(() async {
+      try {
+        await ref.read(settingsServiceProvider).setDeleteConfirmation(value);
+      } catch (e, st) {
+        dLog('[GeneralPrefsNotifier] setDeleteConfirmation failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+      return (state.value ?? await build()).copyWith(deleteConfirmation: value);
+    });
   }
 
   Future<void> setTerminalApp(String value) async {
-    try {
-      await ref.read(settingsServiceProvider).setTerminalApp(value);
-      _update((s) => s.copyWith(terminalApp: value));
-    } catch (e, st) {
-      dLog('[GeneralPrefsNotifier] setTerminalApp failed: $e');
-      state = AsyncError(e, st);
-    }
+    state = await AsyncValue.guard(() async {
+      try {
+        await ref.read(settingsServiceProvider).setTerminalApp(value);
+      } catch (e, st) {
+        dLog('[GeneralPrefsNotifier] setTerminalApp failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+      return (state.value ?? await build()).copyWith(terminalApp: value);
+    });
   }
 
   /// Resets all general settings to their defaults and invalidates this
   /// provider so the settings UI rebuilds with fresh values.
   Future<void> restoreDefaults() async {
-    try {
-      final svc = ref.read(settingsServiceProvider);
-      await svc.setAutoCommit(false);
-      await svc.setTerminalApp('Terminal');
-      await svc.setDeleteConfirmation(true);
+    state = await AsyncValue.guard(() async {
+      try {
+        final svc = ref.read(settingsServiceProvider);
+        await svc.setAutoCommit(false);
+        await svc.setTerminalApp('Terminal');
+        await svc.setDeleteConfirmation(true);
+      } catch (e, st) {
+        dLog('[GeneralPrefsNotifier] restoreDefaults failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
       ref.invalidateSelf();
-    } catch (e, st) {
-      dLog('[GeneralPrefsNotifier] restoreDefaults failed: $e');
-      state = AsyncError(e, st);
-    }
-  }
-
-  void _update(GeneralPrefsNotifierState Function(GeneralPrefsNotifierState) fn) {
-    final current = state.value;
-    if (current != null) state = AsyncData(fn(current));
+      return state.value ?? await build();
+    });
   }
 }

@@ -35,7 +35,17 @@ class SettingsActions extends _$SettingsActions {
     }
   }
 
-  Future<bool> testOllamaUrl(String url) => ref.read(apiKeyTestServiceProvider).testOllamaUrl(url);
+  /// Returns `true` when [url] is reachable as an Ollama endpoint. Never
+  /// throws — returns `false` on any exception so the UI can show an inline
+  /// error without crashing.
+  Future<bool> testOllamaUrl(String url) async {
+    try {
+      return await ref.read(apiKeyTestServiceProvider).testOllamaUrl(url);
+    } catch (e, st) {
+      dLog('[SettingsActions] testOllamaUrl failed: $e\n$st');
+      return false;
+    }
+  }
 
   /// Persists [key] for [provider]. Emits [SettingsStorageFailed] on error.
   Future<void> saveApiKey(String provider, String key) async {

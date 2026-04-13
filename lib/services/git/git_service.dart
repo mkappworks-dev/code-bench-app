@@ -51,8 +51,13 @@ class GitService {
   Future<void> checkout(String path, String branch) => _ds(path).checkout(branch);
   Future<void> createBranch(String path, String name) => _ds(path).createBranch(name);
 
-  Future<GitLiveState> fetchLiveState(String path) =>
-      (_liveState ?? GitLiveStateDatasourceProcess()).fetchLiveState(path);
+  Future<GitLiveState> fetchLiveState(String path) {
+    assert(_liveState != null, 'GitService: liveState not injected — using live process fallback');
+    return (_liveState ?? GitLiveStateDatasourceProcess()).fetchLiveState(path);
+  }
 
-  Future<int?> behindCount(String path) => (_liveState ?? GitLiveStateDatasourceProcess()).fetchBehindCount(path);
+  Future<int?> behindCount(String path) {
+    assert(_liveState != null, 'GitService: liveState not injected — using live process fallback');
+    return (_liveState ?? GitLiveStateDatasourceProcess()).fetchBehindCount(path);
+  }
 }

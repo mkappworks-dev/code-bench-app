@@ -170,10 +170,19 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
     }
   }
 
+  // Validates commit SHAs before interpolating them into API paths.
+  // Accepts 7–40 hex chars (full or abbreviated SHA). A hostile payload
+  // with path segments (e.g. "../pulls") is rejected here.
+  static final _safeSha = RegExp(r'^[0-9a-f]{7,40}$');
+
   /// Lists check-runs (CI statuses) for a commit SHA. Used by the PR card
   /// to render CI chips next to the PR title.
   @override
   Future<List<Map<String, dynamic>>> getCheckRuns(String owner, String repo, String sha) async {
+    if (!_safeSha.hasMatch(sha)) {
+      sLog('[getCheckRuns] non-hex SHA rejected: "$sha"');
+      throw ArgumentError('Invalid commit SHA: $sha');
+    }
     try {
       final response = await _dio.get('/repos/$owner/$repo/commits/$sha/check-runs');
       final data = response.data as Map<String, dynamic>;

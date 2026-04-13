@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -133,26 +132,23 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
 
   /// Returns `true` when the folder at [path] currently exists on disk.
   /// Used by widgets that need a fast availability check without async I/O.
-  bool projectExistsOnDisk(String path) => Directory(path).existsSync();
+  bool projectExistsOnDisk(String path) => _projects.projectExistsOnDisk(path);
 
   /// Resolves [path] to its canonical real path and confirms it is a
-  /// directory. Returns the resolved path on success.
-  ///
-  /// Throws [ArgumentError] with a user-facing message on failure:
-  /// - broken / non-existent path → `'That path could not be opened'`
-  /// - resolved path is a file, not a directory → `'Please drop a folder, not a file'`
-  String resolveDroppedDirectory(String path) {
-    final String resolved;
-    try {
-      // resolveSymbolicLinksSync throws on broken or non-existent paths —
-      // a dangling symlink must not become a project root.
-      resolved = Directory(path).resolveSymbolicLinksSync();
-    } catch (_) {
-      throw ArgumentError('That path could not be opened');
-    }
-    if (!FileSystemEntity.isDirectorySync(resolved)) {
-      throw ArgumentError('Please drop a folder, not a file');
-    }
+  /// directory. Returns the resolved path on success, or `null` when the
+  /// path cannot be resolved — error is surfaced via [state] as a
+  /// [ProjectSidebarInvalidPath] failure so widgets can react via `ref.listen`.
+  Future<String?> resolveDroppedDirectory(String path) async {
+    state = const AsyncLoading();
+    String? resolved;
+    state = await AsyncValue.guard(() async {
+      try {
+        resolved = _projects.resolveDroppedDirectory(path);
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] resolveDroppedDirectory failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
     return resolved;
   }
 

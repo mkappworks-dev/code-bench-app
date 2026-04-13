@@ -13,9 +13,13 @@ class FakeApplyRepository implements ApplyRepository {
   bool _deleted = false;
   bool _gitCheckedOut = false;
   bool _shouldThrowNonPathError = false;
+  bool _shouldThrowFsOnRead = false;
 
   void setReadContent(String content) => _readContent = content;
   void setReadThrowsNonPathError() => _shouldThrowNonPathError = true;
+
+  /// Makes [readFile] throw [FileSystemException] (simulates disk error).
+  void setReadThrowsFileSystemException() => _shouldThrowFsOnRead = true;
 
   String? get writtenContent => _writtenContent;
   bool get deleted => _deleted;
@@ -23,9 +27,8 @@ class FakeApplyRepository implements ApplyRepository {
 
   @override
   Future<String> readFile(String path) async {
-    if (_shouldThrowNonPathError) {
-      throw FileSystemException('Disk read error', path);
-    }
+    if (_shouldThrowFsOnRead) throw FileSystemException('Disk read error', path);
+    if (_shouldThrowNonPathError) throw FileSystemException('Disk read error', path);
     if (_readContent == null) {
       throw PathNotFoundException(path, const OSError('Not found', 2));
     }
@@ -142,7 +145,7 @@ void main() {
       expect(change.originalContent, isNull);
     });
 
-    test('throws ProjectMissingException for non-path-not-found FileSystemException', () async {
+    test('throws FileSystemException for non-path-not-found disk error', () async {
       final repo = FakeApplyRepository();
       repo.setReadThrowsNonPathError();
       final service = makeService(repo: repo);
@@ -229,6 +232,28 @@ void main() {
       await service.revertChange(change: change, isGit: true, projectPath: '/tmp');
       expect(repo.gitCheckedOut, isTrue);
       expect(repo.deleted, isFalse);
+    });
+
+    test('throws PathEscapeException for filePath outside projectPath', () async {
+      final service = makeService();
+
+      final change = AppliedChange(
+        id: 'id-escape',
+        sessionId: 's',
+        messageId: 'm',
+        filePath: '/etc/passwd',
+        originalContent: 'original',
+        newContent: 'new',
+        appliedAt: DateTime.now(),
+        additions: 1,
+        deletions: 1,
+        contentChecksum: 'abc',
+      );
+
+      await expectLater(
+        () => service.revertChange(change: change, isGit: false, projectPath: '/tmp'),
+        throwsA(isA<PathEscapeException>()),
+      );
     });
   });
 
@@ -339,6 +364,17 @@ void main() {
 
       final result = await service.readOriginalForDiff('/tmp/new_file.dart', '/tmp');
       expect(result, isNull);
+    });
+
+    test('rethrows FileSystemException (unlike readFileContent which swallows it)', () async {
+      final repo = FakeApplyRepository();
+      repo.setReadThrowsFileSystemException();
+      final service = makeService(repo: repo);
+
+      await expectLater(
+        () => service.readOriginalForDiff('/tmp/file.dart', '/tmp'),
+        throwsA(isA<FileSystemException>()),
+      );
     });
   });
 }

@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/errors/app_exception.dart' as app_errors;
+import '../../../core/utils/debug_logger.dart';
 import '../../filesystem/repository/filesystem_repository.dart';
 import '../../filesystem/repository/filesystem_repository_impl.dart';
 import 'apply_repository.dart';
@@ -65,9 +66,11 @@ class ApplyRepositoryImpl implements ApplyRepository {
         filePath,
       ], workingDirectory: workingDirectory).timeout(kGitCheckoutTimeout);
     } on TimeoutException {
+      dLog('[ApplyRepository] gitCheckout timed out for $filePath');
       throw StateError('git checkout timed out after ${kGitCheckoutTimeout.inSeconds}s');
     }
     if (result.exitCode != 0) {
+      dLog('[ApplyRepository] gitCheckout failed (exit ${result.exitCode}): ${result.stderr}');
       throw StateError('git checkout failed (exit ${result.exitCode}): ${result.stderr}');
     }
   }

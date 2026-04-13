@@ -99,8 +99,9 @@ class ApplyService {
   }) async {
     assertWithinProject(filePath, projectPath);
 
-    if (utf8.encode(newContent).length > kMaxApplyContentBytes) {
-      throw ApplyTooLargeException(utf8.encode(newContent).length);
+    final newByteLen = utf8.encode(newContent).length;
+    if (newByteLen > kMaxApplyContentBytes) {
+      throw ApplyTooLargeException(newByteLen);
     }
 
     String? originalContent;
@@ -112,8 +113,11 @@ class ApplyService {
       rethrow;
     }
 
-    if (originalContent != null && utf8.encode(originalContent).length > kMaxApplyContentBytes) {
-      throw ApplyTooLargeException(utf8.encode(originalContent).length);
+    if (originalContent != null) {
+      final originalByteLen = utf8.encode(originalContent).length;
+      if (originalByteLen > kMaxApplyContentBytes) {
+        throw ApplyTooLargeException(originalByteLen);
+      }
     }
 
     await _repo.writeFile(filePath, newContent);
