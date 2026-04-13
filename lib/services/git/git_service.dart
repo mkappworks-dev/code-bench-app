@@ -4,11 +4,13 @@ import '../../data/git/datasource/git_datasource.dart';
 import '../../data/git/datasource/git_datasource_process.dart';
 import '../../data/git/datasource/git_live_state_datasource.dart';
 import '../../data/git/datasource/git_live_state_datasource_process.dart';
+import '../../data/git/models/git_changed_file.dart';
 import '../../data/git/repository/git_repository.dart';
 import '../../data/git/repository/git_repository_impl.dart';
 
 export '../../data/git/git_exceptions.dart';
 export '../../data/git/datasource/git_datasource.dart' show GitRemote;
+export '../../data/git/models/git_changed_file.dart';
 
 part 'git_service.g.dart';
 
@@ -43,6 +45,7 @@ class GitService {
   Future<Set<String>> worktreeBranches(String path) => _ds(path).worktreeBranches();
   Future<void> checkout(String path, String branch) => _ds(path).checkout(branch);
   Future<void> createBranch(String path, String name) => _ds(path).createBranch(name);
+  Future<List<GitChangedFile>> getChangedFiles(String path) => _ds(path).getChangedFiles();
 
   Future<GitLiveState> fetchLiveState(String path) {
     assert(_liveState != null, 'GitService: liveState not injected — using live process fallback');

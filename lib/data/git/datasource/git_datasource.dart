@@ -1,3 +1,5 @@
+import '../models/git_changed_file.dart';
+
 export '../models/git_live_state.dart';
 
 abstract interface class GitDatasource {
@@ -14,6 +16,7 @@ abstract interface class GitDatasource {
   Future<Set<String>> worktreeBranches();
   Future<void> checkout(String branch);
   Future<void> createBranch(String name);
+  Future<List<GitChangedFile>> getChangedFiles();
 }
 
 class GitRemote {

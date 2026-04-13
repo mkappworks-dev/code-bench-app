@@ -2,6 +2,7 @@ import 'dart:io';
 
 import '../../../core/utils/debug_logger.dart';
 import '../git_exceptions.dart';
+import '../models/git_changed_file.dart';
 import 'git_datasource.dart';
 
 class GitDatasourceProcess implements GitDatasource {
@@ -282,5 +283,43 @@ class GitDatasourceProcess implements GitDatasource {
     if (result.exitCode != 0) {
       throw GitException(_sanitizeGitStderr((result.stderr as String).trim()));
     }
+  }
+
+  /// Returns staged changes via `git diff --cached --numstat`.
+  /// Falls back to `git diff --numstat HEAD` when nothing is staged.
+  @override
+  Future<List<GitChangedFile>> getChangedFiles() async {
+    var result = await Process.run('git', ['diff', '--cached', '--numstat'], workingDirectory: _projectPath);
+    var output = (result.stdout as String).trim();
+
+    if (output.isEmpty && result.exitCode == 0) {
+      result = await Process.run('git', ['diff', '--numstat', 'HEAD'], workingDirectory: _projectPath);
+      output = (result.stdout as String).trim();
+    }
+
+    if (output.isEmpty) return [];
+    return output.split('\n').map(_parseLine).whereType<GitChangedFile>().toList();
+  }
+
+  static GitChangedFile? _parseLine(String line) {
+    final parts = line.split('\t');
+    if (parts.length < 3) return null;
+    final additions = int.tryParse(parts[0]) ?? 0;
+    final deletions = int.tryParse(parts[1]) ?? 0;
+    final path = parts.sublist(2).join('\t').trim();
+    if (path.isEmpty) return null;
+    return GitChangedFile(
+      path: path,
+      additions: additions,
+      deletions: deletions,
+      status: _inferStatus(additions, deletions, path),
+    );
+  }
+
+  static GitChangedFileStatus _inferStatus(int additions, int deletions, String path) {
+    if (path.contains(' => ')) return GitChangedFileStatus.renamed;
+    if (additions > 0 && deletions == 0) return GitChangedFileStatus.added;
+    if (deletions > 0 && additions == 0) return GitChangedFileStatus.deleted;
+    return GitChangedFileStatus.modified;
   }
 }
