@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../services/project/git_detector.dart';
+import '../../../data/git/repository/git_repository_impl.dart';
 import '../../project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../project_sidebar/notifiers/project_sidebar_failure.dart';
 
@@ -25,7 +25,7 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
   bool _adding = false;
   bool _isDragOver = false;
 
-  bool get _isGitRepo => _selectedPath != null && GitDetector.isGitRepo(_selectedPath!);
+  bool get _isGitRepo => _selectedPath != null && ref.read(gitRepositoryProvider).isGitRepo(_selectedPath!);
 
   Future<void> _browse() async {
     final result = await FilePicker.getDirectoryPath();

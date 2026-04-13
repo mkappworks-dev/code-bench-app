@@ -15,7 +15,7 @@ GitLiveStateDatasource gitLiveStateDatasource(Ref ref) => GitLiveStateDatasource
 class GitLiveStateDatasourceProcess implements GitLiveStateDatasource {
   /// Returns `true` when [projectPath] is a plain git repository (`.git`
   /// directory exists). For the full worktree-safe check (including `.git`
-  /// file validation), use [GitDetector.isGitRepo] from `git_detector.dart`.
+  /// file validation), see [GitRepositoryImpl.isGitRepo].
   @override
   bool isGitRepo(String projectPath) {
     return FileSystemEntity.typeSync('$projectPath/.git') == FileSystemEntityType.directory;
