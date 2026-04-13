@@ -44,4 +44,4 @@ final class GithubAuthServiceProvider
   }
 }
 
-String _$githubAuthServiceHash() => r'b33369cec83e38488c69619c3341245921675043';
+String _$githubAuthServiceHash() => r'94e7cb79dcb9ede96d457b8eddc812021a28b5d7';

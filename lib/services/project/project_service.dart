@@ -7,7 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/utils/debug_logger.dart';
 
-import '../../data/datasources/local/app_database.dart';
+import '../../data/_core/app_database.dart';
 import '../../data/models/project.dart';
 import '../../data/models/project_action.dart';
 

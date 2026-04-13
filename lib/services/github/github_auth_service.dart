@@ -5,20 +5,20 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/errors/app_exception.dart';
-import '../../data/datasources/local/secure_storage_source.dart';
+import '../../data/_core/secure_storage.dart';
 import '../../data/models/repository.dart';
 
 part 'github_auth_service.g.dart';
 
 @Riverpod(keepAlive: true)
 GitHubAuthService githubAuthService(Ref ref) {
-  return GitHubAuthService(ref.watch(secureStorageSourceProvider));
+  return GitHubAuthService(ref.watch(secureStorageProvider));
 }
 
 class GitHubAuthService {
   GitHubAuthService(this._storage);
 
-  final SecureStorageSource _storage;
+  final SecureStorage _storage;
 
   // NOTE: In production, store client credentials server-side.
   // For this desktop app they are embedded (common for desktop OAuth apps).

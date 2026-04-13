@@ -7,7 +7,7 @@ import 'app.dart';
 import 'core/utils/debug_logger.dart';
 import 'core/constants/app_constants.dart';
 import 'core/utils/platform_utils.dart';
-import 'data/datasources/local/app_database.dart';
+import 'data/_core/app_database.dart';
 
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();

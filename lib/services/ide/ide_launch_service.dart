@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/utils/debug_logger.dart';
-import '../../data/datasources/local/general_preferences.dart';
+import '../../data/_core/preferences/general_preferences.dart';
 
 part 'ide_launch_service.g.dart';
 

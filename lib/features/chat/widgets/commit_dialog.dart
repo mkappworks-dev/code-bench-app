@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../data/datasources/local/general_preferences.dart';
+import '../../../data/_core/preferences/general_preferences.dart';
 
 class CommitDialog extends ConsumerStatefulWidget {
   const CommitDialog({super.key, required this.initialMessage});

@@ -39,4 +39,4 @@ final class GithubApiServiceProvider
   }
 }
 
-String _$githubApiServiceHash() => r'2b37df873d040c8731c9cd247e0b66988603ee26';
+String _$githubApiServiceHash() => r'5a8db4c5420b844bba260a6d33ecfc913d689d81';

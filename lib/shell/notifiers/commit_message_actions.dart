@@ -4,7 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/errors/app_exception.dart';
 import '../../core/utils/debug_logger.dart';
-import '../../data/datasources/local/general_preferences.dart';
+import '../../data/_core/preferences/general_preferences.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/chat/notifiers/create_pr_actions.dart';
 import '../../services/ai/ai_service_factory.dart';

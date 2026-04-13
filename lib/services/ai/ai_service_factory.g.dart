@@ -54,7 +54,7 @@ final class AiServiceProvider extends $FunctionalProvider<AsyncValue<AIService?>
   }
 }
 
-String _$aiServiceHash() => r'b2b6ca1109c747094f80ac976f29ec5bbb98257d';
+String _$aiServiceHash() => r'ef78dc675d6c14fb6ffa6f6f916770c22daa2a29';
 
 final class AiServiceFamily extends $Family with $FunctionalFamilyOverride<FutureOr<AIService?>, AIProvider> {
   AiServiceFamily._()
@@ -102,4 +102,4 @@ final class AvailableModelsProvider
   }
 }
 
-String _$availableModelsHash() => r'69eb26eebb8ce7a109cc652cc5abe328c8fe995f';
+String _$availableModelsHash() => r'f7b11f9512951c80296322d74309ba81f76db281';

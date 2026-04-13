@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/constants/api_constants.dart';
-import '../../data/datasources/local/secure_storage_source.dart';
+import '../../data/_core/secure_storage.dart';
 import '../../data/models/ai_model.dart';
 import 'ai_service.dart';
 import 'anthropic_service.dart';
@@ -14,7 +14,7 @@ part 'ai_service_factory.g.dart';
 
 @riverpod
 Future<AIService?> aiService(Ref ref, AIProvider aiProvider) async {
-  final storage = ref.watch(secureStorageSourceProvider);
+  final storage = ref.watch(secureStorageProvider);
 
   switch (aiProvider) {
     case AIProvider.openai:
@@ -46,7 +46,7 @@ Future<AIService?> aiService(Ref ref, AIProvider aiProvider) async {
 
 @riverpod
 Future<List<AIModel>> availableModels(Ref ref) async {
-  final storage = ref.watch(secureStorageSourceProvider);
+  final storage = ref.watch(secureStorageProvider);
   final models = <AIModel>[];
 
   // Add defaults first

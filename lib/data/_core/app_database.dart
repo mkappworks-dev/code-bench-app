@@ -137,7 +137,7 @@ class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
 
   Future<void> deleteProject(String id) => (delete(workspaceProjects)..where((t) => t.id.equals(id))).go();
 
-  /// Wipes every workspace project. Used by the debug "Wipe all data" action.
+  /// Wipes every workspace project. Used by the "Wipe all data" action.
   Future<void> deleteAllProjects() => delete(workspaceProjects).go();
 }
 

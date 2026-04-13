@@ -1,16 +1,16 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../../core/errors/app_exception.dart';
-import '../../../core/utils/debug_logger.dart';
+import '../../core/errors/app_exception.dart';
+import '../../core/utils/debug_logger.dart';
 
-part 'secure_storage_source.g.dart';
+part 'secure_storage.g.dart';
 
 @Riverpod(keepAlive: true)
-SecureStorageSource secureStorageSource(Ref ref) {
-  return SecureStorageSource();
+SecureStorage secureStorage(Ref ref) {
+  return SecureStorage();
 }
 
-class SecureStorageSource {
+class SecureStorage {
   static const _storage = FlutterSecureStorage(
     mOptions: MacOsOptions(accessibility: KeychainAccessibility.first_unlock),
   );
@@ -124,7 +124,7 @@ class SecureStorageSource {
       try {
         await _storage.delete(key: key);
       } catch (e) {
-        dLog('[SecureStorageSource] delete($key) failed: $e');
+        dLog('[SecureStorage] delete($key) failed: $e');
         failedKeys.add(key);
       }
     }

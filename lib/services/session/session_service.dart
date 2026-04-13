@@ -4,7 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../data/datasources/local/app_database.dart';
+import '../../data/_core/app_database.dart';
 import '../../data/models/ai_model.dart';
 import '../../data/models/chat_message.dart' as msg_model;
 import '../../data/models/chat_session.dart' as session_model;

@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../data/datasources/local/general_preferences.dart';
-import '../../data/datasources/local/onboarding_preferences.dart';
-import '../../data/datasources/local/secure_storage_source.dart';
+import '../../data/_core/preferences/general_preferences.dart';
+import '../../data/_core/preferences/onboarding_preferences.dart';
+import '../../data/_core/secure_storage.dart';
 
 part 'settings_service.g.dart';
 
@@ -10,14 +10,14 @@ part 'settings_service.g.dart';
 SettingsService settingsService(Ref ref) => SettingsService(ref);
 
 /// Adapter that gives the notifier layer a single, stable seam over the three
-/// settings data-sources: [SecureStorageSource] (API keys / GitHub token),
+/// settings data-sources: [SecureStorage] (API keys / GitHub token),
 /// [GeneralPreferences] (SharedPreferences flags), and [OnboardingPreferences].
 class SettingsService {
   SettingsService(this._ref);
 
   final Ref _ref;
 
-  SecureStorageSource get _storage => _ref.read(secureStorageSourceProvider);
+  SecureStorage get _storage => _ref.read(secureStorageProvider);
   GeneralPreferences get _generalPrefs => _ref.read(generalPreferencesProvider);
   OnboardingPreferences get _onboardingPrefs => _ref.read(onboardingPreferencesProvider);
 
