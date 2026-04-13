@@ -136,10 +136,9 @@ class ApplyRepositoryImpl implements ApplyRepository {
   Future<String?> readOriginalForDiff(String absolutePath, String projectPath) async {
     ApplyRepository.assertWithinProject(absolutePath, projectPath);
     try {
-      return await File(absolutePath).readAsString();
-    } on PathNotFoundException {
-      return null;
-    } on FileSystemException catch (e) {
+      return await _fs.readFile(absolutePath);
+    } on app_errors.FileSystemException catch (e) {
+      if (e.originalError is PathNotFoundException) return null;
       dLog('[ApplyRepositoryImpl] readOriginalForDiff failed: ${e.message}');
       rethrow;
     }
@@ -148,11 +147,10 @@ class ApplyRepositoryImpl implements ApplyRepository {
   @override
   Future<bool> isExternallyModified(String filePath, String storedChecksum) async {
     try {
-      final file = File(filePath);
-      if (!file.existsSync()) return true;
-      final current = await file.readAsString();
+      final current = await _fs.readFile(filePath);
       return ApplyRepository.sha256OfString(current) != storedChecksum;
-    } catch (e) {
+    } on app_errors.FileSystemException catch (e) {
+      if (e.originalError is PathNotFoundException) return true;
       dLog('[ApplyRepositoryImpl] isExternallyModified read failed: ${e.runtimeType}');
       return true;
     }

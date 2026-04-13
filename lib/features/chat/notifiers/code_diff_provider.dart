@@ -24,7 +24,7 @@ Future<DiffResult?> codeDiff(
   required String newContent,
 }) async {
   try {
-    final original = await ref.read(applyRepositoryProvider).readOriginalForDiff(absolutePath, projectPath);
+    final original = await ref.watch(applyRepositoryProvider).readOriginalForDiff(absolutePath, projectPath);
     final dmp = DiffMatchPatch();
     final diffs = dmp.diff(original ?? '', newContent);
     dmp.diffCleanupSemantic(diffs);
