@@ -9,8 +9,10 @@ import 'package:code_bench_app/data/models/chat_message.dart';
 import 'package:code_bench_app/data/models/project.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/widgets/chat_input_bar.dart';
+import 'package:code_bench_app/data/models/project_action.dart';
+import 'package:code_bench_app/data/project/repository/project_repository.dart';
+import 'package:code_bench_app/data/project/repository/project_repository_impl.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
-import 'package:code_bench_app/services/project/project_service.dart';
 
 /// Minimal stub so the missing-project guard's `_isProjectAvailable` helper
 /// can fire `refreshProjectStatus` in tests without pulling in a real Drift
@@ -19,34 +21,58 @@ import 'package:code_bench_app/services/project/project_service.dart';
 ///
 /// Records every `refreshProjectStatus` call so the drift-self-heal tests can
 /// assert it fired (Cases B and C) or didn't (Cases A and D).
-class _FakeProjectService extends Mock implements ProjectService {
+class _FakeProjectRepository extends Mock implements ProjectRepository {
   final List<String?> refreshCalls = <String?>[];
   @override
   Future<void> refreshProjectStatus(String? projectId) async {
     refreshCalls.add(projectId);
   }
+
+  @override
+  Stream<List<Project>> watchAllProjects() => const Stream.empty();
+
+  @override
+  Future<Project> addExistingFolder(String directoryPath) => throw UnimplementedError();
+
+  @override
+  Future<Project> createNewFolder(String parentPath, String folderName) => throw UnimplementedError();
+
+  @override
+  Future<void> removeProject(String projectId) => throw UnimplementedError();
+
+  @override
+  Future<void> updateProjectActions(String projectId, List<ProjectAction> actions) => throw UnimplementedError();
+
+  @override
+  Future<void> refreshProjectStatuses() => throw UnimplementedError();
+
+  @override
+  Future<void> relocateProject(String projectId, String newPath) => throw UnimplementedError();
+
+  @override
+  Future<void> deleteAllProjects() => throw UnimplementedError();
 }
 
 Project _makeProject({required String id, required String path, ProjectStatus status = ProjectStatus.available}) =>
     Project(id: id, name: id, path: path, createdAt: DateTime(2026, 4, 12), status: status);
 
 /// Test-scoped wrap that lets callers inject the project list, the active
-/// project id, and a fake ProjectService. Keeps the older no-arg shape
+/// project id, and a fake ProjectRepository. Keeps the older no-arg shape
 /// working for the effort/draft tests that don't care about projects.
 Widget _wrap(
   Widget child, {
   List<Project> projects = const <Project>[],
   String? activeProjectId,
-  ProjectService? projectService,
+  ProjectRepository? projectRepository,
 }) {
-  final fakeService = projectService ?? _FakeProjectService();
+  final fakeRepo = projectRepository ?? _FakeProjectRepository();
   return ProviderScope(
     // Override projectsProvider so the widget tree can build without pulling
     // in the real on-disk Drift database (which leaves pending timers that
     // fail the test binding's invariant checks).
     overrides: [
       projectsProvider.overrideWith((ref) => Stream<List<Project>>.value(projects)),
-      projectServiceProvider.overrideWith((ref) => fakeService),
+      projectRepositoryProvider.overrideWith((ref) => fakeRepo),
       chatMessagesProvider.overrideWith2((_) => _FakeChatMessages()),
       if (activeProjectId != null) activeProjectIdProvider.overrideWith(() => _FakeActiveProjectId(activeProjectId)),
     ],
@@ -176,14 +202,14 @@ void main() {
       final dir = Directory.systemTemp.createTempSync('chat_input_bar_test_case_c_');
       addTearDown(() => dir.deleteSync(recursive: true));
 
-      final fake = _FakeProjectService();
+      final fake = _FakeProjectRepository();
       final project = _makeProject(id: 'proj-c', path: dir.path, status: ProjectStatus.missing);
       await tester.pumpWidget(
         _wrap(
           const ChatInputBar(sessionId: 'sid'),
           projects: [project],
           activeProjectId: 'proj-c',
-          projectService: fake,
+          projectRepository: fake,
         ),
       );
       await tester.pump();
@@ -215,14 +241,14 @@ void main() {
       // Delete BEFORE pump — at send time, the folder is gone.
       dir.deleteSync(recursive: true);
 
-      final fake = _FakeProjectService();
+      final fake = _FakeProjectRepository();
       final project = _makeProject(id: 'proj-b', path: dir.path, status: ProjectStatus.available);
       await tester.pumpWidget(
         _wrap(
           const ChatInputBar(sessionId: 'sid'),
           projects: [project],
           activeProjectId: 'proj-b',
-          projectService: fake,
+          projectRepository: fake,
         ),
       );
       await tester.pump();
@@ -242,7 +268,7 @@ void main() {
       // Case D: cached status and filesystem agree — folder is gone. Block
       // the send, show the snackbar, and do NOT fire a redundant refresh
       // (nothing to self-heal).
-      final fake = _FakeProjectService();
+      final fake = _FakeProjectRepository();
       final project = _makeProject(
         id: 'proj-d',
         path: '/tmp/chat_input_bar_test_case_d_does_not_exist_${DateTime.now().microsecondsSinceEpoch}',
@@ -253,7 +279,7 @@ void main() {
           const ChatInputBar(sessionId: 'sid'),
           projects: [project],
           activeProjectId: 'proj-d',
-          projectService: fake,
+          projectRepository: fake,
         ),
       );
       await tester.pump();
@@ -269,8 +295,8 @@ void main() {
       // No activeProjectId override — `_resolveActiveProject` should return
       // null and the send guard should short-circuit with the dedicated
       // snackbar (not the missing-folder one).
-      final fake = _FakeProjectService();
-      await tester.pumpWidget(_wrap(const ChatInputBar(sessionId: 'sid'), projectService: fake));
+      final fake = _FakeProjectRepository();
+      await tester.pumpWidget(_wrap(const ChatInputBar(sessionId: 'sid'), projectRepository: fake));
       await tester.pump();
 
       await tester.tap(_sendButton());

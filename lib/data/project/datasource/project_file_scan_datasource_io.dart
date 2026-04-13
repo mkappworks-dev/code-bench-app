@@ -3,9 +3,10 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/utils/debug_logger.dart';
+import '../../../../core/utils/debug_logger.dart';
+import 'project_file_scan_datasource.dart';
 
-part 'project_file_scan_service.g.dart';
+part 'project_file_scan_datasource_io.g.dart';
 
 /// Hard cap on how many files the picker's scan will collect. Short-circuits
 /// the walk once reached — a bigger list would blow the autocomplete popover's
@@ -52,19 +53,20 @@ const Set<String> kCodeExtensions = {
 const Set<String> kSkipDirs = {'.git', '.dart_tool', 'build', 'node_modules', '.worktrees', '.idea', '.vscode'};
 
 @Riverpod(keepAlive: true)
-ProjectFileScanService projectFileScanService(Ref ref) => ProjectFileScanService();
+ProjectFileScanDatasource projectFileScanDatasource(Ref ref) => ProjectFileScanDatasourceIo();
 
 /// Walks a project root and returns repo-relative paths of code files.
 ///
 /// Pruning happens at the directory level (vs. filtering yielded files from
 /// `Directory.list(recursive: true)`) so heavy trees like `node_modules`
 /// never hit the OS scan. Short-circuits at [kMaxScanFiles].
-class ProjectFileScanService {
+class ProjectFileScanDatasourceIo implements ProjectFileScanDatasource {
   /// Returns repo-relative paths of code files under [rootPath].
   ///
   /// Propagates [FileSystemException] when the root itself cannot be listed
   /// — the caller can decide whether that's a user-visible error or a
   /// silently-skipped subtree.
+  @override
   Future<List<String>> scanCodeFiles(String rootPath) async {
     final out = <String>[];
     await _walk(Directory(rootPath), rootPath, out);
@@ -80,7 +82,7 @@ class ProjectFileScanService {
       // Permission-denied on a subdirectory: skip it but continue the
       // walk. Only a root-level failure should bubble up as a scan error.
       if (dir.path == rootPath) rethrow;
-      dLog('[ProjectFileScanService] skipping ${dir.path}: ${e.runtimeType}');
+      dLog('[ProjectFileScanDatasource] skipping ${dir.path}: ${e.runtimeType}');
       return;
     }
     for (final entity in entries) {

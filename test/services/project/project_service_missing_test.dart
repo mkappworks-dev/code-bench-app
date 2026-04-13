@@ -4,20 +4,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/_core/app_database.dart';
 import 'package:code_bench_app/data/models/project.dart';
-import 'package:code_bench_app/services/project/project_service.dart';
+import 'package:code_bench_app/data/project/repository/project_repository.dart';
+import 'package:code_bench_app/data/project/repository/project_repository_impl.dart';
 import 'package:drift/native.dart';
 
 void main() {
   late Directory tmpDir;
   late ProviderContainer container;
-  late ProjectService service;
+  late ProjectRepository service;
 
   setUp(() async {
     tmpDir = await Directory.systemTemp.createTemp('project_missing_test_');
     container = ProviderContainer(
       overrides: [appDatabaseProvider.overrideWith((ref) => AppDatabase.forTesting(NativeDatabase.memory()))],
     );
-    service = container.read(projectServiceProvider);
+    service = container.read(projectRepositoryProvider);
   });
 
   tearDown(() async {

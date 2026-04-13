@@ -7,7 +7,7 @@ import '../../../core/errors/app_exception.dart';
 import '../../../data/models/ai_model.dart';
 import '../../../data/ai/repository/ai_repository_impl.dart';
 import '../../../services/api_key_test_service.dart';
-import '../../../services/project/project_service.dart';
+import '../../../data/project/repository/project_repository_impl.dart';
 import '../../../services/session/session_service.dart';
 import '../../../services/settings/settings_service.dart';
 import 'settings_actions_failure.dart';
@@ -85,7 +85,7 @@ class SettingsActions extends _$SettingsActions {
     }
 
     try {
-      await ref.read(projectServiceProvider).deleteAllProjects();
+      await ref.read(projectRepositoryProvider).deleteAllProjects();
     } catch (e, st) {
       _logWipeFailure('projects', e, st);
       failures.add('projects');

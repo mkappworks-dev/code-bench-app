@@ -10,7 +10,8 @@ import '../../../data/models/chat_session.dart';
 import '../../../data/models/project_action.dart';
 import '../../chat/notifiers/chat_notifier.dart';
 import '../../../data/git/repository/git_repository_impl.dart';
-import '../../../services/project/project_service.dart';
+import '../../../data/project/repository/project_repository.dart';
+import '../../../data/project/repository/project_repository_impl.dart';
 import '../../../services/session/session_service.dart';
 import 'project_sidebar_failure.dart';
 
@@ -24,7 +25,7 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
   @override
   FutureOr<void> build() {}
 
-  ProjectService get _projects => ref.read(projectServiceProvider);
+  ProjectRepository get _projects => ref.read(projectRepositoryProvider);
   SessionService get _sessions => ref.read(sessionServiceProvider);
 
   ProjectSidebarFailure _asFailure(Object e) => switch (e) {
