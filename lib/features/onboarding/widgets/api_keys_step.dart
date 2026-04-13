@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/instant_menu.dart';
-import '../../../data/models/ai_model.dart';
+import '../../../data/shared/ai_model.dart';
 import '../../settings/notifiers/settings_actions.dart';
 
 class ApiKeysStep extends ConsumerStatefulWidget {

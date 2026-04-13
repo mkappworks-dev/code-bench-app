@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/ai/repository/ai_repository.dart';
-import 'package:code_bench_app/data/models/ai_model.dart';
-import 'package:code_bench_app/data/models/chat_message.dart';
+import 'package:code_bench_app/data/shared/ai_model.dart';
+import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/services/ai/ai_service.dart';
 
 class _FakeAIRepo extends Fake implements AIRepository {

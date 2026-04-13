@@ -1,5 +1,5 @@
-import '../../models/ai_model.dart';
-import '../../models/chat_message.dart';
+import '../../shared/ai_model.dart';
+import '../../shared/chat_message.dart';
 
 /// Single-provider I/O boundary. Speaks wire protocol only — no persistence,
 /// no retries, no provider-selection logic.

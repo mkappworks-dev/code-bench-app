@@ -1,4 +1,4 @@
-import '../../models/repository.dart';
+import '../models/repository.dart';
 
 abstract interface class GitHubRepository {
   // Auth methods

@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../data/_core/secure_storage.dart';
-import '../../../data/models/ai_model.dart';
-import '../../../data/models/chat_message.dart';
+import '../../../data/shared/ai_model.dart';
+import '../../../data/shared/chat_message.dart';
 import '../datasource/ai_remote_datasource.dart';
 import '../datasource/anthropic_remote_datasource_dio.dart';
 import '../datasource/custom_remote_datasource_dio.dart';

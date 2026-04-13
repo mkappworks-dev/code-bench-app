@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
-import '../../../data/models/applied_change.dart';
+import '../../../data/apply/models/applied_change.dart';
 import '../../../services/apply/apply_service.dart';
 import '../../project_sidebar/notifiers/project_sidebar_actions.dart';
 import 'chat_notifier.dart';

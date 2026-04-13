@@ -1,5 +1,5 @@
-import '../../../data/models/project.dart';
-import '../../../data/models/project_action.dart';
+import '../../../data/project/models/project.dart';
+import '../../../data/project/models/project_action.dart';
 
 abstract interface class ProjectRepository {
   Stream<List<Project>> watchAllProjects();

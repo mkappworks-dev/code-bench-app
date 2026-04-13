@@ -7,7 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../core/utils/instant_menu.dart';
-import '../../data/models/project.dart';
+import '../../data/project/models/project.dart';
 import '../../features/chat/notifiers/create_pr_actions.dart';
 import '../../features/chat/widgets/commit_dialog.dart';
 import '../../features/chat/widgets/create_pr_dialog.dart';

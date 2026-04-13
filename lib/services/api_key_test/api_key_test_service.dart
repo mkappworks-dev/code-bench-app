@@ -2,9 +2,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/ai/repository/api_key_test_repository.dart';
 import '../../data/ai/repository/api_key_test_repository_impl.dart';
-import '../../data/models/ai_model.dart';
+import '../../data/shared/ai_model.dart';
 
-export '../../data/models/ai_model.dart' show AIProvider;
+export '../../data/shared/ai_model.dart' show AIProvider;
 
 part 'api_key_test_service.g.dart';
 

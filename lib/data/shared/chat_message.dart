@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'ask_user_question.dart';
-import 'tool_event.dart';
+import '../session/models/ask_user_question.dart';
+import '../session/models/tool_event.dart';
 
 part 'chat_message.freezed.dart';
 part 'chat_message.g.dart';

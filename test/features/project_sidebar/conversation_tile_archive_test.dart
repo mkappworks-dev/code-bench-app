@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:code_bench_app/data/models/chat_session.dart';
+import 'package:code_bench_app/data/session/models/chat_session.dart';
 import 'package:code_bench_app/features/project_sidebar/widgets/conversation_tile.dart';
 
 void main() {

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/_core/app_database.dart';
-import 'package:code_bench_app/data/models/project.dart';
+import 'package:code_bench_app/data/project/models/project.dart';
 import 'package:code_bench_app/data/project/repository/project_repository.dart';
 import 'package:code_bench_app/data/project/repository/project_repository_impl.dart';
 import 'package:drift/native.dart';

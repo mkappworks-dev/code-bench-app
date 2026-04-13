@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_icons.dart';
-import '../../data/models/project.dart';
+import '../../data/project/models/project.dart';
 import '../notifiers/git_actions.dart';
 import '../notifiers/git_actions_failure.dart';
 import '../../features/project_sidebar/notifiers/project_sidebar_actions.dart';

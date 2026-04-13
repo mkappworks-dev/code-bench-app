@@ -2,9 +2,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/github/repository/github_repository.dart';
 import '../../data/github/repository/github_repository_impl.dart';
-import '../../data/models/repository.dart';
+import '../../data/github/models/repository.dart';
 
-export '../../data/models/repository.dart' show GitHubAccount, GitTreeItem, Repository;
+export '../../data/github/models/repository.dart' show GitHubAccount, GitTreeItem, Repository;
 
 part 'github_service.g.dart';
 

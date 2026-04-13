@@ -1,5 +1,5 @@
-import '../../models/chat_message.dart' as msg;
-import '../../models/chat_session.dart';
+import '../../shared/chat_message.dart' as msg;
+import '../models/chat_session.dart';
 
 abstract interface class SessionDatasource {
   Stream<List<ChatSession>> watchAllSessions();

@@ -1,6 +1,6 @@
-import 'package:code_bench_app/data/models/chat_message.dart';
-import 'package:code_bench_app/data/models/project.dart';
-import 'package:code_bench_app/data/models/tool_event.dart';
+import 'package:code_bench_app/data/shared/chat_message.dart';
+import 'package:code_bench_app/data/project/models/project.dart';
+import 'package:code_bench_app/data/session/models/tool_event.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'package:code_bench_app/shell/widgets/status_bar.dart';

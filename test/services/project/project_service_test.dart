@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:code_bench_app/data/models/project.dart';
-import 'package:code_bench_app/data/models/project_action.dart';
+import 'package:code_bench_app/data/project/models/project.dart';
+import 'package:code_bench_app/data/project/models/project_action.dart';
 import 'package:code_bench_app/data/project/repository/project_repository.dart';
 import 'package:code_bench_app/services/project/project_service.dart';
 

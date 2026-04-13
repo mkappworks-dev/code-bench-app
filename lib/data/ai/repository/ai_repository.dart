@@ -1,5 +1,5 @@
-import '../../models/ai_model.dart';
-import '../../models/chat_message.dart';
+import '../../shared/ai_model.dart';
+import '../../shared/chat_message.dart';
 
 /// Domain-level AI API. Abstracts provider selection and stream buffering.
 abstract interface class AIRepository {

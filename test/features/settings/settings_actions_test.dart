@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/core/errors/app_exception.dart';
-import 'package:code_bench_app/data/models/ai_model.dart';
+import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/services/settings/settings_service.dart';
 import 'package:code_bench_app/features/settings/notifiers/settings_actions_failure.dart';
 import 'package:code_bench_app/features/settings/notifiers/settings_actions.dart';

@@ -1,6 +1,6 @@
-import '../../models/ai_model.dart';
-import '../../models/chat_message.dart';
-import '../../models/chat_session.dart';
+import '../../shared/ai_model.dart';
+import '../../shared/chat_message.dart';
+import '../models/chat_session.dart';
 
 abstract interface class SessionRepository {
   Stream<List<ChatSession>> watchAllSessions();

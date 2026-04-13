@@ -2,7 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../data/models/project.dart';
+import '../../../data/project/models/project.dart';
 import '../../../services/project/project_service.dart';
 
 part 'project_sidebar_notifier.g.dart';

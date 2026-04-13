@@ -9,7 +9,7 @@ import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/_core/secure_storage.dart';
-import '../../models/repository.dart';
+import '../models/repository.dart';
 import 'github_api_datasource.dart';
 
 part 'github_api_datasource_dio.g.dart';

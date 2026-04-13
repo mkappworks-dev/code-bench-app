@@ -5,7 +5,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../data/models/chat_message.dart';
+import '../../../data/shared/chat_message.dart';
 import '../notifiers/chat_notifier.dart';
 import '../notifiers/ask_question_notifier.dart';
 import 'ask_user_question_card.dart';

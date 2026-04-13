@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/utils/debug_logger.dart';
-import '../../data/models/project.dart';
-import '../../data/models/project_action.dart';
+import '../../data/project/models/project.dart';
+import '../../data/project/models/project_action.dart';
 import '../../data/project/repository/project_repository.dart';
 import '../../data/project/repository/project_repository_impl.dart';
 import 'project_exceptions.dart';

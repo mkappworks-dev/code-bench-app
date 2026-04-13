@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../data/models/applied_change.dart';
+import '../../../data/apply/models/applied_change.dart';
 
 /// Three-tab diff view shown when the user tries to revert a change on a
 /// file that has been externally modified since apply. Each tab shows the

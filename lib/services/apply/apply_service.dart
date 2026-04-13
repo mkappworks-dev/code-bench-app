@@ -10,7 +10,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/utils/debug_logger.dart';
 import '../../data/apply/repository/apply_repository.dart';
 import '../../data/apply/repository/apply_repository_impl.dart';
-import '../../data/models/applied_change.dart';
+import '../../data/apply/models/applied_change.dart';
 import 'apply_exceptions.dart';
 
 export 'apply_exceptions.dart';

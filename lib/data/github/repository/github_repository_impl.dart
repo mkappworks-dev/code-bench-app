@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../models/repository.dart';
+import '../models/repository.dart';
 import '../datasource/github_api_datasource.dart';
 import '../datasource/github_api_datasource_dio.dart';
 import '../datasource/github_auth_datasource.dart';

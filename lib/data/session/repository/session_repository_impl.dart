@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../models/ai_model.dart';
-import '../../models/chat_message.dart';
-import '../../models/chat_session.dart';
+import '../../shared/ai_model.dart';
+import '../../shared/chat_message.dart';
+import '../models/chat_session.dart';
 import '../datasource/session_datasource.dart';
 import '../datasource/session_datasource_drift.dart';
 import 'session_repository.dart';

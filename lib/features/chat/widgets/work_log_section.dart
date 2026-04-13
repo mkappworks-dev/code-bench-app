@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../data/models/chat_message.dart';
-import '../../../data/models/tool_event.dart';
+import '../../../data/shared/chat_message.dart';
+import '../../../data/session/models/tool_event.dart';
 import '../notifiers/chat_notifier.dart';
 
 /// Collapsible in-message tool-call log.

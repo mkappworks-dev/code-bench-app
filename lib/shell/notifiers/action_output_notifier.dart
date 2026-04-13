@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../data/models/project_action.dart';
+import '../../data/project/models/project_action.dart';
 
 part 'action_output_notifier.freezed.dart';
 part 'action_output_notifier.g.dart';

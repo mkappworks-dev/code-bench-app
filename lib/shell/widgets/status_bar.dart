@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
-import '../../data/models/project.dart';
+import '../../data/project/models/project.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/branch_picker/widgets/branch_picker_popover.dart';
 import '../../data/git/git_live_state.dart';

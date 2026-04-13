@@ -3,9 +3,9 @@ import 'package:uuid/uuid.dart';
 
 import '../../data/ai/repository/ai_repository.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
-import '../../data/models/ai_model.dart';
-import '../../data/models/chat_message.dart';
-import '../../data/models/chat_session.dart';
+import '../../data/shared/ai_model.dart';
+import '../../data/shared/chat_message.dart';
+import '../../data/session/models/chat_session.dart';
 import '../../data/session/repository/session_repository.dart';
 import '../../data/session/repository/session_repository_impl.dart';
 

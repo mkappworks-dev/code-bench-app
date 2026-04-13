@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:code_bench_app/data/models/tool_event.dart';
+import 'package:code_bench_app/data/session/models/tool_event.dart';
 
 void main() {
   group('ToolEvent round-trip', () {

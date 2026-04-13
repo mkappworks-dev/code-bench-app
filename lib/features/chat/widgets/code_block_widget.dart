@@ -11,7 +11,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../core/utils/snackbar_helper.dart';
-import '../../../data/models/project.dart';
+import '../../../data/project/models/project.dart';
 import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/chat_notifier.dart';
 import '../notifiers/code_apply_actions.dart';

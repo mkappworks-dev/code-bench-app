@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:code_bench_app/data/apply/repository/apply_repository.dart';
-import 'package:code_bench_app/data/models/applied_change.dart';
+import 'package:code_bench_app/data/apply/models/applied_change.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 

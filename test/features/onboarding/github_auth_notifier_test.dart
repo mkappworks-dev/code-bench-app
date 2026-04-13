@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/data/github/repository/github_repository.dart';
 import 'package:code_bench_app/data/github/repository/github_repository_impl.dart';
-import 'package:code_bench_app/data/models/repository.dart';
+import 'package:code_bench_app/data/github/models/repository.dart';
 import 'package:code_bench_app/features/onboarding/notifiers/github_auth_notifier.dart';
 
 // ── Fake GitHubRepository ────────────────────────────────────────────────────

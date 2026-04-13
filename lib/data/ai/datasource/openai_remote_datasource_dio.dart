@@ -7,8 +7,8 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
-import '../../../data/models/ai_model.dart';
-import '../../../data/models/chat_message.dart';
+import '../../../data/shared/ai_model.dart';
+import '../../../data/shared/chat_message.dart';
 import 'ai_remote_datasource.dart';
 
 class OpenAIRemoteDatasourceDio implements AIRemoteDatasource {

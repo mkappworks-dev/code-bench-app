@@ -4,8 +4,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/utils/debug_logger.dart';
-import '../../../data/models/project.dart';
-import '../../../data/models/project_action.dart';
+import '../../../data/project/models/project.dart';
+import '../../../data/project/models/project_action.dart';
 import '../datasource/project_datasource.dart';
 import '../datasource/project_datasource_drift.dart';
 import '../datasource/project_fs_datasource.dart';

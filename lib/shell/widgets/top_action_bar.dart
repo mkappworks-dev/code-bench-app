@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/theme_constants.dart';
-import '../../data/models/project.dart';
+import '../../data/project/models/project.dart';
 import '../notifiers/top_action_bar_notifier.dart';
 import 'actions_dropdown.dart';
 import 'commit_push_button.dart';

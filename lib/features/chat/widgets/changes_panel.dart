@@ -6,8 +6,8 @@ import '../../../core/utils/snackbar_helper.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
-import '../../../data/models/applied_change.dart';
-import '../../../data/models/project.dart';
+import '../../../data/apply/models/applied_change.dart';
+import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../../../shell/notifiers/git_actions.dart';
 import '../notifiers/chat_notifier.dart';
