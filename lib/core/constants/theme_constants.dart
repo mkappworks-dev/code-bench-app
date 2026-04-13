@@ -24,10 +24,10 @@ class ThemeConstants {
   static const Color textMuted = Color(0xFF666666);
 
   // Accent colors
-  static const Color accent = Color(0xFF007ACC);
-  static const Color accentLight = Color(0xFF1F8AD2);
-  static const Color accentHover = Color(0xFF0066B8);
-  static const Color accentDark = Color(0xFF004F85);
+  static const Color accent = Color(0xFF4EC9B0);
+  static const Color accentLight = Color(0xFF6DD4BE);
+  static const Color accentHover = Color(0xFF3AB49A);
+  static const Color accentDark = Color(0xFF267A68);
 
   // Semantic colors
   static const Color success = Color(0xFF4EC9B0);
@@ -52,7 +52,7 @@ class ThemeConstants {
   // Tab colors
   static const Color tabActive = Color(0xFF141414);
   static const Color tabInactive = Color(0xFF111111);
-  static const Color tabBorder = Color(0xFF007ACC);
+  static const Color tabBorder = Color(0xFF4EC9B0);
 
   // Frosted glass (for cards on dark backgrounds)
   static const Color frostedBg = Color(0x0AFFFFFF);
@@ -69,8 +69,8 @@ class ThemeConstants {
   static const Color mutedFg = Color(0xFF555555);
   static const Color faintFg = Color(0xFF333333);
 
-  // Interactive blue (step dots, spinners, links — distinct from accent/007ACC)
-  static const Color blueAccent = Color(0xFF4A7CFF);
+  // Interactive teal (step dots, spinners, links — alias of accent; to be renamed in follow-up)
+  static const Color blueAccent = Color(0xFF4EC9B0);
 
   // Dim foreground (between textSecondary and textMuted — dim icons, labels)
   static const Color dimFg = Color(0xFF888888);
@@ -83,9 +83,9 @@ class ThemeConstants {
   static const Color worktreeBadgeFg = Color(0xFFE8A228);
 
   // Selection / active-state surfaces
-  static const Color selectionBg = Color(0xFF1A2540);
-  static const Color selectionBorder = Color(0xFF2A3550);
-  static const Color questionCardBg = Color(0xFF1A1F2E);
+  static const Color selectionBg = Color(0xFF0D2B27);
+  static const Color selectionBorder = Color(0xFF1A4840);
+  static const Color questionCardBg = Color(0xFF0D2B27);
 
   // PR status
   static const Color prMergedColor = Color(0xFF6E40C9);
