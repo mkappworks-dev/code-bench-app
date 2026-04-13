@@ -64,7 +64,7 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource {
               if (text is String && text.isNotEmpty) {
                 yield text;
               }
-            } catch (_) {}
+            } on FormatException catch (_) {}
           }
         }
       }

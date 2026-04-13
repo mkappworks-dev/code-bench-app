@@ -58,7 +58,7 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
               if (delta is String && delta.isNotEmpty) {
                 yield delta;
               }
-            } catch (_) {
+            } on FormatException catch (_) {
               // skip malformed lines
             }
           }

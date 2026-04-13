@@ -66,7 +66,7 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource {
                   yield delta;
                 }
               }
-            } catch (_) {}
+            } on FormatException catch (_) {}
           }
         }
       }

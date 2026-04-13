@@ -52,7 +52,7 @@ class OllamaRemoteDatasourceDio implements AIRemoteDatasource {
             if (content is String && content.isNotEmpty) {
               yield content;
             }
-          } catch (_) {}
+          } on FormatException catch (_) {}
         }
       }
     } on DioException catch (e) {
