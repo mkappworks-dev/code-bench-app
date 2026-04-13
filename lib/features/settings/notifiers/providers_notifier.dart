@@ -4,7 +4,7 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/models/ai_model.dart';
 import '../../../data/ai/repository/ai_repository_impl.dart';
-import '../../../data/settings/repository/settings_repository_impl.dart';
+import '../../../services/settings/settings_service.dart';
 
 part 'providers_notifier.g.dart';
 
@@ -48,7 +48,7 @@ class ApiKeysNotifierState {
 class ApiKeysNotifier extends _$ApiKeysNotifier {
   @override
   Future<ApiKeysNotifierState> build() async {
-    final svc = ref.read(settingsRepositoryProvider);
+    final svc = ref.read(settingsServiceProvider);
     return ApiKeysNotifierState(
       openai: await svc.readApiKey('openai') ?? '',
       anthropic: await svc.readApiKey('anthropic') ?? '',
@@ -66,7 +66,7 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
     required String customApiKey,
   }) async {
     try {
-      final svc = ref.read(settingsRepositoryProvider);
+      final svc = ref.read(settingsServiceProvider);
       for (final entry in providerKeys.entries) {
         final key = entry.value.trim();
         if (key.isNotEmpty) {
@@ -87,7 +87,7 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
 
   Future<void> deleteKey(AIProvider provider) async {
     try {
-      await ref.read(settingsRepositoryProvider).deleteApiKey(provider.name);
+      await ref.read(settingsServiceProvider).deleteApiKey(provider.name);
       ref.invalidate(aiRepositoryProvider);
     } catch (e, st) {
       dLog('[ApiKeysNotifier] deleteKey failed: $e');

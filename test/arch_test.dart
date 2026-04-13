@@ -64,9 +64,6 @@ void main() {
     // Widgets and screens must not import from lib/services/, lib/data/**/datasource/,
     // or lib/data/**/repository/ directly. Documented exceptions:
     //   • apply_service.dart — static assertWithinProject security guard
-    //   • project_tile.dart — imports git_service.dart solely for
-    //     gitLiveStateProvider (a @riverpod family provider). Moving it to a
-    //     shell notifier file is tracked as follow-up work.
     test('widgets do not import services or datasources directly', () {
       final widgetFiles = _dartFiles(
         'lib/',
@@ -77,12 +74,58 @@ void main() {
         final hasServiceImport = RegExp(r"import '.*/(services|datasource|repository)/").hasMatch(content);
         if (hasServiceImport) {
           // Allow documented exceptions
-          if (!content.contains('apply_service.dart') && !file.contains('project_tile.dart')) {
+          if (!content.contains('apply_service.dart')) {
             violations.add(file);
           }
         }
       }
       expect(violations, isEmpty, reason: 'Widgets importing services/datasources directly:\n${violations.join('\n')}');
+    });
+
+    // ── Notifier → Repository direct access rule ────────────────────────────
+    //
+    // Notifiers must call services, not repositories directly.
+    test('notifiers do not read repository providers directly', () {
+      final notifierFiles = _dartFiles('lib/')
+          .where((p) => p.contains('/notifiers/') && (p.endsWith('_actions.dart') || p.endsWith('_notifier.dart')))
+          .toList();
+      final violations = <String>[];
+      for (final file in notifierFiles) {
+        final content = File(file).readAsStringSync();
+        final hasRepoRead =
+            RegExp(r'ref\.read\(\w*[Rr]epository[Pp]rovider').hasMatch(content) ||
+            RegExp(r'ref\.watch\(\w*[Rr]epository[Pp]rovider').hasMatch(content);
+        if (hasRepoRead) {
+          violations.add(file);
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason:
+            'Notifiers reading repository providers directly (use a service):\n'
+            '${violations.join('\n')}',
+      );
+    });
+
+    // ── Service → feature import rule ───────────────────────────────────────
+    //
+    // Files in lib/services/ must not import from lib/features/.
+    test('services do not import from lib/features/', () {
+      final violations = _grepImport("package:code_bench_app/features/", 'lib/services/')
+        ..addAll(_grepImport("'../../../features/", 'lib/services/'))
+        ..addAll(_grepImport("'../../features/", 'lib/services/'));
+      expect(violations, isEmpty, reason: 'Services importing from lib/features/:\n${violations.join('\n')}');
+    });
+
+    // ── Data → service import rule ───────────────────────────────────────────
+    //
+    // Files in lib/data/ must not import from lib/services/.
+    test('data layer does not import from lib/services/', () {
+      final violations = _grepImport("package:code_bench_app/services/", 'lib/data/')
+        ..addAll(_grepImport("'../../../services/", 'lib/data/'))
+        ..addAll(_grepImport("'../../services/", 'lib/data/'));
+      expect(violations, isEmpty, reason: 'Data layer importing from lib/services/:\n${violations.join('\n')}');
     });
   });
 }

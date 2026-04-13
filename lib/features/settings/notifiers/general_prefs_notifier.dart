@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
-import '../../../data/settings/repository/settings_repository_impl.dart';
+import '../../../services/settings/settings_service.dart';
 
 part 'general_prefs_notifier.g.dart';
 
@@ -30,7 +30,7 @@ class GeneralPrefsNotifierState {
 class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
   @override
   Future<GeneralPrefsNotifierState> build() async {
-    final svc = ref.read(settingsRepositoryProvider);
+    final svc = ref.read(settingsServiceProvider);
     return GeneralPrefsNotifierState(
       autoCommit: await svc.getAutoCommit(),
       deleteConfirmation: await svc.getDeleteConfirmation(),
@@ -40,7 +40,7 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
 
   Future<void> setAutoCommit(bool value) async {
     try {
-      await ref.read(settingsRepositoryProvider).setAutoCommit(value);
+      await ref.read(settingsServiceProvider).setAutoCommit(value);
       _update((s) => s.copyWith(autoCommit: value));
     } catch (e, st) {
       dLog('[GeneralPrefsNotifier] setAutoCommit failed: $e');
@@ -50,7 +50,7 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
 
   Future<void> setDeleteConfirmation(bool value) async {
     try {
-      await ref.read(settingsRepositoryProvider).setDeleteConfirmation(value);
+      await ref.read(settingsServiceProvider).setDeleteConfirmation(value);
       _update((s) => s.copyWith(deleteConfirmation: value));
     } catch (e, st) {
       dLog('[GeneralPrefsNotifier] setDeleteConfirmation failed: $e');
@@ -60,7 +60,7 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
 
   Future<void> setTerminalApp(String value) async {
     try {
-      await ref.read(settingsRepositoryProvider).setTerminalApp(value);
+      await ref.read(settingsServiceProvider).setTerminalApp(value);
       _update((s) => s.copyWith(terminalApp: value));
     } catch (e, st) {
       dLog('[GeneralPrefsNotifier] setTerminalApp failed: $e');
@@ -72,7 +72,7 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
   /// provider so the settings UI rebuilds with fresh values.
   Future<void> restoreDefaults() async {
     try {
-      final svc = ref.read(settingsRepositoryProvider);
+      final svc = ref.read(settingsServiceProvider);
       await svc.setAutoCommit(false);
       await svc.setTerminalApp('Terminal');
       await svc.setDeleteConfirmation(true);
