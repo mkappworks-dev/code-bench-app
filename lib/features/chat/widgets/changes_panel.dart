@@ -9,7 +9,6 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../data/models/applied_change.dart';
 import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
-import '../../../services/apply/apply_service.dart';
 import '../../../shell/notifiers/git_actions.dart';
 import '../notifiers/chat_notifier.dart';
 import '../notifiers/code_apply_actions.dart';
@@ -151,7 +150,7 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
     final checksum = widget.change.contentChecksum;
     _editedFuture = checksum == null
         ? Future.value(false)
-        : ApplyService.isExternallyModified(widget.change.filePath, checksum);
+        : ref.read(codeApplyActionsProvider.notifier).isExternallyModified(widget.change.filePath, checksum);
   }
 
   Future<void> _handleRevert() async {

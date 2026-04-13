@@ -3,15 +3,17 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:code_bench_app/data/apply/repository/apply_repository.dart';
+import 'package:code_bench_app/data/apply/repository/apply_repository_impl.dart';
 import 'package:code_bench_app/data/models/applied_change.dart';
+import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/notifiers/code_apply_actions.dart';
 import 'package:code_bench_app/features/chat/notifiers/code_apply_failure.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_actions.dart';
-import 'package:code_bench_app/services/apply/apply_service.dart';
 
-// ── Fake ApplyService ─────────────────────────────────────────────────────────
+// ── Fake ApplyRepository ──────────────────────────────────────────────────────
 
-class _FakeApplyService extends Fake implements ApplyService {
+class _FakeApplyRepository extends Fake implements ApplyRepository {
   Object? _applyError;
   Object? _revertError;
 
@@ -19,7 +21,7 @@ class _FakeApplyService extends Fake implements ApplyService {
   void throwOnRevert(Object error) => _revertError = error;
 
   @override
-  Future<void> applyChange({
+  Future<AppliedChange> applyChange({
     required String filePath,
     required String projectPath,
     required String newContent,
@@ -27,6 +29,17 @@ class _FakeApplyService extends Fake implements ApplyService {
     required String messageId,
   }) async {
     if (_applyError != null) throw _applyError!;
+    return AppliedChange(
+      id: 'fake-id',
+      sessionId: sessionId,
+      messageId: messageId,
+      filePath: filePath,
+      originalContent: null,
+      newContent: newContent,
+      appliedAt: DateTime(2024),
+      additions: 0,
+      deletions: 0,
+    );
   }
 
   @override
@@ -42,6 +55,12 @@ class _FakeApplyService extends Fake implements ApplyService {
       return null;
     }
   }
+
+  @override
+  Future<String?> readOriginalForDiff(String absolutePath, String projectPath) async => null;
+
+  @override
+  Future<bool> isExternallyModified(String filePath, String storedChecksum) async => false;
 }
 
 // ── Fake ProjectSidebarActions ────────────────────────────────────────────────
@@ -70,18 +89,18 @@ AppliedChange _makeChange() => AppliedChange(
 );
 
 void main() {
-  late _FakeApplyService fakeService;
+  late _FakeApplyRepository fakeRepo;
   late _FakeProjectSidebarActions fakeSidebar;
 
   setUp(() {
-    fakeService = _FakeApplyService();
+    fakeRepo = _FakeApplyRepository();
     fakeSidebar = _FakeProjectSidebarActions();
   });
 
   ProviderContainer makeContainer() {
     final c = ProviderContainer(
       overrides: [
-        applyServiceProvider.overrideWithValue(fakeService),
+        applyRepositoryProvider.overrideWithValue(fakeRepo),
         projectSidebarActionsProvider.overrideWith(() => fakeSidebar),
       ],
     );
@@ -92,7 +111,7 @@ void main() {
   // ── applyChange ─────────────────────────────────────────────────────────────
 
   group('applyChange', () {
-    test('happy path — state becomes AsyncData', () async {
+    test('happy path — state becomes AsyncData and change is recorded', () async {
       final c = makeContainer();
       await c
           .read(codeApplyActionsProvider.notifier)
@@ -105,10 +124,12 @@ void main() {
             messageId: 'm',
           );
       expect(c.read(codeApplyActionsProvider), isA<AsyncData<void>>());
+      // CodeApplyActions now calls appliedChangesProvider.notifier.apply() directly
+      expect(c.read(appliedChangesProvider)['s'], isNotEmpty);
     });
 
     test('ProjectMissingException → CodeApplyProjectMissing', () async {
-      fakeService.throwOnApply(ProjectMissingException('p'));
+      fakeRepo.throwOnApply(ProjectMissingException('p'));
 
       final c = makeContainer();
       await c
@@ -125,7 +146,7 @@ void main() {
     });
 
     test('ProjectMissingException triggers refreshProjectStatus', () async {
-      fakeService.throwOnApply(ProjectMissingException('p'));
+      fakeRepo.throwOnApply(ProjectMissingException('p'));
 
       final c = makeContainer();
       // Pre-read so fakeSidebar is the active notifier instance.
@@ -148,7 +169,7 @@ void main() {
     });
 
     test('StateError → CodeApplyOutsideProject', () async {
-      fakeService.throwOnApply(StateError('outside'));
+      fakeRepo.throwOnApply(StateError('outside'));
 
       final c = makeContainer();
       await c
@@ -165,7 +186,7 @@ void main() {
     });
 
     test('FileSystemException → CodeApplyDiskWrite', () async {
-      fakeService.throwOnApply(const FileSystemException('disk full', '/p/f.dart'));
+      fakeRepo.throwOnApply(const FileSystemException('disk full', '/p/f.dart'));
 
       final c = makeContainer();
       await c
@@ -182,7 +203,7 @@ void main() {
     });
 
     test('generic exception → CodeApplyUnknownError', () async {
-      fakeService.throwOnApply(Exception('boom'));
+      fakeRepo.throwOnApply(Exception('boom'));
 
       final c = makeContainer();
       await c
@@ -202,7 +223,29 @@ void main() {
   // ── revertChange ────────────────────────────────────────────────────────────
 
   group('revertChange', () {
-    test('happy path — state becomes AsyncData', () async {
+    test('happy path — state becomes AsyncData and change is removed', () async {
+      final c = makeContainer();
+      // First apply a change so appliedChangesProvider has it.
+      await c
+          .read(codeApplyActionsProvider.notifier)
+          .applyChange(
+            projectId: 'p',
+            filePath: '/p/f.dart',
+            projectPath: '/p',
+            newContent: 'x',
+            sessionId: 's',
+            messageId: 'm',
+          );
+      expect(c.read(appliedChangesProvider)['s'], isNotEmpty);
+
+      // Now revert — the change should be removed from appliedChangesProvider.
+      final applied = c.read(appliedChangesProvider)['s']!.first;
+      await c.read(codeApplyActionsProvider.notifier).revertChange(change: applied, isGit: false, projectPath: '/p');
+      expect(c.read(codeApplyActionsProvider), isA<AsyncData<void>>());
+      expect(c.read(appliedChangesProvider)['s'] ?? [], isEmpty);
+    });
+
+    test('revertChange with standalone change — state becomes AsyncData', () async {
       final c = makeContainer();
       await c
           .read(codeApplyActionsProvider.notifier)
@@ -211,7 +254,7 @@ void main() {
     });
 
     test('exception → CodeApplyUnknownError', () async {
-      fakeService.throwOnRevert(Exception('boom'));
+      fakeRepo.throwOnRevert(Exception('boom'));
 
       final c = makeContainer();
       await c

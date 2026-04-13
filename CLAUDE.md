@@ -100,7 +100,7 @@ The Riverpod generator strips the `Notifier` suffix when producing the provider 
 
 **Where services live:** `lib/services/` only. Services are instantiated via `@riverpod` / `@Riverpod(keepAlive: true)` provider functions — never constructed directly in widgets or notifiers.
 
-**`Process.run` / `dart:io` / Dio** — allowed only inside `lib/data/**/datasource/` and `lib/services/`. Datasource files encode their I/O type in their filename suffix: `*_dio.dart` for HTTP, `*_process.dart` for shell-outs, `*_io.dart` for filesystem, `*_drift.dart` for SQLite. The one exception is `ApplyService.assertWithinProject` (a static security guard), which may be called from widgets that perform their own file reads (e.g. `_loadDiff` in `message_bubble.dart`).
+**`Process.run` / `dart:io` / Dio** — allowed only inside `lib/data/**/datasource/` and `lib/services/`. Datasource files encode their I/O type in their filename suffix: `*_dio.dart` for HTTP, `*_process.dart` for shell-outs, `*_io.dart` for filesystem, `*_drift.dart` for SQLite. The one exception is `ApplyRepository.assertWithinProject` (a static security guard), which may be called from widgets that perform their own file reads (e.g. `_loadDiff` in `message_bubble.dart`).
 
 ## Riverpod usage rules
 

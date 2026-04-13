@@ -6,7 +6,7 @@ import '../data/models/ai_model.dart';
 part 'api_key_test_service.g.dart';
 
 @Riverpod(keepAlive: true)
-ApiKeyTestService apiKeyTestService(Ref ref) => ApiKeyTestService();
+ApiKeyTestService apiKeyTestService(Ref ref) => ApiKeyTestService(datasource: ApiKeyTestDatasourceDio());
 
 /// Validates AI provider credentials and local Ollama connectivity via live
 /// HTTP probes. Delegates all Dio usage to [ApiKeyTestDatasourceDio] to keep
@@ -18,7 +18,9 @@ ApiKeyTestService apiKeyTestService(Ref ref) => ApiKeyTestService();
 /// would be leaked if anything ever prints the exception. See
 /// `macos/Runner/README.md` for the full threat model.
 class ApiKeyTestService {
-  final _datasource = ApiKeyTestDatasourceDio();
+  ApiKeyTestService({required ApiKeyTestDatasourceDio datasource}) : _datasource = datasource;
+
+  final ApiKeyTestDatasourceDio _datasource;
 
   /// Returns `true` when [key] is accepted by [provider]'s API.
   Future<bool> testApiKey(AIProvider provider, String key) => _datasource.testApiKey(provider, key);
