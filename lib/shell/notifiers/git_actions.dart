@@ -137,4 +137,6 @@ class GitActions extends _$GitActions {
   Future<String?> currentBranch(String projectPath) => _git().currentBranch(projectPath);
 
   Future<String?> getOriginUrl(String projectPath) => _git().getOriginUrl(projectPath);
+
+  bool isGitRepo(String path) => _git().isGitRepo(path);
 }

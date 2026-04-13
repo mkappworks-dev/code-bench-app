@@ -10,7 +10,7 @@ import '../../../data/models/applied_change.dart';
 import '../../../data/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../../../services/apply/apply_service.dart';
-import '../../../data/git/repository/git_repository_impl.dart';
+import '../../../shell/notifiers/git_actions.dart';
 import '../notifiers/chat_notifier.dart';
 import '../notifiers/code_apply_actions.dart';
 import '../notifiers/code_apply_failure.dart';
@@ -163,7 +163,7 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
 
     if (!isEdited) {
       // No conflict — revert directly.
-      final isGit = ref.read(gitRepositoryProvider).isGitRepo(project.path);
+      final isGit = ref.read(gitActionsProvider.notifier).isGitRepo(project.path);
       setState(() => _reverting = true);
       try {
         await ref
@@ -189,7 +189,7 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
       return;
     }
 
-    final isGit = ref.read(gitRepositoryProvider).isGitRepo(project.path);
+    final isGit = ref.read(gitActionsProvider.notifier).isGitRepo(project.path);
     await showDialog<void>(
       context: context,
       builder: (dialogCtx) => AlertDialog(

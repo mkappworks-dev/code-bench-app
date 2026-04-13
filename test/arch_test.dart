@@ -59,11 +59,15 @@ void main() {
       expect(violations, isEmpty, reason: 'package:drift found outside permitted paths:\n${violations.join('\n')}');
     });
 
-    // ── Widget → service/datasource import rule ──────────────────────────────
+    // ── Widget → service/datasource/repository import rule ──────────────────
     //
-    // Widgets and screens must not import from lib/services/ or lib/data/**/datasource/
-    // directly. The only documented exception: apply_service.dart may be imported
-    // for the static assertWithinProject security guard.
+    // Widgets and screens must not import from lib/services/, lib/data/**/datasource/,
+    // or lib/data/**/repository/ directly. Documented exceptions:
+    //   • apply_service.dart — static assertWithinProject security guard
+    //   • project_tile.dart — imports git_repository_impl.dart solely for
+    //     gitLiveStateProvider, a @riverpod family provider whose definition
+    //     currently lives in the repository layer. Moving it to a shell
+    //     notifier file is tracked as follow-up work.
     test('widgets do not import services or datasources directly', () {
       final widgetFiles = _dartFiles(
         'lib/',
@@ -71,10 +75,10 @@ void main() {
       final violations = <String>[];
       for (final file in widgetFiles) {
         final content = File(file).readAsStringSync();
-        final hasServiceImport = RegExp(r"import '.*/(services|datasource)/").hasMatch(content);
+        final hasServiceImport = RegExp(r"import '.*/(services|datasource|repository)/").hasMatch(content);
         if (hasServiceImport) {
-          // Allow the assertWithinProject exception
-          if (!content.contains('apply_service.dart')) {
+          // Allow documented exceptions
+          if (!content.contains('apply_service.dart') && !file.contains('project_tile.dart')) {
             violations.add(file);
           }
         }
