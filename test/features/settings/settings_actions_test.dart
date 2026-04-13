@@ -7,11 +7,12 @@ import 'package:code_bench_app/data/settings/repository/settings_repository.dart
 import 'package:code_bench_app/data/settings/repository/settings_repository_impl.dart';
 import 'package:code_bench_app/features/settings/notifiers/settings_actions_failure.dart';
 import 'package:code_bench_app/features/settings/notifiers/settings_actions.dart';
-import 'package:code_bench_app/services/api_key_test_service.dart';
+import 'package:code_bench_app/data/ai/repository/api_key_test_repository.dart';
+import 'package:code_bench_app/data/ai/repository/api_key_test_repository_impl.dart';
 
-// ── Fake ApiKeyTestService ────────────────────────────────────────────────────
+// ── Fake ApiKeyTestRepository ─────────────────────────────────────────────────
 
-class _FakeApiKeyTestService extends Fake implements ApiKeyTestService {
+class _FakeApiKeyTestRepository extends Fake implements ApiKeyTestRepository {
   Object? _testError;
   bool _testResult = true;
 
@@ -51,18 +52,18 @@ class _FakeSettingsRepository extends Fake implements SettingsRepository {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 void main() {
-  late _FakeApiKeyTestService fakeTestSvc;
+  late _FakeApiKeyTestRepository fakeTestSvc;
   late _FakeSettingsRepository fakeSettingsRepo;
 
   setUp(() {
-    fakeTestSvc = _FakeApiKeyTestService();
+    fakeTestSvc = _FakeApiKeyTestRepository();
     fakeSettingsRepo = _FakeSettingsRepository();
   });
 
   ProviderContainer makeContainer() {
     final c = ProviderContainer(
       overrides: [
-        apiKeyTestServiceProvider.overrideWithValue(fakeTestSvc),
+        apiKeyTestRepositoryProvider.overrideWithValue(fakeTestSvc),
         settingsRepositoryProvider.overrideWithValue(fakeSettingsRepo),
       ],
     );

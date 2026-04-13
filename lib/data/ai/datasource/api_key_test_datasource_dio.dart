@@ -5,7 +5,7 @@ import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/models/ai_model.dart';
 
 /// HTTP probes for validating AI provider API keys.
-/// Called by [ApiKeyTestService] — this file owns all Dio usage.
+/// Called by [ApiKeyTestRepositoryImpl] — this file owns all Dio usage.
 class ApiKeyTestDatasourceDio {
   Future<bool> testApiKey(AIProvider provider, String key) {
     return switch (provider) {
