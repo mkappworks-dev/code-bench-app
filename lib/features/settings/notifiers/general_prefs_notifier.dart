@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/settings/repository/settings_repository_impl.dart';
 
 part 'general_prefs_notifier.g.dart';
@@ -38,28 +39,48 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
   }
 
   Future<void> setAutoCommit(bool value) async {
-    await ref.read(settingsRepositoryProvider).setAutoCommit(value);
-    _update((s) => s.copyWith(autoCommit: value));
+    try {
+      await ref.read(settingsRepositoryProvider).setAutoCommit(value);
+      _update((s) => s.copyWith(autoCommit: value));
+    } catch (e, st) {
+      dLog('[GeneralPrefsNotifier] setAutoCommit failed: $e');
+      state = AsyncError(e, st);
+    }
   }
 
   Future<void> setDeleteConfirmation(bool value) async {
-    await ref.read(settingsRepositoryProvider).setDeleteConfirmation(value);
-    _update((s) => s.copyWith(deleteConfirmation: value));
+    try {
+      await ref.read(settingsRepositoryProvider).setDeleteConfirmation(value);
+      _update((s) => s.copyWith(deleteConfirmation: value));
+    } catch (e, st) {
+      dLog('[GeneralPrefsNotifier] setDeleteConfirmation failed: $e');
+      state = AsyncError(e, st);
+    }
   }
 
   Future<void> setTerminalApp(String value) async {
-    await ref.read(settingsRepositoryProvider).setTerminalApp(value);
-    _update((s) => s.copyWith(terminalApp: value));
+    try {
+      await ref.read(settingsRepositoryProvider).setTerminalApp(value);
+      _update((s) => s.copyWith(terminalApp: value));
+    } catch (e, st) {
+      dLog('[GeneralPrefsNotifier] setTerminalApp failed: $e');
+      state = AsyncError(e, st);
+    }
   }
 
   /// Resets all general settings to their defaults and invalidates this
   /// provider so the settings UI rebuilds with fresh values.
   Future<void> restoreDefaults() async {
-    final svc = ref.read(settingsRepositoryProvider);
-    await svc.setAutoCommit(false);
-    await svc.setTerminalApp('Terminal');
-    await svc.setDeleteConfirmation(true);
-    ref.invalidateSelf();
+    try {
+      final svc = ref.read(settingsRepositoryProvider);
+      await svc.setAutoCommit(false);
+      await svc.setTerminalApp('Terminal');
+      await svc.setDeleteConfirmation(true);
+      ref.invalidateSelf();
+    } catch (e, st) {
+      dLog('[GeneralPrefsNotifier] restoreDefaults failed: $e');
+      state = AsyncError(e, st);
+    }
   }
 
   void _update(GeneralPrefsNotifierState Function(GeneralPrefsNotifierState) fn) {
