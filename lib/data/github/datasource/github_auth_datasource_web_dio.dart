@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../_core/http/dio_factory.dart';
 import '../../_core/secure_storage.dart';
 import '../../models/repository.dart';
@@ -118,7 +119,10 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
     if (token == null) return null;
     try {
       return await _fetchUserInfo(token);
-    } catch (_) {
+    } on DioException catch (e) {
+      // Token revoked or network unavailable — treat as signed out, but leave
+      // token on disk so the next successful startup restores the session.
+      dLog('[GitHubAuthDatasource] getStoredAccount network check failed: ${e.type} ${e.response?.statusCode}');
       return null;
     }
   }

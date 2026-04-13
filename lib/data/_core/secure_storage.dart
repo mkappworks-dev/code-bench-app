@@ -92,7 +92,8 @@ class SecureStorage {
       final all = await _storage.readAll();
       return all.keys.any((k) => k.startsWith('api_key_'));
     } catch (e) {
-      return false;
+      dLog('[SecureStorage] hasAnyApiKey failed — keychain unavailable: $e');
+      throw StorageException('Failed to check API keys', originalError: e);
     }
   }
 
