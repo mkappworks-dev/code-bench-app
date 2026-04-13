@@ -11,7 +11,7 @@ part 'create_pr_actions.g.dart';
 
 /// Command notifier mediating every GitHub-API call the "Create PR"
 /// dialog flow makes. Widgets never touch [GitHubApiService] or
-/// [SecureStorageSource] directly — they go through here so the
+/// [SecureStorage] directly — they go through here so the
 /// GitHub PAT never crosses the widget layer.
 ///
 /// ### Security
