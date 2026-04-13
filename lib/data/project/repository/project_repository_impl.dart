@@ -1,11 +1,9 @@
 import 'dart:convert';
 
-import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/utils/debug_logger.dart';
-import '../../../data/_core/app_database.dart';
 import '../../../data/models/project.dart';
 import '../../../data/models/project_action.dart';
 import '../datasource/project_datasource.dart';
@@ -43,7 +41,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
     return _db.watchAllProjectRows().map((rows) => rows.map(_toDomain).toList());
   }
 
-  Project _toDomain(WorkspaceProjectRow row) {
+  Project _toDomain(ProjectRow row) {
     List<ProjectAction> actions = const [];
     // We write this column ourselves as jsonEncode(...) in
     // updateProjectActions, so a decode failure here means either manual
@@ -88,15 +86,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
     final segments = directoryPath.split('/');
     final name = segments.lastWhere((s) => s.isNotEmpty, orElse: () => directoryPath);
 
-    await _db.upsertProjectRow(
-      WorkspaceProjectsCompanion(
-        id: Value(id),
-        name: Value(name),
-        path: Value(directoryPath),
-        createdAt: Value(DateTime.now()),
-        sortOrder: Value(0),
-      ),
-    );
+    await _db.upsertProject(id: id, name: name, path: directoryPath, createdAt: DateTime.now(), sortOrder: 0);
 
     return Project(id: id, name: name, path: directoryPath, createdAt: DateTime.now());
   }
@@ -119,7 +109,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
   @override
   Future<void> updateProjectActions(String projectId, List<ProjectAction> actions) async {
     final json = jsonEncode(actions.map((a) => a.toJson()).toList());
-    await _db.updateProjectRow(projectId, WorkspaceProjectsCompanion(actionsJson: Value(json)));
+    await _db.updateProjectActions(projectId, json);
   }
 
   /// Touches every project row with a no-op write so Drift re-emits the
@@ -130,7 +120,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
   Future<void> refreshProjectStatuses() async {
     final rows = await _db.getAllProjectRows();
     for (final r in rows) {
-      await _db.updateProjectRow(r.id, WorkspaceProjectsCompanion(sortOrder: Value(r.sortOrder)));
+      await _db.updateProjectSortOrder(r.id, r.sortOrder);
     }
   }
 
@@ -143,7 +133,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
   Future<void> refreshProjectStatus(String projectId) async {
     final row = await _db.getProjectRow(projectId);
     if (row == null) return;
-    await _db.updateProjectRow(projectId, WorkspaceProjectsCompanion(sortOrder: Value(row.sortOrder)));
+    await _db.updateProjectSortOrder(projectId, row.sortOrder);
   }
 
   /// Point an existing project at a new folder on disk. Used by the
@@ -161,7 +151,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
       throw DuplicateProjectPathException(newPath);
     }
 
-    await _db.updateProjectRow(projectId, WorkspaceProjectsCompanion(path: Value(newPath)));
+    await _db.updateProjectPath(projectId, newPath);
   }
 
   /// Deletes every project row. Used by the "Wipe all data" action.
