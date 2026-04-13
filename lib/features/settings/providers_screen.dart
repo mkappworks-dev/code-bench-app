@@ -109,7 +109,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
                   ),
                 ),
               ),
-          const SizedBox(height: 16),
+          const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
           SectionLabel('Ollama (Local)'),
           const SizedBox(height: 8),
           SettingsGroup(
@@ -128,7 +128,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
             icon: const Icon(AppIcons.run, size: 12),
             label: const Text('Test Connection', style: TextStyle(fontSize: 11)),
           ),
-          const SizedBox(height: 16),
+          const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
           SectionLabel('Custom Endpoint (OpenAI-compatible)'),
           const SizedBox(height: 8),
           SettingsGroup(

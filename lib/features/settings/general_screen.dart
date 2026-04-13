@@ -159,7 +159,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
           SectionLabel('About'),
           const SizedBox(height: 8),
           SettingsGroup(
@@ -180,7 +180,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
             ],
           ),
           if (kDebugMode) ...[
-            const SizedBox(height: 24),
+            const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
             SectionLabel('Debug'),
             const SizedBox(height: 8),
             SettingsGroup(
