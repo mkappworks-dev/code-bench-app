@@ -48,8 +48,10 @@ Widgets / Screens
 | Widget | Notifier | Service, Repository, Datasource |
 | Notifier | Service | Repository, Datasource |
 | Service | Repository, other Service | Datasource directly (except through its feature's Repository) |
-| Repository | Datasource | Service, Notifier |
+| Repository | Datasource, **`FilesystemRepository` (only)** | Service, Notifier, any other Repository |
 | Datasource | External | Anything else in `lib/` |
+
+**Cross-repository exception — `FilesystemRepository`.** `FilesystemRepository` is a shared I/O primitive exposing `readFile`, `writeFile`, `createFile`, `listDirectory`, `watchDirectory`, `detectLanguage`, and related helpers. Today only `ApplyRepositoryImpl` depends on it; that dependency is preserved after the refactor. This is the only sanctioned repository-to-repository call — all other repositories talk exclusively to their datasources. The arch test allowlists `lib/data/filesystem/repository/` imports from `lib/data/apply/repository/`.
 
 **New arch-test invariants:**
 
@@ -280,13 +282,13 @@ Nine services to create. All landing in a single PR (big-bang).
 | # | Service | Current repo (strips to I/O) | Orchestration moving up | Domain exceptions |
 |---|---|---|---|---|
 | 1 | `ApplyService` | `ApplyRepository` | path validation, 1 MB cap, checksum, UUID gen, applied-change construction | `ProjectMissingException` (exists, relocate), `ApplyTooLargeException` (new), `PathEscapeException` (new) |
-| 2 | `GitService` | `GitRepository` | retry/parse on push/pull/fetch, worktree enumeration, branch filtering | `GitAuthException`, `GitConflictException`, `GitNoUpstreamException` (all exist, relocate) |
-| 3 | `ProjectService` | `ProjectRepository` | duplicate-path detection, relocate logic, archive cascade | `DuplicateProjectPathException` (exists, relocate) |
-| 4 | `SessionService` | `SessionRepository` | session + message cascade delete, archival semantics | TBD at impl time |
+| 2 | `GitService` | `GitRepository` | retry/parse on push/pull/fetch, worktree enumeration, branch filtering, commit/checkout/createBranch composition | `GitAuthException`, `GitConflictException`, `GitNoUpstreamException` (all exist, relocate) |
+| 3 | `ProjectService` | `ProjectRepository` | duplicate-path detection, relocate logic, archive cascade, file-scan orchestration | `DuplicateProjectPathException` (exists, relocate), `ProjectFileScanFailure` (exists, relocate) |
+| 4 | `SessionService` | `SessionRepository` | session + message cascade delete, archival semantics, `sendAndStream` orchestration | none dedicated — notifier continues to map raw `StateError` / I/O failures to existing `*Failure` variants |
 | 5 | `SettingsService` | `SettingsRepository` | `wipeAllData` cascade (moves from `SettingsActions`), onboarding state machine | `StorageException` (exists, relocate) |
-| 6 | `AIService` | `AIRepository` | stream buffering (`sendMessage`), provider selection, system prompt assembly | TBD |
-| 7 | `GitHubService` | `GitHubApiRepository` | PAT redaction, rate-limit handling | `GitHubAuthException` if present (else TBD) |
-| 8 | `IdeService` | `IdeRepository` | editor detection, launch sequencing | TBD |
+| 6 | `AIService` | `AIRepository` | stream buffering (`sendMessage`), provider selection, system prompt assembly | no new exceptions — reuses `ProjectMissingException` (shared with Apply); raw `StateError` / `FileSystemException` pass through to notifier `_asFailure` |
+| 7 | `GitHubService` | `GitHubRepository` (file: `lib/data/github/repository/github_repository.dart`) | PAT redaction, rate-limit handling, create-PR orchestration | none — notifier continues to map via existing `CreatePrFailure` union (`notAuthenticated` / `network` / `permissionDenied`) |
+| 8 | `IdeService` | `IdeLaunchRepository` (file: `lib/data/ide/repository/ide_launch_repository.dart`) | editor detection, launch sequencing | `IdeLaunchFailedException` (new) |
 | 9 | `ApiKeyTestService` | `ApiKeyTestRepository` | thin passthrough (rule: every notifier-backed feature gets a service) | none — passthrough returns `false` on failure |
 
 ### Expected file-size shifts
@@ -303,6 +305,30 @@ Nine services to create. All landing in a single PR (big-bang).
 | Notifier test files | | | **~30% smaller** (logic tests move to service) |
 
 **Repository interfaces lose methods** — e.g., `ApplyRepository` drops `applyChange`, `revertChange`, `readOriginalForDiff`, `isExternallyModified`, `assertWithinProject`, `sha256OfString`; keeps `readFile`, `writeFile`, `deleteFile`, `gitCheckout`.
+
+### GitRepository method split
+
+Of the 16 public methods on `GitRepositoryImpl` today, 4 are primitives (single `git` invocation, no retry or parse logic) and stay on the thinned `GitRepository`; the remaining 12 are compositions that move to `GitService`.
+
+**Stays on `GitRepository` (primitives):**
+
+- `initGit(String path)`
+- `currentBranch(String path)`
+- `getOriginUrl(String path)`
+- `isGitRepo(String path)`
+
+**Moves to `GitService` (compositions, retry/parse, cross-method orchestration):**
+
+- `commit`, `push`, `pushToRemote`, `pull`
+- `fetchBehindCount`, `behindCount`, `fetchLiveState`
+- `listRemotes`, `listLocalBranches`, `worktreeBranches`
+- `checkout`, `createBranch`
+
+The service calls into the thinned `GitRepository` for primitives and into `GitDatasource`-adjacent primitives (via the repository) for single-shot shell invocations it composes. All retry, output parsing, and multi-call sequencing lives in the service.
+
+### ApplyRepositoryImpl — keep `FilesystemRepository` dependency
+
+After the I/O split, `ApplyRepositoryImpl` continues to depend on `FilesystemRepository` (not `FilesystemDatasource`). This is the single sanctioned cross-repository call, documented under "Cross-repository exception" in the dependency-rule table above.
 
 **Added:**
 
@@ -338,9 +364,11 @@ If partway through review the shape is wrong, the entire PR can be reverted and 
 
 ## Open questions for implementation-plan phase
 
-The following are intentionally left for the implementation plan, not this spec:
+None at the spec level. The four items originally deferred are resolved inline:
 
-- Exact method signatures for each service (resolved by reading current repository impl).
-- TBD domain exceptions for `SessionService`, `AIService`, `IdeService`.
-- Handling of `ApplyRepositoryImpl._fs` dependency after I/O split — whether the repository takes a `FilesystemRepository` or a `FilesystemDatasource`.
-- Exact shape of thinned `GitRepository` interface (which 16 methods stay, which merge into one service-owned flow).
+- **Method signatures** — derived mechanically from current `*RepositoryImpl` at implementation time; the per-feature migration table above is authoritative for *which* orchestration moves.
+- **Domain exceptions** — resolved per-row in the migration table (Session: none; AI: none, reuses `ProjectMissingException`; GitHub: none, stays on notifier via `CreatePrFailure`; IDE: new `IdeLaunchFailedException`).
+- **`ApplyRepositoryImpl._fs` dependency** — keeps `FilesystemRepository`; documented under the dependency-rule table and the "ApplyRepositoryImpl — keep `FilesystemRepository` dependency" subsection.
+- **`GitRepository` shape** — resolved in "GitRepository method split": 4 primitives stay, 12 compositions move to `GitService`.
+
+Anything remaining (import reshuffling, test-file reorganization, exact `build_runner` sequence) is mechanical and surfaces naturally during plan authoring.
