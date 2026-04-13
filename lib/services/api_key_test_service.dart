@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../data/models/ai_model.dart';
+import '../data/_core/http/dio_factory.dart';
+import '../data/models/ai_model.dart';
 
 part 'api_key_test_service.g.dart';
 
@@ -31,7 +32,7 @@ class ApiKeyTestService {
   /// Returns `true` when an Ollama instance is reachable at [url].
   Future<bool> testOllamaUrl(String url) async {
     try {
-      final dio = Dio(BaseOptions(baseUrl: url, connectTimeout: const Duration(seconds: 5)));
+      final dio = DioFactory.create(baseUrl: url, connectTimeout: const Duration(seconds: 5));
       await dio.get('/api/tags');
       return true;
     } catch (_) {
@@ -41,12 +42,10 @@ class ApiKeyTestService {
 
   Future<bool> _testOpenAI(String key) async {
     try {
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: 'https://api.openai.com/v1',
-          connectTimeout: const Duration(seconds: 10),
-          headers: {'Authorization': 'Bearer $key'},
-        ),
+      final dio = DioFactory.create(
+        baseUrl: 'https://api.openai.com/v1',
+        connectTimeout: const Duration(seconds: 10),
+        headers: {'Authorization': 'Bearer $key'},
       );
       await dio.get('/models');
       return true;
@@ -57,12 +56,10 @@ class ApiKeyTestService {
 
   Future<bool> _testAnthropic(String key) async {
     try {
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: 'https://api.anthropic.com/v1',
-          connectTimeout: const Duration(seconds: 10),
-          headers: {'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
-        ),
+      final dio = DioFactory.create(
+        baseUrl: 'https://api.anthropic.com/v1',
+        connectTimeout: const Duration(seconds: 10),
+        headers: {'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
       );
       await dio.post(
         '/messages',
@@ -90,12 +87,10 @@ class ApiKeyTestService {
     try {
       // SECURITY: Send the key via the `x-goog-api-key` header, NOT as a
       // query-string parameter. See class-level doc for rationale.
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-          connectTimeout: const Duration(seconds: 10),
-          headers: {'x-goog-api-key': key},
-        ),
+      final dio = DioFactory.create(
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+        connectTimeout: const Duration(seconds: 10),
+        headers: {'x-goog-api-key': key},
       );
       await dio.get('/models');
       return true;

@@ -10,7 +10,7 @@ part of 'create_pr_actions.dart';
 // ignore_for_file: type=lint, type=warning
 /// Command notifier mediating every GitHub-API call the "Create PR"
 /// dialog flow makes. Widgets never touch [GitHubApiService] or
-/// [SecureStorageSource] directly — they go through here so the
+/// [SecureStorage] directly — they go through here so the
 /// GitHub PAT never crosses the widget layer.
 ///
 /// ### Security
@@ -25,7 +25,7 @@ final createPrActionsProvider = CreatePrActionsProvider._();
 
 /// Command notifier mediating every GitHub-API call the "Create PR"
 /// dialog flow makes. Widgets never touch [GitHubApiService] or
-/// [SecureStorageSource] directly — they go through here so the
+/// [SecureStorage] directly — they go through here so the
 /// GitHub PAT never crosses the widget layer.
 ///
 /// ### Security
@@ -37,7 +37,7 @@ final createPrActionsProvider = CreatePrActionsProvider._();
 final class CreatePrActionsProvider extends $AsyncNotifierProvider<CreatePrActions, void> {
   /// Command notifier mediating every GitHub-API call the "Create PR"
   /// dialog flow makes. Widgets never touch [GitHubApiService] or
-  /// [SecureStorageSource] directly — they go through here so the
+  /// [SecureStorage] directly — they go through here so the
   /// GitHub PAT never crosses the widget layer.
   ///
   /// ### Security
@@ -69,7 +69,7 @@ String _$createPrActionsHash() => r'af479231451f5fe37aa50e42b57ec5241fcee63b';
 
 /// Command notifier mediating every GitHub-API call the "Create PR"
 /// dialog flow makes. Widgets never touch [GitHubApiService] or
-/// [SecureStorageSource] directly — they go through here so the
+/// [SecureStorage] directly — they go through here so the
 /// GitHub PAT never crosses the widget layer.
 ///
 /// ### Security

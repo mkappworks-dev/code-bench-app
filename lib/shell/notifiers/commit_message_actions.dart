@@ -7,7 +7,7 @@ import '../../core/utils/debug_logger.dart';
 import '../../data/_core/preferences/general_preferences.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/chat/notifiers/create_pr_actions.dart';
-import '../../services/ai/ai_service_factory.dart';
+import '../../data/ai/repository/ai_repository_impl.dart';
 import 'commit_message_failure.dart';
 import 'git_actions.dart';
 import 'pr_preflight_result.dart';
@@ -104,13 +104,12 @@ class CommitMessageActions extends _$CommitMessageActions {
     state = await AsyncValue.guard(() async {
       try {
         final model = ref.read(selectedModelProvider);
-        final aiSvc = await ref.read(aiServiceProvider(model.provider).future);
-        if (aiSvc == null) return;
+        final repo = await ref.read(aiRepositoryProvider.future);
         final prompt =
             'Write a conventional commit message (subject line only, max 72 chars) '
             'summarising these file changes: ${changedFiles.isEmpty ? "general changes" : changedFiles.join(", ")}. '
             'Reply with only the commit message, no explanation.';
-        final response = await aiSvc.sendMessage(history: const [], prompt: prompt, model: model);
+        final response = await repo.sendMessage(history: const [], prompt: prompt, model: model);
         final text = response.content;
         if (text.isNotEmpty) {
           message = text.trim().replaceAll('"', '').split('\n').first.trim();
@@ -140,13 +139,12 @@ class CommitMessageActions extends _$CommitMessageActions {
     state = await AsyncValue.guard(() async {
       try {
         final model = ref.read(selectedModelProvider);
-        final aiSvc = await ref.read(aiServiceProvider(model.provider).future);
-        if (aiSvc == null) return;
+        final repo = await ref.read(aiRepositoryProvider.future);
         final prompt =
             'Generate a PR title (max 70 chars) and bullet-point body for these '
             'changes: ${changedFiles.isEmpty ? "general changes" : changedFiles.join(", ")}. '
             'Reply in this format:\nTITLE: <title>\nBODY:\n<bullets>';
-        final response = await aiSvc.sendMessage(history: const [], prompt: prompt, model: model);
+        final response = await repo.sendMessage(history: const [], prompt: prompt, model: model);
         final text = response.content;
         final titleMatch = RegExp(r'TITLE:\s*(.+)').firstMatch(text);
         final bodyMatch = RegExp(r'BODY:\n([\s\S]+)').firstMatch(text);

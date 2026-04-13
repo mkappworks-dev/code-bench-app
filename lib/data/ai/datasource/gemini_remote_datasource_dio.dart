@@ -2,25 +2,21 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:uuid/uuid.dart';
 
-import '../../core/constants/api_constants.dart';
-import '../../core/errors/app_exception.dart';
-import '../../data/models/ai_model.dart';
-import '../../data/models/chat_message.dart';
-import 'ai_service.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/errors/app_exception.dart';
+import '../../../data/_core/http/dio_factory.dart';
+import '../../../data/models/ai_model.dart';
+import '../../../data/models/chat_message.dart';
+import 'ai_remote_datasource.dart';
 
-class GeminiService implements AIService {
-  GeminiService(this._apiKey);
+class GeminiRemoteDatasourceDio implements AIRemoteDatasource {
+  GeminiRemoteDatasourceDio(String apiKey)
+    : _apiKey = apiKey,
+      _dio = DioFactory.create(baseUrl: ApiConstants.geminiBaseUrl);
 
   final String _apiKey;
-  late final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: ApiConstants.geminiBaseUrl,
-      connectTimeout: ApiConstants.connectTimeout,
-      receiveTimeout: ApiConstants.receiveTimeout,
-    ),
-  );
+  final Dio _dio;
 
   @override
   AIProvider get provider => AIProvider.gemini;
@@ -79,31 +75,6 @@ class GeminiService implements AIService {
         originalError: e,
       );
     }
-  }
-
-  @override
-  Future<ChatMessage> sendMessage({
-    required List<ChatMessage> history,
-    required String prompt,
-    required AIModel model,
-    String? systemPrompt,
-  }) async {
-    final buffer = StringBuffer();
-    await for (final chunk in streamMessage(
-      history: history,
-      prompt: prompt,
-      model: model,
-      systemPrompt: systemPrompt,
-    )) {
-      buffer.write(chunk);
-    }
-    return ChatMessage(
-      id: const Uuid().v4(),
-      sessionId: history.isNotEmpty ? history.first.sessionId : '',
-      role: MessageRole.assistant,
-      content: buffer.toString(),
-      timestamp: DateTime.now(),
-    );
   }
 
   @override

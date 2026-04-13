@@ -2,7 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../data/models/ai_model.dart';
-import '../../../services/ai/ai_service_factory.dart';
+import '../../../data/ai/repository/ai_repository_impl.dart';
 import '../../../services/settings/settings_service.dart';
 
 part 'providers_notifier.g.dart';
@@ -76,11 +76,11 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
     if (ollamaUrl.trim().isNotEmpty) await svc.writeOllamaUrl(ollamaUrl.trim());
     await svc.writeCustomEndpoint(customEndpoint.trim());
     await svc.writeCustomApiKey(customApiKey.trim());
-    ref.invalidate(aiServiceProvider);
+    ref.invalidate(aiRepositoryProvider);
   }
 
   Future<void> deleteKey(AIProvider provider) async {
     await ref.read(settingsServiceProvider).deleteApiKey(provider.name);
-    ref.invalidate(aiServiceProvider);
+    ref.invalidate(aiRepositoryProvider);
   }
 }

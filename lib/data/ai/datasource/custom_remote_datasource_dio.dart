@@ -2,29 +2,25 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:uuid/uuid.dart';
 
-import '../../core/constants/api_constants.dart';
-import '../../core/errors/app_exception.dart';
-import '../../data/models/ai_model.dart';
-import '../../data/models/chat_message.dart';
-import 'ai_service.dart';
+import '../../../core/errors/app_exception.dart';
+import '../../../data/_core/http/dio_factory.dart';
+import '../../../data/models/ai_model.dart';
+import '../../../data/models/chat_message.dart';
+import 'ai_remote_datasource.dart';
 
-class OpenAIService implements AIService {
-  OpenAIService(this._apiKey);
+/// OpenAI-compatible AI datasource for custom endpoints (e.g. LM Studio, LocalAI).
+class CustomRemoteDatasourceDio implements AIRemoteDatasource {
+  CustomRemoteDatasourceDio({required String endpoint, required String apiKey})
+    : _dio = DioFactory.create(
+        baseUrl: endpoint,
+        headers: {if (apiKey.isNotEmpty) 'Authorization': 'Bearer $apiKey', 'Content-Type': 'application/json'},
+      );
 
-  final String _apiKey;
-  late final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: ApiConstants.openAiBaseUrl,
-      connectTimeout: ApiConstants.connectTimeout,
-      receiveTimeout: ApiConstants.receiveTimeout,
-      headers: {'Authorization': 'Bearer $_apiKey', 'Content-Type': 'application/json'},
-    ),
-  );
+  final Dio _dio;
 
   @override
-  AIProvider get provider => AIProvider.openai;
+  AIProvider get provider => AIProvider.custom;
 
   @override
   Stream<String> streamMessage({
@@ -38,7 +34,7 @@ class OpenAIService implements AIService {
 
     try {
       final response = await _dio.post(
-        ApiConstants.openAiChatEndpoint,
+        '/chat/completions',
         data: body,
         options: Options(responseType: ResponseType.stream),
       );
@@ -70,7 +66,7 @@ class OpenAIService implements AIService {
       }
     } on DioException catch (e) {
       throw NetworkException(
-        e.message ?? 'OpenAI request failed',
+        e.message ?? 'Custom endpoint request failed',
         statusCode: e.response?.statusCode,
         originalError: e,
       );
@@ -78,40 +74,9 @@ class OpenAIService implements AIService {
   }
 
   @override
-  Future<ChatMessage> sendMessage({
-    required List<ChatMessage> history,
-    required String prompt,
-    required AIModel model,
-    String? systemPrompt,
-  }) async {
-    final buffer = StringBuffer();
-    await for (final chunk in streamMessage(
-      history: history,
-      prompt: prompt,
-      model: model,
-      systemPrompt: systemPrompt,
-    )) {
-      buffer.write(chunk);
-    }
-    return ChatMessage(
-      id: const Uuid().v4(),
-      sessionId: history.isNotEmpty ? history.first.sessionId : '',
-      role: MessageRole.assistant,
-      content: buffer.toString(),
-      timestamp: DateTime.now(),
-    );
-  }
-
-  @override
   Future<bool> testConnection(AIModel model, String apiKey) async {
     try {
-      final testDio = Dio(
-        BaseOptions(
-          baseUrl: ApiConstants.openAiBaseUrl,
-          headers: {'Authorization': 'Bearer $apiKey', 'Content-Type': 'application/json'},
-        ),
-      );
-      await testDio.get(ApiConstants.openAiModelsEndpoint);
+      await _dio.get('/models');
       return true;
     } catch (_) {
       return false;
@@ -121,19 +86,21 @@ class OpenAIService implements AIService {
   @override
   Future<List<AIModel>> fetchAvailableModels(String apiKey) async {
     try {
-      final testDio = Dio(
-        BaseOptions(baseUrl: ApiConstants.openAiBaseUrl, headers: {'Authorization': 'Bearer $apiKey'}),
-      );
-      final response = await testDio.get(ApiConstants.openAiModelsEndpoint);
+      final response = await _dio.get('/models');
       final data = response.data as Map<String, dynamic>;
       final models = (data['data'] as List)
-          .map((m) => m['id'] as String)
-          .where((id) => id.startsWith('gpt-'))
-          .map((id) => AIModel(id: id, provider: AIProvider.openai, name: id, modelId: id))
+          .map(
+            (m) => AIModel(
+              id: m['id'] as String,
+              provider: AIProvider.custom,
+              name: m['id'] as String,
+              modelId: m['id'] as String,
+            ),
+          )
           .toList();
       return models;
     } catch (_) {
-      return AIModels.defaults.where((m) => m.provider == AIProvider.openai).toList();
+      return [];
     }
   }
 

@@ -2,30 +2,26 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:uuid/uuid.dart';
 
-import '../../core/constants/api_constants.dart';
-import '../../core/errors/app_exception.dart';
-import '../../data/models/ai_model.dart';
-import '../../data/models/chat_message.dart';
-import 'ai_service.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/errors/app_exception.dart';
+import '../../../data/_core/http/dio_factory.dart';
+import '../../../data/models/ai_model.dart';
+import '../../../data/models/chat_message.dart';
+import 'ai_remote_datasource.dart';
 
-class AnthropicService implements AIService {
-  AnthropicService(this._apiKey);
+class AnthropicRemoteDatasourceDio implements AIRemoteDatasource {
+  AnthropicRemoteDatasourceDio(String apiKey)
+    : _dio = DioFactory.create(
+        baseUrl: ApiConstants.anthropicBaseUrl,
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': ApiConstants.anthropicVersion,
+          'content-type': 'application/json',
+        },
+      );
 
-  final String _apiKey;
-  late final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: ApiConstants.anthropicBaseUrl,
-      connectTimeout: ApiConstants.connectTimeout,
-      receiveTimeout: ApiConstants.receiveTimeout,
-      headers: {
-        'x-api-key': _apiKey,
-        'anthropic-version': ApiConstants.anthropicVersion,
-        'content-type': 'application/json',
-      },
-    ),
-  );
+  final Dio _dio;
 
   @override
   AIProvider get provider => AIProvider.anthropic;
@@ -84,42 +80,15 @@ class AnthropicService implements AIService {
   }
 
   @override
-  Future<ChatMessage> sendMessage({
-    required List<ChatMessage> history,
-    required String prompt,
-    required AIModel model,
-    String? systemPrompt,
-  }) async {
-    final buffer = StringBuffer();
-    await for (final chunk in streamMessage(
-      history: history,
-      prompt: prompt,
-      model: model,
-      systemPrompt: systemPrompt,
-    )) {
-      buffer.write(chunk);
-    }
-    return ChatMessage(
-      id: const Uuid().v4(),
-      sessionId: history.isNotEmpty ? history.first.sessionId : '',
-      role: MessageRole.assistant,
-      content: buffer.toString(),
-      timestamp: DateTime.now(),
-    );
-  }
-
-  @override
   Future<bool> testConnection(AIModel model, String apiKey) async {
     try {
-      final testDio = Dio(
-        BaseOptions(
-          baseUrl: ApiConstants.anthropicBaseUrl,
-          headers: {
-            'x-api-key': apiKey,
-            'anthropic-version': ApiConstants.anthropicVersion,
-            'content-type': 'application/json',
-          },
-        ),
+      final testDio = DioFactory.create(
+        baseUrl: ApiConstants.anthropicBaseUrl,
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': ApiConstants.anthropicVersion,
+          'content-type': 'application/json',
+        },
       );
       await testDio.post(
         ApiConstants.anthropicChatEndpoint,

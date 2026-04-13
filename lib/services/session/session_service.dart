@@ -8,7 +8,7 @@ import '../../data/_core/app_database.dart';
 import '../../data/models/ai_model.dart';
 import '../../data/models/chat_message.dart' as msg_model;
 import '../../data/models/chat_session.dart' as session_model;
-import '../ai/ai_service_factory.dart';
+import '../../data/ai/repository/ai_repository_impl.dart';
 
 part 'session_service.g.dart';
 
@@ -131,10 +131,7 @@ class SessionService {
     await persistMessage(sessionId, userMsg);
     yield userMsg;
 
-    final service = await _ref.read(aiServiceProvider(model.provider).future);
-    if (service == null) {
-      throw Exception('No API key configured for ${model.provider.displayName}');
-    }
+    final repo = await _ref.read(aiRepositoryProvider.future);
 
     final history = await loadHistory(sessionId, limit: 20);
     final historyExcludingCurrent = history.where((m) => m.id != userMsg.id).toList();
@@ -142,7 +139,7 @@ class SessionService {
     final assistantId = _uuid.v4();
     final buffer = StringBuffer();
 
-    await for (final chunk in service.streamMessage(
+    await for (final chunk in repo.streamMessage(
       history: historyExcludingCurrent,
       prompt: userInput,
       model: model,
