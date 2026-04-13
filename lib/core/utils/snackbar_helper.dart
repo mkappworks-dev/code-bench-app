@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
+import '../widgets/app_snack_bar.dart';
 
-import '../constants/theme_constants.dart';
-
-/// Shows a red error snackbar. Use for action failures visible to the user.
-void showErrorSnackBar(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: ThemeConstants.error));
+/// Shows a frosted error snackbar.
+void showErrorSnackBar(BuildContext context, String label, {String? detail}) {
+  AppSnackBar.show(context, label, message: detail, type: AppSnackBarType.error);
 }
 
-/// Shows a neutral snackbar. Use for confirmations (e.g. "Copied").
-void showSuccessSnackBar(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+/// Shows a frosted success snackbar.
+void showSuccessSnackBar(BuildContext context, String label, {String? detail}) {
+  AppSnackBar.show(context, label, message: detail, type: AppSnackBarType.success);
 }
