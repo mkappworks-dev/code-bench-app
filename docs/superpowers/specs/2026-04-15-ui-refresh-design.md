@@ -58,6 +58,11 @@ hardcoded in widgets — always reference a token.
 | `accentBorderAmber` | `rgba(232,162,40,0.3)` | Branch picker "new worktree" button border |
 | `sendGlow` | `rgba(78,201,176,0.4)` | Send button drop shadow |
 | `inlineCodeBg` | `rgba(13,17,23,0.8)` | Inline code background |
+| `dialogSurface` | `rgba(18,18,18,0.92)` | Dialog dark glass background |
+| `dialogTopHighlight` | `rgba(255,255,255,0.06)` | Dialog inner top-edge highlight |
+| `fieldSurface` | `rgba(255,255,255,0.04)` | Text field fill |
+| `fieldBorder` | `rgba(255,255,255,0.10)` | Text field idle border |
+| `fieldFocusGlow` | `rgba(78,201,176,0.12)` | Text field focused outer glow ring |
 
 ### 2c. New light tokens to add
 
@@ -172,15 +177,16 @@ floats by shadow only. No hard structural borders.
 
 ## 5. App Dialog (`lib/core/widgets/app_dialog.dart`)
 
-**Goal:** More refined surface, stronger shadow, icon badge with teal glow, gradient primary
-button, faint footer separator.
+**Goal:** Dark glass surface elevated clearly above the app content, stronger shadow, icon
+badge with teal glow, gradient primary button, faint footer separator.
 
 ### Changes
 
 - **Container border-radius:** `13` (was `10`)
-- **Background:** `ThemeConstants.frostedSurface`
-- **Border:** `1px solid ThemeConstants.glassBorderSubtle`
-- **Drop shadow:** `BoxShadow(blurRadius: 64, offset: 0 24, color: rgba(0,0,0,0.9))`
+- **Background:** `rgba(18,18,18,0.92)` — dark glass, clearly elevated above `#141414` background
+- **Blur:** `BackdropFilter(filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24))` — softens content behind
+- **Border:** `1px solid rgba(255,255,255,0.08)` + inner top highlight `inset 0 1px 0 rgba(255,255,255,0.06)`
+- **Drop shadow:** `BoxShadow(blurRadius: 64, offset: 0 24, color: rgba(0,0,0,0.95))`
 - **Icon badge** (leading icon area, if present):
   - Size: `40×40`, border-radius: `10`
   - Fill: `rgba(78,201,176,0.08)`
@@ -200,16 +206,18 @@ button, faint footer separator.
 
 ## 6. Text Fields
 
-**Goal:** Consistent Elevated Glass treatment matching the chat box container style.
+**Goal:** Glass field that reads clearly against the dark glass dialog surface, with a
+teal-accented focused state consistent with the rest of the design language.
 
 **`InputDecorationTheme` in `AppTheme.dark`:**
 - Filled: `true`
-- Fill colour: `ThemeConstants.frostedSurface`
-- Enabled border: `OutlineInputBorder(borderSide: BorderSide(color: glassBorderSubtle), borderRadius: 9)`
-- Focused border: `OutlineInputBorder(borderSide: BorderSide(color: accent, width: 1.5), borderRadius: 9)`
-- Hint style: colour `#444`
+- Fill colour: `rgba(255,255,255,0.04)` — slightly lighter than dialog bg for clear contrast
+- **Idle border:** `OutlineInputBorder(borderSide: BorderSide(color: rgba(255,255,255,0.10)), borderRadius: 8)`
+- **Focused border:** `OutlineInputBorder(borderSide: BorderSide(color: accent, width: 1.5), borderRadius: 8)`
+- **Focused outer glow:** `BoxShadow(color: rgba(78,201,176,0.12), blurRadius: 0, spreadRadius: 3)` — soft teal ring
+- Hint style: colour `#666`
 - Label style: colour `#9D9D9D`
-- Content padding: `EdgeInsets.symmetric(horizontal: 14, vertical: 12)`
+- Content padding: `EdgeInsets.symmetric(horizontal: 12, vertical: 10)`
 
 ---
 
