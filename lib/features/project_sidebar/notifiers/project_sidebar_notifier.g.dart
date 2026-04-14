@@ -55,33 +55,30 @@ abstract class _$ActiveProjectIdNotifier extends $Notifier<String?> {
   }
 }
 
-/// In-memory worktree path overrides: projectId → effective filesystem path.
+/// Persisted worktree path overrides: sessionId → effective filesystem path.
 ///
 /// When the user switches to a worktree via the branch picker, the entry
-/// for that project is updated here. All git operations (live-state, branch
-/// picker, commit, push …) read the effective path from this map rather than
-/// using the project's stored path directly. Cleared when the user switches
-/// back to the main working tree. Not persisted — resets on app restart.
+/// for the active session is stored here and written through to SharedPreferences
+/// so each thread remembers its worktree context across app restarts.
+/// Cleared when the user switches back to the main working tree.
 
 @ProviderFor(ActiveWorktreePathNotifier)
 final activeWorktreePathProvider = ActiveWorktreePathNotifierProvider._();
 
-/// In-memory worktree path overrides: projectId → effective filesystem path.
+/// Persisted worktree path overrides: sessionId → effective filesystem path.
 ///
 /// When the user switches to a worktree via the branch picker, the entry
-/// for that project is updated here. All git operations (live-state, branch
-/// picker, commit, push …) read the effective path from this map rather than
-/// using the project's stored path directly. Cleared when the user switches
-/// back to the main working tree. Not persisted — resets on app restart.
+/// for the active session is stored here and written through to SharedPreferences
+/// so each thread remembers its worktree context across app restarts.
+/// Cleared when the user switches back to the main working tree.
 final class ActiveWorktreePathNotifierProvider
     extends $NotifierProvider<ActiveWorktreePathNotifier, Map<String, String>> {
-  /// In-memory worktree path overrides: projectId → effective filesystem path.
+  /// Persisted worktree path overrides: sessionId → effective filesystem path.
   ///
   /// When the user switches to a worktree via the branch picker, the entry
-  /// for that project is updated here. All git operations (live-state, branch
-  /// picker, commit, push …) read the effective path from this map rather than
-  /// using the project's stored path directly. Cleared when the user switches
-  /// back to the main working tree. Not persisted — resets on app restart.
+  /// for the active session is stored here and written through to SharedPreferences
+  /// so each thread remembers its worktree context across app restarts.
+  /// Cleared when the user switches back to the main working tree.
   ActiveWorktreePathNotifierProvider._()
     : super(
         from: null,
@@ -106,15 +103,14 @@ final class ActiveWorktreePathNotifierProvider
   }
 }
 
-String _$activeWorktreePathNotifierHash() => r'10b26f87af959dd0d9272d4131c2ed580654ce66';
+String _$activeWorktreePathNotifierHash() => r'14797c6d7b60521eba08ed542e9438a3a55dbdc1';
 
-/// In-memory worktree path overrides: projectId → effective filesystem path.
+/// Persisted worktree path overrides: sessionId → effective filesystem path.
 ///
 /// When the user switches to a worktree via the branch picker, the entry
-/// for that project is updated here. All git operations (live-state, branch
-/// picker, commit, push …) read the effective path from this map rather than
-/// using the project's stored path directly. Cleared when the user switches
-/// back to the main working tree. Not persisted — resets on app restart.
+/// for the active session is stored here and written through to SharedPreferences
+/// so each thread remembers its worktree context across app restarts.
+/// Cleared when the user switches back to the main working tree.
 
 abstract class _$ActiveWorktreePathNotifier extends $Notifier<Map<String, String>> {
   Map<String, String> build();

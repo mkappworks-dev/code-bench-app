@@ -77,8 +77,8 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
     }
   }
 
-  void _switchToWorktree(String worktreePath) {
-    ref.read(projectSidebarActionsProvider.notifier).switchWorktreePath(worktreePath);
+  Future<void> _switchToWorktree(String worktreePath) async {
+    await ref.read(projectSidebarActionsProvider.notifier).switchWorktreePath(worktreePath);
     widget.onClose();
   }
 

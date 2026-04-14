@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:collection/collection.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,25 +18,41 @@ class ActiveProjectIdNotifier extends _$ActiveProjectIdNotifier {
   void set(String? id) => state = id;
 }
 
-/// In-memory worktree path overrides: sessionId → effective filesystem path.
+/// Persisted worktree path overrides: sessionId → effective filesystem path.
 ///
 /// When the user switches to a worktree via the branch picker, the entry
-/// for the active session is updated here. Each thread/session can point to a
-/// different worktree independently. All git operations (live-state, branch
-/// picker, commit, push …) read the effective path from this map rather than
-/// using the project's stored path directly. Cleared when the user switches
-/// back to the main working tree. Not persisted — resets on app restart.
+/// for the active session is stored here and written through to SharedPreferences
+/// so each thread remembers its worktree context across app restarts.
+/// Cleared when the user switches back to the main working tree.
 @Riverpod(keepAlive: true)
 class ActiveWorktreePathNotifier extends _$ActiveWorktreePathNotifier {
-  @override
-  Map<String, String> build() => {};
+  static const _prefsKey = 'worktree_path_overrides';
 
-  void setPath(String sessionId, String worktreePath) {
-    state = {...state, sessionId: worktreePath};
+  @override
+  Map<String, String> build() {
+    _loadFromPrefs();
+    return {};
   }
 
-  void clearPath(String sessionId) {
+  Future<void> _loadFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKey);
+    if (raw == null) return;
+    try {
+      state = Map<String, String>.from(jsonDecode(raw) as Map);
+    } catch (_) {}
+  }
+
+  Future<void> setPath(String sessionId, String worktreePath) async {
+    state = {...state, sessionId: worktreePath};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, jsonEncode(state));
+  }
+
+  Future<void> clearPath(String sessionId) async {
     state = {...state}..remove(sessionId);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, jsonEncode(state));
   }
 }
 
