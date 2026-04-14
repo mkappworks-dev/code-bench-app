@@ -402,35 +402,37 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                       }
                     }
                   : null,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7),
-                constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
-                decoration: BoxDecoration(
-                  color: s.canDropdown ? ThemeConstants.accentHover : ThemeConstants.inputSurface,
-                  border: Border(
-                    left: BorderSide(color: s.canDropdown ? ThemeConstants.accentDark : ThemeConstants.deepBorder),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.horizontal(right: Radius.circular(5)),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7),
+                  constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
+                  decoration: BoxDecoration(
+                    color: s.canDropdown ? ThemeConstants.accentHover : ThemeConstants.inputSurface,
+                    border: Border(
+                      left: BorderSide(color: s.canDropdown ? ThemeConstants.accentDark : ThemeConstants.deepBorder),
+                    ),
                   ),
-                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(5)),
-                ),
-                child: Center(
-                  widthFactor: 1,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (s.badgeLabel.isNotEmpty)
-                        Text(
-                          s.badgeLabel,
-                          style: TextStyle(
-                            color: s.canDropdown ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
-                            fontSize: ThemeConstants.uiFontSizeLabel,
+                  child: Center(
+                    widthFactor: 1,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (s.badgeLabel.isNotEmpty)
+                          Text(
+                            s.badgeLabel,
+                            style: TextStyle(
+                              color: s.canDropdown ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
+                              fontSize: ThemeConstants.uiFontSizeLabel,
+                            ),
                           ),
+                        Icon(
+                          AppIcons.chevronDown,
+                          size: 11,
+                          color: s.canDropdown ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
                         ),
-                      Icon(
-                        AppIcons.chevronDown,
-                        size: 11,
-                        color: s.canDropdown ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

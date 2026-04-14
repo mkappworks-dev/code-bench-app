@@ -48,7 +48,7 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
   };
 
   Future<void> setAutoCommit(bool value) async {
-    state = await AsyncValue.guard(() async {
+    final next = await AsyncValue.guard(() async {
       try {
         await ref.read(settingsServiceProvider).setAutoCommit(value);
       } catch (e, st) {
@@ -57,10 +57,11 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
       }
       return (state.value ?? await build()).copyWith(autoCommit: value);
     });
+    if (ref.mounted) state = next;
   }
 
   Future<void> setDeleteConfirmation(bool value) async {
-    state = await AsyncValue.guard(() async {
+    final next = await AsyncValue.guard(() async {
       try {
         await ref.read(settingsServiceProvider).setDeleteConfirmation(value);
       } catch (e, st) {
@@ -69,10 +70,11 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
       }
       return (state.value ?? await build()).copyWith(deleteConfirmation: value);
     });
+    if (ref.mounted) state = next;
   }
 
   Future<void> setTerminalApp(String value) async {
-    state = await AsyncValue.guard(() async {
+    final next = await AsyncValue.guard(() async {
       try {
         await ref.read(settingsServiceProvider).setTerminalApp(value);
       } catch (e, st) {
@@ -81,12 +83,13 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
       }
       return (state.value ?? await build()).copyWith(terminalApp: value);
     });
+    if (ref.mounted) state = next;
   }
 
   /// Resets all general settings to their defaults and invalidates this
   /// provider so the settings UI rebuilds with fresh values.
   Future<void> restoreDefaults() async {
-    state = await AsyncValue.guard(() async {
+    final next = await AsyncValue.guard(() async {
       try {
         final svc = ref.read(settingsServiceProvider);
         await svc.setAutoCommit(false);
@@ -99,5 +102,6 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
       ref.invalidateSelf();
       return state.value ?? await build();
     });
+    if (ref.mounted) state = next;
   }
 }
