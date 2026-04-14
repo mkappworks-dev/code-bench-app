@@ -44,13 +44,3 @@ String userMessage(Object error, {String fallback = 'Something went wrong.'}) {
   if (error is AppException) return error.message;
   return fallback;
 }
-
-/// Converts a Dio HTTP status code into a short, actionable user message.
-/// Falls back to [providerName] + "request failed" for unknown codes.
-String networkErrorMessage(int? statusCode, {required String providerName}) => switch (statusCode) {
-  401 => 'Invalid API key — go to Settings → Providers to update it.',
-  403 => 'Access denied — check your API key permissions.',
-  429 => 'Rate limit reached — try again in a moment.',
-  500 || 502 || 503 || 504 => '$providerName is temporarily unavailable — try again.',
-  _ => '$providerName request failed.',
-};

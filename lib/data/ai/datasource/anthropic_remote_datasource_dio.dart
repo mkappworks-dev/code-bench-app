@@ -71,11 +71,7 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource {
         }
       }
     } on DioException catch (e) {
-      throw NetworkException(
-        networkErrorMessage(e.response?.statusCode, providerName: 'Anthropic'),
-        statusCode: e.response?.statusCode,
-        originalError: e,
-      );
+      throw NetworkException('Anthropic request failed', statusCode: e.response?.statusCode, originalError: e);
     }
   }
 
