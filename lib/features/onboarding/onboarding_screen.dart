@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import '../settings/notifiers/settings_actions.dart';
 import 'notifiers/onboarding_notifier.dart';
 import 'widgets/step_progress_indicator.dart';
@@ -131,8 +132,10 @@ class _ContentPanel extends ConsumerWidget {
       await ref.read(settingsActionsProvider.notifier).markOnboardingCompleted();
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not save onboarding progress — you may see this screen again')),
+        AppSnackBar.show(
+          context,
+          'Could not save onboarding progress — you may see this screen again',
+          type: AppSnackBarType.warning,
         );
       }
     }

@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/theme_constants.dart';
 import '../../core/utils/platform_utils.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import '../chat/notifiers/chat_notifier.dart';
 import 'notifiers/project_sidebar_actions.dart';
 import 'notifiers/project_sidebar_failure.dart';
@@ -115,7 +116,7 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
           inAddFlow ? 'Failed to add project — please try again.' : 'Operation failed — please try again.',
         _ => inAddFlow ? 'Failed to add project — please try again.' : 'Operation failed — please try again.',
       };
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      AppSnackBar.show(context, message, type: AppSnackBarType.error);
     });
 
     final projectsAsync = ref.watch(projectsProvider);

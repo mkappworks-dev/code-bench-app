@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import '../../data/shared/ai_model.dart';
 import 'notifiers/providers_notifier.dart';
 import 'notifiers/settings_actions.dart';
@@ -56,9 +57,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
           customApiKey: _customApiKeyController.text.trim(),
         );
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Settings saved'), backgroundColor: ThemeConstants.success));
+      AppSnackBar.show(context, 'Settings saved', type: AppSnackBarType.success);
     }
   }
 
@@ -71,10 +70,10 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
     final url = _ollamaController.text.trim();
     final ok = await ref.read(settingsActionsProvider.notifier).testOllamaUrl(url);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      ok
-          ? const SnackBar(content: Text('Ollama is running!'), backgroundColor: ThemeConstants.success)
-          : const SnackBar(content: Text('Cannot connect to Ollama.'), backgroundColor: ThemeConstants.error),
+    AppSnackBar.show(
+      context,
+      ok ? 'Ollama is running!' : 'Cannot connect to Ollama.',
+      type: ok ? AppSnackBarType.success : AppSnackBarType.error,
     );
   }
 

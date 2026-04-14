@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import '../../core/utils/instant_menu.dart';
 import '../../data/project/models/project.dart';
 import '../../features/chat/notifiers/create_pr_actions.dart';
@@ -55,7 +56,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
     final sha = await ref.read(gitActionsProvider.notifier).commit(widget.project.path, message);
     if (ref.read(gitActionsProvider).hasError) return;
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Committed — $sha')));
+      AppSnackBar.show(context, 'Committed — $sha', type: AppSnackBarType.success);
       ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
     }
   }
@@ -75,7 +76,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
         target = (branch == null || branch.isEmpty) ? s.selectedRemote : '${s.selectedRemote}/$branch';
       }
       if (!ref.read(gitActionsProvider).hasError && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pushed to $target')));
+        AppSnackBar.show(context, 'Pushed to $target', type: AppSnackBarType.success);
         ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
       }
     } finally {
@@ -97,7 +98,11 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
     final parts = <String>[];
     if (pushed.isNotEmpty) parts.add('Pushed: ${pushed.join(", ")}');
     if (failed.isNotEmpty) parts.add('Failed: ${failed.join(", ")}');
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(parts.join(' · '))));
+    AppSnackBar.show(
+      context,
+      parts.join(' · '),
+      type: failed.isEmpty ? AppSnackBarType.success : AppSnackBarType.error,
+    );
     if (pushed.isNotEmpty) ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
   }
 
@@ -107,7 +112,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
     try {
       final n = await ref.read(gitActionsProvider.notifier).pull(widget.project.path);
       if (!ref.read(gitActionsProvider).hasError && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pulled — $n new commit(s) from origin')));
+        AppSnackBar.show(context, 'Pulled — $n new commit(s) from origin', type: AppSnackBarType.success);
         ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
       }
     } finally {
@@ -115,9 +120,21 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
     }
   }
 
-  void _snack(String message, {Duration duration = const Duration(seconds: 4), SnackBarAction? action}) {
+  void _snack(
+    String message, {
+    Duration duration = const Duration(seconds: 4),
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), duration: duration, action: action));
+    AppSnackBar.show(
+      context,
+      message,
+      type: AppSnackBarType.info,
+      duration: duration,
+      actionLabel: actionLabel,
+      onAction: onAction,
+    );
   }
 
   Future<void> _showCreatePrDialog() async {
@@ -157,11 +174,9 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
         _snack(
           'Pull request created: $prUrl',
           duration: const Duration(seconds: 8),
-          action: canAutoOpen
-              ? SnackBarAction(
-                  label: 'Open',
-                  onPressed: () => unawaited(launchUrl(Uri.parse(prUrl), mode: LaunchMode.externalApplication)),
-                )
+          actionLabel: canAutoOpen ? 'Open' : null,
+          onAction: canAutoOpen
+              ? () => unawaited(launchUrl(Uri.parse(prUrl), mode: LaunchMode.externalApplication))
               : null,
         );
     }
@@ -181,7 +196,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
         GitActionsGitError(:final message) => message,
         GitActionsUnknownError() => 'Git operation failed.',
       };
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      AppSnackBar.show(context, msg, type: AppSnackBarType.error);
     });
 
     ref.listen(commitMessageActionsProvider, (prev, next) {
@@ -193,7 +208,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
         PrContentUnavailable() => 'AI title/body unavailable — using a default. Check your model provider.',
         CommitMessageUnknown() => 'AI unavailable — using a default. Check your API key and model provider.',
       };
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      AppSnackBar.show(context, msg, type: AppSnackBarType.warning);
     });
 
     final s = ref.watch(commitPushButtonStateProvider(widget.project.path));

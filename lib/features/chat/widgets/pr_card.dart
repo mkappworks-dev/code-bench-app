@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../notifiers/pr_notifier.dart';
 
@@ -168,7 +169,7 @@ class _PRCardState extends ConsumerState<PRCard> {
 
   void _showSnack(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    AppSnackBar.show(context, message, type: AppSnackBarType.info);
   }
 
   Future<void> _openOnGitHub(String htmlUrl) async {

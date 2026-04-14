@@ -14,12 +14,7 @@ class PrFormResult {
 }
 
 class CreatePrDialog extends ConsumerStatefulWidget {
-  const CreatePrDialog({
-    super.key,
-    required this.initialTitle,
-    required this.initialBody,
-    required this.branches,
-  });
+  const CreatePrDialog({super.key, required this.initialTitle, required this.initialBody, required this.branches});
 
   final String initialTitle;
   final String initialBody;
@@ -33,11 +28,7 @@ class CreatePrDialog extends ConsumerStatefulWidget {
   }) {
     return showDialog<PrFormResult>(
       context: context,
-      builder: (_) => CreatePrDialog(
-        initialTitle: initialTitle,
-        initialBody: initialBody,
-        branches: branches,
-      ),
+      builder: (_) => CreatePrDialog(initialTitle: initialTitle, initialBody: initialBody, branches: branches),
     );
   }
 
@@ -56,9 +47,7 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
     super.initState();
     _titleController = TextEditingController(text: widget.initialTitle);
     _bodyController = TextEditingController(text: widget.initialBody);
-    _base = widget.branches.contains('main')
-        ? 'main'
-        : (widget.branches.isNotEmpty ? widget.branches.first : 'main');
+    _base = widget.branches.contains('main') ? 'main' : (widget.branches.isNotEmpty ? widget.branches.first : 'main');
   }
 
   @override
@@ -71,9 +60,9 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
   void _submit() {
     final title = _titleController.text.trim();
     if (title.isEmpty) return;
-    Navigator.of(context).pop(
-      PrFormResult(title: title, body: _bodyController.text.trim(), base: _base, draft: _draft),
-    );
+    Navigator.of(
+      context,
+    ).pop(PrFormResult(title: title, body: _bodyController.text.trim(), base: _base, draft: _draft));
   }
 
   @override
@@ -95,15 +84,9 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
               maxLength: 70,
               decoration: const InputDecoration(
                 labelText: 'Title',
-                labelStyle: TextStyle(
-                  color: ThemeConstants.textSecondary,
-                  fontSize: ThemeConstants.uiFontSizeSmall,
-                ),
+                labelStyle: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
               ),
-              style: const TextStyle(
-                color: ThemeConstants.textPrimary,
-                fontSize: ThemeConstants.uiFontSize,
-              ),
+              style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -111,38 +94,24 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
               maxLines: 6,
               decoration: const InputDecoration(
                 labelText: 'Description',
-                labelStyle: TextStyle(
-                  color: ThemeConstants.textSecondary,
-                  fontSize: ThemeConstants.uiFontSizeSmall,
-                ),
+                labelStyle: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                 alignLabelWithHint: true,
               ),
-              style: const TextStyle(
-                color: ThemeConstants.textPrimary,
-                fontSize: ThemeConstants.uiFontSize,
-              ),
+              style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
                 const Text(
                   'Base branch:',
-                  style: TextStyle(
-                    color: ThemeConstants.textSecondary,
-                    fontSize: ThemeConstants.uiFontSizeSmall,
-                  ),
+                  style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                 ),
                 const SizedBox(width: 8),
                 DropdownButton<String>(
                   value: widget.branches.contains(_base) ? _base : null,
                   dropdownColor: ThemeConstants.inputSurface,
-                  style: const TextStyle(
-                    color: ThemeConstants.textPrimary,
-                    fontSize: ThemeConstants.uiFontSizeSmall,
-                  ),
-                  items: widget.branches
-                      .map((b) => DropdownMenuItem(value: b, child: Text(b)))
-                      .toList(),
+                  style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+                  items: widget.branches.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
                   onChanged: (v) {
                     if (v != null) setState(() => _base = v);
                   },
@@ -150,10 +119,7 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
                 const Spacer(),
                 const Text(
                   'Draft PR',
-                  style: TextStyle(
-                    color: ThemeConstants.textSecondary,
-                    fontSize: ThemeConstants.uiFontSizeSmall,
-                  ),
+                  style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                 ),
                 Switch(value: _draft, onChanged: (v) => setState(() => _draft = v)),
               ],
@@ -162,10 +128,7 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
         ),
         actions: [
           AppDialogAction.cancel(onPressed: () => Navigator.of(context).pop()),
-          AppDialogAction.primary(
-            label: 'Create PR',
-            onPressed: _titleController.text.trim().isEmpty ? null : _submit,
-          ),
+          AppDialogAction.primary(label: 'Create PR', onPressed: _titleController.text.trim().isEmpty ? null : _submit),
         ],
       ),
     );

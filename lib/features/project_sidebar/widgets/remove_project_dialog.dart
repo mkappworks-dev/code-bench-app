@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 import '../../../data/project/models/project.dart';
 import '../notifiers/project_sidebar_actions.dart';
 import '../notifiers/project_sidebar_failure.dart';
@@ -65,9 +66,7 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
       if (next is! AsyncError || !mounted) return;
       final failure = next.error;
       if (failure is! ProjectSidebarFailure) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to remove project — please try again.')));
+      AppSnackBar.show(context, 'Failed to remove project — please try again.', type: AppSnackBarType.error);
     });
 
     final isMissing = widget.project.status == ProjectStatus.missing;

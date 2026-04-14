@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import '../../core/utils/instant_menu.dart';
 import 'notifiers/general_prefs_notifier.dart';
 import 'notifiers/settings_actions.dart';
@@ -80,18 +81,16 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
     final failures = await ref.read(settingsActionsProvider.notifier).wipeAllData();
     if (!mounted) return;
     if (failures.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('All data wiped. Restart the app to see the onboarding wizard.'),
-          backgroundColor: ThemeConstants.success,
-        ),
+      AppSnackBar.show(
+        context,
+        'All data wiped. Restart the app to see the onboarding wizard.',
+        type: AppSnackBarType.success,
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Wipe partially failed: ${failures.join(', ')}. Check logs.'),
-          backgroundColor: ThemeConstants.error,
-        ),
+      AppSnackBar.show(
+        context,
+        'Wipe partially failed: ${failures.join(', ')}. Check logs.',
+        type: AppSnackBarType.error,
       );
     }
   }
@@ -194,11 +193,11 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                       onTap: () async {
                         await ref.read(settingsActionsProvider.notifier).replayOnboarding();
                         if (ctx.mounted) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            const SnackBar(
-                              content: Text('Wizard will replay on next launch'),
-                              duration: Duration(seconds: 2),
-                            ),
+                          AppSnackBar.show(
+                            ctx,
+                            'Wizard will replay on next launch',
+                            type: AppSnackBarType.info,
+                            duration: const Duration(seconds: 2),
                           );
                         }
                       },

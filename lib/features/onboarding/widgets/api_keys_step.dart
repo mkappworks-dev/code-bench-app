@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/instant_menu.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../settings/notifiers/settings_actions.dart';
 
@@ -119,9 +120,7 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
     ref.listen(settingsActionsProvider, (_, next) {
       if (!_saving) return;
       if (next is! AsyncError || !mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to save API key — please try again')));
+      AppSnackBar.show(context, 'Failed to save API key — please try again', type: AppSnackBarType.error);
     });
 
     final allAdded = _addedProviders.length == AIProvider.values.length;

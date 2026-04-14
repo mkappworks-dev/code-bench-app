@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/widgets/app_snack_bar.dart';
 import '../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 
 /// Returns `true` if the project folder at [projectPath] currently exists on
@@ -20,14 +21,12 @@ bool ensureProjectAvailable(BuildContext context, WidgetRef ref, String projectI
   // follows on the next Drift stream emission. Swallow errors here so this
   // background refresh cannot surface as an uncaught exception.
   unawaited(ref.read(projectSidebarActionsProvider.notifier).refreshProjectStatus(projectId).catchError((Object _) {}));
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text(
-        'This project folder is missing. Right-click the project in the '
-        'sidebar to Relocate or Remove it.',
-      ),
-      duration: Duration(seconds: 4),
-    ),
+  AppSnackBar.show(
+    context,
+    'Project folder missing',
+    message: 'Right-click the project in the sidebar to Relocate or Remove it.',
+    type: AppSnackBarType.warning,
+    duration: const Duration(seconds: 4),
   );
   return false;
 }

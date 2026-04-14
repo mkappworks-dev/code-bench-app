@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../notifiers/branch_picker_failure.dart';
 import '../notifiers/branch_picker_notifier.dart';
@@ -58,23 +59,17 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
       if (failure is! BranchPickerFailure) return;
       switch (failure) {
         case BranchPickerInvalidName(:final reason):
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reason)));
+          AppSnackBar.show(context, reason, type: AppSnackBarType.error);
         case BranchPickerCheckoutConflict(:final message):
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(message), duration: const Duration(seconds: 4)));
+          AppSnackBar.show(context, message, type: AppSnackBarType.error, duration: const Duration(seconds: 4));
           // Reload so the branch list is restored from the error state.
           ref.read(branchPickerProvider(widget.projectPath).notifier).reload();
         case BranchPickerCreateFailed(:final message):
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Checkout failed: $message')));
+          AppSnackBar.show(context, 'Checkout failed: $message', type: AppSnackBarType.error);
         case BranchPickerGitUnavailable():
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Checkout failed — git binary unavailable.')));
+          AppSnackBar.show(context, 'Checkout failed — git binary unavailable.', type: AppSnackBarType.error);
         case BranchPickerUnknownError():
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Checkout failed — project folder unavailable.')));
+          AppSnackBar.show(context, 'Checkout failed — project folder unavailable.', type: AppSnackBarType.error);
       }
     } else {
       ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
@@ -92,19 +87,15 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
       if (failure is! BranchPickerFailure) return;
       switch (failure) {
         case BranchPickerInvalidName(:final reason):
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reason)));
+          AppSnackBar.show(context, reason, type: AppSnackBarType.error);
         case BranchPickerCreateFailed(:final message):
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $message')));
+          AppSnackBar.show(context, 'Failed: $message', type: AppSnackBarType.error);
         case BranchPickerCheckoutConflict(:final message):
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+          AppSnackBar.show(context, message, type: AppSnackBarType.error);
         case BranchPickerGitUnavailable():
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Create branch failed — git binary unavailable.')));
+          AppSnackBar.show(context, 'Create branch failed — git binary unavailable.', type: AppSnackBarType.error);
         case BranchPickerUnknownError():
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Create branch failed — project folder unavailable.')));
+          AppSnackBar.show(context, 'Create branch failed — project folder unavailable.', type: AppSnackBarType.error);
       }
     } else {
       ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
