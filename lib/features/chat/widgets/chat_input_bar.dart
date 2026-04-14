@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../data/shared/ai_model.dart';
@@ -192,9 +193,12 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     setState(() => _isSending = true);
     try {
       final systemPrompt = ref.read(sessionSystemPromptProvider)[widget.sessionId];
-      await ref
+      final sendError = await ref
           .read(chatMessagesProvider(widget.sessionId).notifier)
           .sendMessage(text, systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty) ? systemPrompt : null);
+      if (mounted && sendError != null) {
+        showErrorSnackBar(context, userMessage(sendError, fallback: 'Failed to get a response.'));
+      }
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
