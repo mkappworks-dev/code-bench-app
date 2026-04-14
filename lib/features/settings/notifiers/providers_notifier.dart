@@ -80,7 +80,7 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
       ref.invalidate(aiRepositoryProvider);
     } catch (e, st) {
       dLog('[ApiKeysNotifier] saveAll failed: $e');
-      state = AsyncError(e, st);
+      if (ref.mounted) state = AsyncError(e, st);
     }
   }
 
@@ -90,7 +90,7 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
       ref.invalidate(aiRepositoryProvider);
     } catch (e, st) {
       dLog('[ApiKeysNotifier] deleteKey failed: $e');
-      state = AsyncError(e, st);
+      if (ref.mounted) state = AsyncError(e, st);
     }
   }
 }
