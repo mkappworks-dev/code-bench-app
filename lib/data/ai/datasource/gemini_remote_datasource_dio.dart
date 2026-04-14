@@ -71,7 +71,7 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource {
       }
     } on DioException catch (e) {
       throw NetworkException(
-        e.message ?? 'Gemini request failed',
+        networkErrorMessage(e.response?.statusCode, providerName: 'Gemini'),
         statusCode: e.response?.statusCode,
         originalError: e,
       );

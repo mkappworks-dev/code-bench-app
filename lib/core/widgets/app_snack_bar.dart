@@ -81,65 +81,71 @@ class AppSnackBar extends StatelessWidget {
       width: 320,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
+        // Uniform border — safe to combine with borderRadius.
+        border: Border.all(color: ThemeConstants.borderColor),
         boxShadow: const [BoxShadow(color: Color(0xB3000000), blurRadius: 32, offset: Offset(0, 8))],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: ThemeConstants.frostedSurface,
-            border: Border(
-              top: BorderSide(color: ThemeConstants.borderColor),
-              right: BorderSide(color: ThemeConstants.borderColor),
-              bottom: BorderSide(color: ThemeConstants.borderColor),
-              left: BorderSide(color: typeColor, width: 3),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: ColoredBox(
+          color: ThemeConstants.frostedSurface,
+          // IntrinsicHeight lets the left accent strip fill the full height
+          // without a non-uniform border (which Flutter forbids with borderRadius).
+          child: IntrinsicHeight(
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(5)),
-                  child: Icon(iconData, size: 13, color: typeColor),
-                ),
-                const SizedBox(width: 10),
+                Container(width: 3, color: typeColor),
                 Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          color: ThemeConstants.headingText,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(5)),
+                          child: Icon(iconData, size: 13, color: typeColor),
                         ),
-                      ),
-                      if (message != null) ...[
-                        const SizedBox(height: 1),
-                        Text(message!, style: const TextStyle(color: ThemeConstants.dimFg, fontSize: 10)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                label,
+                                style: const TextStyle(
+                                  color: ThemeConstants.headingText,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (message != null) ...[
+                                const SizedBox(height: 1),
+                                Text(message!, style: const TextStyle(color: ThemeConstants.dimFg, fontSize: 10)),
+                              ],
+                            ],
+                          ),
+                        ),
+                        if (actionLabel != null) ...[
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: onAction,
+                            child: Text(
+                              actionLabel!,
+                              style: TextStyle(color: typeColor, fontSize: 10, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+                          child: const Icon(Icons.close, size: 13, color: ThemeConstants.mutedFg),
+                        ),
                       ],
-                    ],
-                  ),
-                ),
-                if (actionLabel != null) ...[
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: onAction,
-                    child: Text(
-                      actionLabel!,
-                      style: TextStyle(color: typeColor, fontSize: 10, fontWeight: FontWeight.w600),
                     ),
                   ),
-                ],
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
-                  child: const Icon(Icons.close, size: 13, color: ThemeConstants.mutedFg),
                 ),
               ],
             ),
