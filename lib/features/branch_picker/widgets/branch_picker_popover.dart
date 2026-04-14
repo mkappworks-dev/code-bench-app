@@ -311,52 +311,49 @@ class _BranchRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canTap = onTap != null;
-    return Tooltip(
-      message: isWorktree ? 'Checked out in another worktree' : '',
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-          color: isCurrent ? ThemeConstants.success.withValues(alpha: 0.07) : Colors.transparent,
-          child: Row(
-            children: [
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        color: isCurrent ? ThemeConstants.success.withValues(alpha: 0.07) : Colors.transparent,
+        child: Row(
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isCurrent ? ThemeConstants.success : Colors.transparent,
+                border: isCurrent ? null : Border.all(color: ThemeConstants.faintFg),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                branch,
+                style: TextStyle(
+                  color: isCurrent
+                      ? ThemeConstants.success
+                      : canTap
+                      ? ThemeConstants.textSecondary
+                      : ThemeConstants.faintFg,
+                  fontSize: ThemeConstants.uiFontSizeLabel,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (isCurrent) const Icon(LucideIcons.check, size: 10, color: ThemeConstants.success),
+            if (isWorktree)
               Container(
-                width: 6,
-                height: 6,
+                margin: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isCurrent ? ThemeConstants.success : Colors.transparent,
-                  border: isCurrent ? null : Border.all(color: ThemeConstants.faintFg),
+                  color: ThemeConstants.worktreeBadgeBg,
+                  borderRadius: BorderRadius.circular(3),
                 ),
+                child: const Text('worktree', style: TextStyle(color: ThemeConstants.worktreeBadgeFg, fontSize: 9)),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  branch,
-                  style: TextStyle(
-                    color: isCurrent
-                        ? ThemeConstants.success
-                        : canTap
-                        ? ThemeConstants.textSecondary
-                        : ThemeConstants.faintFg,
-                    fontSize: ThemeConstants.uiFontSizeLabel,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (isCurrent) const Icon(LucideIcons.check, size: 10, color: ThemeConstants.success),
-              if (isWorktree)
-                Container(
-                  margin: const EdgeInsets.only(left: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: ThemeConstants.worktreeBadgeBg,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                  child: const Text('worktree', style: TextStyle(color: ThemeConstants.worktreeBadgeFg, fontSize: 9)),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );
