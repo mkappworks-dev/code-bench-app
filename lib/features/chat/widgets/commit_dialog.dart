@@ -7,6 +7,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../data/_core/preferences/general_preferences.dart';
+import '../../../data/git/models/git_changed_file.dart';
 import '../../../shell/notifiers/git_actions.dart';
 
 class CommitDialog extends ConsumerStatefulWidget {
