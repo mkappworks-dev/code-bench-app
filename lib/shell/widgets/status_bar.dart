@@ -51,13 +51,6 @@ class _StatusBarState extends ConsumerState<StatusBar> {
       ),
       child: Row(
         children: [
-          // Left: Local indicator
-          Icon(LucideIcons.hardDrive, size: 10, color: ThemeConstants.faintFg),
-          const SizedBox(width: 5),
-          Text(
-            'Local',
-            style: const TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSizeLabel),
-          ),
           const Spacer(),
           // Working pill — shown while the agent is running tool calls.
           Consumer(
@@ -147,9 +140,10 @@ class _StatusBarState extends ConsumerState<StatusBar> {
       closePicker();
       return;
     }
-    // Use the in-memory worktree override if the user has switched context.
+    // Use the per-session worktree override if one is set.
+    final sessionId = ref.read(activeSessionIdProvider);
     final overrides = ref.read(activeWorktreePathProvider);
-    final effectivePath = overrides[project.id] ?? project.path;
+    final effectivePath = (sessionId != null ? overrides[sessionId] : null) ?? project.path;
     _pickerEntry = OverlayEntry(
       builder: (ctx) => BranchPickerPopover(
         layerLink: _branchLabelLink,

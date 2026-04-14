@@ -43,9 +43,11 @@ StatusBarState statusBarState(Ref ref) {
   final allChanges = ref.watch(appliedChangesProvider);
   final changeCount = activeSessionId != null ? (allChanges[activeSessionId]?.length ?? 0) : 0;
 
-  // Use worktree override if the user has switched context, else the stored path.
+  // Use worktree override for the active session if set, else the stored path.
   final worktreeOverrides = ref.watch(activeWorktreePathProvider);
-  final effectivePath = activeProject != null ? (worktreeOverrides[activeProject.id] ?? activeProject.path) : null;
+  final effectivePath = activeProject != null
+      ? (activeSessionId != null ? worktreeOverrides[activeSessionId] : null) ?? activeProject.path
+      : null;
   final liveStateAsync = effectivePath != null ? ref.watch(gitLiveStateProvider(effectivePath)) : null;
 
   return StatusBarState(

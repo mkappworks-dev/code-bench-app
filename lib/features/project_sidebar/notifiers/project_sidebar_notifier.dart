@@ -16,10 +16,11 @@ class ActiveProjectIdNotifier extends _$ActiveProjectIdNotifier {
   void set(String? id) => state = id;
 }
 
-/// In-memory worktree path overrides: projectId → effective filesystem path.
+/// In-memory worktree path overrides: sessionId → effective filesystem path.
 ///
 /// When the user switches to a worktree via the branch picker, the entry
-/// for that project is updated here. All git operations (live-state, branch
+/// for the active session is updated here. Each thread/session can point to a
+/// different worktree independently. All git operations (live-state, branch
 /// picker, commit, push …) read the effective path from this map rather than
 /// using the project's stored path directly. Cleared when the user switches
 /// back to the main working tree. Not persisted — resets on app restart.
@@ -28,12 +29,12 @@ class ActiveWorktreePathNotifier extends _$ActiveWorktreePathNotifier {
   @override
   Map<String, String> build() => {};
 
-  void setPath(String projectId, String worktreePath) {
-    state = {...state, projectId: worktreePath};
+  void setPath(String sessionId, String worktreePath) {
+    state = {...state, sessionId: worktreePath};
   }
 
-  void clearPath(String projectId) {
-    state = {...state}..remove(projectId);
+  void clearPath(String sessionId) {
+    state = {...state}..remove(sessionId);
   }
 }
 

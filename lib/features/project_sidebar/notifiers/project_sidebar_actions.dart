@@ -129,21 +129,23 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     ref.invalidate(behindCountProvider(projectPath));
   }
 
-  /// Switches the git context for the active project to [worktreePath].
+  /// Switches the git context for the active session to [worktreePath].
   ///
-  /// Stores an in-memory override so all git operations (live-state, branch
-  /// picker, commit, push …) run against [worktreePath] instead of the
-  /// project's stored path. No database writes — resets on app restart.
+  /// Stores an in-memory override keyed by session ID so each thread can point
+  /// to a different worktree independently. No database writes — resets on
+  /// app restart.
   ///
   /// If [worktreePath] equals the project's own stored path the override is
   /// cleared, returning to the main working tree.
   void switchWorktreePath(String worktreePath) {
+    final sessionId = ref.read(activeSessionIdProvider);
+    if (sessionId == null) return;
     final project = ref.read(activeProjectProvider);
     if (project == null) return;
     if (worktreePath == project.path) {
-      ref.read(activeWorktreePathProvider.notifier).clearPath(project.id);
+      ref.read(activeWorktreePathProvider.notifier).clearPath(sessionId);
     } else {
-      ref.read(activeWorktreePathProvider.notifier).setPath(project.id, worktreePath);
+      ref.read(activeWorktreePathProvider.notifier).setPath(sessionId, worktreePath);
     }
   }
 
