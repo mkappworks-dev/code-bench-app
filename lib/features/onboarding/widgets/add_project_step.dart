@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 import '../../../shell/notifiers/git_actions.dart';
 import '../../project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../project_sidebar/notifiers/project_sidebar_failure.dart';
@@ -53,7 +54,7 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
 
   void _showDropError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    AppSnackBar.show(context, message, type: AppSnackBarType.error);
   }
 
   Future<void> _addProject() async {
@@ -82,7 +83,7 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
         ProjectSidebarUnknownError() => 'Failed to add project — please try again.',
         _ => 'Failed to add project — please try again.',
       };
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      AppSnackBar.show(context, message, type: AppSnackBarType.error);
     });
 
     return Column(

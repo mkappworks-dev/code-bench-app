@@ -13,8 +13,8 @@ class BranchPickerNotifier extends _$BranchPickerNotifier {
   Future<BranchPickerState> build(String projectPath) async {
     final git = ref.watch(gitServiceProvider);
     final branches = await git.listLocalBranches(projectPath);
-    final wtBranches = await git.worktreeBranches(projectPath);
-    return BranchPickerState(branches: branches, worktreeBranches: wtBranches);
+    final wtPaths = await git.worktreeBranches(projectPath);
+    return BranchPickerState(branches: branches, worktreePaths: wtPaths);
   }
 
   BranchPickerFailure _asFailure(Object e) => switch (e) {
@@ -34,7 +34,7 @@ class BranchPickerNotifier extends _$BranchPickerNotifier {
         await git.checkout(projectPath, branch);
         final branches = await git.listLocalBranches(projectPath);
         final wt = await git.worktreeBranches(projectPath);
-        return BranchPickerState(branches: branches, worktreeBranches: wt);
+        return BranchPickerState(branches: branches, worktreePaths: wt);
       } catch (e, st) {
         dLog('[BranchPickerNotifier] checkout failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -54,7 +54,7 @@ class BranchPickerNotifier extends _$BranchPickerNotifier {
         await git.createBranch(projectPath, name);
         final branches = await git.listLocalBranches(projectPath);
         final wt = await git.worktreeBranches(projectPath);
-        return BranchPickerState(branches: branches, worktreeBranches: wt);
+        return BranchPickerState(branches: branches, worktreePaths: wt);
       } catch (e, st) {
         dLog('[BranchPickerNotifier] createBranch failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);

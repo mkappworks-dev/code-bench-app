@@ -14,7 +14,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BranchPickerState {
 
- List<String> get branches; Set<String> get worktreeBranches;
+ List<String> get branches;/// Maps branch name → worktree filesystem path for every worktree
+/// OTHER than the current project. Used by the picker to show the
+/// "worktree" badge and to navigate to a worktree on tap.
+ Map<String, String> get worktreePaths;
 /// Create a copy of BranchPickerState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +28,16 @@ $BranchPickerStateCopyWith<BranchPickerState> get copyWith => _$BranchPickerStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BranchPickerState&&const DeepCollectionEquality().equals(other.branches, branches)&&const DeepCollectionEquality().equals(other.worktreeBranches, worktreeBranches));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BranchPickerState&&const DeepCollectionEquality().equals(other.branches, branches)&&const DeepCollectionEquality().equals(other.worktreePaths, worktreePaths));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(branches),const DeepCollectionEquality().hash(worktreeBranches));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(branches),const DeepCollectionEquality().hash(worktreePaths));
 
 @override
 String toString() {
-  return 'BranchPickerState(branches: $branches, worktreeBranches: $worktreeBranches)';
+  return 'BranchPickerState(branches: $branches, worktreePaths: $worktreePaths)';
 }
 
 
@@ -45,7 +48,7 @@ abstract mixin class $BranchPickerStateCopyWith<$Res>  {
   factory $BranchPickerStateCopyWith(BranchPickerState value, $Res Function(BranchPickerState) _then) = _$BranchPickerStateCopyWithImpl;
 @useResult
 $Res call({
- List<String> branches, Set<String> worktreeBranches
+ List<String> branches, Map<String, String> worktreePaths
 });
 
 
@@ -62,11 +65,11 @@ class _$BranchPickerStateCopyWithImpl<$Res>
 
 /// Create a copy of BranchPickerState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? branches = null,Object? worktreeBranches = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? branches = null,Object? worktreePaths = null,}) {
   return _then(_self.copyWith(
 branches: null == branches ? _self.branches : branches // ignore: cast_nullable_to_non_nullable
-as List<String>,worktreeBranches: null == worktreeBranches ? _self.worktreeBranches : worktreeBranches // ignore: cast_nullable_to_non_nullable
-as Set<String>,
+as List<String>,worktreePaths: null == worktreePaths ? _self.worktreePaths : worktreePaths // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,
   ));
 }
 
@@ -151,10 +154,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<String> branches,  Set<String> worktreeBranches)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<String> branches,  Map<String, String> worktreePaths)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BranchPickerState() when $default != null:
-return $default(_that.branches,_that.worktreeBranches);case _:
+return $default(_that.branches,_that.worktreePaths);case _:
   return orElse();
 
 }
@@ -172,10 +175,10 @@ return $default(_that.branches,_that.worktreeBranches);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<String> branches,  Set<String> worktreeBranches)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<String> branches,  Map<String, String> worktreePaths)  $default,) {final _that = this;
 switch (_that) {
 case _BranchPickerState():
-return $default(_that.branches,_that.worktreeBranches);case _:
+return $default(_that.branches,_that.worktreePaths);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -192,10 +195,10 @@ return $default(_that.branches,_that.worktreeBranches);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<String> branches,  Set<String> worktreeBranches)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<String> branches,  Map<String, String> worktreePaths)?  $default,) {final _that = this;
 switch (_that) {
 case _BranchPickerState() when $default != null:
-return $default(_that.branches,_that.worktreeBranches);case _:
+return $default(_that.branches,_that.worktreePaths);case _:
   return null;
 
 }
@@ -207,7 +210,7 @@ return $default(_that.branches,_that.worktreeBranches);case _:
 
 
 class _BranchPickerState implements BranchPickerState {
-  const _BranchPickerState({final  List<String> branches = const [], final  Set<String> worktreeBranches = const {}}): _branches = branches,_worktreeBranches = worktreeBranches;
+  const _BranchPickerState({final  List<String> branches = const [], final  Map<String, String> worktreePaths = const {}}): _branches = branches,_worktreePaths = worktreePaths;
   
 
  final  List<String> _branches;
@@ -217,11 +220,17 @@ class _BranchPickerState implements BranchPickerState {
   return EqualUnmodifiableListView(_branches);
 }
 
- final  Set<String> _worktreeBranches;
-@override@JsonKey() Set<String> get worktreeBranches {
-  if (_worktreeBranches is EqualUnmodifiableSetView) return _worktreeBranches;
+/// Maps branch name → worktree filesystem path for every worktree
+/// OTHER than the current project. Used by the picker to show the
+/// "worktree" badge and to navigate to a worktree on tap.
+ final  Map<String, String> _worktreePaths;
+/// Maps branch name → worktree filesystem path for every worktree
+/// OTHER than the current project. Used by the picker to show the
+/// "worktree" badge and to navigate to a worktree on tap.
+@override@JsonKey() Map<String, String> get worktreePaths {
+  if (_worktreePaths is EqualUnmodifiableMapView) return _worktreePaths;
   // ignore: implicit_dynamic_type
-  return EqualUnmodifiableSetView(_worktreeBranches);
+  return EqualUnmodifiableMapView(_worktreePaths);
 }
 
 
@@ -235,16 +244,16 @@ _$BranchPickerStateCopyWith<_BranchPickerState> get copyWith => __$BranchPickerS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BranchPickerState&&const DeepCollectionEquality().equals(other._branches, _branches)&&const DeepCollectionEquality().equals(other._worktreeBranches, _worktreeBranches));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BranchPickerState&&const DeepCollectionEquality().equals(other._branches, _branches)&&const DeepCollectionEquality().equals(other._worktreePaths, _worktreePaths));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_branches),const DeepCollectionEquality().hash(_worktreeBranches));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_branches),const DeepCollectionEquality().hash(_worktreePaths));
 
 @override
 String toString() {
-  return 'BranchPickerState(branches: $branches, worktreeBranches: $worktreeBranches)';
+  return 'BranchPickerState(branches: $branches, worktreePaths: $worktreePaths)';
 }
 
 
@@ -255,7 +264,7 @@ abstract mixin class _$BranchPickerStateCopyWith<$Res> implements $BranchPickerS
   factory _$BranchPickerStateCopyWith(_BranchPickerState value, $Res Function(_BranchPickerState) _then) = __$BranchPickerStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<String> branches, Set<String> worktreeBranches
+ List<String> branches, Map<String, String> worktreePaths
 });
 
 
@@ -272,11 +281,11 @@ class __$BranchPickerStateCopyWithImpl<$Res>
 
 /// Create a copy of BranchPickerState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? branches = null,Object? worktreeBranches = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? branches = null,Object? worktreePaths = null,}) {
   return _then(_BranchPickerState(
 branches: null == branches ? _self._branches : branches // ignore: cast_nullable_to_non_nullable
-as List<String>,worktreeBranches: null == worktreeBranches ? _self._worktreeBranches : worktreeBranches // ignore: cast_nullable_to_non_nullable
-as Set<String>,
+as List<String>,worktreePaths: null == worktreePaths ? _self._worktreePaths : worktreePaths // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,
   ));
 }
 

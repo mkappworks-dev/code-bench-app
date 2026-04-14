@@ -2,6 +2,7 @@ import 'dart:io';
 
 import '../../../core/utils/debug_logger.dart';
 import '../git_exceptions.dart';
+import '../models/git_changed_file.dart';
 import 'git_datasource.dart';
 
 class GitDatasourceProcess implements GitDatasource {
@@ -205,22 +206,34 @@ class GitDatasourceProcess implements GitDatasource {
     return all..sort();
   }
 
-  /// Returns the set of branch names checked out in other git worktrees.
+  /// Returns a map of branch name → worktree filesystem path for every
+  /// git worktree OTHER than this one ([_projectPath]).
+  ///
+  /// Skips the block whose `worktree` path matches [_projectPath] so the
+  /// current working tree is never reported as "occupied elsewhere".
+  /// This path-based skip is correct for both the main working tree (block 0
+  /// = self) and linked worktrees (block 0 is the main repo, NOT self).
   @override
-  Future<Set<String>> worktreeBranches() async {
+  Future<Map<String, String>> worktreeBranches() async {
     final result = await Process.run('git', ['worktree', 'list', '--porcelain'], workingDirectory: _projectPath);
     if (result.exitCode != 0) return const {};
     final blocks = (result.stdout as String).trim().split(RegExp(r'\n\n+'));
-    final branches = <String>{};
-    for (int i = 1; i < blocks.length; i++) {
-      for (final line in blocks[i].split('\n')) {
+    final map = <String, String>{};
+    for (final block in blocks) {
+      final lines = block.split('\n');
+      final worktreeLine = lines.firstWhere((l) => l.startsWith('worktree '), orElse: () => '');
+      final worktreePath = worktreeLine.substring('worktree '.length).trim();
+      if (worktreePath == _projectPath || worktreePath.isEmpty) continue;
+      String? branch;
+      for (final line in lines) {
         if (line.startsWith('branch ')) {
-          final ref = line.substring('branch '.length).trim();
-          branches.add(ref.replaceFirst('refs/heads/', ''));
+          branch = line.substring('branch '.length).trim().replaceFirst('refs/heads/', '');
+          break;
         }
       }
+      if (branch != null) map[branch] = worktreePath;
     }
-    return branches;
+    return map;
   }
 
   /// Switches the working tree to [branch] using `git switch`.
@@ -282,5 +295,47 @@ class GitDatasourceProcess implements GitDatasource {
     if (result.exitCode != 0) {
       throw GitException(_sanitizeGitStderr((result.stderr as String).trim()));
     }
+  }
+
+  /// Returns staged changes via `git diff --cached --numstat`.
+  /// Falls back to `git diff --numstat HEAD` when nothing is staged.
+  @override
+  Future<List<GitChangedFile>> getChangedFiles() async {
+    var result = await Process.run('git', ['diff', '--cached', '--numstat'], workingDirectory: _projectPath);
+    var output = (result.stdout as String).trim();
+
+    if (output.isEmpty && result.exitCode == 0) {
+      result = await Process.run('git', ['diff', '--numstat', 'HEAD'], workingDirectory: _projectPath);
+      output = (result.stdout as String).trim();
+      if (result.exitCode != 0) {
+        dLog('[GitDatasourceProcess] getChangedFiles HEAD diff failed (exit ${result.exitCode}): ${(result.stderr as String).trim()}');
+        return [];
+      }
+    }
+
+    if (output.isEmpty) return [];
+    return output.split('\n').map(_parseLine).whereType<GitChangedFile>().toList();
+  }
+
+  static GitChangedFile? _parseLine(String line) {
+    final parts = line.split('\t');
+    if (parts.length < 3) return null;
+    final additions = int.tryParse(parts[0]) ?? 0;
+    final deletions = int.tryParse(parts[1]) ?? 0;
+    final path = parts.sublist(2).join('\t').trim();
+    if (path.isEmpty) return null;
+    return GitChangedFile(
+      path: path,
+      additions: additions,
+      deletions: deletions,
+      status: _inferStatus(additions, deletions, path),
+    );
+  }
+
+  static GitChangedFileStatus _inferStatus(int additions, int deletions, String path) {
+    if (path.contains(' => ')) return GitChangedFileStatus.renamed;
+    if (additions > 0 && deletions == 0) return GitChangedFileStatus.added;
+    if (deletions > 0 && additions == 0) return GitChangedFileStatus.deleted;
+    return GitChangedFileStatus.modified;
   }
 }

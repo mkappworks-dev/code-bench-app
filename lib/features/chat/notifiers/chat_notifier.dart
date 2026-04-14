@@ -49,7 +49,12 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     return svc.loadHistory(sessionId);
   }
 
-  Future<void> sendMessage(String input, {String? systemPrompt}) async {
+  /// Sends [input] and streams the response into state.
+  ///
+  /// Returns `null` on success, or the caught error object on failure.
+  /// The caller (widget) checks the return value to show a snackbar without
+  /// needing a try-catch around a notifier call.
+  Future<Object?> sendMessage(String input, {String? systemPrompt}) async {
     final sessionId = ref.read(activeSessionIdProvider);
     if (sessionId == null) {
       throw StateError('No active session — cannot send message.');
@@ -90,9 +95,14 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
           state = AsyncData([...current, msg]);
         }
       }
+      return null;
     } catch (e, st) {
       dLog('[sendMessage] stream error: $e\n$st');
+      // Emit AsyncError so ref.listen subscribers (e.g. chat_input_bar) can
+      // react, then immediately restore AsyncData so the chat list stays intact.
       state = AsyncError(e, st);
+      state = AsyncData(currentMessages);
+      return e;
     } finally {
       if (streamingAssistantId != null) {
         activeMessageIdNotifier.set(null);

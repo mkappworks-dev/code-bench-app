@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import '../../core/utils/instant_menu.dart';
 import '../../data/project/models/project.dart';
 import '../../features/chat/notifiers/create_pr_actions.dart';
@@ -47,7 +48,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
       return;
     }
     if (!mounted) return;
-    final confirmed = await CommitDialog.show(context, message);
+    final confirmed = await CommitDialog.show(context, message, projectPath: widget.project.path);
     if (confirmed != null) await _runCommit(confirmed);
   }
 
@@ -55,7 +56,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
     final sha = await ref.read(gitActionsProvider.notifier).commit(widget.project.path, message);
     if (ref.read(gitActionsProvider).hasError) return;
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Committed — $sha')));
+      AppSnackBar.show(context, 'Committed — $sha', type: AppSnackBarType.success);
       ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
     }
   }
@@ -75,7 +76,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
         target = (branch == null || branch.isEmpty) ? s.selectedRemote : '${s.selectedRemote}/$branch';
       }
       if (!ref.read(gitActionsProvider).hasError && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pushed to $target')));
+        AppSnackBar.show(context, 'Pushed to $target', type: AppSnackBarType.success);
         ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
       }
     } finally {
@@ -97,7 +98,11 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
     final parts = <String>[];
     if (pushed.isNotEmpty) parts.add('Pushed: ${pushed.join(", ")}');
     if (failed.isNotEmpty) parts.add('Failed: ${failed.join(", ")}');
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(parts.join(' · '))));
+    AppSnackBar.show(
+      context,
+      parts.join(' · '),
+      type: failed.isEmpty ? AppSnackBarType.success : AppSnackBarType.error,
+    );
     if (pushed.isNotEmpty) ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
   }
 
@@ -107,7 +112,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
     try {
       final n = await ref.read(gitActionsProvider.notifier).pull(widget.project.path);
       if (!ref.read(gitActionsProvider).hasError && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pulled — $n new commit(s) from origin')));
+        AppSnackBar.show(context, 'Pulled — $n new commit(s) from origin', type: AppSnackBarType.success);
         ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.project.path);
       }
     } finally {
@@ -115,9 +120,21 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
     }
   }
 
-  void _snack(String message, {Duration duration = const Duration(seconds: 4), SnackBarAction? action}) {
+  void _snack(
+    String message, {
+    Duration duration = const Duration(seconds: 4),
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), duration: duration, action: action));
+    AppSnackBar.show(
+      context,
+      message,
+      type: AppSnackBarType.info,
+      duration: duration,
+      actionLabel: actionLabel,
+      onAction: onAction,
+    );
   }
 
   Future<void> _showCreatePrDialog() async {
@@ -157,11 +174,9 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
         _snack(
           'Pull request created: $prUrl',
           duration: const Duration(seconds: 8),
-          action: canAutoOpen
-              ? SnackBarAction(
-                  label: 'Open',
-                  onPressed: () => unawaited(launchUrl(Uri.parse(prUrl), mode: LaunchMode.externalApplication)),
-                )
+          actionLabel: canAutoOpen ? 'Open' : null,
+          onAction: canAutoOpen
+              ? () => unawaited(launchUrl(Uri.parse(prUrl), mode: LaunchMode.externalApplication))
               : null,
         );
     }
@@ -181,7 +196,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
         GitActionsGitError(:final message) => message,
         GitActionsUnknownError() => 'Git operation failed.',
       };
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      AppSnackBar.show(context, msg, type: AppSnackBarType.error);
     });
 
     ref.listen(commitMessageActionsProvider, (prev, next) {
@@ -193,7 +208,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
         PrContentUnavailable() => 'AI title/body unavailable — using a default. Check your model provider.',
         CommitMessageUnknown() => 'AI unavailable — using a default. Check your API key and model provider.',
       };
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      AppSnackBar.show(context, msg, type: AppSnackBarType.warning);
     });
 
     final s = ref.watch(commitPushButtonStateProvider(widget.project.path));
@@ -227,7 +242,11 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(AppIcons.gitCommit, size: 12, color: s.canCommit ? Colors.white : ThemeConstants.mutedFg),
+                    Icon(
+                      AppIcons.gitCommit,
+                      size: 12,
+                      color: s.canCommit ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
+                    ),
                     const SizedBox(width: 5),
                     Text(
                       _pushing
@@ -236,7 +255,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                           ? '● Pulling…'
                           : 'Commit',
                       style: TextStyle(
-                        color: s.canCommit ? Colors.white : ThemeConstants.mutedFg,
+                        color: s.canCommit ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
                         fontSize: ThemeConstants.uiFontSizeSmall,
                       ),
                     ),
@@ -307,39 +326,59 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                             value: 'push',
                             height: 32,
                             enabled: s.canPush && !busy,
-                            child: Text(
-                              _pushing
-                                  ? '● Pushing…'
-                                  : s.remotes.length > 1
-                                  ? 'Push ↑ (${s.selectedRemote})'
-                                  : 'Push ↑',
-                              style: TextStyle(
-                                color: (s.canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
-                                fontSize: ThemeConstants.uiFontSizeSmall,
-                              ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  AppIcons.cloudUpload,
+                                  size: 12,
+                                  color: (s.canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _pushing ? '● Pushing…' : 'Push',
+                                  style: TextStyle(
+                                    color: (s.canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                    fontSize: ThemeConstants.uiFontSizeSmall,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                          PopupMenuItem(
+                            value: 'create_pr',
+                            height: 32,
+                            enabled: s.canPr && !busy,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  AppIcons.gitPullRequest,
+                                  size: 12,
+                                  color: (s.canPr && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Create PR',
+                                  style: TextStyle(
+                                    color: (s.canPr && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                    fontSize: ThemeConstants.uiFontSizeSmall,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuDivider(),
                           PopupMenuItem(
                             value: 'pull',
                             height: 32,
                             enabled: s.canPull && !busy,
                             child: Text(
-                              s.canPull ? 'Pull${s.badgeLabel}' : 'Pull',
+                              _pulling
+                                  ? '● Pulling…'
+                                  : s.canPull
+                                  ? 'Pull${s.badgeLabel}'
+                                  : 'Pull',
                               style: TextStyle(
                                 color: s.canPull ? ThemeConstants.accent : ThemeConstants.faintFg,
-                                fontSize: ThemeConstants.uiFontSizeSmall,
-                              ),
-                            ),
-                          ),
-                          const PopupMenuDivider(),
-                          PopupMenuItem(
-                            value: 'create_pr',
-                            height: 32,
-                            enabled: s.canPr,
-                            child: Text(
-                              'Create PR',
-                              style: TextStyle(
-                                color: s.canPr ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
                                 fontSize: ThemeConstants.uiFontSizeSmall,
                               ),
                             ),
@@ -348,14 +387,14 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                       );
                       if (action == null) return;
                       switch (action) {
-                        case 'push':
-                          unawaited(_doPush(s));
                         case 'push_all':
                           unawaited(_doPushAll(s));
-                        case 'pull':
-                          unawaited(_doPull());
+                        case 'push':
+                          unawaited(_doPush(s));
                         case 'create_pr':
                           unawaited(_showCreatePrDialog());
+                        case 'pull':
+                          unawaited(_doPull());
                         case final String sel when sel.startsWith('select_'):
                           ref
                               .read(gitRemotesProvider(widget.project.path).notifier)
@@ -363,35 +402,37 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                       }
                     }
                   : null,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7),
-                constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
-                decoration: BoxDecoration(
-                  color: s.canDropdown ? ThemeConstants.accentLight : ThemeConstants.inputSurface,
-                  border: Border(
-                    left: BorderSide(color: s.canDropdown ? ThemeConstants.accentDark : ThemeConstants.deepBorder),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.horizontal(right: Radius.circular(5)),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7),
+                  constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
+                  decoration: BoxDecoration(
+                    color: s.canDropdown ? ThemeConstants.accentHover : ThemeConstants.inputSurface,
+                    border: Border(
+                      left: BorderSide(color: s.canDropdown ? ThemeConstants.accentDark : ThemeConstants.deepBorder),
+                    ),
                   ),
-                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(5)),
-                ),
-                child: Center(
-                  widthFactor: 1,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (s.badgeLabel.isNotEmpty)
-                        Text(
-                          s.badgeLabel,
-                          style: TextStyle(
-                            color: s.canDropdown ? Colors.white : ThemeConstants.mutedFg,
-                            fontSize: ThemeConstants.uiFontSizeLabel,
+                  child: Center(
+                    widthFactor: 1,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (s.badgeLabel.isNotEmpty)
+                          Text(
+                            s.badgeLabel,
+                            style: TextStyle(
+                              color: s.canDropdown ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
+                              fontSize: ThemeConstants.uiFontSizeLabel,
+                            ),
                           ),
+                        Icon(
+                          AppIcons.chevronDown,
+                          size: 11,
+                          color: s.canDropdown ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
                         ),
-                      Icon(
-                        AppIcons.chevronDown,
-                        size: 11,
-                        color: s.canDropdown ? Colors.white : ThemeConstants.mutedFg,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

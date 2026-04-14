@@ -66,11 +66,7 @@ class OpenAIRemoteDatasourceDio implements AIRemoteDatasource {
         }
       }
     } on DioException catch (e) {
-      throw NetworkException(
-        e.message ?? 'OpenAI request failed',
-        statusCode: e.response?.statusCode,
-        originalError: e,
-      );
+      throw NetworkException('OpenAI request failed', statusCode: e.response?.statusCode, originalError: e);
     }
   }
 

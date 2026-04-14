@@ -32,6 +32,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       backgroundColor: ThemeConstants.background,
       body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _SettingsLeftNav(
             activeNav: _activeNav,
@@ -169,14 +170,14 @@ class _NavItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.only(left: isActive ? 14 : 16, right: 16, top: 8, bottom: 8),
         decoration: BoxDecoration(
-          color: isActive ? ThemeConstants.inputSurface : null,
-          borderRadius: BorderRadius.circular(6),
+          color: isActive ? ThemeConstants.selectionBg : null,
+          border: isActive ? const Border(left: BorderSide(color: ThemeConstants.accent, width: 2)) : null,
         ),
         child: Row(
           children: [
-            Icon(icon, size: 14, color: isActive ? ThemeConstants.textPrimary : ThemeConstants.textSecondary),
+            Icon(icon, size: 14, color: isActive ? ThemeConstants.accent : ThemeConstants.textSecondary),
             const SizedBox(width: 8),
             Text(
               label,

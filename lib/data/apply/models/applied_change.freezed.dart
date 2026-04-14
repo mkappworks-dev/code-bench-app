@@ -21,10 +21,9 @@ mixin _$AppliedChange {
  String get newContent;// content that was written to disk
  DateTime get appliedAt;// Line counts derived at apply-time from a char-level diff so the
 // changes-panel indicator reflects real additions/deletions instead of
-// a signed line delta. 0 when no diff was computed (e.g. legacy rows).
+// a signed line delta.
  int get additions; int get deletions;// SHA-256 of [newContent] captured at apply-time. Used to detect
-// external modification before revert (Phase 6 conflict detection).
-// Null on legacy rows written before the field existed.
+// external modification before revert.
  String? get contentChecksum;
 /// Create a copy of AppliedChange
 /// with the given fields replaced by the non-null parameter values.
@@ -243,12 +242,11 @@ class _AppliedChange implements AppliedChange {
 @override final  DateTime appliedAt;
 // Line counts derived at apply-time from a char-level diff so the
 // changes-panel indicator reflects real additions/deletions instead of
-// a signed line delta. 0 when no diff was computed (e.g. legacy rows).
+// a signed line delta.
 @override@JsonKey() final  int additions;
 @override@JsonKey() final  int deletions;
 // SHA-256 of [newContent] captured at apply-time. Used to detect
-// external modification before revert (Phase 6 conflict detection).
-// Null on legacy rows written before the field existed.
+// external modification before revert.
 @override final  String? contentChecksum;
 
 /// Create a copy of AppliedChange

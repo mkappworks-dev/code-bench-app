@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:collection/collection.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/project/models/project.dart';
 import '../../../services/project/project_service.dart';
 
@@ -14,6 +17,47 @@ class ActiveProjectIdNotifier extends _$ActiveProjectIdNotifier {
   String? build() => null;
 
   void set(String? id) => state = id;
+}
+
+/// Persisted worktree path overrides: sessionId → effective filesystem path.
+///
+/// When the user switches to a worktree via the branch picker, the entry
+/// for the active session is stored here and written through to SharedPreferences
+/// so each thread remembers its worktree context across app restarts.
+/// Cleared when the user switches back to the main working tree.
+@Riverpod(keepAlive: true)
+class ActiveWorktreePathNotifier extends _$ActiveWorktreePathNotifier {
+  static const _prefsKey = 'worktree_path_overrides';
+
+  @override
+  Map<String, String> build() {
+    _loadFromPrefs();
+    return {};
+  }
+
+  Future<void> _loadFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKey);
+    if (raw == null) return;
+    try {
+      state = Map<String, String>.from(jsonDecode(raw) as Map);
+    } catch (e) {
+      dLog('[ActiveWorktreePathNotifier] failed to deserialize persisted paths, clearing corrupt data: $e');
+      await prefs.remove(_prefsKey);
+    }
+  }
+
+  Future<void> setPath(String sessionId, String worktreePath) async {
+    state = {...state, sessionId: worktreePath};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, jsonEncode(state));
+  }
+
+  Future<void> clearPath(String sessionId) async {
+    state = {...state}..remove(sessionId);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, jsonEncode(state));
+  }
 }
 
 /// Set of expanded project IDs in the sidebar

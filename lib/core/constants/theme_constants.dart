@@ -24,10 +24,10 @@ class ThemeConstants {
   static const Color textMuted = Color(0xFF666666);
 
   // Accent colors
-  static const Color accent = Color(0xFF007ACC);
-  static const Color accentLight = Color(0xFF1F8AD2);
-  static const Color accentHover = Color(0xFF0066B8);
-  static const Color accentDark = Color(0xFF004F85);
+  static const Color accent = Color(0xFF4EC9B0);
+  static const Color accentLight = Color(0xFF6DD4BE);
+  static const Color accentHover = Color(0xFF3AB49A);
+  static const Color accentDark = Color(0xFF267A68);
 
   // Semantic colors
   static const Color success = Color(0xFF4EC9B0);
@@ -52,7 +52,7 @@ class ThemeConstants {
   // Tab colors
   static const Color tabActive = Color(0xFF141414);
   static const Color tabInactive = Color(0xFF111111);
-  static const Color tabBorder = Color(0xFF007ACC);
+  static const Color tabBorder = Color(0xFF4EC9B0);
 
   // Frosted glass (for cards on dark backgrounds)
   static const Color frostedBg = Color(0x0AFFFFFF);
@@ -69,8 +69,8 @@ class ThemeConstants {
   static const Color mutedFg = Color(0xFF555555);
   static const Color faintFg = Color(0xFF333333);
 
-  // Interactive blue (step dots, spinners, links — distinct from accent/007ACC)
-  static const Color blueAccent = Color(0xFF4A7CFF);
+  // Interactive teal (step dots, spinners, links — alias of accent; to be renamed in follow-up)
+  static const Color blueAccent = Color(0xFF4EC9B0);
 
   // Dim foreground (between textSecondary and textMuted — dim icons, labels)
   static const Color dimFg = Color(0xFF888888);
@@ -83,9 +83,9 @@ class ThemeConstants {
   static const Color worktreeBadgeFg = Color(0xFFE8A228);
 
   // Selection / active-state surfaces
-  static const Color selectionBg = Color(0xFF1A2540);
-  static const Color selectionBorder = Color(0xFF2A3550);
-  static const Color questionCardBg = Color(0xFF1A1F2E);
+  static const Color selectionBg = Color(0xFF0D2B27);
+  static const Color selectionBorder = Color(0xFF1A4840);
+  static const Color questionCardBg = Color(0xFF0D2B27);
 
   // PR status
   static const Color prMergedColor = Color(0xFF6E40C9);
@@ -102,9 +102,55 @@ class ThemeConstants {
   static const Color diffAdditionBg = Color(0x3300CC66);
   static const Color diffDeletionBg = Color(0x33FF4444);
 
+  // Foreground on accent-coloured surfaces (near-black for contrast on teal)
+  static const Color onAccent = Color(0xFF0A0A0A);
+
+  // Frosted surface (dialogs, snackbars — near-black with high opacity)
+  static const Color frostedSurface = Color(0xF7161616);
+
+  // Destructive action border (dark red outline for destructive buttons)
+  static const Color destructiveBorder = Color(0xFF3D1515);
+
+  // Panel/footer separator (divider between content area and footer)
+  static const Color panelSeparator = Color(0xFF242424);
+
+  // Icon in empty / inactive state (between mutedFg and faintFg)
+  static const Color iconInactive = Color(0xFF444444);
+
   // Box shadow colours
   static const Color shadowDark = Color(0x99000000);
   static const Color shadowMedium = Color(0x66000000);
+  // 70% black — heavy drop shadow (snackbar)
+  static const Color shadowHeavy = Color(0xB3000000);
+  // 85% black — deep dialog drop shadow
+  static const Color shadowDeep = Color(0xD9000000);
+  // 4% white — inner edge highlight on frosted surfaces
+  static const Color innerGlow = Color(0x0AFFFFFF);
+
+  // Tinted icon backgrounds (12.5% opacity) — snackbar icon wells
+  static const Color successTintBg = Color(0x1F4EC9B0);
+  static const Color errorTintBg = Color(0x1FF44747);
+  static const Color warningTintBg = Color(0x1FCCA700);
+  static const Color infoTintBg = Color(0x1F4FC1FF);
+
+  // Tinted badge backgrounds (10% opacity) — file status badges (commit dialog)
+  static const Color successBadgeBg = Color(0x1A4EC9B0);
+  static const Color errorBadgeBg = Color(0x1AF44747);
+  static const Color warningBadgeBg = Color(0x1ACCA700);
+
+  // Branding panel gradient stops
+  static const Color brandingGradientTop = Color(0xFF0E1A18);
+  static const Color brandingGradientMid = Color(0xFF0A0E0D);
+
+  // Branding panel accent glow (25% teal, logo badge shadow)
+  static const Color accentGlow = Color(0x404EC9B0);
+
+  // Branding panel tagline text (muted teal foreground)
+  static const Color subtleTealFg = Color(0xFF4A6660);
+
+  // Feature card tint fills (4% and 8% teal)
+  static const Color accentTintLight = Color(0x0A4EC9B0);
+  static const Color accentTintMid = Color(0x144EC9B0);
 
   // Icon sizes
   static const double iconSizeSmall = 14;

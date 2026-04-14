@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import '../settings/notifiers/settings_actions.dart';
 import 'notifiers/onboarding_notifier.dart';
 import 'widgets/step_progress_indicator.dart';
@@ -59,7 +60,7 @@ class _BrandingPanel extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             stops: [0.0, 0.5, 1.0],
-            colors: [ThemeConstants.sidebarBackground, ThemeConstants.activityBar, ThemeConstants.deepBackground],
+            colors: [ThemeConstants.brandingGradientTop, ThemeConstants.brandingGradientMid, ThemeConstants.deepBackground],
           ),
           border: Border(right: BorderSide(color: ThemeConstants.borderColor)),
         ),
@@ -74,21 +75,12 @@ class _BrandingPanel extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [ThemeConstants.accent, ThemeConstants.accentDark],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: ThemeConstants.selectionBg,
                     borderRadius: BorderRadius.circular(8),
-                    boxShadow: const [
-                      BoxShadow(color: ThemeConstants.shadowDark, blurRadius: 10, offset: Offset(0, 2)),
-                    ],
+                    border: Border.all(color: ThemeConstants.selectionBorder),
+                    boxShadow: const [BoxShadow(color: ThemeConstants.accentGlow, blurRadius: 12)],
                   ),
-                  alignment: Alignment.center,
-                  child: const Text(
-                    'C',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
-                  ),
+                  child: const _CodeGlyph(),
                 ),
                 const SizedBox(width: 10),
                 const Text(
@@ -98,10 +90,7 @@ class _BrandingPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
-              'AI-powered coding workspace',
-              style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 11),
-            ),
+            const Text('AI-powered coding workspace', style: TextStyle(color: ThemeConstants.subtleTealFg, fontSize: 11)),
             const SizedBox(height: 28),
             _FeatureCard(icon: '⚡', title: 'Multi-provider AI', subtitle: 'OpenAI · Anthropic · Gemini · Ollama'),
             const SizedBox(height: 8),
@@ -143,8 +132,10 @@ class _ContentPanel extends ConsumerWidget {
       await ref.read(settingsActionsProvider.notifier).markOnboardingCompleted();
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not save onboarding progress — you may see this screen again')),
+        AppSnackBar.show(
+          context,
+          'Could not save onboarding progress — you may see this screen again',
+          type: AppSnackBarType.warning,
         );
       }
     }
@@ -228,8 +219,8 @@ class _FeatureCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: ThemeConstants.frostedBg,
-        border: Border.all(color: ThemeConstants.frostedBorder),
+        color: ThemeConstants.accentTintLight,
+        border: Border.all(color: ThemeConstants.accentTintMid),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -253,4 +244,37 @@ class _FeatureCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── </> logo mark ──────────────────────────────────────────────────────────
+
+class _CodeGlyph extends StatelessWidget {
+  const _CodeGlyph();
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(size: const Size(32, 32), painter: _CodeGlyphPainter());
+}
+
+class _CodeGlyphPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = ThemeConstants.accent
+      ..strokeWidth = 2.2 * (size.width / 32)
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final s = size.width / 32;
+    // Left bracket <
+    canvas.drawLine(Offset(5 * s, 16 * s), Offset(11 * s, 10 * s), paint);
+    canvas.drawLine(Offset(5 * s, 16 * s), Offset(11 * s, 22 * s), paint);
+    // Right bracket >
+    canvas.drawLine(Offset(27 * s, 16 * s), Offset(21 * s, 10 * s), paint);
+    canvas.drawLine(Offset(27 * s, 16 * s), Offset(21 * s, 22 * s), paint);
+    // Slash /
+    canvas.drawLine(Offset(19 * s, 9 * s), Offset(13 * s, 23 * s), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

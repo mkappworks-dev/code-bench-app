@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 class PrFormResult {
   const PrFormResult({required this.title, required this.body, required this.base, required this.draft});
@@ -13,6 +15,7 @@ class PrFormResult {
 
 class CreatePrDialog extends ConsumerStatefulWidget {
   const CreatePrDialog({super.key, required this.initialTitle, required this.initialBody, required this.branches});
+
   final String initialTitle;
   final String initialBody;
   final List<String> branches;
@@ -54,14 +57,25 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
     super.dispose();
   }
 
+  void _submit() {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) return;
+    Navigator.of(
+      context,
+    ).pop(PrFormResult(title: title, body: _bodyController.text.trim(), base: _base, draft: _draft));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: ThemeConstants.inputSurface,
-      title: const Text('Create Pull Request', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
-      content: SizedBox(
-        width: 480,
-        child: Column(
+    return ListenableBuilder(
+      listenable: _titleController,
+      builder: (_, _) => AppDialog(
+        icon: AppIcons.gitPullRequest,
+        iconType: AppDialogIconType.teal,
+        title: 'Create pull request',
+        hasInputField: true,
+        maxWidth: 480,
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -112,23 +126,11 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
             ),
           ],
         ),
+        actions: [
+          AppDialogAction.cancel(onPressed: () => Navigator.of(context).pop()),
+          AppDialogAction.primary(label: 'Create PR', onPressed: _titleController.text.trim().isEmpty ? null : _submit),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel', style: TextStyle(color: ThemeConstants.textSecondary)),
-        ),
-        TextButton(
-          onPressed: () {
-            final title = _titleController.text.trim();
-            if (title.isEmpty) return;
-            Navigator.of(
-              context,
-            ).pop(PrFormResult(title: title, body: _bodyController.text.trim(), base: _base, draft: _draft));
-          },
-          child: const Text('Create PR', style: TextStyle(color: ThemeConstants.accent)),
-        ),
-      ],
     );
   }
 }

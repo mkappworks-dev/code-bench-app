@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import '../../data/shared/ai_model.dart';
 import 'notifiers/providers_notifier.dart';
 import 'notifiers/settings_actions.dart';
@@ -47,7 +48,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
   }
 
   Future<void> _saveKeys() async {
-    await ref
+    final ok = await ref
         .read(apiKeysProvider.notifier)
         .saveAll(
           providerKeys: {for (final e in _controllers.entries) e.key: e.value.text},
@@ -55,26 +56,27 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
           customEndpoint: _customEndpointController.text.trim(),
           customApiKey: _customApiKeyController.text.trim(),
         );
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Settings saved'), backgroundColor: ThemeConstants.success));
+    if (!mounted) return;
+    if (ok) {
+      AppSnackBar.show(context, 'Settings saved', type: AppSnackBarType.success);
+    } else {
+      AppSnackBar.show(context, 'Failed to save settings — please try again', type: AppSnackBarType.error);
     }
   }
 
   Future<void> _deleteKey(AIProvider provider) async {
-    await ref.read(apiKeysProvider.notifier).deleteKey(provider);
-    _controllers[provider]!.clear();
+    final ok = await ref.read(apiKeysProvider.notifier).deleteKey(provider);
+    if (ok) _controllers[provider]!.clear();
   }
 
   Future<void> _testOllama() async {
     final url = _ollamaController.text.trim();
     final ok = await ref.read(settingsActionsProvider.notifier).testOllamaUrl(url);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      ok
-          ? const SnackBar(content: Text('Ollama is running!'), backgroundColor: ThemeConstants.success)
-          : const SnackBar(content: Text('Cannot connect to Ollama.'), backgroundColor: ThemeConstants.error),
+    AppSnackBar.show(
+      context,
+      ok ? 'Ollama is running!' : 'Cannot connect to Ollama.',
+      type: ok ? AppSnackBarType.success : AppSnackBarType.error,
     );
   }
 
@@ -109,7 +111,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
                   ),
                 ),
               ),
-          const SizedBox(height: 16),
+          const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
           SectionLabel('Ollama (Local)'),
           const SizedBox(height: 8),
           SettingsGroup(
@@ -128,7 +130,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
             icon: const Icon(AppIcons.run, size: 12),
             label: const Text('Test Connection', style: TextStyle(fontSize: 11)),
           ),
-          const SizedBox(height: 16),
+          const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
           SectionLabel('Custom Endpoint (OpenAI-compatible)'),
           const SizedBox(height: 8),
           SettingsGroup(

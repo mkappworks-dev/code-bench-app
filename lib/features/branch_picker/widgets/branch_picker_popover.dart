@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../notifiers/branch_picker_failure.dart';
 import '../notifiers/branch_picker_notifier.dart';
@@ -58,28 +59,27 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
       if (failure is! BranchPickerFailure) return;
       switch (failure) {
         case BranchPickerInvalidName(:final reason):
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reason)));
+          AppSnackBar.show(context, reason, type: AppSnackBarType.error);
         case BranchPickerCheckoutConflict(:final message):
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(message), duration: const Duration(seconds: 4)));
+          AppSnackBar.show(context, message, type: AppSnackBarType.error, duration: const Duration(seconds: 4));
           // Reload so the branch list is restored from the error state.
           ref.read(branchPickerProvider(widget.projectPath).notifier).reload();
         case BranchPickerCreateFailed(:final message):
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Checkout failed: $message')));
+          AppSnackBar.show(context, 'Checkout failed: $message', type: AppSnackBarType.error);
         case BranchPickerGitUnavailable():
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Checkout failed — git binary unavailable.')));
+          AppSnackBar.show(context, 'Checkout failed — git binary unavailable.', type: AppSnackBarType.error);
         case BranchPickerUnknownError():
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Checkout failed — project folder unavailable.')));
+          AppSnackBar.show(context, 'Checkout failed — project folder unavailable.', type: AppSnackBarType.error);
       }
     } else {
       ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
       widget.onClose();
     }
+  }
+
+  Future<void> _switchToWorktree(String worktreePath) async {
+    await ref.read(projectSidebarActionsProvider.notifier).switchWorktreePath(worktreePath);
+    widget.onClose();
   }
 
   Future<void> _createBranch() async {
@@ -92,19 +92,15 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
       if (failure is! BranchPickerFailure) return;
       switch (failure) {
         case BranchPickerInvalidName(:final reason):
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reason)));
+          AppSnackBar.show(context, reason, type: AppSnackBarType.error);
         case BranchPickerCreateFailed(:final message):
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $message')));
+          AppSnackBar.show(context, 'Failed: $message', type: AppSnackBarType.error);
         case BranchPickerCheckoutConflict(:final message):
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+          AppSnackBar.show(context, message, type: AppSnackBarType.error);
         case BranchPickerGitUnavailable():
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Create branch failed — git binary unavailable.')));
+          AppSnackBar.show(context, 'Create branch failed — git binary unavailable.', type: AppSnackBarType.error);
         case BranchPickerUnknownError():
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Create branch failed — project folder unavailable.')));
+          AppSnackBar.show(context, 'Create branch failed — project folder unavailable.', type: AppSnackBarType.error);
       }
     } else {
       ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
@@ -137,14 +133,14 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
           link: widget.layerLink,
           targetAnchor: Alignment.topRight,
           followerAnchor: Alignment.bottomRight,
-          offset: const Offset(0, -4),
+          offset: const Offset(0, -8),
           child: Material(
             color: Colors.transparent,
             child: GestureDetector(
               onTap: () {}, // stop propagation
               child: Container(
-                width: 250,
-                constraints: const BoxConstraints(maxHeight: 320),
+                width: 280,
+                constraints: const BoxConstraints(maxHeight: 380),
                 decoration: BoxDecoration(
                   color: ThemeConstants.panelBackground,
                   borderRadius: BorderRadius.circular(8),
@@ -191,12 +187,21 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
                               itemBuilder: (ctx, i) {
                                 final branch = filtered[i];
                                 final isCurrent = branch == widget.currentBranch;
-                                final isWorktree = value.worktreeBranches.contains(branch);
+                                final worktreePath = value.worktreePaths[branch];
+                                final isWorktree = worktreePath != null;
+                                final VoidCallback? onTap;
+                                if (isCurrent) {
+                                  onTap = null;
+                                } else if (isWorktree) {
+                                  onTap = () => _switchToWorktree(worktreePath);
+                                } else {
+                                  onTap = () => _checkout(branch);
+                                }
                                 return _BranchRow(
                                   branch: branch,
                                   isCurrent: isCurrent,
                                   isWorktree: isWorktree,
-                                  onTap: (isCurrent || isWorktree) ? null : () => _checkout(branch),
+                                  onTap: onTap,
                                 );
                               },
                             );
@@ -306,52 +311,49 @@ class _BranchRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canTap = onTap != null;
-    return Tooltip(
-      message: isWorktree ? 'Checked out in another worktree' : '',
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-          color: isCurrent ? ThemeConstants.success.withValues(alpha: 0.07) : Colors.transparent,
-          child: Row(
-            children: [
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        color: isCurrent ? ThemeConstants.success.withValues(alpha: 0.07) : Colors.transparent,
+        child: Row(
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isCurrent ? ThemeConstants.success : Colors.transparent,
+                border: isCurrent ? null : Border.all(color: ThemeConstants.faintFg),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                branch,
+                style: TextStyle(
+                  color: isCurrent
+                      ? ThemeConstants.success
+                      : canTap
+                      ? ThemeConstants.textSecondary
+                      : ThemeConstants.faintFg,
+                  fontSize: ThemeConstants.uiFontSizeLabel,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (isCurrent) const Icon(LucideIcons.check, size: 10, color: ThemeConstants.success),
+            if (isWorktree)
               Container(
-                width: 6,
-                height: 6,
+                margin: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isCurrent ? ThemeConstants.success : Colors.transparent,
-                  border: isCurrent ? null : Border.all(color: ThemeConstants.faintFg),
+                  color: ThemeConstants.worktreeBadgeBg,
+                  borderRadius: BorderRadius.circular(3),
                 ),
+                child: const Text('worktree', style: TextStyle(color: ThemeConstants.worktreeBadgeFg, fontSize: 9)),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  branch,
-                  style: TextStyle(
-                    color: isCurrent
-                        ? ThemeConstants.success
-                        : canTap
-                        ? ThemeConstants.textSecondary
-                        : ThemeConstants.faintFg,
-                    fontSize: ThemeConstants.uiFontSizeLabel,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (isCurrent) const Icon(LucideIcons.check, size: 10, color: ThemeConstants.success),
-              if (isWorktree)
-                Container(
-                  margin: const EdgeInsets.only(left: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: ThemeConstants.worktreeBadgeBg,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                  child: const Text('worktree', style: TextStyle(color: ThemeConstants.worktreeBadgeFg, fontSize: 9)),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );

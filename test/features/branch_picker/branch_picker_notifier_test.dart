@@ -8,7 +8,11 @@ import 'package:code_bench_app/features/branch_picker/notifiers/branch_picker_fa
 import 'package:code_bench_app/features/branch_picker/notifiers/branch_picker_notifier.dart';
 
 Future<Directory> _initRepo({String branchName = 'main'}) async {
-  final dir = await Directory.systemTemp.createTemp('bp_notifier_test_');
+  final rawDir = await Directory.systemTemp.createTemp('bp_notifier_test_');
+  // Resolve symlinks so the path matches what `git worktree list` returns
+  // (on macOS /tmp → /private/tmp). Production paths are always resolved via
+  // resolveDroppedDirectory, so tests must mirror that.
+  final dir = Directory(rawDir.resolveSymbolicLinksSync());
   await Process.run('git', ['init', '-b', branchName], workingDirectory: dir.path);
   await Process.run('git', ['config', 'user.email', 'test@test.com'], workingDirectory: dir.path);
   await Process.run('git', ['config', 'user.name', 'Test'], workingDirectory: dir.path);
@@ -92,7 +96,7 @@ void main() {
       final state = await c.read(branchPickerProvider(repoDir.path).future);
       expect(state.branches, isNotEmpty);
       expect(state.branches.first, equals('main'));
-      expect(state.worktreeBranches, isEmpty);
+      expect(state.worktreePaths, isEmpty);
     });
 
     test('checkout transitions to success', () async {

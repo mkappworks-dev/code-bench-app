@@ -55,6 +55,81 @@ abstract class _$ActiveProjectIdNotifier extends $Notifier<String?> {
   }
 }
 
+/// Persisted worktree path overrides: sessionId → effective filesystem path.
+///
+/// When the user switches to a worktree via the branch picker, the entry
+/// for the active session is stored here and written through to SharedPreferences
+/// so each thread remembers its worktree context across app restarts.
+/// Cleared when the user switches back to the main working tree.
+
+@ProviderFor(ActiveWorktreePathNotifier)
+final activeWorktreePathProvider = ActiveWorktreePathNotifierProvider._();
+
+/// Persisted worktree path overrides: sessionId → effective filesystem path.
+///
+/// When the user switches to a worktree via the branch picker, the entry
+/// for the active session is stored here and written through to SharedPreferences
+/// so each thread remembers its worktree context across app restarts.
+/// Cleared when the user switches back to the main working tree.
+final class ActiveWorktreePathNotifierProvider
+    extends $NotifierProvider<ActiveWorktreePathNotifier, Map<String, String>> {
+  /// Persisted worktree path overrides: sessionId → effective filesystem path.
+  ///
+  /// When the user switches to a worktree via the branch picker, the entry
+  /// for the active session is stored here and written through to SharedPreferences
+  /// so each thread remembers its worktree context across app restarts.
+  /// Cleared when the user switches back to the main working tree.
+  ActiveWorktreePathNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'activeWorktreePathProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$activeWorktreePathNotifierHash();
+
+  @$internal
+  @override
+  ActiveWorktreePathNotifier create() => ActiveWorktreePathNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<String, String> value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<Map<String, String>>(value));
+  }
+}
+
+String _$activeWorktreePathNotifierHash() => r'14797c6d7b60521eba08ed542e9438a3a55dbdc1';
+
+/// Persisted worktree path overrides: sessionId → effective filesystem path.
+///
+/// When the user switches to a worktree via the branch picker, the entry
+/// for the active session is stored here and written through to SharedPreferences
+/// so each thread remembers its worktree context across app restarts.
+/// Cleared when the user switches back to the main working tree.
+
+abstract class _$ActiveWorktreePathNotifier extends $Notifier<Map<String, String>> {
+  Map<String, String> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<Map<String, String>, Map<String, String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Map<String, String>, Map<String, String>>,
+              Map<String, String>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 /// Set of expanded project IDs in the sidebar
 
 @ProviderFor(ExpandedProjectIdsNotifier)

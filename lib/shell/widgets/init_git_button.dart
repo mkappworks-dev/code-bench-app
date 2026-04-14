@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_icons.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import '../../data/project/models/project.dart';
 import '../notifiers/git_actions.dart';
 import '../notifiers/git_actions_failure.dart';
@@ -30,7 +31,7 @@ class InitGitButton extends ConsumerWidget {
         GitActionsGitError(:final message) => message,
         GitActionsUnknownError() => 'Git operation failed.',
       };
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      AppSnackBar.show(context, msg, type: AppSnackBarType.error);
     });
 
     return ActionButton(
@@ -42,7 +43,7 @@ class InitGitButton extends ConsumerWidget {
         if (ref.read(gitActionsProvider).hasError) return;
         ref.read(projectSidebarActionsProvider.notifier).refreshGitState(project.path);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Git repository initialized')));
+          AppSnackBar.show(context, 'Git repository initialized', type: AppSnackBarType.success);
         }
       },
     );

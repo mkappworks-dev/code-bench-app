@@ -9,6 +9,7 @@ import '../../../data/session/models/chat_session.dart';
 import '../../../data/project/models/project_action.dart';
 import '../../chat/notifiers/chat_notifier.dart';
 import '../../../shell/notifiers/git_live_state_notifier.dart';
+import 'project_sidebar_notifier.dart';
 import '../../../services/project/project_service.dart';
 import '../../../services/session/session_service.dart';
 import 'project_sidebar_failure.dart';
@@ -126,6 +127,33 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
   void refreshGitState(String projectPath) {
     ref.invalidate(gitLiveStateProvider(projectPath));
     ref.invalidate(behindCountProvider(projectPath));
+  }
+
+  /// Switches the git context for the active session to [worktreePath].
+  ///
+  /// Persists the override keyed by session ID so each thread remembers its
+  /// worktree context across app restarts.
+  ///
+  /// If [worktreePath] equals the project's own stored path the override is
+  /// cleared, returning to the main working tree.
+  Future<void> switchWorktreePath(String worktreePath) async {
+    final sessionId = ref.read(activeSessionIdProvider);
+    if (sessionId == null) return;
+    final project = ref.read(activeProjectProvider);
+    if (project == null) return;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        if (worktreePath == project.path) {
+          await ref.read(activeWorktreePathProvider.notifier).clearPath(sessionId);
+        } else {
+          await ref.read(activeWorktreePathProvider.notifier).setPath(sessionId, worktreePath);
+        }
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] switchWorktreePath failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
   }
 
   // ── Filesystem helpers ─────────────────────────────────────────────────────

@@ -162,17 +162,29 @@ class _ArchivedSessionCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 12),
-          OutlinedButton.icon(
-            onPressed: () => ref.read(archiveActionsProvider.notifier).unarchiveSession(session.sessionId),
-            icon: const Icon(AppIcons.archiveRestore, size: 12),
-            label: const Text('Unarchive'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: ThemeConstants.textPrimary,
-              side: const BorderSide(color: ThemeConstants.borderColor),
-              textStyle: const TextStyle(fontSize: 11),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          GestureDetector(
+            onTap: () => ref.read(archiveActionsProvider.notifier).unarchiveSession(session.sessionId),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                border: Border.all(color: ThemeConstants.borderColor),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(AppIcons.archiveRestore, size: 12, color: ThemeConstants.textSecondary),
+                  SizedBox(width: 5),
+                  Text(
+                    'Unarchive',
+                    style: TextStyle(
+                      color: ThemeConstants.textPrimary,
+                      fontSize: ThemeConstants.uiFontSizeSmall,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

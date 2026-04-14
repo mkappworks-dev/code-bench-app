@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/utils/snackbar_helper.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
@@ -159,8 +160,10 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
     if (currentContent == null) {
       // Refuse to open the merge view on an unreadable file — accepting the
       // merge would overwrite the real file with an empty / placeholder body.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not read current file contents — try again after resolving file access.')),
+      AppSnackBar.show(
+        context,
+        'Could not read current file contents — try again after resolving file access.',
+        type: AppSnackBarType.error,
       );
       return;
     }

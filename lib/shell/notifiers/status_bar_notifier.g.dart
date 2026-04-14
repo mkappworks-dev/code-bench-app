@@ -59,4 +59,4 @@ final class StatusBarStateProvider extends $FunctionalProvider<StatusBarState, S
   }
 }
 
-String _$statusBarStateHash() => r'c4d1c0fdf192e8342fbccc338caa9a89b4ec3641';
+String _$statusBarStateHash() => r'0016e9f58fe064e17ddee94b5d4483202f70dfed';

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/instant_menu.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 
 class ProjectContextMenu {
   static Future<String?> show({
@@ -86,7 +87,7 @@ class ProjectContextMenu {
       case 'open_finder':
         final launched = await launchUrl(Uri.file(projectPath), mode: LaunchMode.platformDefault);
         if (!launched && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open in Finder.')));
+          AppSnackBar.show(context, 'Could not open in Finder.', type: AppSnackBarType.error);
         }
       case 'copy_path':
         await Clipboard.setData(ClipboardData(text: projectPath));

@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/errors/app_exception.dart';
 import '../../data/ai/repository/ai_repository.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
 import '../../data/shared/ai_model.dart';
@@ -35,7 +36,31 @@ class AIService {
     required String prompt,
     required AIModel model,
     String? systemPrompt,
-  }) => _repo.streamMessage(history: history, prompt: prompt, model: model, systemPrompt: systemPrompt);
+  }) async* {
+    try {
+      yield* _repo.streamMessage(history: history, prompt: prompt, model: model, systemPrompt: systemPrompt);
+    } on NetworkException catch (e, st) {
+      Error.throwWithStackTrace(
+        NetworkException(
+          _mapStatusCode(e.statusCode, provider: model.provider),
+          statusCode: e.statusCode,
+          originalError: e.originalError,
+        ),
+        st,
+      );
+    }
+  }
+
+  static String _mapStatusCode(int? statusCode, {required AIProvider provider}) {
+    final name = provider.displayName;
+    return switch (statusCode) {
+      401 => 'Invalid API key — go to Settings → Providers to update it.',
+      403 => 'Access denied — check your $name API key permissions.',
+      429 => 'Rate limit reached — try again in a moment.',
+      500 || 502 || 503 || 504 => '$name is temporarily unavailable — try again.',
+      _ => '$name request failed.',
+    };
+  }
 
   Future<ChatMessage> sendMessage({
     required List<ChatMessage> history,

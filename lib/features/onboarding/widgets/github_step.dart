@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/utils/debug_logger.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 import '../../../data/github/models/repository.dart';
 import '../notifiers/github_auth_notifier.dart';
 
@@ -43,16 +44,20 @@ class _GithubStepState extends ConsumerState<GithubStep> {
     try {
       final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!launched && mounted) {
-        ScaffoldMessenger.of(
+        AppSnackBar.show(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Could not open browser — visit github.com/settings/tokens/new')));
+          'Could not open browser — visit github.com/settings/tokens/new',
+          type: AppSnackBarType.warning,
+        );
       }
     } catch (e, st) {
       dLog('[GithubStep] launchUrl failed: $e\n$st');
       if (mounted) {
-        ScaffoldMessenger.of(
+        AppSnackBar.show(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Could not open browser — visit github.com/settings/tokens/new')));
+          'Could not open browser — visit github.com/settings/tokens/new',
+          type: AppSnackBarType.warning,
+        );
       }
     }
   }

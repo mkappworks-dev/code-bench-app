@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../data/shared/ai_model.dart';
@@ -72,11 +73,13 @@ class ChatInputBar extends ConsumerStatefulWidget {
   ConsumerState<ChatInputBar> createState() => _ChatInputBarState();
 }
 
-class _ChatInputBarState extends ConsumerState<ChatInputBar> {
+class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerProviderStateMixin {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   final _keyboardFocusNode = FocusNode();
   bool _isSending = false;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseOpacity;
   _Effort _effort = _Effort.high;
   _Mode _mode = _Mode.chat;
   _Permission _permission = _Permission.fullAccess;
@@ -99,6 +102,12 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     if (draft != null && draft.isNotEmpty) {
       _controller.text = draft;
     }
+    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800))
+      ..repeat(reverse: true);
+    _pulseOpacity = Tween<double>(
+      begin: 0.35,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
   }
 
   @override
@@ -106,6 +115,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     // Stash the current draft so a later ChatInputBar rebuild can
     // restore it for this session.
     _stashDraft(widget.sessionId, _controller.text);
+    _pulseController.dispose();
     _controller.dispose();
     _focusNode.dispose();
     _keyboardFocusNode.dispose();
@@ -183,9 +193,12 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     setState(() => _isSending = true);
     try {
       final systemPrompt = ref.read(sessionSystemPromptProvider)[widget.sessionId];
-      await ref
+      final sendError = await ref
           .read(chatMessagesProvider(widget.sessionId).notifier)
           .sendMessage(text, systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty) ? systemPrompt : null);
+      if (mounted && sendError != null) {
+        showErrorSnackBar(context, userMessage(sendError, fallback: 'Failed to get a response.'));
+      }
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
@@ -299,9 +312,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     // (e.g. app-resume refresh, write-button guard, or ApplyService catch).
     final project = ref.watch(activeProjectProvider);
     final isMissing = project?.status == ProjectStatus.missing;
-    final canSend = !_isSending && !isMissing;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
       decoration: const BoxDecoration(
         border: Border(top: BorderSide(color: ThemeConstants.deepBorder)),
       ),
@@ -398,25 +410,57 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
                   const Spacer(),
                   Tooltip(
                     message: isMissing ? 'Project folder is missing. Relocate or Remove it from the sidebar.' : '',
-                    child: GestureDetector(
-                      // Route all taps through _send() — even when visually
-                      // disabled for a missing folder — so the guard inside
-                      // _send() can show the explanatory snackbar.
-                      onTap: _isSending ? null : _send,
-                      child: Container(
-                        width: 26,
-                        height: 26,
-                        decoration: BoxDecoration(
-                          color: canSend ? ThemeConstants.accent : ThemeConstants.accent.withValues(alpha: 0.35),
-                          shape: BoxShape.circle,
-                        ),
-                        child: _isSending
-                            ? const Padding(
-                                padding: EdgeInsets.all(6),
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(AppIcons.arrowUp, size: 14, color: Colors.white),
-                      ),
+                    child: ListenableBuilder(
+                      listenable: _controller,
+                      builder: (context, _) {
+                        final hasText = _controller.text.trim().isNotEmpty;
+                        final Color bg;
+                        if (_isSending) {
+                          bg = ThemeConstants.accentDark;
+                        } else if (hasText && !isMissing) {
+                          bg = ThemeConstants.accent;
+                        } else {
+                          bg = ThemeConstants.inputSurface;
+                        }
+                        return GestureDetector(
+                          onTap: _isSending ? null : _send,
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: bg,
+                              borderRadius: BorderRadius.circular(7),
+                              border: (!_isSending && (!hasText || isMissing))
+                                  ? Border.all(color: ThemeConstants.deepBorder)
+                                  : null,
+                            ),
+                            child: Center(
+                              child: _isSending
+                                  ? AnimatedBuilder(
+                                      animation: _pulseOpacity,
+                                      builder: (context, _) => Opacity(
+                                        opacity: _pulseOpacity.value,
+                                        child: Container(
+                                          width: 9,
+                                          height: 9,
+                                          decoration: BoxDecoration(
+                                            color: ThemeConstants.onAccent,
+                                            borderRadius: BorderRadius.circular(2),
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Icon(
+                                      AppIcons.arrowUp,
+                                      size: 14,
+                                      color: (hasText && !isMissing)
+                                          ? ThemeConstants.onAccent
+                                          : ThemeConstants.iconInactive,
+                                    ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],

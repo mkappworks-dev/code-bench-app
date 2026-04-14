@@ -47,7 +47,7 @@ final class BranchPickerNotifierProvider extends $AsyncNotifierProvider<BranchPi
   }
 }
 
-String _$branchPickerNotifierHash() => r'53322dacd0cd8a6c344c47a2e2fb7fcf84afbb50';
+String _$branchPickerNotifierHash() => r'9ff362d82679cfed286d8bbdb48d985579d6e4c4';
 
 final class BranchPickerNotifierFamily extends $Family
     with

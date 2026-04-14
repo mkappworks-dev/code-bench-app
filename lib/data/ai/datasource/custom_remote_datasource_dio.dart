@@ -66,11 +66,7 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
         }
       }
     } on DioException catch (e) {
-      throw NetworkException(
-        e.message ?? 'Custom endpoint request failed',
-        statusCode: e.response?.statusCode,
-        originalError: e,
-      );
+      throw NetworkException('Custom endpoint request failed', statusCode: e.response?.statusCode, originalError: e);
     }
   }
 

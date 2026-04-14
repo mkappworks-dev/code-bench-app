@@ -50,6 +50,8 @@ abstract final class AppIcons {
   static const IconData gitCommit = LucideIcons.gitCommitHorizontal;
   static const IconData gitDiff = LucideIcons.gitCompare;
   static const IconData gitBranch = LucideIcons.gitBranch;
+  static const IconData cloudUpload = LucideIcons.cloudUpload;
+  static const IconData gitPullRequest = LucideIcons.gitPullRequest;
 
   // UI chrome
   static const IconData settings = LucideIcons.settings;

@@ -39,7 +39,10 @@ class SecureStorage {
 
   Future<void> deleteApiKey(String provider) async {
     try {
-      await _storage.delete(key: _apiKeyKey(provider));
+      final key = _apiKeyKey(provider);
+      if (await _storage.containsKey(key: key)) {
+        await _storage.delete(key: key);
+      }
     } catch (e) {
       throw StorageException('Failed to delete API key', originalError: e);
     }
