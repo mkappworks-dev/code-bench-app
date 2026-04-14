@@ -10,6 +10,8 @@ import '../../data/git/models/git_live_state.dart';
 import '../notifiers/status_bar_notifier.dart';
 import 'working_pill.dart';
 
+export '../notifiers/status_bar_notifier.dart' show activeWorktreePathProvider;
+
 class StatusBar extends ConsumerStatefulWidget {
   const StatusBar({super.key});
 
@@ -100,24 +102,31 @@ class _StatusBarState extends ConsumerState<StatusBar> {
           ],
           // Right: Git branch (live)
           if (activeProject != null && liveState != null && liveState.isGit) ...[
-            Container(
-              width: 5,
-              height: 5,
-              decoration: const BoxDecoration(color: ThemeConstants.success, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 5),
             CompositedTransformTarget(
               link: _branchLabelLink,
-              child: GestureDetector(
-                onTap: () => _openPicker(activeProject, liveState),
-                child: Text(
-                  liveState.branch ?? '(detached)',
-                  style: const TextStyle(
-                    color: ThemeConstants.success,
-                    fontSize: ThemeConstants.uiFontSizeLabel,
-                    decoration: TextDecoration.underline,
-                    decorationStyle: TextDecorationStyle.dotted,
-                    decorationColor: ThemeConstants.success,
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(4),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(4),
+                  hoverColor: ThemeConstants.success.withValues(alpha: 0.1),
+                  onTap: () => _openPicker(activeProject, liveState),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(LucideIcons.gitBranch, size: 10, color: ThemeConstants.success),
+                        const SizedBox(width: 4),
+                        Text(
+                          liveState.branch ?? '(detached)',
+                          style: const TextStyle(
+                            color: ThemeConstants.success,
+                            fontSize: ThemeConstants.uiFontSizeLabel,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -138,10 +147,13 @@ class _StatusBarState extends ConsumerState<StatusBar> {
       closePicker();
       return;
     }
+    // Use the in-memory worktree override if the user has switched context.
+    final overrides = ref.read(activeWorktreePathProvider);
+    final effectivePath = overrides[project.id] ?? project.path;
     _pickerEntry = OverlayEntry(
       builder: (ctx) => BranchPickerPopover(
         layerLink: _branchLabelLink,
-        projectPath: project.path,
+        projectPath: effectivePath,
         currentBranch: liveState.branch,
         onClose: closePicker,
       ),

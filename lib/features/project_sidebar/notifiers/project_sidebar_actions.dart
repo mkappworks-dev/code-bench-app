@@ -9,6 +9,7 @@ import '../../../data/session/models/chat_session.dart';
 import '../../../data/project/models/project_action.dart';
 import '../../chat/notifiers/chat_notifier.dart';
 import '../../../shell/notifiers/git_live_state_notifier.dart';
+import 'project_sidebar_notifier.dart';
 import '../../../services/project/project_service.dart';
 import '../../../services/session/session_service.dart';
 import 'project_sidebar_failure.dart';
@@ -126,6 +127,24 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
   void refreshGitState(String projectPath) {
     ref.invalidate(gitLiveStateProvider(projectPath));
     ref.invalidate(behindCountProvider(projectPath));
+  }
+
+  /// Switches the git context for the active project to [worktreePath].
+  ///
+  /// Stores an in-memory override so all git operations (live-state, branch
+  /// picker, commit, push …) run against [worktreePath] instead of the
+  /// project's stored path. No database writes — resets on app restart.
+  ///
+  /// If [worktreePath] equals the project's own stored path the override is
+  /// cleared, returning to the main working tree.
+  void switchWorktreePath(String worktreePath) {
+    final project = ref.read(activeProjectProvider);
+    if (project == null) return;
+    if (worktreePath == project.path) {
+      ref.read(activeWorktreePathProvider.notifier).clearPath(project.id);
+    } else {
+      ref.read(activeWorktreePathProvider.notifier).setPath(project.id, worktreePath);
+    }
   }
 
   // ── Filesystem helpers ─────────────────────────────────────────────────────

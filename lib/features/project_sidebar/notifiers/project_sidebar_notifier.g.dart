@@ -55,6 +55,85 @@ abstract class _$ActiveProjectIdNotifier extends $Notifier<String?> {
   }
 }
 
+/// In-memory worktree path overrides: projectId → effective filesystem path.
+///
+/// When the user switches to a worktree via the branch picker, the entry
+/// for that project is updated here. All git operations (live-state, branch
+/// picker, commit, push …) read the effective path from this map rather than
+/// using the project's stored path directly. Cleared when the user switches
+/// back to the main working tree. Not persisted — resets on app restart.
+
+@ProviderFor(ActiveWorktreePathNotifier)
+final activeWorktreePathProvider = ActiveWorktreePathNotifierProvider._();
+
+/// In-memory worktree path overrides: projectId → effective filesystem path.
+///
+/// When the user switches to a worktree via the branch picker, the entry
+/// for that project is updated here. All git operations (live-state, branch
+/// picker, commit, push …) read the effective path from this map rather than
+/// using the project's stored path directly. Cleared when the user switches
+/// back to the main working tree. Not persisted — resets on app restart.
+final class ActiveWorktreePathNotifierProvider
+    extends $NotifierProvider<ActiveWorktreePathNotifier, Map<String, String>> {
+  /// In-memory worktree path overrides: projectId → effective filesystem path.
+  ///
+  /// When the user switches to a worktree via the branch picker, the entry
+  /// for that project is updated here. All git operations (live-state, branch
+  /// picker, commit, push …) read the effective path from this map rather than
+  /// using the project's stored path directly. Cleared when the user switches
+  /// back to the main working tree. Not persisted — resets on app restart.
+  ActiveWorktreePathNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'activeWorktreePathProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$activeWorktreePathNotifierHash();
+
+  @$internal
+  @override
+  ActiveWorktreePathNotifier create() => ActiveWorktreePathNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<String, String> value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<Map<String, String>>(value));
+  }
+}
+
+String _$activeWorktreePathNotifierHash() => r'10b26f87af959dd0d9272d4131c2ed580654ce66';
+
+/// In-memory worktree path overrides: projectId → effective filesystem path.
+///
+/// When the user switches to a worktree via the branch picker, the entry
+/// for that project is updated here. All git operations (live-state, branch
+/// picker, commit, push …) read the effective path from this map rather than
+/// using the project's stored path directly. Cleared when the user switches
+/// back to the main working tree. Not persisted — resets on app restart.
+
+abstract class _$ActiveWorktreePathNotifier extends $Notifier<Map<String, String>> {
+  Map<String, String> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<Map<String, String>, Map<String, String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Map<String, String>, Map<String, String>>,
+              Map<String, String>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 /// Set of expanded project IDs in the sidebar
 
 @ProviderFor(ExpandedProjectIdsNotifier)

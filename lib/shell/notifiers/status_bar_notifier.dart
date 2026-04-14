@@ -7,6 +7,8 @@ import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'git_live_state_notifier.dart';
 
+export '../../features/project_sidebar/notifiers/project_sidebar_notifier.dart' show activeWorktreePathProvider;
+
 part 'status_bar_notifier.freezed.dart';
 part 'status_bar_notifier.g.dart';
 
@@ -41,7 +43,10 @@ StatusBarState statusBarState(Ref ref) {
   final allChanges = ref.watch(appliedChangesProvider);
   final changeCount = activeSessionId != null ? (allChanges[activeSessionId]?.length ?? 0) : 0;
 
-  final liveStateAsync = activeProject != null ? ref.watch(gitLiveStateProvider(activeProject.path)) : null;
+  // Use worktree override if the user has switched context, else the stored path.
+  final worktreeOverrides = ref.watch(activeWorktreePathProvider);
+  final effectivePath = activeProject != null ? (worktreeOverrides[activeProject.id] ?? activeProject.path) : null;
+  final liveStateAsync = effectivePath != null ? ref.watch(gitLiveStateProvider(effectivePath)) : null;
 
   return StatusBarState(
     activeProject: activeProject,

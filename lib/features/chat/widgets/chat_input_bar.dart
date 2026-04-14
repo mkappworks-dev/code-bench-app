@@ -313,7 +313,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final project = ref.watch(activeProjectProvider);
     final isMissing = project?.status == ProjectStatus.missing;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
       decoration: const BoxDecoration(
         border: Border(top: BorderSide(color: ThemeConstants.deepBorder)),
       ),

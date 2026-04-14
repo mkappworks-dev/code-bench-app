@@ -206,22 +206,34 @@ class GitDatasourceProcess implements GitDatasource {
     return all..sort();
   }
 
-  /// Returns the set of branch names checked out in other git worktrees.
+  /// Returns a map of branch name → worktree filesystem path for every
+  /// git worktree OTHER than this one ([_projectPath]).
+  ///
+  /// Skips the block whose `worktree` path matches [_projectPath] so the
+  /// current working tree is never reported as "occupied elsewhere".
+  /// This path-based skip is correct for both the main working tree (block 0
+  /// = self) and linked worktrees (block 0 is the main repo, NOT self).
   @override
-  Future<Set<String>> worktreeBranches() async {
+  Future<Map<String, String>> worktreeBranches() async {
     final result = await Process.run('git', ['worktree', 'list', '--porcelain'], workingDirectory: _projectPath);
     if (result.exitCode != 0) return const {};
     final blocks = (result.stdout as String).trim().split(RegExp(r'\n\n+'));
-    final branches = <String>{};
-    for (int i = 1; i < blocks.length; i++) {
-      for (final line in blocks[i].split('\n')) {
+    final map = <String, String>{};
+    for (final block in blocks) {
+      final lines = block.split('\n');
+      final worktreeLine = lines.firstWhere((l) => l.startsWith('worktree '), orElse: () => '');
+      final worktreePath = worktreeLine.substring('worktree '.length).trim();
+      if (worktreePath == _projectPath || worktreePath.isEmpty) continue;
+      String? branch;
+      for (final line in lines) {
         if (line.startsWith('branch ')) {
-          final ref = line.substring('branch '.length).trim();
-          branches.add(ref.replaceFirst('refs/heads/', ''));
+          branch = line.substring('branch '.length).trim().replaceFirst('refs/heads/', '');
+          break;
         }
       }
+      if (branch != null) map[branch] = worktreePath;
     }
-    return branches;
+    return map;
   }
 
   /// Switches the working tree to [branch] using `git switch`.

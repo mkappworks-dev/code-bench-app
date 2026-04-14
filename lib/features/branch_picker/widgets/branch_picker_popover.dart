@@ -77,6 +77,11 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
     }
   }
 
+  void _switchToWorktree(String worktreePath) {
+    ref.read(projectSidebarActionsProvider.notifier).switchWorktreePath(worktreePath);
+    widget.onClose();
+  }
+
   Future<void> _createBranch() async {
     final name = _createController.text.trim();
     await ref.read(branchPickerProvider(widget.projectPath).notifier).createBranch(name);
@@ -128,14 +133,14 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
           link: widget.layerLink,
           targetAnchor: Alignment.topRight,
           followerAnchor: Alignment.bottomRight,
-          offset: const Offset(0, -4),
+          offset: const Offset(0, -8),
           child: Material(
             color: Colors.transparent,
             child: GestureDetector(
               onTap: () {}, // stop propagation
               child: Container(
-                width: 250,
-                constraints: const BoxConstraints(maxHeight: 320),
+                width: 280,
+                constraints: const BoxConstraints(maxHeight: 380),
                 decoration: BoxDecoration(
                   color: ThemeConstants.panelBackground,
                   borderRadius: BorderRadius.circular(8),
@@ -182,12 +187,21 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
                               itemBuilder: (ctx, i) {
                                 final branch = filtered[i];
                                 final isCurrent = branch == widget.currentBranch;
-                                final isWorktree = value.worktreeBranches.contains(branch);
+                                final worktreePath = value.worktreePaths[branch];
+                                final isWorktree = worktreePath != null;
+                                final VoidCallback? onTap;
+                                if (isCurrent) {
+                                  onTap = null;
+                                } else if (isWorktree) {
+                                  onTap = () => _switchToWorktree(worktreePath);
+                                } else {
+                                  onTap = () => _checkout(branch);
+                                }
                                 return _BranchRow(
                                   branch: branch,
                                   isCurrent: isCurrent,
                                   isWorktree: isWorktree,
-                                  onTap: (isCurrent || isWorktree) ? null : () => _checkout(branch),
+                                  onTap: onTap,
                                 );
                               },
                             );
