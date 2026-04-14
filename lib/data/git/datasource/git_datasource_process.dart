@@ -307,6 +307,10 @@ class GitDatasourceProcess implements GitDatasource {
     if (output.isEmpty && result.exitCode == 0) {
       result = await Process.run('git', ['diff', '--numstat', 'HEAD'], workingDirectory: _projectPath);
       output = (result.stdout as String).trim();
+      if (result.exitCode != 0) {
+        dLog('[GitDatasourceProcess] getChangedFiles HEAD diff failed (exit ${result.exitCode}): ${(result.stderr as String).trim()}');
+        return [];
+      }
     }
 
     if (output.isEmpty) return [];

@@ -60,7 +60,7 @@ class _BrandingPanel extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             stops: [0.0, 0.5, 1.0],
-            colors: [Color(0xFF0E1A18), Color(0xFF0A0E0D), ThemeConstants.deepBackground],
+            colors: [ThemeConstants.brandingGradientTop, ThemeConstants.brandingGradientMid, ThemeConstants.deepBackground],
           ),
           border: Border(right: BorderSide(color: ThemeConstants.borderColor)),
         ),
@@ -75,10 +75,10 @@ class _BrandingPanel extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0D2B27),
+                    color: ThemeConstants.selectionBg,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFF1A4840)),
-                    boxShadow: const [BoxShadow(color: Color(0x404EC9B0), blurRadius: 12)],
+                    border: Border.all(color: ThemeConstants.selectionBorder),
+                    boxShadow: const [BoxShadow(color: ThemeConstants.accentGlow, blurRadius: 12)],
                   ),
                   child: const _CodeGlyph(),
                 ),
@@ -90,7 +90,7 @@ class _BrandingPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            const Text('AI-powered coding workspace', style: TextStyle(color: Color(0xFF4A6660), fontSize: 11)),
+            const Text('AI-powered coding workspace', style: TextStyle(color: ThemeConstants.subtleTealFg, fontSize: 11)),
             const SizedBox(height: 28),
             _FeatureCard(icon: '⚡', title: 'Multi-provider AI', subtitle: 'OpenAI · Anthropic · Gemini · Ollama'),
             const SizedBox(height: 8),
@@ -219,8 +219,8 @@ class _FeatureCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0x0A4EC9B0),
-        border: Border.all(color: const Color(0x144EC9B0)),
+        color: ThemeConstants.accentTintLight,
+        border: Border.all(color: ThemeConstants.accentTintMid),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -259,7 +259,7 @@ class _CodeGlyphPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF4EC9B0)
+      ..color = ThemeConstants.accent
       ..strokeWidth = 2.2 * (size.width / 32)
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;

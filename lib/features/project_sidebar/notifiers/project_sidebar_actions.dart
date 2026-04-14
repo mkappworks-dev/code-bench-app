@@ -141,11 +141,19 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     if (sessionId == null) return;
     final project = ref.read(activeProjectProvider);
     if (project == null) return;
-    if (worktreePath == project.path) {
-      await ref.read(activeWorktreePathProvider.notifier).clearPath(sessionId);
-    } else {
-      await ref.read(activeWorktreePathProvider.notifier).setPath(sessionId, worktreePath);
-    }
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        if (worktreePath == project.path) {
+          await ref.read(activeWorktreePathProvider.notifier).clearPath(sessionId);
+        } else {
+          await ref.read(activeWorktreePathProvider.notifier).setPath(sessionId, worktreePath);
+        }
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] switchWorktreePath failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
   }
 
   // ── Filesystem helpers ─────────────────────────────────────────────────────

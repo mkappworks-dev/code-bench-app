@@ -7,7 +7,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../data/_core/preferences/general_preferences.dart';
-import '../../../services/git/git_service.dart';
+import '../../../shell/notifiers/git_actions.dart';
 
 class CommitDialog extends ConsumerStatefulWidget {
   const CommitDialog({super.key, required this.initialMessage, required this.projectPath});
@@ -46,12 +46,8 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
   }
 
   Future<void> _loadChangedFiles() async {
-    try {
-      final files = await ref.read(gitServiceProvider).getChangedFiles(widget.projectPath);
-      if (mounted) setState(() => _changedFiles = files);
-    } catch (_) {
-      // File list is informational — silently hide on error.
-    }
+    final files = await ref.read(gitActionsProvider.notifier).fetchChangedFiles(widget.projectPath);
+    if (mounted) setState(() => _changedFiles = files);
   }
 
   @override
@@ -126,9 +122,9 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
 
   Widget _buildFileRow(GitChangedFile file) {
     final (badgeColor, badgeBg) = switch (file.status) {
-      GitChangedFileStatus.modified => (ThemeConstants.warning, const Color(0x1ACCA700)),
-      GitChangedFileStatus.added => (ThemeConstants.accent, const Color(0x1A4EC9B0)),
-      GitChangedFileStatus.deleted => (ThemeConstants.error, const Color(0x1AF44747)),
+      GitChangedFileStatus.modified => (ThemeConstants.warning, ThemeConstants.warningBadgeBg),
+      GitChangedFileStatus.added => (ThemeConstants.accent, ThemeConstants.successBadgeBg),
+      GitChangedFileStatus.deleted => (ThemeConstants.error, ThemeConstants.errorBadgeBg),
       GitChangedFileStatus.renamed => (ThemeConstants.textSecondary, ThemeConstants.inputSurface),
     };
 

@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/project/models/project.dart';
 import '../../../services/project/project_service.dart';
 
@@ -40,7 +41,10 @@ class ActiveWorktreePathNotifier extends _$ActiveWorktreePathNotifier {
     if (raw == null) return;
     try {
       state = Map<String, String>.from(jsonDecode(raw) as Map);
-    } catch (_) {}
+    } catch (e) {
+      dLog('[ActiveWorktreePathNotifier] failed to deserialize persisted paths, clearing corrupt data: $e');
+      await prefs.remove(_prefsKey);
+    }
   }
 
   Future<void> setPath(String sessionId, String worktreePath) async {

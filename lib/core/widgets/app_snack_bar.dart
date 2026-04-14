@@ -27,10 +27,10 @@ class AppSnackBar extends StatelessWidget {
   };
 
   static const _typeIconBg = {
-    AppSnackBarType.success: Color(0x1F4EC9B0),
-    AppSnackBarType.error: Color(0x1FF44747),
-    AppSnackBarType.warning: Color(0x1FCCA700),
-    AppSnackBarType.info: Color(0x1F4FC1FF),
+    AppSnackBarType.success: ThemeConstants.successTintBg,
+    AppSnackBarType.error: ThemeConstants.errorTintBg,
+    AppSnackBarType.warning: ThemeConstants.warningTintBg,
+    AppSnackBarType.info: ThemeConstants.infoTintBg,
   };
 
   static const _typeIcon = {
@@ -83,7 +83,7 @@ class AppSnackBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         // Uniform border — safe to combine with borderRadius.
         border: Border.all(color: ThemeConstants.borderColor),
-        boxShadow: const [BoxShadow(color: Color(0xB3000000), blurRadius: 32, offset: Offset(0, 8))],
+        boxShadow: const [BoxShadow(color: ThemeConstants.shadowHeavy, blurRadius: 32, offset: Offset(0, 8))],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),

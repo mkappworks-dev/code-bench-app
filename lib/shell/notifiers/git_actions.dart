@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/utils/debug_logger.dart';
+import '../../data/git/models/git_changed_file.dart';
 import '../../services/git/git_service.dart';
 import 'git_actions_failure.dart';
 
@@ -152,4 +153,17 @@ class GitActions extends _$GitActions {
   }
 
   bool isGitRepo(String path) => _git().isGitRepo(path);
+
+  /// Returns the list of changed files for [projectPath].
+  ///
+  /// Non-throwing: returns an empty list on any error so callers that display
+  /// this data informally (e.g. commit dialog file list) degrade gracefully.
+  Future<List<GitChangedFile>> fetchChangedFiles(String projectPath) async {
+    try {
+      return await _git().getChangedFiles(projectPath);
+    } catch (e) {
+      dLog('[GitActions] fetchChangedFiles failed: $e');
+      return [];
+    }
+  }
 }

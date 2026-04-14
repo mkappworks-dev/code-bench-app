@@ -80,8 +80,8 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
       await svc.writeCustomApiKey(customApiKey.trim());
       ref.invalidate(aiRepositoryProvider);
       return true;
-    } catch (e) {
-      dLog('[ApiKeysNotifier] saveAll failed: $e');
+    } catch (e, st) {
+      dLog('[ApiKeysNotifier] saveAll failed: $e\n$st');
       return false;
     }
   }
@@ -92,8 +92,8 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
       await ref.read(settingsServiceProvider).deleteApiKey(provider.name);
       ref.invalidate(aiRepositoryProvider);
       return true;
-    } catch (e) {
-      dLog('[ApiKeysNotifier] deleteKey failed: $e');
+    } catch (e, st) {
+      dLog('[ApiKeysNotifier] deleteKey failed: $e\n$st');
       return false;
     }
   }

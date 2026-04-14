@@ -72,8 +72,8 @@ class AppDialog extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: ThemeConstants.borderColor),
             boxShadow: const [
-              BoxShadow(color: Color(0xD9000000), blurRadius: 60, offset: Offset(0, 20)),
-              BoxShadow(color: Color(0x0AFFFFFF), blurRadius: 0, spreadRadius: 0.5),
+              BoxShadow(color: ThemeConstants.shadowDeep, blurRadius: 60, offset: Offset(0, 20)),
+              BoxShadow(color: ThemeConstants.innerGlow, blurRadius: 0, spreadRadius: 0.5),
             ],
           ),
           child: Column(

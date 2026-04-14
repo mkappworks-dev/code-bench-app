@@ -120,6 +120,37 @@ class ThemeConstants {
   // Box shadow colours
   static const Color shadowDark = Color(0x99000000);
   static const Color shadowMedium = Color(0x66000000);
+  // 70% black — heavy drop shadow (snackbar)
+  static const Color shadowHeavy = Color(0xB3000000);
+  // 85% black — deep dialog drop shadow
+  static const Color shadowDeep = Color(0xD9000000);
+  // 4% white — inner edge highlight on frosted surfaces
+  static const Color innerGlow = Color(0x0AFFFFFF);
+
+  // Tinted icon backgrounds (12.5% opacity) — snackbar icon wells
+  static const Color successTintBg = Color(0x1F4EC9B0);
+  static const Color errorTintBg = Color(0x1FF44747);
+  static const Color warningTintBg = Color(0x1FCCA700);
+  static const Color infoTintBg = Color(0x1F4FC1FF);
+
+  // Tinted badge backgrounds (10% opacity) — file status badges (commit dialog)
+  static const Color successBadgeBg = Color(0x1A4EC9B0);
+  static const Color errorBadgeBg = Color(0x1AF44747);
+  static const Color warningBadgeBg = Color(0x1ACCA700);
+
+  // Branding panel gradient stops
+  static const Color brandingGradientTop = Color(0xFF0E1A18);
+  static const Color brandingGradientMid = Color(0xFF0A0E0D);
+
+  // Branding panel accent glow (25% teal, logo badge shadow)
+  static const Color accentGlow = Color(0x404EC9B0);
+
+  // Branding panel tagline text (muted teal foreground)
+  static const Color subtleTealFg = Color(0xFF4A6660);
+
+  // Feature card tint fills (4% and 8% teal)
+  static const Color accentTintLight = Color(0x0A4EC9B0);
+  static const Color accentTintMid = Color(0x144EC9B0);
 
   // Icon sizes
   static const double iconSizeSmall = 14;

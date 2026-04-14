@@ -98,7 +98,10 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
       return null;
     } catch (e, st) {
       dLog('[sendMessage] stream error: $e\n$st');
-      state = AsyncData(currentMessages); // restore so the chat list stays intact
+      // Emit AsyncError so ref.listen subscribers (e.g. chat_input_bar) can
+      // react, then immediately restore AsyncData so the chat list stays intact.
+      state = AsyncError(e, st);
+      state = AsyncData(currentMessages);
       return e;
     } finally {
       if (streamingAssistantId != null) {
