@@ -58,7 +58,8 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
     );
   }
 
-  Future<void> saveAll({
+  /// Returns `true` on success, `false` if any write fails.
+  Future<bool> saveAll({
     required Map<AIProvider, String> providerKeys,
     required String ollamaUrl,
     required String customEndpoint,
@@ -78,19 +79,22 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
       await svc.writeCustomEndpoint(customEndpoint.trim());
       await svc.writeCustomApiKey(customApiKey.trim());
       ref.invalidate(aiRepositoryProvider);
-    } catch (e, st) {
+      return true;
+    } catch (e) {
       dLog('[ApiKeysNotifier] saveAll failed: $e');
-      if (ref.mounted) state = AsyncError(e, st);
+      return false;
     }
   }
 
-  Future<void> deleteKey(AIProvider provider) async {
+  /// Returns `true` on success, `false` if the delete fails.
+  Future<bool> deleteKey(AIProvider provider) async {
     try {
       await ref.read(settingsServiceProvider).deleteApiKey(provider.name);
       ref.invalidate(aiRepositoryProvider);
-    } catch (e, st) {
+      return true;
+    } catch (e) {
       dLog('[ApiKeysNotifier] deleteKey failed: $e');
-      if (ref.mounted) state = AsyncError(e, st);
+      return false;
     }
   }
 }

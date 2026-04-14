@@ -48,7 +48,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
   }
 
   Future<void> _saveKeys() async {
-    await ref
+    final ok = await ref
         .read(apiKeysProvider.notifier)
         .saveAll(
           providerKeys: {for (final e in _controllers.entries) e.key: e.value.text},
@@ -56,14 +56,17 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
           customEndpoint: _customEndpointController.text.trim(),
           customApiKey: _customApiKeyController.text.trim(),
         );
-    if (mounted) {
+    if (!mounted) return;
+    if (ok) {
       AppSnackBar.show(context, 'Settings saved', type: AppSnackBarType.success);
+    } else {
+      AppSnackBar.show(context, 'Failed to save settings — please try again', type: AppSnackBarType.error);
     }
   }
 
   Future<void> _deleteKey(AIProvider provider) async {
-    await ref.read(apiKeysProvider.notifier).deleteKey(provider);
-    _controllers[provider]!.clear();
+    final ok = await ref.read(apiKeysProvider.notifier).deleteKey(provider);
+    if (ok) _controllers[provider]!.clear();
   }
 
   Future<void> _testOllama() async {
