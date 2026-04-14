@@ -323,6 +323,51 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                             const PopupMenuDivider(),
                           ],
                           PopupMenuItem(
+                            value: 'push',
+                            height: 32,
+                            enabled: s.canPush && !busy,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  AppIcons.cloudUpload,
+                                  size: 12,
+                                  color: (s.canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _pushing ? '● Pushing…' : 'Push',
+                                  style: TextStyle(
+                                    color: (s.canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                    fontSize: ThemeConstants.uiFontSizeSmall,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'create_pr',
+                            height: 32,
+                            enabled: s.canPr && !busy,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  AppIcons.gitPullRequest,
+                                  size: 12,
+                                  color: (s.canPr && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Create PR',
+                                  style: TextStyle(
+                                    color: (s.canPr && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                    fontSize: ThemeConstants.uiFontSizeSmall,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuDivider(),
+                          PopupMenuItem(
                             value: 'pull',
                             height: 32,
                             enabled: s.canPull && !busy,
@@ -344,6 +389,10 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                       switch (action) {
                         case 'push_all':
                           unawaited(_doPushAll(s));
+                        case 'push':
+                          unawaited(_doPush(s));
+                        case 'create_pr':
+                          unawaited(_showCreatePrDialog());
                         case 'pull':
                           unawaited(_doPull());
                         case final String sel when sel.startsWith('select_'):
@@ -384,76 +433,6 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                     ],
                   ),
                 ),
-              ),
-            ),
-          ),
-        ),
-        // ── Push ghost button ──────────────────────────────────────────────
-        const SizedBox(width: 4),
-        Tooltip(
-          message: 'Push to remote',
-          child: GestureDetector(
-            onTap: (busy || !s.canPush) ? null : () => unawaited(_doPush(s)),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
-              decoration: BoxDecoration(
-                color: ThemeConstants.inputSurface,
-                border: Border.all(color: ThemeConstants.deepBorder),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    AppIcons.cloudUpload,
-                    size: 10,
-                    color: (busy || !s.canPush) ? ThemeConstants.faintFg : ThemeConstants.textSecondary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _pushing ? '…' : 'Push',
-                    style: TextStyle(
-                      color: (busy || !s.canPush) ? ThemeConstants.faintFg : ThemeConstants.textSecondary,
-                      fontSize: ThemeConstants.uiFontSizeSmall,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        // ── Create PR ghost button ─────────────────────────────────────────
-        const SizedBox(width: 4),
-        Tooltip(
-          message: 'Create pull request',
-          child: GestureDetector(
-            onTap: (busy || !s.canPr) ? null : () => unawaited(_showCreatePrDialog()),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
-              decoration: BoxDecoration(
-                color: ThemeConstants.inputSurface,
-                border: Border.all(color: ThemeConstants.deepBorder),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    AppIcons.gitPullRequest,
-                    size: 10,
-                    color: (busy || !s.canPr) ? ThemeConstants.faintFg : ThemeConstants.textSecondary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'PR',
-                    style: TextStyle(
-                      color: (busy || !s.canPr) ? ThemeConstants.faintFg : ThemeConstants.textSecondary,
-                      fontSize: ThemeConstants.uiFontSizeSmall,
-                    ),
-                  ),
-                ],
               ),
             ),
           ),

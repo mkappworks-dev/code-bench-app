@@ -284,27 +284,37 @@ class _ProviderRowState extends State<_ProviderRow> {
                   : widget.testResult == false
                   ? ThemeConstants.error
                   : ThemeConstants.textSecondary;
-              return OutlinedButton(
-                onPressed: (hasKey && !widget.isTesting) ? widget.onTest : null,
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: borderCol),
-                  foregroundColor: fgCol,
-                  disabledForegroundColor: ThemeConstants.textMuted,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              final isEnabled = hasKey && !widget.isTesting;
+              return GestureDetector(
+                onTap: isEnabled ? widget.onTest : null,
+                child: Opacity(
+                  opacity: isEnabled ? 1.0 : 0.4,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: borderCol),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: widget.isTesting
+                        ? SizedBox(
+                            height: 12,
+                            width: 12,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: fgCol),
+                          )
+                        : Text(
+                            widget.testResult == true
+                                ? '✓ OK'
+                                : widget.testResult == false
+                                ? '✗ Fail'
+                                : 'Test',
+                            style: TextStyle(
+                              color: fgCol,
+                              fontSize: ThemeConstants.uiFontSizeSmall,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                  ),
                 ),
-                child: widget.isTesting
-                    ? const SizedBox(height: 12, width: 12, child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text(
-                        widget.testResult == true
-                            ? '✓ OK'
-                            : widget.testResult == false
-                            ? '✗ Fail'
-                            : 'Test',
-                        style: const TextStyle(fontSize: 11),
-                      ),
               );
             },
           ),
