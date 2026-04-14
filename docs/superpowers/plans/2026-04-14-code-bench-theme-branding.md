@@ -16,7 +16,7 @@
 - `lib/core/widgets/app_dialog.dart`
 - `lib/core/widgets/app_snack_bar.dart`
 - `lib/data/git/models/git_changed_file.dart`
-- `test/tool/generate_icon_test.dart`
+- `tool/generate_icon.dart`
 
 **Modify:**
 - `lib/core/constants/theme_constants.dart`
@@ -1900,10 +1900,9 @@ git commit -m "feat: blue token audit — near-black foreground on teal button b
 ## Task 15: App icon generation
 
 **Files:**
-- Create: `test/tool/generate_icon_test.dart`
 - Create (generated output): `macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_{16,32,64,128,256,512,1024}.png`
 
-Uses `dart:ui` canvas rendering + the `image` package for downsampling to each required size.
+Uses `dart:ui` canvas rendering + the `image` package for downsampling. The generator script runs as a standalone Dart script (not a test file) so it does not end up in the test suite.
 
 - [ ] **Step 1: Verify image package is in dev_dependencies**
 
@@ -1917,37 +1916,41 @@ Then run:
 flutter pub get
 ```
 
-- [ ] **Step 2: Create the generator test**
+- [ ] **Step 2: Run the generator script**
 
-Create `test/tool/generate_icon_test.dart`:
+Execute directly with the Dart VM (no test runner needed):
+
+```bash
+dart run tool/generate_icon.dart
+```
+
+The script writes 7 PNG files to `macos/Runner/Assets.xcassets/AppIcon.appiconset/`. Create `tool/generate_icon.dart` with:
 
 ```dart
-// Run with: flutter test test/tool/generate_icon_test.dart
+// Run with: dart run tool/generate_icon.dart
 // Writes 7 PNG files to macos/Runner/Assets.xcassets/AppIcon.appiconset/
 
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 
-void main() {
-  test('generate app icon PNGs', () async {
-    final master = await _render1024();
-    const outDir = 'macos/Runner/Assets.xcassets/AppIcon.appiconset';
+Future<void> main() async {
+  final master = await _render1024();
+  const outDir = 'macos/Runner/Assets.xcassets/AppIcon.appiconset';
 
-    for (final size in [16, 32, 64, 128, 256, 512, 1024]) {
-      final output = size == 1024
-          ? master
-          : img.copyResize(
-              master,
-              width: size,
-              height: size,
-              interpolation: img.Interpolation.lanczos,
-            );
-      await File('$outDir/app_icon_$size.png').writeAsBytes(img.encodePng(output));
-    }
-  }, timeout: const Timeout(Duration(minutes: 2)));
+  for (final size in [16, 32, 64, 128, 256, 512, 1024]) {
+    final output = size == 1024
+        ? master
+        : img.copyResize(
+            master,
+            width: size,
+            height: size,
+            interpolation: img.Interpolation.lanczos,
+          );
+    await File('$outDir/app_icon_$size.png').writeAsBytes(img.encodePng(output));
+    print('wrote app_icon_$size.png');
+  }
 }
 
 /// Renders the 1024×1024 master icon using dart:ui.
@@ -2010,15 +2013,7 @@ Future<img.Image> _render1024() async {
 }
 ```
 
-- [ ] **Step 3: Run the generator**
-
-```bash
-flutter test test/tool/generate_icon_test.dart --reporter expanded
-```
-
-Expected: test passes, 7 PNG files written.
-
-- [ ] **Step 4: Verify output**
+- [ ] **Step 3: Verify output**
 
 ```bash
 ls -lh macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_*.png
@@ -2026,11 +2021,11 @@ ls -lh macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_*.png
 
 Expected: 7 files. The 1024px file should be ≥30 KB.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-dart format lib/ test/
-git add test/tool/generate_icon_test.dart \
+dart format tool/
+git add tool/generate_icon.dart \
         macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_*.png
 git commit -m "feat: generate </> app icon — 7 PNG sizes"
 ```
