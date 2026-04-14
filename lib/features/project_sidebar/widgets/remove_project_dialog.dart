@@ -24,32 +24,12 @@ class RemoveProjectDialog extends ConsumerStatefulWidget {
 }
 
 class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
-  bool _alsoDeleteSessions = false;
   bool _submitting = false;
-  int _sessionCount = 0;
-  bool _sessionCountLoaded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSessionCount();
-  }
-
-  Future<void> _loadSessionCount() async {
-    final count = await ref.read(projectSidebarActionsProvider.notifier).fetchSessionCount(widget.project.id);
-    if (!mounted) return;
-    setState(() {
-      _sessionCount = count;
-      _sessionCountLoaded = true;
-    });
-  }
 
   Future<void> _submit() async {
     setState(() => _submitting = true);
     try {
-      await ref
-          .read(projectSidebarActionsProvider.notifier)
-          .removeProject(widget.project.id, deleteSessions: _alsoDeleteSessions);
+      await ref.read(projectSidebarActionsProvider.notifier).removeProject(widget.project.id, deleteSessions: true);
       if (!mounted) return;
       if (!ref.read(projectSidebarActionsProvider).hasError) {
         Navigator.of(context).pop(true);
@@ -78,40 +58,13 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
       ),
       content: ConstrainedBox(
         constraints: const BoxConstraints(minWidth: 360, maxWidth: 480),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              isMissing
-                  ? 'This project folder is already missing from disk. '
-                        'Removing it will only delete the entry from Code Bench.'
-                  : 'This will remove the project from Code Bench. '
-                        'The folder on disk will NOT be deleted.',
-              style: TextStyle(color: ThemeConstants.mutedFg, fontSize: 11),
-            ),
-            const SizedBox(height: 12),
-            if (_sessionCountLoaded && _sessionCount > 0)
-              InkWell(
-                onTap: _submitting ? null : () => setState(() => _alsoDeleteSessions = !_alsoDeleteSessions),
-                child: Row(
-                  children: [
-                    Checkbox(
-                      value: _alsoDeleteSessions,
-                      onChanged: _submitting ? null : (v) => setState(() => _alsoDeleteSessions = v ?? false),
-                    ),
-                    Expanded(
-                      child: Text(
-                        'Also delete $_sessionCount '
-                        '${_sessionCount == 1 ? "conversation" : "conversations"} '
-                        'linked to this project',
-                        style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 11),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
+        child: Text(
+          isMissing
+              ? 'This project folder is already missing from disk. '
+                    'Removing it will delete the entry and all linked conversations from Code Bench.'
+              : 'This will remove the project and all linked conversations from Code Bench. '
+                    'The folder on disk will NOT be deleted.',
+          style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: 11),
         ),
       ),
       actions: [
