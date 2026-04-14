@@ -63,6 +63,9 @@ hardcoded in widgets — always reference a token.
 | `fieldSurface` | `rgba(255,255,255,0.04)` | Text field fill |
 | `fieldBorder` | `rgba(255,255,255,0.10)` | Text field idle border |
 | `fieldFocusGlow` | `rgba(78,201,176,0.12)` | Text field focused outer glow ring |
+| `sendDisabledSurface` | `rgba(255,255,255,0.06)` | Send button fill when disabled (no text) |
+| `sendDisabledBorder` | `rgba(255,255,255,0.18)` | Send button border when disabled |
+| `sendDisabledIcon` | `rgba(255,255,255,0.35)` | Send button arrow icon when disabled |
 
 ### 2c. New light tokens to add
 
@@ -158,11 +161,18 @@ floats by shadow only. No hard structural borders.
 - Text: `#9D9D9D`
 - **Remove** the `_Separator` pipe `|` characters between chips
 
-**Send button:**
+**Send button — active (has text, project available):**
 - Fill: `LinearGradient(135deg, accent → accentDark)`
 - Shadow: `BoxShadow(blurRadius: 8, color: sendGlow)`
-- Size: `26×26`, border-radius: `7`
+- Border: none
+- Size: `28×28`, border-radius: `7`
 - Icon colour: `#0A0A0A`
+
+**Send button — disabled (no text or project missing):**
+- Fill: `ThemeConstants.sendDisabledSurface` (`rgba(255,255,255,0.06)`)
+- Border: `1px solid ThemeConstants.sendDisabledBorder` (`rgba(255,255,255,0.18)`)
+- No shadow
+- Icon colour: `ThemeConstants.sendDisabledIcon` (`rgba(255,255,255,0.35)`)
 
 ### 4c. Status Bar (`lib/shell/widgets/status_bar.dart`)
 
@@ -217,7 +227,7 @@ teal-accented focused state consistent with the rest of the design language.
 - **Focused outer glow:** `BoxShadow(color: rgba(78,201,176,0.12), blurRadius: 0, spreadRadius: 3)` — soft teal ring
 - Hint style: colour `#666`
 - Label style: colour `#9D9D9D`
-- Content padding: `EdgeInsets.symmetric(horizontal: 12, vertical: 10)`
+- Content padding: `EdgeInsets.symmetric(horizontal: 10, vertical: 7)` (size B — comfortable)
 
 ---
 
@@ -245,7 +255,35 @@ teal-accented focused state consistent with the rest of the design language.
   - Leading chevron icon: `#9D9D9D`
   - Label: `#9D9D9D`
 
-### 7c. Settings groups (`lib/features/settings/widgets/settings_group.dart`)
+### 7c. General settings — boolean rows (`lib/features/settings/general_screen.dart`)
+
+Replace `_AppDropdown<bool>` with a `Switch` widget for the two boolean settings rows.
+The `Theme` dropdown (3 options: Dark / Light / System) keeps its dropdown.
+
+**Toggle rows to convert:**
+- "Delete confirmation" — `_deleteConfirmation` bool state
+- "Auto-commit" — `_autoCommit` bool state
+
+**Switch styling (Flutter `Switch` with `MaterialStateProperty`):**
+- **On state:**
+  - Track: `LinearGradient(135deg, accent → accentDark)` — approximated via `activeTrackColor: ThemeConstants.accent`
+  - Thumb: `Colors.white`
+  - Track shadow: `BoxShadow(blurRadius: 8, color: rgba(78,201,176,0.30))`
+  - Size: 28×16 (`thumbRadius: 5.0`, custom `MaterialStateProperty` or sized via `Transform.scale`)
+- **Off state:**
+  - Track: `rgba(255,255,255,0.05)` (`inactiveTrackColor`)
+  - Track border: `rgba(255,255,255,0.09)` (`trackOutlineColor`)
+  - Thumb: `rgba(255,255,255,0.25)` (`inactiveThumbColor`)
+
+Use `Switch(value: _state, onChanged: (v) => setState(() => _state = v))` in each row.
+Replace the `_AppDropdown<bool>` widget call entirely — do not keep it in the file.
+
+**`_AppDropdown` glass re-style** (still used for Theme row):
+- Fill: `ThemeConstants.chipSurface` (`rgba(255,255,255,0.04)`) — was `inputSurface #1A1A1A`
+- Border: `1px solid ThemeConstants.chipBorder` (`rgba(255,255,255,0.07)`) — was `deepBorder #222`
+- Border-radius: `6`
+
+### 7d. Settings groups (`lib/features/settings/widgets/settings_group.dart`)
 
 **`SettingsGroup` container:**
 - Fill: `rgba(255,255,255,0.02)`
@@ -387,7 +425,7 @@ resolved `ThemeMode` to `themeMode:`, `theme: AppTheme.light`, `darkTheme: AppTh
 | `lib/core/widgets/app_dialog.dart` | Larger radius, stronger shadow, icon badge glow, footer separator, gradient primary button |
 | `lib/features/settings/settings_screen.dart` | Active nav accent bar + fill, back button pill |
 | `lib/features/settings/widgets/settings_group.dart` | Glass container, hairline row dividers |
-| `lib/features/settings/general_screen.dart` | Wire theme dropdown to `setThemeMode` |
+| `lib/features/settings/general_screen.dart` | Boolean rows → Switch toggles; glass-style `_AppDropdown`; wire theme dropdown to `setThemeMode` |
 | `lib/features/branch_picker/widgets/branch_picker_popover.dart` | Full redesign → dialog-style |
 | `lib/data/settings/` (Drift table) | Add `themeMode` column to `GeneralPrefs` |
 | `main.dart` | Pass `theme`, `darkTheme`, `themeMode` to `MaterialApp.router` |
