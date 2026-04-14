@@ -93,6 +93,7 @@ dev_dependencies:
 
   # App icon
   flutter_launcher_icons: ^0.14.1
+  image: ^4.5.0
 
 flutter:
   uses-material-design: true
