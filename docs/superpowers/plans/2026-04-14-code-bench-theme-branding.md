@@ -16,7 +16,7 @@
 - `lib/core/widgets/app_dialog.dart`
 - `lib/core/widgets/app_snack_bar.dart`
 - `lib/data/git/models/git_changed_file.dart`
-- `tool/generate_icon.dart`
+- `tool/generate_icon.dart` — renders source icon, feeds flutter_launcher_icons
 
 **Modify:**
 - `lib/core/constants/theme_constants.dart`
@@ -1900,76 +1900,49 @@ git commit -m "feat: blue token audit — near-black foreground on teal button b
 ## Task 15: App icon generation
 
 **Files:**
-- Create (generated output): `macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_{16,32,64,128,256,512,1024}.png`
+- Create: `tool/generate_icon.dart` — renders source icon, feeds flutter_launcher_icons
+- Modify (generated output): `assets/images/app_icon.png` — source PNG consumed by `flutter_launcher_icons`
 
-Uses `dart:ui` canvas rendering + the `image` package for downsampling. The generator runs as a standalone Dart script via `dart run`.
+Renders the `</>` mark at 1024×1024 using `dart:ui` and writes it to `assets/images/app_icon.png`. Then `flutter_launcher_icons` (already configured in `pubspec.yaml`) handles all platform resizing and placement. No extra packages needed — `dart:ui` encodes PNG natively via `ImageByteFormat.png`.
 
-- [ ] **Step 1: Run the generator script**
+- [ ] **Step 1: Create the generator script**
 
-Execute directly with the Dart VM (no test runner needed):
-
-```bash
-dart run tool/generate_icon.dart
-```
-
-The script writes 7 PNG files to `macos/Runner/Assets.xcassets/AppIcon.appiconset/`. Create `tool/generate_icon.dart` with:
+Create `tool/generate_icon.dart`:
 
 ```dart
 // Run with: dart run tool/generate_icon.dart
-// Writes 7 PNG files to macos/Runner/Assets.xcassets/AppIcon.appiconset/
+// Writes the 1024×1024 source icon to assets/images/app_icon.png.
+// Then run: dart run flutter_launcher_icons
 
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:image/image.dart' as img;
-
 Future<void> main() async {
-  final master = await _render1024();
-  const outDir = 'macos/Runner/Assets.xcassets/AppIcon.appiconset';
-
-  for (final size in [16, 32, 64, 128, 256, 512, 1024]) {
-    final output = size == 1024
-        ? master
-        : img.copyResize(
-            master,
-            width: size,
-            height: size,
-            interpolation: img.Interpolation.lanczos,
-          );
-    await File('$outDir/app_icon_$size.png').writeAsBytes(img.encodePng(output));
-    print('wrote app_icon_$size.png');
-  }
-}
-
-/// Renders the 1024×1024 master icon using dart:ui.
-Future<img.Image> _render1024() async {
   const size = 1024.0;
   final recorder = ui.PictureRecorder();
   final canvas = ui.Canvas(recorder);
 
   // Dark rounded-square background
-  final bgPaint = ui.Paint()..color = const ui.Color(0xFF111111);
   canvas.drawRRect(
     ui.RRect.fromRectAndRadius(
       ui.Rect.fromLTWH(0, 0, size, size),
       const ui.Radius.circular(224), // ~22% of 1024
     ),
-    bgPaint,
+    ui.Paint()..color = const ui.Color(0xFF111111),
   );
 
   // Subtle top-left highlight
-  final gradPaint = ui.Paint()
-    ..shader = ui.Gradient.linear(
-      ui.Offset.zero,
-      ui.Offset(size, size),
-      [const ui.Color(0x22FFFFFF), const ui.Color(0x00000000)],
-    );
   canvas.drawRRect(
     ui.RRect.fromRectAndRadius(
       ui.Rect.fromLTWH(0, 0, size, size),
       const ui.Radius.circular(224),
     ),
-    gradPaint,
+    ui.Paint()
+      ..shader = ui.Gradient.linear(
+        ui.Offset.zero,
+        ui.Offset(size, size),
+        [const ui.Color(0x22FFFFFF), const ui.Color(0x00000000)],
+      ),
   );
 
   // </> glyph — coordinates from 32-unit viewport scaled ×32
@@ -1987,35 +1960,41 @@ Future<img.Image> _render1024() async {
   canvas.drawLine(ui.Offset(19 * s, 9 * s), ui.Offset(13 * s, 23 * s), glyphPaint);
 
   final picture = recorder.endRecording();
-  final uiImage = await picture.toImage(size.toInt(), size.toInt());
-  final byteData = await uiImage.toByteData(format: ui.ImageByteFormat.rawRgba);
+  final image = await picture.toImage(size.toInt(), size.toInt());
+  final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
   if (byteData == null) throw StateError('canvas toByteData returned null');
 
-  return img.Image.fromBytes(
-    width: size.toInt(),
-    height: size.toInt(),
-    bytes: byteData.buffer,
-    format: img.Format.uint8,
-    numChannels: 4,
-  );
+  await File('assets/images/app_icon.png').writeAsBytes(byteData.buffer.asUint8List());
+  print('wrote assets/images/app_icon.png (${byteData.lengthInBytes} bytes)');
 }
 ```
 
-- [ ] **Step 2: Verify output**
+- [ ] **Step 2: Run the generator script**
 
 ```bash
-ls -lh macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_*.png
+dart run tool/generate_icon.dart
 ```
 
-Expected: 7 files. The 1024px file should be ≥30 KB.
+Expected: `wrote assets/images/app_icon.png (NNN bytes)` — file should be ≥30 KB.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Run flutter_launcher_icons**
+
+```bash
+dart run flutter_launcher_icons
+```
+
+Expected: generates icons for macOS, Windows, and Linux as configured in `pubspec.yaml`.
+
+- [ ] **Step 4: Commit**
 
 ```bash
 dart format tool/
 git add tool/generate_icon.dart \
-        macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_*.png
-git commit -m "feat: generate </> app icon — 7 PNG sizes"
+        assets/images/app_icon.png \
+        macos/Runner/Assets.xcassets/AppIcon.appiconset/ \
+        windows/ \
+        linux/
+git commit -m "feat: generate </> app icon via flutter_launcher_icons"
 ```
 
 ---
