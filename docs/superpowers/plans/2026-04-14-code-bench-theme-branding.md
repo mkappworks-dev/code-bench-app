@@ -1902,21 +1902,9 @@ git commit -m "feat: blue token audit — near-black foreground on teal button b
 **Files:**
 - Create (generated output): `macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_{16,32,64,128,256,512,1024}.png`
 
-Uses `dart:ui` canvas rendering + the `image` package for downsampling. The generator script runs as a standalone Dart script (not a test file) so it does not end up in the test suite.
+Uses `dart:ui` canvas rendering + the `image` package for downsampling. The generator runs as a standalone Dart script via `dart run`.
 
-- [ ] **Step 1: Verify image package is in dev_dependencies**
-
-Check `pubspec.yaml` for `image:` under `dev_dependencies`. If absent, add:
-```yaml
-dev_dependencies:
-  image: ^4.5.0
-```
-Then run:
-```bash
-flutter pub get
-```
-
-- [ ] **Step 2: Run the generator script**
+- [ ] **Step 1: Run the generator script**
 
 Execute directly with the Dart VM (no test runner needed):
 
@@ -2013,7 +2001,7 @@ Future<img.Image> _render1024() async {
 }
 ```
 
-- [ ] **Step 3: Verify output**
+- [ ] **Step 2: Verify output**
 
 ```bash
 ls -lh macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_*.png
@@ -2021,7 +2009,7 @@ ls -lh macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_*.png
 
 Expected: 7 files. The 1024px file should be ≥30 KB.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
 dart format tool/
