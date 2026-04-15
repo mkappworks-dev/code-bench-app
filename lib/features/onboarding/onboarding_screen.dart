@@ -79,10 +79,10 @@ class _BrandingPanel extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: ThemeConstants.selectionBg,
+                    color: ThemeConstants.panelBackground,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: ThemeConstants.selectionBorder),
-                    boxShadow: const [BoxShadow(color: ThemeConstants.accentGlow, blurRadius: 12)],
+                    border: Border.all(color: ThemeConstants.borderColor),
+                    boxShadow: const [BoxShadow(color: ThemeConstants.accentGlow, blurRadius: 16, spreadRadius: 2)],
                   ),
                   child: const _CodeGlyph(),
                 ),
