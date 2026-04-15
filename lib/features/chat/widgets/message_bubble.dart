@@ -50,7 +50,26 @@ class _UserBubble extends StatelessWidget {
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-          decoration: BoxDecoration(color: ThemeConstants.userMessageBg, borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? ThemeConstants.glassSurface
+                : ThemeConstants.lightUserBubbleSurface,
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? ThemeConstants.userBubbleBorder
+                  : ThemeConstants.lightUserBubbleBorder,
+            ),
+            borderRadius: BorderRadius.circular(11),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? ThemeConstants.userBubbleHighlight
+                    : Colors.transparent,
+                blurRadius: 0,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
           child: SelectableText(
             message.content,
             style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),

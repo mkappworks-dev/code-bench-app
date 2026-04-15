@@ -29,19 +29,29 @@ class CodeBlockBuilder extends MarkdownElementBuilder {
   final String sessionId;
 
   @override
-  Widget? visitElementAfter(element, TextStyle? preferredStyle) {
+  Widget? visitElementAfterWithContext(
+    BuildContext context,
+    element,
+    TextStyle? preferredStyle,
+    TextStyle? parentStyle,
+  ) {
     final fullInfo = element.attributes['class']?.replaceFirst('language-', '') ?? 'plaintext';
     final code = element.textContent;
 
     if (!element.attributes.containsKey('class') && !code.contains('\n')) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-        decoration: BoxDecoration(color: ThemeConstants.codeBlockBg, borderRadius: BorderRadius.circular(3)),
+        decoration: BoxDecoration(
+          color: isDark ? ThemeConstants.inlineCodeBg : ThemeConstants.lightInlineCodeSurface,
+          border: Border.all(color: isDark ? ThemeConstants.glassBorderSubtle : ThemeConstants.lightInlineCodeBorder),
+          borderRadius: BorderRadius.circular(4),
+        ),
         child: Text(
           code,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: ThemeConstants.editorFontFamily,
-            color: ThemeConstants.syntaxString,
+            color: isDark ? ThemeConstants.syntaxString : ThemeConstants.lightInlineCodeText,
             fontSize: ThemeConstants.uiFontSize,
           ),
         ),
@@ -167,8 +177,8 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         color: ThemeConstants.codeBlockBg,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: ThemeConstants.borderColor),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: ThemeConstants.glassBorderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
