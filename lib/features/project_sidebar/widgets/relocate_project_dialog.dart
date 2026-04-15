@@ -2,7 +2,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../data/project/models/project.dart';
 import '../notifiers/project_sidebar_actions.dart';
 import '../notifiers/project_sidebar_failure.dart';
@@ -72,56 +74,52 @@ class _RelocateProjectDialogState extends ConsumerState<RelocateProjectDialog> {
       );
     });
 
-    return AlertDialog(
-      backgroundColor: ThemeConstants.panelBackground,
-      title: Text(
-        'Relocate "${widget.project.name}"',
-        style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 14),
-      ),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 360, maxWidth: 480),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Original path:', style: TextStyle(color: ThemeConstants.mutedFg, fontSize: 11)),
-            const SizedBox(height: 2),
-            Text(
-              widget.project.path,
-              style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11, fontFamily: 'monospace'),
-            ),
-            const SizedBox(height: 12),
-            Text('New path:', style: TextStyle(color: ThemeConstants.mutedFg, fontSize: 11)),
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _newPath ?? '(none selected)',
-                    style: TextStyle(
-                      color: _newPath == null ? ThemeConstants.faintFg : ThemeConstants.textPrimary,
-                      fontSize: 11,
-                      fontFamily: 'monospace',
-                    ),
-                    overflow: TextOverflow.ellipsis,
+    return AppDialog(
+      icon: AppIcons.folder,
+      iconType: AppDialogIconType.teal,
+      title: 'Relocate "${widget.project.name}"',
+      maxWidth: 480,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Original path:', style: TextStyle(color: ThemeConstants.mutedFg, fontSize: 11)),
+          const SizedBox(height: 2),
+          Text(
+            widget.project.path,
+            style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11, fontFamily: 'monospace'),
+          ),
+          const SizedBox(height: 12),
+          Text('New path:', style: TextStyle(color: ThemeConstants.mutedFg, fontSize: 11)),
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _newPath ?? '(none selected)',
+                  style: TextStyle(
+                    color: _newPath == null ? ThemeConstants.faintFg : ThemeConstants.textPrimary,
+                    fontSize: 11,
+                    fontFamily: 'monospace',
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 8),
-                TextButton(onPressed: _submitting ? null : _pick, child: const Text('Browse…')),
-              ],
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(_error!, style: const TextStyle(color: ThemeConstants.error, fontSize: 11)),
+              ),
+              const SizedBox(width: 8),
+              TextButton(onPressed: _submitting ? null : _pick, child: const Text('Browse…')),
             ],
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(_error!, style: const TextStyle(color: ThemeConstants.error, fontSize: 11)),
           ],
-        ),
+        ],
       ),
       actions: [
-        TextButton(onPressed: _submitting ? null : () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-        TextButton(
+        AppDialogAction.cancel(onPressed: _submitting ? () {} : () => Navigator.of(context).pop(false)),
+        AppDialogAction.primary(
+          label: _submitting ? 'Relocating…' : 'Relocate',
           onPressed: _submitting || _newPath == null ? null : _submit,
-          child: Text(_submitting ? 'Relocating…' : 'Relocate'),
         ),
       ],
     );

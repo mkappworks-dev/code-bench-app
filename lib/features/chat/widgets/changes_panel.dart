@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/utils/snackbar_helper.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import 'package:path/path.dart' as p;
 
@@ -171,12 +172,11 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
     final isGit = ref.read(gitActionsProvider.notifier).isGitRepo(project.path);
     await showDialog<void>(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: ThemeConstants.inputSurface,
-        title: const Text(
-          'File externally modified',
-          style: TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
-        ),
+      builder: (dialogCtx) => AppDialog(
+        icon: AppIcons.warning,
+        iconType: AppDialogIconType.teal,
+        title: 'File externally modified',
+        maxWidth: 580,
         content: ConflictMergeView(
           change: widget.change,
           currentContent: currentContent,
@@ -193,6 +193,7 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
           },
           onKeepCurrent: () => Navigator.of(dialogCtx).pop(),
         ),
+        // ConflictMergeView provides its own action buttons.
       ),
     );
   }

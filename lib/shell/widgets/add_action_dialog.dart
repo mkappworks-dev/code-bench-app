@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/widgets/app_dialog.dart';
 import '../../data/project/models/project_action.dart';
 
 /// Dialog for adding a new project action (name + shell command).
@@ -27,9 +28,11 @@ class _AddActionDialogState extends State<AddActionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: ThemeConstants.inputSurface,
-      title: const Text('Add Action', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
+    return AppDialog(
+      icon: AppIcons.add,
+      iconType: AppDialogIconType.teal,
+      title: 'Add Action',
+      hasInputField: true,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -79,18 +82,15 @@ class _AddActionDialogState extends State<AddActionDialog> {
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel', style: TextStyle(color: ThemeConstants.textSecondary)),
-        ),
-        TextButton(
+        AppDialogAction.cancel(onPressed: () => Navigator.of(context).pop()),
+        AppDialogAction.primary(
+          label: 'Save',
           onPressed: () {
             final name = _nameController.text.trim();
             final command = _commandController.text.trim();
             if (name.isEmpty || command.isEmpty) return;
             Navigator.of(context).pop(ProjectAction(name: name, command: command));
           },
-          child: const Text('Save', style: TextStyle(color: ThemeConstants.accent)),
         ),
       ],
     );

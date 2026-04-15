@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../notifiers/pr_notifier.dart';
@@ -149,19 +151,16 @@ class _PRCardState extends ConsumerState<PRCard> {
   }) {
     return showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: ThemeConstants.inputSurface,
-        title: Text(title, style: const TextStyle(color: ThemeConstants.textPrimary)),
-        content: Text(body, style: const TextStyle(color: ThemeConstants.textSecondary)),
+      builder: (ctx) => AppDialog(
+        icon: destructive ? AppIcons.warning : AppIcons.gitPullRequest,
+        iconType: destructive ? AppDialogIconType.destructive : AppDialogIconType.teal,
+        title: title,
+        content: Text(body, style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 12)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(
-              actionLabel,
-              style: TextStyle(color: destructive ? ThemeConstants.error : ThemeConstants.success),
-            ),
-          ),
+          AppDialogAction.cancel(onPressed: () => Navigator.of(ctx).pop(false)),
+          destructive
+              ? AppDialogAction.destructive(label: actionLabel, onPressed: () => Navigator.of(ctx).pop(true))
+              : AppDialogAction.primary(label: actionLabel, onPressed: () => Navigator.of(ctx).pop(true)),
         ],
       ),
     );

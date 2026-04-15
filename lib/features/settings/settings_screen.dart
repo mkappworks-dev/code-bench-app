@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../core/utils/platform_utils.dart';
+import '../../core/widgets/app_dialog.dart';
 import 'archive_screen.dart';
 import 'general_screen.dart';
 import 'notifiers/general_prefs_notifier.dart';
@@ -66,20 +67,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _restoreDefaults() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: ThemeConstants.panelBackground,
-        title: const Text(
-          'Restore General defaults?',
-          style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14),
-        ),
+      builder: (ctx) => AppDialog(
+        icon: AppIcons.settings,
+        iconType: AppDialogIconType.teal,
+        title: 'Restore General defaults?',
         content: const Text(
           'Auto-commit, terminal app, and delete confirmation will be reset.\n\n'
           'API keys, GitHub sign-in, chat history, and projects are not affected.',
           style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 12),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Restore')),
+          AppDialogAction.cancel(onPressed: () => Navigator.pop(ctx, false)),
+          AppDialogAction.primary(label: 'Restore', onPressed: () => Navigator.pop(ctx, true)),
         ],
       ),
     );

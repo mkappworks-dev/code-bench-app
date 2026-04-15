@@ -37,7 +37,7 @@ class AppDialog extends StatelessWidget {
     this.subtitle,
     this.hasInputField = false,
     required this.content,
-    required this.actions,
+    this.actions,
     this.minWidth = 300,
     this.maxWidth = 480,
   });
@@ -48,7 +48,10 @@ class AppDialog extends StatelessWidget {
   final String? subtitle;
   final bool hasInputField;
   final Widget content;
-  final List<AppDialogAction> actions;
+
+  /// Footer action buttons. Pass `null` to suppress the footer entirely —
+  /// useful when the content widget provides its own action row.
+  final List<AppDialogAction>? actions;
   final double minWidth;
   final double maxWidth;
 
@@ -172,29 +175,32 @@ class AppDialog extends StatelessWidget {
                   ),
                   Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: content),
                   const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(16, 11, 16, 11),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        top: BorderSide(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? ThemeConstants.glassBorderFaint
-                              : ThemeConstants.lightDivider,
+                  if (actions != null)
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(16, 11, 16, 11),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? ThemeConstants.glassBorderFaint
+                                : ThemeConstants.lightDivider,
+                          ),
                         ),
                       ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: actions.indexed
-                          .map(
-                            (entry) => Padding(
-                              padding: EdgeInsets.only(left: entry.$1 > 0 ? 8.0 : 0.0),
-                              child: _ActionButton(action: entry.$2),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: actions!.indexed
+                            .map(
+                              (entry) => Padding(
+                                padding: EdgeInsets.only(left: entry.$1 > 0 ? 8.0 : 0.0),
+                                child: _ActionButton(action: entry.$2),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 4),
                 ],
               ),
             ),

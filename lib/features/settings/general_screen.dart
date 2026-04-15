@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/widgets/app_dialog.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import '../../core/utils/instant_menu.dart';
 import 'notifiers/general_prefs_notifier.dart';
@@ -54,9 +55,10 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
   Future<void> _confirmWipeAllData() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: ThemeConstants.panelBackground,
-        title: const Text('Wipe all data?', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
+      builder: (dialogCtx) => AppDialog(
+        icon: AppIcons.trash,
+        iconType: AppDialogIconType.destructive,
+        title: 'Wipe all data?',
         content: const Text(
           'This will permanently delete:\n'
           '  • All API keys\n'
@@ -67,11 +69,8 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
           style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 12),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx, true),
-            child: const Text('Wipe everything', style: TextStyle(color: ThemeConstants.error)),
-          ),
+          AppDialogAction.cancel(onPressed: () => Navigator.pop(dialogCtx, false)),
+          AppDialogAction.destructive(label: 'Wipe everything', onPressed: () => Navigator.pop(dialogCtx, true)),
         ],
       ),
     );

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../data/project/models/project.dart';
 import '../notifiers/project_sidebar_actions.dart';
@@ -50,29 +52,24 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
     });
 
     final isMissing = widget.project.status == ProjectStatus.missing;
-    return AlertDialog(
-      backgroundColor: ThemeConstants.panelBackground,
-      title: Text(
-        'Remove "${widget.project.name}"?',
-        style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 14),
-      ),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 360, maxWidth: 480),
-        child: Text(
-          isMissing
-              ? 'This project folder is already missing from disk. '
-                    'Removing it will delete the entry and all linked conversations from Code Bench.'
-              : 'This will remove the project and all linked conversations from Code Bench. '
-                    'The folder on disk will NOT be deleted.',
-          style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: 11),
-        ),
+    return AppDialog(
+      icon: AppIcons.trash,
+      iconType: AppDialogIconType.destructive,
+      title: 'Remove "${widget.project.name}"?',
+      maxWidth: 480,
+      content: Text(
+        isMissing
+            ? 'This project folder is already missing from disk. '
+                  'Removing it will delete the entry and all linked conversations from Code Bench.'
+            : 'This will remove the project and all linked conversations from Code Bench. '
+                  'The folder on disk will NOT be deleted.',
+        style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: 11),
       ),
       actions: [
-        TextButton(onPressed: _submitting ? null : () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-        TextButton(
-          onPressed: _submitting ? null : _submit,
-          style: TextButton.styleFrom(foregroundColor: ThemeConstants.error),
-          child: Text(_submitting ? 'Removing…' : 'Remove'),
+        AppDialogAction.cancel(onPressed: _submitting ? () {} : () => Navigator.of(context).pop(false)),
+        AppDialogAction.destructive(
+          label: _submitting ? 'Removing…' : 'Remove',
+          onPressed: _submitting ? () {} : _submit,
         ),
       ],
     );
