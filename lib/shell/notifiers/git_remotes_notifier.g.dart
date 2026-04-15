@@ -22,20 +22,23 @@ final gitRemotesProvider = GitRemotesNotifierFamily._();
 ///
 /// Family: one provider instance per project path — disposes when the
 /// widget tree stops watching it.
-final class GitRemotesNotifierProvider extends $AsyncNotifierProvider<GitRemotesNotifier, GitRemotesState> {
+final class GitRemotesNotifierProvider
+    extends $AsyncNotifierProvider<GitRemotesNotifier, GitRemotesState> {
   /// Loads the configured git remotes for [path] once on mount and tracks
   /// which remote the user has selected for the next Push.
   ///
   /// Family: one provider instance per project path — disposes when the
   /// widget tree stops watching it.
-  GitRemotesNotifierProvider._({required GitRemotesNotifierFamily super.from, required String super.argument})
-    : super(
-        retry: null,
-        name: r'gitRemotesProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+  GitRemotesNotifierProvider._({
+    required GitRemotesNotifierFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'gitRemotesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$gitRemotesNotifierHash();
@@ -62,7 +65,8 @@ final class GitRemotesNotifierProvider extends $AsyncNotifierProvider<GitRemotes
   }
 }
 
-String _$gitRemotesNotifierHash() => r'aa62c4f693eb3b14c8c28a24c38a91b6eda6b7b0';
+String _$gitRemotesNotifierHash() =>
+    r'aa62c4f693eb3b14c8c28a24c38a91b6eda6b7b0';
 
 /// Loads the configured git remotes for [path] once on mount and tracks
 /// which remote the user has selected for the next Push.
@@ -94,7 +98,8 @@ final class GitRemotesNotifierFamily extends $Family
   /// Family: one provider instance per project path — disposes when the
   /// widget tree stops watching it.
 
-  GitRemotesNotifierProvider call(String path) => GitRemotesNotifierProvider._(argument: path, from: this);
+  GitRemotesNotifierProvider call(String path) =>
+      GitRemotesNotifierProvider._(argument: path, from: this);
 
   @override
   String toString() => r'gitRemotesProvider';
