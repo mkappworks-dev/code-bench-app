@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import '../../data/settings/models/app_theme_preference.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/errors/app_exception.dart';
@@ -51,8 +51,8 @@ class SettingsService {
   Future<void> setTerminalApp(String value) => _settings.setTerminalApp(value);
   Future<bool> getDeleteConfirmation() => _settings.getDeleteConfirmation();
   Future<void> setDeleteConfirmation(bool value) => _settings.setDeleteConfirmation(value);
-  Future<ThemeMode> getThemeMode() => _settings.getThemeMode();
-  Future<void> setThemeMode(ThemeMode mode) => _settings.setThemeMode(mode);
+  Future<AppThemePreference> getThemeMode() => _settings.getThemeMode();
+  Future<void> setThemeMode(AppThemePreference mode) => _settings.setThemeMode(mode);
   Future<void> markOnboardingCompleted() => _settings.markOnboardingCompleted();
   Future<void> resetOnboarding() => _settings.resetOnboarding();
 

@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../data/_core/preferences/general_preferences.dart';
+import '../models/app_theme_preference.dart';
 import '../../../data/_core/preferences/onboarding_preferences.dart';
 import '../../../data/_core/secure_storage.dart';
 import 'settings_repository.dart';
@@ -73,10 +73,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
   Future<void> setDeleteConfirmation(bool value) => _generalPrefs.setDeleteConfirmation(value);
 
   @override
-  Future<ThemeMode> getThemeMode() => _generalPrefs.getThemeMode();
+  Future<AppThemePreference> getThemeMode() => _generalPrefs.getThemeMode();
 
   @override
-  Future<void> setThemeMode(ThemeMode mode) => _generalPrefs.setThemeMode(mode);
+  Future<void> setThemeMode(AppThemePreference mode) => _generalPrefs.setThemeMode(mode);
 
   // ── Onboarding ────────────────────────────────────────────────────────────
 

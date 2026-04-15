@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import '../../settings/models/app_theme_preference.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -44,22 +44,22 @@ class GeneralPreferences {
 
   static const _themeMode = 'theme_mode'; // values: 'system', 'dark', 'light'
 
-  Future<ThemeMode> getThemeMode() async {
+  Future<AppThemePreference> getThemeMode() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_themeMode) ?? 'system';
     return switch (raw) {
-      'dark' => ThemeMode.dark,
-      'light' => ThemeMode.light,
-      _ => ThemeMode.system,
+      'dark' => AppThemePreference.dark,
+      'light' => AppThemePreference.light,
+      _ => AppThemePreference.system,
     };
   }
 
-  Future<void> setThemeMode(ThemeMode mode) async {
+  Future<void> setThemeMode(AppThemePreference mode) async {
     final prefs = await SharedPreferences.getInstance();
     final raw = switch (mode) {
-      ThemeMode.dark => 'dark',
-      ThemeMode.light => 'light',
-      ThemeMode.system => 'system',
+      AppThemePreference.dark => 'dark',
+      AppThemePreference.light => 'light',
+      AppThemePreference.system => 'system',
     };
     await prefs.setString(_themeMode, raw);
   }

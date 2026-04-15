@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import '../models/app_theme_preference.dart';
 
 abstract interface class SettingsRepository {
   // ── API keys ──────────────────────────────────────────────────────────────
@@ -29,8 +29,8 @@ abstract interface class SettingsRepository {
   Future<bool> getDeleteConfirmation();
   Future<void> setDeleteConfirmation(bool value);
 
-  Future<ThemeMode> getThemeMode();
-  Future<void> setThemeMode(ThemeMode mode);
+  Future<AppThemePreference> getThemeMode();
+  Future<void> setThemeMode(AppThemePreference mode);
 
   // ── Onboarding ────────────────────────────────────────────────────────────
 

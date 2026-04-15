@@ -1,3 +1,4 @@
+import '../../../data/settings/models/app_theme_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -47,7 +48,7 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
       autoCommit: await svc.getAutoCommit(),
       deleteConfirmation: await svc.getDeleteConfirmation(),
       terminalApp: await svc.getTerminalApp(),
-      themeMode: await svc.getThemeMode(),
+      themeMode: _toThemeMode(await svc.getThemeMode()),
     );
   }
 
@@ -98,7 +99,7 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
   Future<void> setThemeMode(ThemeMode mode) async {
     final next = await AsyncValue.guard(() async {
       try {
-        await ref.read(settingsServiceProvider).setThemeMode(mode);
+        await ref.read(settingsServiceProvider).setThemeMode(_toPreference(mode));
       } catch (e, st) {
         dLog('[GeneralPrefsNotifier] setThemeMode failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -107,6 +108,18 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
     });
     if (ref.mounted) state = next;
   }
+
+  ThemeMode _toThemeMode(AppThemePreference p) => switch (p) {
+    AppThemePreference.dark => ThemeMode.dark,
+    AppThemePreference.light => ThemeMode.light,
+    AppThemePreference.system => ThemeMode.system,
+  };
+
+  AppThemePreference _toPreference(ThemeMode m) => switch (m) {
+    ThemeMode.dark => AppThemePreference.dark,
+    ThemeMode.light => AppThemePreference.light,
+    ThemeMode.system => AppThemePreference.system,
+  };
 
   /// Resets all general settings to their defaults and invalidates this
   /// provider so the settings UI rebuilds with fresh values.
