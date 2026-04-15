@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 abstract interface class SettingsRepository {
   // ── API keys ──────────────────────────────────────────────────────────────
 
@@ -26,6 +28,9 @@ abstract interface class SettingsRepository {
 
   Future<bool> getDeleteConfirmation();
   Future<void> setDeleteConfirmation(bool value);
+
+  Future<ThemeMode> getThemeMode();
+  Future<void> setThemeMode(ThemeMode mode);
 
   // ── Onboarding ────────────────────────────────────────────────────────────
 

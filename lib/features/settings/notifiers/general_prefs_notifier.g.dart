@@ -17,7 +17,11 @@ final generalPrefsProvider = GeneralPrefsNotifierProvider._();
 /// Loads general preferences on first watch and exposes setters.
 /// Auto-disposes when the settings screen is not in view.
 final class GeneralPrefsNotifierProvider
-    extends $AsyncNotifierProvider<GeneralPrefsNotifier, GeneralPrefsNotifierState> {
+    extends
+        $AsyncNotifierProvider<
+          GeneralPrefsNotifier,
+          GeneralPrefsNotifierState
+        > {
   /// Loads general preferences on first watch and exposes setters.
   /// Auto-disposes when the settings screen is not in view.
   GeneralPrefsNotifierProvider._()
@@ -39,21 +43,31 @@ final class GeneralPrefsNotifierProvider
   GeneralPrefsNotifier create() => GeneralPrefsNotifier();
 }
 
-String _$generalPrefsNotifierHash() => r'3ba1fc0fce142e361d527401ebe69136a0aabc33';
+String _$generalPrefsNotifierHash() =>
+    r'526112ed4187b38db25e35379f7e15dd0c42c4c4';
 
 /// Loads general preferences on first watch and exposes setters.
 /// Auto-disposes when the settings screen is not in view.
 
-abstract class _$GeneralPrefsNotifier extends $AsyncNotifier<GeneralPrefsNotifierState> {
+abstract class _$GeneralPrefsNotifier
+    extends $AsyncNotifier<GeneralPrefsNotifierState> {
   FutureOr<GeneralPrefsNotifierState> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<GeneralPrefsNotifierState>, GeneralPrefsNotifierState>;
+    final ref =
+        this.ref
+            as $Ref<
+              AsyncValue<GeneralPrefsNotifierState>,
+              GeneralPrefsNotifierState
+            >;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<GeneralPrefsNotifierState>, GeneralPrefsNotifierState>,
+              AnyNotifier<
+                AsyncValue<GeneralPrefsNotifierState>,
+                GeneralPrefsNotifierState
+              >,
               AsyncValue<GeneralPrefsNotifierState>,
               Object?,
               Object?

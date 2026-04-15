@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/errors/app_exception.dart';
@@ -14,18 +15,25 @@ class GeneralPrefsNotifierState {
     required this.autoCommit,
     required this.deleteConfirmation,
     required this.terminalApp,
+    required this.themeMode,
   });
 
   final bool autoCommit;
   final bool deleteConfirmation;
   final String terminalApp;
+  final ThemeMode themeMode;
 
-  GeneralPrefsNotifierState copyWith({bool? autoCommit, bool? deleteConfirmation, String? terminalApp}) =>
-      GeneralPrefsNotifierState(
-        autoCommit: autoCommit ?? this.autoCommit,
-        deleteConfirmation: deleteConfirmation ?? this.deleteConfirmation,
-        terminalApp: terminalApp ?? this.terminalApp,
-      );
+  GeneralPrefsNotifierState copyWith({
+    bool? autoCommit,
+    bool? deleteConfirmation,
+    String? terminalApp,
+    ThemeMode? themeMode,
+  }) => GeneralPrefsNotifierState(
+    autoCommit: autoCommit ?? this.autoCommit,
+    deleteConfirmation: deleteConfirmation ?? this.deleteConfirmation,
+    terminalApp: terminalApp ?? this.terminalApp,
+    themeMode: themeMode ?? this.themeMode,
+  );
 }
 
 /// Loads general preferences on first watch and exposes setters.
@@ -39,6 +47,7 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
       autoCommit: await svc.getAutoCommit(),
       deleteConfirmation: await svc.getDeleteConfirmation(),
       terminalApp: await svc.getTerminalApp(),
+      themeMode: await svc.getThemeMode(),
     );
   }
 
@@ -82,6 +91,19 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
         Error.throwWithStackTrace(_asFailure(e), st);
       }
       return (state.value ?? await build()).copyWith(terminalApp: value);
+    });
+    if (ref.mounted) state = next;
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    final next = await AsyncValue.guard(() async {
+      try {
+        await ref.read(settingsServiceProvider).setThemeMode(mode);
+      } catch (e, st) {
+        dLog('[GeneralPrefsNotifier] setThemeMode failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+      return (state.value ?? await build()).copyWith(themeMode: mode);
     });
     if (ref.mounted) state = next;
   }
