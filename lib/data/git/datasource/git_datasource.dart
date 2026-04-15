@@ -14,12 +14,16 @@ abstract interface class GitDatasource {
   Future<List<GitRemote>> listRemotes();
   Future<List<String>> listLocalBranches();
 
-  /// Returns a map of branch name → worktree filesystem path for every
-  /// git worktree OTHER than the one at this datasource's project path.
-  Future<Map<String, String>> worktreeBranches();
+  /// Returns active and stale worktree information for every git worktree
+  /// OTHER than the one at this datasource's project path.
+  ///
+  /// [active] maps branch name → worktree path for healthy worktrees.
+  /// [stale] is the set of branch names locked to prunable worktrees
+  /// (the worktree directory no longer exists on disk).
+  Future<({Map<String, String> active, Set<String> stale})> worktreeBranches();
   Future<void> checkout(String branch);
-  Future<void> createBranch(String name);
-  Future<void> createWorktree(String branchName, String worktreePath);
+  Future<void> createBranch(String name, {String? baseBranch});
+  Future<void> createWorktree(String branchName, String worktreePath, {String? baseBranch});
   Future<List<GitChangedFile>> getChangedFiles();
 }
 

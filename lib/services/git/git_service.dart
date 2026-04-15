@@ -42,11 +42,13 @@ class GitService {
   Future<int?> fetchBehindCount(String path) => _ds(path).fetchBehindCount();
   Future<List<GitRemote>> listRemotes(String path) => _ds(path).listRemotes();
   Future<List<String>> listLocalBranches(String path) => _ds(path).listLocalBranches();
-  Future<Map<String, String>> worktreeBranches(String path) => _ds(path).worktreeBranches();
+  Future<({Map<String, String> active, Set<String> stale})> worktreeBranches(String path) =>
+      _ds(path).worktreeBranches();
   Future<void> checkout(String path, String branch) => _ds(path).checkout(branch);
-  Future<void> createBranch(String path, String name) => _ds(path).createBranch(name);
-  Future<void> createWorktree(String path, String branchName, String worktreePath) =>
-      _ds(path).createWorktree(branchName, worktreePath);
+  Future<void> createBranch(String path, String name, {String? baseBranch}) =>
+      _ds(path).createBranch(name, baseBranch: baseBranch);
+  Future<void> createWorktree(String path, String branchName, String worktreePath, {String? baseBranch}) =>
+      _ds(path).createWorktree(branchName, worktreePath, baseBranch: baseBranch);
   Future<List<GitChangedFile>> getChangedFiles(String path) => _ds(path).getChangedFiles();
 
   Future<GitLiveState> fetchLiveState(String path) {

@@ -44,7 +44,8 @@ void main() {
 
     test('worktreeBranches is empty for plain repo', () async {
       final wt = await git.worktreeBranches();
-      expect(wt, isEmpty);
+      expect(wt.active, isEmpty);
+      expect(wt.stale, isEmpty);
     });
 
     test('checkout switches branch', () async {

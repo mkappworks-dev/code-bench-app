@@ -90,9 +90,9 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
     widget.onClose();
   }
 
-  Future<void> _createBranch() async {
+  Future<void> _createBranch(String baseBranch) async {
     final name = _createController.text.trim();
-    await ref.read(branchPickerProvider(widget.projectPath).notifier).createBranch(name);
+    await ref.read(branchPickerProvider(widget.projectPath).notifier).createBranch(name, baseBranch: baseBranch);
     if (!mounted) return;
     final state = ref.read(branchPickerProvider(widget.projectPath));
     if (state.hasError) {
@@ -118,11 +118,13 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
     }
   }
 
-  Future<void> _createWorktree() async {
+  Future<void> _createWorktree(String baseBranch) async {
     final branch = _createController.text.trim();
     final path = _worktreePathController.text.trim();
     if (branch.isEmpty || path.isEmpty) return;
-    await ref.read(branchPickerProvider(widget.projectPath).notifier).createWorktree(branch, path);
+    await ref
+        .read(branchPickerProvider(widget.projectPath).notifier)
+        .createWorktree(branch, path, baseBranch: baseBranch);
     if (!mounted) return;
     final s = ref.read(branchPickerProvider(widget.projectPath));
     if (s.hasError) {
@@ -182,7 +184,7 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
               _filterFocus.requestFocus();
             }
           });
-          final filtered = _filtered(value.branches);
+          final filtered = _filtered(value.branches).where((b) => !value.staleBranches.contains(b)).toList();
           final branches = filtered.where((b) => !value.worktreePaths.containsKey(b)).toList();
           final worktrees = filtered.where((b) => value.worktreePaths.containsKey(b)).toList();
           return SizedBox(
@@ -221,6 +223,15 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
   @override
   Widget build(BuildContext context) {
     final asyncState = ref.watch(branchPickerProvider(widget.projectPath));
+    final stale = asyncState.value?.staleBranches ?? const {};
+    // All local branches minus any locked to a prunable (stale) worktree.
+    final allBranches = (asyncState.value?.branches ?? const []).where((b) => !stale.contains(b)).toList();
+    // Worktree source list: root project (currentBranch) + active worktrees only.
+    // Stale worktrees are already absent from worktreePaths by the datasource.
+    final worktreeSources = [
+      if (widget.currentBranch != null) widget.currentBranch!,
+      ...?asyncState.value?.worktreePaths.keys,
+    ];
 
     return Stack(
       children: [
@@ -266,7 +277,7 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
                                 })
                               : null,
                         ),
-                        _SearchBar(controller: _filterController, focusNode: _filterFocus),
+                        if (!_createMode) _SearchBar(controller: _filterController, focusNode: _filterFocus),
                         if (!_createMode) ...[
                           Flexible(child: _buildList(asyncState)),
                           _DialogFooter(
@@ -284,12 +295,16 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
                             branchController: _createController,
                             pathController: _worktreePathController,
                             defaultPath: _defaultWorktreePath(),
+                            branches: worktreeSources,
+                            currentBranch: widget.currentBranch,
                             onSubmit: _createWorktree,
                           ),
                         ] else ...[
                           _BranchCreateForm(
                             controller: _createController,
                             focusNode: _createFocus,
+                            branches: allBranches,
+                            currentBranch: widget.currentBranch,
                             onSubmit: _createBranch,
                           ),
                         ],
@@ -563,11 +578,34 @@ class _FooterButton extends StatelessWidget {
   }
 }
 
-class _BranchCreateForm extends StatelessWidget {
-  const _BranchCreateForm({required this.controller, required this.focusNode, required this.onSubmit});
+class _BranchCreateForm extends StatefulWidget {
+  const _BranchCreateForm({
+    required this.controller,
+    required this.focusNode,
+    required this.branches,
+    required this.currentBranch,
+    required this.onSubmit,
+  });
   final TextEditingController controller;
   final FocusNode focusNode;
-  final VoidCallback onSubmit;
+  final List<String> branches;
+  final String? currentBranch;
+
+  /// Called with the selected base branch name when the user taps Create.
+  final void Function(String baseBranch) onSubmit;
+
+  @override
+  State<_BranchCreateForm> createState() => _BranchCreateFormState();
+}
+
+class _BranchCreateFormState extends State<_BranchCreateForm> {
+  late String _base;
+
+  @override
+  void initState() {
+    super.initState();
+    _base = widget.currentBranch ?? (widget.branches.isNotEmpty ? widget.branches.first : '');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -576,17 +614,28 @@ class _BranchCreateForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const Text('Branch name', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10)),
+          const SizedBox(height: 4),
           TextField(
-            controller: controller,
-            focusNode: focusNode,
+            controller: widget.controller,
+            focusNode: widget.focusNode,
             autofocus: true,
-            onSubmitted: (_) => onSubmit(),
+            onSubmitted: (_) => widget.onSubmit(_base),
             style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
             decoration: const InputDecoration(hintText: 'branch-name'),
           ),
           const SizedBox(height: 10),
+          const Text('From', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10)),
+          const SizedBox(height: 4),
+          if (widget.branches.isNotEmpty)
+            _SourceDropdown(
+              value: widget.branches.contains(_base) ? _base : widget.branches.first,
+              items: widget.branches,
+              onChanged: (v) => setState(() => _base = v),
+            ),
+          const SizedBox(height: 10),
           GestureDetector(
-            onTap: onSubmit,
+            onTap: () => widget.onSubmit(_base),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
@@ -608,23 +657,42 @@ class _BranchCreateForm extends StatelessWidget {
   }
 }
 
-class _WorktreeCreateForm extends StatelessWidget {
+class _WorktreeCreateForm extends StatefulWidget {
   const _WorktreeCreateForm({
     required this.branchController,
     required this.pathController,
     required this.defaultPath,
+    required this.branches,
+    required this.currentBranch,
     required this.onSubmit,
   });
   final TextEditingController branchController;
   final TextEditingController pathController;
   final String defaultPath;
-  final VoidCallback onSubmit;
+  final List<String> branches;
+  final String? currentBranch;
+
+  /// Called with the selected base branch name when the user taps Create.
+  final void Function(String baseBranch) onSubmit;
+
+  @override
+  State<_WorktreeCreateForm> createState() => _WorktreeCreateFormState();
+}
+
+class _WorktreeCreateFormState extends State<_WorktreeCreateForm> {
+  late String _base;
+
+  @override
+  void initState() {
+    super.initState();
+    _base = widget.currentBranch ?? (widget.branches.isNotEmpty ? widget.branches.first : '');
+    if (widget.pathController.text.isEmpty && widget.defaultPath.isNotEmpty) {
+      widget.pathController.text = widget.defaultPath;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (pathController.text.isEmpty && defaultPath.isNotEmpty) {
-      pathController.text = defaultPath;
-    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
@@ -633,7 +701,7 @@ class _WorktreeCreateForm extends StatelessWidget {
           const Text('Branch name', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10)),
           const SizedBox(height: 4),
           TextField(
-            controller: branchController,
+            controller: widget.branchController,
             autofocus: true,
             style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
             decoration: const InputDecoration(hintText: 'feat/my-feature'),
@@ -642,13 +710,22 @@ class _WorktreeCreateForm extends StatelessWidget {
           const Text('Path', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10)),
           const SizedBox(height: 4),
           TextField(
-            controller: pathController,
+            controller: widget.pathController,
             style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
             decoration: const InputDecoration(hintText: '.worktrees/feat-my-feature'),
           ),
+          const SizedBox(height: 8),
+          const Text('From worktree', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10)),
+          const SizedBox(height: 4),
+          if (widget.branches.isNotEmpty)
+            _SourceDropdown(
+              value: widget.branches.contains(_base) ? _base : widget.branches.first,
+              items: widget.branches,
+              onChanged: (v) => setState(() => _base = v),
+            ),
           const SizedBox(height: 10),
           GestureDetector(
-            onTap: onSubmit,
+            onTap: () => widget.onSubmit(_base),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
@@ -666,6 +743,195 @@ class _WorktreeCreateForm extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Overlay dropdown using [CompositedTransformFollower] + [LayerLink].
+///
+/// The panel floats above the dialog in the [Overlay] layer, anchored
+/// directly below the trigger with matching width — no Navigator route
+/// machinery and no layout expansion of the parent dialog.
+class _SourceDropdown extends StatefulWidget {
+  const _SourceDropdown({required this.value, required this.items, required this.onChanged});
+
+  final String value;
+  final List<String> items;
+  final ValueChanged<String> onChanged;
+
+  @override
+  State<_SourceDropdown> createState() => _SourceDropdownState();
+}
+
+class _SourceDropdownState extends State<_SourceDropdown> {
+  final _link = LayerLink();
+  OverlayEntry? _overlay;
+
+  bool get _isOpen => _overlay != null;
+
+  void _openOverlay(BuildContext context) {
+    final renderBox = context.findRenderObject()! as RenderBox;
+    final size = renderBox.size;
+    _overlay = OverlayEntry(
+      builder: (_) => _DropdownPanel(
+        link: _link,
+        triggerHeight: size.height,
+        width: size.width,
+        value: widget.value,
+        items: widget.items,
+        onChanged: (v) {
+          widget.onChanged(v);
+          _closeOverlay();
+        },
+        onDismiss: _closeOverlay,
+      ),
+    );
+    Overlay.of(context).insert(_overlay!);
+    setState(() {});
+  }
+
+  void _closeOverlay() {
+    _overlay?.remove();
+    _overlay = null;
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _overlay?.remove();
+    _overlay = null;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final effective = widget.items.contains(widget.value)
+        ? widget.value
+        : (widget.items.isNotEmpty ? widget.items.first : '');
+
+    return CompositedTransformTarget(
+      link: _link,
+      child: GestureDetector(
+        onTap: () => _isOpen ? _closeOverlay() : _openOverlay(context),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: ThemeConstants.fieldSurface,
+            border: Border.all(
+              color: _isOpen ? ThemeConstants.accent : ThemeConstants.fieldBorder,
+              width: _isOpen ? 1.5 : 1.0,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  effective,
+                  style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Icon(
+                _isOpen ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                size: 12,
+                color: ThemeConstants.mutedFg,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Floating panel inserted into the [Overlay] by [_SourceDropdown].
+class _DropdownPanel extends StatelessWidget {
+  const _DropdownPanel({
+    required this.link,
+    required this.triggerHeight,
+    required this.width,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+    required this.onDismiss,
+  });
+
+  final LayerLink link;
+  final double triggerHeight;
+  final double width;
+  final String value;
+  final List<String> items;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    // Material resets DefaultTextStyle so Overlay-inherited underline decoration
+    // doesn't bleed onto the panel's text items.
+    return Material(
+      type: MaterialType.transparency,
+      child: Stack(
+        children: [
+          // Full-screen dismiss layer — opaque so the dialog's own dismiss
+          // gesture doesn't fire; one tap closes the dropdown first.
+          Positioned.fill(child: GestureDetector(onTap: onDismiss, behavior: HitTestBehavior.opaque)),
+          // Panel anchored just below the trigger.
+          CompositedTransformFollower(
+          link: link,
+          showWhenUnlinked: false,
+          offset: Offset(0, triggerHeight + 2),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: width,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 160),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: ThemeConstants.panelBackground,
+                    border: Border.all(color: ThemeConstants.glassBorderSubtle),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: items.map((item) {
+                        final selected = item == value;
+                        return GestureDetector(
+                          onTap: () => onChanged(item),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            decoration: selected
+                                ? BoxDecoration(color: ThemeConstants.accent.withValues(alpha: 0.08))
+                                : null,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    item,
+                                    style: TextStyle(
+                                      color: selected ? ThemeConstants.accent : ThemeConstants.textSecondary,
+                                      fontSize: 12,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (selected) const Icon(LucideIcons.check, size: 10, color: ThemeConstants.accent),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
     );
   }
 }
