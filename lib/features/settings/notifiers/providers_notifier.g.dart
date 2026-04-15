@@ -38,7 +38,7 @@ final class ApiKeysNotifierProvider extends $AsyncNotifierProvider<ApiKeysNotifi
   ApiKeysNotifier create() => ApiKeysNotifier();
 }
 
-String _$apiKeysNotifierHash() => r'9baad3f338aee8e97f1e3126dc723e4ad9435eab';
+String _$apiKeysNotifierHash() => r'a3df672e671a76eb20bc457580d3023c849f3038';
 
 /// Loads API keys on first watch and exposes save/delete actions.
 /// Auto-disposes when the settings screen is not in view.

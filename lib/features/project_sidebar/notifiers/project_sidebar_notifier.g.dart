@@ -103,7 +103,7 @@ final class ActiveWorktreePathNotifierProvider
   }
 }
 
-String _$activeWorktreePathNotifierHash() => r'14797c6d7b60521eba08ed542e9438a3a55dbdc1';
+String _$activeWorktreePathNotifierHash() => r'232db4ee6455b27903824e088648e9fa104a238d';
 
 /// Persisted worktree path overrides: sessionId → effective filesystem path.
 ///
