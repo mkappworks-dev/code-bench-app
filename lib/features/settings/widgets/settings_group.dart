@@ -11,13 +11,26 @@ class SettingsGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: ThemeConstants.deepBorder),
-        borderRadius: BorderRadius.circular(8),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0x05FFFFFF) // rgba 255,255,255,0.02
+            : const Color(0x99FFFFFF), // rgba 255,255,255,0.60
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? ThemeConstants.glassBorderSubtle
+              : ThemeConstants.lightBorder,
+        ),
+        borderRadius: BorderRadius.circular(9),
       ),
       child: Column(
         children: [
           for (int i = 0; i < rows.length; i++) ...[
-            if (i > 0) const Divider(height: 1, color: ThemeConstants.deepBorder),
+            if (i > 0)
+              Divider(
+                height: 1,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? ThemeConstants.glassBorderFaint
+                    : ThemeConstants.lightDivider,
+              ),
             rows[i],
           ],
         ],

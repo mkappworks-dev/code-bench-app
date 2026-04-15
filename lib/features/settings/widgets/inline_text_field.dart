@@ -13,15 +13,12 @@ class InlineTextField extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: obscureText,
-      style: const TextStyle(
-        color: ThemeConstants.textPrimary,
+      style: TextStyle(
+        color: Theme.of(context).brightness == Brightness.dark ? ThemeConstants.textPrimary : ThemeConstants.lightText,
         fontSize: 12,
         fontFamily: ThemeConstants.editorFontFamily,
       ),
-      decoration: const InputDecoration(
-        isDense: true,
-        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      ),
+      decoration: const InputDecoration(),
     );
   }
 }
