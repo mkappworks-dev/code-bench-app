@@ -1,5 +1,6 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -8,6 +9,7 @@ import '../../../core/widgets/app_snack_bar.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../notifiers/branch_picker_failure.dart';
 import '../notifiers/branch_picker_notifier.dart';
+import '../notifiers/branch_picker_state.dart';
 
 class BranchPickerPopover extends ConsumerStatefulWidget {
   const BranchPickerPopover({
@@ -32,13 +34,16 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
   final _createController = TextEditingController();
   final _filterFocus = FocusNode();
   final _createFocus = FocusNode();
+  final _worktreePathController = TextEditingController();
 
   bool _createMode = false;
+  bool _worktreeMode = false;
 
   @override
   void initState() {
     super.initState();
     _filterController.addListener(() => setState(() {}));
+    _createController.addListener(() => setState(() {}));
   }
 
   @override
@@ -47,6 +52,7 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
     _createController.dispose();
     _filterFocus.dispose();
     _createFocus.dispose();
+    _worktreePathController.dispose();
     super.dispose();
   }
 
@@ -65,6 +71,8 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
           // Reload so the branch list is restored from the error state.
           ref.read(branchPickerProvider(widget.projectPath).notifier).reload();
         case BranchPickerCreateFailed(:final message):
+          AppSnackBar.show(context, 'Checkout failed: $message', type: AppSnackBarType.error);
+        case BranchPickerCreateWorktreeFailed(:final message):
           AppSnackBar.show(context, 'Checkout failed: $message', type: AppSnackBarType.error);
         case BranchPickerGitUnavailable():
           AppSnackBar.show(context, 'Checkout failed — git binary unavailable.', type: AppSnackBarType.error);
@@ -97,10 +105,35 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
           AppSnackBar.show(context, 'Failed: $message', type: AppSnackBarType.error);
         case BranchPickerCheckoutConflict(:final message):
           AppSnackBar.show(context, message, type: AppSnackBarType.error);
+        case BranchPickerCreateWorktreeFailed(:final message):
+          AppSnackBar.show(context, 'Failed: $message', type: AppSnackBarType.error);
         case BranchPickerGitUnavailable():
           AppSnackBar.show(context, 'Create branch failed — git binary unavailable.', type: AppSnackBarType.error);
         case BranchPickerUnknownError():
           AppSnackBar.show(context, 'Create branch failed — project folder unavailable.', type: AppSnackBarType.error);
+      }
+    } else {
+      ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
+      widget.onClose();
+    }
+  }
+
+  Future<void> _createWorktree() async {
+    final branch = _createController.text.trim();
+    final path = _worktreePathController.text.trim();
+    if (branch.isEmpty || path.isEmpty) return;
+    await ref.read(branchPickerProvider(widget.projectPath).notifier).createWorktree(branch, path);
+    if (!mounted) return;
+    final s = ref.read(branchPickerProvider(widget.projectPath));
+    if (s.hasError) {
+      final failure = s.error;
+      if (failure is BranchPickerFailure) {
+        switch (failure) {
+          case BranchPickerCreateWorktreeFailed(:final message):
+            AppSnackBar.show(context, 'Worktree failed: $message', type: AppSnackBarType.error);
+          default:
+            AppSnackBar.show(context, 'Create worktree failed.', type: AppSnackBarType.error);
+        }
       }
     } else {
       ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
@@ -114,120 +147,155 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
     return branches.where((b) => b.toLowerCase().contains(q)).toList();
   }
 
+  String _defaultWorktreePath() {
+    final branch = _createController.text.trim();
+    if (branch.isEmpty) return '';
+    final parent = widget.projectPath.contains('/')
+        ? widget.projectPath.substring(0, widget.projectPath.lastIndexOf('/'))
+        : widget.projectPath;
+    return '$parent/.worktrees/$branch';
+  }
+
+  Widget _buildList(AsyncValue<BranchPickerState> asyncState) {
+    return switch (asyncState) {
+      AsyncLoading() => const Padding(
+        padding: EdgeInsets.all(20),
+        child: Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 1.5, color: ThemeConstants.accent),
+          ),
+        ),
+      ),
+      AsyncError(:final error) => Padding(
+        padding: const EdgeInsets.all(14),
+        child: Text(
+          _errorMessage(error),
+          style: const TextStyle(color: ThemeConstants.warning, fontSize: ThemeConstants.uiFontSizeLabel),
+        ),
+      ),
+      AsyncData(:final value) => Builder(
+        builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_filterFocus.hasFocus && !_createFocus.hasFocus) {
+              _filterFocus.requestFocus();
+            }
+          });
+          final filtered = _filtered(value.branches);
+          final branches = filtered.where((b) => !value.worktreePaths.containsKey(b)).toList();
+          final worktrees = filtered.where((b) => value.worktreePaths.containsKey(b)).toList();
+          return SizedBox(
+            height: 240,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              children: [
+                if (branches.isNotEmpty) ...[
+                  const _SectionHeader(label: 'BRANCHES'),
+                  for (final b in branches)
+                    _BranchRow(
+                      branch: b,
+                      isCurrent: b == widget.currentBranch,
+                      isWorktree: false,
+                      onTap: b == widget.currentBranch ? null : () => _checkout(b),
+                    ),
+                ],
+                if (worktrees.isNotEmpty) ...[
+                  const _SectionHeader(label: 'WORKTREES'),
+                  for (final b in worktrees)
+                    _BranchRow(
+                      branch: b,
+                      isCurrent: b == widget.currentBranch,
+                      isWorktree: true,
+                      onTap: b == widget.currentBranch ? null : () => _switchToWorktree(value.worktreePaths[b]!),
+                    ),
+                ],
+              ],
+            ),
+          );
+        },
+      ),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncState = ref.watch(branchPickerProvider(widget.projectPath));
 
     return Stack(
       children: [
-        // Dismiss on outside tap
         Positioned.fill(
           child: GestureDetector(
             onTap: widget.onClose,
             behavior: HitTestBehavior.opaque,
-            child: const SizedBox.expand(),
+            child: Container(color: const Color(0x33000000)),
           ),
         ),
-        // Popover
-        CompositedTransformFollower(
-          link: widget.layerLink,
-          targetAnchor: Alignment.topRight,
-          followerAnchor: Alignment.bottomRight,
-          offset: const Offset(0, -8),
+        Center(
           child: Material(
             color: Colors.transparent,
             child: GestureDetector(
-              onTap: () {}, // stop propagation
-              child: Container(
-                width: 280,
-                constraints: const BoxConstraints(maxHeight: 380),
-                decoration: BoxDecoration(
-                  color: ThemeConstants.panelBackground,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: ThemeConstants.deepBorder),
-                  boxShadow: const [
-                    BoxShadow(color: ThemeConstants.shadowMedium, blurRadius: 20, offset: Offset(0, -4)),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _SearchBar(controller: _filterController, focusNode: _filterFocus),
-                    Flexible(
-                      child: switch (asyncState) {
-                        AsyncLoading() => const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Center(
-                            child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5)),
-                          ),
-                        ),
-                        AsyncError(:final error) => Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: Text(
-                            _errorMessage(error),
-                            style: const TextStyle(
-                              color: ThemeConstants.warning,
-                              fontSize: ThemeConstants.uiFontSizeLabel,
-                            ),
-                          ),
-                        ),
-                        AsyncData(:final value) => Builder(
-                          builder: (context) {
-                            // Request focus after the first successful data load.
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (mounted && !_filterFocus.hasFocus && !_createFocus.hasFocus) {
-                                _filterFocus.requestFocus();
-                              }
-                            });
-                            final filtered = _filtered(value.branches);
-                            return ListView.builder(
-                              shrinkWrap: true,
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              itemCount: filtered.length,
-                              itemBuilder: (ctx, i) {
-                                final branch = filtered[i];
-                                final isCurrent = branch == widget.currentBranch;
-                                final worktreePath = value.worktreePaths[branch];
-                                final isWorktree = worktreePath != null;
-                                final VoidCallback? onTap;
-                                if (isCurrent) {
-                                  onTap = null;
-                                } else if (isWorktree) {
-                                  onTap = () => _switchToWorktree(worktreePath);
-                                } else {
-                                  onTap = () => _checkout(branch);
-                                }
-                                return _BranchRow(
-                                  branch: branch,
-                                  isCurrent: isCurrent,
-                                  isWorktree: isWorktree,
-                                  onTap: onTap,
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      },
+              onTap: () {},
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(13),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                  child: Container(
+                    width: 440,
+                    constraints: const BoxConstraints(maxHeight: 560),
+                    decoration: BoxDecoration(
+                      color: ThemeConstants.dialogSurface,
+                      borderRadius: BorderRadius.circular(13),
+                      border: Border.all(color: ThemeConstants.glassBorderSubtle),
+                      boxShadow: const [BoxShadow(color: Color(0xF2000000), blurRadius: 64, offset: Offset(0, 24))],
                     ),
-                    _Footer(
-                      createMode: _createMode,
-                      controller: _createController,
-                      focusNode: _createFocus,
-                      currentBranch: widget.currentBranch,
-                      onEnterCreateMode: () {
-                        setState(() => _createMode = true);
-                        WidgetsBinding.instance.addPostFrameCallback((_) => _createFocus.requestFocus());
-                      },
-                      onCreateSubmit: _createBranch,
-                      onCreateCancel: () {
-                        setState(() {
-                          _createMode = false;
-                          _createController.clear();
-                        });
-                        _filterFocus.requestFocus();
-                      },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _DialogHeader(
+                          currentBranch: widget.currentBranch,
+                          onClose: widget.onClose,
+                          createMode: _createMode,
+                          worktreeMode: _worktreeMode,
+                          onBack: _createMode
+                              ? () => setState(() {
+                                  _createMode = false;
+                                  _worktreeMode = false;
+                                  _createController.clear();
+                                  _worktreePathController.clear();
+                                })
+                              : null,
+                        ),
+                        _SearchBar(controller: _filterController, focusNode: _filterFocus),
+                        if (!_createMode) ...[
+                          Flexible(child: _buildList(asyncState)),
+                          _DialogFooter(
+                            onNewBranch: () => setState(() {
+                              _createMode = true;
+                              _worktreeMode = false;
+                            }),
+                            onNewWorktree: () => setState(() {
+                              _createMode = true;
+                              _worktreeMode = true;
+                            }),
+                          ),
+                        ] else if (_worktreeMode) ...[
+                          _WorktreeCreateForm(
+                            branchController: _createController,
+                            pathController: _worktreePathController,
+                            defaultPath: _defaultWorktreePath(),
+                            onSubmit: _createWorktree,
+                          ),
+                        ] else ...[
+                          _BranchCreateForm(
+                            controller: _createController,
+                            focusNode: _createFocus,
+                            onSubmit: _createBranch,
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -244,6 +312,7 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
         BranchPickerInvalidName(:final reason) => reason,
         BranchPickerCheckoutConflict(:final message) => message,
         BranchPickerCreateFailed(:final message) => message,
+        BranchPickerCreateWorktreeFailed(:final message) => message,
         BranchPickerUnknownError() => 'Could not read branches — is git installed and the folder available?',
       };
     }
@@ -253,6 +322,65 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
 
 // ── Sub-widgets ───────────────────────────────────────────────────────────────
 
+class _DialogHeader extends StatelessWidget {
+  const _DialogHeader({
+    required this.currentBranch,
+    required this.onClose,
+    required this.createMode,
+    required this.worktreeMode,
+    required this.onBack,
+  });
+
+  final String? currentBranch;
+  final VoidCallback onClose;
+  final bool createMode;
+  final bool worktreeMode;
+  final VoidCallback? onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = createMode ? (worktreeMode ? 'New Worktree' : 'New Branch') : 'Switch Branch';
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 10, 10),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: ThemeConstants.glassBorderFaint)),
+      ),
+      child: Row(
+        children: [
+          if (onBack != null) ...[
+            GestureDetector(
+              onTap: onBack,
+              child: const Icon(LucideIcons.arrowLeft, size: 14, color: ThemeConstants.textSecondary),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                if (!createMode && currentBranch != null)
+                  Text(
+                    currentBranch!,
+                    style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
+                  ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: onClose,
+            child: const Icon(LucideIcons.x, size: 14, color: ThemeConstants.mutedFg),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SearchBar extends StatelessWidget {
   const _SearchBar({required this.controller, required this.focusNode});
 
@@ -261,41 +389,35 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: TextField(
         controller: controller,
         focusNode: focusNode,
-        style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeLabel),
+        style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
         decoration: InputDecoration(
-          hintText: 'Filter branches…',
-          hintStyle: const TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSizeLabel),
+          hintText: 'Search branches…',
+          hintStyle: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
           prefixIcon: const Padding(
-            padding: EdgeInsets.only(left: 6, right: 4),
-            child: Icon(LucideIcons.search, size: 11, color: ThemeConstants.faintFg),
+            padding: EdgeInsets.only(left: 8, right: 4),
+            child: Icon(LucideIcons.search, size: 11, color: ThemeConstants.mutedFg),
           ),
           prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-          filled: true,
-          fillColor: ThemeConstants.inputBackground,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(4),
-            borderSide: const BorderSide(color: ThemeConstants.deepBorder),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(4),
-            borderSide: const BorderSide(color: ThemeConstants.deepBorder),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(4),
-            borderSide: const BorderSide(color: ThemeConstants.accent),
-          ),
         ),
       ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: Text(label, style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: 8, letterSpacing: 0.5)),
     );
   }
 }
@@ -360,100 +482,189 @@ class _BranchRow extends StatelessWidget {
   }
 }
 
-class _Footer extends StatelessWidget {
-  const _Footer({
-    required this.createMode,
-    required this.controller,
-    required this.focusNode,
-    required this.currentBranch,
-    required this.onEnterCreateMode,
-    required this.onCreateSubmit,
-    required this.onCreateCancel,
-  });
-
-  final bool createMode;
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final String? currentBranch;
-  final VoidCallback onEnterCreateMode;
-  final VoidCallback onCreateSubmit;
-  final VoidCallback onCreateCancel;
+class _DialogFooter extends StatelessWidget {
+  const _DialogFooter({required this.onNewBranch, required this.onNewWorktree});
+  final VoidCallback onNewBranch;
+  final VoidCallback onNewWorktree;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: ThemeConstants.borderColor)),
+        border: Border(top: BorderSide(color: ThemeConstants.glassBorderFaint)),
       ),
-      child: createMode ? _createInput() : _createButton(),
+      child: Row(
+        children: [
+          Expanded(
+            child: _FooterButton(
+              icon: LucideIcons.gitBranch,
+              label: 'New Branch',
+              iconColor: ThemeConstants.accent,
+              borderColor: ThemeConstants.accentBorderTeal,
+              onTap: onNewBranch,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _FooterButton(
+              icon: LucideIcons.layers,
+              label: 'New Worktree',
+              iconColor: ThemeConstants.worktreeBadgeFg,
+              borderColor: ThemeConstants.accentBorderAmber,
+              onTap: onNewWorktree,
+            ),
+          ),
+        ],
+      ),
     );
   }
+}
 
-  Widget _createButton() {
+class _FooterButton extends StatelessWidget {
+  const _FooterButton({
+    required this.icon,
+    required this.label,
+    required this.iconColor,
+    required this.borderColor,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final Color iconColor;
+  final Color borderColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
     return InkWell(
-      onTap: onEnterCreateMode,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(7),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0x08FFFFFF),
+          border: Border.all(color: borderColor),
+          borderRadius: BorderRadius.circular(7),
+        ),
         child: Row(
-          children: const [
-            Icon(LucideIcons.plus, size: 11, color: ThemeConstants.faintFg),
-            SizedBox(width: 6),
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 12, color: iconColor),
+            const SizedBox(width: 6),
             Text(
-              'Create new branch…',
-              style: TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSizeLabel),
+              label,
+              style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _createInput() {
-    return KeyboardListener(
-      focusNode: FocusNode(),
-      onKeyEvent: (event) {
-        if (event is KeyDownEvent) {
-          if (event.logicalKey == LogicalKeyboardKey.escape) {
-            onCreateCancel();
-          }
-        }
-      },
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(LucideIcons.gitBranch, size: 11, color: ThemeConstants.success),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: TextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    onSubmitted: (_) => onCreateSubmit(),
-                    style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeLabel),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      contentPadding: EdgeInsets.only(bottom: 2),
-                      border: UnderlineInputBorder(borderSide: BorderSide(color: ThemeConstants.success)),
-                      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: ThemeConstants.success)),
-                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: ThemeConstants.success)),
-                      hintText: 'branch-name',
-                      hintStyle: TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSizeLabel),
-                    ),
-                  ),
+class _BranchCreateForm extends StatelessWidget {
+  const _BranchCreateForm({required this.controller, required this.focusNode, required this.onSubmit});
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final VoidCallback onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: controller,
+            focusNode: focusNode,
+            autofocus: true,
+            onSubmitted: (_) => onSubmit(),
+            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+            decoration: const InputDecoration(hintText: 'branch-name'),
+          ),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: onSubmit,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [ThemeConstants.accent, ThemeConstants.accentHover]),
+                borderRadius: BorderRadius.circular(7),
+                boxShadow: const [BoxShadow(color: ThemeConstants.sendGlow, blurRadius: 8, offset: Offset(0, 2))],
+              ),
+              child: const Center(
+                child: Text(
+                  'Create Branch',
+                  style: TextStyle(color: ThemeConstants.onAccent, fontSize: 11, fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(width: 8),
-                const Text('↵ create · esc cancel', style: TextStyle(color: ThemeConstants.faintFg, fontSize: 9)),
-              ],
+              ),
             ),
-            if (currentBranch != null) ...[
-              const SizedBox(height: 3),
-              Text('from $currentBranch', style: const TextStyle(color: ThemeConstants.faintFg, fontSize: 9)),
-            ],
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WorktreeCreateForm extends StatelessWidget {
+  const _WorktreeCreateForm({
+    required this.branchController,
+    required this.pathController,
+    required this.defaultPath,
+    required this.onSubmit,
+  });
+  final TextEditingController branchController;
+  final TextEditingController pathController;
+  final String defaultPath;
+  final VoidCallback onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    if (pathController.text.isEmpty && defaultPath.isNotEmpty) {
+      pathController.text = defaultPath;
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Branch name', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10)),
+          const SizedBox(height: 4),
+          TextField(
+            controller: branchController,
+            autofocus: true,
+            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+            decoration: const InputDecoration(hintText: 'feat/my-feature'),
+          ),
+          const SizedBox(height: 8),
+          const Text('Path', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10)),
+          const SizedBox(height: 4),
+          TextField(
+            controller: pathController,
+            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+            decoration: const InputDecoration(hintText: '.worktrees/feat-my-feature'),
+          ),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: onSubmit,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0x14E8A228),
+                border: Border.all(color: ThemeConstants.accentBorderAmber),
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: const Center(
+                child: Text(
+                  'Create Worktree',
+                  style: TextStyle(color: ThemeConstants.worktreeBadgeFg, fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -19,6 +19,7 @@ abstract interface class GitDatasource {
   Future<Map<String, String>> worktreeBranches();
   Future<void> checkout(String branch);
   Future<void> createBranch(String name);
+  Future<void> createWorktree(String branchName, String worktreePath);
   Future<List<GitChangedFile>> getChangedFiles();
 }
 

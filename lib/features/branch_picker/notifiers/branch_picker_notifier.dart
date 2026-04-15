@@ -17,6 +17,12 @@ class BranchPickerNotifier extends _$BranchPickerNotifier {
     return BranchPickerState(branches: branches, worktreePaths: wtPaths);
   }
 
+  BranchPickerFailure _asWorktreeFailure(Object e) => switch (e) {
+    ArgumentError(:final message) => BranchPickerFailure.createWorktreeFailed(message?.toString() ?? 'Invalid input'),
+    GitException(:final message) => BranchPickerFailure.createWorktreeFailed(message),
+    _ => BranchPickerFailure.gitUnavailable(),
+  };
+
   BranchPickerFailure _asFailure(Object e) => switch (e) {
     ArgumentError(:final message) => BranchPickerFailure.invalidName(message?.toString() ?? 'Invalid branch name'),
     GitException(:final message) when message.contains('would be overwritten') => BranchPickerFailure.checkoutConflict(
@@ -45,6 +51,22 @@ class BranchPickerNotifier extends _$BranchPickerNotifier {
   /// Re-triggers [build] via Riverpod's lifecycle. Call after an action error
   /// to restore the branch list without leaving the popover in an error state.
   void reload() => ref.invalidateSelf();
+
+  Future<void> createWorktree(String branchName, String worktreePath) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        final git = ref.read(gitServiceProvider);
+        await git.createWorktree(projectPath, branchName, worktreePath);
+        final branches = await git.listLocalBranches(projectPath);
+        final wt = await git.worktreeBranches(projectPath);
+        return BranchPickerState(branches: branches, worktreePaths: wt);
+      } catch (e, st) {
+        dLog('[BranchPickerNotifier] createWorktree failed: $e');
+        Error.throwWithStackTrace(_asWorktreeFailure(e), st);
+      }
+    });
+  }
 
   Future<void> createBranch(String name) async {
     state = const AsyncLoading();

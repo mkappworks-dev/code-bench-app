@@ -45,6 +45,8 @@ class GitService {
   Future<Map<String, String>> worktreeBranches(String path) => _ds(path).worktreeBranches();
   Future<void> checkout(String path, String branch) => _ds(path).checkout(branch);
   Future<void> createBranch(String path, String name) => _ds(path).createBranch(name);
+  Future<void> createWorktree(String path, String branchName, String worktreePath) =>
+      _ds(path).createWorktree(branchName, worktreePath);
   Future<List<GitChangedFile>> getChangedFiles(String path) => _ds(path).getChangedFiles();
 
   Future<GitLiveState> fetchLiveState(String path) {

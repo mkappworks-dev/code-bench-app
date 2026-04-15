@@ -274,6 +274,28 @@ class GitDatasourceProcess implements GitDatasource {
     }
   }
 
+  /// Creates a new git worktree at [worktreePath] on a new branch [branchName].
+  /// Throws [ArgumentError] for flag-shaped names, [GitException] on git failure.
+  @override
+  Future<void> createWorktree(String branchName, String worktreePath) async {
+    if (branchName.isEmpty) throw ArgumentError('Branch name must not be empty.');
+    if (branchName.startsWith('-')) {
+      sLog('[GitDatasourceProcess] flag-shaped createWorktree branch rejected: "$branchName"');
+      throw ArgumentError('Branch name must not start with a dash.');
+    }
+    if (branchName.contains(' ')) throw ArgumentError('Branch name must not contain spaces.');
+    final result = await Process.run('git', [
+      'worktree',
+      'add',
+      worktreePath,
+      '-b',
+      branchName,
+    ], workingDirectory: _projectPath);
+    if (result.exitCode != 0) {
+      throw GitException('git worktree add failed: ${(result.stderr as String).trim()}');
+    }
+  }
+
   /// Pushes current branch to a named [remote].
   @override
   Future<void> pushToRemote(String remote) async {
@@ -308,7 +330,9 @@ class GitDatasourceProcess implements GitDatasource {
       result = await Process.run('git', ['diff', '--numstat', 'HEAD'], workingDirectory: _projectPath);
       output = (result.stdout as String).trim();
       if (result.exitCode != 0) {
-        dLog('[GitDatasourceProcess] getChangedFiles HEAD diff failed (exit ${result.exitCode}): ${(result.stderr as String).trim()}');
+        dLog(
+          '[GitDatasourceProcess] getChangedFiles HEAD diff failed (exit ${result.exitCode}): ${(result.stderr as String).trim()}',
+        );
         return [];
       }
     }
