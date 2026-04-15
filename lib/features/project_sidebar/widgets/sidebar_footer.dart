@@ -10,6 +10,10 @@ class SidebarFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final chipColor = dark ? ThemeConstants.chipSurface : ThemeConstants.lightChipSurface;
+    final borderColor = dark ? ThemeConstants.chipBorder : ThemeConstants.lightChipBorder;
+    final textColor = dark ? ThemeConstants.textSecondary : ThemeConstants.lightChipText;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Align(
@@ -20,16 +24,16 @@ class SidebarFooter extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: ThemeConstants.chipSurface,
-              border: Border.all(color: ThemeConstants.chipBorder),
+              color: chipColor,
+              border: Border.all(color: borderColor),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(AppIcons.settings, size: 11, color: ThemeConstants.textSecondary),
+                Icon(AppIcons.settings, size: 11, color: textColor),
                 const SizedBox(width: 6),
-                const Text('Settings', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 11)),
+                Text('Settings', style: TextStyle(color: textColor, fontSize: 11)),
               ],
             ),
           ),

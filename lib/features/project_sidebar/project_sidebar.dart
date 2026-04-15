@@ -125,9 +125,10 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
     // Watch activeProjectId to rebuild when it changes.
     ref.watch(activeProjectIdProvider);
 
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: 224,
-      color: ThemeConstants.activityBar,
+      color: dark ? ThemeConstants.activityBar : ThemeConstants.lightActivityBar,
       child: Column(
         children: [
           // Traffic-light clearance on macOS (TitleBarStyle.hidden)
@@ -151,8 +152,10 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
                     final project = projects[i];
                     final sessions = ref.watch(projectSessionsProvider(project.id)).value ?? [];
                     return Container(
-                      decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: ThemeConstants.deepBackground)),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: dark ? ThemeConstants.deepBackground : ThemeConstants.lightDivider),
+                        ),
                       ),
                       child: ProjectTile(
                         project: project,

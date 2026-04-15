@@ -66,17 +66,19 @@ class SidebarHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final labelColor = dark ? ThemeConstants.mutedFg : ThemeConstants.lightTextMuted;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: dark ? ThemeConstants.borderColor : ThemeConstants.lightBorder)),
       ),
       child: Row(
         children: [
-          const Text(
+          Text(
             'PROJECTS',
             style: TextStyle(
-              color: ThemeConstants.mutedFg,
+              color: labelColor,
               fontSize: ThemeConstants.uiFontSizeLabel,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.8,
@@ -89,7 +91,7 @@ class SidebarHeader extends ConsumerWidget {
               borderRadius: BorderRadius.circular(4),
               child: Padding(
                 padding: const EdgeInsets.all(3),
-                child: Icon(AppIcons.arrowUpDown, size: 13, color: ThemeConstants.mutedFg),
+                child: Icon(AppIcons.arrowUpDown, size: 13, color: labelColor),
               ),
             ),
           ),
@@ -99,7 +101,7 @@ class SidebarHeader extends ConsumerWidget {
             borderRadius: BorderRadius.circular(4),
             child: Padding(
               padding: const EdgeInsets.all(3),
-              child: Icon(AppIcons.add, size: 13, color: ThemeConstants.mutedFg),
+              child: Icon(AppIcons.add, size: 13, color: labelColor),
             ),
           ),
         ],

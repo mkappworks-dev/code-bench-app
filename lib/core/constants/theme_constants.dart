@@ -180,6 +180,12 @@ class ThemeConstants {
   static const Color lightSendDisabledBorder = Color(0x21000000);
   static const Color lightSendDisabledIcon = Color(0x40000000);
 
+  // Light-mode structural surfaces (no dark equivalents needed — dark uses named tokens above)
+  static const Color lightSidebarBackground = Color(0xFFE8EAEE);
+  static const Color lightActivityBar = Color(0xFFDFE1E6);
+  static const Color lightPanelBackground = Color(0xFFF6F8FA);
+  static const Color lightFrostedSurface = Color(0xF0FFFFFF);
+
   // Box shadow colours
   static const Color shadowDark = Color(0x99000000);
   static const Color shadowMedium = Color(0x66000000);

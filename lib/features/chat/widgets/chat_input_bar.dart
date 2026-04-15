@@ -230,13 +230,18 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
   ) {
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final menuBg = isDark ? ThemeConstants.panelBackground : ThemeConstants.lightPanelBackground;
+    final menuBorder = isDark ? ThemeConstants.faintFg : ThemeConstants.lightBorder;
+    final activeColor = isDark ? ThemeConstants.textPrimary : ThemeConstants.lightText;
+    final inactiveColor = isDark ? ThemeConstants.textSecondary : ThemeConstants.lightTextSecondary;
     showInstantMenu<T>(
       context: context,
       position: _menuAbove(context, box),
-      color: ThemeConstants.panelBackground,
+      color: menuBg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
-        side: const BorderSide(color: ThemeConstants.faintFg),
+        side: BorderSide(color: menuBorder),
       ),
       items: items
           .map(
@@ -249,7 +254,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                     child: Text(
                       label(item),
                       style: TextStyle(
-                        color: item == selected ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
+                        color: item == selected ? activeColor : inactiveColor,
                         fontSize: ThemeConstants.uiFontSizeSmall,
                       ),
                     ),
@@ -270,13 +275,18 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final selected = ref.read(selectedModelProvider);
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final menuBg = isDark ? ThemeConstants.panelBackground : ThemeConstants.lightPanelBackground;
+    final menuBorder = isDark ? ThemeConstants.faintFg : ThemeConstants.lightBorder;
+    final activeColor = isDark ? ThemeConstants.textPrimary : ThemeConstants.lightText;
+    final inactiveColor = isDark ? ThemeConstants.textSecondary : ThemeConstants.lightTextSecondary;
     showInstantMenu<AIModel>(
       context: context,
       position: _menuAbove(context, box),
-      color: ThemeConstants.panelBackground,
+      color: menuBg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
-        side: const BorderSide(color: ThemeConstants.faintFg),
+        side: BorderSide(color: menuBorder),
       ),
       items: models
           .map(
@@ -286,7 +296,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
               child: Text(
                 '${m.provider.displayName} / ${m.name}',
                 style: TextStyle(
-                  color: m == selected ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
+                  color: m == selected ? activeColor : inactiveColor,
                   fontSize: ThemeConstants.uiFontSizeSmall,
                 ),
               ),
@@ -369,12 +379,22 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                 focusNode: _focusNode,
                 maxLines: null,
                 minLines: 1,
-                style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? ThemeConstants.textPrimary
+                      : ThemeConstants.lightText,
+                  fontSize: ThemeConstants.uiFontSize,
+                ),
                 decoration: InputDecoration(
                   hintText: isMissing
                       ? 'Project folder is missing — Relocate or Remove to continue'
                       : 'Ask anything, @tag files/folders, or use /command',
-                  hintStyle: const TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSize),
+                  hintStyle: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? ThemeConstants.faintFg
+                        : ThemeConstants.lightTextMuted,
+                    fontSize: ThemeConstants.uiFontSize,
+                  ),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,

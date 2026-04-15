@@ -35,8 +35,10 @@ class TopActionBar extends ConsumerWidget {
           // ── Left: title + badges ────────────────────────────────────────
           Text(
             s.sessionTitle,
-            style: const TextStyle(
-              color: ThemeConstants.textPrimary,
+            style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? ThemeConstants.textPrimary
+                  : ThemeConstants.lightText,
               fontSize: ThemeConstants.uiFontSize,
               fontWeight: FontWeight.w500,
             ),
@@ -46,10 +48,20 @@ class TopActionBar extends ConsumerWidget {
             // Project name badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(color: ThemeConstants.inputSurface, borderRadius: BorderRadius.circular(4)),
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? ThemeConstants.inputSurface
+                    : ThemeConstants.lightChipSurface,
+                borderRadius: BorderRadius.circular(4),
+              ),
               child: Text(
                 s.project!.name,
-                style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeLabel),
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? ThemeConstants.mutedFg
+                      : ThemeConstants.lightTextMuted,
+                  fontSize: ThemeConstants.uiFontSizeLabel,
+                ),
               ),
             ),
             // No Git badge (only when we've definitively observed the path
