@@ -71,15 +71,31 @@ hardcoded in widgets — always reference a token.
 
 | Token | Value | Role |
 |---|---|---|
-| `lightBackground` | `#F0F2F5` | App background |
-| `lightSurface` | `#FFFFFF` | Cards, dialogs, input surfaces |
-| `lightBorder` | `#D4D8DF` | Borders, dividers |
-| `lightBorderSubtle` | `rgba(0,0,0,0.06)` | Hairline separators |
-| `lightText` | `#2C3138` | Primary text |
-| `lightTextSecondary` | `#6B7280` | Secondary / placeholder text |
-| `lightTextMuted` | `#9DA5B0` | Disabled / hint text |
-| `lightChipSurface` | `rgba(0,0,0,0.04)` | Chip fill |
-| `lightChipBorder` | `rgba(0,0,0,0.1)` | Chip border |
+| `lightBackground` | `#F0F2F5` | App background, message area, input wrapper |
+| `lightStatusBar` | `#E8EAEE` | Status bar — one step darker than background |
+| `lightTopBarSurface` | `rgba(240,242,245,0.80)` | Top bar frosted glass fill |
+| `lightChatBoxSurface` | `rgba(255,255,255,0.72)` | Chat box frosted fill |
+| `lightChatBoxBorder` | `rgba(255,255,255,0.90)` | Chat box frosted border |
+| `lightDialogSurface` | `rgba(255,255,255,0.88)` | Dialog frosted glass fill |
+| `lightDialogBorder` | `rgba(255,255,255,0.95)` | Dialog frosted border |
+| `lightDialogHighlight` | `rgba(255,255,255,1.0)` | Dialog inner top-edge highlight |
+| `lightDivider` | `rgba(0,0,0,0.06)` | Toolbar separator, row dividers, dialog footer line |
+| `lightBorder` | `rgba(0,0,0,0.09)` | General borders |
+| `lightText` | `#1E2329` | Primary text |
+| `lightTextSecondary` | `#3A424D` | Assistant message text |
+| `lightTextTertiary` | `#6B7280` | Secondary / label text |
+| `lightTextMuted` | `#9BA4B0` | Hint / placeholder text |
+| `lightChipSurface` | `rgba(0,0,0,0.04)` | Chip / pill fill |
+| `lightChipBorder` | `rgba(0,0,0,0.10)` | Chip / pill border |
+| `lightChipText` | `#7A8494` | Chip label text |
+| `lightUserBubbleSurface` | `rgba(78,201,176,0.12)` | User message bubble fill |
+| `lightUserBubbleBorder` | `rgba(78,201,176,0.30)` | User message bubble border |
+| `lightInlineCodeSurface` | `rgba(78,201,176,0.12)` | Inline code background |
+| `lightInlineCodeBorder` | `rgba(78,201,176,0.20)` | Inline code border |
+| `lightInlineCodeText` | `#2A7A6E` | Inline code text colour |
+| `lightSendDisabledSurface` | `rgba(0,0,0,0.05)` | Send button fill when disabled |
+| `lightSendDisabledBorder` | `rgba(0,0,0,0.13)` | Send button border when disabled |
+| `lightSendDisabledIcon` | `rgba(0,0,0,0.25)` | Send button arrow when disabled |
 
 ---
 
@@ -373,24 +389,77 @@ Tapping "New Branch" or "New Worktree" replaces the dialog body (not a new dialo
 
 ### 9a. `AppTheme.light` (`lib/core/theme/app_theme.dart`)
 
-Mirror `AppTheme.dark` structure with Cool Studio tokens (§2c):
+**Design language:** Glass Elevated Light — same frosted-surface hierarchy as dark, inverted.
+Background `#F0F2F5`, white-glass surfaces (`rgba(255,255,255,0.72–0.88)` + blur), teal accent unchanged.
+
+**`ThemeData` properties:**
 
 | Property | Light value |
 |---|---|
 | `scaffoldBackgroundColor` | `lightBackground` (`#F0F2F5`) |
-| `colorScheme.surface` | `lightSurface` (`#FFFFFF`) |
-| `colorScheme.primary` | `accent` (`#4EC9B0`) |
+| `colorScheme.surface` | `lightChatBoxSurface` |
+| `colorScheme.primary` | `accent` (`#4EC9B0`) — unchanged |
 | `colorScheme.onPrimary` | `#FFFFFF` |
-| `colorScheme.onSurface` | `lightText` (`#2C3138`) |
-| Dialog background | `lightSurface` |
-| `InputDecorationTheme` fill | `lightSurface` |
-| `InputDecorationTheme` border | `lightBorder` |
-| Hint colour | `lightTextMuted` |
-| Divider colour | `lightBorder` |
+| `colorScheme.onSurface` | `lightText` (`#1E2329`) |
+| `dividerColor` | `lightDivider` (`rgba(0,0,0,0.06)`) |
 
-Top bar, status bar, chat box borders adapt automatically via `Theme.of(context)` lookups.
-Any widget currently reading a `ThemeConstants` dark token directly must be updated to
-read from `Theme.of(context).colorScheme` or a resolved token helper.
+**`InputDecorationTheme` (light):**
+- `fillColor`: `lightChatBoxSurface` (`rgba(255,255,255,0.72)`)
+- Idle border: `OutlineInputBorder(color: lightBorder, radius: 8)`
+- Focused border: `OutlineInputBorder(color: accent, width: 1.5, radius: 8)`
+- Focused glow: `BoxShadow(color: rgba(78,201,176,0.12), spreadRadius: 3)`
+- Hint colour: `lightTextMuted` (`#9BA4B0`)
+- Content padding: `EdgeInsets.symmetric(horizontal: 10, vertical: 7)` — same size B as dark
+
+**Top action bar (light):**
+- Background: `lightTopBarSurface` (`rgba(240,242,245,0.80)`) + `BackdropFilter blur(14)`
+- Bottom border: `lightDivider` (`rgba(0,0,0,0.06)`)
+- Action pill buttons: fill `lightChipSurface`, border `lightChipBorder`, text `lightChipText`
+- Commit button: same teal gradient — unchanged
+
+**Chat box (light):**
+- Fill: `lightChatBoxSurface` (`rgba(255,255,255,0.72)`) + `BackdropFilter blur(20)`
+- Border: `lightChatBoxBorder` (`rgba(255,255,255,0.90)`)
+- Shadow: `BoxShadow(blurRadius: 24, offset: 0 -6, color: rgba(0,0,0,0.08))` + `BoxShadow(blurRadius: 8, offset: 0 2, color: rgba(0,0,0,0.05))`
+- Toolbar divider: `lightDivider`
+- Fade gradient: `LinearGradient(transparent → lightBackground)`
+
+**User message bubble (light):**
+- Fill: `lightUserBubbleSurface` (`rgba(78,201,176,0.12)`)
+- Border: `lightUserBubbleBorder` (`rgba(78,201,176,0.30)`)
+- Text: `lightText` (`#1E2329`)
+
+**Assistant message text (light):** `lightTextSecondary` (`#3A424D`)
+
+**Inline code (light):**
+- Background: `lightInlineCodeSurface`
+- Border: `lightInlineCodeBorder`
+- Text: `lightInlineCodeText` (`#2A7A6E`)
+
+**Send button (light):**
+- Active: same teal gradient + `sendGlow` shadow — unchanged
+- Disabled: fill `lightSendDisabledSurface`, border `lightSendDisabledBorder`, icon `lightSendDisabledIcon`
+
+**Status bar (light):**
+- Background: `lightStatusBar` (`#E8EAEE`) — one step darker than background
+- Border-top: none
+- Branch text / icon: `accent` teal — unchanged
+
+**App dialog (light):**
+- Background: `lightDialogSurface` (`rgba(255,255,255,0.88)`) + `BackdropFilter blur(28)`
+- Border: `lightDialogBorder` (`rgba(255,255,255,0.95)`) + inner highlight `lightDialogHighlight`
+- Shadow: `BoxShadow(blurRadius: 48, offset: 0 16, color: rgba(0,0,0,0.20))`
+- Border-radius: `13` — same as dark
+- Icon badge: fill `rgba(78,201,176,0.10)`, border `accentBorderTeal`, glow `accentGlowBadge`
+- Footer separator: `lightDivider`
+- Primary button: same teal gradient — unchanged
+- Secondary button: fill `lightChipSurface`, border `lightChipBorder`, text `lightTextTertiary`
+
+**Settings groups (light):**
+- Container fill: `rgba(255,255,255,0.60)`
+- Border: `lightBorder` (`rgba(0,0,0,0.09)`)
+- Row divider: `lightDivider`
+- Active nav item: fill `rgba(78,201,176,0.08)`, left bar `accent`
 
 ### 9b. `GeneralPrefs` — theme field (`lib/data/settings/`)
 
