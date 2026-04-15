@@ -10,19 +10,29 @@ class SidebarFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => context.go('/settings'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            Icon(AppIcons.settings, size: 14, color: ThemeConstants.mutedFg),
-            const SizedBox(width: 7),
-            const Text(
-              'Settings',
-              style: TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSize),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: InkWell(
+          onTap: () => context.go('/settings'),
+          borderRadius: BorderRadius.circular(6),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: ThemeConstants.chipSurface,
+              border: Border.all(color: ThemeConstants.chipBorder),
+              borderRadius: BorderRadius.circular(6),
             ),
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(AppIcons.settings, size: 11, color: ThemeConstants.textSecondary),
+                const SizedBox(width: 6),
+                const Text('Settings', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 11)),
+              ],
+            ),
+          ),
         ),
       ),
     );
