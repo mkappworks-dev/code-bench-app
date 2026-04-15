@@ -117,6 +117,69 @@ class ThemeConstants {
   // Icon in empty / inactive state (between mutedFg and faintFg)
   static const Color iconInactive = Color(0xFF444444);
 
+  // ── Elevated Glass — dark tokens ─────────────────────────────────────────
+
+  // Surface fills (frosted white tints)
+  static const Color glassSurface = Color(0x06FFFFFF);
+  static const Color chipSurface = Color(0x0AFFFFFF);
+  static const Color fieldSurface = Color(0x0AFFFFFF);
+  static const Color topBarSurface = Color(0x05FFFFFF);
+  static const Color sendDisabledSurface = Color(0x0FFFFFFF);
+  static const Color dialogSurface = Color(0xEB121212);
+
+  // Borders (frosted white)
+  static const Color glassBorder = Color(0x14FFFFFF);
+  static const Color glassBorderSubtle = Color(0x0FFFFFFF);
+  static const Color glassBorderFaint = Color(0x0DFFFFFF);
+  static const Color chipBorder = Color(0x12FFFFFF);
+  static const Color userBubbleBorder = Color(0x17FFFFFF);
+  static const Color userBubbleHighlight = Color(0x12FFFFFF);
+  static const Color dialogTopHighlight = Color(0x0FFFFFFF);
+  static const Color fieldBorder = Color(0x1AFFFFFF);
+  static const Color sendDisabledBorder = Color(0x2EFFFFFF);
+
+  // Icon / text (disabled states)
+  static const Color sendDisabledIcon = Color(0x59FFFFFF);
+
+  // Accent tinted surfaces / borders
+  static const Color chatBoxRimGlow = Color(0x124EC9B0);
+  static const Color accentGlowBadge = Color(0x2E4EC9B0);
+  static const Color accentBorderTeal = Color(0x4D4EC9B0);
+  static const Color accentBorderAmber = Color(0x4DE8A228);
+  static const Color sendGlow = Color(0x664EC9B0);
+  static const Color fieldFocusGlow = Color(0x1F4EC9B0);
+
+  // Code
+  static const Color inlineCodeBg = Color(0xCC0D1117);
+
+  // ── Elevated Glass — light tokens ────────────────────────────────────────
+
+  static const Color lightBackground = Color(0xFFF0F2F5);
+  static const Color lightStatusBar = Color(0xFFE8EAEE);
+  static const Color lightTopBarSurface = Color(0xCCF0F2F5);
+  static const Color lightChatBoxSurface = Color(0xB8FFFFFF);
+  static const Color lightChatBoxBorder = Color(0xE6FFFFFF);
+  static const Color lightDialogSurface = Color(0xE0FFFFFF);
+  static const Color lightDialogBorder = Color(0xF2FFFFFF);
+  static const Color lightDialogHighlight = Color(0xFFFFFFFF);
+  static const Color lightDivider = Color(0x0F000000);
+  static const Color lightBorder = Color(0x17000000);
+  static const Color lightText = Color(0xFF1E2329);
+  static const Color lightTextSecondary = Color(0xFF3A424D);
+  static const Color lightTextTertiary = Color(0xFF6B7280);
+  static const Color lightTextMuted = Color(0xFF9BA4B0);
+  static const Color lightChipSurface = Color(0x0A000000);
+  static const Color lightChipBorder = Color(0x1A000000);
+  static const Color lightChipText = Color(0xFF7A8494);
+  static const Color lightUserBubbleSurface = Color(0x1F4EC9B0);
+  static const Color lightUserBubbleBorder = Color(0x4D4EC9B0);
+  static const Color lightInlineCodeSurface = Color(0x1F4EC9B0);
+  static const Color lightInlineCodeBorder = Color(0x334EC9B0);
+  static const Color lightInlineCodeText = Color(0xFF2A7A6E);
+  static const Color lightSendDisabledSurface = Color(0x0D000000);
+  static const Color lightSendDisabledBorder = Color(0x21000000);
+  static const Color lightSendDisabledIcon = Color(0x40000000);
+
   // Box shadow colours
   static const Color shadowDark = Color(0x99000000);
   static const Color shadowMedium = Color(0x66000000);
