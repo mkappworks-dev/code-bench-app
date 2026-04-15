@@ -313,15 +313,40 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final project = ref.watch(activeProjectProvider);
     final isMissing = project?.status == ProjectStatus.missing;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: ThemeConstants.deepBorder)),
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? ThemeConstants.background
+            : ThemeConstants.lightBackground,
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: ThemeConstants.inputSurface,
-          border: Border.all(color: ThemeConstants.deepBorder),
-          borderRadius: BorderRadius.circular(10),
+          color: Theme.of(context).brightness == Brightness.dark
+              ? ThemeConstants.glassSurface
+              : ThemeConstants.lightChatBoxSurface,
+          border: Border.all(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? ThemeConstants.glassBorder
+                : ThemeConstants.lightChatBoxBorder,
+          ),
+          borderRadius: BorderRadius.circular(11),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0x8C000000)
+                  : const Color(0x14000000),
+              blurRadius: 24,
+              offset: const Offset(0, -6),
+            ),
+            BoxShadow(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0x4D000000)
+                  : const Color(0x0D000000),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+            BoxShadow(color: ThemeConstants.chatBoxRimGlow, blurRadius: 0, spreadRadius: 0.5),
+          ],
         ),
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
         child: Column(
@@ -362,8 +387,14 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.only(top: 7),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: ThemeConstants.deepBorder)),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? ThemeConstants.glassBorderFaint
+                        : ThemeConstants.lightDivider,
+                  ),
+                ),
               ),
               child: Row(
                 children: [
@@ -371,7 +402,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                     builder: (ctx) =>
                         _ControlChip(icon: AppIcons.aiMode, label: model.name, onTap: () => _showModelPicker(ctx)),
                   ),
-                  const _Separator(),
+                  const SizedBox(width: 4),
                   Builder(
                     builder: (ctx) => _ControlChip(
                       label: _effort.label,
@@ -384,7 +415,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                       ),
                     ),
                   ),
-                  const _Separator(),
+                  const SizedBox(width: 4),
                   Builder(
                     builder: (ctx) => _ControlChip(
                       icon: AppIcons.chat,
@@ -393,7 +424,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                           _showDropdown(ctx, _Mode.values, _mode, (m) => m.label, (m) => setState(() => _mode = m)),
                     ),
                   ),
-                  const _Separator(),
+                  const SizedBox(width: 4),
                   Builder(
                     builder: (ctx) => _ControlChip(
                       icon: AppIcons.lock,
@@ -414,13 +445,30 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                       listenable: _controller,
                       builder: (context, _) {
                         final hasText = _controller.text.trim().isNotEmpty;
+                        final dark = Theme.of(context).brightness == Brightness.dark;
                         final Color bg;
+                        final Border? border;
+                        final Color iconColor;
+                        final List<BoxShadow> shadows;
                         if (_isSending) {
-                          bg = ThemeConstants.accentDark;
+                          bg = ThemeConstants.accentHover;
+                          border = null;
+                          iconColor = ThemeConstants.onAccent;
+                          shadows = [];
                         } else if (hasText && !isMissing) {
                           bg = ThemeConstants.accent;
+                          border = null;
+                          iconColor = ThemeConstants.onAccent;
+                          shadows = const [
+                            BoxShadow(color: ThemeConstants.sendGlow, blurRadius: 8, offset: Offset(0, 2)),
+                          ];
                         } else {
-                          bg = ThemeConstants.inputSurface;
+                          bg = dark ? ThemeConstants.sendDisabledSurface : ThemeConstants.lightSendDisabledSurface;
+                          border = Border.all(
+                            color: dark ? ThemeConstants.sendDisabledBorder : ThemeConstants.lightSendDisabledBorder,
+                          );
+                          iconColor = dark ? ThemeConstants.sendDisabledIcon : ThemeConstants.lightSendDisabledIcon;
+                          shadows = [];
                         }
                         return GestureDetector(
                           onTap: _isSending ? null : _send,
@@ -428,11 +476,17 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                             width: 28,
                             height: 28,
                             decoration: BoxDecoration(
-                              color: bg,
-                              borderRadius: BorderRadius.circular(7),
-                              border: (!_isSending && (!hasText || isMissing))
-                                  ? Border.all(color: ThemeConstants.deepBorder)
+                              gradient: (!_isSending && hasText && !isMissing)
+                                  ? const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [ThemeConstants.accent, ThemeConstants.accentHover],
+                                    )
                                   : null,
+                              color: (_isSending || !hasText || isMissing) ? bg : null,
+                              borderRadius: BorderRadius.circular(7),
+                              border: border,
+                              boxShadow: shadows,
                             ),
                             child: Center(
                               child: _isSending
@@ -450,13 +504,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                                         ),
                                       ),
                                     )
-                                  : Icon(
-                                      AppIcons.arrowUp,
-                                      size: 14,
-                                      color: (hasText && !isMissing)
-                                          ? ThemeConstants.onAccent
-                                          : ThemeConstants.iconInactive,
-                                    ),
+                                  : Icon(AppIcons.arrowUp, size: 14, color: iconColor),
                             ),
                           ),
                         );
@@ -481,38 +529,35 @@ class _ControlChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
-      child: Padding(
+      borderRadius: BorderRadius.circular(5),
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(
+          color: dark ? ThemeConstants.chipSurface : ThemeConstants.lightChipSurface,
+          border: Border.all(color: dark ? ThemeConstants.chipBorder : ThemeConstants.lightChipBorder),
+          borderRadius: BorderRadius.circular(5),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[Icon(icon, size: 11, color: ThemeConstants.textSecondary), const SizedBox(width: 4)],
+            if (icon != null) ...[
+              Icon(icon, size: 11, color: dark ? ThemeConstants.textSecondary : ThemeConstants.lightChipText),
+              const SizedBox(width: 4),
+            ],
             Text(
               label,
-              style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+              style: TextStyle(
+                color: dark ? ThemeConstants.textSecondary : ThemeConstants.lightChipText,
+                fontSize: ThemeConstants.uiFontSizeSmall,
+              ),
             ),
             const SizedBox(width: 3),
-            const Icon(AppIcons.chevronDown, size: 10, color: ThemeConstants.faintFg),
+            Icon(AppIcons.chevronDown, size: 10, color: dark ? ThemeConstants.faintFg : ThemeConstants.lightTextMuted),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _Separator extends StatelessWidget {
-  const _Separator();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 1),
-      child: Text(
-        '|',
-        style: TextStyle(color: ThemeConstants.deepBorder, fontSize: ThemeConstants.uiFontSizeSmall),
       ),
     );
   }
