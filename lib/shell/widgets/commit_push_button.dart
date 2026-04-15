@@ -230,12 +230,22 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
               padding: const EdgeInsets.symmetric(horizontal: 10),
               constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
               decoration: BoxDecoration(
+                gradient: (busy || !s.canCommit)
+                    ? null
+                    : const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [ThemeConstants.accent, ThemeConstants.accentHover],
+                      ),
                 color: busy
-                    ? ThemeConstants.accentDark
+                    ? ThemeConstants.accentHover
                     : s.canCommit
-                    ? ThemeConstants.accent
+                    ? null
                     : ThemeConstants.inputSurface,
                 borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
+                boxShadow: (busy || !s.canCommit)
+                    ? null
+                    : const [BoxShadow(color: ThemeConstants.sendGlow, blurRadius: 10, offset: Offset(0, 2))],
               ),
               child: Center(
                 widthFactor: 1,

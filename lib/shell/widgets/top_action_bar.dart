@@ -24,9 +24,11 @@ class TopActionBar extends ConsumerWidget {
     return Container(
       height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: const BoxDecoration(
-        color: ThemeConstants.inputBackground,
-        border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? ThemeConstants.topBarSurface
+            : ThemeConstants.lightTopBarSurface,
+        border: const Border(bottom: BorderSide(color: ThemeConstants.glassBorderSubtle)),
       ),
       child: Row(
         children: [
@@ -79,9 +81,11 @@ class TopActionBar extends ConsumerWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ActionsDropdown(project: s.project!),
+                  _GlassPill(child: ActionsDropdown(project: s.project!)),
                   const SizedBox(width: 5),
-                  CodeDropdown(projectId: s.project!.id, projectPath: s.project!.path),
+                  _GlassPill(
+                    child: CodeDropdown(projectId: s.project!.id, projectPath: s.project!.path),
+                  ),
                   const SizedBox(width: 5),
                   // Git action: Commit & Push (git) or Initialize Git
                   // (confirmed non-git). During loading/error (isGit == null)
@@ -98,6 +102,24 @@ class TopActionBar extends ConsumerWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _GlassPill extends StatelessWidget {
+  const _GlassPill({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: dark ? ThemeConstants.chipSurface : ThemeConstants.lightChipSurface,
+        border: Border.all(color: dark ? ThemeConstants.chipBorder : ThemeConstants.lightChipBorder),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: child,
     );
   }
 }
