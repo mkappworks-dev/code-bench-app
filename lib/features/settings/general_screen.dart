@@ -22,6 +22,7 @@ class GeneralScreen extends ConsumerStatefulWidget {
 class _GeneralScreenState extends ConsumerState<GeneralScreen> {
   bool _autoCommit = false;
   bool _deleteConfirmation = true;
+  ThemeMode _themeMode = ThemeMode.system;
   final _terminalAppController = TextEditingController();
 
   @override
@@ -40,6 +41,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
       _autoCommit = s.autoCommit;
       _deleteConfirmation = s.deleteConfirmation;
       _terminalAppController.text = s.terminalApp;
+      _themeMode = s.themeMode;
     });
   }
 
@@ -109,11 +111,18 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                 label: 'Theme',
                 description: 'How Code Bench looks',
                 trailing: Builder(
-                  builder: (ctx) => _AppDropdown<String>(
-                    value: 'Dark',
-                    items: const ['Dark', 'Light', 'System'],
-                    label: (s) => s,
-                    onChanged: (_) {},
+                  builder: (ctx) => _AppDropdown<ThemeMode>(
+                    value: _themeMode,
+                    items: const [ThemeMode.system, ThemeMode.dark, ThemeMode.light],
+                    label: (m) => switch (m) {
+                      ThemeMode.system => 'System',
+                      ThemeMode.dark => 'Dark',
+                      ThemeMode.light => 'Light',
+                    },
+                    onChanged: (mode) async {
+                      await ref.read(generalPrefsProvider.notifier).setThemeMode(mode);
+                      setState(() => _themeMode = mode);
+                    },
                     context: ctx,
                   ),
                 ),
