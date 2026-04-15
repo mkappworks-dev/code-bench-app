@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import '../constants/theme_constants.dart';
 
@@ -66,81 +68,136 @@ class AppDialog extends StatelessWidget {
       elevation: 0,
       child: ConstrainedBox(
         constraints: BoxConstraints(minWidth: minWidth, maxWidth: maxWidth),
-        child: Container(
-          decoration: BoxDecoration(
-            color: ThemeConstants.frostedSurface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: ThemeConstants.borderColor),
-            boxShadow: const [
-              BoxShadow(color: ThemeConstants.shadowDeep, blurRadius: 60, offset: Offset(0, 20)),
-              BoxShadow(color: ThemeConstants.innerGlow, blurRadius: 0, spreadRadius: 0.5),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(16, 18, 16, headerBottomPad),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: badgeSize,
-                      height: badgeSize,
-                      decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(badgeRadius)),
-                      child: Icon(icon, size: badgeSize * 0.5, color: iconFg),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: (badgeSize - 16.0) / 2),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                color: ThemeConstants.textPrimary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(13),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? ThemeConstants.dialogSurface
+                    : ThemeConstants.lightDialogSurface,
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? ThemeConstants.glassBorderSubtle
+                      : ThemeConstants.lightDialogBorder,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xF2000000)
+                        : const Color(0x33000000),
+                    blurRadius: Theme.of(context).brightness == Brightness.dark ? 64 : 48,
+                    offset: Offset(0, Theme.of(context).brightness == Brightness.dark ? 24 : 16),
+                  ),
+                  BoxShadow(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? ThemeConstants.dialogTopHighlight
+                        : ThemeConstants.lightDialogHighlight,
+                    blurRadius: 0,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header row (icon badge + title + subtitle)
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(16, 18, 16, headerBottomPad),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: badgeSize,
+                          height: badgeSize,
+                          decoration: BoxDecoration(
+                            color: iconBg,
+                            borderRadius: BorderRadius.circular(badgeRadius),
+                            border: Border.all(
+                              color: iconType == AppDialogIconType.teal
+                                  ? ThemeConstants.accentBorderTeal
+                                  : ThemeConstants.error.withValues(alpha: 0.3),
                             ),
-                            if (subtitle != null) ...[
-                              const SizedBox(height: 3),
-                              Text(
-                                subtitle!,
-                                style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11),
+                            boxShadow: [
+                              BoxShadow(
+                                color: iconType == AppDialogIconType.teal
+                                    ? ThemeConstants.accentGlowBadge
+                                    : ThemeConstants.error.withValues(alpha: 0.18),
+                                blurRadius: 14,
                               ),
                             ],
-                          ],
+                          ),
+                          child: Icon(icon, size: badgeSize * 0.5, color: iconFg),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: (badgeSize - 16.0) / 2),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  title,
+                                  style: TextStyle(
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? ThemeConstants.textPrimary
+                                        : ThemeConstants.lightText,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (subtitle != null) ...[
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    subtitle!,
+                                    style: TextStyle(
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? ThemeConstants.textSecondary
+                                          : ThemeConstants.lightTextTertiary,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: content),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(16, 11, 16, 11),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? ThemeConstants.glassBorderFaint
+                              : ThemeConstants.lightDivider,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: actions.indexed
+                          .map(
+                            (entry) => Padding(
+                              padding: EdgeInsets.only(left: entry.$1 > 0 ? 8.0 : 0.0),
+                              child: _ActionButton(action: entry.$2),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ],
               ),
-              Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: content),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.fromLTRB(16, 11, 16, 11),
-                decoration: const BoxDecoration(
-                  border: Border(top: BorderSide(color: ThemeConstants.panelSeparator)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: actions.indexed
-                      .map(
-                        (entry) => Padding(
-                          padding: EdgeInsets.only(left: entry.$1 > 0 ? 8.0 : 0.0),
-                          child: _ActionButton(action: entry.$2),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -154,37 +211,72 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (bg, border, textColor) = switch (action._style) {
-      _ActionStyle.primary => (ThemeConstants.accent, Border.all(color: Colors.transparent), ThemeConstants.onAccent),
-      _ActionStyle.ghost => (
-        Colors.transparent,
-        Border.all(color: ThemeConstants.borderColor),
-        ThemeConstants.textPrimary,
-      ),
-      _ActionStyle.destructive => (
-        Colors.transparent,
-        Border.all(color: ThemeConstants.destructiveBorder),
-        ThemeConstants.error,
-      ),
-    };
-
-    return GestureDetector(
-      onTap: action.onPressed,
-      child: Opacity(
-        opacity: action.onPressed == null ? 0.5 : 1.0,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6), border: border),
-          child: Text(
-            action.label,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 11,
-              fontWeight: action._style == _ActionStyle.primary ? FontWeight.w600 : FontWeight.w500,
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    switch (action._style) {
+      case _ActionStyle.primary:
+        return GestureDetector(
+          onTap: action.onPressed,
+          child: Opacity(
+            opacity: action.onPressed == null ? 0.5 : 1.0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [ThemeConstants.accent, ThemeConstants.accentHover],
+                ),
+                borderRadius: BorderRadius.circular(6),
+                boxShadow: const [BoxShadow(color: ThemeConstants.sendGlow, blurRadius: 10, offset: Offset(0, 2))],
+              ),
+              child: Text(
+                action.label,
+                style: const TextStyle(color: ThemeConstants.onAccent, fontSize: 11, fontWeight: FontWeight.w600),
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        );
+      case _ActionStyle.ghost:
+        return GestureDetector(
+          onTap: action.onPressed,
+          child: Opacity(
+            opacity: action.onPressed == null ? 0.5 : 1.0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: dark ? ThemeConstants.chipSurface : ThemeConstants.lightChipSurface,
+                border: Border.all(color: dark ? ThemeConstants.chipBorder : ThemeConstants.lightChipBorder),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                action.label,
+                style: TextStyle(
+                  color: dark ? ThemeConstants.textPrimary : ThemeConstants.lightTextTertiary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        );
+      case _ActionStyle.destructive:
+        return GestureDetector(
+          onTap: action.onPressed,
+          child: Opacity(
+            opacity: action.onPressed == null ? 0.5 : 1.0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                border: Border.all(color: ThemeConstants.destructiveBorder),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                action.label,
+                style: const TextStyle(color: ThemeConstants.error, fontSize: 11, fontWeight: FontWeight.w500),
+              ),
+            ),
+          ),
+        );
+    }
   }
 }
