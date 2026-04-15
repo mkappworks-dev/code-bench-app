@@ -18,7 +18,10 @@ class InlineTextField extends StatelessWidget {
         fontSize: 12,
         fontFamily: ThemeConstants.editorFontFamily,
       ),
-      decoration: const InputDecoration(),
+      decoration: const InputDecoration(
+        isDense: true,
+        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      ),
     );
   }
 }
