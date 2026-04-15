@@ -149,7 +149,29 @@ class _SettingsLeftNav extends StatelessWidget {
               child: Text('↺ Restore defaults', style: TextStyle(color: ThemeConstants.mutedFg, fontSize: 11)),
             ),
           ),
-          _NavItem(icon: AppIcons.arrowLeft, label: 'Back', isActive: false, onTap: onBack),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+            child: InkWell(
+              onTap: onBack,
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: ThemeConstants.chipSurface,
+                  border: Border.all(color: ThemeConstants.chipBorder),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(AppIcons.arrowLeft, size: 11, color: ThemeConstants.textSecondary),
+                    SizedBox(width: 6),
+                    Text('Back', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 11)),
+                  ],
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
         ],
       ),
@@ -170,10 +192,12 @@ class _NavItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.only(left: isActive ? 14 : 16, right: 16, top: 8, bottom: 8),
+        margin: isActive ? const EdgeInsets.only(right: 6) : EdgeInsets.zero,
+        padding: EdgeInsets.only(left: isActive ? 11 : 16, right: 16, top: 8, bottom: 8),
         decoration: BoxDecoration(
-          color: isActive ? ThemeConstants.selectionBg : null,
-          border: isActive ? const Border(left: BorderSide(color: ThemeConstants.accent, width: 2)) : null,
+          color: isActive ? const Color(0x124EC9B0) : null, // rgba(78,201,176,0.07)
+          borderRadius: isActive ? const BorderRadius.horizontal(right: Radius.circular(6)) : null,
+          border: isActive ? const Border(left: BorderSide(color: ThemeConstants.accent, width: 3)) : null,
         ),
         child: Row(
           children: [
