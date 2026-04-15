@@ -121,32 +121,52 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
               SettingsRow(
                 label: 'Delete confirmation',
                 description: 'Ask before deleting a session',
-                trailing: Builder(
-                  builder: (ctx) => _AppDropdown<bool>(
+                trailing: Transform.scale(
+                  scale: 0.75,
+                  child: Switch(
                     value: _deleteConfirmation,
-                    items: const [true, false],
-                    label: (v) => v ? 'Enabled' : 'Disabled',
                     onChanged: (v) async {
                       await ref.read(generalPrefsProvider.notifier).setDeleteConfirmation(v);
                       setState(() => _deleteConfirmation = v);
                     },
-                    context: ctx,
+                    thumbColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) return Colors.white;
+                      return const Color(0x40FFFFFF); // rgba(255,255,255,0.25)
+                    }),
+                    trackColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) return ThemeConstants.accent;
+                      return const Color(0x0DFFFFFF); // rgba(255,255,255,0.05)
+                    }),
+                    trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) return Colors.transparent;
+                      return const Color(0x17FFFFFF); // rgba(255,255,255,0.09)
+                    }),
                   ),
                 ),
               ),
               SettingsRow(
                 label: 'Auto-commit',
                 description: 'Skip commit dialog; commit immediately with AI-generated message',
-                trailing: Builder(
-                  builder: (ctx) => _AppDropdown<bool>(
+                trailing: Transform.scale(
+                  scale: 0.75,
+                  child: Switch(
                     value: _autoCommit,
-                    items: const [true, false],
-                    label: (v) => v ? 'Enabled' : 'Disabled',
                     onChanged: (v) async {
                       await ref.read(generalPrefsProvider.notifier).setAutoCommit(v);
                       setState(() => _autoCommit = v);
                     },
-                    context: ctx,
+                    thumbColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) return Colors.white;
+                      return const Color(0x40FFFFFF);
+                    }),
+                    trackColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) return ThemeConstants.accent;
+                      return const Color(0x0DFFFFFF);
+                    }),
+                    trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) return Colors.transparent;
+                      return const Color(0x17FFFFFF);
+                    }),
                   ),
                 ),
               ),
@@ -317,9 +337,9 @@ class _AppDropdown<T> extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          border: Border.all(color: ThemeConstants.deepBorder),
-          borderRadius: BorderRadius.circular(5),
-          color: ThemeConstants.inputSurface,
+          color: ThemeConstants.chipSurface,
+          border: Border.all(color: ThemeConstants.chipBorder),
+          borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
