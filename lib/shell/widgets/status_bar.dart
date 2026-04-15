@@ -45,9 +45,10 @@ class _StatusBarState extends ConsumerState<StatusBar> {
     return Container(
       height: 22,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: const BoxDecoration(
-        color: ThemeConstants.activityBar,
-        border: Border(top: BorderSide(color: ThemeConstants.borderColor)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? ThemeConstants.background
+            : ThemeConstants.lightStatusBar,
       ),
       child: Row(
         children: [
