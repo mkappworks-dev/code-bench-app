@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 /// Non-colour design constants. Colour tokens live in AppColors.
 class ThemeConstants {
   ThemeConstants._();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/core/theme/app_colors.dart';
 import 'package:code_bench_app/data/session/models/chat_session.dart';
 import 'package:code_bench_app/data/project/models/project.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
@@ -28,7 +29,10 @@ Widget _buildArchive({
       projectsProvider.overrideWith((ref) => Stream.value(projects)),
       if (archiveActions != null) archiveActionsProvider.overrideWith(() => archiveActions),
     ],
-    child: const MaterialApp(home: ArchiveScreen()),
+    child: MaterialApp(
+      theme: ThemeData(extensions: [AppColors.dark]),
+      home: const ArchiveScreen(),
+    ),
   );
 }
 

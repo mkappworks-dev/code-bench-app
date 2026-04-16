@@ -12,18 +12,15 @@ part of 'branch_picker_notifier.dart';
 @ProviderFor(BranchPickerNotifier)
 final branchPickerProvider = BranchPickerNotifierFamily._();
 
-final class BranchPickerNotifierProvider
-    extends $AsyncNotifierProvider<BranchPickerNotifier, BranchPickerState> {
-  BranchPickerNotifierProvider._({
-    required BranchPickerNotifierFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'branchPickerProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+final class BranchPickerNotifierProvider extends $AsyncNotifierProvider<BranchPickerNotifier, BranchPickerState> {
+  BranchPickerNotifierProvider._({required BranchPickerNotifierFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'branchPickerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$branchPickerNotifierHash();
@@ -50,8 +47,7 @@ final class BranchPickerNotifierProvider
   }
 }
 
-String _$branchPickerNotifierHash() =>
-    r'431068b268ca0a2b901350c66b4eaffacf478d66';
+String _$branchPickerNotifierHash() => r'431068b268ca0a2b901350c66b4eaffacf478d66';
 
 final class BranchPickerNotifierFamily extends $Family
     with
@@ -78,8 +74,7 @@ final class BranchPickerNotifierFamily extends $Family
   String toString() => r'branchPickerProvider';
 }
 
-abstract class _$BranchPickerNotifier
-    extends $AsyncNotifier<BranchPickerState> {
+abstract class _$BranchPickerNotifier extends $AsyncNotifier<BranchPickerState> {
   late final _$args = ref.$arg as String;
   String get projectPath => _$args;
 
@@ -87,8 +82,7 @@ abstract class _$BranchPickerNotifier
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref =
-        this.ref as $Ref<AsyncValue<BranchPickerState>, BranchPickerState>;
+    final ref = this.ref as $Ref<AsyncValue<BranchPickerState>, BranchPickerState>;
     final element =
         ref.element
             as $ClassProviderElement<

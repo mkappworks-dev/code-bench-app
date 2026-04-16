@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../notifiers/branch_picker_failure.dart';
@@ -160,22 +161,32 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
 
   Widget _buildList(AsyncValue<BranchPickerState> asyncState) {
     return switch (asyncState) {
-      AsyncLoading() => const Padding(
-        padding: EdgeInsets.all(20),
-        child: Center(
-          child: SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 1.5, color: ThemeConstants.accent),
-          ),
-        ),
+      AsyncLoading() => Builder(
+        builder: (context) {
+          final c = AppColors.of(context);
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Center(
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 1.5, color: c.accent),
+              ),
+            ),
+          );
+        },
       ),
-      AsyncError(:final error) => Padding(
-        padding: const EdgeInsets.all(14),
-        child: Text(
-          _errorMessage(error),
-          style: const TextStyle(color: ThemeConstants.warning, fontSize: ThemeConstants.uiFontSizeLabel),
-        ),
+      AsyncError(:final error) => Builder(
+        builder: (context) {
+          final c = AppColors.of(context);
+          return Padding(
+            padding: const EdgeInsets.all(14),
+            child: Text(
+              _errorMessage(error),
+              style: TextStyle(color: c.warning, fontSize: ThemeConstants.uiFontSizeLabel),
+            ),
+          );
+        },
       ),
       AsyncData(:final value) => Builder(
         builder: (context) {
@@ -255,9 +266,9 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
                     width: 440,
                     constraints: const BoxConstraints(maxHeight: 560),
                     decoration: BoxDecoration(
-                      color: ThemeConstants.dialogSurface,
+                      color: AppColors.of(context).dialogFill,
                       borderRadius: BorderRadius.circular(13),
-                      border: Border.all(color: ThemeConstants.glassBorderSubtle),
+                      border: Border.all(color: AppColors.of(context).subtleBorder),
                       boxShadow: const [BoxShadow(color: Color(0xF2000000), blurRadius: 64, offset: Offset(0, 24))],
                     ),
                     child: Column(
@@ -354,19 +365,20 @@ class _DialogHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final title = createMode ? (worktreeMode ? 'New Worktree' : 'New Branch') : 'Switch Branch';
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 10, 10),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: ThemeConstants.glassBorderFaint)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.faintBorder)),
       ),
       child: Row(
         children: [
           if (onBack != null) ...[
             GestureDetector(
               onTap: onBack,
-              child: const Icon(LucideIcons.arrowLeft, size: 14, color: ThemeConstants.textSecondary),
+              child: Icon(LucideIcons.arrowLeft, size: 14, color: c.textSecondary),
             ),
             const SizedBox(width: 8),
           ],
@@ -376,19 +388,19 @@ class _DialogHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: c.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
                 ),
                 if (!createMode && currentBranch != null)
                   Text(
                     currentBranch!,
-                    style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
+                    style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
                   ),
               ],
             ),
           ),
           GestureDetector(
             onTap: onClose,
-            child: const Icon(LucideIcons.x, size: 14, color: ThemeConstants.mutedFg),
+            child: Icon(LucideIcons.x, size: 14, color: c.mutedFg),
           ),
         ],
       ),
@@ -404,18 +416,19 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: TextField(
         controller: controller,
         focusNode: focusNode,
-        style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+        style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
         decoration: InputDecoration(
           hintText: 'Search branches…',
-          hintStyle: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
-          prefixIcon: const Padding(
-            padding: EdgeInsets.only(left: 8, right: 4),
-            child: Icon(LucideIcons.search, size: 11, color: ThemeConstants.mutedFg),
+          hintStyle: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(left: 8, right: 4),
+            child: Icon(LucideIcons.search, size: 11, color: c.mutedFg),
           ),
           prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
         ),
@@ -430,9 +443,10 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-      child: Text(label, style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: 8, letterSpacing: 0.5)),
+      child: Text(label, style: TextStyle(color: c.mutedFg, fontSize: 8, letterSpacing: 0.5)),
     );
   }
 }
@@ -447,12 +461,13 @@ class _BranchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final canTap = onTap != null;
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        color: isCurrent ? ThemeConstants.success.withValues(alpha: 0.07) : Colors.transparent,
+        color: isCurrent ? c.success.withValues(alpha: 0.07) : Colors.transparent,
         child: Row(
           children: [
             Container(
@@ -460,8 +475,8 @@ class _BranchRow extends StatelessWidget {
               height: 6,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isCurrent ? ThemeConstants.success : Colors.transparent,
-                border: isCurrent ? null : Border.all(color: ThemeConstants.faintFg),
+                color: isCurrent ? c.success : Colors.transparent,
+                border: isCurrent ? null : Border.all(color: c.faintFg),
               ),
             ),
             const SizedBox(width: 8),
@@ -470,25 +485,22 @@ class _BranchRow extends StatelessWidget {
                 branch,
                 style: TextStyle(
                   color: isCurrent
-                      ? ThemeConstants.success
+                      ? c.success
                       : canTap
-                      ? ThemeConstants.textSecondary
-                      : ThemeConstants.faintFg,
+                      ? c.textSecondary
+                      : c.faintFg,
                   fontSize: ThemeConstants.uiFontSizeLabel,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (isCurrent) const Icon(LucideIcons.check, size: 10, color: ThemeConstants.success),
+            if (isCurrent) Icon(LucideIcons.check, size: 10, color: c.success),
             if (isWorktree)
               Container(
                 margin: const EdgeInsets.only(left: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: ThemeConstants.worktreeBadgeBg,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: const Text('worktree', style: TextStyle(color: ThemeConstants.worktreeBadgeFg, fontSize: 9)),
+                decoration: BoxDecoration(color: c.worktreeBadgeBg, borderRadius: BorderRadius.circular(3)),
+                child: Text('worktree', style: TextStyle(color: c.worktreeBadgeFg, fontSize: 9)),
               ),
           ],
         ),
@@ -504,10 +516,11 @@ class _DialogFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: ThemeConstants.glassBorderFaint)),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: c.faintBorder)),
       ),
       child: Row(
         children: [
@@ -515,8 +528,8 @@ class _DialogFooter extends StatelessWidget {
             child: _FooterButton(
               icon: LucideIcons.gitBranch,
               label: 'New Branch',
-              iconColor: ThemeConstants.accent,
-              borderColor: ThemeConstants.accentBorderTeal,
+              iconColor: c.accent,
+              borderColor: c.accentBorderTeal,
               onTap: onNewBranch,
             ),
           ),
@@ -525,8 +538,8 @@ class _DialogFooter extends StatelessWidget {
             child: _FooterButton(
               icon: LucideIcons.layers,
               label: 'New Worktree',
-              iconColor: ThemeConstants.worktreeBadgeFg,
-              borderColor: ThemeConstants.accentBorderAmber,
+              iconColor: c.worktreeBadgeFg,
+              borderColor: c.accentBorderAmber,
               onTap: onNewWorktree,
             ),
           ),
@@ -569,7 +582,7 @@ class _FooterButton extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+              style: TextStyle(color: AppColors.of(context).textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
             ),
           ],
         ),
@@ -609,23 +622,24 @@ class _BranchCreateFormState extends State<_BranchCreateForm> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Branch name', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10)),
+          Text('Branch name', style: TextStyle(color: c.textSecondary, fontSize: 10)),
           const SizedBox(height: 4),
           TextField(
             controller: widget.controller,
             focusNode: widget.focusNode,
             autofocus: true,
             onSubmitted: (_) => widget.onSubmit(_base),
-            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+            style: TextStyle(color: c.textPrimary, fontSize: 12),
             decoration: const InputDecoration(hintText: 'branch-name'),
           ),
           const SizedBox(height: 10),
-          const Text('From', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10)),
+          Text('From', style: TextStyle(color: c.textSecondary, fontSize: 10)),
           const SizedBox(height: 4),
           if (widget.branches.isNotEmpty)
             _SourceDropdown(
@@ -639,14 +653,14 @@ class _BranchCreateFormState extends State<_BranchCreateForm> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [ThemeConstants.accent, ThemeConstants.accentHover]),
+                gradient: LinearGradient(colors: [c.accent, c.accentHover]),
                 borderRadius: BorderRadius.circular(7),
-                boxShadow: const [BoxShadow(color: ThemeConstants.sendGlow, blurRadius: 8, offset: Offset(0, 2))],
+                boxShadow: [BoxShadow(color: c.sendGlow, blurRadius: 8, offset: const Offset(0, 2))],
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
                   'Create Branch',
-                  style: TextStyle(color: ThemeConstants.onAccent, fontSize: 11, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: c.onAccent, fontSize: 11, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -693,29 +707,30 @@ class _WorktreeCreateFormState extends State<_WorktreeCreateForm> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Branch name', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10)),
+          Text('Branch name', style: TextStyle(color: c.textSecondary, fontSize: 10)),
           const SizedBox(height: 4),
           TextField(
             controller: widget.branchController,
             autofocus: true,
-            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+            style: TextStyle(color: c.textPrimary, fontSize: 12),
             decoration: const InputDecoration(hintText: 'feat/my-feature'),
           ),
           const SizedBox(height: 8),
-          const Text('Path', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10)),
+          Text('Path', style: TextStyle(color: c.textSecondary, fontSize: 10)),
           const SizedBox(height: 4),
           TextField(
             controller: widget.pathController,
-            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+            style: TextStyle(color: c.textPrimary, fontSize: 12),
             decoration: const InputDecoration(hintText: '.worktrees/feat-my-feature'),
           ),
           const SizedBox(height: 8),
-          const Text('From worktree', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10)),
+          Text('From worktree', style: TextStyle(color: c.textSecondary, fontSize: 10)),
           const SizedBox(height: 4),
           if (widget.branches.isNotEmpty)
             _SourceDropdown(
@@ -730,13 +745,13 @@ class _WorktreeCreateFormState extends State<_WorktreeCreateForm> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
                 color: const Color(0x14E8A228),
-                border: Border.all(color: ThemeConstants.accentBorderAmber),
+                border: Border.all(color: c.accentBorderAmber),
                 borderRadius: BorderRadius.circular(7),
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
                   'Create Worktree',
-                  style: TextStyle(color: ThemeConstants.worktreeBadgeFg, fontSize: 11, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: c.worktreeBadgeFg, fontSize: 11, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -809,6 +824,7 @@ class _SourceDropdownState extends State<_SourceDropdown> {
         ? widget.value
         : (widget.items.isNotEmpty ? widget.items.first : '');
 
+    final c = AppColors.of(context);
     return CompositedTransformTarget(
       link: _link,
       child: GestureDetector(
@@ -816,11 +832,8 @@ class _SourceDropdownState extends State<_SourceDropdown> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: ThemeConstants.fieldSurface,
-            border: Border.all(
-              color: _isOpen ? ThemeConstants.accent : ThemeConstants.fieldBorder,
-              width: _isOpen ? 1.5 : 1.0,
-            ),
+            color: c.fieldFill,
+            border: Border.all(color: _isOpen ? c.accent : c.fieldStroke, width: _isOpen ? 1.5 : 1.0),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -828,15 +841,11 @@ class _SourceDropdownState extends State<_SourceDropdown> {
               Expanded(
                 child: Text(
                   effective,
-                  style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+                  style: TextStyle(color: c.textPrimary, fontSize: 12),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Icon(
-                _isOpen ? LucideIcons.chevronUp : LucideIcons.chevronDown,
-                size: 12,
-                color: ThemeConstants.mutedFg,
-              ),
+              Icon(_isOpen ? LucideIcons.chevronUp : LucideIcons.chevronDown, size: 12, color: c.mutedFg),
             ],
           ),
         ),
@@ -875,63 +884,65 @@ class _DropdownPanel extends StatelessWidget {
         children: [
           // Full-screen dismiss layer — opaque so the dialog's own dismiss
           // gesture doesn't fire; one tap closes the dropdown first.
-          Positioned.fill(child: GestureDetector(onTap: onDismiss, behavior: HitTestBehavior.opaque)),
+          Positioned.fill(
+            child: GestureDetector(onTap: onDismiss, behavior: HitTestBehavior.opaque),
+          ),
           // Panel anchored just below the trigger.
           CompositedTransformFollower(
-          link: link,
-          showWhenUnlinked: false,
-          offset: Offset(0, triggerHeight + 2),
-          child: Align(
-            alignment: Alignment.topLeft,
-            child: SizedBox(
-              width: width,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 160),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: ThemeConstants.panelBackground,
-                    border: Border.all(color: ThemeConstants.glassBorderSubtle),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: items.map((item) {
-                        final selected = item == value;
-                        return GestureDetector(
-                          onTap: () => onChanged(item),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            decoration: selected
-                                ? BoxDecoration(color: ThemeConstants.accent.withValues(alpha: 0.08))
-                                : null,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    item,
-                                    style: TextStyle(
-                                      color: selected ? ThemeConstants.accent : ThemeConstants.textSecondary,
-                                      fontSize: 12,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+            link: link,
+            showWhenUnlinked: false,
+            offset: Offset(0, triggerHeight + 2),
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: SizedBox(
+                width: width,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 160),
+                  child: Builder(
+                    builder: (context) {
+                      final c = AppColors.of(context);
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: c.panelBackground,
+                          border: Border.all(color: c.subtleBorder),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: items.map((item) {
+                              final selected = item == value;
+                              return GestureDetector(
+                                onTap: () => onChanged(item),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  decoration: selected ? BoxDecoration(color: c.accent.withValues(alpha: 0.08)) : null,
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          item,
+                                          style: TextStyle(color: selected ? c.accent : c.textSecondary, fontSize: 12),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (selected) Icon(LucideIcons.check, size: 10, color: c.accent),
+                                    ],
                                   ),
                                 ),
-                                if (selected) const Icon(LucideIcons.check, size: 10, color: ThemeConstants.accent),
-                              ],
-                            ),
+                              );
+                            }).toList(),
                           ),
-                        );
-                      }).toList(),
-                    ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
     );
   }
 }

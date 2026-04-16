@@ -1,3 +1,4 @@
+import 'package:code_bench_app/core/theme/app_colors.dart';
 import 'package:code_bench_app/data/apply/models/applied_change.dart';
 import 'package:code_bench_app/data/project/models/project.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
@@ -22,7 +23,10 @@ ProviderContainer _container() {
 Widget _wrap(Widget child, ProviderContainer container) {
   return UncontrolledProviderScope(
     container: container,
-    child: MaterialApp(home: Scaffold(body: child)),
+    child: MaterialApp(
+      theme: ThemeData(extensions: [AppColors.dark]),
+      home: Scaffold(body: child),
+    ),
   );
 }
 

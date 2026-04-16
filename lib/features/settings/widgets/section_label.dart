@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 
 class SectionLabel extends StatelessWidget {
   const SectionLabel(this.label, {super.key});
@@ -9,14 +9,10 @@ class SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Text(
       label.toUpperCase(),
-      style: const TextStyle(
-        color: ThemeConstants.mutedFg,
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.8,
-      ),
+      style: TextStyle(color: c.mutedFg, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.8),
     );
   }
 }

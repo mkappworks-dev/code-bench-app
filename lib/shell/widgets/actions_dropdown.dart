@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/utils/instant_menu.dart';
 import '../../data/project/models/project.dart';
 import '../../data/project/models/project_action.dart';
@@ -29,12 +30,13 @@ class ActionsDropdown extends ConsumerWidget {
           label: 'Actions',
           trailingCaret: true,
           onTap: () async {
+            final c = AppColors.of(btnContext);
             final value = await showInstantMenuAnchoredTo<Object>(
               buttonContext: btnContext,
-              color: ThemeConstants.panelBackground,
+              color: c.panelBackground,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(7),
-                side: const BorderSide(color: ThemeConstants.faintFg),
+                side: BorderSide(color: c.faintFg),
               ),
               items: [
                 for (final action in project.actions)
@@ -43,14 +45,11 @@ class ActionsDropdown extends ConsumerWidget {
                     height: 32,
                     child: Row(
                       children: [
-                        const Icon(AppIcons.run, size: 12, color: ThemeConstants.textSecondary),
+                        Icon(AppIcons.run, size: 12, color: c.textSecondary),
                         const SizedBox(width: 6),
                         Text(
                           action.name,
-                          style: const TextStyle(
-                            color: ThemeConstants.textSecondary,
-                            fontSize: ThemeConstants.uiFontSizeSmall,
-                          ),
+                          style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                         ),
                       ],
                     ),
@@ -60,12 +59,12 @@ class ActionsDropdown extends ConsumerWidget {
                   value: '__add__',
                   height: 32,
                   child: Row(
-                    children: const [
-                      Icon(AppIcons.add, size: 12, color: ThemeConstants.textSecondary),
-                      SizedBox(width: 6),
+                    children: [
+                      Icon(AppIcons.add, size: 12, color: c.textSecondary),
+                      const SizedBox(width: 6),
                       Text(
                         'Add action',
-                        style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                        style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                       ),
                     ],
                   ),

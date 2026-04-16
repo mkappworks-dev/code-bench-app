@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import '../constants/theme_constants.dart';
+import '../theme/app_colors.dart';
 
 enum AppSnackBarType { success, error, warning, info }
 
@@ -22,20 +22,6 @@ class AppSnackBar extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
   final VoidCallback? onClose;
-
-  static const _typeColor = {
-    AppSnackBarType.success: ThemeConstants.success,
-    AppSnackBarType.error: ThemeConstants.error,
-    AppSnackBarType.warning: ThemeConstants.warning,
-    AppSnackBarType.info: ThemeConstants.info,
-  };
-
-  static const _typeIconBg = {
-    AppSnackBarType.success: ThemeConstants.successTintBg,
-    AppSnackBarType.error: ThemeConstants.errorTintBg,
-    AppSnackBarType.warning: ThemeConstants.warningTintBg,
-    AppSnackBarType.info: ThemeConstants.infoTintBg,
-  };
 
   static const _typeIcon = {
     AppSnackBarType.success: Icons.check_circle_outline,
@@ -82,15 +68,20 @@ class AppSnackBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final typeColor = _typeColor[type]!;
-    final iconBg = _typeIconBg[type]!;
+    final c = AppColors.of(context);
+    final typeColor = {
+      AppSnackBarType.success: c.success,
+      AppSnackBarType.error: c.error,
+      AppSnackBarType.warning: c.warning,
+      AppSnackBarType.info: c.info,
+    }[type]!;
+    final iconBg = {
+      AppSnackBarType.success: c.successTintBg,
+      AppSnackBarType.error: c.errorTintBg,
+      AppSnackBarType.warning: c.warningTintBg,
+      AppSnackBarType.info: c.infoTintBg,
+    }[type]!;
     final iconData = _typeIcon[type]!;
-    final surface = dark ? ThemeConstants.frostedSurface : ThemeConstants.lightFrostedSurface;
-    final borderC = dark ? ThemeConstants.borderColor : ThemeConstants.lightBorder;
-    final labelColor = dark ? ThemeConstants.headingText : ThemeConstants.lightText;
-    final bodyColor = dark ? ThemeConstants.dimFg : ThemeConstants.lightTextSecondary;
-    final closeColor = dark ? ThemeConstants.mutedFg : ThemeConstants.lightTextMuted;
 
     return Material(
       type: MaterialType.transparency,
@@ -98,13 +89,13 @@ class AppSnackBar extends StatelessWidget {
         width: 320,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: borderC),
-          boxShadow: const [BoxShadow(color: ThemeConstants.shadowHeavy, blurRadius: 32, offset: Offset(0, 8))],
+          border: Border.all(color: c.subtleBorder),
+          boxShadow: [BoxShadow(color: c.shadowHeavy, blurRadius: 32, offset: const Offset(0, 8))],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: ColoredBox(
-            color: surface,
+            color: c.frostedSurface,
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -129,11 +120,11 @@ class AppSnackBar extends StatelessWidget {
                               children: [
                                 Text(
                                   label,
-                                  style: TextStyle(color: labelColor, fontSize: 11, fontWeight: FontWeight.w600),
+                                  style: TextStyle(color: c.headingText, fontSize: 11, fontWeight: FontWeight.w600),
                                 ),
                                 if (message != null) ...[
                                   const SizedBox(height: 1),
-                                  Text(message!, style: TextStyle(color: bodyColor, fontSize: 10)),
+                                  Text(message!, style: TextStyle(color: c.dimFg, fontSize: 10)),
                                 ],
                               ],
                             ),
@@ -151,7 +142,7 @@ class AppSnackBar extends StatelessWidget {
                           const SizedBox(width: 8),
                           GestureDetector(
                             onTap: onClose,
-                            child: Icon(Icons.close, size: 13, color: closeColor),
+                            child: Icon(Icons.close, size: 13, color: c.mutedFg),
                           ),
                         ],
                       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../notifiers/action_output_notifier.dart';
 
 class ActionOutputPanel extends ConsumerWidget {
@@ -9,6 +10,7 @@ class ActionOutputPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = AppColors.of(context);
     final state = ref.watch(actionOutputProvider);
     if (state.status == ActionStatus.idle) return const SizedBox.shrink();
 
@@ -20,18 +22,18 @@ class ActionOutputPanel extends ConsumerWidget {
     };
 
     final statusColor = switch (state.status) {
-      ActionStatus.running => ThemeConstants.info,
-      ActionStatus.done => ThemeConstants.success,
-      ActionStatus.failed => ThemeConstants.error,
-      ActionStatus.idle => ThemeConstants.textSecondary,
+      ActionStatus.running => c.info,
+      ActionStatus.done => c.success,
+      ActionStatus.failed => c.error,
+      ActionStatus.idle => c.textSecondary,
     };
 
     return Container(
       margin: const EdgeInsets.fromLTRB(8, 4, 8, 0),
       decoration: BoxDecoration(
-        color: ThemeConstants.codeBlockBg,
+        color: c.codeBlockBg,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: ThemeConstants.borderColor),
+        border: Border.all(color: c.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -40,15 +42,15 @@ class ActionOutputPanel extends ConsumerWidget {
           // Header row
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: c.borderColor)),
             ),
             child: Row(
               children: [
                 Text(
                   state.actionName ?? 'Action',
-                  style: const TextStyle(
-                    color: ThemeConstants.textPrimary,
+                  style: TextStyle(
+                    color: c.textPrimary,
                     fontSize: ThemeConstants.uiFontSizeSmall,
                     fontWeight: FontWeight.w600,
                   ),
@@ -61,7 +63,7 @@ class ActionOutputPanel extends ConsumerWidget {
                 const Spacer(),
                 GestureDetector(
                   onTap: () => ref.read(actionOutputProvider.notifier).clear(),
-                  child: const Icon(Icons.close, size: 14, color: ThemeConstants.textSecondary),
+                  child: Icon(Icons.close, size: 14, color: c.textSecondary),
                 ),
               ],
             ),
@@ -74,8 +76,8 @@ class ActionOutputPanel extends ConsumerWidget {
               itemCount: state.lines.length,
               itemBuilder: (_, i) => Text(
                 state.lines[i],
-                style: const TextStyle(
-                  color: ThemeConstants.textPrimary,
+                style: TextStyle(
+                  color: c.textPrimary,
                   fontSize: ThemeConstants.uiFontSizeSmall,
                   fontFamily: ThemeConstants.editorFontFamily,
                   height: 1.4,

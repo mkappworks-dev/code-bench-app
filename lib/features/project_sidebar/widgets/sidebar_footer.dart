@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_icons.dart';
-import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Settings link pinned to the bottom of the project sidebar.
 class SidebarFooter extends StatelessWidget {
@@ -10,10 +10,7 @@ class SidebarFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final chipColor = dark ? ThemeConstants.chipSurface : ThemeConstants.lightChipSurface;
-    final borderColor = dark ? ThemeConstants.chipBorder : ThemeConstants.lightChipBorder;
-    final textColor = dark ? ThemeConstants.textSecondary : ThemeConstants.lightChipText;
+    final c = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Align(
@@ -24,16 +21,16 @@ class SidebarFooter extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: chipColor,
-              border: Border.all(color: borderColor),
+              color: c.chipFill,
+              border: Border.all(color: c.chipStroke),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(AppIcons.settings, size: 11, color: textColor),
+                Icon(AppIcons.settings, size: 11, color: c.chipText),
                 const SizedBox(width: 6),
-                Text('Settings', style: TextStyle(color: textColor, fontSize: 11)),
+                Text('Settings', style: TextStyle(color: c.chipText, fontSize: 11)),
               ],
             ),
           ),

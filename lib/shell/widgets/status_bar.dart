@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../data/project/models/project.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/branch_picker/widgets/branch_picker_popover.dart';
@@ -36,6 +37,7 @@ class _StatusBarState extends ConsumerState<StatusBar> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final s = ref.watch(statusBarStateProvider);
     final activeProject = s.activeProject;
     final changeCount = s.changeCount;
@@ -45,11 +47,7 @@ class _StatusBarState extends ConsumerState<StatusBar> {
     return Container(
       height: 22,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? ThemeConstants.background
-            : ThemeConstants.lightStatusBar,
-      ),
+      decoration: BoxDecoration(color: c.statusBarFill),
       child: Row(
         children: [
           const Spacer(),
@@ -76,16 +74,13 @@ class _StatusBarState extends ConsumerState<StatusBar> {
                   Container(
                     width: 5,
                     height: 5,
-                    decoration: BoxDecoration(
-                      color: panelVisible ? ThemeConstants.accent : ThemeConstants.warning,
-                      shape: BoxShape.circle,
-                    ),
+                    decoration: BoxDecoration(color: panelVisible ? c.accent : c.warning, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 5),
                   Text(
                     '$changeCount ${changeCount == 1 ? 'change' : 'changes'}',
                     style: TextStyle(
-                      color: panelVisible ? ThemeConstants.accent : ThemeConstants.warning,
+                      color: panelVisible ? c.accent : c.warning,
                       fontSize: ThemeConstants.uiFontSizeLabel,
                     ),
                   ),
@@ -103,21 +98,18 @@ class _StatusBarState extends ConsumerState<StatusBar> {
                 borderRadius: BorderRadius.circular(4),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(4),
-                  hoverColor: ThemeConstants.success.withValues(alpha: 0.1),
+                  hoverColor: c.success.withValues(alpha: 0.1),
                   onTap: () => _openPicker(activeProject, liveState),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(LucideIcons.gitBranch, size: 10, color: ThemeConstants.success),
+                        Icon(LucideIcons.gitBranch, size: 10, color: c.success),
                         const SizedBox(width: 4),
                         Text(
                           liveState.branch ?? '(detached)',
-                          style: const TextStyle(
-                            color: ThemeConstants.success,
-                            fontSize: ThemeConstants.uiFontSizeLabel,
-                          ),
+                          style: TextStyle(color: c.success, fontSize: ThemeConstants.uiFontSizeLabel),
                         ),
                       ],
                     ),
@@ -128,7 +120,7 @@ class _StatusBarState extends ConsumerState<StatusBar> {
           ] else if (activeProject != null && liveState != null) ...[
             Text(
               'Not git',
-              style: const TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSizeLabel),
+              style: TextStyle(color: c.faintFg, fontSize: ThemeConstants.uiFontSizeLabel),
             ),
           ],
         ],

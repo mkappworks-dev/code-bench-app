@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../notifiers/project_sidebar_notifier.dart';
 
@@ -16,6 +17,7 @@ class SidebarHeader extends ConsumerWidget {
   final VoidCallback onAdd;
 
   void _showSortMenu(BuildContext context, WidgetRef ref) {
+    final c = AppColors.of(context);
     final current = ref.read(projectSortProvider).value;
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
@@ -31,20 +33,20 @@ class SidebarHeader extends ConsumerWidget {
     showInstantMenu<String>(
       context: context,
       position: position,
-      color: ThemeConstants.panelBackground,
+      color: c.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
-        side: const BorderSide(color: ThemeConstants.faintFg),
+        side: BorderSide(color: c.faintFg),
       ),
       items: [
-        _sortHeader('SORT PROJECTS'),
-        _sortItem('proj_lastMessage', 'Last user message', current?.projectSort == ProjectSortOrder.lastMessage),
-        _sortItem('proj_createdAt', 'Created at', current?.projectSort == ProjectSortOrder.createdAt),
-        _sortItem('proj_manual', 'Manual', current?.projectSort == ProjectSortOrder.manual),
+        _sortHeader('SORT PROJECTS', c),
+        _sortItem('proj_lastMessage', 'Last user message', current?.projectSort == ProjectSortOrder.lastMessage, c),
+        _sortItem('proj_createdAt', 'Created at', current?.projectSort == ProjectSortOrder.createdAt, c),
+        _sortItem('proj_manual', 'Manual', current?.projectSort == ProjectSortOrder.manual, c),
         const PopupMenuDivider(),
-        _sortHeader('SORT THREADS'),
-        _sortItem('thread_lastMessage', 'Last user message', current?.threadSort == ThreadSortOrder.lastMessage),
-        _sortItem('thread_createdAt', 'Created at', current?.threadSort == ThreadSortOrder.createdAt),
+        _sortHeader('SORT THREADS', c),
+        _sortItem('thread_lastMessage', 'Last user message', current?.threadSort == ThreadSortOrder.lastMessage, c),
+        _sortItem('thread_createdAt', 'Created at', current?.threadSort == ThreadSortOrder.createdAt, c),
       ],
     ).then((value) {
       if (value == null) return;
@@ -66,19 +68,18 @@ class SidebarHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final labelColor = dark ? ThemeConstants.mutedFg : ThemeConstants.lightTextMuted;
+    final c = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: dark ? ThemeConstants.borderColor : ThemeConstants.lightBorder)),
+        border: Border(bottom: BorderSide(color: c.borderColor)),
       ),
       child: Row(
         children: [
           Text(
             'PROJECTS',
             style: TextStyle(
-              color: labelColor,
+              color: c.mutedFg,
               fontSize: ThemeConstants.uiFontSizeLabel,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.8,
@@ -91,7 +92,7 @@ class SidebarHeader extends ConsumerWidget {
               borderRadius: BorderRadius.circular(4),
               child: Padding(
                 padding: const EdgeInsets.all(3),
-                child: Icon(AppIcons.arrowUpDown, size: 13, color: labelColor),
+                child: Icon(AppIcons.arrowUpDown, size: 13, color: c.mutedFg),
               ),
             ),
           ),
@@ -101,7 +102,7 @@ class SidebarHeader extends ConsumerWidget {
             borderRadius: BorderRadius.circular(4),
             child: Padding(
               padding: const EdgeInsets.all(3),
-              child: Icon(AppIcons.add, size: 13, color: labelColor),
+              child: Icon(AppIcons.add, size: 13, color: c.mutedFg),
             ),
           ),
         ],
@@ -110,13 +111,13 @@ class SidebarHeader extends ConsumerWidget {
   }
 }
 
-PopupMenuItem<String> _sortHeader(String label) => PopupMenuItem<String>(
+PopupMenuItem<String> _sortHeader(String label, AppColors c) => PopupMenuItem<String>(
   enabled: false,
   height: 24,
   child: Text(
     label,
-    style: const TextStyle(
-      color: ThemeConstants.mutedFg,
+    style: TextStyle(
+      color: c.mutedFg,
       fontSize: ThemeConstants.uiFontSizeLabel,
       fontWeight: FontWeight.w600,
       letterSpacing: 0.6,
@@ -124,7 +125,7 @@ PopupMenuItem<String> _sortHeader(String label) => PopupMenuItem<String>(
   ),
 );
 
-PopupMenuItem<String> _sortItem(String value, String label, bool selected) => PopupMenuItem<String>(
+PopupMenuItem<String> _sortItem(String value, String label, bool selected, AppColors c) => PopupMenuItem<String>(
   value: value,
   height: 32,
   child: Row(
@@ -132,13 +133,10 @@ PopupMenuItem<String> _sortItem(String value, String label, bool selected) => Po
       Expanded(
         child: Text(
           label,
-          style: TextStyle(
-            color: selected ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
-            fontSize: ThemeConstants.uiFontSizeSmall,
-          ),
+          style: TextStyle(color: selected ? c.textPrimary : c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
         ),
       ),
-      if (selected) const Icon(AppIcons.check, size: 11, color: ThemeConstants.accent),
+      if (selected) Icon(AppIcons.check, size: 11, color: c.accent),
     ],
   ),
 );

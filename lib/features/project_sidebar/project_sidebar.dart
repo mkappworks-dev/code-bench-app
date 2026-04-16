@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/utils/platform_utils.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import '../chat/notifiers/chat_notifier.dart';
@@ -102,6 +103,7 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     ref.listen(projectSidebarActionsProvider, (_, next) {
       if (!_adding && !_mutating) return;
       if (next is! AsyncError || !mounted) return;
@@ -125,10 +127,9 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
     // Watch activeProjectId to rebuild when it changes.
     ref.watch(activeProjectIdProvider);
 
-    final dark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: 224,
-      color: dark ? ThemeConstants.activityBar : ThemeConstants.lightActivityBar,
+      color: c.activityBar,
       child: Column(
         children: [
           // Traffic-light clearance on macOS (TitleBarStyle.hidden)
@@ -140,7 +141,7 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
               error: (e, _) => Center(
                 child: Text(
                   'Error: $e',
-                  style: const TextStyle(color: ThemeConstants.error, fontSize: ThemeConstants.uiFontSizeSmall),
+                  style: TextStyle(color: c.error, fontSize: ThemeConstants.uiFontSizeSmall),
                 ),
               ),
               data: (projects) {
@@ -153,9 +154,7 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
                     final sessions = ref.watch(projectSessionsProvider(project.id)).value ?? [];
                     return Container(
                       decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: dark ? ThemeConstants.deepBackground : ThemeConstants.lightDivider),
-                        ),
+                        border: Border(bottom: BorderSide(color: c.deepBackground)),
                       ),
                       child: ProjectTile(
                         project: project,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../data/project/models/project.dart';
 import '../notifiers/top_action_bar_notifier.dart';
 import 'actions_dropdown.dart';
@@ -19,49 +20,32 @@ class TopActionBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = AppColors.of(context);
     final s = ref.watch(topActionBarStateProvider);
 
     return Container(
       height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? ThemeConstants.topBarSurface
-            : ThemeConstants.lightTopBarSurface,
-        border: const Border(bottom: BorderSide(color: ThemeConstants.glassBorderSubtle)),
+        color: c.topBarFill,
+        border: Border(bottom: BorderSide(color: c.subtleBorder)),
       ),
       child: Row(
         children: [
           // ── Left: title + badges ────────────────────────────────────────
           Text(
             s.sessionTitle,
-            style: TextStyle(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? ThemeConstants.textPrimary
-                  : ThemeConstants.lightText,
-              fontSize: ThemeConstants.uiFontSize,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, fontWeight: FontWeight.w500),
           ),
           if (s.project != null) ...[
             const SizedBox(width: 8),
             // Project name badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? ThemeConstants.inputSurface
-                    : ThemeConstants.lightChipSurface,
-                borderRadius: BorderRadius.circular(4),
-              ),
+              decoration: BoxDecoration(color: c.chipFill, borderRadius: BorderRadius.circular(4)),
               child: Text(
                 s.project!.name,
-                style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? ThemeConstants.mutedFg
-                      : ThemeConstants.lightTextMuted,
-                  fontSize: ThemeConstants.uiFontSizeLabel,
-                ),
+                style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeLabel),
               ),
             ),
             // No Git badge (only when we've definitively observed the path
@@ -70,14 +54,11 @@ class TopActionBar extends ConsumerWidget {
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: ThemeConstants.worktreeBadgeBg,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
+                decoration: BoxDecoration(color: c.worktreeBadgeBg, borderRadius: BorderRadius.circular(4)),
+                child: Text(
                   'No Git',
                   style: TextStyle(
-                    color: ThemeConstants.worktreeBadgeFg,
+                    color: c.worktreeBadgeFg,
                     fontSize: ThemeConstants.uiFontSizeLabel,
                     fontWeight: FontWeight.w600,
                   ),
@@ -124,11 +105,11 @@ class _GlassPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final c = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: dark ? ThemeConstants.chipSurface : ThemeConstants.lightChipSurface,
-        border: Border.all(color: dark ? ThemeConstants.chipBorder : ThemeConstants.lightChipBorder),
+        color: c.chipFill,
+        border: Border.all(color: c.chipStroke),
         borderRadius: BorderRadius.circular(6),
       ),
       child: child,

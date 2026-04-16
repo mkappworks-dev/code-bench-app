@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/core/theme/app_colors.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/features/chat/widgets/message_bubble.dart'
     show MessageBubble, StreamingDot, parseCodeFenceInfo;
 
 Widget _wrap(Widget child) => ProviderScope(
-  child: MaterialApp(home: Scaffold(body: child)),
+  child: MaterialApp(
+    theme: ThemeData(extensions: [AppColors.dark]),
+    home: Scaffold(body: child),
+  ),
 );
 
 ChatMessage _msg(MessageRole role, {bool streaming = false}) => ChatMessage(

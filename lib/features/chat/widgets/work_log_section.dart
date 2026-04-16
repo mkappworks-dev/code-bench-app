@@ -4,7 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/tool_event.dart';
 import '../notifiers/chat_notifier.dart';
@@ -65,6 +65,7 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     // Watch the tool events for this specific message. `select` trims
     // rebuilds to changes in this message's toolEvents only — and uses
     // firstWhereOrNull so a missing message just produces an empty list
@@ -94,30 +95,30 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
             child: Row(
               children: [
                 if (anyRunning)
-                  const SizedBox(
+                  SizedBox(
                     width: 10,
                     height: 10,
-                    child: CircularProgressIndicator(strokeWidth: 1.5, color: ThemeConstants.blueAccent),
+                    child: CircularProgressIndicator(strokeWidth: 1.5, color: c.blueAccent),
                   )
                 else
                   const Icon(Icons.check_circle, size: 11, color: Colors.green),
                 const SizedBox(width: 6),
-                const Text(
+                Text(
                   'WORK LOG',
                   style: TextStyle(
-                    color: ThemeConstants.textSecondary,
+                    color: c.textSecondary,
                     fontSize: 9,
                     letterSpacing: 1.2,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text('⏱ ${elapsedSeconds}s', style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 9)),
+                Text('⏱ ${elapsedSeconds}s', style: TextStyle(color: c.textSecondary, fontSize: 9)),
                 const Spacer(),
                 Icon(
                   _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                   size: 12,
-                  color: ThemeConstants.textSecondary,
+                  color: c.textSecondary,
                 ),
               ],
             ),
@@ -128,9 +129,9 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: ThemeConstants.sidebarBackground,
+              color: c.sidebarBackground,
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: ThemeConstants.borderColor),
+              border: Border.all(color: c.borderColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,10 +143,10 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
                   ToolStatus.cancelled => '⊘',
                 };
                 final Color iconColor = switch (entry.status) {
-                  ToolStatus.running => ThemeConstants.blueAccent,
+                  ToolStatus.running => c.blueAccent,
                   ToolStatus.success => Colors.green,
                   ToolStatus.error => Colors.red,
-                  ToolStatus.cancelled => ThemeConstants.dimFg,
+                  ToolStatus.cancelled => c.dimFg,
                 };
                 final arg =
                     entry.filePath ??
@@ -161,32 +162,21 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
                       const SizedBox(width: 6),
                       Text(
                         entry.toolName,
-                        style: const TextStyle(
-                          color: ThemeConstants.textPrimary,
-                          fontSize: 10,
-                          fontFamily: 'monospace',
-                        ),
+                        style: TextStyle(color: c.textPrimary, fontSize: 10, fontFamily: 'monospace'),
                       ),
                       if (arg != null) ...[
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             arg,
-                            style: const TextStyle(
-                              color: ThemeConstants.textSecondary,
-                              fontSize: 9,
-                              fontFamily: 'monospace',
-                            ),
+                            style: TextStyle(color: c.textSecondary, fontSize: 9, fontFamily: 'monospace'),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ] else
                         const Spacer(),
                       if (entry.durationMs != null)
-                        Text(
-                          '${entry.durationMs}ms',
-                          style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 9),
-                        ),
+                        Text('${entry.durationMs}ms', style: TextStyle(color: c.textSecondary, fontSize: 9)),
                     ],
                   ),
                 );

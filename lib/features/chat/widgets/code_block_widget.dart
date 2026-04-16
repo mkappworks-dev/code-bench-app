@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../data/project/models/project.dart';
@@ -39,19 +40,19 @@ class CodeBlockBuilder extends MarkdownElementBuilder {
     final code = element.textContent;
 
     if (!element.attributes.containsKey('class') && !code.contains('\n')) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final c = AppColors.of(context);
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
         decoration: BoxDecoration(
-          color: isDark ? ThemeConstants.inlineCodeBg : ThemeConstants.lightInlineCodeSurface,
-          border: Border.all(color: isDark ? ThemeConstants.glassBorderSubtle : ThemeConstants.lightInlineCodeBorder),
+          color: c.inlineCodeFill,
+          border: Border.all(color: c.inlineCodeStroke),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(
           code,
           style: TextStyle(
             fontFamily: ThemeConstants.editorFontFamily,
-            color: isDark ? ThemeConstants.syntaxString : ThemeConstants.lightInlineCodeText,
+            color: c.inlineCodeText,
             fontSize: ThemeConstants.uiFontSize,
           ),
         ),
@@ -173,12 +174,13 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
     }
     final bool diffLoaded = diffAsync?.asData?.value != null;
 
+    final c = AppColors.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: ThemeConstants.codeBlockBg,
+        color: c.codeBlockBg,
         borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: ThemeConstants.glassBorderSubtle),
+        border: Border.all(color: c.subtleBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -205,11 +207,13 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
                 ),
               ),
               AsyncData(:final value) when value != null => _buildDiffCard(value),
-              _ => const Padding(
-                padding: EdgeInsets.all(12),
-                child: Text(
-                  'Unable to compute diff.',
-                  style: TextStyle(color: ThemeConstants.error, fontSize: ThemeConstants.uiFontSizeSmall),
+              _ => Builder(
+                builder: (context) => Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    'Unable to compute diff.',
+                    style: TextStyle(color: AppColors.of(context).error, fontSize: ThemeConstants.uiFontSizeSmall),
+                  ),
                 ),
               ),
             }
@@ -234,17 +238,18 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
   }
 
   Widget _buildHeader(bool diffLoaded) {
+    final c = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.borderColor)),
       ),
       child: Row(
         children: [
           Text(
             widget.language,
-            style: const TextStyle(
-              color: ThemeConstants.mutedFg,
+            style: TextStyle(
+              color: c.mutedFg,
               fontSize: ThemeConstants.uiFontSizeSmall,
               fontFamily: ThemeConstants.editorFontFamily,
             ),
@@ -254,8 +259,8 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
             Expanded(
               child: Text(
                 _effectiveFilename!,
-                style: const TextStyle(
-                  color: ThemeConstants.textSecondary,
+                style: TextStyle(
+                  color: c.textSecondary,
                   fontSize: ThemeConstants.uiFontSizeSmall,
                   fontFamily: ThemeConstants.editorFontFamily,
                 ),
@@ -292,12 +297,13 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
   }
 
   Widget _buildDiffCard(DiffResult diffResult) {
+    final c = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: c.borderColor)),
           ),
           child: Row(
             children: [
@@ -339,6 +345,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
   }
 
   Widget _buildDiffContent(List<Diff> diffs) {
+    final c = AppColors.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Padding(
@@ -347,9 +354,9 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: diffs.map((diff) {
             final bg = diff.operation == DIFF_INSERT
-                ? ThemeConstants.diffAdditionBg
+                ? c.diffAdditionBg
                 : diff.operation == DIFF_DELETE
-                ? ThemeConstants.diffDeletionBg
+                ? c.diffDeletionBg
                 : Colors.transparent;
             final prefix = diff.operation == DIFF_INSERT
                 ? '+'
@@ -363,10 +370,10 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
                     .split('\n')
                     .map((line) => '$prefix $line')
                     .join('\n'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: ThemeConstants.editorFontFamily,
                   fontSize: ThemeConstants.editorFontSize,
-                  color: ThemeConstants.textPrimary,
+                  color: c.textPrimary,
                   height: 1.5,
                 ),
               ),
@@ -388,16 +395,17 @@ class _HeaderButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: ThemeConstants.mutedFg),
+          Icon(icon, size: 12, color: c.mutedFg),
           const SizedBox(width: 4),
           Text(
             label,
-            style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
+            style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
           ),
         ],
       ),
@@ -416,20 +424,18 @@ class _Tab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final isActive = index == activeIndex;
     return GestureDetector(
       onTap: () => onTap(index),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: isActive ? ThemeConstants.accent : Colors.transparent, width: 2)),
+          border: Border(bottom: BorderSide(color: isActive ? c.accent : Colors.transparent, width: 2)),
         ),
         child: Text(
           label,
-          style: TextStyle(
-            fontSize: ThemeConstants.uiFontSizeSmall,
-            color: isActive ? ThemeConstants.textPrimary : ThemeConstants.mutedFg,
-          ),
+          style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall, color: isActive ? c.textPrimary : c.mutedFg),
         ),
       ),
     );
@@ -462,16 +468,21 @@ class _CopyButtonState extends State<_CopyButton> {
           dLog('[clipboard] copy failed: $e');
         }
       },
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(_copied ? AppIcons.check : AppIcons.copy, size: 12, color: ThemeConstants.mutedFg),
-          const SizedBox(width: 4),
-          Text(
-            _copied ? 'Copied' : 'Copy',
-            style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
-          ),
-        ],
+      child: Builder(
+        builder: (context) {
+          final c = AppColors.of(context);
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_copied ? AppIcons.check : AppIcons.copy, size: 12, color: c.mutedFg),
+              const SizedBox(width: 4),
+              Text(
+                _copied ? 'Copied' : 'Copy',
+                style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -559,17 +570,18 @@ class _FilePickerPanelState extends ConsumerState<_FilePickerPanel> {
 
     final isScanning = ref.watch(projectFileScanActionsProvider).isLoading;
 
+    final c = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.borderColor)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Which file does this update?',
-            style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+            style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
           ),
           const SizedBox(height: 6),
           Row(
@@ -582,16 +594,16 @@ class _FilePickerPanelState extends ConsumerState<_FilePickerPanel> {
                   onSubmitted: (_) => _submit(),
                   decoration: InputDecoration(
                     hintText: _scanError ?? (isScanning ? 'Scanning project…' : 'lib/features/…'),
-                    hintStyle: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
+                    hintStyle: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(4),
-                      borderSide: const BorderSide(color: ThemeConstants.borderColor),
+                      borderSide: BorderSide(color: c.borderColor),
                     ),
                   ),
-                  style: const TextStyle(
-                    color: ThemeConstants.textPrimary,
+                  style: TextStyle(
+                    color: c.textPrimary,
                     fontSize: ThemeConstants.uiFontSizeSmall,
                     fontFamily: ThemeConstants.editorFontFamily,
                   ),
@@ -608,7 +620,7 @@ class _FilePickerPanelState extends ConsumerState<_FilePickerPanel> {
             Container(
               constraints: const BoxConstraints(maxHeight: 140),
               decoration: BoxDecoration(
-                border: Border.all(color: ThemeConstants.borderColor),
+                border: Border.all(color: c.borderColor),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: ListView.builder(
@@ -620,8 +632,8 @@ class _FilePickerPanelState extends ConsumerState<_FilePickerPanel> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Text(
                       _suggestions[i],
-                      style: const TextStyle(
-                        color: ThemeConstants.textSecondary,
+                      style: TextStyle(
+                        color: c.textSecondary,
                         fontSize: ThemeConstants.uiFontSizeSmall,
                         fontFamily: ThemeConstants.editorFontFamily,
                       ),

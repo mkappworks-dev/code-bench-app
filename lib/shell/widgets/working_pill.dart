@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../notifiers/working_pill_notifier.dart';
 
 /// Status-bar pill that shows "Working for Xs" while the agent runs tool
@@ -61,17 +61,15 @@ class _WorkingPillState extends ConsumerState<WorkingPill> {
 
     if (!anyRunning) return const SizedBox.shrink();
 
+    final c = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: ThemeConstants.selectionBg,
+        color: c.selectionBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: ThemeConstants.selectionBorder),
+        border: Border.all(color: c.selectionBorder),
       ),
-      child: Text(
-        'Working for ${_elapsedSeconds}s',
-        style: const TextStyle(color: ThemeConstants.blueAccent, fontSize: 10),
-      ),
+      child: Text('Working for ${_elapsedSeconds}s', style: TextStyle(color: c.blueAccent, fontSize: 10)),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 
 /// Compact action button used in the top action bar.
 ///
@@ -18,12 +19,13 @@ class ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final content = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
       decoration: BoxDecoration(
-        color: ThemeConstants.inputSurface,
-        border: Border.all(color: ThemeConstants.deepBorder),
+        color: c.inputSurface,
+        border: Border.all(color: c.deepBorder),
         borderRadius: BorderRadius.circular(5),
       ),
       child: Center(
@@ -31,16 +33,13 @@ class ActionButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 12, color: ThemeConstants.textSecondary),
+            Icon(icon, size: 12, color: c.textSecondary),
             const SizedBox(width: 5),
             Text(
               label,
-              style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+              style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
             ),
-            if (trailingCaret) ...[
-              const SizedBox(width: 4),
-              const Icon(AppIcons.chevronDown, size: 10, color: ThemeConstants.faintFg),
-            ],
+            if (trailingCaret) ...[const SizedBox(width: 4), Icon(AppIcons.chevronDown, size: 10, color: c.faintFg)],
           ],
         ),
       ),

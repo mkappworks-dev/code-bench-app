@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import '../constants/theme_constants.dart';
+import '../theme/app_colors.dart';
 
 enum AppDialogIconType { teal, destructive }
 
@@ -57,13 +57,14 @@ class AppDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final badgeSize = hasInputField ? 28.0 : 36.0;
     final badgeRadius = hasInputField ? 7.0 : 9.0;
     final headerBottomPad = hasInputField ? 12.0 : 14.0;
 
     final (iconBg, iconFg) = switch (iconType) {
-      AppDialogIconType.teal => (ThemeConstants.accent.withValues(alpha: 0.1), ThemeConstants.accent),
-      AppDialogIconType.destructive => (ThemeConstants.error.withValues(alpha: 0.1), ThemeConstants.error),
+      AppDialogIconType.teal => (c.accent.withValues(alpha: 0.1), c.accent),
+      AppDialogIconType.destructive => (c.error.withValues(alpha: 0.1), c.error),
     };
 
     return Dialog(
@@ -77,15 +78,9 @@ class AppDialog extends StatelessWidget {
             filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
             child: Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? ThemeConstants.dialogSurface
-                    : ThemeConstants.lightDialogSurface,
+                color: c.dialogFill,
                 borderRadius: BorderRadius.circular(13),
-                border: Border.all(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? ThemeConstants.glassBorderSubtle
-                      : ThemeConstants.lightDialogBorder,
-                ),
+                border: Border.all(color: c.dialogBorder),
                 boxShadow: [
                   BoxShadow(
                     color: Theme.of(context).brightness == Brightness.dark
@@ -94,14 +89,7 @@ class AppDialog extends StatelessWidget {
                     blurRadius: Theme.of(context).brightness == Brightness.dark ? 64 : 48,
                     offset: Offset(0, Theme.of(context).brightness == Brightness.dark ? 24 : 16),
                   ),
-                  BoxShadow(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? ThemeConstants.dialogTopHighlight
-                        : ThemeConstants.lightDialogHighlight,
-                    blurRadius: 0,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 1),
-                  ),
+                  BoxShadow(color: c.dialogHighlight, blurRadius: 0, spreadRadius: 0, offset: const Offset(0, 1)),
                 ],
               ),
               child: Column(
@@ -122,14 +110,14 @@ class AppDialog extends StatelessWidget {
                             borderRadius: BorderRadius.circular(badgeRadius),
                             border: Border.all(
                               color: iconType == AppDialogIconType.teal
-                                  ? ThemeConstants.accentBorderTeal
-                                  : ThemeConstants.error.withValues(alpha: 0.3),
+                                  ? c.accentBorderTeal
+                                  : c.error.withValues(alpha: 0.3),
                             ),
                             boxShadow: [
                               BoxShadow(
                                 color: iconType == AppDialogIconType.teal
-                                    ? ThemeConstants.accentGlowBadge
-                                    : ThemeConstants.error.withValues(alpha: 0.18),
+                                    ? c.accentGlowBadge
+                                    : c.error.withValues(alpha: 0.18),
                                 blurRadius: 14,
                               ),
                             ],
@@ -146,25 +134,11 @@ class AppDialog extends StatelessWidget {
                               children: [
                                 Text(
                                   title,
-                                  style: TextStyle(
-                                    color: Theme.of(context).brightness == Brightness.dark
-                                        ? ThemeConstants.textPrimary
-                                        : ThemeConstants.lightText,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                  style: TextStyle(color: c.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
                                 ),
                                 if (subtitle != null) ...[
                                   const SizedBox(height: 3),
-                                  Text(
-                                    subtitle!,
-                                    style: TextStyle(
-                                      color: Theme.of(context).brightness == Brightness.dark
-                                          ? ThemeConstants.textSecondary
-                                          : ThemeConstants.lightTextTertiary,
-                                      fontSize: 11,
-                                    ),
-                                  ),
+                                  Text(subtitle!, style: TextStyle(color: c.textSecondary, fontSize: 11)),
                                 ],
                               ],
                             ),
@@ -179,13 +153,7 @@ class AppDialog extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.fromLTRB(16, 11, 16, 11),
                       decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? ThemeConstants.glassBorderFaint
-                                : ThemeConstants.lightDivider,
-                          ),
-                        ),
+                        border: Border(top: BorderSide(color: c.faintBorder)),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -217,7 +185,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final c = AppColors.of(context);
     switch (action._style) {
       case _ActionStyle.primary:
         return GestureDetector(
@@ -227,17 +195,17 @@ class _ActionButton extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [ThemeConstants.accent, ThemeConstants.accentHover],
+                  colors: [c.accent, c.accentHover],
                 ),
                 borderRadius: BorderRadius.circular(6),
-                boxShadow: const [BoxShadow(color: ThemeConstants.sendGlow, blurRadius: 10, offset: Offset(0, 2))],
+                boxShadow: [BoxShadow(color: c.sendGlow, blurRadius: 10, offset: const Offset(0, 2))],
               ),
               child: Text(
                 action.label,
-                style: const TextStyle(color: ThemeConstants.onAccent, fontSize: 11, fontWeight: FontWeight.w600),
+                style: TextStyle(color: c.onAccent, fontSize: 11, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -250,17 +218,13 @@ class _ActionButton extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: dark ? ThemeConstants.chipSurface : ThemeConstants.lightChipSurface,
-                border: Border.all(color: dark ? ThemeConstants.chipBorder : ThemeConstants.lightChipBorder),
+                color: c.chipFill,
+                border: Border.all(color: c.chipStroke),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 action.label,
-                style: TextStyle(
-                  color: dark ? ThemeConstants.textPrimary : ThemeConstants.lightTextTertiary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(color: c.textSecondary, fontSize: 11, fontWeight: FontWeight.w500),
               ),
             ),
           ),
@@ -273,12 +237,12 @@ class _ActionButton extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                border: Border.all(color: ThemeConstants.destructiveBorder),
+                border: Border.all(color: c.destructiveBorder),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 action.label,
-                style: const TextStyle(color: ThemeConstants.error, fontSize: 11, fontWeight: FontWeight.w500),
+                style: TextStyle(color: c.error, fontSize: 11, fontWeight: FontWeight.w500),
               ),
             ),
           ),

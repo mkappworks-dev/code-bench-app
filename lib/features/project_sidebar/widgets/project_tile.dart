@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/session/models/chat_session.dart';
 import '../../../data/project/models/project.dart';
 import '../../../shell/notifiers/git_live_state_notifier.dart';
@@ -49,6 +50,7 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final isMissing = widget.project.status == ProjectStatus.missing;
     final activeProjectId = ref.watch(activeProjectIdProvider);
     // Safe to watch unconditionally: for a missing folder the provider's
@@ -94,8 +96,8 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
               child: Container(
                 decoration: isActive
                     ? BoxDecoration(
-                        color: ThemeConstants.success.withValues(alpha: 0.06),
-                        border: const Border(left: BorderSide(color: ThemeConstants.success, width: 2)),
+                        color: c.success.withValues(alpha: 0.06),
+                        border: Border(left: BorderSide(color: c.success, width: 2)),
                       )
                     : null,
                 child: Padding(
@@ -106,14 +108,14 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                       Icon(
                         widget.isExpanded ? AppIcons.chevronDown : AppIcons.chevronRight,
                         size: 14,
-                        color: ThemeConstants.faintFg,
+                        color: c.faintFg,
                       ),
                       const SizedBox(width: 4),
                       // Folder icon — warning triangle when missing
                       Icon(
                         isMissing ? AppIcons.warning : AppIcons.folder,
                         size: 13,
-                        color: isMissing ? ThemeConstants.warning : ThemeConstants.textSecondary,
+                        color: isMissing ? c.warning : c.textSecondary,
                       ),
                       const SizedBox(width: 6),
                       // Project name — muted + strikethrough when missing
@@ -123,11 +125,11 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                           child: Text(
                             widget.project.name,
                             style: TextStyle(
-                              color: isMissing ? ThemeConstants.mutedFg : ThemeConstants.textPrimary,
+                              color: isMissing ? c.mutedFg : c.textPrimary,
                               fontSize: ThemeConstants.uiFontSize,
                               fontWeight: FontWeight.w500,
                               decoration: isMissing ? TextDecoration.lineThrough : null,
-                              decorationColor: ThemeConstants.mutedFg,
+                              decorationColor: c.mutedFg,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -143,7 +145,7 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                             borderRadius: BorderRadius.circular(4),
                             child: Padding(
                               padding: const EdgeInsets.all(3),
-                              child: Icon(AppIcons.newChat, size: 13, color: ThemeConstants.mutedFg),
+                              child: Icon(AppIcons.newChat, size: 13, color: c.mutedFg),
                             ),
                           ),
                         ),
@@ -151,11 +153,7 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                       // Git icon — faint when missing or not a repo
                       Tooltip(
                         message: isGit ? (liveState?.branch ?? 'git') : '',
-                        child: Icon(
-                          AppIcons.gitBranch,
-                          size: 13,
-                          color: isGit ? ThemeConstants.success : ThemeConstants.faintFg,
-                        ),
+                        child: Icon(AppIcons.gitBranch, size: 13, color: isGit ? c.success : c.faintFg),
                       ),
                     ],
                   ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_dialog.dart';
 
 class RenameConversationDialog extends StatefulWidget {
@@ -52,16 +53,21 @@ class _RenameConversationDialogState extends State<RenameConversationDialog> {
       iconType: AppDialogIconType.teal,
       title: 'Rename Conversation',
       hasInputField: true,
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        onSubmitted: (_) => _submit(),
-        decoration: InputDecoration(
-          errorText: _error,
-          labelText: 'Conversation title',
-          labelStyle: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-        ),
-        style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
+      content: Builder(
+        builder: (context) {
+          final c = AppColors.of(context);
+          return TextField(
+            controller: _controller,
+            autofocus: true,
+            onSubmitted: (_) => _submit(),
+            decoration: InputDecoration(
+              errorText: _error,
+              labelText: 'Conversation title',
+              labelStyle: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+            ),
+            style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
+          );
+        },
       ),
       actions: [
         AppDialogAction.cancel(onPressed: () => Navigator.of(context).pop()),

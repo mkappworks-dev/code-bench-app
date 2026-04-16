@@ -16,12 +16,7 @@ final topActionBarStateProvider = TopActionBarStateProvider._();
 /// Synchronously derives [TopActionBarState] from lower-level providers.
 
 final class TopActionBarStateProvider
-    extends
-        $FunctionalProvider<
-          TopActionBarState,
-          TopActionBarState,
-          TopActionBarState
-        >
+    extends $FunctionalProvider<TopActionBarState, TopActionBarState, TopActionBarState>
     with $Provider<TopActionBarState> {
   /// Synchronously derives [TopActionBarState] from lower-level providers.
   TopActionBarStateProvider._()
@@ -40,9 +35,7 @@ final class TopActionBarStateProvider
 
   @$internal
   @override
-  $ProviderElement<TopActionBarState> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<TopActionBarState> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   TopActionBarState create(Ref ref) {
@@ -51,10 +44,7 @@ final class TopActionBarStateProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(TopActionBarState value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<TopActionBarState>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<TopActionBarState>(value));
   }
 }
 

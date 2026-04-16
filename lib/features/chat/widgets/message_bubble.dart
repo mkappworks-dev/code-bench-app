@@ -5,6 +5,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/shared/chat_message.dart';
 import '../notifiers/chat_notifier.dart';
 import '../notifiers/ask_question_notifier.dart';
@@ -44,6 +45,7 @@ class _UserBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Align(
       alignment: Alignment.centerRight,
       child: ConstrainedBox(
@@ -51,28 +53,14 @@ class _UserBubble extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
           decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? ThemeConstants.glassSurface
-                : ThemeConstants.lightUserBubbleSurface,
-            border: Border.all(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? ThemeConstants.userBubbleBorder
-                  : ThemeConstants.lightUserBubbleBorder,
-            ),
+            color: c.userBubbleFill,
+            border: Border.all(color: c.userBubbleStroke),
             borderRadius: BorderRadius.circular(11),
-            boxShadow: [
-              BoxShadow(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? ThemeConstants.userBubbleHighlight
-                    : Colors.transparent,
-                blurRadius: 0,
-                offset: const Offset(0, 1),
-              ),
-            ],
+            boxShadow: [BoxShadow(color: c.userBubbleHighlight, blurRadius: 0, offset: const Offset(0, 1))],
           ),
           child: SelectableText(
             message.content,
-            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),
+            style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),
           ),
         ),
       ),
@@ -103,7 +91,7 @@ class _AssistantBubble extends ConsumerWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(width: 2, margin: const EdgeInsets.only(top: 3, bottom: 3), color: ThemeConstants.borderColor),
+        Container(width: 2, margin: const EdgeInsets.only(top: 3, bottom: 3), color: AppColors.of(context).borderColor),
         const SizedBox(width: 9),
         Expanded(
           child: Column(
@@ -158,28 +146,29 @@ class _MessageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     if (message.role == MessageRole.user) {
       return SelectableText(
         message.content,
-        style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),
+        style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),
       );
     }
     return MarkdownBody(
       data: message.content,
       styleSheet: MarkdownStyleSheet(
-        p: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.65),
-        code: const TextStyle(
+        p: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.65),
+        code: TextStyle(
           fontFamily: ThemeConstants.editorFontFamily,
-          backgroundColor: ThemeConstants.codeBlockBg,
-          color: ThemeConstants.syntaxString,
+          backgroundColor: c.codeBlockBg,
+          color: c.syntaxString,
           fontSize: ThemeConstants.uiFontSizeSmall,
         ),
-        codeblockDecoration: BoxDecoration(color: ThemeConstants.codeBlockBg, borderRadius: BorderRadius.circular(6)),
-        h1: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
-        h2: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
-        h3: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
-        blockquote: const TextStyle(color: ThemeConstants.textSecondary),
-        listBullet: const TextStyle(color: ThemeConstants.textPrimary),
+        codeblockDecoration: BoxDecoration(color: c.codeBlockBg, borderRadius: BorderRadius.circular(6)),
+        h1: TextStyle(color: c.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+        h2: TextStyle(color: c.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
+        h3: TextStyle(color: c.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
+        blockquote: TextStyle(color: c.textSecondary),
+        listBullet: TextStyle(color: c.textPrimary),
       ),
       builders: {'code': CodeBlockBuilder(messageId: message.id, sessionId: message.sessionId)},
     );

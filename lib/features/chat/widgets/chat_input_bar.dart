@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/instant_menu.dart';
@@ -230,18 +231,14 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
   ) {
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final menuBg = isDark ? ThemeConstants.panelBackground : ThemeConstants.lightPanelBackground;
-    final menuBorder = isDark ? ThemeConstants.faintFg : ThemeConstants.lightBorder;
-    final activeColor = isDark ? ThemeConstants.textPrimary : ThemeConstants.lightText;
-    final inactiveColor = isDark ? ThemeConstants.textSecondary : ThemeConstants.lightTextSecondary;
+    final c = AppColors.of(context);
     showInstantMenu<T>(
       context: context,
       position: _menuAbove(context, box),
-      color: menuBg,
+      color: c.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
-        side: BorderSide(color: menuBorder),
+        side: BorderSide(color: c.subtleBorder),
       ),
       items: items
           .map(
@@ -254,12 +251,12 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                     child: Text(
                       label(item),
                       style: TextStyle(
-                        color: item == selected ? activeColor : inactiveColor,
+                        color: item == selected ? c.textPrimary : c.textSecondary,
                         fontSize: ThemeConstants.uiFontSizeSmall,
                       ),
                     ),
                   ),
-                  if (item == selected) const Icon(AppIcons.check, size: 11, color: ThemeConstants.accent),
+                  if (item == selected) Icon(AppIcons.check, size: 11, color: c.accent),
                 ],
               ),
             ),
@@ -275,18 +272,14 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final selected = ref.read(selectedModelProvider);
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final menuBg = isDark ? ThemeConstants.panelBackground : ThemeConstants.lightPanelBackground;
-    final menuBorder = isDark ? ThemeConstants.faintFg : ThemeConstants.lightBorder;
-    final activeColor = isDark ? ThemeConstants.textPrimary : ThemeConstants.lightText;
-    final inactiveColor = isDark ? ThemeConstants.textSecondary : ThemeConstants.lightTextSecondary;
+    final c = AppColors.of(context);
     showInstantMenu<AIModel>(
       context: context,
       position: _menuAbove(context, box),
-      color: menuBg,
+      color: c.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
-        side: BorderSide(color: menuBorder),
+        side: BorderSide(color: c.subtleBorder),
       ),
       items: models
           .map(
@@ -296,7 +289,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
               child: Text(
                 '${m.provider.displayName} / ${m.name}',
                 style: TextStyle(
-                  color: m == selected ? activeColor : inactiveColor,
+                  color: m == selected ? c.textPrimary : c.textSecondary,
                   fontSize: ThemeConstants.uiFontSizeSmall,
                 ),
               ),
@@ -316,6 +309,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
       showErrorSnackBar(context, 'Failed to send message. Please try again.');
     });
 
+    final c = AppColors.of(context);
     final model = ref.watch(selectedModelProvider);
     // Re-render whenever the active project or its status changes so the
     // send button + Enter key disable the moment the folder goes missing
@@ -324,21 +318,11 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final isMissing = project?.status == ProjectStatus.missing;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? ThemeConstants.background
-            : ThemeConstants.lightBackground,
-      ),
+      decoration: BoxDecoration(color: c.background),
       child: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? ThemeConstants.glassSurface
-              : ThemeConstants.lightChatBoxSurface,
-          border: Border.all(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? ThemeConstants.glassBorder
-                : ThemeConstants.lightChatBoxBorder,
-          ),
+          color: c.glassFill,
+          border: Border.all(color: c.glassBorder),
           borderRadius: BorderRadius.circular(11),
           boxShadow: [
             BoxShadow(
@@ -355,7 +339,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
-            BoxShadow(color: ThemeConstants.chatBoxRimGlow, blurRadius: 0, spreadRadius: 0.5),
+            BoxShadow(color: c.chatBoxRimGlow, blurRadius: 0, spreadRadius: 0.5),
           ],
         ),
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
@@ -379,22 +363,12 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                 focusNode: _focusNode,
                 maxLines: null,
                 minLines: 1,
-                style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? ThemeConstants.textPrimary
-                      : ThemeConstants.lightText,
-                  fontSize: ThemeConstants.uiFontSize,
-                ),
+                style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
                 decoration: InputDecoration(
                   hintText: isMissing
                       ? 'Project folder is missing — Relocate or Remove to continue'
                       : 'Ask anything, @tag files/folders, or use /command',
-                  hintStyle: TextStyle(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? ThemeConstants.faintFg
-                        : ThemeConstants.lightTextMuted,
-                    fontSize: ThemeConstants.uiFontSize,
-                  ),
+                  hintStyle: TextStyle(color: c.faintFg, fontSize: ThemeConstants.uiFontSize),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -408,13 +382,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
             Container(
               padding: const EdgeInsets.only(top: 7),
               decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? ThemeConstants.glassBorderFaint
-                        : ThemeConstants.lightDivider,
-                  ),
-                ),
+                border: Border(top: BorderSide(color: c.faintBorder)),
               ),
               child: Row(
                 children: [
@@ -464,30 +432,26 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                     child: ListenableBuilder(
                       listenable: _controller,
                       builder: (context, _) {
+                        final lc = AppColors.of(context);
                         final hasText = _controller.text.trim().isNotEmpty;
-                        final dark = Theme.of(context).brightness == Brightness.dark;
                         final Color bg;
                         final Border? border;
                         final Color iconColor;
                         final List<BoxShadow> shadows;
                         if (_isSending) {
-                          bg = ThemeConstants.accentHover;
+                          bg = lc.accentHover;
                           border = null;
-                          iconColor = ThemeConstants.onAccent;
+                          iconColor = lc.onAccent;
                           shadows = [];
                         } else if (hasText && !isMissing) {
-                          bg = ThemeConstants.accent;
+                          bg = lc.accent;
                           border = null;
-                          iconColor = ThemeConstants.onAccent;
-                          shadows = const [
-                            BoxShadow(color: ThemeConstants.sendGlow, blurRadius: 8, offset: Offset(0, 2)),
-                          ];
+                          iconColor = lc.onAccent;
+                          shadows = [BoxShadow(color: lc.sendGlow, blurRadius: 8, offset: const Offset(0, 2))];
                         } else {
-                          bg = dark ? ThemeConstants.sendDisabledSurface : ThemeConstants.lightSendDisabledSurface;
-                          border = Border.all(
-                            color: dark ? ThemeConstants.sendDisabledBorder : ThemeConstants.lightSendDisabledBorder,
-                          );
-                          iconColor = dark ? ThemeConstants.sendDisabledIcon : ThemeConstants.lightSendDisabledIcon;
+                          bg = lc.sendDisabledFill;
+                          border = Border.all(color: lc.sendDisabledStroke);
+                          iconColor = lc.sendDisabledIconColor;
                           shadows = [];
                         }
                         return GestureDetector(
@@ -497,10 +461,10 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                             height: 28,
                             decoration: BoxDecoration(
                               gradient: (!_isSending && hasText && !isMissing)
-                                  ? const LinearGradient(
+                                  ? LinearGradient(
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
-                                      colors: [ThemeConstants.accent, ThemeConstants.accentHover],
+                                      colors: [lc.accent, lc.accentHover],
                                     )
                                   : null,
                               color: (_isSending || !hasText || isMissing) ? bg : null,
@@ -518,7 +482,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                                           width: 9,
                                           height: 9,
                                           decoration: BoxDecoration(
-                                            color: ThemeConstants.onAccent,
+                                            color: lc.onAccent,
                                             borderRadius: BorderRadius.circular(2),
                                           ),
                                         ),
@@ -549,33 +513,27 @@ class _ControlChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final c = AppColors.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(5),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
         decoration: BoxDecoration(
-          color: dark ? ThemeConstants.chipSurface : ThemeConstants.lightChipSurface,
-          border: Border.all(color: dark ? ThemeConstants.chipBorder : ThemeConstants.lightChipBorder),
+          color: c.chipFill,
+          border: Border.all(color: c.chipStroke),
           borderRadius: BorderRadius.circular(5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[
-              Icon(icon, size: 11, color: dark ? ThemeConstants.textSecondary : ThemeConstants.lightChipText),
-              const SizedBox(width: 4),
-            ],
+            if (icon != null) ...[Icon(icon, size: 11, color: c.chipText), const SizedBox(width: 4)],
             Text(
               label,
-              style: TextStyle(
-                color: dark ? ThemeConstants.textSecondary : ThemeConstants.lightChipText,
-                fontSize: ThemeConstants.uiFontSizeSmall,
-              ),
+              style: TextStyle(color: c.chipText, fontSize: ThemeConstants.uiFontSizeSmall),
             ),
             const SizedBox(width: 3),
-            Icon(AppIcons.chevronDown, size: 10, color: dark ? ThemeConstants.faintFg : ThemeConstants.lightTextMuted),
+            Icon(AppIcons.chevronDown, size: 10, color: c.faintFg),
           ],
         ),
       ),

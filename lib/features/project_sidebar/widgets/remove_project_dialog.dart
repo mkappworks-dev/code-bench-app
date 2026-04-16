@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_icons.dart';
-import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../data/project/models/project.dart';
@@ -57,13 +57,18 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
       iconType: AppDialogIconType.destructive,
       title: 'Remove "${widget.project.name}"?',
       maxWidth: 480,
-      content: Text(
-        isMissing
-            ? 'This project folder is already missing from disk. '
-                  'Removing it will delete the entry and all linked conversations from Code Bench.'
-            : 'This will remove the project and all linked conversations from Code Bench. '
-                  'The folder on disk will NOT be deleted.',
-        style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: 11),
+      content: Builder(
+        builder: (context) {
+          final c = AppColors.of(context);
+          return Text(
+            isMissing
+                ? 'This project folder is already missing from disk. '
+                      'Removing it will delete the entry and all linked conversations from Code Bench.'
+                : 'This will remove the project and all linked conversations from Code Bench. '
+                      'The folder on disk will NOT be deleted.',
+            style: TextStyle(color: c.mutedFg, fontSize: 11),
+          );
+        },
       ),
       actions: [
         AppDialogAction.cancel(onPressed: _submitting ? () {} : () => Navigator.of(context).pop(false)),

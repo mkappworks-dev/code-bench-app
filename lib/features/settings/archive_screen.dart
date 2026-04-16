@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_icons.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/utils/relative_time.dart';
 import '../../core/utils/debug_logger.dart';
 import '../../data/session/models/chat_session.dart';
@@ -17,6 +18,7 @@ class ArchiveScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = AppColors.of(context);
     final sessionsAsync = ref.watch(archivedSessionsProvider);
     final projectsAsync = ref.watch(projectsProvider);
 
@@ -33,10 +35,10 @@ class ArchiveScreen extends ConsumerWidget {
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(AppIcons.archive, size: 32, color: ThemeConstants.mutedFg),
-                SizedBox(height: 12),
-                Text('No archived conversations', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 12)),
+              children: [
+                Icon(AppIcons.archive, size: 32, color: c.mutedFg),
+                const SizedBox(height: 12),
+                Text('No archived conversations', style: TextStyle(color: c.textSecondary, fontSize: 12)),
               ],
             ),
           );
@@ -75,17 +77,18 @@ class _ArchiveErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Failed to load archived sessions.', style: TextStyle(color: ThemeConstants.error, fontSize: 11)),
+          Text('Failed to load archived sessions.', style: TextStyle(color: c.error, fontSize: 11)),
           const SizedBox(height: 8),
           OutlinedButton(
             onPressed: onRetry,
             style: OutlinedButton.styleFrom(
-              foregroundColor: ThemeConstants.textPrimary,
-              side: const BorderSide(color: ThemeConstants.borderColor),
+              foregroundColor: c.textPrimary,
+              side: BorderSide(color: c.borderColor),
               textStyle: const TextStyle(fontSize: 11),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               minimumSize: Size.zero,
@@ -106,20 +109,16 @@ class _ProjectHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
       child: Row(
         children: [
-          const Icon(AppIcons.folder, size: 12, color: ThemeConstants.mutedFg),
+          Icon(AppIcons.folder, size: 12, color: c.mutedFg),
           const SizedBox(width: 6),
           Text(
             name.toUpperCase(),
-            style: const TextStyle(
-              color: ThemeConstants.mutedFg,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.8,
-            ),
+            style: TextStyle(color: c.mutedFg, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.8),
           ),
         ],
       ),
@@ -134,12 +133,13 @@ class _ArchivedSessionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = AppColors.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: ThemeConstants.background,
-        border: Border.all(color: ThemeConstants.borderColor),
+        color: c.background,
+        border: Border.all(color: c.borderColor),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -150,13 +150,13 @@ class _ArchivedSessionCard extends ConsumerWidget {
               children: [
                 Text(
                   session.title,
-                  style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
+                  style: TextStyle(color: c.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 3),
                 Text(
                   'Archived ${session.updatedAt.relativeTime} · Created ${session.createdAt.relativeTime}',
-                  style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11),
+                  style: TextStyle(color: c.textSecondary, fontSize: 11),
                 ),
               ],
             ),
@@ -167,18 +167,18 @@ class _ArchivedSessionCard extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                border: Border.all(color: ThemeConstants.borderColor),
+                border: Border.all(color: c.borderColor),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(AppIcons.archiveRestore, size: 12, color: ThemeConstants.textSecondary),
-                  SizedBox(width: 5),
+                children: [
+                  Icon(AppIcons.archiveRestore, size: 12, color: c.textSecondary),
+                  const SizedBox(width: 5),
                   Text(
                     'Unarchive',
                     style: TextStyle(
-                      color: ThemeConstants.textPrimary,
+                      color: c.textPrimary,
                       fontSize: ThemeConstants.uiFontSizeSmall,
                       fontWeight: FontWeight.w500,
                     ),

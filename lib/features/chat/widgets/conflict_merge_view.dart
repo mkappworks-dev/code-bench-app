@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/apply/models/applied_change.dart';
 
 /// Three-tab diff view shown when the user tries to revert a change on a
@@ -51,6 +52,7 @@ class _ConflictMergeViewState extends State<ConflictMergeView> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return SizedBox(
       width: 520,
       child: Column(
@@ -61,9 +63,9 @@ class _ConflictMergeViewState extends State<ConflictMergeView> with SingleTicker
             controller: _tabController,
             labelStyle: const TextStyle(fontSize: ThemeConstants.uiFontSizeSmall),
             unselectedLabelStyle: const TextStyle(fontSize: ThemeConstants.uiFontSizeSmall),
-            labelColor: ThemeConstants.accent,
-            unselectedLabelColor: ThemeConstants.textSecondary,
-            indicatorColor: ThemeConstants.accent,
+            labelColor: c.accent,
+            unselectedLabelColor: c.textSecondary,
+            indicatorColor: c.accent,
             tabs: const [
               Tab(text: 'Original'),
               Tab(text: 'Applied'),
@@ -87,15 +89,15 @@ class _ConflictMergeViewState extends State<ConflictMergeView> with SingleTicker
             children: [
               TextButton(
                 onPressed: widget.onKeepCurrent,
-                child: const Text(
+                child: Text(
                   'Keep current',
-                  style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                  style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                 ),
               ),
               const SizedBox(width: 8),
               FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: ThemeConstants.accent,
+                  backgroundColor: c.accent,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                 ),
                 onPressed: widget.onAcceptRevert,
@@ -115,14 +117,15 @@ class _ContentView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Container(
-      color: ThemeConstants.codeBlockBg,
+      color: c.codeBlockBg,
       padding: const EdgeInsets.all(8),
       child: SingleChildScrollView(
         child: SelectableText(
           content,
-          style: const TextStyle(
-            color: ThemeConstants.textPrimary,
+          style: TextStyle(
+            color: c.textPrimary,
             fontSize: ThemeConstants.uiFontSizeSmall,
             fontFamily: ThemeConstants.editorFontFamily,
             height: 1.4,

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_icons.dart';
-import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../data/project/models/project.dart';
 import '../notifiers/project_sidebar_actions.dart';
@@ -79,41 +79,46 @@ class _RelocateProjectDialogState extends ConsumerState<RelocateProjectDialog> {
       iconType: AppDialogIconType.teal,
       title: 'Relocate "${widget.project.name}"',
       maxWidth: 480,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Original path:', style: TextStyle(color: ThemeConstants.mutedFg, fontSize: 11)),
-          const SizedBox(height: 2),
-          Text(
-            widget.project.path,
-            style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11, fontFamily: 'monospace'),
-          ),
-          const SizedBox(height: 12),
-          Text('New path:', style: TextStyle(color: ThemeConstants.mutedFg, fontSize: 11)),
-          const SizedBox(height: 2),
-          Row(
+      content: Builder(
+        builder: (context) {
+          final bc = AppColors.of(context);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  _newPath ?? '(none selected)',
-                  style: TextStyle(
-                    color: _newPath == null ? ThemeConstants.faintFg : ThemeConstants.textPrimary,
-                    fontSize: 11,
-                    fontFamily: 'monospace',
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+              Text('Original path:', style: TextStyle(color: bc.mutedFg, fontSize: 11)),
+              const SizedBox(height: 2),
+              Text(
+                widget.project.path,
+                style: TextStyle(color: bc.textSecondary, fontSize: 11, fontFamily: 'monospace'),
               ),
-              const SizedBox(width: 8),
-              TextButton(onPressed: _submitting ? null : _pick, child: const Text('Browse…')),
+              const SizedBox(height: 12),
+              Text('New path:', style: TextStyle(color: bc.mutedFg, fontSize: 11)),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _newPath ?? '(none selected)',
+                      style: TextStyle(
+                        color: _newPath == null ? bc.faintFg : bc.textPrimary,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(onPressed: _submitting ? null : _pick, child: const Text('Browse…')),
+                ],
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 8),
+                Text(_error!, style: TextStyle(color: bc.error, fontSize: 11)),
+              ],
             ],
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 8),
-            Text(_error!, style: const TextStyle(color: ThemeConstants.error, fontSize: 11)),
-          ],
-        ],
+          );
+        },
       ),
       actions: [
         AppDialogAction.cancel(onPressed: _submitting ? () {} : () => Navigator.of(context).pop(false)),

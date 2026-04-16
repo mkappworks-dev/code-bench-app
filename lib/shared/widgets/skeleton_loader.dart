@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 
 /// A shimmer-style skeleton loader for list items.
 class SkeletonLoader extends StatefulWidget {
@@ -40,10 +40,11 @@ class _SkeletonLoaderState extends State<SkeletonLoader> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, _) {
-        final shimmerColor = Color.lerp(ThemeConstants.inputBackground, ThemeConstants.borderColor, _animation.value)!;
+        final shimmerColor = Color.lerp(c.inputBackground, c.borderColor, _animation.value)!;
 
         return ListView.separated(
           itemCount: widget.itemCount,

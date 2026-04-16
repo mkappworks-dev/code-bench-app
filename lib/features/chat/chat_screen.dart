@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import 'notifiers/chat_notifier.dart';
 import 'widgets/chat_input_bar.dart';
 import 'widgets/message_list.dart';
@@ -29,19 +29,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final sessionId = ref.watch(activeSessionIdProvider);
 
+    final c = AppColors.of(context);
     if (sessionId == null) {
-      return const Scaffold(
-        backgroundColor: ThemeConstants.background,
+      return Scaffold(
+        backgroundColor: c.background,
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.chat_bubble_outline, size: 48, color: ThemeConstants.faintFg),
-              SizedBox(height: 16),
-              Text(
-                'Select a project and start a conversation',
-                style: TextStyle(color: ThemeConstants.mutedFg, fontSize: 13),
-              ),
+              Icon(Icons.chat_bubble_outline, size: 48, color: c.faintFg),
+              const SizedBox(height: 16),
+              Text('Select a project and start a conversation', style: TextStyle(color: c.mutedFg, fontSize: 13)),
             ],
           ),
         ),
@@ -49,7 +47,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
 
     return Scaffold(
-      backgroundColor: ThemeConstants.background,
+      backgroundColor: c.background,
       body: Column(
         children: [
           Expanded(child: MessageList(sessionId: sessionId)),

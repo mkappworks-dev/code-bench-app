@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/session/models/ask_user_question.dart';
 import '../notifiers/ask_question_notifier.dart';
 
@@ -69,12 +69,13 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: ThemeConstants.questionCardBg,
+        color: c.questionCardBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: ThemeConstants.selectionBorder),
+        border: Border.all(color: c.selectionBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -87,7 +88,7 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
           const SizedBox(height: 12),
           Text(
             widget.question.question,
-            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
+            style: TextStyle(color: c.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 12),
           if (widget.question.options.isNotEmpty)
@@ -104,13 +105,13 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
             TextField(
               controller: _freeTextController,
               onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Or describe your own approach…',
-                hintStyle: TextStyle(color: ThemeConstants.mutedFg, fontSize: 11),
+                hintStyle: TextStyle(color: c.mutedFg, fontSize: 11),
                 isDense: true,
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
               ),
-              style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+              style: TextStyle(color: c.textPrimary, fontSize: 12),
               maxLines: 3,
               minLines: 1,
             ),
@@ -131,8 +132,8 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
               if (!_isLastStep)
                 FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: ThemeConstants.blueAccent,
-                    foregroundColor: ThemeConstants.onAccent,
+                    backgroundColor: c.blueAccent,
+                    foregroundColor: c.onAccent,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                   ),
                   onPressed: _canSubmit ? _handleSubmit : null,
@@ -141,8 +142,8 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
               else
                 FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: ThemeConstants.blueAccent,
-                    foregroundColor: ThemeConstants.onAccent,
+                    backgroundColor: c.blueAccent,
+                    foregroundColor: c.onAccent,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                   ),
                   onPressed: _canSubmit ? _handleSubmit : null,
@@ -167,17 +168,18 @@ class _StepHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Row(
       children: [
         Row(
           children: List.generate(totalSteps, (i) {
             Color dotColor;
             if (i < currentStep) {
-              dotColor = ThemeConstants.blueAccent;
+              dotColor = c.blueAccent;
             } else if (i == currentStep) {
-              dotColor = ThemeConstants.blueAccent.withValues(alpha: 0.5);
+              dotColor = c.blueAccent.withValues(alpha: 0.5);
             } else {
-              dotColor = ThemeConstants.borderColor;
+              dotColor = c.borderColor;
             }
             return Padding(
               padding: EdgeInsets.only(right: i < totalSteps - 1 ? 4 : 0),
@@ -192,16 +194,11 @@ class _StepHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '${currentStep + 1} / $totalSteps',
-          style: const TextStyle(
-            color: ThemeConstants.textMuted,
-            fontSize: 9,
-            letterSpacing: 1,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: c.textMuted, fontSize: 9, letterSpacing: 1, fontWeight: FontWeight.w600),
         ),
         const Spacer(),
         if (sectionLabel != null)
-          Text(sectionLabel!, style: const TextStyle(color: ThemeConstants.dimFg, fontSize: 9, letterSpacing: 0.5)),
+          Text(sectionLabel!, style: TextStyle(color: c.dimFg, fontSize: 9, letterSpacing: 0.5)),
       ],
     );
   }
@@ -219,6 +216,7 @@ class _OptionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -226,9 +224,9 @@ class _OptionRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? ThemeConstants.selectionBg : ThemeConstants.background,
+          color: isSelected ? c.selectionBg : c.background,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: isSelected ? ThemeConstants.blueAccent : ThemeConstants.borderColor),
+          border: Border.all(color: isSelected ? c.blueAccent : c.borderColor),
         ),
         child: Row(
           children: [
@@ -236,14 +234,14 @@ class _OptionRow extends StatelessWidget {
               width: 20,
               height: 20,
               decoration: BoxDecoration(
-                color: isSelected ? ThemeConstants.blueAccent : ThemeConstants.borderColor,
+                color: isSelected ? c.blueAccent : c.borderColor,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Center(
                 child: Text(
                   '${index + 1}',
                   style: TextStyle(
-                    color: isSelected ? Colors.white : ThemeConstants.dimFg,
+                    color: isSelected ? Colors.white : c.dimFg,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
@@ -252,13 +250,7 @@ class _OptionRow extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
+              child: Text(label, style: TextStyle(color: isSelected ? c.textPrimary : c.textSecondary, fontSize: 12)),
             ),
           ],
         ),

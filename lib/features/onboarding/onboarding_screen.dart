@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import '../settings/notifiers/settings_actions.dart';
 import 'notifiers/onboarding_notifier.dart';
@@ -26,10 +26,11 @@ class OnboardingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = AppColors.of(context);
     final step = ref.watch(onboardingProvider);
 
     return Scaffold(
-      backgroundColor: ThemeConstants.background,
+      backgroundColor: c.background,
       body: Row(
         children: [
           // ── Left: branding (38% width, unchanged from original) ──────────
@@ -52,21 +53,18 @@ class _BrandingPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Expanded(
       flex: 38,
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            stops: [0.0, 0.5, 1.0],
-            colors: [
-              ThemeConstants.brandingGradientTop,
-              ThemeConstants.brandingGradientMid,
-              ThemeConstants.deepBackground,
-            ],
+            stops: const [0.0, 0.5, 1.0],
+            colors: [c.brandingGradientTop, c.brandingGradientMid, c.deepBackground],
           ),
-          border: Border(right: BorderSide(color: ThemeConstants.borderColor)),
+          border: Border(right: BorderSide(color: c.borderColor)),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
         child: Column(
@@ -79,25 +77,22 @@ class _BrandingPanel extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: ThemeConstants.panelBackground,
+                    color: c.panelBackground,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: ThemeConstants.borderColor),
-                    boxShadow: const [BoxShadow(color: ThemeConstants.accentGlow, blurRadius: 16, spreadRadius: 2)],
+                    border: Border.all(color: c.borderColor),
+                    boxShadow: [BoxShadow(color: c.accentGlow, blurRadius: 16, spreadRadius: 2)],
                   ),
                   child: const _CodeGlyph(),
                 ),
                 const SizedBox(width: 10),
-                const Text(
+                Text(
                   'Code Bench',
-                  style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 17, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: c.textPrimary, fontSize: 17, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
-              'AI-powered coding workspace',
-              style: TextStyle(color: ThemeConstants.subtleTealFg, fontSize: 11),
-            ),
+            Text('AI-powered coding workspace', style: TextStyle(color: c.subtleTealFg, fontSize: 11)),
             const SizedBox(height: 28),
             _FeatureCard(icon: '⚡', title: 'Multi-provider AI', subtitle: 'OpenAI · Anthropic · Gemini · Ollama'),
             const SizedBox(height: 8),
@@ -105,10 +100,7 @@ class _BrandingPanel extends StatelessWidget {
             const SizedBox(height: 8),
             _FeatureCard(icon: '🐙', title: 'GitHub Integration', subtitle: 'PRs · commits · repo browser'),
             const Spacer(),
-            const Text(
-              '🔒 Keys stored in your OS keychain',
-              style: TextStyle(color: ThemeConstants.textMuted, fontSize: 10),
-            ),
+            Text('🔒 Keys stored in your OS keychain', style: TextStyle(color: c.textMuted, fontSize: 10)),
           ],
         ),
       ),
@@ -164,8 +156,9 @@ class _ContentPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = AppColors.of(context);
     return Container(
-      color: ThemeConstants.background,
+      color: c.background,
       padding: const EdgeInsets.symmetric(horizontal: 56, vertical: 48),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -176,8 +169,8 @@ class _ContentPanel extends ConsumerWidget {
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 onPressed: () => ref.read(onboardingProvider.notifier).back(),
-                icon: const Icon(Icons.chevron_left, size: 16, color: ThemeConstants.dimFg),
-                label: const Text('Back', style: TextStyle(color: ThemeConstants.dimFg, fontSize: 12)),
+                icon: Icon(Icons.chevron_left, size: 16, color: c.dimFg),
+                label: Text('Back', style: TextStyle(color: c.dimFg, fontSize: 12)),
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,
@@ -221,13 +214,14 @@ class _FeatureCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Container(
       height: 54,
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: ThemeConstants.accentTintLight,
-        border: Border.all(color: ThemeConstants.accentTintMid),
+        color: c.accentTintLight,
+        border: Border.all(color: c.accentTintMid),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -236,14 +230,14 @@ class _FeatureCard extends StatelessWidget {
         children: [
           Text(
             '$icon  $title',
-            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 11, fontWeight: FontWeight.w600),
+            style: TextStyle(color: c.textPrimary, fontSize: 11, fontWeight: FontWeight.w600),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: const TextStyle(color: ThemeConstants.textMuted, fontSize: 10),
+            style: TextStyle(color: c.textMuted, fontSize: 10),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -259,14 +253,23 @@ class _CodeGlyph extends StatelessWidget {
   const _CodeGlyph();
 
   @override
-  Widget build(BuildContext context) => CustomPaint(size: const Size(32, 32), painter: _CodeGlyphPainter());
+  Widget build(BuildContext context) {
+    final accentColor = AppColors.of(context).accent;
+    return CustomPaint(
+      size: const Size(32, 32),
+      painter: _CodeGlyphPainter(color: accentColor),
+    );
+  }
 }
 
 class _CodeGlyphPainter extends CustomPainter {
+  const _CodeGlyphPainter({required this.color});
+  final Color color;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = ThemeConstants.accent
+      ..color = color
       ..strokeWidth = 2.2 * (size.width / 32)
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
@@ -283,5 +286,5 @@ class _CodeGlyphPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _CodeGlyphPainter oldDelegate) => oldDelegate.color != color;
 }

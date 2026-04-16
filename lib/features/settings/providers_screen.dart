@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import '../../data/shared/ai_model.dart';
 import 'notifiers/providers_notifier.dart';
@@ -93,6 +94,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +113,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
                   ),
                 ),
               ),
-          const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
+          Divider(height: 36, thickness: 1, color: c.borderColor),
           SectionLabel('Ollama (Local)'),
           const SizedBox(height: 8),
           SettingsGroup(
@@ -130,7 +132,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
             icon: const Icon(AppIcons.run, size: 12),
             label: const Text('Test Connection', style: TextStyle(fontSize: 11)),
           ),
-          const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
+          Divider(height: 36, thickness: 1, color: c.borderColor),
           SectionLabel('Custom Endpoint (OpenAI-compatible)'),
           const SizedBox(height: 8),
           SettingsGroup(
@@ -184,11 +186,12 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final hasKey = widget.controller.text.isNotEmpty;
     return Container(
       decoration: BoxDecoration(
-        color: ThemeConstants.inputSurface,
-        border: Border.all(color: ThemeConstants.deepBorder),
+        color: c.inputSurface,
+        border: Border.all(color: c.deepBorder),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -203,27 +206,20 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
                   Container(
                     width: 5,
                     height: 5,
-                    decoration: BoxDecoration(
-                      color: hasKey ? ThemeConstants.success : ThemeConstants.error,
-                      shape: BoxShape.circle,
-                    ),
+                    decoration: BoxDecoration(color: hasKey ? c.success : c.error, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 10),
                   Text(
                     widget.provider.displayName,
-                    style: const TextStyle(
-                      color: ThemeConstants.textPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(color: c.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     hasKey ? 'Configured' : 'Not configured',
-                    style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11),
+                    style: TextStyle(color: c.textSecondary, fontSize: 11),
                   ),
                   const Spacer(),
-                  Icon(_expanded ? AppIcons.chevronUp : AppIcons.chevronDown, size: 14, color: ThemeConstants.mutedFg),
+                  Icon(_expanded ? AppIcons.chevronUp : AppIcons.chevronDown, size: 14, color: c.mutedFg),
                 ],
               ),
             ),
@@ -237,11 +233,7 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
                     child: TextField(
                       controller: widget.controller,
                       obscureText: _obscure,
-                      style: const TextStyle(
-                        color: ThemeConstants.textPrimary,
-                        fontSize: 12,
-                        fontFamily: ThemeConstants.editorFontFamily,
-                      ),
+                      style: TextStyle(color: c.textPrimary, fontSize: 12, fontFamily: ThemeConstants.editorFontFamily),
                       decoration: InputDecoration(
                         hintText: 'API key',
                         suffixIcon: IconButton(
@@ -253,7 +245,7 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(AppIcons.close, size: 14, color: ThemeConstants.error),
+                    icon: Icon(AppIcons.close, size: 14, color: c.error),
                     tooltip: 'Remove key',
                     onPressed: widget.onDelete,
                   ),

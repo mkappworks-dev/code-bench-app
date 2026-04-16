@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/core/theme/app_colors.dart';
 import 'package:code_bench_app/data/session/models/tool_event.dart';
 import 'package:code_bench_app/features/chat/widgets/tool_call_row.dart';
 
 Widget _host(ToolEvent event) => MaterialApp(
+  theme: ThemeData(extensions: [AppColors.dark]),
   home: Scaffold(body: ToolCallRow(event: event)),
 );
 

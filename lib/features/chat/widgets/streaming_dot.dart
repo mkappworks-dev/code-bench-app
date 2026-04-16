@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 
 class StreamingDot extends StatefulWidget {
   const StreamingDot({super.key});
@@ -35,7 +35,7 @@ class _StreamingDotState extends State<StreamingDot> with SingleTickerProviderSt
         child: Container(
           width: 6,
           height: 6,
-          decoration: const BoxDecoration(color: ThemeConstants.success, shape: BoxShape.circle),
+          decoration: BoxDecoration(color: AppColors.of(context).success, shape: BoxShape.circle),
         ),
       ),
     );

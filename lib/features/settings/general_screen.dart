@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_dialog.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import '../../core/utils/instant_menu.dart';
@@ -59,14 +60,19 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
         icon: AppIcons.trash,
         iconType: AppDialogIconType.destructive,
         title: 'Wipe all data?',
-        content: const Text(
-          'This will permanently delete:\n'
-          '  • All API keys\n'
-          '  • GitHub sign-in\n'
-          '  • All chat sessions and messages\n'
-          '  • All projects\n\n'
-          'You will see the onboarding wizard on next launch. This cannot be undone.',
-          style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 12),
+        content: Builder(
+          builder: (context) {
+            final c = AppColors.of(context);
+            return Text(
+              'This will permanently delete:\n'
+              '  • All API keys\n'
+              '  • GitHub sign-in\n'
+              '  • All chat sessions and messages\n'
+              '  • All projects\n\n'
+              'You will see the onboarding wizard on next launch. This cannot be undone.',
+              style: TextStyle(color: c.textSecondary, fontSize: 12),
+            );
+          },
         ),
         actions: [
           AppDialogAction.cancel(onPressed: () => Navigator.pop(dialogCtx, false)),
@@ -98,6 +104,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,7 +149,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                       return const Color(0x40FFFFFF); // rgba(255,255,255,0.25)
                     }),
                     trackColor: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.selected)) return ThemeConstants.accent;
+                      if (states.contains(WidgetState.selected)) return c.accent;
                       return const Color(0x0DFFFFFF); // rgba(255,255,255,0.05)
                     }),
                     trackOutlineColor: WidgetStateProperty.resolveWith((states) {
@@ -168,7 +175,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                       return const Color(0x40FFFFFF);
                     }),
                     trackColor: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.selected)) return ThemeConstants.accent;
+                      if (states.contains(WidgetState.selected)) return c.accent;
                       return const Color(0x0DFFFFFF);
                     }),
                     trackOutlineColor: WidgetStateProperty.resolveWith((states) {
@@ -186,7 +193,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
               ),
             ],
           ),
-          const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
+          Divider(height: 36, thickness: 1, color: c.borderColor),
           SectionLabel('About'),
           const SizedBox(height: 8),
           SettingsGroup(
@@ -197,17 +204,17 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: ThemeConstants.success.withValues(alpha: 0.15),
+                    color: c.success.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text('Up to Date', style: TextStyle(color: ThemeConstants.success, fontSize: 10)),
+                  child: Text('Up to Date', style: TextStyle(color: c.success, fontSize: 10)),
                 ),
                 isLast: true,
               ),
             ],
           ),
           if (kDebugMode) ...[
-            const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
+            Divider(height: 36, thickness: 1, color: c.borderColor),
             SectionLabel('Debug'),
             const SizedBox(height: 8),
             SettingsGroup(
@@ -233,13 +240,13 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          border: Border.all(color: ThemeConstants.deepBorder),
+                          border: Border.all(color: c.deepBorder),
                           borderRadius: BorderRadius.circular(5),
-                          color: ThemeConstants.inputSurface,
+                          color: c.inputSurface,
                         ),
-                        child: const Text(
+                        child: Text(
                           'Replay',
-                          style: TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+                          style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
                         ),
                       ),
                     ),
@@ -254,13 +261,13 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        border: Border.all(color: ThemeConstants.error),
+                        border: Border.all(color: c.error),
                         borderRadius: BorderRadius.circular(5),
-                        color: ThemeConstants.inputSurface,
+                        color: c.inputSurface,
                       ),
-                      child: const Text(
+                      child: Text(
                         'Wipe',
-                        style: TextStyle(color: ThemeConstants.error, fontSize: ThemeConstants.uiFontSizeSmall),
+                        style: TextStyle(color: c.error, fontSize: ThemeConstants.uiFontSizeSmall),
                       ),
                     ),
                   ),
@@ -293,6 +300,7 @@ class _AppDropdown<T> extends StatelessWidget {
   final BuildContext context;
 
   void _open() {
+    final c = AppColors.of(context);
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
@@ -305,10 +313,10 @@ class _AppDropdown<T> extends StatelessWidget {
         overlay.size.width - origin.dx - box.size.width,
         0,
       ),
-      color: ThemeConstants.panelBackground,
+      color: c.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(6),
-        side: const BorderSide(color: ThemeConstants.faintFg),
+        side: BorderSide(color: c.faintFg),
       ),
       items: items
           .map(
@@ -321,12 +329,12 @@ class _AppDropdown<T> extends StatelessWidget {
                     child: Text(
                       label(item),
                       style: TextStyle(
-                        color: item == value ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
+                        color: item == value ? c.textPrimary : c.textSecondary,
                         fontSize: ThemeConstants.uiFontSizeSmall,
                       ),
                     ),
                   ),
-                  if (item == value) const Icon(AppIcons.check, size: 11, color: ThemeConstants.accent),
+                  if (item == value) Icon(AppIcons.check, size: 11, color: c.accent),
                 ],
               ),
             ),
@@ -338,15 +346,16 @@ class _AppDropdown<T> extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext _) {
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return InkWell(
       onTap: _open,
       borderRadius: BorderRadius.circular(5),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: ThemeConstants.chipSurface,
-          border: Border.all(color: ThemeConstants.chipBorder),
+          color: c.chipFill,
+          border: Border.all(color: c.chipStroke),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
@@ -354,10 +363,10 @@ class _AppDropdown<T> extends StatelessWidget {
           children: [
             Text(
               label(value),
-              style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+              style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
             ),
             const SizedBox(width: 4),
-            const Icon(AppIcons.chevronDown, size: 10, color: ThemeConstants.mutedFg),
+            Icon(AppIcons.chevronDown, size: 10, color: c.mutedFg),
           ],
         ),
       ),

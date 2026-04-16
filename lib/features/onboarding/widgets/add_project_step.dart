@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../shell/notifiers/git_actions.dart';
 import '../../project_sidebar/notifiers/project_sidebar_actions.dart';
@@ -73,6 +74,7 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     ref.listen(projectSidebarActionsProvider, (_, next) {
       if (next is! AsyncError || !mounted) return;
       final failure = next.error;
@@ -89,7 +91,7 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(child: _buildDropZone()),
+        Expanded(child: _buildDropZone(c)),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -97,14 +99,14 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
             TextButton(
               onPressed: widget.onSkip,
               style: TextButton.styleFrom(
-                foregroundColor: ThemeConstants.textMuted,
+                foregroundColor: c.textMuted,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               ),
               child: const Text('Skip for now', style: TextStyle(fontSize: 12)),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: ThemeConstants.accent,
+                backgroundColor: c.accent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               ),
               onPressed: _selectedPath == null || _adding ? null : _addProject,
@@ -118,7 +120,7 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
     );
   }
 
-  Widget _buildDropZone() {
+  Widget _buildDropZone(AppColors c) {
     if (_selectedPath != null) {
       return _SelectedFolderPreview(path: _selectedPath!, isGit: _isGitRepo, onBrowse: _browse);
     }
@@ -130,23 +132,19 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
-          color: _isDragOver ? ThemeConstants.panelBackground : Colors.transparent,
+          color: _isDragOver ? c.panelBackground : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: _isDragOver ? ThemeConstants.accent : ThemeConstants.borderColor, width: 1.5),
+          border: Border.all(color: _isDragOver ? c.accent : c.borderColor, width: 1.5),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              LucideIcons.folderOpen,
-              size: 40,
-              color: _isDragOver ? ThemeConstants.accent : ThemeConstants.textSecondary,
-            ),
+            Icon(LucideIcons.folderOpen, size: 40, color: _isDragOver ? c.accent : c.textSecondary),
             const SizedBox(height: 16),
             Text(
               'Drop a folder here',
               style: TextStyle(
-                color: ThemeConstants.textSecondary,
+                color: c.textSecondary,
                 fontSize: ThemeConstants.uiFontSize,
                 fontWeight: FontWeight.w500,
               ),
@@ -154,13 +152,13 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
             const SizedBox(height: 12),
             Text(
               '— or —',
-              style: TextStyle(color: ThemeConstants.textMuted, fontSize: ThemeConstants.uiFontSizeSmall),
+              style: TextStyle(color: c.textMuted, fontSize: ThemeConstants.uiFontSizeSmall),
             ),
             const SizedBox(height: 12),
             TextButton(
               onPressed: _browse,
               style: TextButton.styleFrom(
-                foregroundColor: ThemeConstants.accent,
+                foregroundColor: c.accent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               ),
               child: Text('Browse for folder…', style: TextStyle(fontSize: ThemeConstants.uiFontSize)),
@@ -185,12 +183,13 @@ class _SelectedFolderPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: ThemeConstants.inputSurface,
+        color: c.inputSurface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: ThemeConstants.faintFg),
+        border: Border.all(color: c.faintFg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +197,7 @@ class _SelectedFolderPreview extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(LucideIcons.folderOpen, size: 18, color: ThemeConstants.textSecondary),
+              Icon(LucideIcons.folderOpen, size: 18, color: c.textSecondary),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -209,7 +208,7 @@ class _SelectedFolderPreview extends StatelessWidget {
                         Text(
                           _projectName,
                           style: TextStyle(
-                            color: ThemeConstants.textPrimary,
+                            color: c.textPrimary,
                             fontSize: ThemeConstants.uiFontSize,
                             fontWeight: FontWeight.w600,
                           ),
@@ -219,16 +218,13 @@ class _SelectedFolderPreview extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: ThemeConstants.gitBadgeBg,
+                              color: c.gitBadgeBg,
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: ThemeConstants.gitBadgeBorder),
+                              border: Border.all(color: c.gitBadgeBorder),
                             ),
                             child: Text(
                               'git',
-                              style: TextStyle(
-                                color: ThemeConstants.gitBadgeText,
-                                fontSize: ThemeConstants.uiFontSizeBadge,
-                              ),
+                              style: TextStyle(color: c.gitBadgeText, fontSize: ThemeConstants.uiFontSizeBadge),
                             ),
                           ),
                         ],
@@ -237,7 +233,7 @@ class _SelectedFolderPreview extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       path,
-                      style: TextStyle(color: ThemeConstants.textMuted, fontSize: ThemeConstants.uiFontSizeLabel),
+                      style: TextStyle(color: c.textMuted, fontSize: ThemeConstants.uiFontSizeLabel),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -252,7 +248,7 @@ class _SelectedFolderPreview extends StatelessWidget {
             child: Text(
               'Change folder',
               style: TextStyle(
-                color: ThemeConstants.accent,
+                color: c.accent,
                 fontSize: ThemeConstants.uiFontSizeSmall,
                 decoration: TextDecoration.underline,
               ),

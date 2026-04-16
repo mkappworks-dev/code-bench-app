@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_dialog.dart';
 
 class PrFormResult {
@@ -75,56 +76,61 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
         title: 'Create pull request',
         hasInputField: true,
         maxWidth: 480,
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _titleController,
-              maxLength: 70,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                labelStyle: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-              ),
-              style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _bodyController,
-              maxLines: 6,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                labelStyle: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-                alignLabelWithHint: true,
-              ),
-              style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
-            ),
-            const SizedBox(height: 12),
-            Row(
+        content: Builder(
+          builder: (context) {
+            final c = AppColors.of(context);
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Base branch:',
-                  style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                TextField(
+                  controller: _titleController,
+                  maxLength: 70,
+                  decoration: InputDecoration(
+                    labelText: 'Title',
+                    labelStyle: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                  ),
+                  style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
                 ),
-                const SizedBox(width: 8),
-                DropdownButton<String>(
-                  value: widget.branches.contains(_base) ? _base : null,
-                  dropdownColor: ThemeConstants.inputSurface,
-                  style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
-                  items: widget.branches.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
-                  onChanged: (v) {
-                    if (v != null) setState(() => _base = v);
-                  },
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _bodyController,
+                  maxLines: 6,
+                  decoration: InputDecoration(
+                    labelText: 'Description',
+                    labelStyle: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                    alignLabelWithHint: true,
+                  ),
+                  style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
                 ),
-                const Spacer(),
-                const Text(
-                  'Draft PR',
-                  style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Text(
+                      'Base branch:',
+                      style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                    ),
+                    const SizedBox(width: 8),
+                    DropdownButton<String>(
+                      value: widget.branches.contains(_base) ? _base : null,
+                      dropdownColor: c.inputSurface,
+                      style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+                      items: widget.branches.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
+                      onChanged: (v) {
+                        if (v != null) setState(() => _base = v);
+                      },
+                    ),
+                    const Spacer(),
+                    Text(
+                      'Draft PR',
+                      style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                    ),
+                    Switch(value: _draft, onChanged: (v) => setState(() => _draft = v)),
+                  ],
                 ),
-                Switch(value: _draft, onChanged: (v) => setState(() => _draft = v)),
               ],
-            ),
-          ],
+            );
+          },
         ),
         actions: [
           AppDialogAction.cancel(onPressed: () => Navigator.of(context).pop()),
