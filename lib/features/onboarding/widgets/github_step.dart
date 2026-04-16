@@ -98,6 +98,7 @@ class _GithubStepState extends ConsumerState<GithubStep> {
         FilledButton.icon(
           style: FilledButton.styleFrom(
             backgroundColor: c.githubBrandColor, // GitHub brand colour
+            foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
