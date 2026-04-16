@@ -170,9 +170,9 @@ class _SettingsLeftNav extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(AppIcons.arrowLeft, size: 11, color: c.chipText),
+                    Icon(AppIcons.arrowLeft, size: 11, color: c.textSecondary),
                     const SizedBox(width: 6),
-                    Text('Back', style: TextStyle(color: c.chipText, fontSize: 11)),
+                    Text('Back', style: TextStyle(color: c.textSecondary, fontSize: 11)),
                   ],
                 ),
               ),
@@ -202,7 +202,7 @@ class _NavItem extends StatelessWidget {
         margin: isActive ? const EdgeInsets.only(right: 6) : EdgeInsets.zero,
         padding: EdgeInsets.only(left: isActive ? 11 : 16, right: 16, top: 8, bottom: 8),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0x124EC9B0) : null,
+          color: isActive ? c.accentTintMid : null,
           borderRadius: isActive ? const BorderRadius.horizontal(right: Radius.circular(6)) : null,
           border: isActive ? Border(left: BorderSide(color: c.accent, width: 3)) : null,
         ),
