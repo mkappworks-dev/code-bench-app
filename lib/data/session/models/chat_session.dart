@@ -15,6 +15,10 @@ abstract class ChatSession with _$ChatSession {
     required DateTime updatedAt,
     @Default(false) bool isPinned,
     @Default(false) bool isArchived,
+    String? systemPrompt,
+    String? mode,
+    String? effort,
+    String? permission,
   }) = _ChatSession;
 
   factory ChatSession.fromJson(Map<String, dynamic> json) => _$ChatSessionFromJson(json);
