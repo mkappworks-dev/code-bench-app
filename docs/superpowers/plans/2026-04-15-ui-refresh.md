@@ -4,257 +4,1034 @@
 
 **Goal:** Apply the Elevated Glass design language across the full app — frosted surfaces, rgba borders, shadow-only depth, gradient teal CTA, glass dark dialog — and wire a functional light theme switcher.
 
-**Architecture:** Pure styling changes layered on top of the existing widget tree. New tokens in `ThemeConstants` → `AppTheme` updated → individual widgets updated to use the new tokens. Light theme uses the same `MaterialApp.router` `theme`/`darkTheme`/`themeMode` pattern with `ThemeMode` persisted via `SharedPreferences`. No notifiers, services, or data models change except the additions for theme preference and one new git worktree command.
+**Architecture:** `ThemeExtension` approach (Option A). Create `AppColors extends ThemeExtension<AppColors>` in `lib/core/theme/app_colors.dart` containing **all** colour tokens — the ~84 existing ones from `ThemeConstants` plus 29 new glass/light tokens. Register `AppColors.dark` on `AppTheme.dark` and `AppColors.light` on `AppTheme.light`. Remove every colour field from `ThemeConstants` (keep non-colour constants: sizes, fonts). Migrate all existing widget references from `ThemeConstants.colorXxx` to `AppColors.of(context).colorXxx`. Result: zero `Theme.of(context).brightness` checks anywhere; the extension instance handles the switch automatically.
 
 **Tech Stack:** Flutter/Dart, Riverpod (`ref.watch`/`ref.read`), `shared_preferences`, `dart:ui` (`ImageFilter`), `lucide_icons_flutter`
 
 ---
 
-## Token Reference (hex values for `Color()` constructor)
+## Token Reference
 
-Use these exact values everywhere in the plan:
+All hex values for `Color(0xAARRGGBB)`. Tokens new in this plan are marked ★.
 
-| Token name | `Color(0xAARRGGBB)` |
-|---|---|
-| `glassSurface` | `0x06FFFFFF` (rgba 255,255,255,0.024 ≈ 0.025) |
-| `glassBorder` | `0x14FFFFFF` (rgba 255,255,255,0.08) |
-| `glassBorderSubtle` | `0x0FFFFFFF` (rgba 255,255,255,0.06) |
-| `glassBorderFaint` | `0x0DFFFFFF` (rgba 255,255,255,0.05) |
-| `chipSurface` | `0x0AFFFFFF` (rgba 255,255,255,0.04) |
-| `chipBorder` | `0x12FFFFFF` (rgba 255,255,255,0.07) |
-| `userBubbleBorder` | `0x17FFFFFF` (rgba 255,255,255,0.09) |
-| `userBubbleHighlight` | `0x12FFFFFF` (rgba 255,255,255,0.07) |
-| `topBarSurface` | `0x05FFFFFF` (rgba 255,255,255,0.02) |
-| `chatBoxRimGlow` | `0x124EC9B0` (rgba 78,201,176,0.07) |
-| `accentGlowBadge` | `0x2E4EC9B0` (rgba 78,201,176,0.18) |
-| `accentBorderTeal` | `0x4D4EC9B0` (rgba 78,201,176,0.30) |
-| `accentBorderAmber` | `0x4DE8A228` (rgba 232,162,40,0.30) |
-| `sendGlow` | `0x664EC9B0` (rgba 78,201,176,0.40) |
-| `inlineCodeBg` | `0xCC0D1117` (rgba 13,17,23,0.80) |
-| `dialogSurface` | `0xEB121212` (rgba 18,18,18,0.92) |
-| `dialogTopHighlight` | `0x0FFFFFFF` (rgba 255,255,255,0.06) |
-| `fieldSurface` | `0x0AFFFFFF` (rgba 255,255,255,0.04) |
-| `fieldBorder` | `0x1AFFFFFF` (rgba 255,255,255,0.10) |
-| `fieldFocusGlow` | `0x1F4EC9B0` (rgba 78,201,176,0.12) |
-| `sendDisabledSurface` | `0x0FFFFFFF` (rgba 255,255,255,0.06) |
-| `sendDisabledBorder` | `0x2EFFFFFF` (rgba 255,255,255,0.18) |
-| `sendDisabledIcon` | `0x59FFFFFF` (rgba 255,255,255,0.35) |
-| `lightBackground` | `0xFFF0F2F5` |
-| `lightStatusBar` | `0xFFE8EAEE` |
-| `lightTopBarSurface` | `0xCCF0F2F5` (rgba 240,242,245,0.80) |
-| `lightChatBoxSurface` | `0xB8FFFFFF` (rgba 255,255,255,0.72) |
-| `lightChatBoxBorder` | `0xE6FFFFFF` (rgba 255,255,255,0.90) |
-| `lightDialogSurface` | `0xE0FFFFFF` (rgba 255,255,255,0.88) |
-| `lightDialogBorder` | `0xF2FFFFFF` (rgba 255,255,255,0.95) |
-| `lightDialogHighlight` | `0xFFFFFFFF` |
-| `lightDivider` | `0x0F000000` (rgba 0,0,0,0.06) |
-| `lightBorder` | `0x17000000` (rgba 0,0,0,0.09) |
-| `lightText` | `0xFF1E2329` |
-| `lightTextSecondary` | `0xFF3A424D` |
-| `lightTextTertiary` | `0xFF6B7280` |
-| `lightTextMuted` | `0xFF9BA4B0` |
-| `lightChipSurface` | `0x0A000000` (rgba 0,0,0,0.04) |
-| `lightChipBorder` | `0x1A000000` (rgba 0,0,0,0.10) |
-| `lightChipText` | `0xFF7A8494` |
-| `lightUserBubbleSurface` | `0x1F4EC9B0` (rgba 78,201,176,0.12) |
-| `lightUserBubbleBorder` | `0x4D4EC9B0` (rgba 78,201,176,0.30) |
-| `lightInlineCodeSurface` | `0x1F4EC9B0` |
-| `lightInlineCodeBorder` | `0x334EC9B0` (rgba 78,201,176,0.20) |
-| `lightInlineCodeText` | `0xFF2A7A6E` |
-| `lightSendDisabledSurface` | `0x0D000000` (rgba 0,0,0,0.05) |
-| `lightSendDisabledBorder` | `0x21000000` (rgba 0,0,0,0.13) |
-| `lightSendDisabledIcon` | `0x40000000` (rgba 0,0,0,0.25) |
+| Token | dark value | light value |
+|---|---|---|
+| `background` | `0xFF141414` | `0xFFF0F2F5` ★ |
+| `textPrimary` | `0xFFD4D4D4` | `0xFF1E2329` ★ |
+| `textSecondary` | `0xFF9D9D9D` | `0xFF3A424D` ★ |
+| `textMuted` | `0xFF666666` | `0xFF9BA4B0` ★ |
+| `glassFill` ★ | `0x06FFFFFF` | `0xB8FFFFFF` |
+| `glassBorder` ★ | `0x14FFFFFF` | `0xE6FFFFFF` |
+| `subtleBorder` ★ | `0x0FFFFFFF` | `0x17000000` |
+| `faintBorder` ★ | `0x0DFFFFFF` | `0x0F000000` |
+| `chipFill` ★ | `0x0AFFFFFF` | `0x0A000000` |
+| `chipStroke` ★ | `0x12FFFFFF` | `0x1A000000` |
+| `chipText` ★ | `0xFF9D9D9D` | `0xFF7A8494` |
+| `userBubbleFill` ★ | `0x06FFFFFF` | `0x1F4EC9B0` |
+| `userBubbleStroke` ★ | `0x17FFFFFF` | `0x4D4EC9B0` |
+| `userBubbleHighlight` ★ | `0x12FFFFFF` | `0x00000000` |
+| `topBarFill` ★ | `0x05FFFFFF` | `0xCCF0F2F5` |
+| `statusBarFill` ★ | `0xFF141414` | `0xFFE8EAEE` |
+| `chatBoxRimGlow` ★ | `0x124EC9B0` | same |
+| `accentGlowBadge` ★ | `0x2E4EC9B0` | same |
+| `accentBorderTeal` ★ | `0x4D4EC9B0` | same |
+| `accentBorderAmber` ★ | `0x4DE8A228` | same |
+| `sendGlow` ★ | `0x664EC9B0` | same |
+| `inlineCodeFill` ★ | `0xCC0D1117` | `0x1F4EC9B0` |
+| `inlineCodeStroke` ★ | `0x0FFFFFFF` | `0x334EC9B0` |
+| `inlineCodeText` ★ | `0xFFCE9178` | `0xFF2A7A6E` |
+| `dialogFill` ★ | `0xEB121212` | `0xE0FFFFFF` |
+| `dialogBorder` ★ | `0x0FFFFFFF` | `0xF2FFFFFF` |
+| `dialogHighlight` ★ | `0x0FFFFFFF` | `0xFFFFFFFF` |
+| `fieldFill` ★ | `0x0AFFFFFF` | `0xB8FFFFFF` |
+| `fieldStroke` ★ | `0x1AFFFFFF` | `0x17000000` |
+| `fieldFocusGlow` ★ | `0x1F4EC9B0` | same |
+| `sendDisabledFill` ★ | `0x0FFFFFFF` | `0x0D000000` |
+| `sendDisabledStroke` ★ | `0x2EFFFFFF` | `0x21000000` |
+| `sendDisabledIconColor` ★ | `0x59FFFFFF` | `0x40000000` |
 
-> **Token name conflict:** `ThemeConstants.accentGlow` already exists (`0x404EC9B0`, used by branding panel). The new token is named `chatBoxRimGlow` to avoid collision. The spec's "accentDark" gradient end (`#3AB49A`) already exists as `ThemeConstants.accentHover` — use `accentHover` everywhere the spec says `accentDark` for gradients.
+> **Note:** `accentHover` (`#3AB49A`) is used as gradient end everywhere the spec says `accentDark`. `chatBoxRimGlow` replaces the old plan's `accentGlow` name to avoid collision with the existing branding token.
 
 ---
 
-## Task 1: Colour tokens
+## Task 1: Create `AppColors` ThemeExtension
 
 **Files:**
-- Modify: `lib/core/constants/theme_constants.dart`
+- Create: `lib/core/theme/app_colors.dart`
 
-- [ ] **Step 1: Add all new dark tokens after the existing `iconInactive` line**
-
-In `lib/core/constants/theme_constants.dart`, add after `static const Color iconInactive = Color(0xFF444444);`:
+- [ ] **Step 1: Create the file**
 
 ```dart
-  // ── Elevated Glass — dark tokens ─────────────────────────────────────────
+// lib/core/theme/app_colors.dart
+import 'package:flutter/material.dart';
 
-  // Surface fills (frosted white tints)
-  static const Color glassSurface = Color(0x06FFFFFF);
-  static const Color chipSurface = Color(0x0AFFFFFF);
-  static const Color fieldSurface = Color(0x0AFFFFFF);
-  static const Color topBarSurface = Color(0x05FFFFFF);
-  static const Color sendDisabledSurface = Color(0x0FFFFFFF);
-  static const Color dialogSurface = Color(0xEB121212);
+/// All colour tokens for Code Bench.
+///
+/// Access in a widget build method:
+///   final c = AppColors.of(context);
+///   color: c.background
+///
+/// Registered on ThemeData via AppTheme.dark / AppTheme.light.
+class AppColors extends ThemeExtension<AppColors> {
+  const AppColors({
+    // ── Backgrounds ──────────────────────────────────────────────────────
+    required this.background,
+    required this.sidebarBackground,
+    required this.activityBar,
+    required this.deepBackground,
+    required this.titleBar,
+    required this.editorBackground,
+    required this.editorLineHighlight,
+    required this.editorGutter,
+    required this.editorGutterForeground,
+    required this.panelBackground,
+    required this.inputBackground,
+    required this.borderColor,
+    required this.dividerColor,
+    // ── Text ─────────────────────────────────────────────────────────────
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textMuted,
+    // ── Accent ───────────────────────────────────────────────────────────
+    required this.accent,
+    required this.accentLight,
+    required this.accentHover,
+    required this.accentDark,
+    // ── Semantic ─────────────────────────────────────────────────────────
+    required this.success,
+    required this.warning,
+    required this.error,
+    required this.info,
+    // ── Chat ─────────────────────────────────────────────────────────────
+    required this.userMessageBg,
+    required this.assistantMessageBg,
+    required this.codeBlockBg,
+    // ── Syntax ───────────────────────────────────────────────────────────
+    required this.syntaxKeyword,
+    required this.syntaxString,
+    required this.syntaxComment,
+    required this.syntaxFunction,
+    required this.syntaxType,
+    required this.syntaxNumber,
+    required this.syntaxVariable,
+    // ── Tabs ─────────────────────────────────────────────────────────────
+    required this.tabActive,
+    required this.tabInactive,
+    required this.tabBorder,
+    // ── Legacy frosted glass ──────────────────────────────────────────────
+    required this.frostedBg,
+    required this.frostedBorder,
+    // ── VCS badges ───────────────────────────────────────────────────────
+    required this.gitBadgeText,
+    required this.gitBadgeBg,
+    required this.gitBadgeBorder,
+    // ── Input / surface ───────────────────────────────────────────────────
+    required this.inputSurface,
+    required this.deepBorder,
+    required this.mutedFg,
+    required this.faintFg,
+    // ── Misc foregrounds ─────────────────────────────────────────────────
+    required this.blueAccent,
+    required this.dimFg,
+    required this.headingText,
+    // ── Status badges ────────────────────────────────────────────────────
+    required this.worktreeBadgeBg,
+    required this.worktreeBadgeFg,
+    required this.selectionBg,
+    required this.selectionBorder,
+    required this.questionCardBg,
+    required this.prMergedColor,
+    required this.pendingAmber,
+    required this.editedBadgeBg,
+    required this.editedBadgeBorder,
+    required this.githubBrandColor,
+    // ── Diff ─────────────────────────────────────────────────────────────
+    required this.diffAdditionBg,
+    required this.diffDeletionBg,
+    // ── Surfaces / shadows ────────────────────────────────────────────────
+    required this.onAccent,
+    required this.frostedSurface,
+    required this.destructiveBorder,
+    required this.panelSeparator,
+    required this.iconInactive,
+    required this.shadowDark,
+    required this.shadowMedium,
+    required this.shadowHeavy,
+    required this.shadowDeep,
+    required this.innerGlow,
+    // ── Tinted icon backgrounds ───────────────────────────────────────────
+    required this.successTintBg,
+    required this.errorTintBg,
+    required this.warningTintBg,
+    required this.infoTintBg,
+    required this.successBadgeBg,
+    required this.errorBadgeBg,
+    required this.warningBadgeBg,
+    // ── Branding ─────────────────────────────────────────────────────────
+    required this.brandingGradientTop,
+    required this.brandingGradientMid,
+    required this.accentGlow,
+    required this.subtleTealFg,
+    required this.accentTintLight,
+    required this.accentTintMid,
+    // ── Elevated Glass — new tokens ★ ─────────────────────────────────────
+    required this.glassFill,
+    required this.glassBorder,
+    required this.subtleBorder,
+    required this.faintBorder,
+    required this.chipFill,
+    required this.chipStroke,
+    required this.chipText,
+    required this.userBubbleFill,
+    required this.userBubbleStroke,
+    required this.userBubbleHighlight,
+    required this.topBarFill,
+    required this.statusBarFill,
+    required this.chatBoxRimGlow,
+    required this.accentGlowBadge,
+    required this.accentBorderTeal,
+    required this.accentBorderAmber,
+    required this.sendGlow,
+    required this.inlineCodeFill,
+    required this.inlineCodeStroke,
+    required this.inlineCodeText,
+    required this.dialogFill,
+    required this.dialogBorder,
+    required this.dialogHighlight,
+    required this.fieldFill,
+    required this.fieldStroke,
+    required this.fieldFocusGlow,
+    required this.sendDisabledFill,
+    required this.sendDisabledStroke,
+    required this.sendDisabledIconColor,
+  });
 
-  // Borders (frosted white)
-  static const Color glassBorder = Color(0x14FFFFFF);
-  static const Color glassBorderSubtle = Color(0x0FFFFFFF);
-  static const Color glassBorderFaint = Color(0x0DFFFFFF);
-  static const Color chipBorder = Color(0x12FFFFFF);
-  static const Color userBubbleBorder = Color(0x17FFFFFF);
-  static const Color userBubbleHighlight = Color(0x12FFFFFF);
-  static const Color dialogTopHighlight = Color(0x0FFFFFFF);
-  static const Color fieldBorder = Color(0x1AFFFFFF);
-  static const Color sendDisabledBorder = Color(0x2EFFFFFF);
+  // ── Field declarations ────────────────────────────────────────────────────
 
-  // Icon / text (disabled states)
-  static const Color sendDisabledIcon = Color(0x59FFFFFF);
+  final Color background;
+  final Color sidebarBackground;
+  final Color activityBar;
+  final Color deepBackground;
+  final Color titleBar;
+  final Color editorBackground;
+  final Color editorLineHighlight;
+  final Color editorGutter;
+  final Color editorGutterForeground;
+  final Color panelBackground;
+  final Color inputBackground;
+  final Color borderColor;
+  final Color dividerColor;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textMuted;
+  final Color accent;
+  final Color accentLight;
+  final Color accentHover;
+  final Color accentDark;
+  final Color success;
+  final Color warning;
+  final Color error;
+  final Color info;
+  final Color userMessageBg;
+  final Color assistantMessageBg;
+  final Color codeBlockBg;
+  final Color syntaxKeyword;
+  final Color syntaxString;
+  final Color syntaxComment;
+  final Color syntaxFunction;
+  final Color syntaxType;
+  final Color syntaxNumber;
+  final Color syntaxVariable;
+  final Color tabActive;
+  final Color tabInactive;
+  final Color tabBorder;
+  final Color frostedBg;
+  final Color frostedBorder;
+  final Color gitBadgeText;
+  final Color gitBadgeBg;
+  final Color gitBadgeBorder;
+  final Color inputSurface;
+  final Color deepBorder;
+  final Color mutedFg;
+  final Color faintFg;
+  final Color blueAccent;
+  final Color dimFg;
+  final Color headingText;
+  final Color worktreeBadgeBg;
+  final Color worktreeBadgeFg;
+  final Color selectionBg;
+  final Color selectionBorder;
+  final Color questionCardBg;
+  final Color prMergedColor;
+  final Color pendingAmber;
+  final Color editedBadgeBg;
+  final Color editedBadgeBorder;
+  final Color githubBrandColor;
+  final Color diffAdditionBg;
+  final Color diffDeletionBg;
+  final Color onAccent;
+  final Color frostedSurface;
+  final Color destructiveBorder;
+  final Color panelSeparator;
+  final Color iconInactive;
+  final Color shadowDark;
+  final Color shadowMedium;
+  final Color shadowHeavy;
+  final Color shadowDeep;
+  final Color innerGlow;
+  final Color successTintBg;
+  final Color errorTintBg;
+  final Color warningTintBg;
+  final Color infoTintBg;
+  final Color successBadgeBg;
+  final Color errorBadgeBg;
+  final Color warningBadgeBg;
+  final Color brandingGradientTop;
+  final Color brandingGradientMid;
+  final Color accentGlow;
+  final Color subtleTealFg;
+  final Color accentTintLight;
+  final Color accentTintMid;
+  // New glass tokens ★
+  final Color glassFill;
+  final Color glassBorder;
+  final Color subtleBorder;
+  final Color faintBorder;
+  final Color chipFill;
+  final Color chipStroke;
+  final Color chipText;
+  final Color userBubbleFill;
+  final Color userBubbleStroke;
+  final Color userBubbleHighlight;
+  final Color topBarFill;
+  final Color statusBarFill;
+  final Color chatBoxRimGlow;
+  final Color accentGlowBadge;
+  final Color accentBorderTeal;
+  final Color accentBorderAmber;
+  final Color sendGlow;
+  final Color inlineCodeFill;
+  final Color inlineCodeStroke;
+  final Color inlineCodeText;
+  final Color dialogFill;
+  final Color dialogBorder;
+  final Color dialogHighlight;
+  final Color fieldFill;
+  final Color fieldStroke;
+  final Color fieldFocusGlow;
+  final Color sendDisabledFill;
+  final Color sendDisabledStroke;
+  final Color sendDisabledIconColor;
 
-  // Accent tinted surfaces / borders
-  static const Color chatBoxRimGlow = Color(0x124EC9B0);
-  static const Color accentGlowBadge = Color(0x2E4EC9B0);
-  static const Color accentBorderTeal = Color(0x4D4EC9B0);
-  static const Color accentBorderAmber = Color(0x4DE8A228);
-  static const Color sendGlow = Color(0x664EC9B0);
-  static const Color fieldFocusGlow = Color(0x1F4EC9B0);
+  // ── Convenience accessor ─────────────────────────────────────────────────
 
-  // Code
-  static const Color inlineCodeBg = Color(0xCC0D1117);
+  static AppColors of(BuildContext context) =>
+      Theme.of(context).extension<AppColors>()!;
 
-  // ── Elevated Glass — light tokens ────────────────────────────────────────
+  // ── Static instances (used by AppTheme and InputDecorationTheme) ──────────
 
-  static const Color lightBackground = Color(0xFFF0F2F5);
-  static const Color lightStatusBar = Color(0xFFE8EAEE);
-  static const Color lightTopBarSurface = Color(0xCCF0F2F5);
-  static const Color lightChatBoxSurface = Color(0xB8FFFFFF);
-  static const Color lightChatBoxBorder = Color(0xE6FFFFFF);
-  static const Color lightDialogSurface = Color(0xE0FFFFFF);
-  static const Color lightDialogBorder = Color(0xF2FFFFFF);
-  static const Color lightDialogHighlight = Color(0xFFFFFFFF);
-  static const Color lightDivider = Color(0x0F000000);
-  static const Color lightBorder = Color(0x17000000);
-  static const Color lightText = Color(0xFF1E2329);
-  static const Color lightTextSecondary = Color(0xFF3A424D);
-  static const Color lightTextTertiary = Color(0xFF6B7280);
-  static const Color lightTextMuted = Color(0xFF9BA4B0);
-  static const Color lightChipSurface = Color(0x0A000000);
-  static const Color lightChipBorder = Color(0x1A000000);
-  static const Color lightChipText = Color(0xFF7A8494);
-  static const Color lightUserBubbleSurface = Color(0x1F4EC9B0);
-  static const Color lightUserBubbleBorder = Color(0x4D4EC9B0);
-  static const Color lightInlineCodeSurface = Color(0x1F4EC9B0);
-  static const Color lightInlineCodeBorder = Color(0x334EC9B0);
-  static const Color lightInlineCodeText = Color(0xFF2A7A6E);
-  static const Color lightSendDisabledSurface = Color(0x0D000000);
-  static const Color lightSendDisabledBorder = Color(0x21000000);
-  static const Color lightSendDisabledIcon = Color(0x40000000);
+  static const AppColors dark = AppColors(
+    background: Color(0xFF141414),
+    sidebarBackground: Color(0xFF111111),
+    activityBar: Color(0xFF0A0A0A),
+    deepBackground: Color(0xFF050505),
+    titleBar: Color(0xFF111111),
+    editorBackground: Color(0xFF141414),
+    editorLineHighlight: Color(0xFF1E1E1E),
+    editorGutter: Color(0xFF141414),
+    editorGutterForeground: Color(0xFF858585),
+    panelBackground: Color(0xFF1E1E1E),
+    inputBackground: Color(0xFF111111),
+    borderColor: Color(0xFF2A2A2A),
+    dividerColor: Color(0xFF2A2A2A),
+    textPrimary: Color(0xFFD4D4D4),
+    textSecondary: Color(0xFF9D9D9D),
+    textMuted: Color(0xFF666666),
+    accent: Color(0xFF4EC9B0),
+    accentLight: Color(0xFF6DD4BE),
+    accentHover: Color(0xFF3AB49A),
+    accentDark: Color(0xFF267A68),
+    success: Color(0xFF4EC9B0),
+    warning: Color(0xFFCCA700),
+    error: Color(0xFFF44747),
+    info: Color(0xFF4FC1FF),
+    userMessageBg: Color(0xFF1E1E1E),
+    assistantMessageBg: Color(0xFF141414),
+    codeBlockBg: Color(0xFF0D1117),
+    syntaxKeyword: Color(0xFF569CD6),
+    syntaxString: Color(0xFFCE9178),
+    syntaxComment: Color(0xFF6A9955),
+    syntaxFunction: Color(0xFFDCDCAA),
+    syntaxType: Color(0xFF4EC9B0),
+    syntaxNumber: Color(0xFFB5CEA8),
+    syntaxVariable: Color(0xFF9CDCFE),
+    tabActive: Color(0xFF141414),
+    tabInactive: Color(0xFF111111),
+    tabBorder: Color(0xFF4EC9B0),
+    frostedBg: Color(0x0AFFFFFF),
+    frostedBorder: Color(0x12FFFFFF),
+    gitBadgeText: Color(0xFF4CAF50),
+    gitBadgeBg: Color(0xFF0F3D1F),
+    gitBadgeBorder: Color(0xFF1A6B35),
+    inputSurface: Color(0xFF1A1A1A),
+    deepBorder: Color(0xFF222222),
+    mutedFg: Color(0xFF555555),
+    faintFg: Color(0xFF333333),
+    blueAccent: Color(0xFF4EC9B0),
+    dimFg: Color(0xFF888888),
+    headingText: Color(0xFFE0E0E0),
+    worktreeBadgeBg: Color(0xFF2A1F0A),
+    worktreeBadgeFg: Color(0xFFE8A228),
+    selectionBg: Color(0xFF0D2B27),
+    selectionBorder: Color(0xFF1A4840),
+    questionCardBg: Color(0xFF0D2B27),
+    prMergedColor: Color(0xFF6E40C9),
+    pendingAmber: Color(0xFFFFAA00),
+    editedBadgeBg: Color(0xFF3D2900),
+    editedBadgeBorder: Color(0xFFAA7700),
+    githubBrandColor: Color(0xFF24292E),
+    diffAdditionBg: Color(0x3300CC66),
+    diffDeletionBg: Color(0x33FF4444),
+    onAccent: Color(0xFF0A0A0A),
+    frostedSurface: Color(0xF7161616),
+    destructiveBorder: Color(0xFF3D1515),
+    panelSeparator: Color(0xFF242424),
+    iconInactive: Color(0xFF444444),
+    shadowDark: Color(0x99000000),
+    shadowMedium: Color(0x66000000),
+    shadowHeavy: Color(0xB3000000),
+    shadowDeep: Color(0xD9000000),
+    innerGlow: Color(0x0AFFFFFF),
+    successTintBg: Color(0x1F4EC9B0),
+    errorTintBg: Color(0x1FF44747),
+    warningTintBg: Color(0x1FCCA700),
+    infoTintBg: Color(0x1F4FC1FF),
+    successBadgeBg: Color(0x1A4EC9B0),
+    errorBadgeBg: Color(0x1AF44747),
+    warningBadgeBg: Color(0x1ACCA700),
+    brandingGradientTop: Color(0xFF0E1A18),
+    brandingGradientMid: Color(0xFF0A0E0D),
+    accentGlow: Color(0x404EC9B0),
+    subtleTealFg: Color(0xFF4A6660),
+    accentTintLight: Color(0x0A4EC9B0),
+    accentTintMid: Color(0x144EC9B0),
+    // Elevated Glass dark
+    glassFill: Color(0x06FFFFFF),
+    glassBorder: Color(0x14FFFFFF),
+    subtleBorder: Color(0x0FFFFFFF),
+    faintBorder: Color(0x0DFFFFFF),
+    chipFill: Color(0x0AFFFFFF),
+    chipStroke: Color(0x12FFFFFF),
+    chipText: Color(0xFF9D9D9D),
+    userBubbleFill: Color(0x06FFFFFF),
+    userBubbleStroke: Color(0x17FFFFFF),
+    userBubbleHighlight: Color(0x12FFFFFF),
+    topBarFill: Color(0x05FFFFFF),
+    statusBarFill: Color(0xFF141414),
+    chatBoxRimGlow: Color(0x124EC9B0),
+    accentGlowBadge: Color(0x2E4EC9B0),
+    accentBorderTeal: Color(0x4D4EC9B0),
+    accentBorderAmber: Color(0x4DE8A228),
+    sendGlow: Color(0x664EC9B0),
+    inlineCodeFill: Color(0xCC0D1117),
+    inlineCodeStroke: Color(0x0FFFFFFF),
+    inlineCodeText: Color(0xFFCE9178),
+    dialogFill: Color(0xEB121212),
+    dialogBorder: Color(0x0FFFFFFF),
+    dialogHighlight: Color(0x0FFFFFFF),
+    fieldFill: Color(0x0AFFFFFF),
+    fieldStroke: Color(0x1AFFFFFF),
+    fieldFocusGlow: Color(0x1F4EC9B0),
+    sendDisabledFill: Color(0x0FFFFFFF),
+    sendDisabledStroke: Color(0x2EFFFFFF),
+    sendDisabledIconColor: Color(0x59FFFFFF),
+  );
+
+  static const AppColors light = AppColors(
+    // Themed
+    background: Color(0xFFF0F2F5),
+    textPrimary: Color(0xFF1E2329),
+    textSecondary: Color(0xFF3A424D),
+    textMuted: Color(0xFF9BA4B0),
+    // Unchanged from dark (will be themed in follow-up PRs as needed)
+    sidebarBackground: Color(0xFF111111),
+    activityBar: Color(0xFF0A0A0A),
+    deepBackground: Color(0xFF050505),
+    titleBar: Color(0xFF111111),
+    editorBackground: Color(0xFF141414),
+    editorLineHighlight: Color(0xFF1E1E1E),
+    editorGutter: Color(0xFF141414),
+    editorGutterForeground: Color(0xFF858585),
+    panelBackground: Color(0xFF1E1E1E),
+    inputBackground: Color(0xFF111111),
+    borderColor: Color(0xFF2A2A2A),
+    dividerColor: Color(0xFF2A2A2A),
+    accent: Color(0xFF4EC9B0),
+    accentLight: Color(0xFF6DD4BE),
+    accentHover: Color(0xFF3AB49A),
+    accentDark: Color(0xFF267A68),
+    success: Color(0xFF4EC9B0),
+    warning: Color(0xFFCCA700),
+    error: Color(0xFFF44747),
+    info: Color(0xFF4FC1FF),
+    userMessageBg: Color(0xFF1E1E1E),
+    assistantMessageBg: Color(0xFF141414),
+    codeBlockBg: Color(0xFF0D1117),
+    syntaxKeyword: Color(0xFF569CD6),
+    syntaxString: Color(0xFFCE9178),
+    syntaxComment: Color(0xFF6A9955),
+    syntaxFunction: Color(0xFFDCDCAA),
+    syntaxType: Color(0xFF4EC9B0),
+    syntaxNumber: Color(0xFFB5CEA8),
+    syntaxVariable: Color(0xFF9CDCFE),
+    tabActive: Color(0xFF141414),
+    tabInactive: Color(0xFF111111),
+    tabBorder: Color(0xFF4EC9B0),
+    frostedBg: Color(0x0AFFFFFF),
+    frostedBorder: Color(0x12FFFFFF),
+    gitBadgeText: Color(0xFF4CAF50),
+    gitBadgeBg: Color(0xFF0F3D1F),
+    gitBadgeBorder: Color(0xFF1A6B35),
+    inputSurface: Color(0xFF1A1A1A),
+    deepBorder: Color(0xFF222222),
+    mutedFg: Color(0xFF555555),
+    faintFg: Color(0xFF333333),
+    blueAccent: Color(0xFF4EC9B0),
+    dimFg: Color(0xFF888888),
+    headingText: Color(0xFFE0E0E0),
+    worktreeBadgeBg: Color(0xFF2A1F0A),
+    worktreeBadgeFg: Color(0xFFE8A228),
+    selectionBg: Color(0xFF0D2B27),
+    selectionBorder: Color(0xFF1A4840),
+    questionCardBg: Color(0xFF0D2B27),
+    prMergedColor: Color(0xFF6E40C9),
+    pendingAmber: Color(0xFFFFAA00),
+    editedBadgeBg: Color(0xFF3D2900),
+    editedBadgeBorder: Color(0xFFAA7700),
+    githubBrandColor: Color(0xFF24292E),
+    diffAdditionBg: Color(0x3300CC66),
+    diffDeletionBg: Color(0x33FF4444),
+    onAccent: Color(0xFF0A0A0A),
+    frostedSurface: Color(0xF7161616),
+    destructiveBorder: Color(0xFF3D1515),
+    panelSeparator: Color(0xFF242424),
+    iconInactive: Color(0xFF444444),
+    shadowDark: Color(0x99000000),
+    shadowMedium: Color(0x66000000),
+    shadowHeavy: Color(0xB3000000),
+    shadowDeep: Color(0xD9000000),
+    innerGlow: Color(0x0AFFFFFF),
+    successTintBg: Color(0x1F4EC9B0),
+    errorTintBg: Color(0x1FF44747),
+    warningTintBg: Color(0x1FCCA700),
+    infoTintBg: Color(0x1F4FC1FF),
+    successBadgeBg: Color(0x1A4EC9B0),
+    errorBadgeBg: Color(0x1AF44747),
+    warningBadgeBg: Color(0x1ACCA700),
+    brandingGradientTop: Color(0xFF0E1A18),
+    brandingGradientMid: Color(0xFF0A0E0D),
+    accentGlow: Color(0x404EC9B0),
+    subtleTealFg: Color(0xFF4A6660),
+    accentTintLight: Color(0x0A4EC9B0),
+    accentTintMid: Color(0x144EC9B0),
+    // Elevated Glass light ★
+    glassFill: Color(0xB8FFFFFF),
+    glassBorder: Color(0xE6FFFFFF),
+    subtleBorder: Color(0x17000000),
+    faintBorder: Color(0x0F000000),
+    chipFill: Color(0x0A000000),
+    chipStroke: Color(0x1A000000),
+    chipText: Color(0xFF7A8494),
+    userBubbleFill: Color(0x1F4EC9B0),
+    userBubbleStroke: Color(0x4D4EC9B0),
+    userBubbleHighlight: Color(0x00000000),
+    topBarFill: Color(0xCCF0F2F5),
+    statusBarFill: Color(0xFFE8EAEE),
+    chatBoxRimGlow: Color(0x124EC9B0),
+    accentGlowBadge: Color(0x2E4EC9B0),
+    accentBorderTeal: Color(0x4D4EC9B0),
+    accentBorderAmber: Color(0x4DE8A228),
+    sendGlow: Color(0x664EC9B0),
+    inlineCodeFill: Color(0x1F4EC9B0),
+    inlineCodeStroke: Color(0x334EC9B0),
+    inlineCodeText: Color(0xFF2A7A6E),
+    dialogFill: Color(0xE0FFFFFF),
+    dialogBorder: Color(0xF2FFFFFF),
+    dialogHighlight: Color(0xFFFFFFFF),
+    fieldFill: Color(0xB8FFFFFF),
+    fieldStroke: Color(0x17000000),
+    fieldFocusGlow: Color(0x1F4EC9B0),
+    sendDisabledFill: Color(0x0D000000),
+    sendDisabledStroke: Color(0x21000000),
+    sendDisabledIconColor: Color(0x40000000),
+  );
+
+  // ── ThemeExtension overrides ──────────────────────────────────────────────
+
+  @override
+  AppColors copyWith({
+    Color? background, Color? sidebarBackground, Color? activityBar,
+    Color? deepBackground, Color? titleBar, Color? editorBackground,
+    Color? editorLineHighlight, Color? editorGutter, Color? editorGutterForeground,
+    Color? panelBackground, Color? inputBackground, Color? borderColor,
+    Color? dividerColor, Color? textPrimary, Color? textSecondary, Color? textMuted,
+    Color? accent, Color? accentLight, Color? accentHover, Color? accentDark,
+    Color? success, Color? warning, Color? error, Color? info,
+    Color? userMessageBg, Color? assistantMessageBg, Color? codeBlockBg,
+    Color? syntaxKeyword, Color? syntaxString, Color? syntaxComment,
+    Color? syntaxFunction, Color? syntaxType, Color? syntaxNumber, Color? syntaxVariable,
+    Color? tabActive, Color? tabInactive, Color? tabBorder,
+    Color? frostedBg, Color? frostedBorder,
+    Color? gitBadgeText, Color? gitBadgeBg, Color? gitBadgeBorder,
+    Color? inputSurface, Color? deepBorder, Color? mutedFg, Color? faintFg,
+    Color? blueAccent, Color? dimFg, Color? headingText,
+    Color? worktreeBadgeBg, Color? worktreeBadgeFg,
+    Color? selectionBg, Color? selectionBorder, Color? questionCardBg,
+    Color? prMergedColor, Color? pendingAmber,
+    Color? editedBadgeBg, Color? editedBadgeBorder, Color? githubBrandColor,
+    Color? diffAdditionBg, Color? diffDeletionBg,
+    Color? onAccent, Color? frostedSurface, Color? destructiveBorder,
+    Color? panelSeparator, Color? iconInactive,
+    Color? shadowDark, Color? shadowMedium, Color? shadowHeavy,
+    Color? shadowDeep, Color? innerGlow,
+    Color? successTintBg, Color? errorTintBg, Color? warningTintBg, Color? infoTintBg,
+    Color? successBadgeBg, Color? errorBadgeBg, Color? warningBadgeBg,
+    Color? brandingGradientTop, Color? brandingGradientMid,
+    Color? accentGlow, Color? subtleTealFg, Color? accentTintLight, Color? accentTintMid,
+    Color? glassFill, Color? glassBorder, Color? subtleBorder, Color? faintBorder,
+    Color? chipFill, Color? chipStroke, Color? chipText,
+    Color? userBubbleFill, Color? userBubbleStroke, Color? userBubbleHighlight,
+    Color? topBarFill, Color? statusBarFill,
+    Color? chatBoxRimGlow, Color? accentGlowBadge, Color? accentBorderTeal,
+    Color? accentBorderAmber, Color? sendGlow,
+    Color? inlineCodeFill, Color? inlineCodeStroke, Color? inlineCodeText,
+    Color? dialogFill, Color? dialogBorder, Color? dialogHighlight,
+    Color? fieldFill, Color? fieldStroke, Color? fieldFocusGlow,
+    Color? sendDisabledFill, Color? sendDisabledStroke, Color? sendDisabledIconColor,
+  }) => AppColors(
+    background: background ?? this.background,
+    sidebarBackground: sidebarBackground ?? this.sidebarBackground,
+    activityBar: activityBar ?? this.activityBar,
+    deepBackground: deepBackground ?? this.deepBackground,
+    titleBar: titleBar ?? this.titleBar,
+    editorBackground: editorBackground ?? this.editorBackground,
+    editorLineHighlight: editorLineHighlight ?? this.editorLineHighlight,
+    editorGutter: editorGutter ?? this.editorGutter,
+    editorGutterForeground: editorGutterForeground ?? this.editorGutterForeground,
+    panelBackground: panelBackground ?? this.panelBackground,
+    inputBackground: inputBackground ?? this.inputBackground,
+    borderColor: borderColor ?? this.borderColor,
+    dividerColor: dividerColor ?? this.dividerColor,
+    textPrimary: textPrimary ?? this.textPrimary,
+    textSecondary: textSecondary ?? this.textSecondary,
+    textMuted: textMuted ?? this.textMuted,
+    accent: accent ?? this.accent,
+    accentLight: accentLight ?? this.accentLight,
+    accentHover: accentHover ?? this.accentHover,
+    accentDark: accentDark ?? this.accentDark,
+    success: success ?? this.success,
+    warning: warning ?? this.warning,
+    error: error ?? this.error,
+    info: info ?? this.info,
+    userMessageBg: userMessageBg ?? this.userMessageBg,
+    assistantMessageBg: assistantMessageBg ?? this.assistantMessageBg,
+    codeBlockBg: codeBlockBg ?? this.codeBlockBg,
+    syntaxKeyword: syntaxKeyword ?? this.syntaxKeyword,
+    syntaxString: syntaxString ?? this.syntaxString,
+    syntaxComment: syntaxComment ?? this.syntaxComment,
+    syntaxFunction: syntaxFunction ?? this.syntaxFunction,
+    syntaxType: syntaxType ?? this.syntaxType,
+    syntaxNumber: syntaxNumber ?? this.syntaxNumber,
+    syntaxVariable: syntaxVariable ?? this.syntaxVariable,
+    tabActive: tabActive ?? this.tabActive,
+    tabInactive: tabInactive ?? this.tabInactive,
+    tabBorder: tabBorder ?? this.tabBorder,
+    frostedBg: frostedBg ?? this.frostedBg,
+    frostedBorder: frostedBorder ?? this.frostedBorder,
+    gitBadgeText: gitBadgeText ?? this.gitBadgeText,
+    gitBadgeBg: gitBadgeBg ?? this.gitBadgeBg,
+    gitBadgeBorder: gitBadgeBorder ?? this.gitBadgeBorder,
+    inputSurface: inputSurface ?? this.inputSurface,
+    deepBorder: deepBorder ?? this.deepBorder,
+    mutedFg: mutedFg ?? this.mutedFg,
+    faintFg: faintFg ?? this.faintFg,
+    blueAccent: blueAccent ?? this.blueAccent,
+    dimFg: dimFg ?? this.dimFg,
+    headingText: headingText ?? this.headingText,
+    worktreeBadgeBg: worktreeBadgeBg ?? this.worktreeBadgeBg,
+    worktreeBadgeFg: worktreeBadgeFg ?? this.worktreeBadgeFg,
+    selectionBg: selectionBg ?? this.selectionBg,
+    selectionBorder: selectionBorder ?? this.selectionBorder,
+    questionCardBg: questionCardBg ?? this.questionCardBg,
+    prMergedColor: prMergedColor ?? this.prMergedColor,
+    pendingAmber: pendingAmber ?? this.pendingAmber,
+    editedBadgeBg: editedBadgeBg ?? this.editedBadgeBg,
+    editedBadgeBorder: editedBadgeBorder ?? this.editedBadgeBorder,
+    githubBrandColor: githubBrandColor ?? this.githubBrandColor,
+    diffAdditionBg: diffAdditionBg ?? this.diffAdditionBg,
+    diffDeletionBg: diffDeletionBg ?? this.diffDeletionBg,
+    onAccent: onAccent ?? this.onAccent,
+    frostedSurface: frostedSurface ?? this.frostedSurface,
+    destructiveBorder: destructiveBorder ?? this.destructiveBorder,
+    panelSeparator: panelSeparator ?? this.panelSeparator,
+    iconInactive: iconInactive ?? this.iconInactive,
+    shadowDark: shadowDark ?? this.shadowDark,
+    shadowMedium: shadowMedium ?? this.shadowMedium,
+    shadowHeavy: shadowHeavy ?? this.shadowHeavy,
+    shadowDeep: shadowDeep ?? this.shadowDeep,
+    innerGlow: innerGlow ?? this.innerGlow,
+    successTintBg: successTintBg ?? this.successTintBg,
+    errorTintBg: errorTintBg ?? this.errorTintBg,
+    warningTintBg: warningTintBg ?? this.warningTintBg,
+    infoTintBg: infoTintBg ?? this.infoTintBg,
+    successBadgeBg: successBadgeBg ?? this.successBadgeBg,
+    errorBadgeBg: errorBadgeBg ?? this.errorBadgeBg,
+    warningBadgeBg: warningBadgeBg ?? this.warningBadgeBg,
+    brandingGradientTop: brandingGradientTop ?? this.brandingGradientTop,
+    brandingGradientMid: brandingGradientMid ?? this.brandingGradientMid,
+    accentGlow: accentGlow ?? this.accentGlow,
+    subtleTealFg: subtleTealFg ?? this.subtleTealFg,
+    accentTintLight: accentTintLight ?? this.accentTintLight,
+    accentTintMid: accentTintMid ?? this.accentTintMid,
+    glassFill: glassFill ?? this.glassFill,
+    glassBorder: glassBorder ?? this.glassBorder,
+    subtleBorder: subtleBorder ?? this.subtleBorder,
+    faintBorder: faintBorder ?? this.faintBorder,
+    chipFill: chipFill ?? this.chipFill,
+    chipStroke: chipStroke ?? this.chipStroke,
+    chipText: chipText ?? this.chipText,
+    userBubbleFill: userBubbleFill ?? this.userBubbleFill,
+    userBubbleStroke: userBubbleStroke ?? this.userBubbleStroke,
+    userBubbleHighlight: userBubbleHighlight ?? this.userBubbleHighlight,
+    topBarFill: topBarFill ?? this.topBarFill,
+    statusBarFill: statusBarFill ?? this.statusBarFill,
+    chatBoxRimGlow: chatBoxRimGlow ?? this.chatBoxRimGlow,
+    accentGlowBadge: accentGlowBadge ?? this.accentGlowBadge,
+    accentBorderTeal: accentBorderTeal ?? this.accentBorderTeal,
+    accentBorderAmber: accentBorderAmber ?? this.accentBorderAmber,
+    sendGlow: sendGlow ?? this.sendGlow,
+    inlineCodeFill: inlineCodeFill ?? this.inlineCodeFill,
+    inlineCodeStroke: inlineCodeStroke ?? this.inlineCodeStroke,
+    inlineCodeText: inlineCodeText ?? this.inlineCodeText,
+    dialogFill: dialogFill ?? this.dialogFill,
+    dialogBorder: dialogBorder ?? this.dialogBorder,
+    dialogHighlight: dialogHighlight ?? this.dialogHighlight,
+    fieldFill: fieldFill ?? this.fieldFill,
+    fieldStroke: fieldStroke ?? this.fieldStroke,
+    fieldFocusGlow: fieldFocusGlow ?? this.fieldFocusGlow,
+    sendDisabledFill: sendDisabledFill ?? this.sendDisabledFill,
+    sendDisabledStroke: sendDisabledStroke ?? this.sendDisabledStroke,
+    sendDisabledIconColor: sendDisabledIconColor ?? this.sendDisabledIconColor,
+  );
+
+  @override
+  AppColors lerp(AppColors? other, double t) {
+    if (other is! AppColors) return this;
+    Color l(Color a, Color b) => Color.lerp(a, b, t)!;
+    return AppColors(
+      background: l(background, other.background),
+      sidebarBackground: l(sidebarBackground, other.sidebarBackground),
+      activityBar: l(activityBar, other.activityBar),
+      deepBackground: l(deepBackground, other.deepBackground),
+      titleBar: l(titleBar, other.titleBar),
+      editorBackground: l(editorBackground, other.editorBackground),
+      editorLineHighlight: l(editorLineHighlight, other.editorLineHighlight),
+      editorGutter: l(editorGutter, other.editorGutter),
+      editorGutterForeground: l(editorGutterForeground, other.editorGutterForeground),
+      panelBackground: l(panelBackground, other.panelBackground),
+      inputBackground: l(inputBackground, other.inputBackground),
+      borderColor: l(borderColor, other.borderColor),
+      dividerColor: l(dividerColor, other.dividerColor),
+      textPrimary: l(textPrimary, other.textPrimary),
+      textSecondary: l(textSecondary, other.textSecondary),
+      textMuted: l(textMuted, other.textMuted),
+      accent: l(accent, other.accent),
+      accentLight: l(accentLight, other.accentLight),
+      accentHover: l(accentHover, other.accentHover),
+      accentDark: l(accentDark, other.accentDark),
+      success: l(success, other.success),
+      warning: l(warning, other.warning),
+      error: l(error, other.error),
+      info: l(info, other.info),
+      userMessageBg: l(userMessageBg, other.userMessageBg),
+      assistantMessageBg: l(assistantMessageBg, other.assistantMessageBg),
+      codeBlockBg: l(codeBlockBg, other.codeBlockBg),
+      syntaxKeyword: l(syntaxKeyword, other.syntaxKeyword),
+      syntaxString: l(syntaxString, other.syntaxString),
+      syntaxComment: l(syntaxComment, other.syntaxComment),
+      syntaxFunction: l(syntaxFunction, other.syntaxFunction),
+      syntaxType: l(syntaxType, other.syntaxType),
+      syntaxNumber: l(syntaxNumber, other.syntaxNumber),
+      syntaxVariable: l(syntaxVariable, other.syntaxVariable),
+      tabActive: l(tabActive, other.tabActive),
+      tabInactive: l(tabInactive, other.tabInactive),
+      tabBorder: l(tabBorder, other.tabBorder),
+      frostedBg: l(frostedBg, other.frostedBg),
+      frostedBorder: l(frostedBorder, other.frostedBorder),
+      gitBadgeText: l(gitBadgeText, other.gitBadgeText),
+      gitBadgeBg: l(gitBadgeBg, other.gitBadgeBg),
+      gitBadgeBorder: l(gitBadgeBorder, other.gitBadgeBorder),
+      inputSurface: l(inputSurface, other.inputSurface),
+      deepBorder: l(deepBorder, other.deepBorder),
+      mutedFg: l(mutedFg, other.mutedFg),
+      faintFg: l(faintFg, other.faintFg),
+      blueAccent: l(blueAccent, other.blueAccent),
+      dimFg: l(dimFg, other.dimFg),
+      headingText: l(headingText, other.headingText),
+      worktreeBadgeBg: l(worktreeBadgeBg, other.worktreeBadgeBg),
+      worktreeBadgeFg: l(worktreeBadgeFg, other.worktreeBadgeFg),
+      selectionBg: l(selectionBg, other.selectionBg),
+      selectionBorder: l(selectionBorder, other.selectionBorder),
+      questionCardBg: l(questionCardBg, other.questionCardBg),
+      prMergedColor: l(prMergedColor, other.prMergedColor),
+      pendingAmber: l(pendingAmber, other.pendingAmber),
+      editedBadgeBg: l(editedBadgeBg, other.editedBadgeBg),
+      editedBadgeBorder: l(editedBadgeBorder, other.editedBadgeBorder),
+      githubBrandColor: l(githubBrandColor, other.githubBrandColor),
+      diffAdditionBg: l(diffAdditionBg, other.diffAdditionBg),
+      diffDeletionBg: l(diffDeletionBg, other.diffDeletionBg),
+      onAccent: l(onAccent, other.onAccent),
+      frostedSurface: l(frostedSurface, other.frostedSurface),
+      destructiveBorder: l(destructiveBorder, other.destructiveBorder),
+      panelSeparator: l(panelSeparator, other.panelSeparator),
+      iconInactive: l(iconInactive, other.iconInactive),
+      shadowDark: l(shadowDark, other.shadowDark),
+      shadowMedium: l(shadowMedium, other.shadowMedium),
+      shadowHeavy: l(shadowHeavy, other.shadowHeavy),
+      shadowDeep: l(shadowDeep, other.shadowDeep),
+      innerGlow: l(innerGlow, other.innerGlow),
+      successTintBg: l(successTintBg, other.successTintBg),
+      errorTintBg: l(errorTintBg, other.errorTintBg),
+      warningTintBg: l(warningTintBg, other.warningTintBg),
+      infoTintBg: l(infoTintBg, other.infoTintBg),
+      successBadgeBg: l(successBadgeBg, other.successBadgeBg),
+      errorBadgeBg: l(errorBadgeBg, other.errorBadgeBg),
+      warningBadgeBg: l(warningBadgeBg, other.warningBadgeBg),
+      brandingGradientTop: l(brandingGradientTop, other.brandingGradientTop),
+      brandingGradientMid: l(brandingGradientMid, other.brandingGradientMid),
+      accentGlow: l(accentGlow, other.accentGlow),
+      subtleTealFg: l(subtleTealFg, other.subtleTealFg),
+      accentTintLight: l(accentTintLight, other.accentTintLight),
+      accentTintMid: l(accentTintMid, other.accentTintMid),
+      glassFill: l(glassFill, other.glassFill),
+      glassBorder: l(glassBorder, other.glassBorder),
+      subtleBorder: l(subtleBorder, other.subtleBorder),
+      faintBorder: l(faintBorder, other.faintBorder),
+      chipFill: l(chipFill, other.chipFill),
+      chipStroke: l(chipStroke, other.chipStroke),
+      chipText: l(chipText, other.chipText),
+      userBubbleFill: l(userBubbleFill, other.userBubbleFill),
+      userBubbleStroke: l(userBubbleStroke, other.userBubbleStroke),
+      userBubbleHighlight: l(userBubbleHighlight, other.userBubbleHighlight),
+      topBarFill: l(topBarFill, other.topBarFill),
+      statusBarFill: l(statusBarFill, other.statusBarFill),
+      chatBoxRimGlow: l(chatBoxRimGlow, other.chatBoxRimGlow),
+      accentGlowBadge: l(accentGlowBadge, other.accentGlowBadge),
+      accentBorderTeal: l(accentBorderTeal, other.accentBorderTeal),
+      accentBorderAmber: l(accentBorderAmber, other.accentBorderAmber),
+      sendGlow: l(sendGlow, other.sendGlow),
+      inlineCodeFill: l(inlineCodeFill, other.inlineCodeFill),
+      inlineCodeStroke: l(inlineCodeStroke, other.inlineCodeStroke),
+      inlineCodeText: l(inlineCodeText, other.inlineCodeText),
+      dialogFill: l(dialogFill, other.dialogFill),
+      dialogBorder: l(dialogBorder, other.dialogBorder),
+      dialogHighlight: l(dialogHighlight, other.dialogHighlight),
+      fieldFill: l(fieldFill, other.fieldFill),
+      fieldStroke: l(fieldStroke, other.fieldStroke),
+      fieldFocusGlow: l(fieldFocusGlow, other.fieldFocusGlow),
+      sendDisabledFill: l(sendDisabledFill, other.sendDisabledFill),
+      sendDisabledStroke: l(sendDisabledStroke, other.sendDisabledStroke),
+      sendDisabledIconColor: l(sendDisabledIconColor, other.sendDisabledIconColor),
+    );
+  }
+}
 ```
 
 - [ ] **Step 2: Verify no analysis errors**
 
 ```bash
-flutter analyze lib/core/constants/theme_constants.dart
+flutter analyze lib/core/theme/app_colors.dart
 ```
+
 Expected: no issues.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add lib/core/constants/theme_constants.dart
-git commit -m "feat(tokens): add Elevated Glass dark + light colour tokens"
+git add lib/core/theme/app_colors.dart
+git commit -m "feat(tokens): add AppColors ThemeExtension with all colour tokens"
 ```
 
 ---
 
-## Task 2: AppTheme — update dark `InputDecorationTheme` + add `AppTheme.light`
+## Task 2: Update `ThemeConstants` — remove colour fields
+
+**Files:**
+- Modify: `lib/core/constants/theme_constants.dart`
+
+- [ ] **Step 1: Replace the file contents**
+
+Keep only the non-colour constants (sizes, fonts). The new file:
+
+```dart
+import 'package:flutter/material.dart';
+
+/// Non-colour design constants. Colour tokens live in AppColors.
+class ThemeConstants {
+  ThemeConstants._();
+
+  // Icon sizes
+  static const double iconSizeSmall = 14;
+  static const double iconSizeMedium = 18;
+  static const double iconSizeLarge = 24;
+
+  // Action button height — exact height of small action buttons in the top bar
+  static const double actionButtonHeight = 22;
+
+  // Font
+  static const String editorFontFamily = 'JetBrains Mono';
+  static const double editorFontSize = 13;
+  static const double uiFontSize = 12;
+  static const double uiFontSizeSmall = 11;
+  static const double uiFontSizeLabel = 10;
+  static const double uiFontSizeBadge = 9;
+  static const double uiFontSizeLarge = 15;
+}
+```
+
+- [ ] **Step 2: Run analysis — expect many errors (all ThemeConstants.colorXxx usages)**
+
+```bash
+flutter analyze 2>&1 | grep "ThemeConstants" | head -40
+```
+
+This confirms which files need migration (Task 4). Do NOT fix errors yet — Task 4 handles them.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add lib/core/constants/theme_constants.dart
+git commit -m "refactor(tokens): strip colour fields from ThemeConstants — colours now in AppColors"
+```
+
+---
+
+## Task 3: Update `AppTheme` — register extensions + update `InputDecorationTheme`
 
 **Files:**
 - Modify: `lib/core/theme/app_theme.dart`
 
-- [ ] **Step 1: Update the dark `InputDecorationTheme`**
+- [ ] **Step 1: Add import**
 
-In `lib/core/theme/app_theme.dart`, replace the existing `inputDecorationTheme:` block:
+At the top of `lib/core/theme/app_theme.dart`:
 
 ```dart
+import 'app_colors.dart';
+```
+
+- [ ] **Step 2: Update `AppTheme.dark` to register extension + glass `InputDecorationTheme`**
+
+In the `static ThemeData get dark` getter, add `extensions: [AppColors.dark]` to the `copyWith` call, and replace the `inputDecorationTheme`:
+
+```dart
+  static ThemeData get dark {
+    final base = ThemeData.dark(useMaterial3: true);
+    return base.copyWith(
+      scaffoldBackgroundColor: AppColors.dark.background,
+      extensions: const [AppColors.dark],
+      colorScheme: ColorScheme.dark(
+        primary: AppColors.dark.accent,
+        onPrimary: AppColors.dark.onAccent,
+        secondary: AppColors.dark.accent,
+        surface: AppColors.dark.panelBackground,
+        onSurface: AppColors.dark.textPrimary,
+        error: AppColors.dark.error,
+      ),
+      // keep existing textTheme, dividerTheme, scrollbarTheme, tooltipTheme
+      // just update inputDecorationTheme:
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: ThemeConstants.fieldSurface,
+        fillColor: AppColors.dark.fieldFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: ThemeConstants.fieldBorder),
+          borderSide: BorderSide(color: AppColors.dark.fieldStroke),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: ThemeConstants.fieldBorder),
+          borderSide: BorderSide(color: AppColors.dark.fieldStroke),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: ThemeConstants.accent, width: 1.5),
+          borderSide: BorderSide(color: AppColors.dark.accent, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        hintStyle: const TextStyle(color: ThemeConstants.textMuted),
-        labelStyle: const TextStyle(color: ThemeConstants.textSecondary),
+        hintStyle: TextStyle(color: AppColors.dark.textMuted),
+        labelStyle: TextStyle(color: AppColors.dark.textSecondary),
       ),
+    );
+  }
 ```
 
-- [ ] **Step 2: Add `AppTheme.light` static getter**
-
-After the closing `}` of `static ThemeData get dark { ... }`, add:
+- [ ] **Step 3: Add `AppTheme.light` static getter**
 
 ```dart
   static ThemeData get light {
     final base = ThemeData.light(useMaterial3: true);
     return base.copyWith(
-      scaffoldBackgroundColor: ThemeConstants.lightBackground,
+      scaffoldBackgroundColor: AppColors.light.background,
+      extensions: const [AppColors.light],
       colorScheme: ColorScheme.light(
-        primary: ThemeConstants.accent,
+        primary: AppColors.light.accent,
         onPrimary: Colors.white,
-        secondary: ThemeConstants.accent,
+        secondary: AppColors.light.accent,
         onSecondary: Colors.white,
-        surface: ThemeConstants.lightChatBoxSurface,
-        onSurface: ThemeConstants.lightText,
-        error: ThemeConstants.error,
+        surface: AppColors.light.glassFill,
+        onSurface: AppColors.light.textPrimary,
+        error: AppColors.light.error,
         onError: Colors.white,
       ),
       textTheme: GoogleFonts.interTextTheme(base.textTheme).copyWith(
         bodyMedium: GoogleFonts.inter(
-          color: ThemeConstants.lightText,
+          color: AppColors.light.textPrimary,
           fontSize: ThemeConstants.uiFontSize,
         ),
         bodySmall: GoogleFonts.inter(
-          color: ThemeConstants.lightTextSecondary,
+          color: AppColors.light.textSecondary,
           fontSize: 12,
         ),
         titleMedium: GoogleFonts.inter(
-          color: ThemeConstants.lightText,
+          color: AppColors.light.textPrimary,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
-        labelMedium: GoogleFonts.inter(
-          color: ThemeConstants.lightTextTertiary,
-          fontSize: 12,
-        ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: ThemeConstants.lightDivider,
+      dividerTheme: DividerThemeData(
+        color: AppColors.light.faintBorder,
         thickness: 1,
         space: 1,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: ThemeConstants.lightChatBoxSurface,
+        fillColor: AppColors.light.fieldFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: ThemeConstants.lightBorder),
+          borderSide: BorderSide(color: AppColors.light.fieldStroke),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: ThemeConstants.lightBorder),
+          borderSide: BorderSide(color: AppColors.light.fieldStroke),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: ThemeConstants.accent, width: 1.5),
+          borderSide: BorderSide(color: AppColors.light.accent, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        hintStyle: const TextStyle(color: ThemeConstants.lightTextMuted),
-        labelStyle: const TextStyle(color: ThemeConstants.lightTextTertiary),
+        hintStyle: TextStyle(color: AppColors.light.textMuted),
+        labelStyle: TextStyle(color: AppColors.light.textSecondary),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: ThemeConstants.accent,
+          backgroundColor: AppColors.light.accent,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -263,61 +1040,139 @@ After the closing `}` of `static ThemeData get dark { ... }`, add:
       ),
       scrollbarTheme: ScrollbarThemeData(
         thumbColor: WidgetStateProperty.all(
-          ThemeConstants.lightTextMuted.withAlpha(100),
+          AppColors.light.textMuted.withAlpha(100),
         ),
         thickness: WidgetStateProperty.all(6),
         radius: const Radius.circular(3),
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
-          color: ThemeConstants.lightChatBoxSurface,
+          color: AppColors.light.glassFill,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: ThemeConstants.lightBorder),
+          border: Border.all(color: AppColors.light.subtleBorder),
         ),
-        textStyle: const TextStyle(color: ThemeConstants.lightText, fontSize: 12),
+        textStyle: TextStyle(color: AppColors.light.textPrimary, fontSize: 12),
         waitDuration: const Duration(milliseconds: 500),
       ),
     );
   }
 ```
 
-- [ ] **Step 3: Verify**
+- [ ] **Step 4: Verify**
 
 ```bash
 flutter analyze lib/core/theme/app_theme.dart
 ```
-Expected: no issues.
 
-- [ ] **Step 4: Commit**
+Expected: only errors from files that still reference removed ThemeConstants colour fields — those are Task 4's job.
+
+- [ ] **Step 5: Commit**
 
 ```bash
 git add lib/core/theme/app_theme.dart
-git commit -m "feat(theme): update dark InputDecorationTheme to glass; add AppTheme.light"
+git commit -m "feat(theme): register AppColors extension on dark+light ThemeData"
 ```
 
 ---
 
-## Task 3: Status bar
+## Task 4: Migrate all existing `ThemeConstants` colour usages
+
+**Files:**
+- Modify: every file in `lib/` that references a colour field that no longer exists on `ThemeConstants`
+
+- [ ] **Step 1: Get the full error list**
+
+```bash
+flutter analyze 2>&1 | grep "undefined_identifier\|The getter" | grep -v "app_theme\|app_colors\|theme_constants" | sed "s/.*• //" | sort -u | head -60
+```
+
+This lists all undefined `ThemeConstants.xxx` references. Each one becomes `AppColors.of(context).xxx`.
+
+- [ ] **Step 2: Get the list of affected files**
+
+```bash
+flutter analyze 2>&1 | grep "lib/" | grep -oE "lib/[^:]*\.dart" | sort -u
+```
+
+- [ ] **Step 3: For each file, add the AppColors import and replace references**
+
+Pattern for each file:
+
+1. Add import at top (after existing imports):
+```dart
+import 'package:code_bench/core/theme/app_colors.dart';
+```
+(Adjust the relative path as needed — some files may use relative imports like `'../../../core/theme/app_colors.dart'`.)
+
+2. In every `build` method or builder callback, add at the top:
+```dart
+final c = AppColors.of(context);
+```
+
+3. Replace every `ThemeConstants.colorField` reference with `c.colorField`.
+
+4. Drop `const` from `TextStyle(...)`, `BoxDecoration(...)`, or `BorderSide(...)` that now use `c.fieldName` (runtime values can't be const).
+
+**Example — before:**
+```dart
+decoration: const BoxDecoration(
+  color: ThemeConstants.inputSurface,
+  border: Border(bottom: BorderSide(color: ThemeConstants.deepBorder)),
+),
+child: Text('label', style: const TextStyle(color: ThemeConstants.textSecondary)),
+```
+
+**Example — after:**
+```dart
+final c = AppColors.of(context);
+// ...
+decoration: BoxDecoration(
+  color: c.inputSurface,
+  border: Border(bottom: BorderSide(color: c.deepBorder)),
+),
+child: Text('label', style: TextStyle(color: c.textSecondary)),
+```
+
+- [ ] **Step 4: Verify zero errors**
+
+```bash
+flutter analyze
+```
+
+Expected: zero issues (or only pre-existing unrelated warnings).
+
+- [ ] **Step 5: Run tests**
+
+```bash
+flutter test
+```
+
+Expected: all pass — this task is purely mechanical; no logic changes.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add lib/
+git commit -m "refactor(tokens): migrate all ThemeConstants colour refs to AppColors.of(context)"
+```
+
+---
+
+## Task 5: Status bar
 
 **Files:**
 - Modify: `lib/shell/widgets/status_bar.dart`
 
-- [ ] **Step 1: Fix background and remove border**
-
-In `lib/shell/widgets/status_bar.dart`, replace the `Container` decoration (around line 45–51):
+- [ ] **Step 1: Update background, remove border**
 
 ```dart
-    return Container(
-      height: 22,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? ThemeConstants.background
-            : ThemeConstants.lightStatusBar,
-      ),
+final c = AppColors.of(context);
+// In the Container decoration:
+decoration: BoxDecoration(
+  color: c.statusBarFill,
+  // Remove old border: Border(top: ...) entirely
+),
 ```
-
-The old `border: Border(top: BorderSide(color: ThemeConstants.borderColor))` is removed entirely. The `color: ThemeConstants.activityBar` line is replaced.
 
 - [ ] **Step 2: Verify**
 
@@ -329,48 +1184,39 @@ flutter analyze lib/shell/widgets/status_bar.dart
 
 ```bash
 git add lib/shell/widgets/status_bar.dart
-git commit -m "feat(status-bar): match background colour, remove border-top"
+git commit -m "feat(status-bar): use statusBarFill token, remove border-top"
 ```
 
 ---
 
-## Task 4: Top action bar + commit button
+## Task 6: Top action bar + commit button
 
 **Files:**
 - Modify: `lib/shell/widgets/top_action_bar.dart`
 - Modify: `lib/shell/widgets/commit_push_button.dart`
 
-- [ ] **Step 1: Update `TopActionBar` container background and button styling**
-
-In `lib/shell/widgets/top_action_bar.dart`, replace the `Container` decoration:
+- [ ] **Step 1: Update `TopActionBar` container**
 
 ```dart
-    return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? ThemeConstants.topBarSurface
-            : ThemeConstants.lightTopBarSurface,
-        border: const Border(
-          bottom: BorderSide(color: ThemeConstants.glassBorderSubtle),
-        ),
-      ),
+final c = AppColors.of(context);
+// Container decoration:
+decoration: BoxDecoration(
+  color: c.topBarFill,
+  border: Border(bottom: BorderSide(color: c.subtleBorder)),
+),
 ```
 
-(The bottom border hairline stays — it's intentional per spec §3.)
+- [ ] **Step 2: Add `_GlassPill` + wrap dropdowns**
 
-- [ ] **Step 2: Wrap action buttons in glass pills**
-
-The `ActionsDropdown` and `CodeDropdown` widgets are separate files. Wrap each call site in a glass pill container in `top_action_bar.dart`. After the `const SizedBox(width: 8)` and before `ActionsDropdown`, add a helper that wraps those two dropdowns:
+Replace the `ActionsDropdown` and `CodeDropdown` call sites with:
 
 ```dart
-                  _GlassPill(child: ActionsDropdown(project: s.project!)),
-                  const SizedBox(width: 5),
-                  _GlassPill(child: CodeDropdown(projectId: s.project!.id, projectPath: s.project!.path)),
+_GlassPill(child: ActionsDropdown(project: s.project!)),
+const SizedBox(width: 5),
+_GlassPill(child: CodeDropdown(projectId: s.project!.id, projectPath: s.project!.path)),
 ```
 
-Add the `_GlassPill` private widget at the bottom of `top_action_bar.dart`:
+Add at the bottom of `top_action_bar.dart`:
 
 ```dart
 class _GlassPill extends StatelessWidget {
@@ -379,13 +1225,11 @@ class _GlassPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final c = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: dark ? ThemeConstants.chipSurface : ThemeConstants.lightChipSurface,
-        border: Border.all(
-          color: dark ? ThemeConstants.chipBorder : ThemeConstants.lightChipBorder,
-        ),
+        color: c.chipFill,
+        border: Border.all(color: c.chipStroke),
         borderRadius: BorderRadius.circular(6),
       ),
       child: child,
@@ -394,35 +1238,31 @@ class _GlassPill extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 3: Update the commit button to use gradient + unified appearance**
+- [ ] **Step 3: Update commit button gradient**
 
-In `lib/shell/widgets/commit_push_button.dart`, find the left (Commit) half `Container` decoration (around line 232–240) and replace it:
+In `lib/shell/widgets/commit_push_button.dart`, replace the left-half `Container` decoration:
 
 ```dart
-              decoration: BoxDecoration(
-                gradient: (busy || !s.canCommit)
-                    ? null
-                    : const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [ThemeConstants.accent, ThemeConstants.accentHover],
-                      ),
-                color: busy
-                    ? ThemeConstants.accentHover
-                    : s.canCommit
-                    ? null
-                    : ThemeConstants.inputSurface,
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
-                boxShadow: (busy || !s.canCommit)
-                    ? null
-                    : const [
-                        BoxShadow(
-                          color: ThemeConstants.sendGlow,
-                          blurRadius: 10,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-              ),
+final c = AppColors.of(context);
+// ...
+decoration: BoxDecoration(
+  gradient: (busy || !s.canCommit)
+      ? null
+      : LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [c.accent, c.accentHover],
+        ),
+  color: busy
+      ? c.accentHover
+      : s.canCommit
+      ? null
+      : c.inputSurface,
+  borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
+  boxShadow: (busy || !s.canCommit)
+      ? null
+      : [BoxShadow(color: c.sendGlow, blurRadius: 10, offset: const Offset(0, 2))],
+),
 ```
 
 - [ ] **Step 4: Verify**
@@ -435,265 +1275,150 @@ flutter analyze lib/shell/widgets/top_action_bar.dart lib/shell/widgets/commit_p
 
 ```bash
 git add lib/shell/widgets/top_action_bar.dart lib/shell/widgets/commit_push_button.dart
-git commit -m "feat(top-bar): glass background, pill buttons, gradient commit"
+git commit -m "feat(top-bar): glass background, pill buttons, gradient commit button"
 ```
 
 ---
 
-## Task 5: App dialog
+## Task 7: App dialog
 
 **Files:**
 - Modify: `lib/core/widgets/app_dialog.dart`
 
 - [ ] **Step 1: Add `dart:ui` import**
 
-At the top of `lib/core/widgets/app_dialog.dart`, add:
-
 ```dart
 import 'dart:ui';
 ```
 
-- [ ] **Step 2: Replace the dialog container with dark glass**
+- [ ] **Step 2: Wrap dialog container in glass**
 
-Replace the `Container` inside `Dialog > ConstrainedBox` (lines 69–148) with:
+Inside `Dialog > ConstrainedBox`, replace the existing `Container` with:
 
 ```dart
-          ClipRRect(
-            borderRadius: BorderRadius.circular(13),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? ThemeConstants.dialogSurface
-                      : ThemeConstants.lightDialogSurface,
-                  borderRadius: BorderRadius.circular(13),
-                  border: Border.all(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? ThemeConstants.glassBorderSubtle
-                        : ThemeConstants.lightDialogBorder,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xF2000000)
-                          : const Color(0x33000000),
-                      blurRadius: Theme.of(context).brightness == Brightness.dark ? 64 : 48,
-                      offset: Offset(
-                        0,
-                        Theme.of(context).brightness == Brightness.dark ? 24 : 16,
-                      ),
-                    ),
-                    BoxShadow(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? ThemeConstants.dialogTopHighlight
-                          : ThemeConstants.lightDialogHighlight,
-                      blurRadius: 0,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(16, 18, 16, headerBottomPad),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: badgeSize,
-                            height: badgeSize,
-                            decoration: BoxDecoration(
-                              color: iconBg,
-                              borderRadius: BorderRadius.circular(badgeRadius),
-                              border: Border.all(
-                                color: iconType == AppDialogIconType.teal
-                                    ? ThemeConstants.accentBorderTeal
-                                    : ThemeConstants.error.withValues(alpha: 0.3),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: iconType == AppDialogIconType.teal
-                                      ? ThemeConstants.accentGlowBadge
-                                      : ThemeConstants.error.withValues(alpha: 0.18),
-                                  blurRadius: 14,
-                                ),
-                              ],
-                            ),
-                            child: Icon(icon, size: badgeSize * 0.5, color: iconFg),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Padding(
-                              padding: EdgeInsets.only(top: (badgeSize - 16.0) / 2),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    title,
-                                    style: TextStyle(
-                                      color: Theme.of(context).brightness == Brightness.dark
-                                          ? ThemeConstants.textPrimary
-                                          : ThemeConstants.lightText,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  if (subtitle != null) ...[
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      subtitle!,
-                                      style: TextStyle(
-                                        color: Theme.of(context).brightness == Brightness.dark
-                                            ? ThemeConstants.textSecondary
-                                            : ThemeConstants.lightTextTertiary,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: content),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(16, 11, 16, 11),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? ThemeConstants.glassBorderFaint
-                                : ThemeConstants.lightDivider,
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: actions.indexed
-                            .map(
-                              (entry) => Padding(
-                                padding: EdgeInsets.only(left: entry.$1 > 0 ? 8.0 : 0.0),
-                                child: _ActionButton(action: entry.$2),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+ClipRRect(
+  borderRadius: BorderRadius.circular(13),
+  child: BackdropFilter(
+    filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+    child: Builder(builder: (context) {
+      final c = AppColors.of(context);
+      return Container(
+        decoration: BoxDecoration(
+          color: c.dialogFill,
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: c.dialogBorder),
+          boxShadow: [
+            BoxShadow(
+              color: c.shadowDeep,
+              blurRadius: 64,
+              offset: const Offset(0, 24),
             ),
-          ),
+            BoxShadow(
+              color: c.dialogHighlight,
+              blurRadius: 0,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // header padding + badge + title/subtitle (unchanged structure)
+            // ...keep existing header widget tree, just update colour references:
+            //   textPrimary → c.textPrimary
+            //   textSecondary → c.textSecondary
+            //   accentBorderTeal → c.accentBorderTeal
+            //   accentGlowBadge → c.accentGlowBadge
+            // footer divider:
+            Container(
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: c.faintBorder)),
+              ),
+              // ...existing footer content
+            ),
+          ],
+        ),
+      );
+    }),
+  ),
+),
 ```
 
-Note: `build` must now accept `BuildContext context` — change the `build` signature from `Widget build(BuildContext context)` (it already has context, just make sure it's available in the inner builder). Since `AppDialog.build` already receives `context`, this is fine.
+- [ ] **Step 3: Update `_ActionButton` for gradient primary**
 
-Also update `_ActionButton` to use gradient for the primary style. Replace `_ActionButton.build`:
+Replace `_ActionButton.build`:
 
 ```dart
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    switch (action._style) {
-      case _ActionStyle.primary:
-        return GestureDetector(
-          onTap: action.onPressed,
-          child: Opacity(
-            opacity: action.onPressed == null ? 0.5 : 1.0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [ThemeConstants.accent, ThemeConstants.accentHover],
-                ),
-                borderRadius: BorderRadius.circular(6),
-                boxShadow: const [
-                  BoxShadow(
-                    color: ThemeConstants.sendGlow,
-                    blurRadius: 10,
-                    offset: Offset(0, 2),
-                  ),
-                ],
+@override
+Widget build(BuildContext context) {
+  final c = AppColors.of(context);
+  switch (action._style) {
+    case _ActionStyle.primary:
+      return GestureDetector(
+        onTap: action.onPressed,
+        child: Opacity(
+          opacity: action.onPressed == null ? 0.5 : 1.0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [c.accent, c.accentHover],
               ),
-              child: Text(
-                action.label,
-                style: const TextStyle(
-                  color: ThemeConstants.onAccent,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: [BoxShadow(color: c.sendGlow, blurRadius: 10, offset: const Offset(0, 2))],
             ),
+            child: Text(action.label,
+              style: TextStyle(color: c.onAccent, fontSize: 11, fontWeight: FontWeight.w600)),
           ),
-        );
-      case _ActionStyle.ghost:
-        return GestureDetector(
-          onTap: action.onPressed,
-          child: Opacity(
-            opacity: action.onPressed == null ? 0.5 : 1.0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: dark ? ThemeConstants.chipSurface : ThemeConstants.lightChipSurface,
-                border: Border.all(
-                  color: dark ? ThemeConstants.chipBorder : ThemeConstants.lightChipBorder,
-                ),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                action.label,
-                style: TextStyle(
-                  color: dark ? ThemeConstants.textPrimary : ThemeConstants.lightTextTertiary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+        ),
+      );
+    case _ActionStyle.ghost:
+      return GestureDetector(
+        onTap: action.onPressed,
+        child: Opacity(
+          opacity: action.onPressed == null ? 0.5 : 1.0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: c.chipFill,
+              border: Border.all(color: c.chipStroke),
+              borderRadius: BorderRadius.circular(6),
             ),
+            child: Text(action.label,
+              style: TextStyle(color: c.textPrimary, fontSize: 11, fontWeight: FontWeight.w500)),
           ),
-        );
-      case _ActionStyle.destructive:
-        return GestureDetector(
-          onTap: action.onPressed,
-          child: Opacity(
-            opacity: action.onPressed == null ? 0.5 : 1.0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                border: Border.all(color: ThemeConstants.destructiveBorder),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                action.label,
-                style: const TextStyle(
-                  color: ThemeConstants.error,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+        ),
+      );
+    case _ActionStyle.destructive:
+      return GestureDetector(
+        onTap: action.onPressed,
+        child: Opacity(
+          opacity: action.onPressed == null ? 0.5 : 1.0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              border: Border.all(color: c.destructiveBorder),
+              borderRadius: BorderRadius.circular(6),
             ),
+            child: Text(action.label,
+              style: TextStyle(color: c.error, fontSize: 11, fontWeight: FontWeight.w500)),
           ),
-        );
-    }
+        ),
+      );
   }
+}
 ```
 
-- [ ] **Step 3: Verify**
+- [ ] **Step 4: Verify**
 
 ```bash
 flutter analyze lib/core/widgets/app_dialog.dart
 ```
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add lib/core/widgets/app_dialog.dart
@@ -702,239 +1427,141 @@ git commit -m "feat(dialog): dark glass surface, blur, badge glow, gradient prim
 
 ---
 
-## Task 6: Chat input bar
+## Task 8: Chat input bar
 
 **Files:**
 - Modify: `lib/features/chat/widgets/chat_input_bar.dart`
 
-- [ ] **Step 1: Remove the hard outer border and fix background**
-
-The outer `Container` (around line 315–325) currently has `border: Border(top: BorderSide(color: ThemeConstants.deepBorder))`. Replace that entire outer container decoration:
+- [ ] **Step 1: Update outer container — remove border, match background**
 
 ```dart
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+final c = AppColors.of(context);
+// Outer Container decoration:
+decoration: BoxDecoration(color: c.background),
+```
+
+- [ ] **Step 2: Inner glass chat box**
+
+```dart
+decoration: BoxDecoration(
+  color: c.glassFill,
+  border: Border.all(color: c.glassBorder),
+  borderRadius: BorderRadius.circular(11),
+  boxShadow: [
+    BoxShadow(color: c.shadowHeavy.withAlpha(0x8C), blurRadius: 24, offset: const Offset(0, -6)),
+    BoxShadow(color: c.shadowDark.withAlpha(0x4D), blurRadius: 6, offset: const Offset(0, 2)),
+    BoxShadow(color: c.chatBoxRimGlow, blurRadius: 0, spreadRadius: 0.5),
+  ],
+),
+```
+
+- [ ] **Step 3: Toolbar divider**
+
+```dart
+decoration: BoxDecoration(
+  border: Border(top: BorderSide(color: c.faintBorder)),
+),
+```
+
+- [ ] **Step 4: Update `_ControlChip` to glass pill**
+
+Replace `_ControlChip.build`:
+
+```dart
+@override
+Widget build(BuildContext context) {
+  final c = AppColors.of(context);
+  return InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(5),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? ThemeConstants.background
-            : ThemeConstants.lightBackground,
+        color: c.chipFill,
+        border: Border.all(color: c.chipStroke),
+        borderRadius: BorderRadius.circular(5),
       ),
-```
-
-- [ ] **Step 2: Replace the inner chat box container with glass**
-
-The inner `Container` (around line 320–326) becomes:
-
-```dart
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? ThemeConstants.glassSurface
-              : ThemeConstants.lightChatBoxSurface,
-          border: Border.all(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? ThemeConstants.glassBorder
-                : ThemeConstants.lightChatBoxBorder,
-          ),
-          borderRadius: BorderRadius.circular(11),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0x8C000000)
-                  : const Color(0x14000000),
-              blurRadius: 24,
-              offset: const Offset(0, -6),
-            ),
-            BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0x4D000000)
-                  : const Color(0x0D000000),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-            BoxShadow(
-              color: ThemeConstants.chatBoxRimGlow,
-              blurRadius: 0,
-              spreadRadius: 0.5,
-            ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 11, color: c.chipText),
+            const SizedBox(width: 4),
           ],
-        ),
+          Text(label, style: TextStyle(color: c.chipText, fontSize: ThemeConstants.uiFontSizeSmall)),
+          const SizedBox(width: 3),
+          Icon(AppIcons.chevronDown, size: 10, color: c.faintFg),
+        ],
+      ),
+    ),
+  );
+}
 ```
 
-- [ ] **Step 3: Update the toolbar divider colour**
+Remove the `_Separator` widget and all `const _Separator()` usages (replace each separator + adjacent `SizedBox` with `const SizedBox(width: 4)`).
 
-The `Container` with `border: Border(top: BorderSide(color: ThemeConstants.deepBorder))` (toolbar separator, around line 364–368) becomes:
+- [ ] **Step 5: Update send button states**
 
 ```dart
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? ThemeConstants.glassBorderFaint
-                        : ThemeConstants.lightDivider,
+final c = AppColors.of(context);
+final Color bgColor;
+final Border? border;
+final Color iconColor;
+final List<BoxShadow> shadows;
+
+if (_isSending) {
+  bgColor = c.accentHover;
+  border = null;
+  iconColor = c.onAccent;
+  shadows = [];
+} else if (hasText && !isMissing) {
+  bgColor = c.accent; // overridden by gradient below
+  border = null;
+  iconColor = c.onAccent;
+  shadows = [BoxShadow(color: c.sendGlow, blurRadius: 8, offset: const Offset(0, 2))];
+} else {
+  bgColor = c.sendDisabledFill;
+  border = Border.all(color: c.sendDisabledStroke);
+  iconColor = c.sendDisabledIconColor;
+  shadows = [];
+}
+
+return GestureDetector(
+  onTap: _isSending ? null : _send,
+  child: Container(
+    width: 28, height: 28,
+    decoration: BoxDecoration(
+      gradient: (!_isSending && hasText && !isMissing)
+          ? LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [c.accent, c.accentHover],
+            )
+          : null,
+      color: (_isSending || !hasText || isMissing) ? bgColor : null,
+      borderRadius: BorderRadius.circular(7),
+      border: border,
+      boxShadow: shadows,
+    ),
+    child: Center(
+      child: _isSending
+          ? AnimatedBuilder(
+              animation: _pulseOpacity,
+              builder: (_, __) => Opacity(
+                opacity: _pulseOpacity.value,
+                child: Container(
+                  width: 9, height: 9,
+                  decoration: BoxDecoration(
+                    color: c.onAccent,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-```
-
-- [ ] **Step 4: Update `_ControlChip` to glass pill style**
-
-Replace `_ControlChip.build` entirely:
-
-```dart
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(5),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-        decoration: BoxDecoration(
-          color: dark ? ThemeConstants.chipSurface : ThemeConstants.lightChipSurface,
-          border: Border.all(
-            color: dark ? ThemeConstants.chipBorder : ThemeConstants.lightChipBorder,
-          ),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 11,
-                color: dark ? ThemeConstants.textSecondary : ThemeConstants.lightChipText,
-              ),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                color: dark ? ThemeConstants.textSecondary : ThemeConstants.lightChipText,
-                fontSize: ThemeConstants.uiFontSizeSmall,
-              ),
-            ),
-            const SizedBox(width: 3),
-            Icon(
-              AppIcons.chevronDown,
-              size: 10,
-              color: dark ? ThemeConstants.faintFg : ThemeConstants.lightTextMuted,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-```
-
-Also remove the `_Separator` widget definition and all `const _Separator()` usages in the `Row` of chips (replace each `const _Separator()` and surrounding `const SizedBox(width:...)` with just `const SizedBox(width: 4)`).
-
-- [ ] **Step 5: Update the send button — disabled and active states**
-
-In the `ListenableBuilder` builder for the send button (around lines 415–465), replace the bg/border logic:
-
-```dart
-                        final dark = Theme.of(context).brightness == Brightness.dark;
-                        final Color bg;
-                        final Border? border;
-                        final Color iconColor;
-                        final List<BoxShadow> shadows;
-                        if (_isSending) {
-                          bg = ThemeConstants.accentHover;
-                          border = null;
-                          iconColor = ThemeConstants.onAccent;
-                          shadows = [];
-                        } else if (hasText && !isMissing) {
-                          bg = ThemeConstants.accent;
-                          border = null;
-                          iconColor = ThemeConstants.onAccent;
-                          shadows = const [
-                            BoxShadow(
-                              color: ThemeConstants.sendGlow,
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ];
-                        } else {
-                          bg = dark
-                              ? ThemeConstants.sendDisabledSurface
-                              : ThemeConstants.lightSendDisabledSurface;
-                          border = Border.all(
-                            color: dark
-                                ? ThemeConstants.sendDisabledBorder
-                                : ThemeConstants.lightSendDisabledBorder,
-                          );
-                          iconColor = dark
-                              ? ThemeConstants.sendDisabledIcon
-                              : ThemeConstants.lightSendDisabledIcon;
-                          shadows = [];
-                        }
-                        return GestureDetector(
-                          onTap: _isSending ? null : _send,
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: (_isSending || (hasText && !isMissing)) ? bg : null,
-                              gradient: (!_isSending && hasText && !isMissing)
-                                  ? const LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [ThemeConstants.accent, ThemeConstants.accentHover],
-                                    )
-                                  : null,
-                              color: (_isSending || (!hasText) || isMissing) ? bg : null,
-                              borderRadius: BorderRadius.circular(7),
-                              border: border,
-                              boxShadow: shadows,
-                            ),
-```
-
-Clean this up — the gradient and color can't coexist cleanly with the logic above. Use this simplified form instead for the `Container` decoration:
-
-```dart
-                        return GestureDetector(
-                          onTap: _isSending ? null : _send,
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              gradient: (!_isSending && hasText && !isMissing)
-                                  ? const LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [ThemeConstants.accent, ThemeConstants.accentHover],
-                                    )
-                                  : null,
-                              color: (_isSending || !hasText || isMissing) ? bg : null,
-                              borderRadius: BorderRadius.circular(7),
-                              border: border,
-                              boxShadow: shadows,
-                            ),
-                            child: Center(
-                              child: _isSending
-                                  ? AnimatedBuilder(
-                                      animation: _pulseOpacity,
-                                      builder: (context, _) => Opacity(
-                                        opacity: _pulseOpacity.value,
-                                        child: Container(
-                                          width: 9,
-                                          height: 9,
-                                          decoration: BoxDecoration(
-                                            color: ThemeConstants.onAccent,
-                                            borderRadius: BorderRadius.circular(2),
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  : Icon(
-                                      AppIcons.arrowUp,
-                                      size: 14,
-                                      color: iconColor,
-                                    ),
-                            ),
-                          ),
-                        );
+            )
+          : Icon(AppIcons.arrowUp, size: 14, color: iconColor),
+    ),
+  ),
+);
 ```
 
 - [ ] **Step 6: Verify**
@@ -947,84 +1574,53 @@ flutter analyze lib/features/chat/widgets/chat_input_bar.dart
 
 ```bash
 git add lib/features/chat/widgets/chat_input_bar.dart
-git commit -m "feat(chat-input): glass box, chip pills, glass-ghost disabled send button"
+git commit -m "feat(chat-input): glass box, chip pills, glass-ghost disabled send, gradient active send"
 ```
 
 ---
 
-## Task 7: Message bubbles
+## Task 9: Message bubbles
 
 **Files:**
 - Modify: `lib/features/chat/widgets/message_bubble.dart`
 
-- [ ] **Step 1: Find the user bubble container**
+- [ ] **Step 1: Locate the user bubble container**
 
 ```bash
-grep -n "userMessageBg\|user.*bubble\|UserBubble\|bubble.*user" lib/features/chat/widgets/message_bubble.dart | head -20
+grep -n "userMessageBg\|user.*bubble\|bubble.*user\|UserBubble" lib/features/chat/widgets/message_bubble.dart | head -20
 ```
 
-Expected: lines referencing the user bubble container.
-
-- [ ] **Step 2: Update user bubble styling**
-
-Find the user message bubble `Container` decoration. Replace with:
+- [ ] **Step 2: Update user bubble**
 
 ```dart
+final c = AppColors.of(context);
+// User bubble Container decoration:
 decoration: BoxDecoration(
-  color: Theme.of(context).brightness == Brightness.dark
-      ? ThemeConstants.glassSurface
-      : ThemeConstants.lightUserBubbleSurface,
-  border: Border.all(
-    color: Theme.of(context).brightness == Brightness.dark
-        ? ThemeConstants.userBubbleBorder
-        : ThemeConstants.lightUserBubbleBorder,
-  ),
+  color: c.userBubbleFill,
+  border: Border.all(color: c.userBubbleStroke),
   borderRadius: BorderRadius.circular(11),
   boxShadow: [
-    BoxShadow(
-      color: Theme.of(context).brightness == Brightness.dark
-          ? ThemeConstants.userBubbleHighlight
-          : Colors.transparent,
-      blurRadius: 0,
-      offset: const Offset(0, 1),
-    ),
+    BoxShadow(color: c.userBubbleHighlight, blurRadius: 0, offset: const Offset(0, 1)),
   ],
 ),
 ```
 
 - [ ] **Step 3: Update inline code spans**
 
-Find where inline code spans are rendered (look for `syntaxString` or inline code style). Replace the background/border with:
-
 ```dart
-// Inline code background
-color: Theme.of(context).brightness == Brightness.dark
-    ? ThemeConstants.inlineCodeBg
-    : ThemeConstants.lightInlineCodeSurface,
-// Inline code border  
-border: Border.all(
-  color: Theme.of(context).brightness == Brightness.dark
-      ? ThemeConstants.glassBorderSubtle
-      : ThemeConstants.lightInlineCodeBorder,
-),
+// Inline code background:
+color: c.inlineCodeFill,
+// Inline code border:
+border: Border.all(color: c.inlineCodeStroke),
 borderRadius: BorderRadius.circular(4),
-```
-
-And the inline code text colour:
-```dart
-color: Theme.of(context).brightness == Brightness.dark
-    ? ThemeConstants.syntaxString  // #CE9178
-    : ThemeConstants.lightInlineCodeText,  // #2A7A6E
+// Inline code text colour:
+color: c.inlineCodeText,
 ```
 
 - [ ] **Step 4: Update code block border**
 
-Find the `CodeBlockWidget` or code block container. Add/update the border:
-
 ```dart
-border: Border.all(
-  color: ThemeConstants.glassBorderSubtle,
-),
+border: Border.all(color: c.subtleBorder),
 borderRadius: BorderRadius.circular(7),
 ```
 
@@ -1038,73 +1634,52 @@ flutter analyze lib/features/chat/widgets/message_bubble.dart
 
 ```bash
 git add lib/features/chat/widgets/message_bubble.dart
-git commit -m "feat(bubbles): glass user bubble, teal inline-code light style, code block border"
+git commit -m "feat(bubbles): glass user bubble, themed inline-code, code block border"
 ```
 
 ---
 
-## Task 8: Settings groups + inline text field
+## Task 10: Settings groups + inline text field
 
 **Files:**
 - Modify: `lib/features/settings/widgets/settings_group.dart`
 - Modify: `lib/features/settings/widgets/inline_text_field.dart`
 
-- [ ] **Step 1: Update `SettingsGroup` container to glass**
-
-In `lib/features/settings/widgets/settings_group.dart`, replace the container decoration:
+- [ ] **Step 1: Update `SettingsGroup` container**
 
 ```dart
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0x05FFFFFF)  // rgba 255,255,255,0.02
-            : const Color(0x99FFFFFF), // rgba 255,255,255,0.60
-        border: Border.all(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? ThemeConstants.glassBorderSubtle
-              : ThemeConstants.lightBorder,
-        ),
-        borderRadius: BorderRadius.circular(9),
-      ),
-```
-
-- [ ] **Step 2: Update row dividers to faint glass**
-
-Replace `const Divider(height: 1, color: ThemeConstants.deepBorder)` with:
-
-```dart
-Divider(
-  height: 1,
-  color: Theme.of(context).brightness == Brightness.dark
-      ? ThemeConstants.glassBorderFaint
-      : ThemeConstants.lightDivider,
+final c = AppColors.of(context);
+decoration: BoxDecoration(
+  color: c.glassFill,
+  border: Border.all(color: c.subtleBorder),
+  borderRadius: BorderRadius.circular(9),
 ),
 ```
 
-Note: since this is inside a `build` method that already has `context` as a parameter, `Theme.of(context)` is available.
-
-- [ ] **Step 3: Slim down `InlineTextField` — remove padding override**
-
-In `lib/features/settings/widgets/inline_text_field.dart`, remove the `contentPadding` and `isDense` overrides so the field inherits size B from `InputDecorationTheme`:
+- [ ] **Step 2: Update row dividers**
 
 ```dart
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      style: TextStyle(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? ThemeConstants.textPrimary
-            : ThemeConstants.lightText,
-        fontSize: 12,
-        fontFamily: ThemeConstants.editorFontFamily,
-      ),
-      decoration: const InputDecoration(),
-    );
-  }
+Divider(height: 1, color: AppColors.of(context).faintBorder),
 ```
 
-The `InputDecoration()` with no overrides will use the theme's `InputDecorationTheme` (glass fill, size B padding, teal focus ring).
+- [ ] **Step 3: Slim `InlineTextField` — inherit theme padding**
+
+```dart
+@override
+Widget build(BuildContext context) {
+  final c = AppColors.of(context);
+  return TextField(
+    controller: controller,
+    obscureText: obscureText,
+    style: TextStyle(
+      color: c.textPrimary,
+      fontSize: 12,
+      fontFamily: ThemeConstants.editorFontFamily,
+    ),
+    decoration: const InputDecoration(),
+  );
+}
+```
 
 - [ ] **Step 4: Verify**
 
@@ -1116,100 +1691,83 @@ flutter analyze lib/features/settings/widgets/settings_group.dart lib/features/s
 
 ```bash
 git add lib/features/settings/widgets/settings_group.dart lib/features/settings/widgets/inline_text_field.dart
-git commit -m "feat(settings): glass group container, faint row dividers, size-B inline text field"
+git commit -m "feat(settings): glass group container, faint dividers, size-B inline text field"
 ```
 
 ---
 
-## Task 9: Settings nav + back button
+## Task 11: Settings nav + back button
 
 **Files:**
 - Modify: `lib/features/settings/settings_screen.dart`
 
-- [ ] **Step 1: Update `_NavItem` active state to glass pill + accent bar**
+- [ ] **Step 1: Update `_NavItem` active state**
 
 Replace `_NavItem.build`:
 
 ```dart
-  @override
-  Widget build(BuildContext context) {
+@override
+Widget build(BuildContext context) {
+  final c = AppColors.of(context);
+  return InkWell(
+    onTap: onTap,
+    child: Container(
+      margin: isActive ? const EdgeInsets.only(right: 6) : EdgeInsets.zero,
+      padding: EdgeInsets.only(left: isActive ? 11 : 16, right: 16, top: 8, bottom: 8),
+      decoration: BoxDecoration(
+        color: isActive ? c.accentTintMid : null,
+        borderRadius: isActive
+            ? const BorderRadius.horizontal(right: Radius.circular(6))
+            : null,
+        border: isActive
+            ? Border(left: BorderSide(color: c.accent, width: 3))
+            : null,
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: isActive ? c.accent : c.textSecondary),
+          const SizedBox(width: 8),
+          Text(label,
+            style: TextStyle(
+              color: isActive ? c.textPrimary : c.textSecondary,
+              fontSize: 12,
+            )),
+        ],
+      ),
+    ),
+  );
+}
+```
+
+- [ ] **Step 2: Update Back button to glass pill**
+
+```dart
+Padding(
+  padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+  child: Builder(builder: (context) {
+    final c = AppColors.of(context);
     return InkWell(
-      onTap: onTap,
+      onTap: onBack,
+      borderRadius: BorderRadius.circular(6),
       child: Container(
-        margin: isActive ? const EdgeInsets.only(right: 6) : EdgeInsets.zero,
-        padding: EdgeInsets.only(
-          left: isActive ? 11 : 16,
-          right: 16,
-          top: 8,
-          bottom: 8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0x124EC9B0) : null, // rgba(78,201,176,0.07)
-          borderRadius: isActive
-              ? const BorderRadius.horizontal(right: Radius.circular(6))
-              : null,
-          border: isActive
-              ? const Border(
-                  left: BorderSide(color: ThemeConstants.accent, width: 3),
-                )
-              : null,
+          color: c.chipFill,
+          border: Border.all(color: c.chipStroke),
+          borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 14,
-              color: isActive ? ThemeConstants.accent : ThemeConstants.textSecondary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
-                fontSize: 12,
-              ),
-            ),
+            Icon(AppIcons.arrowLeft, size: 11, color: c.textSecondary),
+            const SizedBox(width: 6),
+            Text('Back', style: TextStyle(color: c.textSecondary, fontSize: 11)),
           ],
         ),
       ),
     );
-  }
-```
-
-- [ ] **Step 2: Update the "Back" nav item to a glass pill**
-
-In `_SettingsLeftNav.build`, find the `_NavItem(icon: AppIcons.arrowLeft, label: 'Back', ...)` and replace it with:
-
-```dart
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-            child: InkWell(
-              onTap: onBack,
-              borderRadius: BorderRadius.circular(6),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: ThemeConstants.chipSurface,
-                  border: Border.all(color: ThemeConstants.chipBorder),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(AppIcons.arrowLeft, size: 11, color: ThemeConstants.textSecondary),
-                    SizedBox(width: 6),
-                    Text(
-                      'Back',
-                      style: TextStyle(
-                        color: ThemeConstants.textSecondary,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+  }),
+),
 ```
 
 - [ ] **Step 3: Verify**
@@ -1227,87 +1785,75 @@ git commit -m "feat(settings-nav): glass active pill with accent bar, glass back
 
 ---
 
-## Task 10: General settings — toggles + glass dropdown
+## Task 12: General settings — toggles + glass dropdown
 
 **Files:**
 - Modify: `lib/features/settings/general_screen.dart`
 
 - [ ] **Step 1: Replace boolean `_AppDropdown` rows with `Switch` widgets**
 
-In `lib/features/settings/general_screen.dart`, replace the "Delete confirmation" and "Auto-commit" rows. Find these two `SettingsRow` blocks (around lines 121–152) and replace them:
+Replace the "Delete confirmation" and "Auto-commit" `SettingsRow` blocks:
 
 ```dart
-              SettingsRow(
-                label: 'Delete confirmation',
-                description: 'Ask before deleting a session',
-                trailing: Switch(
-                  value: _deleteConfirmation,
-                  onChanged: (v) async {
-                    await ref.read(generalPrefsProvider.notifier).setDeleteConfirmation(v);
-                    setState(() => _deleteConfirmation = v);
-                  },
-                  thumbColor: WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.selected)) return Colors.white;
-                    return const Color(0x40FFFFFF); // rgba(255,255,255,0.25)
-                  }),
-                  trackColor: WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.selected)) return ThemeConstants.accent;
-                    return const Color(0x0DFFFFFF); // rgba(255,255,255,0.05)
-                  }),
-                  trackOutlineColor: WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.selected)) return Colors.transparent;
-                    return const Color(0x17FFFFFF); // rgba(255,255,255,0.09)
-                  }),
-                  thumbRadius: 5.0,
-                ),
-              ),
-              SettingsRow(
-                label: 'Auto-commit',
-                description: 'Skip commit dialog; commit immediately with AI-generated message',
-                trailing: Switch(
-                  value: _autoCommit,
-                  onChanged: (v) async {
-                    await ref.read(generalPrefsProvider.notifier).setAutoCommit(v);
-                    setState(() => _autoCommit = v);
-                  },
-                  thumbColor: WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.selected)) return Colors.white;
-                    return const Color(0x40FFFFFF);
-                  }),
-                  trackColor: WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.selected)) return ThemeConstants.accent;
-                    return const Color(0x0DFFFFFF);
-                  }),
-                  trackOutlineColor: WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.selected)) return Colors.transparent;
-                    return const Color(0x17FFFFFF);
-                  }),
-                  thumbRadius: 5.0,
-                ),
-              ),
+SettingsRow(
+  label: 'Delete confirmation',
+  description: 'Ask before deleting a session',
+  trailing: Transform.scale(
+    scale: 0.75,
+    child: Builder(builder: (context) {
+      final c = AppColors.of(context);
+      return Switch(
+        value: _deleteConfirmation,
+        onChanged: (v) async {
+          await ref.read(generalPrefsProvider.notifier).setDeleteConfirmation(v);
+          setState(() => _deleteConfirmation = v);
+        },
+        thumbColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected) ? Colors.white : const Color(0x40FFFFFF)),
+        trackColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected) ? c.accent : const Color(0x0DFFFFFF)),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected) ? Colors.transparent : const Color(0x17FFFFFF)),
+      );
+    }),
+  ),
+),
+SettingsRow(
+  label: 'Auto-commit',
+  description: 'Skip commit dialog; commit immediately with AI-generated message',
+  trailing: Transform.scale(
+    scale: 0.75,
+    child: Builder(builder: (context) {
+      final c = AppColors.of(context);
+      return Switch(
+        value: _autoCommit,
+        onChanged: (v) async {
+          await ref.read(generalPrefsProvider.notifier).setAutoCommit(v);
+          setState(() => _autoCommit = v);
+        },
+        thumbColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected) ? Colors.white : const Color(0x40FFFFFF)),
+        trackColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected) ? c.accent : const Color(0x0DFFFFFF)),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected) ? Colors.transparent : const Color(0x17FFFFFF)),
+      );
+    }),
+  ),
+),
 ```
 
-To get size 28×16, wrap each `Switch` in a `Transform.scale`:
+- [ ] **Step 2: Update `_AppDropdown` to glass style**
+
+In `_AppDropdown.build`, replace the `Container` decoration:
 
 ```dart
-                trailing: Transform.scale(
-                  scale: 0.75,
-                  child: Switch( ... ),
-                ),
-```
-
-Flutter's `Switch` default size is roughly 38×22 — scaling by 0.75 gives ~28×16.
-
-- [ ] **Step 2: Update `_AppDropdown` fill and border to glass**
-
-In `_AppDropdown.build` (around line 316–336), replace the `Container` decoration:
-
-```dart
-        decoration: BoxDecoration(
-          color: ThemeConstants.chipSurface,
-          border: Border.all(color: ThemeConstants.chipBorder),
-          borderRadius: BorderRadius.circular(6),
-        ),
+final c = AppColors.of(context);
+decoration: BoxDecoration(
+  color: c.chipFill,
+  border: Border.all(color: c.chipStroke),
+  borderRadius: BorderRadius.circular(6),
+),
 ```
 
 - [ ] **Step 3: Verify**
@@ -1325,73 +1871,82 @@ git commit -m "feat(general-settings): Switch toggles for booleans, glass dropdo
 
 ---
 
-## Task 11: Theme mode preference — SharedPrefs + repository + notifier
+## Task 13: Theme mode preference — SharedPrefs + repository + notifier
 
 **Files:**
 - Modify: `lib/data/_core/preferences/general_preferences.dart`
 - Modify: `lib/data/settings/repository/settings_repository.dart`
 - Modify: `lib/data/settings/repository/settings_repository_impl.dart`
 - Modify: `lib/features/settings/notifiers/general_prefs_notifier.dart`
+- Modify: `lib/services/settings/settings_service.dart` (if it delegates prefs)
 
 - [ ] **Step 1: Add `themeMode` to `GeneralPreferences`**
 
-In `lib/data/_core/preferences/general_preferences.dart`, add after the existing keys and methods:
+In `lib/data/_core/preferences/general_preferences.dart`, add import and methods:
 
 ```dart
-  static const _themeMode = 'theme_mode'; // values: 'system', 'dark', 'light'
+import 'package:flutter/material.dart';
+// ...
+static const _themeMode = 'theme_mode';
 
-  Future<ThemeMode> getThemeMode() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_themeMode) ?? 'system';
-    return switch (raw) {
-      'dark' => ThemeMode.dark,
-      'light' => ThemeMode.light,
-      _ => ThemeMode.system,
-    };
-  }
+Future<ThemeMode> getThemeMode() async {
+  final prefs = await SharedPreferences.getInstance();
+  return switch (prefs.getString(_themeMode) ?? 'system') {
+    'dark' => ThemeMode.dark,
+    'light' => ThemeMode.light,
+    _ => ThemeMode.system,
+  };
+}
 
-  Future<void> setThemeMode(ThemeMode mode) async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = switch (mode) {
-      ThemeMode.dark => 'dark',
-      ThemeMode.light => 'light',
-      ThemeMode.system => 'system',
-    };
-    await prefs.setString(_themeMode, raw);
-  }
+Future<void> setThemeMode(ThemeMode mode) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(_themeMode, switch (mode) {
+    ThemeMode.dark => 'dark',
+    ThemeMode.light => 'light',
+    ThemeMode.system => 'system',
+  });
+}
 ```
-
-Add `import 'package:flutter/material.dart';` at the top.
 
 - [ ] **Step 2: Add interface methods to `SettingsRepository`**
 
-In `lib/data/settings/repository/settings_repository.dart`, add to the general preferences section:
-
 ```dart
-  Future<ThemeMode> getThemeMode();
-  Future<void> setThemeMode(ThemeMode mode);
+import 'package:flutter/material.dart';
+// ...
+Future<ThemeMode> getThemeMode();
+Future<void> setThemeMode(ThemeMode mode);
 ```
-
-Add `import 'package:flutter/material.dart';` at the top.
 
 - [ ] **Step 3: Implement in `SettingsRepositoryImpl`**
 
-In `lib/data/settings/repository/settings_repository_impl.dart`, add:
-
 ```dart
-  @override
-  Future<ThemeMode> getThemeMode() => _generalPrefs.getThemeMode();
+@override
+Future<ThemeMode> getThemeMode() => _generalPrefs.getThemeMode();
 
-  @override
-  Future<void> setThemeMode(ThemeMode mode) => _generalPrefs.setThemeMode(mode);
+@override
+Future<void> setThemeMode(ThemeMode mode) => _generalPrefs.setThemeMode(mode);
 ```
 
-- [ ] **Step 4: Add `themeMode` to `GeneralPrefsNotifierState` and `GeneralPrefsNotifier`**
+- [ ] **Step 4: Add `setThemeMode` to `SettingsService`**
+
+```bash
+grep -n "getAutoCommit\|setAutoCommit" lib/services/settings/settings_service.dart | head -6
+```
+
+Follow the same delegation pattern:
+
+```dart
+Future<ThemeMode> getThemeMode() => _repo.getThemeMode();
+Future<void> setThemeMode(ThemeMode mode) => _repo.setThemeMode(mode);
+```
+
+- [ ] **Step 5: Update `GeneralPrefsNotifierState` + `GeneralPrefsNotifier`**
 
 In `lib/features/settings/notifiers/general_prefs_notifier.dart`:
 
-Update `GeneralPrefsNotifierState`:
 ```dart
+import 'package:flutter/material.dart';
+
 class GeneralPrefsNotifierState {
   const GeneralPrefsNotifierState({
     required this.autoCommit,
@@ -1419,49 +1974,37 @@ class GeneralPrefsNotifierState {
 }
 ```
 
-Update `GeneralPrefsNotifier.build` to load `themeMode`:
+Update `build()`:
 
 ```dart
-  @override
-  Future<GeneralPrefsNotifierState> build() async {
-    final svc = ref.read(settingsServiceProvider);
-    return GeneralPrefsNotifierState(
-      autoCommit: await svc.getAutoCommit(),
-      deleteConfirmation: await svc.getDeleteConfirmation(),
-      terminalApp: await svc.getTerminalApp(),
-      themeMode: await svc.getThemeMode(),
-    );
-  }
+@override
+Future<GeneralPrefsNotifierState> build() async {
+  final svc = ref.read(settingsServiceProvider);
+  return GeneralPrefsNotifierState(
+    autoCommit: await svc.getAutoCommit(),
+    deleteConfirmation: await svc.getDeleteConfirmation(),
+    terminalApp: await svc.getTerminalApp(),
+    themeMode: await svc.getThemeMode(),
+  );
+}
 ```
 
-Add `setThemeMode` method:
+Add `setThemeMode`:
 
 ```dart
-  Future<void> setThemeMode(ThemeMode mode) async {
-    final next = await AsyncValue.guard(() async {
-      try {
-        await ref.read(settingsServiceProvider).setThemeMode(mode);
-      } catch (e, st) {
-        dLog('[GeneralPrefsNotifier] setThemeMode failed: $e');
-        Error.throwWithStackTrace(_asFailure(e), st);
-      }
-      return (state.value ?? await build()).copyWith(themeMode: mode);
-    });
-    if (ref.mounted) state = next;
-  }
+Future<void> setThemeMode(ThemeMode mode) async {
+  final next = await AsyncValue.guard(() async {
+    try {
+      await ref.read(settingsServiceProvider).setThemeMode(mode);
+    } catch (e, st) {
+      dLog('[GeneralPrefsNotifier] setThemeMode failed: $e');
+      Error.throwWithStackTrace(_asFailure(e), st);
+    }
+    return (state.value ?? await build()).copyWith(themeMode: mode);
+  });
+  if (ref.mounted) state = next;
+}
 ```
-
-Add `import 'package:flutter/material.dart';` at the top.
-
-- [ ] **Step 5: Add `getThemeMode`/`setThemeMode` to `SettingsService`**
-
-Check the service layer:
-
-```bash
-grep -n "themeMode\|getThemeMode\|setThemeMode" lib/services/settings/settings_service.dart
-```
-
-If `SettingsService` delegates to `SettingsRepository`, add the delegating methods there too. Find the pattern (e.g. `getAutoCommit` calls `_repo.getAutoCommit()`) and follow it for `themeMode`.
 
 - [ ] **Step 6: Re-run code generation**
 
@@ -1472,7 +2015,7 @@ dart run build_runner build --delete-conflicting-outputs
 - [ ] **Step 7: Verify**
 
 ```bash
-flutter analyze lib/data/_core/preferences/general_preferences.dart lib/data/settings/repository/ lib/features/settings/notifiers/general_prefs_notifier.dart
+flutter analyze lib/data/_core/preferences/ lib/data/settings/repository/ lib/features/settings/notifiers/general_prefs_notifier.dart
 ```
 
 - [ ] **Step 8: Commit**
@@ -1481,6 +2024,7 @@ flutter analyze lib/data/_core/preferences/general_preferences.dart lib/data/set
 git add lib/data/_core/preferences/general_preferences.dart \
         lib/data/settings/repository/settings_repository.dart \
         lib/data/settings/repository/settings_repository_impl.dart \
+        lib/services/settings/settings_service.dart \
         lib/features/settings/notifiers/general_prefs_notifier.dart \
         lib/features/settings/notifiers/general_prefs_notifier.g.dart
 git commit -m "feat(prefs): add themeMode to SharedPrefs, SettingsRepository, and GeneralPrefsNotifier"
@@ -1488,7 +2032,7 @@ git commit -m "feat(prefs): add themeMode to SharedPrefs, SettingsRepository, an
 
 ---
 
-## Task 12: Theme wiring — `app.dart` + `GeneralScreen` dropdown
+## Task 14: Theme wiring — `app.dart` + `GeneralScreen` dropdown
 
 **Files:**
 - Modify: `lib/app.dart`
@@ -1496,78 +2040,64 @@ git commit -m "feat(prefs): add themeMode to SharedPrefs, SettingsRepository, an
 
 - [ ] **Step 1: Wire theme in `app.dart`**
 
-In `lib/app.dart`, replace `CodeBenchApp.build`:
+Replace `CodeBenchApp.build`:
 
 ```dart
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(appRouterProvider);
-    final themeMode = ref.watch(generalPrefsProvider).valueOrNull?.themeMode ?? ThemeMode.system;
+@override
+Widget build(BuildContext context, WidgetRef ref) {
+  final router = ref.watch(appRouterProvider);
+  final themeMode = ref.watch(generalPrefsProvider).valueOrNull?.themeMode
+      ?? ThemeMode.system;
 
-    return MaterialApp.router(
-      title: 'Code Bench',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: themeMode,
-      routerConfig: router,
-    );
-  }
+  return MaterialApp.router(
+    title: 'Code Bench',
+    debugShowCheckedModeBanner: false,
+    theme: AppTheme.light,
+    darkTheme: AppTheme.dark,
+    themeMode: themeMode,
+    routerConfig: router,
+  );
+}
 ```
 
-Add the import for `generalPrefsProvider`:
+Add import:
 ```dart
 import 'features/settings/notifiers/general_prefs_notifier.dart';
 ```
 
-- [ ] **Step 2: Wire the Theme dropdown in `GeneralScreen`**
+- [ ] **Step 2: Wire Theme dropdown in `GeneralScreen`**
 
-In `lib/features/settings/general_screen.dart`, update the `_GeneralScreenState`:
+Add `ThemeMode _themeMode = ThemeMode.system;` field.
 
-Add `ThemeMode _themeMode = ThemeMode.system;` field alongside the other bools.
-
-Update `_load()` to also read `themeMode`:
+Update `_load()` to include:
 ```dart
-  Future<void> _load() async {
-    final s = await ref.read(generalPrefsProvider.future);
-    if (!mounted) return;
-    setState(() {
-      _autoCommit = s.autoCommit;
-      _deleteConfirmation = s.deleteConfirmation;
-      _terminalApp = s.terminalApp;  // fix: this was _terminalAppController.text = s.terminalApp
-      _themeMode = s.themeMode;
-    });
-  }
+_themeMode = s.themeMode;
 ```
 
-Replace the Theme dropdown `SettingsRow`:
+Replace the Theme `SettingsRow`:
 
 ```dart
-              SettingsRow(
-                label: 'Theme',
-                description: 'How Code Bench looks',
-                trailing: Builder(
-                  builder: (ctx) => _AppDropdown<ThemeMode>(
-                    value: _themeMode,
-                    items: const [ThemeMode.system, ThemeMode.dark, ThemeMode.light],
-                    label: (m) => switch (m) {
-                      ThemeMode.system => 'System',
-                      ThemeMode.dark => 'Dark',
-                      ThemeMode.light => 'Light',
-                    },
-                    onChanged: (mode) async {
-                      await ref.read(generalPrefsProvider.notifier).setThemeMode(mode);
-                      setState(() => _themeMode = mode);
-                    },
-                    context: ctx,
-                  ),
-                ),
-              ),
+SettingsRow(
+  label: 'Theme',
+  description: 'How Code Bench looks',
+  trailing: Builder(
+    builder: (ctx) => _AppDropdown<ThemeMode>(
+      value: _themeMode,
+      items: const [ThemeMode.system, ThemeMode.dark, ThemeMode.light],
+      label: (m) => switch (m) {
+        ThemeMode.system => 'System',
+        ThemeMode.dark => 'Dark',
+        ThemeMode.light => 'Light',
+      },
+      onChanged: (mode) async {
+        await ref.read(generalPrefsProvider.notifier).setThemeMode(mode);
+        setState(() => _themeMode = mode);
+      },
+      context: ctx,
+    ),
+  ),
+),
 ```
-
-Also update `_AppDropdown` generic usage — `_AppDropdown<String>` with `'Dark'` etc. is now `_AppDropdown<ThemeMode>`. Remove the old `'Dark'/'Light'/'System'` strings from the Theme row call site.
-
-Note: `_terminalAppController.text = s.terminalApp` was already in the original `_load()` — don't break that.
 
 - [ ] **Step 3: Verify**
 
@@ -1584,266 +2114,209 @@ git commit -m "feat(theme): wire ThemeMode to MaterialApp.router; live theme dro
 
 ---
 
-## Task 13: Branch picker redesign
+## Task 15: Branch picker redesign
 
 **Files:**
 - Modify: `lib/features/branch_picker/widgets/branch_picker_popover.dart`
 - Modify: `lib/features/branch_picker/notifiers/branch_picker_notifier.dart`
-- Modify: `lib/features/branch_picker/notifiers/branch_picker_state.dart` + `.freezed.dart`
-- Modify: `lib/features/branch_picker/notifiers/branch_picker_failure.dart` + `.freezed.dart`
-- Modify: `lib/services/git/git_service.dart` (interface + impl) or the underlying datasource
+- Modify: `lib/features/branch_picker/notifiers/branch_picker_failure.dart`
+- Modify: `lib/services/git/git_service.dart`
+- Modify: `lib/data/git/datasource/` (`*_process.dart` file)
 
-**Overview:** Convert the `CompositedTransformFollower` popover to a dialog opened via `showDialog`. Redesign the interior with header, search, list (branches + worktrees), footer actions, and inline create-flows. Add `createWorktree` to the git layer.
-
-- [ ] **Step 1: Add `createWorktree` to the git datasource**
+- [ ] **Step 1: Add `createWorktree` to git datasource**
 
 ```bash
-grep -rn "createBranch\|process\|run" lib/data/git/datasource/ | head -20
+grep -rn "createBranch" lib/data/git/datasource/ | head -10
 ```
 
-Find the `*_process.dart` datasource file. Add a `createWorktree` method after `createBranch`:
+In the `*_process.dart` datasource, add after `createBranch`:
 
 ```dart
-  Future<void> createWorktree(String projectPath, String branchName, String worktreePath) async {
-    final result = await Process.run(
-      'git',
-      ['worktree', 'add', worktreePath, '-b', branchName],
-      workingDirectory: projectPath,
-    );
-    if (result.exitCode != 0) {
-      throw GitException('git worktree add failed: ${result.stderr}');
-    }
+Future<void> createWorktree(String projectPath, String branchName, String worktreePath) async {
+  final result = await Process.run(
+    'git',
+    ['worktree', 'add', worktreePath, '-b', branchName],
+    workingDirectory: projectPath,
+  );
+  if (result.exitCode != 0) {
+    throw GitException('git worktree add failed: ${result.stderr}');
   }
+}
 ```
 
-Then add a corresponding method to the `GitDatasource` interface (the abstract class) and to `GitService`:
+Add matching method to the `GitDatasource` interface and to `GitService` / `GitServiceImpl`:
 
 ```dart
-// In GitService interface:
+// Interface + impl delegation:
 Future<void> createWorktree(String projectPath, String branchName, String worktreePath);
-
-// In GitServiceImpl:
-Future<void> createWorktree(String projectPath, String branchName, String worktreePath) =>
-    _ds(projectPath).createWorktree(projectPath, branchName, worktreePath);
 ```
 
-- [ ] **Step 2: Add `createWorktreeFailure` to `BranchPickerFailure`**
-
-In `lib/features/branch_picker/notifiers/branch_picker_failure.dart`:
+- [ ] **Step 2: Add `createWorktreeFailed` to `BranchPickerFailure`**
 
 ```dart
-  const factory BranchPickerFailure.createWorktreeFailed(String message) = BranchPickerCreateWorktreeFailed;
+const factory BranchPickerFailure.createWorktreeFailed(String message) = BranchPickerCreateWorktreeFailed;
 ```
 
-Regenerate:
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
 - [ ] **Step 3: Add `createWorktree` to `BranchPickerNotifier`**
 
-In `lib/features/branch_picker/notifiers/branch_picker_notifier.dart`, add:
-
 ```dart
-  Future<void> createWorktree(String branchName, String worktreePath) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      try {
-        final git = ref.read(gitServiceProvider);
-        await git.createWorktree(projectPath, branchName, worktreePath);
-        final branches = await git.listLocalBranches(projectPath);
-        final wt = await git.worktreeBranches(projectPath);
-        return BranchPickerState(branches: branches, worktreePaths: wt);
-      } catch (e, st) {
-        dLog('[BranchPickerNotifier] createWorktree failed: $e');
-        final failure = switch (e) {
-          GitException(:final message) => BranchPickerFailure.createWorktreeFailed(message),
-          _ => BranchPickerFailure.gitUnavailable(),
-        };
-        Error.throwWithStackTrace(failure, st);
-      }
-    });
-  }
+Future<void> createWorktree(String branchName, String worktreePath) async {
+  state = const AsyncLoading();
+  state = await AsyncValue.guard(() async {
+    try {
+      final git = ref.read(gitServiceProvider);
+      await git.createWorktree(projectPath, branchName, worktreePath);
+      final branches = await git.listLocalBranches(projectPath);
+      final wt = await git.worktreeBranches(projectPath);
+      return BranchPickerState(branches: branches, worktreePaths: wt);
+    } catch (e, st) {
+      dLog('[BranchPickerNotifier] createWorktree failed: $e');
+      final failure = switch (e) {
+        GitException(:final message) => BranchPickerFailure.createWorktreeFailed(message),
+        _ => BranchPickerFailure.gitUnavailable(),
+      };
+      Error.throwWithStackTrace(failure, st);
+    }
+  });
+}
 ```
 
-- [ ] **Step 4: Rewrite `BranchPickerPopover` as a dialog-style widget**
+- [ ] **Step 4: Rewrite `BranchPickerPopover` as centred dialog**
 
-The widget still renders inside an `OverlayEntry` (launched from `StatusBar._openPicker`). Change its appearance from a compact popover to a full-width centered dialog.
+Add `import 'dart:ui';` at top.
 
-Replace the entire `build` method of `_BranchPickerPopoverState` with:
+Add fields to `_BranchPickerPopoverState`:
 
 ```dart
-  @override
-  Widget build(BuildContext context) {
-    final asyncState = ref.watch(branchPickerProvider(widget.projectPath));
+bool _createMode = false;
+bool _worktreeMode = false;
+final _worktreePathController = TextEditingController();
+```
 
-    return Stack(
-      children: [
-        // Scrim — dismiss on tap
-        Positioned.fill(
-          child: GestureDetector(
-            onTap: widget.onClose,
-            behavior: HitTestBehavior.opaque,
-            child: Container(color: const Color(0x33000000)),
-          ),
+Add to `dispose`: `_worktreePathController.dispose();`
+
+Replace `build`:
+
+```dart
+@override
+Widget build(BuildContext context) {
+  final c = AppColors.of(context);
+  final asyncState = ref.watch(branchPickerProvider(widget.projectPath));
+
+  return Stack(
+    children: [
+      Positioned.fill(
+        child: GestureDetector(
+          onTap: widget.onClose,
+          behavior: HitTestBehavior.opaque,
+          child: Container(color: const Color(0x33000000)),
         ),
-        // Dialog centred on screen
-        Center(
-          child: Material(
-            color: Colors.transparent,
-            child: GestureDetector(
-              onTap: () {},
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(13),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                  child: Container(
-                    width: 440,
-                    constraints: const BoxConstraints(maxHeight: 560),
-                    decoration: BoxDecoration(
-                      color: ThemeConstants.dialogSurface,
-                      borderRadius: BorderRadius.circular(13),
-                      border: Border.all(color: ThemeConstants.glassBorderSubtle),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0xF2000000),
-                          blurRadius: 64,
-                          offset: Offset(0, 24),
+      ),
+      Center(
+        child: Material(
+          color: Colors.transparent,
+          child: GestureDetector(
+            onTap: () {},
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(13),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: Container(
+                  width: 440,
+                  constraints: const BoxConstraints(maxHeight: 560),
+                  decoration: BoxDecoration(
+                    color: c.dialogFill,
+                    borderRadius: BorderRadius.circular(13),
+                    border: Border.all(color: c.dialogBorder),
+                    boxShadow: [
+                      BoxShadow(color: c.shadowDeep, blurRadius: 64, offset: const Offset(0, 24)),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _DialogHeader(
+                        currentBranch: widget.currentBranch,
+                        onClose: widget.onClose,
+                        createMode: _createMode,
+                        worktreeMode: _worktreeMode,
+                        onBack: _createMode
+                            ? () => setState(() {
+                                _createMode = false;
+                                _worktreeMode = false;
+                                _createController.clear();
+                                _worktreePathController.clear();
+                              })
+                            : null,
+                      ),
+                      if (!_createMode) ...[
+                        _SearchBar(controller: _filterController, focusNode: _filterFocus),
+                        Flexible(child: _buildList(asyncState)),
+                        _DialogFooter(
+                          onNewBranch: () => setState(() { _createMode = true; _worktreeMode = false; }),
+                          onNewWorktree: () => setState(() { _createMode = true; _worktreeMode = true; }),
+                        ),
+                      ] else if (_worktreeMode) ...[
+                        _WorktreeCreateForm(
+                          branchController: _createController,
+                          pathController: _worktreePathController,
+                          defaultPath: _defaultWorktreePath(),
+                          onSubmit: _createWorktree,
+                        ),
+                      ] else ...[
+                        _BranchCreateForm(
+                          controller: _createController,
+                          focusNode: _createFocus,
+                          onSubmit: _createBranch,
                         ),
                       ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _DialogHeader(
-                          currentBranch: widget.currentBranch,
-                          onClose: widget.onClose,
-                          createMode: _createMode,
-                          onBack: _createMode ? () => setState(() {
-                            _createMode = false;
-                            _worktreeMode = false;
-                            _createController.clear();
-                            _worktreePathController.clear();
-                          }) : null,
-                        ),
-                        _SearchBar(
-                          controller: _filterController,
-                          focusNode: _filterFocus,
-                        ),
-                        if (!_createMode) ...[
-                          Flexible(child: _buildList(asyncState)),
-                          _DialogFooter(
-                            onNewBranch: () => setState(() {
-                              _createMode = true;
-                              _worktreeMode = false;
-                            }),
-                            onNewWorktree: () => setState(() {
-                              _createMode = true;
-                              _worktreeMode = true;
-                            }),
-                          ),
-                        ] else if (_worktreeMode) ...[
-                          _WorktreeCreateForm(
-                            branchController: _createController,
-                            pathController: _worktreePathController,
-                            defaultPath: _defaultWorktreePath(),
-                            onSubmit: _createWorktree,
-                          ),
-                        ] else ...[
-                          _BranchCreateForm(
-                            controller: _createController,
-                            focusNode: _createFocus,
-                            onSubmit: _createBranch,
-                          ),
-                        ],
-                      ],
-                    ),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
         ),
-      ],
-    );
-  }
-
-  String _defaultWorktreePath() {
-    final branch = _createController.text.trim();
-    if (branch.isEmpty) return '';
-    final dir = widget.projectPath.split('/').last;
-    final parent = widget.projectPath.contains('/')
-        ? widget.projectPath.substring(0, widget.projectPath.lastIndexOf('/'))
-        : widget.projectPath;
-    return '$parent/.worktrees/$branch';
-  }
-
-  Widget _buildList(AsyncValue<BranchPickerState> asyncState) {
-    return switch (asyncState) {
-      AsyncLoading() => const Padding(
-        padding: EdgeInsets.all(20),
-        child: Center(
-          child: SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 1.5, color: ThemeConstants.accent),
-          ),
-        ),
       ),
-      AsyncError(:final error) => Padding(
-        padding: const EdgeInsets.all(14),
-        child: Text(
-          _errorMessage(error),
-          style: const TextStyle(color: ThemeConstants.warning, fontSize: ThemeConstants.uiFontSizeLabel),
-        ),
-      ),
-      AsyncData(:final value) => Builder(builder: (context) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && !_filterFocus.hasFocus && !_createFocus.hasFocus) {
-            _filterFocus.requestFocus();
-          }
-        });
-        final filtered = _filtered(value.branches);
-        final branches = filtered.where((b) => !value.worktreePaths.containsKey(b)).toList();
-        final worktrees = filtered.where((b) => value.worktreePaths.containsKey(b)).toList();
-        return SizedBox(
-          height: 240,
-          child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            children: [
-              if (branches.isNotEmpty) ...[
-                const _SectionHeader(label: 'BRANCHES'),
-                for (final b in branches)
-                  _BranchRow(
-                    branch: b,
-                    isCurrent: b == widget.currentBranch,
-                    isWorktree: false,
-                    onTap: b == widget.currentBranch ? null : () => _checkout(b),
-                  ),
-              ],
-              if (worktrees.isNotEmpty) ...[
-                const _SectionHeader(label: 'WORKTREES'),
-                for (final b in worktrees)
-                  _BranchRow(
-                    branch: b,
-                    isCurrent: b == widget.currentBranch,
-                    isWorktree: true,
-                    onTap: b == widget.currentBranch
-                        ? null
-                        : () => _switchToWorktree(value.worktreePaths[b]!),
-                  ),
-              ],
-            ],
-          ),
-        );
-      }),
-    };
+    ],
+  );
+}
+
+String _defaultWorktreePath() {
+  final branch = _createController.text.trim();
+  if (branch.isEmpty) return '';
+  final parent = widget.projectPath.contains('/')
+      ? widget.projectPath.substring(0, widget.projectPath.lastIndexOf('/'))
+      : widget.projectPath;
+  return '$parent/.worktrees/$branch';
+}
+
+Future<void> _createWorktree() async {
+  final branch = _createController.text.trim();
+  final path = _worktreePathController.text.trim();
+  if (branch.isEmpty || path.isEmpty) return;
+  await ref.read(branchPickerProvider(widget.projectPath).notifier).createWorktree(branch, path);
+  if (!mounted) return;
+  final s = ref.read(branchPickerProvider(widget.projectPath));
+  if (s.hasError && s.error is BranchPickerFailure) {
+    switch (s.error as BranchPickerFailure) {
+      case BranchPickerCreateWorktreeFailed(:final message):
+        AppSnackBar.show(context, 'Worktree failed: $message', type: AppSnackBarType.error);
+      default:
+        AppSnackBar.show(context, 'Create worktree failed.', type: AppSnackBarType.error);
+    }
+  } else {
+    ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
+    widget.onClose();
   }
+}
 ```
 
-Add `_worktreeMode = false` and `_worktreePathController = TextEditingController()` fields. Add `_worktreePathController` to `initState`/`dispose`.
-
-Add the helper sub-widgets at the bottom of the file:
+- [ ] **Step 5: Add helper sub-widgets at bottom of file**
 
 ```dart
 class _DialogHeader extends StatelessWidget {
@@ -1851,15 +2324,18 @@ class _DialogHeader extends StatelessWidget {
     required this.currentBranch,
     required this.onClose,
     required this.createMode,
+    required this.worktreeMode,
     this.onBack,
   });
   final String? currentBranch;
   final VoidCallback onClose;
   final bool createMode;
+  final bool worktreeMode;
   final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
       child: Row(
@@ -1868,23 +2344,20 @@ class _DialogHeader extends StatelessWidget {
             InkWell(
               onTap: onBack,
               borderRadius: BorderRadius.circular(5),
-              child: const Padding(
-                padding: EdgeInsets.all(4),
-                child: Icon(LucideIcons.arrowLeft, size: 14, color: ThemeConstants.textSecondary),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(LucideIcons.arrowLeft, size: 14, color: c.textSecondary),
               ),
             ),
           Container(
-            width: 28,
-            height: 28,
+            width: 28, height: 28,
             decoration: BoxDecoration(
-              color: const Color(0x144EC9B0),
+              color: c.accentTintMid,
               borderRadius: BorderRadius.circular(7),
-              border: Border.all(color: ThemeConstants.accentBorderTeal),
-              boxShadow: const [
-                BoxShadow(color: ThemeConstants.accentGlowBadge, blurRadius: 14),
-              ],
+              border: Border.all(color: c.accentBorderTeal),
+              boxShadow: [BoxShadow(color: c.accentGlowBadge, blurRadius: 14)],
             ),
-            child: const Icon(LucideIcons.gitBranch, size: 13, color: ThemeConstants.accent),
+            child: Icon(LucideIcons.gitBranch, size: 13, color: c.accent),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1893,27 +2366,22 @@ class _DialogHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  createMode ? (onBack != null ? 'New Branch' : 'New Worktree') : 'Switch Branch',
-                  style: const TextStyle(
-                    color: ThemeConstants.textPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  createMode
+                      ? (worktreeMode ? 'New Worktree' : 'New Branch')
+                      : 'Switch Branch',
+                  style: TextStyle(color: c.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
                 ),
                 if (currentBranch != null)
-                  Text(
-                    currentBranch!,
-                    style: const TextStyle(color: ThemeConstants.accent, fontSize: 10),
-                  ),
+                  Text(currentBranch!, style: TextStyle(color: c.accent, fontSize: 10)),
               ],
             ),
           ),
           InkWell(
             onTap: onClose,
             borderRadius: BorderRadius.circular(4),
-            child: const Padding(
-              padding: EdgeInsets.all(4),
-              child: Icon(LucideIcons.x, size: 13, color: ThemeConstants.mutedFg),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Icon(LucideIcons.x, size: 13, color: c.mutedFg),
             ),
           ),
         ],
@@ -1932,8 +2400,8 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: Text(
         label,
-        style: const TextStyle(
-          color: ThemeConstants.mutedFg,
+        style: TextStyle(
+          color: AppColors.of(context).mutedFg,
           fontSize: 8,
           letterSpacing: 0.5,
         ),
@@ -1949,19 +2417,18 @@ class _DialogFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: ThemeConstants.glassBorderFaint)),
-      ),
+      decoration: BoxDecoration(border: Border(top: BorderSide(color: c.faintBorder))),
       child: Row(
         children: [
           Expanded(
             child: _FooterButton(
               icon: LucideIcons.gitBranch,
               label: 'New Branch',
-              iconColor: ThemeConstants.accent,
-              borderColor: ThemeConstants.accentBorderTeal,
+              iconColor: c.accent,
+              borderColor: c.accentBorderTeal,
               onTap: onNewBranch,
             ),
           ),
@@ -1970,8 +2437,8 @@ class _DialogFooter extends StatelessWidget {
             child: _FooterButton(
               icon: LucideIcons.layers,
               label: 'New Worktree',
-              iconColor: const Color(0xFFE8A228),
-              borderColor: ThemeConstants.accentBorderAmber,
+              iconColor: c.worktreeBadgeFg,
+              borderColor: c.accentBorderAmber,
               onTap: onNewWorktree,
             ),
           ),
@@ -1997,13 +2464,14 @@ class _FooterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(7),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0x08FFFFFF),
+          color: c.glassFill,
           border: Border.all(color: borderColor),
           borderRadius: BorderRadius.circular(7),
         ),
@@ -2012,13 +2480,8 @@ class _FooterButton extends StatelessWidget {
           children: [
             Icon(icon, size: 12, color: iconColor),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                color: ThemeConstants.textPrimary,
-                fontSize: ThemeConstants.uiFontSizeSmall,
-              ),
-            ),
+            Text(label,
+              style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall)),
           ],
         ),
       ),
@@ -2038,6 +2501,7 @@ class _BranchCreateForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
@@ -2048,7 +2512,7 @@ class _BranchCreateForm extends StatelessWidget {
             focusNode: focusNode,
             autofocus: true,
             onSubmitted: (_) => onSubmit(),
-            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+            style: TextStyle(color: c.textPrimary, fontSize: 12),
             decoration: const InputDecoration(hintText: 'branch-name'),
           ),
           const SizedBox(height: 10),
@@ -2057,23 +2521,13 @@ class _BranchCreateForm extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [ThemeConstants.accent, ThemeConstants.accentHover],
-                ),
+                gradient: LinearGradient(colors: [c.accent, c.accentHover]),
                 borderRadius: BorderRadius.circular(7),
-                boxShadow: const [
-                  BoxShadow(color: ThemeConstants.sendGlow, blurRadius: 8, offset: Offset(0, 2)),
-                ],
+                boxShadow: [BoxShadow(color: c.sendGlow, blurRadius: 8, offset: const Offset(0, 2))],
               ),
-              child: const Center(
-                child: Text(
-                  'Create Branch',
-                  style: TextStyle(
-                    color: ThemeConstants.onAccent,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+              child: Center(
+                child: Text('Create Branch',
+                  style: TextStyle(color: c.onAccent, fontSize: 11, fontWeight: FontWeight.w600)),
               ),
             ),
           ),
@@ -2097,7 +2551,7 @@ class _WorktreeCreateForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Pre-fill path if empty
+    final c = AppColors.of(context);
     if (pathController.text.isEmpty && defaultPath.isNotEmpty) {
       pathController.text = defaultPath;
     }
@@ -2106,26 +2560,20 @@ class _WorktreeCreateForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Branch name',
-            style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10),
-          ),
+          Text('Branch name', style: TextStyle(color: c.textSecondary, fontSize: 10)),
           const SizedBox(height: 4),
           TextField(
             controller: branchController,
             autofocus: true,
-            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+            style: TextStyle(color: c.textPrimary, fontSize: 12),
             decoration: const InputDecoration(hintText: 'feat/my-feature'),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Path',
-            style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 10),
-          ),
+          Text('Path', style: TextStyle(color: c.textSecondary, fontSize: 10)),
           const SizedBox(height: 4),
           TextField(
             controller: pathController,
-            style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+            style: TextStyle(color: c.textPrimary, fontSize: 12),
             decoration: const InputDecoration(hintText: '.worktrees/feat-my-feature'),
           ),
           const SizedBox(height: 10),
@@ -2134,19 +2582,13 @@ class _WorktreeCreateForm extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0x14E8A228),
-                border: Border.all(color: ThemeConstants.accentBorderAmber),
+                color: c.accentTintLight,
+                border: Border.all(color: c.accentBorderAmber),
                 borderRadius: BorderRadius.circular(7),
               ),
-              child: const Center(
-                child: Text(
-                  'Create Worktree',
-                  style: TextStyle(
-                    color: Color(0xFFE8A228),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+              child: Center(
+                child: Text('Create Worktree',
+                  style: TextStyle(color: c.worktreeBadgeFg, fontSize: 11, fontWeight: FontWeight.w600)),
               ),
             ),
           ),
@@ -2157,63 +2599,33 @@ class _WorktreeCreateForm extends StatelessWidget {
 }
 ```
 
-Add the `_createWorktree` method to `_BranchPickerPopoverState`:
+Update `_SearchBar.build` to use theme field:
 
 ```dart
-  Future<void> _createWorktree() async {
-    final branch = _createController.text.trim();
-    final path = _worktreePathController.text.trim();
-    if (branch.isEmpty || path.isEmpty) return;
-    await ref.read(branchPickerProvider(widget.projectPath).notifier).createWorktree(branch, path);
-    if (!mounted) return;
-    final s = ref.read(branchPickerProvider(widget.projectPath));
-    if (s.hasError) {
-      final failure = s.error;
-      if (failure is BranchPickerFailure) {
-        switch (failure) {
-          case BranchPickerCreateWorktreeFailed(:final message):
-            AppSnackBar.show(context, 'Worktree failed: $message', type: AppSnackBarType.error);
-          default:
-            AppSnackBar.show(context, 'Create worktree failed.', type: AppSnackBarType.error);
-        }
-      }
-    } else {
-      ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
-      widget.onClose();
-    }
-  }
-```
-
-Add `import 'dart:ui';` at the top of `branch_picker_popover.dart`.
-
-- [ ] **Step 5: Update `_SearchBar` to use theme field style**
-
-Replace `_SearchBar.build` to use the global `InputDecorationTheme` (remove the explicit `fillColor`, hard borders):
-
-```dart
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
-        decoration: InputDecoration(
-          hintText: 'Search branches…',
-          hintStyle: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
-          prefixIcon: const Padding(
-            padding: EdgeInsets.only(left: 8, right: 4),
-            child: Icon(LucideIcons.search, size: 11, color: ThemeConstants.mutedFg),
-          ),
-          prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+@override
+Widget build(BuildContext context) {
+  final c = AppColors.of(context);
+  return Padding(
+    padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+    child: TextField(
+      controller: controller,
+      focusNode: focusNode,
+      style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+      decoration: InputDecoration(
+        hintText: 'Search branches…',
+        hintStyle: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.only(left: 8, right: 4),
+          child: Icon(LucideIcons.search, size: 11, color: c.mutedFg),
         ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       ),
-    );
-  }
+    ),
+  );
+}
 ```
 
-- [ ] **Step 6: Re-run code generation for updated freezed files**
+- [ ] **Step 6: Re-run code generation**
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
@@ -2246,22 +2658,17 @@ git commit -m "feat(branch-picker): dialog redesign, glass surface, footer actio
   - [ ] App dialog: dark glass, blur, gradient primary button
   - [ ] Settings groups: glass container, faint dividers
   - [ ] Settings nav: teal pill + left bar on active item; glass back button
-  - [ ] Toggle switches on General settings (delete confirmation, auto-commit)
+  - [ ] Toggle switches on General settings
   - [ ] Theme dropdown in settings switches the whole app (Dark / Light / System)
+  - [ ] Light theme: background pale cool grey, chat box frosted white, text dark
   - [ ] Branch picker opens as centred dialog with search, list, footer buttons
-  - [ ] New Branch flow: inline form + gradient Create Branch button
-  - [ ] New Worktree flow: branch + path fields + amber Create Worktree button
+  - [ ] New Branch + New Worktree create flows
 
 ---
 
 ## Self-review notes
 
-**Spec coverage gaps addressed:**
-- §3 top bar: `ActionsDropdown` and `CodeDropdown` are separate widget files that style their own text/icons internally. Task 4 wraps them in glass pills — their inner styles are left to their own pass if needed.
-- §4b gradient fade overlay: not yet in the chat screen layout. The fade needs adding to the `Stack` or `Column` in `chat_screen.dart` / wherever the `ListView` + `ChatInputBar` live. Find the parent and add an `IgnorePointer` `Container` with a gradient at the bottom of the list area. This is a missing task — add it after Task 6 if the fade is absent.
-- §9b (`GeneralPrefs` Drift table): the actual storage uses `SharedPreferences`, not Drift. The plan follows the existing pattern (SharedPrefs) and does not add a Drift column. The spec reference to "Drift table" is incorrect — ignore it.
-
-**Type consistency:**
-- `accentHover` (`#3AB49A`) is used as gradient end everywhere instead of the spec's `accentDark` (which has a different existing value).
-- `chatBoxRimGlow` replaces the spec's `accentGlow` to avoid colliding with the existing branding token.
-- `glassSurface` replaces the spec's reference to "repurposed `frostedSurface`" — the existing `frostedSurface` token is kept unchanged to avoid breaking snackbars and other dialogs that currently use it.
+- Task 4 (migration) is the largest task — it touches potentially 50+ files. The safest subagent strategy is: remove colours from ThemeConstants first (Task 2), let the analyser enumerate every error, fix file by file. `flutter analyze` output is the todo list.
+- `AppColors.dark` and `AppColors.light` are `const` — safe to reference directly in `AppTheme` (no `BuildContext` needed there) and in any `const`-compatible context. Widget `build` methods should still call `AppColors.of(context)` rather than `AppColors.dark` so the extension swap works at runtime.
+- Spec says "Drift table" for themeMode — actual storage uses SharedPreferences. Plan follows existing pattern.
+- `accentHover` (`#3AB49A`) is used as gradient end throughout; the spec's `accentDark` has a different existing value.
