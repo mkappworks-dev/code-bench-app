@@ -122,9 +122,9 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.light.background,
       colorScheme: ColorScheme.light(
         primary: AppColors.light.accent,
-        onPrimary: Colors.white,
+        onPrimary: AppColors.light.onAccent,
         secondary: AppColors.light.accent,
-        onSecondary: Colors.white,
+        onSecondary: AppColors.light.onAccent,
         surface: AppColors.light.glassFill,
         onSurface: AppColors.light.textPrimary,
         error: AppColors.light.error,
@@ -159,11 +159,22 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.light.accent,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.light.onAccent,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           elevation: 0,
         ),
+      ),
+      switchTheme: SwitchThemeData(
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return AppColors.light.accent;
+          return const Color(0xFF8C96A0);
+        }),
+        thumbColor: WidgetStateProperty.all(Colors.white),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.transparent;
+          return const Color(0xFF7A8490);
+        }),
       ),
       scrollbarTheme: ScrollbarThemeData(
         thumbColor: WidgetStateProperty.all(AppColors.light.textMuted.withAlpha(100)),
