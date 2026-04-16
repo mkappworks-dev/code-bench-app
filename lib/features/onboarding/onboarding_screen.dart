@@ -220,8 +220,8 @@ class _FeatureCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: c.accentTintLight,
-        border: Border.all(color: c.accentTintMid),
+        color: c.fieldFill,
+        border: Border.all(color: c.accentBorderTeal),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -237,7 +237,7 @@ class _FeatureCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: TextStyle(color: c.textMuted, fontSize: 10),
+            style: TextStyle(color: c.textSecondary, fontSize: 10),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
