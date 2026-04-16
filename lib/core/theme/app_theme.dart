@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/theme_constants.dart';
+import 'app_colors.dart';
 
 class AppTheme {
   AppTheme._();
@@ -8,54 +9,55 @@ class AppTheme {
   static ThemeData get dark {
     final base = ThemeData.dark(useMaterial3: true);
     return base.copyWith(
-      scaffoldBackgroundColor: ThemeConstants.background,
-      colorScheme: const ColorScheme.dark(
-        primary: ThemeConstants.accent,
-        onPrimary: ThemeConstants.onAccent,
-        secondary: ThemeConstants.accentLight,
-        onSecondary: ThemeConstants.onAccent,
-        surface: ThemeConstants.sidebarBackground,
-        onSurface: ThemeConstants.textPrimary,
-        error: ThemeConstants.error,
+      extensions: const [AppColors.dark],
+      scaffoldBackgroundColor: AppColors.dark.background,
+      colorScheme: ColorScheme.dark(
+        primary: AppColors.dark.accent,
+        onPrimary: AppColors.dark.onAccent,
+        secondary: AppColors.dark.accentLight,
+        onSecondary: AppColors.dark.onAccent,
+        surface: AppColors.dark.sidebarBackground,
+        onSurface: AppColors.dark.textPrimary,
+        error: AppColors.dark.error,
         onError: Colors.white,
       ),
       textTheme: GoogleFonts.interTextTheme(base.textTheme).copyWith(
-        bodyMedium: GoogleFonts.inter(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
-        bodySmall: GoogleFonts.inter(color: ThemeConstants.textSecondary, fontSize: 12),
-        titleMedium: GoogleFonts.inter(color: ThemeConstants.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
-        labelMedium: GoogleFonts.inter(color: ThemeConstants.textSecondary, fontSize: 12),
+        bodyMedium: GoogleFonts.inter(color: AppColors.dark.textPrimary, fontSize: ThemeConstants.uiFontSize),
+        bodySmall: GoogleFonts.inter(color: AppColors.dark.textSecondary, fontSize: 12),
+        titleMedium: GoogleFonts.inter(color: AppColors.dark.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+        labelMedium: GoogleFonts.inter(color: AppColors.dark.textSecondary, fontSize: 12),
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: ThemeConstants.titleBar,
-        foregroundColor: ThemeConstants.textPrimary,
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.dark.titleBar,
+        foregroundColor: AppColors.dark.textPrimary,
         elevation: 0,
         toolbarHeight: 36,
       ),
-      drawerTheme: const DrawerThemeData(backgroundColor: ThemeConstants.sidebarBackground),
-      dividerTheme: const DividerThemeData(color: ThemeConstants.dividerColor, thickness: 1, space: 1),
+      drawerTheme: DrawerThemeData(backgroundColor: AppColors.dark.sidebarBackground),
+      dividerTheme: DividerThemeData(color: AppColors.dark.dividerColor, thickness: 1, space: 1),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: ThemeConstants.fieldSurface,
+        fillColor: AppColors.dark.fieldFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: ThemeConstants.fieldBorder),
+          borderSide: BorderSide(color: AppColors.dark.fieldStroke),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: ThemeConstants.fieldBorder),
+          borderSide: BorderSide(color: AppColors.dark.fieldStroke),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: ThemeConstants.accent, width: 1.5),
+          borderSide: BorderSide(color: AppColors.dark.accent, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        hintStyle: const TextStyle(color: ThemeConstants.textMuted),
-        labelStyle: const TextStyle(color: ThemeConstants.textSecondary),
+        hintStyle: TextStyle(color: AppColors.dark.textMuted),
+        labelStyle: TextStyle(color: AppColors.dark.textSecondary),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: ThemeConstants.accent,
-          foregroundColor: ThemeConstants.onAccent,
+          backgroundColor: AppColors.dark.accent,
+          foregroundColor: AppColors.dark.onAccent,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           elevation: 0,
@@ -69,45 +71,45 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: ThemeConstants.accent,
+          foregroundColor: AppColors.dark.accent,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          foregroundColor: ThemeConstants.textSecondary,
+          foregroundColor: AppColors.dark.textSecondary,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         ),
       ),
-      listTileTheme: const ListTileThemeData(
-        textColor: ThemeConstants.textPrimary,
-        iconColor: ThemeConstants.textSecondary,
+      listTileTheme: ListTileThemeData(
+        textColor: AppColors.dark.textPrimary,
+        iconColor: AppColors.dark.textSecondary,
         tileColor: Colors.transparent,
-        selectedTileColor: ThemeConstants.editorLineHighlight,
+        selectedTileColor: AppColors.dark.editorLineHighlight,
         dense: true,
-        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       ),
       scrollbarTheme: ScrollbarThemeData(
-        thumbColor: WidgetStateProperty.all(ThemeConstants.textMuted.withAlpha(100)),
+        thumbColor: WidgetStateProperty.all(AppColors.dark.textMuted.withAlpha(100)),
         thickness: WidgetStateProperty.all(6),
         radius: const Radius.circular(3),
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
-          color: ThemeConstants.titleBar,
+          color: AppColors.dark.titleBar,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: ThemeConstants.borderColor),
+          border: Border.all(color: AppColors.dark.borderColor),
         ),
-        textStyle: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12),
+        textStyle: TextStyle(color: AppColors.dark.textPrimary, fontSize: 12),
         waitDuration: const Duration(milliseconds: 500),
       ),
       cardTheme: CardThemeData(
-        color: ThemeConstants.sidebarBackground,
+        color: AppColors.dark.sidebarBackground,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: ThemeConstants.borderColor),
+          side: BorderSide(color: AppColors.dark.borderColor),
         ),
       ),
     );
@@ -116,46 +118,47 @@ class AppTheme {
   static ThemeData get light {
     final base = ThemeData.light(useMaterial3: true);
     return base.copyWith(
-      scaffoldBackgroundColor: ThemeConstants.lightBackground,
+      extensions: const [AppColors.light],
+      scaffoldBackgroundColor: AppColors.light.background,
       colorScheme: ColorScheme.light(
-        primary: ThemeConstants.accent,
+        primary: AppColors.light.accent,
         onPrimary: Colors.white,
-        secondary: ThemeConstants.accent,
+        secondary: AppColors.light.accent,
         onSecondary: Colors.white,
-        surface: ThemeConstants.lightChatBoxSurface,
-        onSurface: ThemeConstants.lightText,
-        error: ThemeConstants.error,
+        surface: AppColors.light.glassFill,
+        onSurface: AppColors.light.textPrimary,
+        error: AppColors.light.error,
         onError: Colors.white,
       ),
       textTheme: GoogleFonts.interTextTheme(base.textTheme).copyWith(
-        bodyMedium: GoogleFonts.inter(color: ThemeConstants.lightText, fontSize: ThemeConstants.uiFontSize),
-        bodySmall: GoogleFonts.inter(color: ThemeConstants.lightTextSecondary, fontSize: 12),
-        titleMedium: GoogleFonts.inter(color: ThemeConstants.lightText, fontSize: 14, fontWeight: FontWeight.w500),
-        labelMedium: GoogleFonts.inter(color: ThemeConstants.lightTextTertiary, fontSize: 12),
+        bodyMedium: GoogleFonts.inter(color: AppColors.light.textPrimary, fontSize: ThemeConstants.uiFontSize),
+        bodySmall: GoogleFonts.inter(color: AppColors.light.textSecondary, fontSize: 12),
+        titleMedium: GoogleFonts.inter(color: AppColors.light.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+        labelMedium: GoogleFonts.inter(color: AppColors.light.textSecondary, fontSize: 12),
       ),
-      dividerTheme: const DividerThemeData(color: ThemeConstants.lightDivider, thickness: 1, space: 1),
+      dividerTheme: DividerThemeData(color: AppColors.light.faintBorder, thickness: 1, space: 1),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: ThemeConstants.lightChatBoxSurface,
+        fillColor: AppColors.light.fieldFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: ThemeConstants.lightBorder),
+          borderSide: BorderSide(color: AppColors.light.fieldStroke),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: ThemeConstants.lightBorder),
+          borderSide: BorderSide(color: AppColors.light.fieldStroke),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: ThemeConstants.accent, width: 1.5),
+          borderSide: BorderSide(color: AppColors.light.accent, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        hintStyle: const TextStyle(color: ThemeConstants.lightTextMuted),
-        labelStyle: const TextStyle(color: ThemeConstants.lightTextTertiary),
+        hintStyle: TextStyle(color: AppColors.light.textMuted),
+        labelStyle: TextStyle(color: AppColors.light.textSecondary),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: ThemeConstants.accent,
+          backgroundColor: AppColors.light.accent,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -163,17 +166,17 @@ class AppTheme {
         ),
       ),
       scrollbarTheme: ScrollbarThemeData(
-        thumbColor: WidgetStateProperty.all(ThemeConstants.lightTextMuted.withAlpha(100)),
+        thumbColor: WidgetStateProperty.all(AppColors.light.textMuted.withAlpha(100)),
         thickness: WidgetStateProperty.all(6),
         radius: const Radius.circular(3),
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
-          color: ThemeConstants.lightChatBoxSurface,
+          color: AppColors.light.glassFill,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: ThemeConstants.lightBorder),
+          border: Border.all(color: AppColors.light.fieldStroke),
         ),
-        textStyle: const TextStyle(color: ThemeConstants.lightText, fontSize: 12),
+        textStyle: TextStyle(color: AppColors.light.textPrimary, fontSize: 12),
         waitDuration: const Duration(milliseconds: 500),
       ),
     );
