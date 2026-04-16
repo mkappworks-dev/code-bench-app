@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'ai_model.freezed.dart';
@@ -102,4 +103,7 @@ class AIModels {
   );
 
   static List<AIModel> get defaults => [gpt4o, gpt4oMini, claude35Sonnet, claude3Haiku, geminiPro, customModel];
+
+  static AIModel? fromId(String modelId) =>
+      defaults.firstWhereOrNull((m) => m.modelId == modelId);
 }
