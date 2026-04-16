@@ -103,7 +103,7 @@ class ConversationTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(5),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          decoration: BoxDecoration(color: isActive ? c.inputSurface : null, borderRadius: BorderRadius.circular(5)),
+          decoration: BoxDecoration(color: isActive ? c.accentTintMid : null, borderRadius: BorderRadius.circular(5)),
           child: Row(
             children: [
               // Status dot
