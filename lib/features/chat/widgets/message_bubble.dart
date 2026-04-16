@@ -159,11 +159,15 @@ class _MessageContent extends StatelessWidget {
         p: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.65),
         code: TextStyle(
           fontFamily: ThemeConstants.editorFontFamily,
-          backgroundColor: c.codeBlockBg,
-          color: c.syntaxString,
+          backgroundColor: c.inlineCodeFill,
+          color: c.inlineCodeText,
           fontSize: ThemeConstants.uiFontSizeSmall,
         ),
-        codeblockDecoration: BoxDecoration(color: c.codeBlockBg, borderRadius: BorderRadius.circular(6)),
+        codeblockDecoration: BoxDecoration(
+          color: c.codeBlockBg,
+          border: Border.all(color: c.subtleBorder),
+          borderRadius: BorderRadius.circular(7),
+        ),
         h1: TextStyle(color: c.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
         h2: TextStyle(color: c.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
         h3: TextStyle(color: c.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),

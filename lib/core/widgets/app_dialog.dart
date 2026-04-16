@@ -82,13 +82,7 @@ class AppDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(13),
                 border: Border.all(color: c.dialogBorder),
                 boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xF2000000)
-                        : const Color(0x33000000),
-                    blurRadius: Theme.of(context).brightness == Brightness.dark ? 64 : 48,
-                    offset: Offset(0, Theme.of(context).brightness == Brightness.dark ? 24 : 16),
-                  ),
+                  BoxShadow(color: c.shadowDeep, blurRadius: 64, offset: const Offset(0, 24)),
                   BoxShadow(color: c.dialogHighlight, blurRadius: 0, spreadRadius: 0, offset: const Offset(0, 1)),
                 ],
               ),
@@ -224,7 +218,7 @@ class _ActionButton extends StatelessWidget {
               ),
               child: Text(
                 action.label,
-                style: TextStyle(color: c.textSecondary, fontSize: 11, fontWeight: FontWeight.w500),
+                style: TextStyle(color: c.textPrimary, fontSize: 11, fontWeight: FontWeight.w500),
               ),
             ),
           ),

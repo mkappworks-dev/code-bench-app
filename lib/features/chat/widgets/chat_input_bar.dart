@@ -325,20 +325,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
           border: Border.all(color: c.glassBorder),
           borderRadius: BorderRadius.circular(11),
           boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0x8C000000)
-                  : const Color(0x14000000),
-              blurRadius: 24,
-              offset: const Offset(0, -6),
-            ),
-            BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0x4D000000)
-                  : const Color(0x0D000000),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
+            BoxShadow(color: c.shadowHeavy.withAlpha(0x8C), blurRadius: 24, offset: const Offset(0, -6)),
+            BoxShadow(color: c.shadowDark.withAlpha(0x4D), blurRadius: 6, offset: const Offset(0, 2)),
             BoxShadow(color: c.chatBoxRimGlow, blurRadius: 0, spreadRadius: 0.5),
           ],
         ),
