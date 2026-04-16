@@ -11,8 +11,13 @@ SecureStorage secureStorage(Ref ref) {
 }
 
 class SecureStorage {
+  // usesDataProtectionKeychain defaults to true in flutter_secure_storage v10,
+  // which maps to kSecUseDataProtectionKeychain on macOS and requires App Sandbox
+  // or the com.apple.developer.default-data-protection entitlement. This app
+  // intentionally disables App Sandbox (see macos/Runner/README.md), so we must
+  // opt out to avoid errSecMissingEntitlement on every keychain write.
   static const _storage = FlutterSecureStorage(
-    mOptions: MacOsOptions(accessibility: KeychainAccessibility.first_unlock),
+    mOptions: MacOsOptions(accessibility: KeychainAccessibility.first_unlock, usesDataProtectionKeychain: false),
   );
 
   // Keys
