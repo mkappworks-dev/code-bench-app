@@ -16,10 +16,7 @@ class InlineTextField extends StatelessWidget {
       controller: controller,
       obscureText: obscureText,
       style: TextStyle(color: c.textPrimary, fontSize: 12, fontFamily: ThemeConstants.editorFontFamily),
-      decoration: const InputDecoration(
-        isDense: true,
-        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-      ),
+      decoration: const InputDecoration(),
     );
   }
 }
