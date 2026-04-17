@@ -48,11 +48,14 @@ class SettingsActions extends _$SettingsActions {
   }
 
   /// Persists [key] for [provider]. Emits [SettingsStorageFailed] on error.
+  /// Invalidates [aiRepositoryProvider] on success so the live datasource
+  /// picks up the new key immediately.
   Future<void> saveApiKey(String provider, String key) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
         await ref.read(settingsServiceProvider).writeApiKey(provider, key);
+        ref.invalidate(aiRepositoryProvider);
       } catch (e, st) {
         dLog('[SettingsActions] saveApiKey failed: $e');
         Error.throwWithStackTrace(_asFailure(e, provider), st);
