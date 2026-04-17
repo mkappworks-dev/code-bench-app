@@ -37,14 +37,20 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
   }
 
   Future<void> _load() async {
-    final s = await ref.read(generalPrefsProvider.future);
-    if (!mounted) return;
-    setState(() {
-      _autoCommit = s.autoCommit;
-      _deleteConfirmation = s.deleteConfirmation;
-      _terminalAppController.text = s.terminalApp;
-      _themeMode = s.themeMode;
-    });
+    try {
+      final s = await ref.read(generalPrefsProvider.future);
+      if (!mounted) return;
+      setState(() {
+        _autoCommit = s.autoCommit;
+        _deleteConfirmation = s.deleteConfirmation;
+        _terminalAppController.text = s.terminalApp;
+        _themeMode = s.themeMode;
+      });
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.show(context, 'Could not load settings — showing defaults.', type: AppSnackBarType.warning);
+      }
+    }
   }
 
   @override
@@ -104,6 +110,10 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(generalPrefsProvider, (_, next) {
+      if (next is! AsyncError || !mounted) return;
+      AppSnackBar.show(context, 'Could not save setting — please try again.', type: AppSnackBarType.error);
+    });
     final c = AppColors.of(context);
     return SingleChildScrollView(
       child: Column(
