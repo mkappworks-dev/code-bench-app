@@ -41,6 +41,23 @@ class SessionRepositoryImpl implements SessionRepository {
   Future<void> updateSessionTitle(String sessionId, String title) => _ds.updateSessionTitle(sessionId, title);
 
   @override
+  Future<void> patchSessionSettings(
+    String sessionId, {
+    String? modelId,
+    String? systemPrompt,
+    String? mode,
+    String? effort,
+    String? permission,
+  }) => _ds.patchSessionSettings(
+    sessionId,
+    modelId: modelId,
+    systemPrompt: systemPrompt,
+    mode: mode,
+    effort: effort,
+    permission: permission,
+  );
+
+  @override
   Future<void> deleteSession(String sessionId) => _ds.deleteSession(sessionId);
 
   @override

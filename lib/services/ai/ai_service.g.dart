@@ -12,7 +12,13 @@ part of 'ai_service.dart';
 @ProviderFor(aiService)
 final aiServiceProvider = AiServiceProvider._();
 
-final class AiServiceProvider extends $FunctionalProvider<AsyncValue<AIService>, AIService, FutureOr<AIService>>
+final class AiServiceProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<AIService>,
+          AIService,
+          FutureOr<AIService>
+        >
     with $FutureModifier<AIService>, $FutureProvider<AIService> {
   AiServiceProvider._()
     : super(
@@ -30,7 +36,8 @@ final class AiServiceProvider extends $FunctionalProvider<AsyncValue<AIService>,
 
   @$internal
   @override
-  $FutureProviderElement<AIService> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+  $FutureProviderElement<AIService> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
   FutureOr<AIService> create(Ref ref) {

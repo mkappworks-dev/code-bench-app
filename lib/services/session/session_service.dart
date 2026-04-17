@@ -34,6 +34,21 @@ class SessionService {
   Future<String> createSession({required AIModel model, String? title, String? projectId}) =>
       _session.createSession(model: model, title: title, projectId: projectId);
   Future<void> updateSessionTitle(String sessionId, String title) => _session.updateSessionTitle(sessionId, title);
+  Future<void> patchSessionSettings(
+    String sessionId, {
+    String? modelId,
+    String? systemPrompt,
+    String? mode,
+    String? effort,
+    String? permission,
+  }) => _session.patchSessionSettings(
+    sessionId,
+    modelId: modelId,
+    systemPrompt: systemPrompt,
+    mode: mode,
+    effort: effort,
+    permission: permission,
+  );
   Future<void> deleteSession(String sessionId) => _session.deleteSession(sessionId);
   Future<void> archiveSession(String sessionId) => _session.archiveSession(sessionId);
   Future<void> unarchiveSession(String sessionId) => _session.unarchiveSession(sessionId);

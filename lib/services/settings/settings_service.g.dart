@@ -12,7 +12,9 @@ part of 'settings_service.dart';
 @ProviderFor(settingsService)
 final settingsServiceProvider = SettingsServiceProvider._();
 
-final class SettingsServiceProvider extends $FunctionalProvider<SettingsService, SettingsService, SettingsService>
+final class SettingsServiceProvider
+    extends
+        $FunctionalProvider<SettingsService, SettingsService, SettingsService>
     with $Provider<SettingsService> {
   SettingsServiceProvider._()
     : super(
@@ -30,7 +32,8 @@ final class SettingsServiceProvider extends $FunctionalProvider<SettingsService,
 
   @$internal
   @override
-  $ProviderElement<SettingsService> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<SettingsService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   SettingsService create(Ref ref) {
@@ -39,7 +42,10 @@ final class SettingsServiceProvider extends $FunctionalProvider<SettingsService,
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(SettingsService value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<SettingsService>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SettingsService>(value),
+    );
   }
 }
 

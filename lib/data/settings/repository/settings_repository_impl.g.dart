@@ -13,7 +13,12 @@ part of 'settings_repository_impl.dart';
 final settingsRepositoryProvider = SettingsRepositoryProvider._();
 
 final class SettingsRepositoryProvider
-    extends $FunctionalProvider<SettingsRepository, SettingsRepository, SettingsRepository>
+    extends
+        $FunctionalProvider<
+          SettingsRepository,
+          SettingsRepository,
+          SettingsRepository
+        >
     with $Provider<SettingsRepository> {
   SettingsRepositoryProvider._()
     : super(
@@ -31,7 +36,9 @@ final class SettingsRepositoryProvider
 
   @$internal
   @override
-  $ProviderElement<SettingsRepository> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<SettingsRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   SettingsRepository create(Ref ref) {
@@ -40,8 +47,12 @@ final class SettingsRepositoryProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(SettingsRepository value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<SettingsRepository>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SettingsRepository>(value),
+    );
   }
 }
 
-String _$settingsRepositoryHash() => r'164878d3a6e60fa54721c2b446de3a2bbe6b2ec5';
+String _$settingsRepositoryHash() =>
+    r'164878d3a6e60fa54721c2b446de3a2bbe6b2ec5';

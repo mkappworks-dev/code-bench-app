@@ -12,7 +12,8 @@ part of 'secure_storage.dart';
 @ProviderFor(secureStorage)
 final secureStorageProvider = SecureStorageProvider._();
 
-final class SecureStorageProvider extends $FunctionalProvider<SecureStorage, SecureStorage, SecureStorage>
+final class SecureStorageProvider
+    extends $FunctionalProvider<SecureStorage, SecureStorage, SecureStorage>
     with $Provider<SecureStorage> {
   SecureStorageProvider._()
     : super(
@@ -30,7 +31,8 @@ final class SecureStorageProvider extends $FunctionalProvider<SecureStorage, Sec
 
   @$internal
   @override
-  $ProviderElement<SecureStorage> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<SecureStorage> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   SecureStorage create(Ref ref) {
@@ -39,7 +41,10 @@ final class SecureStorageProvider extends $FunctionalProvider<SecureStorage, Sec
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(SecureStorage value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<SecureStorage>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SecureStorage>(value),
+    );
   }
 }
 
