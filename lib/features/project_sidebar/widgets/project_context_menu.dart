@@ -86,12 +86,27 @@ class ProjectContextMenu {
   }) async {
     switch (action) {
       case 'open_finder':
-        final launched = await launchUrl(Uri.file(projectPath), mode: LaunchMode.platformDefault);
-        if (!launched && context.mounted) {
-          AppSnackBar.show(context, 'Could not open in Finder.', type: AppSnackBarType.error);
+        try {
+          final launched = await launchUrl(Uri.file(projectPath), mode: LaunchMode.platformDefault);
+          if (!launched && context.mounted) {
+            AppSnackBar.show(context, 'Could not open in Finder.', type: AppSnackBarType.error);
+          }
+        } catch (e) {
+          if (context.mounted) {
+            AppSnackBar.show(context, 'Could not open in Finder.', type: AppSnackBarType.error);
+          }
         }
       case 'copy_path':
-        await Clipboard.setData(ClipboardData(text: projectPath));
+        try {
+          await Clipboard.setData(ClipboardData(text: projectPath));
+          if (context.mounted) {
+            AppSnackBar.show(context, 'Path copied.', type: AppSnackBarType.success);
+          }
+        } catch (e) {
+          if (context.mounted) {
+            AppSnackBar.show(context, 'Could not copy path.', type: AppSnackBarType.error);
+          }
+        }
       case 'new_conversation':
         onNewConversation(projectId);
       case 'relocate':
