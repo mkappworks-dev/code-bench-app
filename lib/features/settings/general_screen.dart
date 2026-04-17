@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
@@ -25,6 +26,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
   bool _autoCommit = false;
   bool _deleteConfirmation = true;
   ThemeMode _themeMode = ThemeMode.system;
+  String _version = '';
   final _terminalAppController = TextEditingController();
 
   @override
@@ -38,13 +40,16 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
 
   Future<void> _load() async {
     try {
-      final s = await ref.read(generalPrefsProvider.future);
+      final results = await Future.wait([ref.read(generalPrefsProvider.future), PackageInfo.fromPlatform()]);
+      final s = results[0] as dynamic;
+      final info = results[1] as PackageInfo;
       if (!mounted) return;
       setState(() {
         _autoCommit = s.autoCommit;
         _deleteConfirmation = s.deleteConfirmation;
         _terminalAppController.text = s.terminalApp;
         _themeMode = s.themeMode;
+        _version = info.version;
       });
     } catch (e) {
       if (mounted) {
@@ -216,11 +221,11 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                 description: 'Current app version',
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: c.success.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
+                  decoration: BoxDecoration(color: c.accentTintMid, borderRadius: BorderRadius.circular(4)),
+                  child: Text(
+                    _version.isEmpty ? '…' : _version,
+                    style: TextStyle(color: c.accent, fontSize: 10, fontWeight: FontWeight.w500),
                   ),
-                  child: Text('Up to Date', style: TextStyle(color: c.success, fontSize: 10)),
                 ),
                 isLast: true,
               ),
