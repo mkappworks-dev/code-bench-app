@@ -14,6 +14,9 @@ import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/chat_notifier.dart';
+import '../../../data/session/models/session_settings.dart';
+import '../notifiers/session_settings_actions.dart';
+import '../notifiers/session_settings_failure.dart';
 
 /// Private in-memory store of per-session chat-input drafts.
 ///
@@ -35,37 +38,6 @@ final Map<String, String> _sessionDrafts = <String, String>{};
 @visibleForTesting
 void clearSessionDraftsForTesting() => _sessionDrafts.clear();
 
-enum _Effort { low, medium, high, max }
-
-enum _Mode { chat, plan, act }
-
-enum _Permission { readOnly, askBefore, fullAccess }
-
-extension _EffortLabel on _Effort {
-  String get label => switch (this) {
-    _Effort.low => 'Low',
-    _Effort.medium => 'Medium',
-    _Effort.high => 'High',
-    _Effort.max => 'Max',
-  };
-}
-
-extension _ModeLabel on _Mode {
-  String get label => switch (this) {
-    _Mode.chat => 'Chat',
-    _Mode.plan => 'Plan',
-    _Mode.act => 'Act',
-  };
-}
-
-extension _PermissionLabel on _Permission {
-  String get label => switch (this) {
-    _Permission.readOnly => 'Read only',
-    _Permission.askBefore => 'Ask before changes',
-    _Permission.fullAccess => 'Full access',
-  };
-}
-
 class ChatInputBar extends ConsumerStatefulWidget {
   const ChatInputBar({super.key, required this.sessionId});
   final String sessionId;
@@ -81,9 +53,6 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
   bool _isSending = false;
   late AnimationController _pulseController;
   late Animation<double> _pulseOpacity;
-  _Effort _effort = _Effort.high;
-  _Mode _mode = _Mode.chat;
-  _Permission _permission = _Permission.fullAccess;
 
   void _stashDraft(String sessionId, String text) {
     if (text.isEmpty) {
@@ -130,8 +99,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     // type in the same tree slot), so the text controller keeps whatever
     // the user typed in the previous chat. Save the outgoing draft
     // against oldWidget.sessionId and load the incoming one so drafts
-    // are isolated per session. Effort/mode/permission stay untouched —
-    // those are intentional global sender preferences.
+    // are isolated per session. Effort/mode/permission are now per-session
+    // and loaded by SessionSettingsActions; no local state to preserve here.
     if (oldWidget.sessionId != widget.sessionId) {
       _stashDraft(oldWidget.sessionId, _controller.text);
       _controller.text = _sessionDrafts[widget.sessionId] ?? '';
@@ -297,7 +266,9 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
           )
           .toList(),
     ).then((value) {
-      if (value != null) ref.read(selectedModelProvider.notifier).select(value);
+      if (value != null) {
+        ref.read(sessionSettingsActionsProvider.notifier).updateModel(widget.sessionId, value);
+      }
     });
   }
 
@@ -309,8 +280,18 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
       showErrorSnackBar(context, 'Failed to send message. Please try again.');
     });
 
+    // Initialise (idempotent after first call) and listen for persist errors.
+    ref.listen(sessionSettingsActionsProvider, (_, next) {
+      if (next is! AsyncError || !mounted) return;
+      if (next.error is! SessionSettingsFailure) return;
+      showErrorSnackBar(context, 'Could not save session settings.');
+    });
+
     final c = AppColors.of(context);
     final model = ref.watch(selectedModelProvider);
+    final mode = ref.watch(sessionModeProvider);
+    final effort = ref.watch(sessionEffortProvider);
+    final permission = ref.watch(sessionPermissionProvider);
     // Re-render whenever the active project or its status changes so the
     // send button + Enter key disable the moment the folder goes missing
     // (e.g. app-resume refresh, write-button guard, or ApplyService catch).
@@ -381,13 +362,13 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                   const SizedBox(width: 4),
                   Builder(
                     builder: (ctx) => _ControlChip(
-                      label: _effort.label,
+                      label: effort.label,
                       onTap: () => _showDropdown(
                         ctx,
-                        _Effort.values,
-                        _effort,
+                        ChatEffort.values,
+                        effort,
                         (e) => e.label,
-                        (e) => setState(() => _effort = e),
+                        (e) => ref.read(sessionSettingsActionsProvider.notifier).updateEffort(widget.sessionId, e),
                       ),
                     ),
                   ),
@@ -395,22 +376,27 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                   Builder(
                     builder: (ctx) => _ControlChip(
                       icon: AppIcons.chat,
-                      label: _mode.label,
-                      onTap: () =>
-                          _showDropdown(ctx, _Mode.values, _mode, (m) => m.label, (m) => setState(() => _mode = m)),
+                      label: mode.label,
+                      onTap: () => _showDropdown(
+                        ctx,
+                        ChatMode.values,
+                        mode,
+                        (m) => m.label,
+                        (m) => ref.read(sessionSettingsActionsProvider.notifier).updateMode(widget.sessionId, m),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 4),
                   Builder(
                     builder: (ctx) => _ControlChip(
                       icon: AppIcons.lock,
-                      label: _permission.label,
+                      label: permission.label,
                       onTap: () => _showDropdown(
                         ctx,
-                        _Permission.values,
-                        _permission,
+                        ChatPermission.values,
+                        permission,
                         (p) => p.label,
-                        (p) => setState(() => _permission = p),
+                        (p) => ref.read(sessionSettingsActionsProvider.notifier).updatePermission(widget.sessionId, p),
                       ),
                     ),
                   ),
