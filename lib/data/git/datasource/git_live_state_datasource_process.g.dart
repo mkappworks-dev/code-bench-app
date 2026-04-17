@@ -13,12 +13,7 @@ part of 'git_live_state_datasource_process.dart';
 final gitLiveStateDatasourceProvider = GitLiveStateDatasourceProvider._();
 
 final class GitLiveStateDatasourceProvider
-    extends
-        $FunctionalProvider<
-          GitLiveStateDatasource,
-          GitLiveStateDatasource,
-          GitLiveStateDatasource
-        >
+    extends $FunctionalProvider<GitLiveStateDatasource, GitLiveStateDatasource, GitLiveStateDatasource>
     with $Provider<GitLiveStateDatasource> {
   GitLiveStateDatasourceProvider._()
     : super(
@@ -36,9 +31,7 @@ final class GitLiveStateDatasourceProvider
 
   @$internal
   @override
-  $ProviderElement<GitLiveStateDatasource> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<GitLiveStateDatasource> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   GitLiveStateDatasource create(Ref ref) {
@@ -47,12 +40,8 @@ final class GitLiveStateDatasourceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(GitLiveStateDatasource value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<GitLiveStateDatasource>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<GitLiveStateDatasource>(value));
   }
 }
 
-String _$gitLiveStateDatasourceHash() =>
-    r'6abda28d7a564ec389280d7895ff9148ed4abd0b';
+String _$gitLiveStateDatasourceHash() => r'6abda28d7a564ec389280d7895ff9148ed4abd0b';

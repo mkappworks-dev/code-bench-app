@@ -13,12 +13,7 @@ part of 'api_key_test_repository_impl.dart';
 final apiKeyTestRepositoryProvider = ApiKeyTestRepositoryProvider._();
 
 final class ApiKeyTestRepositoryProvider
-    extends
-        $FunctionalProvider<
-          ApiKeyTestRepository,
-          ApiKeyTestRepository,
-          ApiKeyTestRepository
-        >
+    extends $FunctionalProvider<ApiKeyTestRepository, ApiKeyTestRepository, ApiKeyTestRepository>
     with $Provider<ApiKeyTestRepository> {
   ApiKeyTestRepositoryProvider._()
     : super(
@@ -36,9 +31,7 @@ final class ApiKeyTestRepositoryProvider
 
   @$internal
   @override
-  $ProviderElement<ApiKeyTestRepository> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<ApiKeyTestRepository> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   ApiKeyTestRepository create(Ref ref) {
@@ -47,12 +40,8 @@ final class ApiKeyTestRepositoryProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ApiKeyTestRepository value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ApiKeyTestRepository>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ApiKeyTestRepository>(value));
   }
 }
 
-String _$apiKeyTestRepositoryHash() =>
-    r'60c260b4bc66334b839be905d35b3510f6654d99';
+String _$apiKeyTestRepositoryHash() => r'60c260b4bc66334b839be905d35b3510f6654d99';

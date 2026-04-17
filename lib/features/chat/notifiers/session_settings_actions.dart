@@ -40,27 +40,21 @@ class SessionSettingsActions extends _$SessionSettingsActions {
     final session = await svc.getSession(sessionId);
     if (session == null) return;
 
-    final AIModel model = (session.modelId.isNotEmpty
-        ? AIModels.fromId(session.modelId)
-        : null) ?? ref.read(selectedModelProvider);
+    final AIModel model =
+        (session.modelId.isNotEmpty ? AIModels.fromId(session.modelId) : null) ?? ref.read(selectedModelProvider);
     ref.read(selectedModelProvider.notifier).select(model);
 
-    ref.read(sessionSystemPromptProvider.notifier)
-        .setPrompt(sessionId, session.systemPrompt ?? '');
+    ref.read(sessionSystemPromptProvider.notifier).setPrompt(sessionId, session.systemPrompt ?? '');
 
-    ref.read(sessionModeProvider.notifier).set(
-      ChatMode.values.firstWhereOrNull((m) => m.name == session.mode) ??
-          ChatMode.chat,
-    );
-    ref.read(sessionEffortProvider.notifier).set(
-      ChatEffort.values.firstWhereOrNull((e) => e.name == session.effort) ??
-          ChatEffort.high,
-    );
-    ref.read(sessionPermissionProvider.notifier).set(
-      ChatPermission.values
-              .firstWhereOrNull((p) => p.name == session.permission) ??
-          ChatPermission.fullAccess,
-    );
+    ref
+        .read(sessionModeProvider.notifier)
+        .set(ChatMode.values.firstWhereOrNull((m) => m.name == session.mode) ?? ChatMode.chat);
+    ref
+        .read(sessionEffortProvider.notifier)
+        .set(ChatEffort.values.firstWhereOrNull((e) => e.name == session.effort) ?? ChatEffort.high);
+    ref
+        .read(sessionPermissionProvider.notifier)
+        .set(ChatPermission.values.firstWhereOrNull((p) => p.name == session.permission) ?? ChatPermission.fullAccess);
   }
 
   // ── Public API ────────────────────────────────────────────────────────────
@@ -135,6 +129,5 @@ class SessionSettingsActions extends _$SessionSettingsActions {
     });
   }
 
-  SessionSettingsFailure _asFailure(Object e) =>
-      SessionSettingsFailure.unknown(e);
+  SessionSettingsFailure _asFailure(Object e) => SessionSettingsFailure.unknown(e);
 }

@@ -16,8 +16,7 @@ final apiKeysProvider = ApiKeysNotifierProvider._();
 
 /// Loads API keys on first watch and exposes save/delete actions.
 /// Auto-disposes when the settings screen is not in view.
-final class ApiKeysNotifierProvider
-    extends $AsyncNotifierProvider<ApiKeysNotifier, ApiKeysNotifierState> {
+final class ApiKeysNotifierProvider extends $AsyncNotifierProvider<ApiKeysNotifier, ApiKeysNotifierState> {
   /// Loads API keys on first watch and exposes save/delete actions.
   /// Auto-disposes when the settings screen is not in view.
   ApiKeysNotifierProvider._()
@@ -49,16 +48,11 @@ abstract class _$ApiKeysNotifier extends $AsyncNotifier<ApiKeysNotifierState> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref =
-        this.ref
-            as $Ref<AsyncValue<ApiKeysNotifierState>, ApiKeysNotifierState>;
+    final ref = this.ref as $Ref<AsyncValue<ApiKeysNotifierState>, ApiKeysNotifierState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<
-                AsyncValue<ApiKeysNotifierState>,
-                ApiKeysNotifierState
-              >,
+              AnyNotifier<AsyncValue<ApiKeysNotifierState>, ApiKeysNotifierState>,
               AsyncValue<ApiKeysNotifierState>,
               Object?,
               Object?

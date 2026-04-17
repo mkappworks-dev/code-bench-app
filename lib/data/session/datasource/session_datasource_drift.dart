@@ -86,11 +86,11 @@ class SessionDatasourceDrift implements SessionDatasource {
     await _db.sessionDao.updateSession(
       sessionId,
       ChatSessionsCompanion(
-        modelId:      modelId      != null ? Value(modelId)      : const Value.absent(),
+        modelId: modelId != null ? Value(modelId) : const Value.absent(),
         systemPrompt: systemPrompt != null ? Value(systemPrompt) : const Value.absent(),
-        mode:         mode         != null ? Value(mode)         : const Value.absent(),
-        effort:       effort       != null ? Value(effort)       : const Value.absent(),
-        permission:   permission   != null ? Value(permission)   : const Value.absent(),
+        mode: mode != null ? Value(mode) : const Value.absent(),
+        effort: effort != null ? Value(effort) : const Value.absent(),
+        permission: permission != null ? Value(permission) : const Value.absent(),
       ),
     );
   }
@@ -145,19 +145,19 @@ class SessionDatasourceDrift implements SessionDatasource {
 
   ChatSession _sessionFromRow(ChatSessionRow row) {
     return ChatSession(
-      sessionId:    row.sessionId,
-      title:        row.title,
-      modelId:      row.modelId,
-      providerId:   row.providerId,
-      projectId:    row.projectId,
-      createdAt:    row.createdAt,
-      updatedAt:    row.updatedAt,
-      isPinned:     row.isPinned,
-      isArchived:   row.isArchived,
+      sessionId: row.sessionId,
+      title: row.title,
+      modelId: row.modelId,
+      providerId: row.providerId,
+      projectId: row.projectId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      isPinned: row.isPinned,
+      isArchived: row.isArchived,
       systemPrompt: row.systemPrompt,
-      mode:         row.mode,
-      effort:       row.effort,
-      permission:   row.permission,
+      mode: row.mode,
+      effort: row.effort,
+      permission: row.permission,
     );
   }
 
