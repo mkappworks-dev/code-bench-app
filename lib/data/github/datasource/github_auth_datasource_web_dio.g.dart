@@ -13,7 +13,12 @@ part of 'github_auth_datasource_web_dio.dart';
 final githubAuthDatasourceProvider = GithubAuthDatasourceProvider._();
 
 final class GithubAuthDatasourceProvider
-    extends $FunctionalProvider<GitHubAuthDatasource, GitHubAuthDatasource, GitHubAuthDatasource>
+    extends
+        $FunctionalProvider<
+          GitHubAuthDatasource,
+          GitHubAuthDatasource,
+          GitHubAuthDatasource
+        >
     with $Provider<GitHubAuthDatasource> {
   GithubAuthDatasourceProvider._()
     : super(
@@ -31,7 +36,9 @@ final class GithubAuthDatasourceProvider
 
   @$internal
   @override
-  $ProviderElement<GitHubAuthDatasource> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<GitHubAuthDatasource> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   GitHubAuthDatasource create(Ref ref) {
@@ -40,8 +47,12 @@ final class GithubAuthDatasourceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(GitHubAuthDatasource value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<GitHubAuthDatasource>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<GitHubAuthDatasource>(value),
+    );
   }
 }
 
-String _$githubAuthDatasourceHash() => r'cddde24bd45751e32e0139fc3ab25a97b02bcfb4';
+String _$githubAuthDatasourceHash() =>
+    r'cddde24bd45751e32e0139fc3ab25a97b02bcfb4';

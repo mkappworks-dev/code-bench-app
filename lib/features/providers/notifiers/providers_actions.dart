@@ -36,9 +36,7 @@ class ProvidersActions extends _$ProvidersActions {
   /// endpoint. Never throws.
   Future<bool> testCustomEndpoint(String url, String apiKey) async {
     try {
-      return await ref
-          .read(apiKeyTestServiceProvider)
-          .testCustomEndpoint(url, apiKey);
+      return await ref.read(apiKeyTestServiceProvider).testCustomEndpoint(url, apiKey);
     } catch (e, st) {
       dLog('[ProvidersActions] testCustomEndpoint failed: $e\n$st');
       return false;

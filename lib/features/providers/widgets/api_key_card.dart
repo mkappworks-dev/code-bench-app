@@ -13,12 +13,7 @@ import '../notifiers/providers_notifier.dart';
 import 'provider_card_helpers.dart';
 
 class ApiKeyCard extends ConsumerStatefulWidget {
-  const ApiKeyCard({
-    super.key,
-    required this.provider,
-    required this.controller,
-    required this.initialValue,
-  });
+  const ApiKeyCard({super.key, required this.provider, required this.controller, required this.initialValue});
 
   final AIProvider provider;
   final TextEditingController controller;
@@ -193,17 +188,10 @@ class _ApiKeyCardState extends ConsumerState<ApiKeyCard> {
                   const SizedBox(width: 8),
                   Text(
                     _statusLabel(),
-                    style: TextStyle(
-                      color: c.textSecondary,
-                      fontSize: ThemeConstants.uiFontSizeSmall,
-                    ),
+                    style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                   ),
                   const Spacer(),
-                  Icon(
-                    _expanded ? AppIcons.chevronUp : AppIcons.chevronDown,
-                    size: 14,
-                    color: c.mutedFg,
-                  ),
+                  Icon(_expanded ? AppIcons.chevronUp : AppIcons.chevronDown, size: 14, color: c.mutedFg),
                 ],
               ),
             ),
@@ -223,10 +211,7 @@ class _ApiKeyCardState extends ConsumerState<ApiKeyCard> {
                           fontFamily: ThemeConstants.editorFontFamily,
                           hintText: 'API key',
                           suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscure ? AppIcons.hideSecret : AppIcons.showSecret,
-                              size: 14,
-                            ),
+                            icon: Icon(_obscure ? AppIcons.hideSecret : AppIcons.showSecret, size: 14),
                             onPressed: () => setState(() => _obscure = !_obscure),
                           ),
                         ),
@@ -236,11 +221,7 @@ class _ApiKeyCardState extends ConsumerState<ApiKeyCard> {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      InlineTestButton(
-                        loading: _saveLoading,
-                        testPassed: _testPassed,
-                        onPressed: _test,
-                      ),
+                      InlineTestButton(loading: _saveLoading, testPassed: _testPassed, onPressed: _test),
                       const SizedBox(width: 4),
                       InlineSaveButton(loading: false, onPressed: _save),
                       const SizedBox(width: 4),

@@ -76,11 +76,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
     ref.listen(apiKeysProvider, (_, next) {
       if (!mounted) return;
       if (next is AsyncError) {
-        AppSnackBar.show(
-          context,
-          'Could not load API keys — please restart the app.',
-          type: AppSnackBarType.error,
-        );
+        AppSnackBar.show(context, 'Could not load API keys — please restart the app.', type: AppSnackBarType.error);
       }
     });
 

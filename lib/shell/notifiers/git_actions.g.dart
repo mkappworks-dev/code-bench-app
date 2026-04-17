@@ -22,7 +22,8 @@ final gitActionsProvider = GitActionsProvider._();
 /// Widgets never reach [GitRepository] directly — they call methods here.
 /// State is [AsyncValue<void>]: loading/error/data are driven by each method.
 /// Typed failures are emitted as [AsyncError] carrying a [GitActionsFailure].
-final class GitActionsProvider extends $AsyncNotifierProvider<GitActions, void> {
+final class GitActionsProvider
+    extends $AsyncNotifierProvider<GitActions, void> {
   /// Command notifier for all git operations.
   ///
   /// Widgets never reach [GitRepository] directly — they call methods here.
@@ -62,7 +63,13 @@ abstract class _$GitActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

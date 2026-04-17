@@ -82,11 +82,7 @@ class _GithubDisconnectedCardState extends State<GithubDisconnectedCard> {
                   ),
                 ),
                 const SizedBox(width: 4),
-                Icon(
-                  widget.showPat ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                  size: 14,
-                  color: c.accent,
-                ),
+                Icon(widget.showPat ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, size: 14, color: c.accent),
               ],
             ),
           ),
@@ -112,18 +108,13 @@ class _GithubDisconnectedCardState extends State<GithubDisconnectedCard> {
                       duration: const Duration(milliseconds: 120),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: _patConnectHovered
-                            ? c.accent.withValues(alpha: 0.2)
-                            : c.accentTintMid,
+                        color: _patConnectHovered ? c.accent.withValues(alpha: 0.2) : c.accentTintMid,
                         border: Border.all(color: c.accent.withValues(alpha: 0.35)),
                         borderRadius: BorderRadius.circular(5),
                       ),
                       child: Text(
                         'Connect',
-                        style: TextStyle(
-                          color: c.accent,
-                          fontSize: ThemeConstants.uiFontSizeSmall,
-                        ),
+                        style: TextStyle(color: c.accent, fontSize: ThemeConstants.uiFontSizeSmall),
                       ),
                     ),
                   ),
@@ -165,8 +156,7 @@ class GitHubPainter extends CustomPainter {
     final path = Path();
     final s = size.width / 16;
     path.addPath(
-      _githubPath()
-        ..transform(Float64List.fromList([s, 0, 0, 0, 0, s, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])),
+      _githubPath()..transform(Float64List.fromList([s, 0, 0, 0, 0, s, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])),
       Offset.zero,
     );
     canvas.drawPath(path, paint);

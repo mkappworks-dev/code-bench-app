@@ -88,11 +88,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
     ref.listen(gitHubAuthProvider, (_, next) {
       if (!mounted) return;
       if (next is AsyncError) {
-        AppSnackBar.show(
-          context,
-          'GitHub auth failed — please try again.',
-          type: AppSnackBarType.error,
-        );
+        AppSnackBar.show(context, 'GitHub auth failed — please try again.', type: AppSnackBarType.error);
       }
     });
 
@@ -131,10 +127,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
             ),
             child: Text(
               'GitHub is used to create pull requests and list branches from within chat sessions.',
-              style: TextStyle(
-                color: c.textSecondary,
-                fontSize: ThemeConstants.uiFontSizeSmall,
-              ),
+              style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
             ),
           ),
         ],

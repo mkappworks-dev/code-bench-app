@@ -40,11 +40,7 @@ class _ArchivedSessionCardState extends ConsumerState<ArchivedSessionCard> {
               children: [
                 Text(
                   widget.session.title,
-                  style: TextStyle(
-                    color: c.textPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(color: c.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 3),
@@ -61,9 +57,7 @@ class _ArchivedSessionCardState extends ConsumerState<ArchivedSessionCard> {
             onEnter: (_) => setState(() => _hovered = true),
             onExit: (_) => setState(() => _hovered = false),
             child: GestureDetector(
-              onTap: () => ref
-                  .read(archiveActionsProvider.notifier)
-                  .unarchiveSession(widget.session.sessionId),
+              onTap: () => ref.read(archiveActionsProvider.notifier).unarchiveSession(widget.session.sessionId),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 120),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

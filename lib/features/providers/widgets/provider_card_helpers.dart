@@ -30,19 +30,14 @@ class InlineTestButton extends StatelessWidget {
         width: 62,
         height: 26,
         child: Center(
-          child: SizedBox(
-            width: 12,
-            height: 12,
-            child: CircularProgressIndicator(strokeWidth: 2, color: c.accent),
-          ),
+          child: SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: c.accent)),
         ),
       );
     }
 
     final fgColor = testPassed ? c.success : c.accent;
     final bgColor = testPassed ? c.success.withValues(alpha: 0.12) : c.accentTintMid;
-    final borderColor =
-        testPassed ? c.success.withValues(alpha: 0.3) : c.accent.withValues(alpha: 0.35);
+    final borderColor = testPassed ? c.success.withValues(alpha: 0.3) : c.accent.withValues(alpha: 0.35);
     final label = testPassed ? passedLabel : 'Test';
 
     return InkWell(
@@ -59,11 +54,7 @@ class InlineTestButton extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(
-            color: fgColor,
-            fontSize: ThemeConstants.uiFontSizeSmall,
-            fontWeight: FontWeight.w500,
-          ),
+          style: TextStyle(color: fgColor, fontSize: ThemeConstants.uiFontSizeSmall, fontWeight: FontWeight.w500),
         ),
       ),
     );
@@ -85,11 +76,7 @@ class InlineSaveButton extends StatelessWidget {
         width: 54,
         height: 26,
         child: Center(
-          child: SizedBox(
-            width: 12,
-            height: 12,
-            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-          ),
+          child: SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
         ),
       );
     }
@@ -104,11 +91,7 @@ class InlineSaveButton extends StatelessWidget {
         decoration: BoxDecoration(color: c.accent, borderRadius: BorderRadius.circular(5)),
         child: Text(
           'Save',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: ThemeConstants.uiFontSizeSmall,
-            fontWeight: FontWeight.w500,
-          ),
+          style: TextStyle(color: Colors.white, fontSize: ThemeConstants.uiFontSizeSmall, fontWeight: FontWeight.w500),
         ),
       ),
     );

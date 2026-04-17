@@ -16,10 +16,7 @@ class ArchiveErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Failed to load archived sessions.',
-            style: TextStyle(color: c.error, fontSize: 11),
-          ),
+          Text('Failed to load archived sessions.', style: TextStyle(color: c.error, fontSize: 11)),
           const SizedBox(height: 8),
           OutlinedButton(
             onPressed: onRetry,
@@ -55,12 +52,7 @@ class ProjectHeader extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             name.toUpperCase(),
-            style: TextStyle(
-              color: c.mutedFg,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.8,
-            ),
+            style: TextStyle(color: c.mutedFg, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.8),
           ),
         ],
       ),

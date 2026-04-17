@@ -6,11 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/github/models/repository.dart';
 
 class GithubConnectedCard extends StatefulWidget {
-  const GithubConnectedCard({
-    super.key,
-    required this.account,
-    required this.onDisconnect,
-  });
+  const GithubConnectedCard({super.key, required this.account, required this.onDisconnect});
 
   final GitHubAccount account;
   final VoidCallback onDisconnect;
@@ -52,11 +48,7 @@ class _GithubConnectedCardState extends State<GithubConnectedCard> {
             children: [
               Text(
                 widget.account.username,
-                style: TextStyle(
-                  color: c.textPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(color: c.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
               ),
               Row(
                 children: [
@@ -84,10 +76,7 @@ class _GithubConnectedCardState extends State<GithubConnectedCard> {
                 ),
                 child: Text(
                   'Disconnect',
-                  style: TextStyle(
-                    color: c.textSecondary,
-                    fontSize: ThemeConstants.uiFontSizeSmall,
-                  ),
+                  style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                 ),
               ),
             ),

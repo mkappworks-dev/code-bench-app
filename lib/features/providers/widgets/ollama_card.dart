@@ -79,11 +79,7 @@ class _OllamaCardState extends ConsumerState<OllamaCard> {
     setState(() => _saveLoading = false);
     if (ok) {
       setState(() => _testPassed = true);
-      AppSnackBar.show(
-        context,
-        'Ollama is reachable — click Save to persist',
-        type: AppSnackBarType.success,
-      );
+      AppSnackBar.show(context, 'Ollama is reachable — click Save to persist', type: AppSnackBarType.success);
     } else {
       AppSnackBar.show(context, 'Cannot connect to Ollama', type: AppSnackBarType.error);
     }
@@ -133,11 +129,7 @@ class _OllamaCardState extends ConsumerState<OllamaCard> {
         _testPassed = false;
         _saveLoading = false;
       });
-      AppSnackBar.show(
-        context,
-        verified ? 'Ollama URL saved' : 'Saved (unverified)',
-        type: AppSnackBarType.success,
-      );
+      AppSnackBar.show(context, verified ? 'Ollama URL saved' : 'Saved (unverified)', type: AppSnackBarType.success);
     } else {
       setState(() => _saveLoading = false);
       AppSnackBar.show(context, 'Failed to save — please retry', type: AppSnackBarType.error);
@@ -216,17 +208,10 @@ class _OllamaCardState extends ConsumerState<OllamaCard> {
                   const SizedBox(width: 8),
                   Text(
                     _statusLabel(),
-                    style: TextStyle(
-                      color: c.textSecondary,
-                      fontSize: ThemeConstants.uiFontSizeSmall,
-                    ),
+                    style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                   ),
                   const Spacer(),
-                  Icon(
-                    _expanded ? AppIcons.chevronUp : AppIcons.chevronDown,
-                    size: 14,
-                    color: c.mutedFg,
-                  ),
+                  Icon(_expanded ? AppIcons.chevronUp : AppIcons.chevronDown, size: 14, color: c.mutedFg),
                 ],
               ),
             ),
@@ -243,10 +228,7 @@ class _OllamaCardState extends ConsumerState<OllamaCard> {
                   ),
                   if (_showSaveAnyway) ...[
                     const SizedBox(height: 6),
-                    InlineErrorRow(
-                      message: 'Cannot connect to Ollama',
-                      onSaveAnyway: _saveAnyway,
-                    ),
+                    InlineErrorRow(message: 'Cannot connect to Ollama', onSaveAnyway: _saveAnyway),
                   ],
                   const SizedBox(height: 6),
                   Row(

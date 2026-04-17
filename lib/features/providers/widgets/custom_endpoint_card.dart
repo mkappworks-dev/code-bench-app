@@ -60,8 +60,7 @@ class _CustomEndpointCardState extends ConsumerState<CustomEndpointCard> {
   @override
   void didUpdateWidget(CustomEndpointCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialUrl != widget.initialUrl ||
-        oldWidget.initialApiKey != widget.initialApiKey) {
+    if (oldWidget.initialUrl != widget.initialUrl || oldWidget.initialApiKey != widget.initialApiKey) {
       setState(() {
         _savedUrl = widget.initialUrl;
         _savedApiKey = widget.initialApiKey;
@@ -71,8 +70,7 @@ class _CustomEndpointCardState extends ConsumerState<CustomEndpointCard> {
   }
 
   bool get _isUnsaved =>
-      widget.urlController.text.trim() != _savedUrl ||
-      widget.apiKeyController.text.trim() != _savedApiKey;
+      widget.urlController.text.trim() != _savedUrl || widget.apiKeyController.text.trim() != _savedApiKey;
 
   void _onFieldChanged() {
     if (_saveLoading) return;
@@ -96,17 +94,12 @@ class _CustomEndpointCardState extends ConsumerState<CustomEndpointCard> {
       _testPassed = false;
       _showSaveAnyway = false;
     });
-    final ok =
-        await ref.read(providersActionsProvider.notifier).testCustomEndpoint(url, apiKey);
+    final ok = await ref.read(providersActionsProvider.notifier).testCustomEndpoint(url, apiKey);
     if (!mounted) return;
     setState(() => _saveLoading = false);
     if (ok) {
       setState(() => _testPassed = true);
-      AppSnackBar.show(
-        context,
-        'Endpoint reachable — click Save to persist',
-        type: AppSnackBarType.success,
-      );
+      AppSnackBar.show(context, 'Endpoint reachable — click Save to persist', type: AppSnackBarType.success);
     } else {
       AppSnackBar.show(context, 'Cannot connect to endpoint', type: AppSnackBarType.error);
     }
@@ -121,8 +114,7 @@ class _CustomEndpointCardState extends ConsumerState<CustomEndpointCard> {
       _saveLoading = true;
       _showSaveAnyway = false;
     });
-    final ok =
-        await ref.read(providersActionsProvider.notifier).testCustomEndpoint(url, apiKey);
+    final ok = await ref.read(providersActionsProvider.notifier).testCustomEndpoint(url, apiKey);
     if (!mounted) {
       _saveTriggered = false;
       return;
@@ -150,8 +142,7 @@ class _CustomEndpointCardState extends ConsumerState<CustomEndpointCard> {
   }
 
   Future<void> _persist(String url, String apiKey, {required bool verified}) async {
-    final saved =
-        await ref.read(apiKeysProvider.notifier).saveCustomEndpoint(url, apiKey);
+    final saved = await ref.read(apiKeysProvider.notifier).saveCustomEndpoint(url, apiKey);
     if (!mounted) return;
     if (saved) {
       _savedUrl = url;
@@ -243,17 +234,10 @@ class _CustomEndpointCardState extends ConsumerState<CustomEndpointCard> {
                   const SizedBox(width: 8),
                   Text(
                     _statusLabel(),
-                    style: TextStyle(
-                      color: c.textSecondary,
-                      fontSize: ThemeConstants.uiFontSizeSmall,
-                    ),
+                    style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                   ),
                   const Spacer(),
-                  Icon(
-                    _expanded ? AppIcons.chevronUp : AppIcons.chevronDown,
-                    size: 14,
-                    color: c.mutedFg,
-                  ),
+                  Icon(_expanded ? AppIcons.chevronUp : AppIcons.chevronDown, size: 14, color: c.mutedFg),
                 ],
               ),
             ),
@@ -275,19 +259,13 @@ class _CustomEndpointCardState extends ConsumerState<CustomEndpointCard> {
                     fontFamily: ThemeConstants.editorFontFamily,
                     hintText: 'API Key (optional)',
                     suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureKey ? AppIcons.hideSecret : AppIcons.showSecret,
-                        size: 14,
-                      ),
+                      icon: Icon(_obscureKey ? AppIcons.hideSecret : AppIcons.showSecret, size: 14),
                       onPressed: () => setState(() => _obscureKey = !_obscureKey),
                     ),
                   ),
                   if (_showSaveAnyway) ...[
                     const SizedBox(height: 6),
-                    InlineErrorRow(
-                      message: 'Cannot connect to endpoint',
-                      onSaveAnyway: _saveAnyway,
-                    ),
+                    InlineErrorRow(message: 'Cannot connect to endpoint', onSaveAnyway: _saveAnyway),
                   ],
                   const SizedBox(height: 6),
                   Row(

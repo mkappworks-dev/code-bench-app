@@ -12,8 +12,7 @@ part of 'providers_notifier.dart';
 @ProviderFor(ApiKeysNotifier)
 final apiKeysProvider = ApiKeysNotifierProvider._();
 
-final class ApiKeysNotifierProvider
-    extends $AsyncNotifierProvider<ApiKeysNotifier, ApiKeysNotifierState> {
+final class ApiKeysNotifierProvider extends $AsyncNotifierProvider<ApiKeysNotifier, ApiKeysNotifierState> {
   ApiKeysNotifierProvider._()
     : super(
         from: null,
@@ -33,23 +32,18 @@ final class ApiKeysNotifierProvider
   ApiKeysNotifier create() => ApiKeysNotifier();
 }
 
-String _$apiKeysNotifierHash() => r'3311c60fc0cffd1e7057adda4e3827e5c02666fe';
+String _$apiKeysNotifierHash() => r'7b56dc7885f60536c782416cdb3e004806f4baef';
 
 abstract class _$ApiKeysNotifier extends $AsyncNotifier<ApiKeysNotifierState> {
   FutureOr<ApiKeysNotifierState> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref =
-        this.ref
-            as $Ref<AsyncValue<ApiKeysNotifierState>, ApiKeysNotifierState>;
+    final ref = this.ref as $Ref<AsyncValue<ApiKeysNotifierState>, ApiKeysNotifierState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<
-                AsyncValue<ApiKeysNotifierState>,
-                ApiKeysNotifierState
-              >,
+              AnyNotifier<AsyncValue<ApiKeysNotifierState>, ApiKeysNotifierState>,
               AsyncValue<ApiKeysNotifierState>,
               Object?,
               Object?

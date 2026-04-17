@@ -13,7 +13,12 @@ part of 'project_fs_datasource_io.dart';
 final projectFsDatasourceProvider = ProjectFsDatasourceProvider._();
 
 final class ProjectFsDatasourceProvider
-    extends $FunctionalProvider<ProjectFsDatasource, ProjectFsDatasource, ProjectFsDatasource>
+    extends
+        $FunctionalProvider<
+          ProjectFsDatasource,
+          ProjectFsDatasource,
+          ProjectFsDatasource
+        >
     with $Provider<ProjectFsDatasource> {
   ProjectFsDatasourceProvider._()
     : super(
@@ -31,7 +36,9 @@ final class ProjectFsDatasourceProvider
 
   @$internal
   @override
-  $ProviderElement<ProjectFsDatasource> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<ProjectFsDatasource> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   ProjectFsDatasource create(Ref ref) {
@@ -40,8 +47,12 @@ final class ProjectFsDatasourceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ProjectFsDatasource value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ProjectFsDatasource>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProjectFsDatasource>(value),
+    );
   }
 }
 
-String _$projectFsDatasourceHash() => r'19dfde9b5ce54678570ff046eec787ccd6fb5065';
+String _$projectFsDatasourceHash() =>
+    r'19dfde9b5ce54678570ff046eec787ccd6fb5065';

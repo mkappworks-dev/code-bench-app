@@ -13,7 +13,12 @@ part of 'filesystem_datasource_io.dart';
 final filesystemDatasourceProvider = FilesystemDatasourceProvider._();
 
 final class FilesystemDatasourceProvider
-    extends $FunctionalProvider<FilesystemDatasource, FilesystemDatasource, FilesystemDatasource>
+    extends
+        $FunctionalProvider<
+          FilesystemDatasource,
+          FilesystemDatasource,
+          FilesystemDatasource
+        >
     with $Provider<FilesystemDatasource> {
   FilesystemDatasourceProvider._()
     : super(
@@ -31,7 +36,9 @@ final class FilesystemDatasourceProvider
 
   @$internal
   @override
-  $ProviderElement<FilesystemDatasource> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<FilesystemDatasource> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   FilesystemDatasource create(Ref ref) {
@@ -40,8 +47,12 @@ final class FilesystemDatasourceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(FilesystemDatasource value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<FilesystemDatasource>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<FilesystemDatasource>(value),
+    );
   }
 }
 
-String _$filesystemDatasourceHash() => r'0b432e1d5f108b8108779be73370193564a2aa08';
+String _$filesystemDatasourceHash() =>
+    r'0b432e1d5f108b8108779be73370193564a2aa08';

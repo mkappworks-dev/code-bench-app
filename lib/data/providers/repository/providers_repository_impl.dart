@@ -19,8 +19,7 @@ class ProvidersRepositoryImpl implements ProvidersRepository {
   Future<String?> readApiKey(String provider) => _storage.readApiKey(provider);
 
   @override
-  Future<void> writeApiKey(String provider, String key) =>
-      _storage.writeApiKey(provider, key);
+  Future<void> writeApiKey(String provider, String key) => _storage.writeApiKey(provider, key);
 
   @override
   Future<void> deleteApiKey(String provider) => _storage.deleteApiKey(provider);

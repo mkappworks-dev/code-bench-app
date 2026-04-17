@@ -23,7 +23,8 @@ final statusBarStateProvider = StatusBarStateProvider._();
 /// toggle that the status bar both reads and writes, so it stays a direct
 /// [ref.watch] in the widget.
 
-final class StatusBarStateProvider extends $FunctionalProvider<StatusBarState, StatusBarState, StatusBarState>
+final class StatusBarStateProvider
+    extends $FunctionalProvider<StatusBarState, StatusBarState, StatusBarState>
     with $Provider<StatusBarState> {
   /// Synchronously derives [StatusBarState] from lower-level providers.
   ///
@@ -46,7 +47,8 @@ final class StatusBarStateProvider extends $FunctionalProvider<StatusBarState, S
 
   @$internal
   @override
-  $ProviderElement<StatusBarState> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<StatusBarState> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   StatusBarState create(Ref ref) {
@@ -55,7 +57,10 @@ final class StatusBarStateProvider extends $FunctionalProvider<StatusBarState, S
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(StatusBarState value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<StatusBarState>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<StatusBarState>(value),
+    );
   }
 }
 
