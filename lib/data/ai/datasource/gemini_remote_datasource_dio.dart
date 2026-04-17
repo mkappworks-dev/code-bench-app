@@ -70,6 +70,15 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource {
         }
       }
     } on DioException catch (e) {
+      String? errorBody;
+      if (e.response?.data is ResponseBody) {
+        try {
+          final bytes = await (e.response!.data as ResponseBody).stream
+              .fold<List<int>>([], (acc, chunk) => [...acc, ...chunk]);
+          errorBody = utf8.decode(bytes);
+        } catch (_) {}
+      }
+      dLog('[GeminiDatasource] request failed: status=${e.response?.statusCode} type=${e.type} body=$errorBody');
       throw NetworkException('Gemini request failed', statusCode: e.response?.statusCode, originalError: e);
     }
   }
