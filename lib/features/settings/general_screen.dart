@@ -8,10 +8,10 @@ import '../../core/constants/theme_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_dialog.dart';
 import '../../core/widgets/app_snack_bar.dart';
-import '../../core/utils/instant_menu.dart';
 import 'notifiers/general_prefs_notifier.dart';
 import 'notifiers/settings_actions.dart';
 import '../../core/widgets/app_text_field.dart';
+import 'widgets/app_dropdown.dart';
 import 'widgets/section_label.dart';
 import 'widgets/settings_group.dart';
 
@@ -132,7 +132,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                 label: 'Theme',
                 description: 'How Code Bench looks',
                 trailing: Builder(
-                  builder: (ctx) => _AppDropdown<ThemeMode>(
+                  builder: (ctx) => AppDropdown<ThemeMode>(
                     value: _themeMode,
                     items: const [ThemeMode.system, ThemeMode.dark, ThemeMode.light],
                     label: (m) => switch (m) {
@@ -295,98 +295,6 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-// ── Dropdown — only used within General settings ──────────────────────────────
-
-class _AppDropdown<T> extends StatelessWidget {
-  const _AppDropdown({
-    required this.value,
-    required this.items,
-    required this.label,
-    required this.onChanged,
-    required this.context,
-  });
-
-  final T value;
-  final List<T> items;
-  final String Function(T) label;
-  final void Function(T) onChanged;
-  final BuildContext context;
-
-  void _open() {
-    final c = AppColors.of(context);
-    final box = context.findRenderObject();
-    if (box is! RenderBox || !box.hasSize) return;
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-    final origin = box.localToGlobal(Offset.zero, ancestor: overlay);
-    showInstantMenu<T>(
-      context: context,
-      position: RelativeRect.fromLTRB(
-        origin.dx,
-        origin.dy + box.size.height + 4,
-        overlay.size.width - origin.dx - box.size.width,
-        0,
-      ),
-      color: c.panelBackground,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(6),
-        side: BorderSide(color: c.faintFg),
-      ),
-      items: items
-          .map(
-            (item) => PopupMenuItem<T>(
-              value: item,
-              height: 30,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      label(item),
-                      style: TextStyle(
-                        color: item == value ? c.textPrimary : c.textSecondary,
-                        fontSize: ThemeConstants.uiFontSizeSmall,
-                      ),
-                    ),
-                  ),
-                  if (item == value) Icon(AppIcons.check, size: 11, color: c.accent),
-                ],
-              ),
-            ),
-          )
-          .toList(),
-    ).then((picked) {
-      if (picked != null) onChanged(picked);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    return InkWell(
-      onTap: _open,
-      borderRadius: BorderRadius.circular(5),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: c.chipFill,
-          border: Border.all(color: c.chipStroke),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label(value),
-              style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
-            ),
-            const SizedBox(width: 4),
-            Icon(AppIcons.chevronDown, size: 10, color: c.mutedFg),
-          ],
-        ),
       ),
     );
   }

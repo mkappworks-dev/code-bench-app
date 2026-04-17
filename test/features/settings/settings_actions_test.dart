@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/core/errors/app_exception.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
-import 'package:code_bench_app/services/settings/settings_service.dart';
-import 'package:code_bench_app/features/settings/notifiers/settings_actions_failure.dart';
-import 'package:code_bench_app/features/settings/notifiers/settings_actions.dart';
+import 'package:code_bench_app/services/providers/providers_service.dart';
+import 'package:code_bench_app/features/providers/notifiers/providers_actions_failure.dart';
+import 'package:code_bench_app/features/providers/notifiers/providers_actions.dart';
 import 'package:code_bench_app/data/ai/repository/api_key_test_repository.dart';
 import 'package:code_bench_app/data/ai/repository/api_key_test_repository_impl.dart';
 
@@ -38,9 +38,9 @@ class _FakeApiKeyTestRepository extends Fake implements ApiKeyTestRepository {
   }
 }
 
-// ── Fake SettingsService ──────────────────────────────────────────────────────
+// ── Fake ProvidersService ─────────────────────────────────────────────────────
 
-class _FakeSettingsService extends Fake implements SettingsService {
+class _FakeProvidersService extends Fake implements ProvidersService {
   Object? _writeError;
 
   void throwOnWrite(Object error) => _writeError = error;
@@ -49,33 +49,24 @@ class _FakeSettingsService extends Fake implements SettingsService {
   Future<void> writeApiKey(String provider, String key) async {
     if (_writeError != null) throw _writeError!;
   }
-
-  @override
-  Future<void> markOnboardingCompleted() async {}
-
-  @override
-  Future<void> resetOnboarding() async {}
-
-  @override
-  Future<List<String>> wipeAllData() async => [];
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 void main() {
   late _FakeApiKeyTestRepository fakeTestSvc;
-  late _FakeSettingsService fakeSettingsSvc;
+  late _FakeProvidersService fakeProvidersSvc;
 
   setUp(() {
     fakeTestSvc = _FakeApiKeyTestRepository();
-    fakeSettingsSvc = _FakeSettingsService();
+    fakeProvidersSvc = _FakeProvidersService();
   });
 
   ProviderContainer makeContainer() {
     final c = ProviderContainer(
       overrides: [
         apiKeyTestRepositoryProvider.overrideWithValue(fakeTestSvc),
-        settingsServiceProvider.overrideWithValue(fakeSettingsSvc),
+        providersServiceProvider.overrideWithValue(fakeProvidersSvc),
       ],
     );
     addTearDown(c.dispose);
@@ -89,7 +80,7 @@ void main() {
       fakeTestSvc.setTestResult(true);
 
       final c = makeContainer();
-      final result = await c.read(settingsActionsProvider.notifier).testApiKey(AIProvider.openai, 'valid-key');
+      final result = await c.read(providersActionsProvider.notifier).testApiKey(AIProvider.openai, 'valid-key');
 
       expect(result, isTrue);
     });
@@ -98,7 +89,7 @@ void main() {
       fakeTestSvc.throwOnTest(Exception('network error'));
 
       final c = makeContainer();
-      final result = await c.read(settingsActionsProvider.notifier).testApiKey(AIProvider.anthropic, 'bad-key');
+      final result = await c.read(providersActionsProvider.notifier).testApiKey(AIProvider.anthropic, 'bad-key');
 
       expect(result, isFalse);
     });
@@ -109,38 +100,38 @@ void main() {
   group('saveApiKey', () {
     test('happy path — state becomes AsyncData', () async {
       final c = makeContainer();
-      await c.read(settingsActionsProvider.notifier).saveApiKey('openai', 'sk-valid');
+      await c.read(providersActionsProvider.notifier).saveApiKey('openai', 'sk-valid');
 
-      expect(c.read(settingsActionsProvider), isA<AsyncData<void>>());
+      expect(c.read(providersActionsProvider), isA<AsyncData<void>>());
     });
 
-    test('StorageException → SettingsStorageFailed error', () async {
-      fakeSettingsSvc.throwOnWrite(const StorageException('keychain denied'));
+    test('StorageException → ProvidersStorageFailed error', () async {
+      fakeProvidersSvc.throwOnWrite(const StorageException('keychain denied'));
 
       final c = makeContainer();
-      await c.read(settingsActionsProvider.notifier).saveApiKey('openai', 'sk-bad');
+      await c.read(providersActionsProvider.notifier).saveApiKey('openai', 'sk-bad');
 
-      expect(c.read(settingsActionsProvider).error, isA<SettingsStorageFailed>());
+      expect(c.read(providersActionsProvider).error, isA<ProvidersStorageFailed>());
     });
 
-    test('generic exception → SettingsUnknownError', () async {
-      fakeSettingsSvc.throwOnWrite(Exception('unexpected'));
+    test('generic exception → ProvidersUnknownError', () async {
+      fakeProvidersSvc.throwOnWrite(Exception('unexpected'));
 
       final c = makeContainer();
-      await c.read(settingsActionsProvider.notifier).saveApiKey('anthropic', 'key');
+      await c.read(providersActionsProvider.notifier).saveApiKey('anthropic', 'key');
 
-      expect(c.read(settingsActionsProvider).error, isA<SettingsUnknownError>());
+      expect(c.read(providersActionsProvider).error, isA<ProvidersUnknownError>());
     });
 
-    test('failure carries provider name in SettingsStorageFailed', () async {
-      fakeSettingsSvc.throwOnWrite(const StorageException('keychain denied'));
+    test('failure carries provider name in ProvidersStorageFailed', () async {
+      fakeProvidersSvc.throwOnWrite(const StorageException('keychain denied'));
 
       final c = makeContainer();
-      await c.read(settingsActionsProvider.notifier).saveApiKey('gemini', 'bad-key');
+      await c.read(providersActionsProvider.notifier).saveApiKey('gemini', 'bad-key');
 
-      final error = c.read(settingsActionsProvider).error;
-      expect(error, isA<SettingsStorageFailed>());
-      expect((error as SettingsStorageFailed).providerName, equals('gemini'));
+      final error = c.read(providersActionsProvider).error;
+      expect(error, isA<ProvidersStorageFailed>());
+      expect((error as ProvidersStorageFailed).providerName, equals('gemini'));
     });
   });
 
@@ -151,7 +142,7 @@ void main() {
       fakeTestSvc.setCustomEndpointResult(true);
 
       final c = makeContainer();
-      final result = await c.read(settingsActionsProvider.notifier).testCustomEndpoint('http://localhost:1234/v1', '');
+      final result = await c.read(providersActionsProvider.notifier).testCustomEndpoint('http://localhost:1234/v1', '');
 
       expect(result, isTrue);
     });
@@ -160,7 +151,7 @@ void main() {
       fakeTestSvc.setCustomEndpointResult(false);
 
       final c = makeContainer();
-      final result = await c.read(settingsActionsProvider.notifier).testCustomEndpoint('http://bad-host', 'key');
+      final result = await c.read(providersActionsProvider.notifier).testCustomEndpoint('http://bad-host', 'key');
 
       expect(result, isFalse);
     });
@@ -169,7 +160,7 @@ void main() {
       fakeTestSvc.throwOnTest(Exception('timeout'));
 
       final c = makeContainer();
-      final result = await c.read(settingsActionsProvider.notifier).testCustomEndpoint('http://host', 'key');
+      final result = await c.read(providersActionsProvider.notifier).testCustomEndpoint('http://host', 'key');
 
       expect(result, isFalse);
     });

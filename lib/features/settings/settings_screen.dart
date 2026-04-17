@@ -7,11 +7,11 @@ import '../../core/theme/app_colors.dart';
 import '../../core/utils/platform_utils.dart';
 import '../../core/widgets/app_dialog.dart';
 import '../../core/widgets/app_snack_bar.dart';
-import 'archive_screen.dart';
+import '../archive/archive_screen.dart';
+import '../integrations/integrations_screen.dart';
+import '../providers/providers_screen.dart';
 import 'general_screen.dart';
-import 'integrations_screen.dart';
 import 'notifiers/general_prefs_notifier.dart';
-import 'providers_screen.dart';
 
 enum _SettingsNav { general, providers, integrations, archive }
 

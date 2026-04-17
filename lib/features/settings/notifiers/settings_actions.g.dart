@@ -8,17 +8,17 @@ part of 'settings_actions.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Imperative actions that don't own observable state: wipe all data,
-/// save a single API key, mark onboarding complete.
+/// Imperative actions for onboarding and data wipe. API key test/save
+/// methods have moved to ProvidersActions in features/providers/.
 
 @ProviderFor(SettingsActions)
 final settingsActionsProvider = SettingsActionsProvider._();
 
-/// Imperative actions that don't own observable state: wipe all data,
-/// save a single API key, mark onboarding complete.
+/// Imperative actions for onboarding and data wipe. API key test/save
+/// methods have moved to ProvidersActions in features/providers/.
 final class SettingsActionsProvider extends $AsyncNotifierProvider<SettingsActions, void> {
-  /// Imperative actions that don't own observable state: wipe all data,
-  /// save a single API key, mark onboarding complete.
+  /// Imperative actions for onboarding and data wipe. API key test/save
+  /// methods have moved to ProvidersActions in features/providers/.
   SettingsActionsProvider._()
     : super(
         from: null,
@@ -38,10 +38,10 @@ final class SettingsActionsProvider extends $AsyncNotifierProvider<SettingsActio
   SettingsActions create() => SettingsActions();
 }
 
-String _$settingsActionsHash() => r'e5bc3850de934177ac00545dcd6b3f459eae205e';
+String _$settingsActionsHash() => r'50a8057f37d0740ef4a6310727a76a9369e81e57';
 
-/// Imperative actions that don't own observable state: wipe all data,
-/// save a single API key, mark onboarding complete.
+/// Imperative actions for onboarding and data wipe. API key test/save
+/// methods have moved to ProvidersActions in features/providers/.
 
 abstract class _$SettingsActions extends $AsyncNotifier<void> {
   FutureOr<void> build();

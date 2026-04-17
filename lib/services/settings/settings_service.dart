@@ -1,4 +1,4 @@
-import '../../data/settings/models/app_theme_preference.dart';
+// lib/services/settings/settings_service.dart
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/errors/app_exception.dart';
@@ -7,8 +7,10 @@ import '../../data/project/repository/project_repository.dart';
 import '../../data/project/repository/project_repository_impl.dart';
 import '../../data/session/repository/session_repository.dart';
 import '../../data/session/repository/session_repository_impl.dart';
+import '../../data/settings/models/app_theme_preference.dart';
 import '../../data/settings/repository/settings_repository.dart';
 import '../../data/settings/repository/settings_repository_impl.dart';
+import '../../services/providers/providers_service.dart';
 
 part 'settings_service.g.dart';
 
@@ -16,6 +18,7 @@ part 'settings_service.g.dart';
 SettingsService settingsService(Ref ref) {
   return SettingsService(
     settings: ref.watch(settingsRepositoryProvider),
+    providers: ref.watch(providersServiceProvider),
     session: ref.watch(sessionRepositoryProvider),
     project: ref.watch(projectRepositoryProvider),
   );
@@ -24,30 +27,19 @@ SettingsService settingsService(Ref ref) {
 class SettingsService {
   SettingsService({
     required SettingsRepository settings,
+    required ProvidersService providers,
     required SessionRepository session,
     required ProjectRepository project,
   }) : _settings = settings,
+       _providers = providers,
        _session = session,
        _project = project;
 
   final SettingsRepository _settings;
+  final ProvidersService _providers;
   final SessionRepository _session;
   final ProjectRepository _project;
 
-  // ── API key delegation ────────────────────────────────────────────────────
-
-  Future<String?> readApiKey(String provider) => _settings.readApiKey(provider);
-  Future<void> writeApiKey(String provider, String key) => _settings.writeApiKey(provider, key);
-  Future<void> deleteApiKey(String provider) => _settings.deleteApiKey(provider);
-  Future<String?> readOllamaUrl() => _settings.readOllamaUrl();
-  Future<void> writeOllamaUrl(String url) => _settings.writeOllamaUrl(url);
-  Future<void> deleteOllamaUrl() => _settings.deleteOllamaUrl();
-  Future<String?> readCustomEndpoint() => _settings.readCustomEndpoint();
-  Future<void> writeCustomEndpoint(String url) => _settings.writeCustomEndpoint(url);
-  Future<void> deleteCustomEndpoint() => _settings.deleteCustomEndpoint();
-  Future<String?> readCustomApiKey() => _settings.readCustomApiKey();
-  Future<void> writeCustomApiKey(String key) => _settings.writeCustomApiKey(key);
-  Future<void> deleteCustomApiKey() => _settings.deleteCustomApiKey();
   Future<bool> getAutoCommit() => _settings.getAutoCommit();
   Future<void> setAutoCommit(bool value) => _settings.setAutoCommit(value);
   Future<String> getTerminalApp() => _settings.getTerminalApp();
@@ -56,6 +48,7 @@ class SettingsService {
   Future<void> setDeleteConfirmation(bool value) => _settings.setDeleteConfirmation(value);
   Future<AppThemePreference> getThemeMode() => _settings.getThemeMode();
   Future<void> setThemeMode(AppThemePreference mode) => _settings.setThemeMode(mode);
+
   Future<void> markOnboardingCompleted() => _settings.markOnboardingCompleted();
   Future<void> resetOnboarding() => _settings.resetOnboarding();
 
@@ -66,7 +59,7 @@ class SettingsService {
     final failures = <String>[];
 
     try {
-      await _settings.deleteAllSecureStorage();
+      await _providers.deleteAll();
     } catch (e, st) {
       _logWipeFailure('secure storage', e, st);
       failures.add('secure storage');

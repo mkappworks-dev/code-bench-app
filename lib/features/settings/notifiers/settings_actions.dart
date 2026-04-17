@@ -1,79 +1,20 @@
+// lib/features/settings/notifiers/settings_actions.dart
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../services/ai/ai_service.dart';
-import '../../../services/api_key_test/api_key_test_service.dart';
 import '../../../services/settings/settings_service.dart';
-import 'settings_actions_failure.dart';
 
 part 'settings_actions.g.dart';
 
-/// Imperative actions that don't own observable state: wipe all data,
-/// save a single API key, mark onboarding complete.
+/// Imperative actions for onboarding and data wipe. API key test/save
+/// methods have moved to ProvidersActions in features/providers/.
 @Riverpod(keepAlive: true)
 class SettingsActions extends _$SettingsActions {
   @override
   FutureOr<void> build() {}
-
-  SettingsActionsFailure _asFailure(Object e, String providerName) => switch (e) {
-    StorageException() => SettingsActionsFailure.storageFailed(providerName),
-    _ => SettingsActionsFailure.unknown(e),
-  };
-
-  /// Returns `true` when [key] is valid for [provider]. Never throws —
-  /// returns `false` on any exception so the UI can show an inline error
-  /// without crashing.
-  Future<bool> testApiKey(AIProvider provider, String key) async {
-    try {
-      return await ref.read(apiKeyTestServiceProvider).testApiKey(provider, key);
-    } catch (e, st) {
-      dLog('[SettingsActions] testApiKey failed: $e\n$st');
-      return false;
-    }
-  }
-
-  /// Returns `true` when [url] is reachable as a custom OpenAI-compatible
-  /// endpoint. Never throws — returns `false` on any exception so the UI can
-  /// show an inline error without crashing.
-  Future<bool> testCustomEndpoint(String url, String apiKey) async {
-    try {
-      return await ref.read(apiKeyTestServiceProvider).testCustomEndpoint(url, apiKey);
-    } catch (e, st) {
-      dLog('[SettingsActions] testCustomEndpoint failed: $e\n$st');
-      return false;
-    }
-  }
-
-  /// Returns `true` when [url] is reachable as an Ollama endpoint. Never
-  /// throws — returns `false` on any exception so the UI can show an inline
-  /// error without crashing.
-  Future<bool> testOllamaUrl(String url) async {
-    try {
-      return await ref.read(apiKeyTestServiceProvider).testOllamaUrl(url);
-    } catch (e, st) {
-      dLog('[SettingsActions] testOllamaUrl failed: $e\n$st');
-      return false;
-    }
-  }
-
-  /// Persists [key] for [provider]. Emits [SettingsStorageFailed] on error.
-  /// Invalidates [aiRepositoryProvider] on success so the live datasource
-  /// picks up the new key immediately.
-  Future<void> saveApiKey(String provider, String key) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      try {
-        await ref.read(settingsServiceProvider).writeApiKey(provider, key);
-        ref.invalidate(aiRepositoryProvider);
-      } catch (e, st) {
-        dLog('[SettingsActions] saveApiKey failed: $e');
-        Error.throwWithStackTrace(_asFailure(e, provider), st);
-      }
-    });
-  }
 
   Future<void> markOnboardingCompleted() async {
     try {

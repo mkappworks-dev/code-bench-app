@@ -1,12 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:code_bench_app/data/shared/ai_model.dart';
-import 'package:code_bench_app/features/settings/notifiers/providers_notifier.dart';
-import 'package:code_bench_app/services/settings/settings_service.dart';
+import 'package:code_bench_app/features/providers/notifiers/providers_notifier.dart';
+import 'package:code_bench_app/services/providers/providers_service.dart';
 import 'package:code_bench_app/services/ai/ai_service.dart';
 
-class _FakeSettingsService extends Fake implements SettingsService {
+class _FakeProvidersService extends Fake implements ProvidersService {
   final Map<String, String> _keys = {};
   String? ollamaUrl;
   String? customEndpoint;
@@ -39,14 +38,14 @@ class _FakeSettingsService extends Fake implements SettingsService {
 }
 
 void main() {
-  late _FakeSettingsService fakeSvc;
+  late _FakeProvidersService fakeSvc;
 
-  setUp(() => fakeSvc = _FakeSettingsService());
+  setUp(() => fakeSvc = _FakeProvidersService());
 
   ProviderContainer makeContainer() {
     final c = ProviderContainer(
       overrides: [
-        settingsServiceProvider.overrideWithValue(fakeSvc),
+        providersServiceProvider.overrideWithValue(fakeSvc),
         aiRepositoryProvider.overrideWith((ref) => throw UnimplementedError()),
       ],
     );
