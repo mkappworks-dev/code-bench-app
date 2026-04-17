@@ -275,6 +275,10 @@ class GitDatasourceProcess implements GitDatasource {
       throw ArgumentError('Branch name must not start with a dash.');
     }
     if (name.contains(' ')) throw ArgumentError('Branch name must not contain spaces.');
+    if (baseBranch != null && baseBranch.startsWith('-')) {
+      sLog('[GitDatasourceProcess] flag-shaped baseBranch rejected in createBranch: "$baseBranch"');
+      throw ArgumentError('Base branch must not start with a dash.');
+    }
     final args = ['checkout', '-b', name, ?baseBranch];
     final result = await Process.run('git', args, workingDirectory: _projectPath);
     if (result.exitCode != 0) {
@@ -292,6 +296,15 @@ class GitDatasourceProcess implements GitDatasource {
       throw ArgumentError('Branch name must not start with a dash.');
     }
     if (branchName.contains(' ')) throw ArgumentError('Branch name must not contain spaces.');
+    if (worktreePath.isEmpty) throw ArgumentError('Worktree path must not be empty.');
+    if (worktreePath.startsWith('-')) {
+      sLog('[GitDatasourceProcess] flag-shaped worktreePath rejected: "$worktreePath"');
+      throw ArgumentError('Worktree path must not start with a dash.');
+    }
+    if (baseBranch != null && baseBranch.startsWith('-')) {
+      sLog('[GitDatasourceProcess] flag-shaped baseBranch rejected in createWorktree: "$baseBranch"');
+      throw ArgumentError('Base branch must not start with a dash.');
+    }
     final args = ['worktree', 'add', worktreePath, '-b', branchName, ?baseBranch];
     final result = await Process.run('git', args, workingDirectory: _projectPath);
     if (result.exitCode != 0) {
