@@ -132,13 +132,23 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
     final s = ref.read(branchPickerProvider(widget.projectPath));
     if (s.hasError) {
       final failure = s.error;
-      if (failure is BranchPickerFailure) {
-        switch (failure) {
-          case BranchPickerCreateWorktreeFailed(:final message):
-            AppSnackBar.show(context, 'Worktree failed: $message', type: AppSnackBarType.error);
-          default:
-            AppSnackBar.show(context, 'Create worktree failed.', type: AppSnackBarType.error);
-        }
+      if (failure is! BranchPickerFailure) return;
+      switch (failure) {
+        case BranchPickerCreateWorktreeFailed(:final message):
+          AppSnackBar.show(context, 'Worktree failed: $message', type: AppSnackBarType.error);
+        case BranchPickerInvalidName(:final reason):
+          AppSnackBar.show(context, reason, type: AppSnackBarType.error);
+        case BranchPickerCheckoutConflict(:final message):
+        case BranchPickerCreateFailed(:final message):
+          AppSnackBar.show(context, 'Create worktree failed: $message', type: AppSnackBarType.error);
+        case BranchPickerGitUnavailable():
+          AppSnackBar.show(context, 'Create worktree failed — git binary unavailable.', type: AppSnackBarType.error);
+        case BranchPickerUnknownError():
+          AppSnackBar.show(
+            context,
+            'Create worktree failed — project folder unavailable.',
+            type: AppSnackBarType.error,
+          );
       }
     } else {
       ref.read(projectSidebarActionsProvider.notifier).refreshGitState(widget.projectPath);
@@ -252,7 +262,7 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
           child: GestureDetector(
             onTap: widget.onClose,
             behavior: HitTestBehavior.opaque,
-            child: Container(color: const Color(0x33000000)),
+            child: Container(color: AppColors.of(context).scrimColor),
           ),
         ),
         Center(

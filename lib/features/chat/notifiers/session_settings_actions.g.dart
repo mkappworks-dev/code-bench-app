@@ -50,7 +50,7 @@ final class SessionSettingsActionsProvider extends $AsyncNotifierProvider<Sessio
   SessionSettingsActions create() => SessionSettingsActions();
 }
 
-String _$sessionSettingsActionsHash() => r'ed0e17a5fd1963eefeb93ed7eae21d17043ee72c';
+String _$sessionSettingsActionsHash() => r'a9a2993e7953aa72c215932484f0f903e62f6bb0';
 
 /// Coordinator notifier that loads and persists the five per-session chat
 /// settings (model, system prompt, mode, effort, permission).

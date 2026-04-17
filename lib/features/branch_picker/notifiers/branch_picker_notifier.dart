@@ -7,7 +7,7 @@ import 'branch_picker_state.dart';
 
 part 'branch_picker_notifier.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class BranchPickerNotifier extends _$BranchPickerNotifier {
   @override
   Future<BranchPickerState> build(String projectPath) async {
