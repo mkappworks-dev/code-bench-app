@@ -168,12 +168,12 @@ class AppTheme {
       switchTheme: SwitchThemeData(
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return AppColors.light.accent;
-          return const Color(0xFF8C96A0);
+          return AppColors.light.switchTrackUnselected;
         }),
         thumbColor: WidgetStateProperty.all(Colors.white),
         trackOutlineColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return Colors.transparent;
-          return const Color(0xFF7A8490);
+          return AppColors.light.switchTrackOutline;
         }),
       ),
       scrollbarTheme: ScrollbarThemeData(

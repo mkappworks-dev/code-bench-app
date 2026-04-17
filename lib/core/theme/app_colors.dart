@@ -142,6 +142,11 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.sendDisabledFill,
     required this.sendDisabledStroke,
     required this.sendDisabledIconColor,
+    // ── Modal scrim ───────────────────────────────────────────────────────
+    required this.scrimColor,
+    // ── Switch (unselected track) ─────────────────────────────────────────
+    required this.switchTrackUnselected,
+    required this.switchTrackOutline,
   });
 
   // ── Field declarations ────────────────────────────────────────────────────
@@ -262,6 +267,9 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color sendDisabledFill;
   final Color sendDisabledStroke;
   final Color sendDisabledIconColor;
+  final Color scrimColor;
+  final Color switchTrackUnselected;
+  final Color switchTrackOutline;
 
   // ── Convenience accessor ─────────────────────────────────────────────────
 
@@ -386,6 +394,9 @@ class AppColors extends ThemeExtension<AppColors> {
     sendDisabledFill: Color(0x0FFFFFFF),
     sendDisabledStroke: Color(0x2EFFFFFF),
     sendDisabledIconColor: Color(0x59FFFFFF),
+    scrimColor: Color(0x99000000),
+    switchTrackUnselected: Color(0x1FFFFFFF),
+    switchTrackOutline: Color(0x2EFFFFFF),
   );
 
   static const AppColors light = AppColors(
@@ -506,6 +517,9 @@ class AppColors extends ThemeExtension<AppColors> {
     sendDisabledFill: Color(0x0D000000),
     sendDisabledStroke: Color(0x21000000),
     sendDisabledIconColor: Color(0x40000000),
+    scrimColor: Color(0x33000000),
+    switchTrackUnselected: Color(0xFF8C96A0),
+    switchTrackOutline: Color(0xFF7A8490),
   );
 
   // ── ThemeExtension overrides ──────────────────────────────────────────────
@@ -627,6 +641,9 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? sendDisabledFill,
     Color? sendDisabledStroke,
     Color? sendDisabledIconColor,
+    Color? scrimColor,
+    Color? switchTrackUnselected,
+    Color? switchTrackOutline,
   }) => AppColors(
     background: background ?? this.background,
     sidebarBackground: sidebarBackground ?? this.sidebarBackground,
@@ -743,6 +760,9 @@ class AppColors extends ThemeExtension<AppColors> {
     sendDisabledFill: sendDisabledFill ?? this.sendDisabledFill,
     sendDisabledStroke: sendDisabledStroke ?? this.sendDisabledStroke,
     sendDisabledIconColor: sendDisabledIconColor ?? this.sendDisabledIconColor,
+    scrimColor: scrimColor ?? this.scrimColor,
+    switchTrackUnselected: switchTrackUnselected ?? this.switchTrackUnselected,
+    switchTrackOutline: switchTrackOutline ?? this.switchTrackOutline,
   );
 
   @override
@@ -864,6 +884,9 @@ class AppColors extends ThemeExtension<AppColors> {
       sendDisabledFill: Color.lerp(sendDisabledFill, other.sendDisabledFill, t)!,
       sendDisabledStroke: Color.lerp(sendDisabledStroke, other.sendDisabledStroke, t)!,
       sendDisabledIconColor: Color.lerp(sendDisabledIconColor, other.sendDisabledIconColor, t)!,
+      scrimColor: Color.lerp(scrimColor, other.scrimColor, t)!,
+      switchTrackUnselected: Color.lerp(switchTrackUnselected, other.switchTrackUnselected, t)!,
+      switchTrackOutline: Color.lerp(switchTrackOutline, other.switchTrackOutline, t)!,
     );
   }
 }
