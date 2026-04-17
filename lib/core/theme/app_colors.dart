@@ -124,6 +124,8 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.topBarFill,
     required this.statusBarFill,
     required this.chatBoxRimGlow,
+    required this.chatBoxShadowOuter,
+    required this.chatBoxShadowDrop,
     required this.accentGlowBadge,
     required this.accentBorderTeal,
     required this.accentBorderAmber,
@@ -242,6 +244,8 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color topBarFill;
   final Color statusBarFill;
   final Color chatBoxRimGlow;
+  final Color chatBoxShadowOuter;
+  final Color chatBoxShadowDrop;
   final Color accentGlowBadge;
   final Color accentBorderTeal;
   final Color accentBorderAmber;
@@ -364,6 +368,8 @@ class AppColors extends ThemeExtension<AppColors> {
     topBarFill: Color(0x05FFFFFF),
     statusBarFill: Color(0xFF141414),
     chatBoxRimGlow: Color(0x124EC9B0),
+    chatBoxShadowOuter: Color(0x8C000000),
+    chatBoxShadowDrop: Color(0x4D000000),
     accentGlowBadge: Color(0x2E4EC9B0),
     accentBorderTeal: Color(0x4D4EC9B0),
     accentBorderAmber: Color(0x4DE8A228),
@@ -469,8 +475,8 @@ class AppColors extends ThemeExtension<AppColors> {
     accentTintLight: Color(0x0A4EC9B0),
     accentTintMid: Color(0x144EC9B0),
     // Elevated Glass light ★
-    glassFill: Color(0xB8FFFFFF),
-    glassBorder: Color(0xE6FFFFFF),
+    glassFill: Color(0xFFFFFFFF),
+    glassBorder: Color(0x1A000000),
     subtleBorder: Color(0x17000000),
     faintBorder: Color(0x0F000000),
     chipFill: Color(0x0A000000),
@@ -481,7 +487,9 @@ class AppColors extends ThemeExtension<AppColors> {
     userBubbleHighlight: Color(0x00000000),
     topBarFill: Color(0xCCF0F2F5),
     statusBarFill: Color(0xFFE8EAEE),
-    chatBoxRimGlow: Color(0x124EC9B0),
+    chatBoxRimGlow: Color(0x1F4EC9B0),
+    chatBoxShadowOuter: Color(0x00000000),
+    chatBoxShadowDrop: Color(0x14000000),
     accentGlowBadge: Color(0x2E4EC9B0),
     accentBorderTeal: Color(0x4D4EC9B0),
     accentBorderAmber: Color(0x4DE8A228),
@@ -601,6 +609,8 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? topBarFill,
     Color? statusBarFill,
     Color? chatBoxRimGlow,
+    Color? chatBoxShadowOuter,
+    Color? chatBoxShadowDrop,
     Color? accentGlowBadge,
     Color? accentBorderTeal,
     Color? accentBorderAmber,
@@ -715,6 +725,8 @@ class AppColors extends ThemeExtension<AppColors> {
     topBarFill: topBarFill ?? this.topBarFill,
     statusBarFill: statusBarFill ?? this.statusBarFill,
     chatBoxRimGlow: chatBoxRimGlow ?? this.chatBoxRimGlow,
+    chatBoxShadowOuter: chatBoxShadowOuter ?? this.chatBoxShadowOuter,
+    chatBoxShadowDrop: chatBoxShadowDrop ?? this.chatBoxShadowDrop,
     accentGlowBadge: accentGlowBadge ?? this.accentGlowBadge,
     accentBorderTeal: accentBorderTeal ?? this.accentBorderTeal,
     accentBorderAmber: accentBorderAmber ?? this.accentBorderAmber,
@@ -834,6 +846,8 @@ class AppColors extends ThemeExtension<AppColors> {
       topBarFill: Color.lerp(topBarFill, other.topBarFill, t)!,
       statusBarFill: Color.lerp(statusBarFill, other.statusBarFill, t)!,
       chatBoxRimGlow: Color.lerp(chatBoxRimGlow, other.chatBoxRimGlow, t)!,
+      chatBoxShadowOuter: Color.lerp(chatBoxShadowOuter, other.chatBoxShadowOuter, t)!,
+      chatBoxShadowDrop: Color.lerp(chatBoxShadowDrop, other.chatBoxShadowDrop, t)!,
       accentGlowBadge: Color.lerp(accentGlowBadge, other.accentGlowBadge, t)!,
       accentBorderTeal: Color.lerp(accentBorderTeal, other.accentBorderTeal, t)!,
       accentBorderAmber: Color.lerp(accentBorderAmber, other.accentBorderAmber, t)!,
