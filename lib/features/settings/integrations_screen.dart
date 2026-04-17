@@ -36,10 +36,6 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
 
   Future<void> _signOut() async {
     await ref.read(gitHubAuthProvider.notifier).signOut();
-    if (!mounted) return;
-    if (ref.read(gitHubAuthProvider).hasError) {
-      AppSnackBar.show(context, 'Failed to disconnect — please try again.', type: AppSnackBarType.error);
-    }
   }
 
   Future<void> _signInWithPat() async {

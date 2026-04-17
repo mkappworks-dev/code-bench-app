@@ -225,7 +225,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
                         fontFamily: ThemeConstants.editorFontFamily,
                       ),
                     ),
-                    const SizedBox(width: 6 + 62),
+                    const SizedBox(width: 62 + 6), // placeholder matching Test button slot width + gap
                     const SizedBox(width: 4),
                     _InlineClearButton(onPressed: _clearCustomApiKey),
                   ],
