@@ -6,6 +6,7 @@ import '../../core/constants/app_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/platform_utils.dart';
 import '../../core/widgets/app_dialog.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import 'archive_screen.dart';
 import 'general_screen.dart';
 import 'notifiers/general_prefs_notifier.dart';
@@ -90,7 +91,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
     if (confirmed != true) return;
     await ref.read(generalPrefsProvider.notifier).restoreDefaults();
-    if (mounted) setState(() => _generalVersion++);
+    if (!mounted) return;
+    if (ref.read(generalPrefsProvider).hasError) {
+      AppSnackBar.show(context, 'Could not restore defaults — please try again.', type: AppSnackBarType.error);
+    } else {
+      setState(() => _generalVersion++);
+    }
   }
 }
 
