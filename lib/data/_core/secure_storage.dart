@@ -104,6 +104,15 @@ class SecureStorage {
     }
   }
 
+  Future<void> deleteOllamaUrl() async {
+    try {
+      await _storage.delete(key: _ollamaUrlKey);
+    } catch (e) {
+      dLog('[SecureStorage] deleteOllamaUrl failed: $e');
+      throw StorageException('Failed to delete Ollama URL', originalError: e);
+    }
+  }
+
   Future<bool> hasAnyApiKey() async {
     try {
       final all = await _storage.readAll();
@@ -178,6 +187,15 @@ class SecureStorage {
     }
   }
 
+  Future<void> deleteCustomEndpoint() async {
+    try {
+      await _storage.delete(key: _customEndpointKey);
+    } catch (e) {
+      dLog('[SecureStorage] deleteCustomEndpoint failed: $e');
+      throw StorageException('Failed to delete custom endpoint', originalError: e);
+    }
+  }
+
   Future<void> writeCustomApiKey(String apiKey) async {
     try {
       await _storage.write(key: _customApiKeyKey, value: apiKey);
@@ -193,6 +211,15 @@ class SecureStorage {
     } catch (e) {
       dLog('[SecureStorage] readCustomApiKey failed: $e');
       throw StorageException('Failed to read custom API key', originalError: e);
+    }
+  }
+
+  Future<void> deleteCustomApiKey() async {
+    try {
+      await _storage.delete(key: _customApiKeyKey);
+    } catch (e) {
+      dLog('[SecureStorage] deleteCustomApiKey failed: $e');
+      throw StorageException('Failed to delete custom API key', originalError: e);
     }
   }
 }

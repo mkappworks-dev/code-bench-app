@@ -9,12 +9,15 @@ abstract interface class SettingsRepository {
 
   Future<String?> readOllamaUrl();
   Future<void> writeOllamaUrl(String url);
+  Future<void> deleteOllamaUrl();
 
   Future<String?> readCustomEndpoint();
   Future<void> writeCustomEndpoint(String url);
+  Future<void> deleteCustomEndpoint();
 
   Future<String?> readCustomApiKey();
   Future<void> writeCustomApiKey(String key);
+  Future<void> deleteCustomApiKey();
 
   Future<void> deleteAllSecureStorage();
 

@@ -38,16 +38,25 @@ class SettingsRepositoryImpl implements SettingsRepository {
   Future<void> writeOllamaUrl(String url) => _storage.writeOllamaUrl(url);
 
   @override
+  Future<void> deleteOllamaUrl() => _storage.deleteOllamaUrl();
+
+  @override
   Future<String?> readCustomEndpoint() => _storage.readCustomEndpoint();
 
   @override
   Future<void> writeCustomEndpoint(String url) => _storage.writeCustomEndpoint(url);
 
   @override
+  Future<void> deleteCustomEndpoint() => _storage.deleteCustomEndpoint();
+
+  @override
   Future<String?> readCustomApiKey() => _storage.readCustomApiKey();
 
   @override
   Future<void> writeCustomApiKey(String key) => _storage.writeCustomApiKey(key);
+
+  @override
+  Future<void> deleteCustomApiKey() => _storage.deleteCustomApiKey();
 
   @override
   Future<void> deleteAllSecureStorage() => _storage.deleteAll();

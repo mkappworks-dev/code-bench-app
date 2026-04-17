@@ -41,10 +41,13 @@ class SettingsService {
   Future<void> deleteApiKey(String provider) => _settings.deleteApiKey(provider);
   Future<String?> readOllamaUrl() => _settings.readOllamaUrl();
   Future<void> writeOllamaUrl(String url) => _settings.writeOllamaUrl(url);
+  Future<void> deleteOllamaUrl() => _settings.deleteOllamaUrl();
   Future<String?> readCustomEndpoint() => _settings.readCustomEndpoint();
   Future<void> writeCustomEndpoint(String url) => _settings.writeCustomEndpoint(url);
+  Future<void> deleteCustomEndpoint() => _settings.deleteCustomEndpoint();
   Future<String?> readCustomApiKey() => _settings.readCustomApiKey();
   Future<void> writeCustomApiKey(String key) => _settings.writeCustomApiKey(key);
+  Future<void> deleteCustomApiKey() => _settings.deleteCustomApiKey();
   Future<bool> getAutoCommit() => _settings.getAutoCommit();
   Future<void> setAutoCommit(bool value) => _settings.setAutoCommit(value);
   Future<String> getTerminalApp() => _settings.getTerminalApp();
