@@ -28,9 +28,9 @@ class SidebarFooter extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(AppIcons.settings, size: 11, color: c.chipText),
+                Icon(AppIcons.settings, size: 11, color: c.textSecondary),
                 const SizedBox(width: 6),
-                Text('Settings', style: TextStyle(color: c.chipText, fontSize: 11)),
+                Text('Settings', style: TextStyle(color: c.textSecondary, fontSize: 11)),
               ],
             ),
           ),
