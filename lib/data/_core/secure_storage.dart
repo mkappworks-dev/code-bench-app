@@ -11,13 +11,14 @@ SecureStorage secureStorage(Ref ref) {
 }
 
 class SecureStorage {
-  // usesDataProtectionKeychain defaults to true in flutter_secure_storage v10,
-  // which maps to kSecUseDataProtectionKeychain on macOS and requires App Sandbox
-  // or the com.apple.developer.default-data-protection entitlement. This app
-  // intentionally disables App Sandbox (see macos/Runner/README.md), so we must
-  // opt out to avoid errSecMissingEntitlement on every keychain write.
+  // kSecUseDataProtectionKeychain = true (the flutter_secure_storage v10 default)
+  // requires the keychain-access-groups entitlement on macOS 15+ (Sequoia removed
+  // the legacy file-based keychain, making the false path fail with -34018).
+  // The entitlement is declared in macos/Runner/DebugProfile.entitlements and
+  // Release.entitlements. App Sandbox remains intentionally disabled — see
+  // macos/Runner/README.md.
   static const _storage = FlutterSecureStorage(
-    mOptions: MacOsOptions(accessibility: KeychainAccessibility.first_unlock, usesDataProtectionKeychain: false),
+    mOptions: MacOsOptions(accessibility: KeychainAccessibility.first_unlock),
   );
 
   // Keys
@@ -30,6 +31,7 @@ class SecureStorage {
     try {
       await _storage.write(key: _apiKeyKey(provider), value: apiKey);
     } catch (e) {
+      dLog('[SecureStorage] writeApiKey($provider) failed: $e');
       throw StorageException('Failed to store API key', originalError: e);
     }
   }
@@ -38,6 +40,7 @@ class SecureStorage {
     try {
       return await _storage.read(key: _apiKeyKey(provider));
     } catch (e) {
+      dLog('[SecureStorage] readApiKey($provider) failed: $e');
       throw StorageException('Failed to read API key', originalError: e);
     }
   }
@@ -49,6 +52,7 @@ class SecureStorage {
         await _storage.delete(key: key);
       }
     } catch (e) {
+      dLog('[SecureStorage] deleteApiKey($provider) failed: $e');
       throw StorageException('Failed to delete API key', originalError: e);
     }
   }
@@ -58,6 +62,7 @@ class SecureStorage {
     try {
       await _storage.write(key: _githubTokenKey, value: token);
     } catch (e) {
+      dLog('[SecureStorage] writeGitHubToken failed: $e');
       throw StorageException('Failed to store GitHub token', originalError: e);
     }
   }
@@ -66,6 +71,7 @@ class SecureStorage {
     try {
       return await _storage.read(key: _githubTokenKey);
     } catch (e) {
+      dLog('[SecureStorage] readGitHubToken failed: $e');
       throw StorageException('Failed to read GitHub token', originalError: e);
     }
   }
@@ -74,6 +80,7 @@ class SecureStorage {
     try {
       await _storage.delete(key: _githubTokenKey);
     } catch (e) {
+      dLog('[SecureStorage] deleteGitHubToken failed: $e');
       throw StorageException('Failed to delete GitHub token', originalError: e);
     }
   }
@@ -83,6 +90,7 @@ class SecureStorage {
     try {
       await _storage.write(key: _ollamaUrlKey, value: url);
     } catch (e) {
+      dLog('[SecureStorage] writeOllamaUrl failed: $e');
       throw StorageException('Failed to store Ollama URL', originalError: e);
     }
   }
@@ -91,6 +99,7 @@ class SecureStorage {
     try {
       return await _storage.read(key: _ollamaUrlKey);
     } catch (e) {
+      dLog('[SecureStorage] readOllamaUrl failed: $e');
       throw StorageException('Failed to read Ollama URL', originalError: e);
     }
   }
@@ -125,6 +134,7 @@ class SecureStorage {
     try {
       all = await _storage.readAll();
     } catch (e) {
+      dLog('[SecureStorage] deleteAll readAll failed: $e');
       throw StorageException('Failed to enumerate secure storage for wipe', originalError: e);
     }
 
@@ -154,6 +164,7 @@ class SecureStorage {
     try {
       await _storage.write(key: _customEndpointKey, value: url);
     } catch (e) {
+      dLog('[SecureStorage] writeCustomEndpoint failed: $e');
       throw StorageException('Failed to store custom endpoint', originalError: e);
     }
   }
@@ -162,6 +173,7 @@ class SecureStorage {
     try {
       return await _storage.read(key: _customEndpointKey);
     } catch (e) {
+      dLog('[SecureStorage] readCustomEndpoint failed: $e');
       throw StorageException('Failed to read custom endpoint', originalError: e);
     }
   }
@@ -170,6 +182,7 @@ class SecureStorage {
     try {
       await _storage.write(key: _customApiKeyKey, value: apiKey);
     } catch (e) {
+      dLog('[SecureStorage] writeCustomApiKey failed: $e');
       throw StorageException('Failed to store custom API key', originalError: e);
     }
   }
@@ -178,6 +191,7 @@ class SecureStorage {
     try {
       return await _storage.read(key: _customApiKeyKey);
     } catch (e) {
+      dLog('[SecureStorage] readCustomApiKey failed: $e');
       throw StorageException('Failed to read custom API key', originalError: e);
     }
   }
