@@ -97,4 +97,83 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
       return false;
     }
   }
+
+  /// Returns `true` on success, `false` if the write fails.
+  Future<bool> saveKey(AIProvider provider, String key) async {
+    try {
+      final svc = ref.read(settingsServiceProvider);
+      if (key.trim().isNotEmpty) {
+        await svc.writeApiKey(provider.name, key.trim());
+      } else {
+        await svc.deleteApiKey(provider.name);
+      }
+      if (ref.mounted) ref.invalidate(aiRepositoryProvider);
+      return true;
+    } catch (e, st) {
+      dLog('[ApiKeysNotifier] saveKey failed: $e\n$st');
+      return false;
+    }
+  }
+
+  /// Returns `true` on success, `false` if the write fails.
+  Future<bool> saveOllamaUrl(String url) async {
+    try {
+      await ref.read(settingsServiceProvider).writeOllamaUrl(url.trim());
+      if (ref.mounted) ref.invalidate(aiRepositoryProvider);
+      return true;
+    } catch (e, st) {
+      dLog('[ApiKeysNotifier] saveOllamaUrl failed: $e\n$st');
+      return false;
+    }
+  }
+
+  /// Returns `true` on success, `false` if the delete fails.
+  Future<bool> clearOllamaUrl() async {
+    try {
+      await ref.read(settingsServiceProvider).deleteOllamaUrl();
+      if (ref.mounted) ref.invalidate(aiRepositoryProvider);
+      return true;
+    } catch (e, st) {
+      dLog('[ApiKeysNotifier] clearOllamaUrl failed: $e\n$st');
+      return false;
+    }
+  }
+
+  /// Returns `true` on success, `false` if any write fails.
+  Future<bool> saveCustomEndpoint(String url, String apiKey) async {
+    try {
+      final svc = ref.read(settingsServiceProvider);
+      await svc.writeCustomEndpoint(url.trim());
+      await svc.writeCustomApiKey(apiKey.trim());
+      if (ref.mounted) ref.invalidate(aiRepositoryProvider);
+      return true;
+    } catch (e, st) {
+      dLog('[ApiKeysNotifier] saveCustomEndpoint failed: $e\n$st');
+      return false;
+    }
+  }
+
+  /// Returns `true` on success, `false` if the delete fails.
+  Future<bool> clearCustomEndpoint() async {
+    try {
+      await ref.read(settingsServiceProvider).deleteCustomEndpoint();
+      if (ref.mounted) ref.invalidate(aiRepositoryProvider);
+      return true;
+    } catch (e, st) {
+      dLog('[ApiKeysNotifier] clearCustomEndpoint failed: $e\n$st');
+      return false;
+    }
+  }
+
+  /// Returns `true` on success, `false` if the delete fails.
+  Future<bool> clearCustomApiKey() async {
+    try {
+      await ref.read(settingsServiceProvider).deleteCustomApiKey();
+      if (ref.mounted) ref.invalidate(aiRepositoryProvider);
+      return true;
+    } catch (e, st) {
+      dLog('[ApiKeysNotifier] clearCustomApiKey failed: $e\n$st');
+      return false;
+    }
+  }
 }
