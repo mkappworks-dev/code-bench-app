@@ -161,19 +161,16 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     // is on the wire, there's nothing to restore on a later switch.
     _sessionDrafts.remove(widget.sessionId);
     setState(() => _isSending = true);
-    try {
-      final systemPrompt = ref.read(sessionSystemPromptProvider)[widget.sessionId];
-      final sendError = await ref
-          .read(chatMessagesProvider(widget.sessionId).notifier)
-          .sendMessage(text, systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty) ? systemPrompt : null);
-      if (mounted && sendError != null) {
+    final systemPrompt = ref.read(sessionSystemPromptProvider)[widget.sessionId];
+    final sendError = await ref
+        .read(chatMessagesProvider(widget.sessionId).notifier)
+        .sendMessage(text, systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty) ? systemPrompt : null);
+    if (mounted) {
+      if (sendError != null) {
         showErrorSnackBar(context, userMessage(sendError, fallback: 'Failed to get a response.'));
       }
-    } finally {
-      if (mounted) {
-        setState(() => _isSending = false);
-        _focusNode.requestFocus();
-      }
+      setState(() => _isSending = false);
+      _focusNode.requestFocus();
     }
   }
 
