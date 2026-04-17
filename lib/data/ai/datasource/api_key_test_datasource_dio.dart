@@ -16,6 +16,19 @@ class ApiKeyTestDatasourceDio {
     };
   }
 
+  Future<bool> testCustomEndpoint(String url, String apiKey) async {
+    try {
+      final headers = <String, String>{};
+      if (apiKey.isNotEmpty) headers['Authorization'] = 'Bearer $apiKey';
+      final dio = DioFactory.create(baseUrl: url, connectTimeout: const Duration(seconds: 10), headers: headers);
+      await dio.get('/models');
+      return true;
+    } on DioException catch (e) {
+      dLog('[ApiKeyTestDatasource] testCustomEndpoint failed: ${e.type} ${e.response?.statusCode}');
+      return false;
+    }
+  }
+
   Future<bool> testOllamaUrl(String url) async {
     try {
       final dio = DioFactory.create(baseUrl: url, connectTimeout: const Duration(seconds: 5));

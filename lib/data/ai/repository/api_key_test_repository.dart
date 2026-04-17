@@ -11,4 +11,8 @@ abstract interface class ApiKeyTestRepository {
 
   /// Returns `true` when an Ollama instance is reachable at [url].
   Future<bool> testOllamaUrl(String url);
+
+  /// Returns `true` when a custom OpenAI-compatible endpoint at [url] responds
+  /// successfully. [apiKey] is sent as a Bearer token if non-empty.
+  Future<bool> testCustomEndpoint(String url, String apiKey);
 }

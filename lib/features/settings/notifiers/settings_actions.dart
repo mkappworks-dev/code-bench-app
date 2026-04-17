@@ -35,6 +35,18 @@ class SettingsActions extends _$SettingsActions {
     }
   }
 
+  /// Returns `true` when [url] is reachable as a custom OpenAI-compatible
+  /// endpoint. Never throws — returns `false` on any exception so the UI can
+  /// show an inline error without crashing.
+  Future<bool> testCustomEndpoint(String url, String apiKey) async {
+    try {
+      return await ref.read(apiKeyTestServiceProvider).testCustomEndpoint(url, apiKey);
+    } catch (e, st) {
+      dLog('[SettingsActions] testCustomEndpoint failed: $e\n$st');
+      return false;
+    }
+  }
+
   /// Returns `true` when [url] is reachable as an Ollama endpoint. Never
   /// throws — returns `false` on any exception so the UI can show an inline
   /// error without crashing.

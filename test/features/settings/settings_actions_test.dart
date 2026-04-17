@@ -26,6 +26,16 @@ class _FakeApiKeyTestRepository extends Fake implements ApiKeyTestRepository {
 
   @override
   Future<bool> testOllamaUrl(String url) async => true;
+
+  bool _customEndpointResult = true;
+
+  void setCustomEndpointResult(bool result) => _customEndpointResult = result;
+
+  @override
+  Future<bool> testCustomEndpoint(String url, String apiKey) async {
+    if (_testError != null) throw _testError!;
+    return _customEndpointResult;
+  }
 }
 
 // ── Fake SettingsService ──────────────────────────────────────────────────────
@@ -131,6 +141,37 @@ void main() {
       final error = c.read(settingsActionsProvider).error;
       expect(error, isA<SettingsStorageFailed>());
       expect((error as SettingsStorageFailed).providerName, equals('gemini'));
+    });
+  });
+
+  // ── testCustomEndpoint ──────────────────────────────────────────────────────
+
+  group('testCustomEndpoint', () {
+    test('returns true when endpoint reachable', () async {
+      fakeTestSvc.setCustomEndpointResult(true);
+
+      final c = makeContainer();
+      final result = await c.read(settingsActionsProvider.notifier).testCustomEndpoint('http://localhost:1234/v1', '');
+
+      expect(result, isTrue);
+    });
+
+    test('returns false when endpoint unreachable', () async {
+      fakeTestSvc.setCustomEndpointResult(false);
+
+      final c = makeContainer();
+      final result = await c.read(settingsActionsProvider.notifier).testCustomEndpoint('http://bad-host', 'key');
+
+      expect(result, isFalse);
+    });
+
+    test('returns false on exception (never throws)', () async {
+      fakeTestSvc.throwOnTest(Exception('timeout'));
+
+      final c = makeContainer();
+      final result = await c.read(settingsActionsProvider.notifier).testCustomEndpoint('http://host', 'key');
+
+      expect(result, isFalse);
     });
   });
 }
