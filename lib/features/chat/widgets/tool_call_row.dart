@@ -84,10 +84,10 @@ class _ToolCallRowState extends State<ToolCallRow> {
                     height: 10,
                     child: CircularProgressIndicator(strokeWidth: 1.5, color: c.blueAccent),
                   ),
-                  ToolStatus.success => const Icon(Icons.check_circle, size: 11, color: Colors.green),
+                  ToolStatus.success => Icon(Icons.check_circle, size: 11, color: c.success),
                   ToolStatus.error => Tooltip(
                     message: widget.event.error ?? '${widget.event.toolName} — failed',
-                    child: const Icon(Icons.error, size: 11, color: Colors.red),
+                    child: Icon(Icons.error, size: 11, color: c.error),
                   ),
                   ToolStatus.cancelled => Tooltip(
                     message: '${widget.event.toolName} — cancelled',
@@ -154,7 +154,7 @@ class _ToolCallRowState extends State<ToolCallRow> {
                   const SizedBox(height: 8),
                 ],
                 if (widget.event.status == ToolStatus.error && widget.event.error != null) ...[
-                  const Text('ERROR', style: TextStyle(color: Colors.red, fontSize: 9, letterSpacing: 1)),
+                  Text('ERROR', style: TextStyle(color: c.error, fontSize: 9, letterSpacing: 1)),
                   const SizedBox(height: 4),
                   Text(
                     widget.event.error!,

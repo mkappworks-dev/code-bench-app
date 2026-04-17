@@ -269,7 +269,7 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
                       color: AppColors.of(context).dialogFill,
                       borderRadius: BorderRadius.circular(13),
                       border: Border.all(color: AppColors.of(context).subtleBorder),
-                      boxShadow: const [BoxShadow(color: Color(0xF2000000), blurRadius: 64, offset: Offset(0, 24))],
+                      boxShadow: [BoxShadow(color: AppColors.of(context).shadowDeep, blurRadius: 64, offset: const Offset(0, 24))],
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -571,7 +571,7 @@ class _FooterButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0x08FFFFFF),
+          color: AppColors.of(context).chipFill,
           border: Border.all(color: borderColor),
           borderRadius: BorderRadius.circular(7),
         ),
@@ -744,7 +744,7 @@ class _WorktreeCreateFormState extends State<_WorktreeCreateForm> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0x14E8A228),
+                color: c.warningTintBg,
                 border: Border.all(color: c.accentBorderAmber),
                 borderRadius: BorderRadius.circular(7),
               ),

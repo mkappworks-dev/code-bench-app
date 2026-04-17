@@ -101,7 +101,7 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
                     child: CircularProgressIndicator(strokeWidth: 1.5, color: c.blueAccent),
                   )
                 else
-                  const Icon(Icons.check_circle, size: 11, color: Colors.green),
+                  Icon(Icons.check_circle, size: 11, color: c.success),
                 const SizedBox(width: 6),
                 Text(
                   'WORK LOG',
@@ -144,8 +144,8 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
                 };
                 final Color iconColor = switch (entry.status) {
                   ToolStatus.running => c.blueAccent,
-                  ToolStatus.success => Colors.green,
-                  ToolStatus.error => Colors.red,
+                  ToolStatus.success => c.success,
+                  ToolStatus.error => c.error,
                   ToolStatus.cancelled => c.dimFg,
                 };
                 final arg =
