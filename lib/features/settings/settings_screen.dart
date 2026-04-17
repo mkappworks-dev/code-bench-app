@@ -9,10 +9,11 @@ import '../../core/widgets/app_dialog.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import 'archive_screen.dart';
 import 'general_screen.dart';
+import 'integrations_screen.dart';
 import 'notifiers/general_prefs_notifier.dart';
 import 'providers_screen.dart';
 
-enum _SettingsNav { general, providers, archive }
+enum _SettingsNav { general, providers, integrations, archive }
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -61,6 +62,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return GeneralScreen(key: ValueKey('general-$_generalVersion'));
       case _SettingsNav.providers:
         return const ProvidersScreen();
+      case _SettingsNav.integrations:
+        return const IntegrationsScreen();
       case _SettingsNav.archive:
         return const ArchiveScreen();
     }
@@ -146,6 +149,12 @@ class _SettingsLeftNav extends StatelessWidget {
             label: 'Providers',
             isActive: activeNav == _SettingsNav.providers,
             onTap: () => onSelect(_SettingsNav.providers),
+          ),
+          _NavItem(
+            icon: AppIcons.gitPullRequest,
+            label: 'Integrations',
+            isActive: activeNav == _SettingsNav.integrations,
+            onTap: () => onSelect(_SettingsNav.integrations),
           ),
           _NavItem(
             icon: AppIcons.archive,
