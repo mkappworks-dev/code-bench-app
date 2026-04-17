@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import '../../../data/shared/chat_message.dart';
 import '../notifiers/chat_notifier.dart';
 import '../notifiers/ask_question_notifier.dart';
@@ -88,6 +89,10 @@ class _AssistantBubble extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(chatMessagesProvider(message.sessionId), (_, next) {
+      if (next is! AsyncError || !context.mounted) return;
+      showErrorSnackBar(context, 'Failed to send response. Please try again.');
+    });
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
