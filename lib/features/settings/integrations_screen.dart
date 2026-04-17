@@ -32,10 +32,18 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
 
   Future<void> _connectOAuth() async {
     await ref.read(gitHubAuthProvider.notifier).authenticate();
+    if (!mounted) return;
+    if (!ref.read(gitHubAuthProvider).hasError) {
+      AppSnackBar.show(context, 'Connected to GitHub', type: AppSnackBarType.success);
+    }
   }
 
   Future<void> _signOut() async {
     await ref.read(gitHubAuthProvider.notifier).signOut();
+    if (!mounted) return;
+    if (!ref.read(gitHubAuthProvider).hasError) {
+      AppSnackBar.show(context, 'Disconnected from GitHub', type: AppSnackBarType.success);
+    }
   }
 
   Future<void> _signInWithPat() async {
@@ -44,6 +52,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
     await ref.read(gitHubAuthProvider.notifier).signInWithPat(token);
     if (!mounted) return;
     if (!ref.read(gitHubAuthProvider).hasError) {
+      AppSnackBar.show(context, 'Connected to GitHub', type: AppSnackBarType.success);
       _patController.clear();
       setState(() => _showPat = false);
     }
@@ -127,11 +136,18 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
   }
 }
 
-class _ConnectedCard extends StatelessWidget {
+class _ConnectedCard extends StatefulWidget {
   const _ConnectedCard({required this.account, required this.onDisconnect});
 
   final GitHubAccount account;
   final VoidCallback onDisconnect;
+
+  @override
+  State<_ConnectedCard> createState() => _ConnectedCardState();
+}
+
+class _ConnectedCardState extends State<_ConnectedCard> {
+  bool _disconnectHovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -145,11 +161,11 @@ class _ConnectedCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          if (account.avatarUrl.isNotEmpty)
+          if (widget.account.avatarUrl.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: Image.network(
-                account.avatarUrl,
+                widget.account.avatarUrl,
                 width: 36,
                 height: 36,
                 errorBuilder: (_, _, _) => _PersonIcon(c: c),
@@ -162,7 +178,7 @@ class _ConnectedCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                account.username,
+                widget.account.username,
                 style: TextStyle(color: c.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
               ),
               Row(
@@ -175,18 +191,24 @@ class _ConnectedCard extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          InkWell(
-            onTap: onDisconnect,
-            borderRadius: BorderRadius.circular(5),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                border: Border.all(color: c.deepBorder),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text(
-                'Disconnect',
-                style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) => setState(() => _disconnectHovered = true),
+            onExit: (_) => setState(() => _disconnectHovered = false),
+            child: GestureDetector(
+              onTap: widget.onDisconnect,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: _disconnectHovered ? c.deepBorder : Colors.transparent,
+                  border: Border.all(color: c.deepBorder),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  'Disconnect',
+                  style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                ),
               ),
             ),
           ),
@@ -210,7 +232,7 @@ class _PersonIcon extends StatelessWidget {
   );
 }
 
-class _DisconnectedCard extends StatelessWidget {
+class _DisconnectedCard extends StatefulWidget {
   const _DisconnectedCard({
     required this.isLoading,
     required this.showPat,
@@ -228,6 +250,13 @@ class _DisconnectedCard extends StatelessWidget {
   final VoidCallback onTogglePat;
   final VoidCallback onSignInWithPat;
   final VoidCallback onOpenTokenPage;
+
+  @override
+  State<_DisconnectedCard> createState() => _DisconnectedCardState();
+}
+
+class _DisconnectedCardState extends State<_DisconnectedCard> {
+  bool _patConnectHovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -249,19 +278,22 @@ class _DisconnectedCard extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
-            onPressed: isLoading ? null : onConnectOAuth,
-            icon: isLoading
+            onPressed: widget.isLoading ? null : widget.onConnectOAuth,
+            icon: widget.isLoading
                 ? const SizedBox(
                     width: 14,
                     height: 14,
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
                 : const _GitHubIcon(),
-            label: Text(isLoading ? 'Connecting…' : 'Continue with GitHub', style: const TextStyle(fontSize: 12)),
+            label: Text(
+              widget.isLoading ? 'Connecting…' : 'Continue with GitHub',
+              style: const TextStyle(fontSize: 12),
+            ),
           ),
           const SizedBox(height: 12),
           GestureDetector(
-            onTap: onTogglePat,
+            onTap: widget.onTogglePat,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -274,31 +306,40 @@ class _DisconnectedCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                Icon(showPat ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, size: 14, color: c.accent),
+                Icon(widget.showPat ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, size: 14, color: c.accent),
               ],
             ),
           ),
-          if (showPat) ...[
+          if (widget.showPat) ...[
             const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
-                  child: AppTextField(controller: patController, obscureText: true, labelText: 'Personal Access Token'),
+                  child: AppTextField(
+                    controller: widget.patController,
+                    obscureText: true,
+                    labelText: 'Personal Access Token',
+                  ),
                 ),
                 const SizedBox(width: 8),
-                InkWell(
-                  onTap: isLoading ? null : onSignInWithPat,
-                  borderRadius: BorderRadius.circular(5),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: c.accentTintMid,
-                      border: Border.all(color: c.accent.withValues(alpha: 0.35)),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Text(
-                      'Connect',
-                      style: TextStyle(color: c.accent, fontSize: ThemeConstants.uiFontSizeSmall),
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  onEnter: (_) => setState(() => _patConnectHovered = true),
+                  onExit: (_) => setState(() => _patConnectHovered = false),
+                  child: GestureDetector(
+                    onTap: widget.isLoading ? null : widget.onSignInWithPat,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 120),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _patConnectHovered ? c.accent.withValues(alpha: 0.2) : c.accentTintMid,
+                        border: Border.all(color: c.accent.withValues(alpha: 0.35)),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(
+                        'Connect',
+                        style: TextStyle(color: c.accent, fontSize: ThemeConstants.uiFontSizeSmall),
+                      ),
                     ),
                   ),
                 ),
@@ -306,7 +347,7 @@ class _DisconnectedCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             GestureDetector(
-              onTap: onOpenTokenPage,
+              onTap: widget.onOpenTokenPage,
               child: Text(
                 'Create a token on GitHub →',
                 style: TextStyle(

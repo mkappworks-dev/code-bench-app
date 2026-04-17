@@ -24,6 +24,7 @@ class SecureStorage {
   // Keys
   static String _apiKeyKey(String provider) => 'api_key_$provider';
   static const String _githubTokenKey = 'github_token';
+  static const String _githubAccountKey = 'github_account';
   static const String _ollamaUrlKey = 'ollama_base_url';
 
   // API Keys
@@ -82,6 +83,34 @@ class SecureStorage {
     } catch (e) {
       dLog('[SecureStorage] deleteGitHubToken failed: $e');
       throw StorageException('Failed to delete GitHub token', originalError: e);
+    }
+  }
+
+  // GitHub Account cache (username, avatarUrl — avoids network call on startup)
+  Future<void> writeGitHubAccount(String json) async {
+    try {
+      await _storage.write(key: _githubAccountKey, value: json);
+    } catch (e) {
+      dLog('[SecureStorage] writeGitHubAccount failed: $e');
+      throw StorageException('Failed to store GitHub account', originalError: e);
+    }
+  }
+
+  Future<String?> readGitHubAccount() async {
+    try {
+      return await _storage.read(key: _githubAccountKey);
+    } catch (e) {
+      dLog('[SecureStorage] readGitHubAccount failed: $e');
+      throw StorageException('Failed to read GitHub account', originalError: e);
+    }
+  }
+
+  Future<void> deleteGitHubAccount() async {
+    try {
+      await _storage.delete(key: _githubAccountKey);
+    } catch (e) {
+      dLog('[SecureStorage] deleteGitHubAccount failed: $e');
+      throw StorageException('Failed to delete GitHub account', originalError: e);
     }
   }
 

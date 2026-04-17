@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -52,8 +54,10 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
       final token = await _exchangeCodeForToken(code);
       await _storage.writeGitHubToken(token);
 
-      // Fetch user info
-      return await _fetchUserInfo(token);
+      // Fetch user info and cache for offline startup
+      final account = await _fetchUserInfo(token);
+      await _storage.writeGitHubAccount(jsonEncode(account.toJson()));
+      return account;
     } on AuthException {
       rethrow;
     } catch (e) {
@@ -102,6 +106,7 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
     try {
       final account = await _fetchUserInfo(token);
       await _storage.writeGitHubToken(token);
+      await _storage.writeGitHubAccount(jsonEncode(account.toJson()));
       return account;
     } on AuthException {
       rethrow;
@@ -117,12 +122,21 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
   Future<GitHubAccount?> getStoredAccount() async {
     final token = await _storage.readGitHubToken();
     if (token == null) return null;
+    final json = await _storage.readGitHubAccount();
+    if (json != null) {
+      try {
+        return GitHubAccount.fromJson(jsonDecode(json) as Map<String, dynamic>);
+      } catch (e) {
+        dLog('[GitHubAuthDatasource] cached account parse failed, falling back to network: $e');
+      }
+    }
+    // Fallback for first launch after upgrade (no cached account yet)
     try {
-      return await _fetchUserInfo(token);
+      final account = await _fetchUserInfo(token);
+      await _storage.writeGitHubAccount(jsonEncode(account.toJson()));
+      return account;
     } on DioException catch (e) {
-      // Token revoked or network unavailable — treat as signed out, but leave
-      // token on disk so the next successful startup restores the session.
-      dLog('[GitHubAuthDatasource] getStoredAccount network check failed: ${e.type} ${e.response?.statusCode}');
+      dLog('[GitHubAuthDatasource] getStoredAccount network fallback failed: ${e.type} ${e.response?.statusCode}');
       return null;
     }
   }
@@ -136,5 +150,6 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
   @override
   Future<void> signOut() async {
     await _storage.deleteGitHubToken();
+    await _storage.deleteGitHubAccount();
   }
 }

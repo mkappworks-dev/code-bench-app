@@ -6,6 +6,7 @@ import '../../core/constants/theme_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/relative_time.dart';
 import '../../core/utils/debug_logger.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import '../../data/session/models/chat_session.dart';
 import '../../data/project/models/project.dart';
 import '../chat/notifiers/chat_notifier.dart';
@@ -13,14 +14,26 @@ import '../project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'notifiers/archive_actions.dart';
 
-class ArchiveScreen extends ConsumerWidget {
+class ArchiveScreen extends ConsumerStatefulWidget {
   const ArchiveScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ArchiveScreen> createState() => _ArchiveScreenState();
+}
+
+class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
+  @override
+  Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final sessionsAsync = ref.watch(archivedSessionsProvider);
     final projectsAsync = ref.watch(projectsProvider);
+
+    ref.listen(archiveActionsProvider, (prev, next) {
+      if (!mounted) return;
+      if (next is AsyncData && prev is AsyncLoading) {
+        AppSnackBar.show(context, 'Session unarchived', type: AppSnackBarType.success);
+      }
+    });
 
     return sessionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
@@ -126,13 +139,20 @@ class _ProjectHeader extends StatelessWidget {
   }
 }
 
-class _ArchivedSessionCard extends ConsumerWidget {
+class _ArchivedSessionCard extends ConsumerStatefulWidget {
   const _ArchivedSessionCard({required this.session});
 
   final ChatSession session;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ArchivedSessionCard> createState() => _ArchivedSessionCardState();
+}
+
+class _ArchivedSessionCardState extends ConsumerState<_ArchivedSessionCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
     final c = AppColors.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -149,41 +169,48 @@ class _ArchivedSessionCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  session.title,
+                  widget.session.title,
                   style: TextStyle(color: c.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Archived ${session.updatedAt.relativeTime} · Created ${session.createdAt.relativeTime}',
+                  'Archived ${widget.session.updatedAt.relativeTime} · Created ${widget.session.createdAt.relativeTime}',
                   style: TextStyle(color: c.textSecondary, fontSize: 11),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 12),
-          GestureDetector(
-            onTap: () => ref.read(archiveActionsProvider.notifier).unarchiveSession(session.sessionId),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                border: Border.all(color: c.borderColor),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(AppIcons.archiveRestore, size: 12, color: c.textSecondary),
-                  const SizedBox(width: 5),
-                  Text(
-                    'Unarchive',
-                    style: TextStyle(
-                      color: c.textPrimary,
-                      fontSize: ThemeConstants.uiFontSizeSmall,
-                      fontWeight: FontWeight.w500,
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) => setState(() => _hovered = true),
+            onExit: (_) => setState(() => _hovered = false),
+            child: GestureDetector(
+              onTap: () => ref.read(archiveActionsProvider.notifier).unarchiveSession(widget.session.sessionId),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: _hovered ? c.borderColor : Colors.transparent,
+                  border: Border.all(color: c.borderColor),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(AppIcons.archiveRestore, size: 12, color: c.textSecondary),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Unarchive',
+                      style: TextStyle(
+                        color: c.textPrimary,
+                        fontSize: ThemeConstants.uiFontSizeSmall,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
