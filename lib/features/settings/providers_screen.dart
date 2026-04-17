@@ -37,15 +37,21 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
   }
 
   Future<void> _loadKeys() async {
-    final s = await ref.read(apiKeysProvider.future);
-    if (!mounted) return;
-    _controllers[AIProvider.openai]!.text = s.openai;
-    _controllers[AIProvider.anthropic]!.text = s.anthropic;
-    _controllers[AIProvider.gemini]!.text = s.gemini;
-    _ollamaController.text = s.ollamaUrl;
-    _customEndpointController.text = s.customEndpoint;
-    _customApiKeyController.text = s.customApiKey;
-    setState(() {});
+    try {
+      final s = await ref.read(apiKeysProvider.future);
+      if (!mounted) return;
+      _controllers[AIProvider.openai]!.text = s.openai;
+      _controllers[AIProvider.anthropic]!.text = s.anthropic;
+      _controllers[AIProvider.gemini]!.text = s.gemini;
+      _ollamaController.text = s.ollamaUrl;
+      _customEndpointController.text = s.customEndpoint;
+      _customApiKeyController.text = s.customApiKey;
+      setState(() {});
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.show(context, 'Could not load API keys — please restart the app.', type: AppSnackBarType.error);
+      }
+    }
   }
 
   Future<void> _saveKeys() async {
@@ -67,7 +73,12 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
 
   Future<void> _deleteKey(AIProvider provider) async {
     final ok = await ref.read(apiKeysProvider.notifier).deleteKey(provider);
-    if (ok) _controllers[provider]!.clear();
+    if (!mounted) return;
+    if (ok) {
+      _controllers[provider]!.clear();
+    } else {
+      AppSnackBar.show(context, 'Failed to remove API key — please try again.', type: AppSnackBarType.error);
+    }
   }
 
   Future<void> _testOllama() async {
