@@ -10,6 +10,8 @@ import '../../core/constants/theme_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/platform_utils.dart';
 import '../../core/widgets/app_snack_bar.dart';
+import '../../data/project/models/project.dart';
+import '../../data/session/models/chat_session.dart';
 import '../chat/notifiers/chat_notifier.dart';
 import 'notifiers/project_sidebar_actions.dart';
 import 'notifiers/project_sidebar_failure.dart';
@@ -101,6 +103,41 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
     if (context.mounted) context.go('/chat/$sessionId');
   }
 
+  List<Project> _sortedProjects(List<Project> projects, ProjectSortState? sortState, WidgetRef ref) {
+    final order = sortState?.projectSort ?? ProjectSortOrder.lastMessage;
+    if (order == ProjectSortOrder.createdAt) {
+      return [...projects]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    if (order == ProjectSortOrder.lastMessage) {
+      final lastTimes = {
+        for (final p in projects)
+          p.id: ref
+              .watch(projectSessionsProvider(p.id))
+              .value
+              ?.map((s) => s.updatedAt)
+              .fold<DateTime?>(null, (max, t) => max == null || t.isAfter(max) ? t : max),
+      };
+      return [...projects]..sort((a, b) {
+        final aTime = lastTimes[a.id];
+        final bTime = lastTimes[b.id];
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        return bTime.compareTo(aTime);
+      });
+    }
+    // manual — preserve DB insertion order (sortOrder field)
+    return [...projects]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+  }
+
+  List<ChatSession> _sortedSessions(List<ChatSession> sessions, ProjectSortState? sortState) {
+    final order = sortState?.threadSort ?? ThreadSortOrder.lastMessage;
+    if (order == ThreadSortOrder.createdAt) {
+      return [...sessions]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    return [...sessions]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
@@ -126,6 +163,7 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
     final activeSessionId = ref.watch(activeSessionIdProvider);
     // Watch activeProjectId to rebuild when it changes.
     ref.watch(activeProjectIdProvider);
+    final sortState = ref.watch(projectSortProvider).value;
 
     return Container(
       width: 224,
@@ -147,11 +185,13 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
               data: (projects) {
                 if (projects.isEmpty) return SidebarEmptyState(onAdd: _addProject);
 
+                final sorted = _sortedProjects(projects, sortState, ref);
                 return ListView.builder(
-                  itemCount: projects.length,
+                  itemCount: sorted.length,
                   itemBuilder: (context, i) {
-                    final project = projects[i];
-                    final sessions = ref.watch(projectSessionsProvider(project.id)).value ?? [];
+                    final project = sorted[i];
+                    final rawSessions = ref.watch(projectSessionsProvider(project.id)).value ?? [];
+                    final sessions = _sortedSessions(rawSessions, sortState);
                     return Container(
                       decoration: BoxDecoration(
                         border: Border(bottom: BorderSide(color: c.deepBackground)),
