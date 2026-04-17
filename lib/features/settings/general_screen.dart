@@ -146,15 +146,15 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                     },
                     thumbColor: WidgetStateProperty.resolveWith((states) {
                       if (states.contains(WidgetState.selected)) return Colors.white;
-                      return const Color(0x40FFFFFF); // rgba(255,255,255,0.25)
+                      return c.sendDisabledIconColor;
                     }),
                     trackColor: WidgetStateProperty.resolveWith((states) {
                       if (states.contains(WidgetState.selected)) return c.accent;
-                      return const Color(0x0DFFFFFF); // rgba(255,255,255,0.05)
+                      return c.sendDisabledFill;
                     }),
                     trackOutlineColor: WidgetStateProperty.resolveWith((states) {
                       if (states.contains(WidgetState.selected)) return Colors.transparent;
-                      return const Color(0x17FFFFFF); // rgba(255,255,255,0.09)
+                      return c.sendDisabledStroke;
                     }),
                   ),
                 ),
@@ -172,15 +172,15 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                     },
                     thumbColor: WidgetStateProperty.resolveWith((states) {
                       if (states.contains(WidgetState.selected)) return Colors.white;
-                      return const Color(0x40FFFFFF);
+                      return c.sendDisabledIconColor;
                     }),
                     trackColor: WidgetStateProperty.resolveWith((states) {
                       if (states.contains(WidgetState.selected)) return c.accent;
-                      return const Color(0x0DFFFFFF);
+                      return c.sendDisabledFill;
                     }),
                     trackOutlineColor: WidgetStateProperty.resolveWith((states) {
                       if (states.contains(WidgetState.selected)) return Colors.transparent;
-                      return const Color(0x17FFFFFF);
+                      return c.sendDisabledStroke;
                     }),
                   ),
                 ),
