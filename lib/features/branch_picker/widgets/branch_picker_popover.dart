@@ -6,7 +6,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_search_field.dart';
 import '../../../core/widgets/app_snack_bar.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../notifiers/branch_picker_failure.dart';
 import '../notifiers/branch_picker_notifier.dart';
@@ -269,7 +271,9 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
                       color: AppColors.of(context).dialogFill,
                       borderRadius: BorderRadius.circular(13),
                       border: Border.all(color: AppColors.of(context).subtleBorder),
-                      boxShadow: [BoxShadow(color: AppColors.of(context).shadowDeep, blurRadius: 64, offset: const Offset(0, 24))],
+                      boxShadow: [
+                        BoxShadow(color: AppColors.of(context).shadowDeep, blurRadius: 64, offset: const Offset(0, 24)),
+                      ],
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -416,23 +420,9 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
-        decoration: InputDecoration(
-          hintText: 'Search branches…',
-          hintStyle: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
-          prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 8, right: 4),
-            child: Icon(LucideIcons.search, size: 11, color: c.mutedFg),
-          ),
-          prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-        ),
-      ),
+      child: AppSearchField(controller: controller, focusNode: focusNode, hintText: 'Search branches…'),
     );
   }
 }
@@ -630,13 +620,12 @@ class _BranchCreateFormState extends State<_BranchCreateForm> {
         children: [
           Text('Branch name', style: TextStyle(color: c.textSecondary, fontSize: 10)),
           const SizedBox(height: 4),
-          TextField(
+          AppTextField(
             controller: widget.controller,
             focusNode: widget.focusNode,
             autofocus: true,
             onSubmitted: (_) => widget.onSubmit(_base),
-            style: TextStyle(color: c.textPrimary, fontSize: 12),
-            decoration: const InputDecoration(hintText: 'branch-name'),
+            hintText: 'branch-name',
           ),
           const SizedBox(height: 10),
           Text('From', style: TextStyle(color: c.textSecondary, fontSize: 10)),
@@ -715,20 +704,11 @@ class _WorktreeCreateFormState extends State<_WorktreeCreateForm> {
         children: [
           Text('Branch name', style: TextStyle(color: c.textSecondary, fontSize: 10)),
           const SizedBox(height: 4),
-          TextField(
-            controller: widget.branchController,
-            autofocus: true,
-            style: TextStyle(color: c.textPrimary, fontSize: 12),
-            decoration: const InputDecoration(hintText: 'feat/my-feature'),
-          ),
+          AppTextField(controller: widget.branchController, autofocus: true, hintText: 'feat/my-feature'),
           const SizedBox(height: 8),
           Text('Path', style: TextStyle(color: c.textSecondary, fontSize: 10)),
           const SizedBox(height: 4),
-          TextField(
-            controller: widget.pathController,
-            style: TextStyle(color: c.textPrimary, fontSize: 12),
-            decoration: const InputDecoration(hintText: '.worktrees/feat-my-feature'),
-          ),
+          AppTextField(controller: widget.pathController, hintText: '.worktrees/feat-my-feature'),
           const SizedBox(height: 8),
           Text('From worktree', style: TextStyle(color: c.textSecondary, fontSize: 10)),
           const SizedBox(height: 4),

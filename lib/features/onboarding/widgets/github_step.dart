@@ -6,6 +6,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../core/widgets/app_snack_bar.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../../data/github/models/repository.dart';
 import '../notifiers/github_auth_notifier.dart';
 
@@ -138,21 +139,17 @@ class _GithubStepState extends ConsumerState<GithubStep> {
           Row(
             children: [
               Expanded(
-                child: TextField(
+                child: AppTextField(
                   controller: _patController,
                   obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Personal Access Token',
-                    labelStyle: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-                    suffixIcon: _patValid == null
-                        ? null
-                        : Icon(
-                            _patValid! ? Icons.check_circle : Icons.error,
-                            color: _patValid! ? c.success : c.error,
-                            size: 16,
-                          ),
-                  ),
-                  style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
+                  labelText: 'Personal Access Token',
+                  suffixIcon: _patValid == null
+                      ? null
+                      : Icon(
+                          _patValid! ? Icons.check_circle : Icons.error,
+                          color: _patValid! ? c.success : c.error,
+                          size: 16,
+                        ),
                 ),
               ),
               const SizedBox(width: 8),

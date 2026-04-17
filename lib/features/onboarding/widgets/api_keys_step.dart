@@ -5,6 +5,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../core/widgets/app_snack_bar.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../settings/notifiers/settings_actions.dart';
 
@@ -241,11 +242,11 @@ class _ProviderRowState extends State<_ProviderRow> {
           ),
         ),
         Expanded(
-          child: TextField(
+          child: AppTextField(
             controller: widget.controller,
             obscureText: !_isUrlProvider && _obscure,
-            style: TextStyle(color: c.textPrimary, fontSize: 13, fontFamily: ThemeConstants.editorFontFamily),
-            decoration: InputDecoration(hintText: _isUrlProvider ? 'http://localhost:11434' : 'API key...'),
+            hintText: _isUrlProvider ? 'http://localhost:11434' : 'API key...',
+            fontFamily: ThemeConstants.editorFontFamily,
           ),
         ),
         if (!_isUrlProvider) ...[

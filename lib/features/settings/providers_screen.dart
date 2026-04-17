@@ -5,11 +5,11 @@ import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/app_text_field.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import '../../data/shared/ai_model.dart';
 import 'notifiers/providers_notifier.dart';
 import 'notifiers/settings_actions.dart';
-import 'widgets/inline_text_field.dart';
 import 'widgets/section_label.dart';
 import 'widgets/settings_group.dart';
 
@@ -121,7 +121,10 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
               SettingsRow(
                 label: 'Base URL',
                 description: ApiConstants.ollamaDefaultBaseUrl,
-                trailing: SizedBox(width: 200, child: InlineTextField(controller: _ollamaController)),
+                trailing: SizedBox(
+                  width: 200,
+                  child: AppTextField(controller: _ollamaController, fontFamily: ThemeConstants.editorFontFamily),
+                ),
                 isLast: true,
               ),
             ],
@@ -140,14 +143,24 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
               SettingsRow(
                 label: 'Base URL',
                 description: 'http://localhost:1234/v1',
-                trailing: SizedBox(width: 200, child: InlineTextField(controller: _customEndpointController)),
+                trailing: SizedBox(
+                  width: 200,
+                  child: AppTextField(
+                    controller: _customEndpointController,
+                    fontFamily: ThemeConstants.editorFontFamily,
+                  ),
+                ),
               ),
               SettingsRow(
                 label: 'API Key',
                 description: 'sk-... or leave blank',
                 trailing: SizedBox(
                   width: 200,
-                  child: InlineTextField(controller: _customApiKeyController, obscureText: true),
+                  child: AppTextField(
+                    controller: _customApiKeyController,
+                    obscureText: true,
+                    fontFamily: ThemeConstants.editorFontFamily,
+                  ),
                 ),
                 isLast: true,
               ),
@@ -230,16 +243,15 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
               child: Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: AppTextField(
                       controller: widget.controller,
                       obscureText: _obscure,
-                      style: TextStyle(color: c.textPrimary, fontSize: 12, fontFamily: ThemeConstants.editorFontFamily),
-                      decoration: InputDecoration(
-                        hintText: 'API key',
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscure ? AppIcons.hideSecret : AppIcons.showSecret, size: 14),
-                          onPressed: () => setState(() => _obscure = !_obscure),
-                        ),
+                      fontSize: 12,
+                      fontFamily: ThemeConstants.editorFontFamily,
+                      hintText: 'API key',
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscure ? AppIcons.hideSecret : AppIcons.showSecret, size: 14),
+                        onPressed: () => setState(() => _obscure = !_obscure),
                       ),
                     ),
                   ),

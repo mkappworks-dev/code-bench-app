@@ -5,6 +5,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/app_text_field.dart';
 
 class PrFormResult {
   const PrFormResult({required this.title, required this.body, required this.base, required this.draft});
@@ -83,25 +84,13 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextField(
-                  controller: _titleController,
-                  maxLength: 70,
-                  decoration: InputDecoration(
-                    labelText: 'Title',
-                    labelStyle: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-                  ),
-                  style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
-                ),
+                AppTextField(controller: _titleController, maxLength: 70, labelText: 'Title'),
                 const SizedBox(height: 8),
-                TextField(
+                AppTextField(
                   controller: _bodyController,
                   maxLines: 6,
-                  decoration: InputDecoration(
-                    labelText: 'Description',
-                    labelStyle: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-                    alignLabelWithHint: true,
-                  ),
-                  style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
+                  labelText: 'Description',
+                  alignLabelWithHint: true,
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -113,7 +102,7 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
                     const SizedBox(width: 8),
                     DropdownButton<String>(
                       value: widget.branches.contains(_base) ? _base : null,
-                      dropdownColor: c.inputSurface,
+                      dropdownColor: c.panelBackground,
                       style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
                       items: widget.branches.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
                       onChanged: (v) {

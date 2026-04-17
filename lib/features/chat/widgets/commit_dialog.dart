@@ -7,6 +7,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../../data/_core/preferences/general_preferences.dart';
 import '../../../data/git/models/git_changed_file.dart';
 import '../../../shell/notifiers/git_actions.dart';
@@ -85,21 +86,7 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
               ),
               const SizedBox(height: 10),
             ],
-            Builder(
-              builder: (context) {
-                final c = AppColors.of(context);
-                return TextField(
-                  controller: _controller,
-                  maxLines: 3,
-                  maxLength: 72,
-                  decoration: InputDecoration(
-                    labelText: 'Commit message',
-                    labelStyle: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-                  ),
-                  style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
-                );
-              },
-            ),
+            AppTextField(controller: _controller, maxLines: 3, maxLength: 72, labelText: 'Commit message'),
             const SizedBox(height: 4),
             Builder(
               builder: (context) {

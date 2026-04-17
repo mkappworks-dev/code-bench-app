@@ -10,7 +10,7 @@ import '../../core/widgets/app_snack_bar.dart';
 import '../../core/utils/instant_menu.dart';
 import 'notifiers/general_prefs_notifier.dart';
 import 'notifiers/settings_actions.dart';
-import 'widgets/inline_text_field.dart';
+import '../../core/widgets/app_text_field.dart';
 import 'widgets/section_label.dart';
 import 'widgets/settings_group.dart';
 
@@ -188,7 +188,10 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
               SettingsRow(
                 label: 'Terminal app',
                 description: 'App to open when "Open Terminal" is tapped',
-                trailing: SizedBox(width: 140, child: InlineTextField(controller: _terminalAppController)),
+                trailing: SizedBox(
+                  width: 140,
+                  child: AppTextField(controller: _terminalAppController, fontFamily: ThemeConstants.editorFontFamily),
+                ),
                 isLast: true,
               ),
             ],

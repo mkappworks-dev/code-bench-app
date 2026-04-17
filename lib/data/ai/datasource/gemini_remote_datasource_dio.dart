@@ -73,8 +73,10 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource {
       String? errorBody;
       if (e.response?.data is ResponseBody) {
         try {
-          final bytes = await (e.response!.data as ResponseBody).stream
-              .fold<List<int>>([], (acc, chunk) => [...acc, ...chunk]);
+          final bytes = await (e.response!.data as ResponseBody).stream.fold<List<int>>(
+            [],
+            (acc, chunk) => [...acc, ...chunk],
+          );
           errorBody = utf8.decode(bytes);
         } catch (_) {}
       }
