@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_icons.dart';
-import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Settings link pinned to the bottom of the project sidebar.
 class SidebarFooter extends StatelessWidget {
@@ -10,19 +10,30 @@ class SidebarFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => context.go('/settings'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            Icon(AppIcons.settings, size: 14, color: ThemeConstants.mutedFg),
-            const SizedBox(width: 7),
-            const Text(
-              'Settings',
-              style: TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSize),
+    final c = AppColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: InkWell(
+          onTap: () => context.go('/settings'),
+          borderRadius: BorderRadius.circular(6),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: c.chipFill,
+              border: Border.all(color: c.chipStroke),
+              borderRadius: BorderRadius.circular(6),
             ),
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(AppIcons.settings, size: 11, color: c.textSecondary),
+                const SizedBox(width: 6),
+                Text('Settings', style: TextStyle(color: c.textSecondary, fontSize: 11)),
+              ],
+            ),
+          ),
         ),
       ),
     );

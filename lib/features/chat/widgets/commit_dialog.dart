@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../../data/_core/preferences/general_preferences.dart';
 import '../../../data/git/models/git_changed_file.dart';
 import '../../../shell/notifiers/git_actions.dart';
@@ -84,32 +86,28 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
               ),
               const SizedBox(height: 10),
             ],
-            TextField(
-              controller: _controller,
-              maxLines: 3,
-              maxLength: 72,
-              decoration: const InputDecoration(
-                labelText: 'Commit message',
-                labelStyle: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-              ),
-              style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
-            ),
+            AppTextField(controller: _controller, maxLines: 3, maxLength: 72, labelText: 'Commit message'),
             const SizedBox(height: 4),
-            Row(
-              children: [
-                Switch(
-                  value: _autoCommit,
-                  onChanged: (v) async {
-                    setState(() => _autoCommit = v);
-                    await ref.read(generalPreferencesProvider).setAutoCommit(v);
-                  },
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  '⚡ Auto-commit future commits',
-                  style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-                ),
-              ],
+            Builder(
+              builder: (context) {
+                final c = AppColors.of(context);
+                return Row(
+                  children: [
+                    Switch(
+                      value: _autoCommit,
+                      onChanged: (v) async {
+                        setState(() => _autoCommit = v);
+                        await ref.read(generalPreferencesProvider).setAutoCommit(v);
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '⚡ Auto-commit future commits',
+                      style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -122,45 +120,49 @@ class _CommitDialogState extends ConsumerState<CommitDialog> {
   }
 
   Widget _buildFileRow(GitChangedFile file) {
-    final (badgeColor, badgeBg) = switch (file.status) {
-      GitChangedFileStatus.modified => (ThemeConstants.warning, ThemeConstants.warningBadgeBg),
-      GitChangedFileStatus.added => (ThemeConstants.accent, ThemeConstants.successBadgeBg),
-      GitChangedFileStatus.deleted => (ThemeConstants.error, ThemeConstants.errorBadgeBg),
-      GitChangedFileStatus.renamed => (ThemeConstants.textSecondary, ThemeConstants.inputSurface),
-    };
+    // context is available via the ListenableBuilder → Builder chain above
+    // but _buildFileRow is called from within that builder scope; we need
+    // to obtain context from the widget tree. Use a Builder wrapper:
+    return Builder(
+      builder: (context) {
+        final c = AppColors.of(context);
+        final (badgeColor, badgeBg) = switch (file.status) {
+          GitChangedFileStatus.modified => (c.warning, c.warningBadgeBg),
+          GitChangedFileStatus.added => (c.accent, c.successBadgeBg),
+          GitChangedFileStatus.deleted => (c.error, c.errorBadgeBg),
+          GitChangedFileStatus.renamed => (c.textSecondary, c.inputSurface),
+        };
 
-    return SizedBox(
-      height: 22,
-      child: Row(
-        children: [
-          Container(
-            width: 14,
-            height: 14,
-            decoration: BoxDecoration(color: badgeBg, borderRadius: BorderRadius.circular(2)),
-            alignment: Alignment.center,
-            child: Text(
-              file.status.badge,
-              style: TextStyle(color: badgeColor, fontSize: 9, fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              file.path,
-              style: const TextStyle(
-                color: ThemeConstants.textPrimary,
-                fontSize: 11,
-                fontFamily: ThemeConstants.editorFontFamily,
+        return SizedBox(
+          height: 22,
+          child: Row(
+            children: [
+              Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(color: badgeBg, borderRadius: BorderRadius.circular(2)),
+                alignment: Alignment.center,
+                child: Text(
+                  file.status.badge,
+                  style: TextStyle(color: badgeColor, fontSize: 9, fontWeight: FontWeight.w700),
+                ),
               ),
-              overflow: TextOverflow.ellipsis,
-            ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  file.path,
+                  style: TextStyle(color: c.textPrimary, fontSize: 11, fontFamily: ThemeConstants.editorFontFamily),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text('+${file.additions}', style: TextStyle(color: c.success, fontSize: 10)),
+              const SizedBox(width: 4),
+              Text('−${file.deletions}', style: TextStyle(color: c.error, fontSize: 10)),
+            ],
           ),
-          const SizedBox(width: 8),
-          Text('+${file.additions}', style: const TextStyle(color: ThemeConstants.success, fontSize: 10)),
-          const SizedBox(width: 4),
-          Text('−${file.deletions}', style: const TextStyle(color: ThemeConstants.error, fontSize: 10)),
-        ],
-      ),
+        );
+      },
     );
   }
 }

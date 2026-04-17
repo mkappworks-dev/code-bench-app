@@ -16,5 +16,8 @@ sealed class BranchPickerFailure with _$BranchPickerFailure {
   /// `git checkout -b` failed (branch already exists, etc.).
   const factory BranchPickerFailure.createFailed(String message) = BranchPickerCreateFailed;
 
+  /// `git worktree add` failed.
+  const factory BranchPickerFailure.createWorktreeFailed(String message) = BranchPickerCreateWorktreeFailed;
+
   const factory BranchPickerFailure.unknown(Object error) = BranchPickerUnknownError;
 }

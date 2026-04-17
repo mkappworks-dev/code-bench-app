@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/app_text_field.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import '../../data/shared/ai_model.dart';
 import 'notifiers/providers_notifier.dart';
 import 'notifiers/settings_actions.dart';
-import 'widgets/inline_text_field.dart';
 import 'widgets/section_label.dart';
 import 'widgets/settings_group.dart';
 
@@ -36,15 +37,21 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
   }
 
   Future<void> _loadKeys() async {
-    final s = await ref.read(apiKeysProvider.future);
-    if (!mounted) return;
-    _controllers[AIProvider.openai]!.text = s.openai;
-    _controllers[AIProvider.anthropic]!.text = s.anthropic;
-    _controllers[AIProvider.gemini]!.text = s.gemini;
-    _ollamaController.text = s.ollamaUrl;
-    _customEndpointController.text = s.customEndpoint;
-    _customApiKeyController.text = s.customApiKey;
-    setState(() {});
+    try {
+      final s = await ref.read(apiKeysProvider.future);
+      if (!mounted) return;
+      _controllers[AIProvider.openai]!.text = s.openai;
+      _controllers[AIProvider.anthropic]!.text = s.anthropic;
+      _controllers[AIProvider.gemini]!.text = s.gemini;
+      _ollamaController.text = s.ollamaUrl;
+      _customEndpointController.text = s.customEndpoint;
+      _customApiKeyController.text = s.customApiKey;
+      setState(() {});
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.show(context, 'Could not load API keys — please restart the app.', type: AppSnackBarType.error);
+      }
+    }
   }
 
   Future<void> _saveKeys() async {
@@ -66,7 +73,12 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
 
   Future<void> _deleteKey(AIProvider provider) async {
     final ok = await ref.read(apiKeysProvider.notifier).deleteKey(provider);
-    if (ok) _controllers[provider]!.clear();
+    if (!mounted) return;
+    if (ok) {
+      _controllers[provider]!.clear();
+    } else {
+      AppSnackBar.show(context, 'Failed to remove API key — please try again.', type: AppSnackBarType.error);
+    }
   }
 
   Future<void> _testOllama() async {
@@ -93,6 +105,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +124,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
                   ),
                 ),
               ),
-          const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
+          Divider(height: 36, thickness: 1, color: c.borderColor),
           SectionLabel('Ollama (Local)'),
           const SizedBox(height: 8),
           SettingsGroup(
@@ -119,7 +132,10 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
               SettingsRow(
                 label: 'Base URL',
                 description: ApiConstants.ollamaDefaultBaseUrl,
-                trailing: SizedBox(width: 200, child: InlineTextField(controller: _ollamaController)),
+                trailing: SizedBox(
+                  width: 200,
+                  child: AppTextField(controller: _ollamaController, fontFamily: ThemeConstants.editorFontFamily),
+                ),
                 isLast: true,
               ),
             ],
@@ -130,7 +146,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
             icon: const Icon(AppIcons.run, size: 12),
             label: const Text('Test Connection', style: TextStyle(fontSize: 11)),
           ),
-          const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
+          Divider(height: 36, thickness: 1, color: c.borderColor),
           SectionLabel('Custom Endpoint (OpenAI-compatible)'),
           const SizedBox(height: 8),
           SettingsGroup(
@@ -138,14 +154,24 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
               SettingsRow(
                 label: 'Base URL',
                 description: 'http://localhost:1234/v1',
-                trailing: SizedBox(width: 200, child: InlineTextField(controller: _customEndpointController)),
+                trailing: SizedBox(
+                  width: 200,
+                  child: AppTextField(
+                    controller: _customEndpointController,
+                    fontFamily: ThemeConstants.editorFontFamily,
+                  ),
+                ),
               ),
               SettingsRow(
                 label: 'API Key',
                 description: 'sk-... or leave blank',
                 trailing: SizedBox(
                   width: 200,
-                  child: InlineTextField(controller: _customApiKeyController, obscureText: true),
+                  child: AppTextField(
+                    controller: _customApiKeyController,
+                    obscureText: true,
+                    fontFamily: ThemeConstants.editorFontFamily,
+                  ),
                 ),
                 isLast: true,
               ),
@@ -184,11 +210,12 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final hasKey = widget.controller.text.isNotEmpty;
     return Container(
       decoration: BoxDecoration(
-        color: ThemeConstants.inputSurface,
-        border: Border.all(color: ThemeConstants.deepBorder),
+        color: c.inputSurface,
+        border: Border.all(color: c.deepBorder),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -203,27 +230,20 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
                   Container(
                     width: 5,
                     height: 5,
-                    decoration: BoxDecoration(
-                      color: hasKey ? ThemeConstants.success : ThemeConstants.error,
-                      shape: BoxShape.circle,
-                    ),
+                    decoration: BoxDecoration(color: hasKey ? c.success : c.error, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 10),
                   Text(
                     widget.provider.displayName,
-                    style: const TextStyle(
-                      color: ThemeConstants.textPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(color: c.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     hasKey ? 'Configured' : 'Not configured',
-                    style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11),
+                    style: TextStyle(color: c.textSecondary, fontSize: 11),
                   ),
                   const Spacer(),
-                  Icon(_expanded ? AppIcons.chevronUp : AppIcons.chevronDown, size: 14, color: ThemeConstants.mutedFg),
+                  Icon(_expanded ? AppIcons.chevronUp : AppIcons.chevronDown, size: 14, color: c.mutedFg),
                 ],
               ),
             ),
@@ -234,26 +254,21 @@ class _ProviderKeyCardState extends State<_ProviderKeyCard> {
               child: Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: AppTextField(
                       controller: widget.controller,
                       obscureText: _obscure,
-                      style: const TextStyle(
-                        color: ThemeConstants.textPrimary,
-                        fontSize: 12,
-                        fontFamily: ThemeConstants.editorFontFamily,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'API key',
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscure ? AppIcons.hideSecret : AppIcons.showSecret, size: 14),
-                          onPressed: () => setState(() => _obscure = !_obscure),
-                        ),
+                      fontSize: 12,
+                      fontFamily: ThemeConstants.editorFontFamily,
+                      hintText: 'API key',
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscure ? AppIcons.hideSecret : AppIcons.showSecret, size: 14),
+                        onPressed: () => setState(() => _obscure = !_obscure),
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(AppIcons.close, size: 14, color: ThemeConstants.error),
+                    icon: Icon(AppIcons.close, size: 14, color: c.error),
                     tooltip: 'Remove key',
                     onPressed: widget.onDelete,
                   ),

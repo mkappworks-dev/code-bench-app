@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/app_dialog.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import '../../core/utils/instant_menu.dart';
 import 'notifiers/general_prefs_notifier.dart';
 import 'notifiers/settings_actions.dart';
-import 'widgets/inline_text_field.dart';
+import '../../core/widgets/app_text_field.dart';
 import 'widgets/section_label.dart';
 import 'widgets/settings_group.dart';
 
@@ -22,6 +24,7 @@ class GeneralScreen extends ConsumerStatefulWidget {
 class _GeneralScreenState extends ConsumerState<GeneralScreen> {
   bool _autoCommit = false;
   bool _deleteConfirmation = true;
+  ThemeMode _themeMode = ThemeMode.system;
   final _terminalAppController = TextEditingController();
 
   @override
@@ -34,13 +37,20 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
   }
 
   Future<void> _load() async {
-    final s = await ref.read(generalPrefsProvider.future);
-    if (!mounted) return;
-    setState(() {
-      _autoCommit = s.autoCommit;
-      _deleteConfirmation = s.deleteConfirmation;
-      _terminalAppController.text = s.terminalApp;
-    });
+    try {
+      final s = await ref.read(generalPrefsProvider.future);
+      if (!mounted) return;
+      setState(() {
+        _autoCommit = s.autoCommit;
+        _deleteConfirmation = s.deleteConfirmation;
+        _terminalAppController.text = s.terminalApp;
+        _themeMode = s.themeMode;
+      });
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.show(context, 'Could not load settings — showing defaults.', type: AppSnackBarType.warning);
+      }
+    }
   }
 
   @override
@@ -52,24 +62,27 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
   Future<void> _confirmWipeAllData() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: ThemeConstants.panelBackground,
-        title: const Text('Wipe all data?', style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14)),
-        content: const Text(
-          'This will permanently delete:\n'
-          '  • All API keys\n'
-          '  • GitHub sign-in\n'
-          '  • All chat sessions and messages\n'
-          '  • All projects\n\n'
-          'You will see the onboarding wizard on next launch. This cannot be undone.',
-          style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 12),
+      builder: (dialogCtx) => AppDialog(
+        icon: AppIcons.trash,
+        iconType: AppDialogIconType.destructive,
+        title: 'Wipe all data?',
+        content: Builder(
+          builder: (context) {
+            final c = AppColors.of(context);
+            return Text(
+              'This will permanently delete:\n'
+              '  • All API keys\n'
+              '  • GitHub sign-in\n'
+              '  • All chat sessions and messages\n'
+              '  • All projects\n\n'
+              'You will see the onboarding wizard on next launch. This cannot be undone.',
+              style: TextStyle(color: c.textSecondary, fontSize: 12),
+            );
+          },
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx, true),
-            child: const Text('Wipe everything', style: TextStyle(color: ThemeConstants.error)),
-          ),
+          AppDialogAction.cancel(onPressed: () => Navigator.pop(dialogCtx, false)),
+          AppDialogAction.destructive(label: 'Wipe everything', onPressed: () => Navigator.pop(dialogCtx, true)),
         ],
       ),
     );
@@ -97,6 +110,11 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(generalPrefsProvider, (_, next) {
+      if (next is! AsyncError || !mounted) return;
+      AppSnackBar.show(context, 'Could not save setting — please try again.', type: AppSnackBarType.error);
+    });
+    final c = AppColors.of(context);
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,11 +127,18 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                 label: 'Theme',
                 description: 'How Code Bench looks',
                 trailing: Builder(
-                  builder: (ctx) => _AppDropdown<String>(
-                    value: 'Dark',
-                    items: const ['Dark', 'Light', 'System'],
-                    label: (s) => s,
-                    onChanged: (_) {},
+                  builder: (ctx) => _AppDropdown<ThemeMode>(
+                    value: _themeMode,
+                    items: const [ThemeMode.system, ThemeMode.dark, ThemeMode.light],
+                    label: (m) => switch (m) {
+                      ThemeMode.system => 'System',
+                      ThemeMode.dark => 'Dark',
+                      ThemeMode.light => 'Light',
+                    },
+                    onChanged: (mode) async {
+                      await ref.read(generalPrefsProvider.notifier).setThemeMode(mode);
+                      setState(() => _themeMode = mode);
+                    },
                     context: ctx,
                   ),
                 ),
@@ -121,44 +146,67 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
               SettingsRow(
                 label: 'Delete confirmation',
                 description: 'Ask before deleting a session',
-                trailing: Builder(
-                  builder: (ctx) => _AppDropdown<bool>(
+                trailing: Transform.scale(
+                  scale: 0.75,
+                  child: Switch(
                     value: _deleteConfirmation,
-                    items: const [true, false],
-                    label: (v) => v ? 'Enabled' : 'Disabled',
                     onChanged: (v) async {
                       await ref.read(generalPrefsProvider.notifier).setDeleteConfirmation(v);
                       setState(() => _deleteConfirmation = v);
                     },
-                    context: ctx,
+                    thumbColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) return Colors.white;
+                      return c.sendDisabledIconColor;
+                    }),
+                    trackColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) return c.accent;
+                      return c.sendDisabledFill;
+                    }),
+                    trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) return Colors.transparent;
+                      return c.sendDisabledStroke;
+                    }),
                   ),
                 ),
               ),
               SettingsRow(
                 label: 'Auto-commit',
                 description: 'Skip commit dialog; commit immediately with AI-generated message',
-                trailing: Builder(
-                  builder: (ctx) => _AppDropdown<bool>(
+                trailing: Transform.scale(
+                  scale: 0.75,
+                  child: Switch(
                     value: _autoCommit,
-                    items: const [true, false],
-                    label: (v) => v ? 'Enabled' : 'Disabled',
                     onChanged: (v) async {
                       await ref.read(generalPrefsProvider.notifier).setAutoCommit(v);
                       setState(() => _autoCommit = v);
                     },
-                    context: ctx,
+                    thumbColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) return Colors.white;
+                      return c.sendDisabledIconColor;
+                    }),
+                    trackColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) return c.accent;
+                      return c.sendDisabledFill;
+                    }),
+                    trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) return Colors.transparent;
+                      return c.sendDisabledStroke;
+                    }),
                   ),
                 ),
               ),
               SettingsRow(
                 label: 'Terminal app',
                 description: 'App to open when "Open Terminal" is tapped',
-                trailing: SizedBox(width: 140, child: InlineTextField(controller: _terminalAppController)),
+                trailing: SizedBox(
+                  width: 140,
+                  child: AppTextField(controller: _terminalAppController, fontFamily: ThemeConstants.editorFontFamily),
+                ),
                 isLast: true,
               ),
             ],
           ),
-          const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
+          Divider(height: 36, thickness: 1, color: c.borderColor),
           SectionLabel('About'),
           const SizedBox(height: 8),
           SettingsGroup(
@@ -169,17 +217,17 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: ThemeConstants.success.withValues(alpha: 0.15),
+                    color: c.success.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text('Up to Date', style: TextStyle(color: ThemeConstants.success, fontSize: 10)),
+                  child: Text('Up to Date', style: TextStyle(color: c.success, fontSize: 10)),
                 ),
                 isLast: true,
               ),
             ],
           ),
           if (kDebugMode) ...[
-            const Divider(height: 36, thickness: 1, color: ThemeConstants.borderColor),
+            Divider(height: 36, thickness: 1, color: c.borderColor),
             SectionLabel('Debug'),
             const SizedBox(height: 8),
             SettingsGroup(
@@ -205,13 +253,13 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          border: Border.all(color: ThemeConstants.deepBorder),
+                          border: Border.all(color: c.deepBorder),
                           borderRadius: BorderRadius.circular(5),
-                          color: ThemeConstants.inputSurface,
+                          color: c.inputSurface,
                         ),
-                        child: const Text(
+                        child: Text(
                           'Replay',
-                          style: TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+                          style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
                         ),
                       ),
                     ),
@@ -226,13 +274,13 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        border: Border.all(color: ThemeConstants.error),
+                        border: Border.all(color: c.error),
                         borderRadius: BorderRadius.circular(5),
-                        color: ThemeConstants.inputSurface,
+                        color: c.inputSurface,
                       ),
-                      child: const Text(
+                      child: Text(
                         'Wipe',
-                        style: TextStyle(color: ThemeConstants.error, fontSize: ThemeConstants.uiFontSizeSmall),
+                        style: TextStyle(color: c.error, fontSize: ThemeConstants.uiFontSizeSmall),
                       ),
                     ),
                   ),
@@ -265,6 +313,7 @@ class _AppDropdown<T> extends StatelessWidget {
   final BuildContext context;
 
   void _open() {
+    final c = AppColors.of(context);
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
@@ -277,10 +326,10 @@ class _AppDropdown<T> extends StatelessWidget {
         overlay.size.width - origin.dx - box.size.width,
         0,
       ),
-      color: ThemeConstants.panelBackground,
+      color: c.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(6),
-        side: const BorderSide(color: ThemeConstants.faintFg),
+        side: BorderSide(color: c.faintFg),
       ),
       items: items
           .map(
@@ -293,12 +342,12 @@ class _AppDropdown<T> extends StatelessWidget {
                     child: Text(
                       label(item),
                       style: TextStyle(
-                        color: item == value ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
+                        color: item == value ? c.textPrimary : c.textSecondary,
                         fontSize: ThemeConstants.uiFontSizeSmall,
                       ),
                     ),
                   ),
-                  if (item == value) const Icon(AppIcons.check, size: 11, color: ThemeConstants.accent),
+                  if (item == value) Icon(AppIcons.check, size: 11, color: c.accent),
                 ],
               ),
             ),
@@ -310,26 +359,27 @@ class _AppDropdown<T> extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext _) {
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return InkWell(
       onTap: _open,
       borderRadius: BorderRadius.circular(5),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          border: Border.all(color: ThemeConstants.deepBorder),
-          borderRadius: BorderRadius.circular(5),
-          color: ThemeConstants.inputSurface,
+          color: c.chipFill,
+          border: Border.all(color: c.chipStroke),
+          borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               label(value),
-              style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+              style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
             ),
             const SizedBox(width: 4),
-            const Icon(AppIcons.chevronDown, size: 10, color: ThemeConstants.mutedFg),
+            Icon(AppIcons.chevronDown, size: 10, color: c.mutedFg),
           ],
         ),
       ),

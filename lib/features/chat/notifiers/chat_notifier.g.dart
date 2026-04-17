@@ -140,6 +140,132 @@ abstract class _$SelectedModelNotifier extends $Notifier<AIModel> {
   }
 }
 
+@ProviderFor(SessionModeNotifier)
+final sessionModeProvider = SessionModeNotifierProvider._();
+
+final class SessionModeNotifierProvider extends $NotifierProvider<SessionModeNotifier, ChatMode> {
+  SessionModeNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sessionModeProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sessionModeNotifierHash();
+
+  @$internal
+  @override
+  SessionModeNotifier create() => SessionModeNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ChatMode value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ChatMode>(value));
+  }
+}
+
+String _$sessionModeNotifierHash() => r'b8c356e232ff88919ad9745362ddb56a771662f8';
+
+abstract class _$SessionModeNotifier extends $Notifier<ChatMode> {
+  ChatMode build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<ChatMode, ChatMode>;
+    final element = ref.element as $ClassProviderElement<AnyNotifier<ChatMode, ChatMode>, ChatMode, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(SessionEffortNotifier)
+final sessionEffortProvider = SessionEffortNotifierProvider._();
+
+final class SessionEffortNotifierProvider extends $NotifierProvider<SessionEffortNotifier, ChatEffort> {
+  SessionEffortNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sessionEffortProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sessionEffortNotifierHash();
+
+  @$internal
+  @override
+  SessionEffortNotifier create() => SessionEffortNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ChatEffort value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ChatEffort>(value));
+  }
+}
+
+String _$sessionEffortNotifierHash() => r'e4386bf903ddab10f0c82d3c59776ea26620bcb8';
+
+abstract class _$SessionEffortNotifier extends $Notifier<ChatEffort> {
+  ChatEffort build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<ChatEffort, ChatEffort>;
+    final element =
+        ref.element as $ClassProviderElement<AnyNotifier<ChatEffort, ChatEffort>, ChatEffort, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(SessionPermissionNotifier)
+final sessionPermissionProvider = SessionPermissionNotifierProvider._();
+
+final class SessionPermissionNotifierProvider extends $NotifierProvider<SessionPermissionNotifier, ChatPermission> {
+  SessionPermissionNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sessionPermissionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sessionPermissionNotifierHash();
+
+  @$internal
+  @override
+  SessionPermissionNotifier create() => SessionPermissionNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ChatPermission value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ChatPermission>(value));
+  }
+}
+
+String _$sessionPermissionNotifierHash() => r'2f2086b673f54c3115048e16533123d9493593af';
+
+abstract class _$SessionPermissionNotifier extends $Notifier<ChatPermission> {
+  ChatPermission build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<ChatPermission, ChatPermission>;
+    final element =
+        ref.element
+            as $ClassProviderElement<AnyNotifier<ChatPermission, ChatPermission>, ChatPermission, Object?, Object?>;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(ChatMessagesNotifier)
 final chatMessagesProvider = ChatMessagesNotifierFamily._();
 
@@ -178,7 +304,7 @@ final class ChatMessagesNotifierProvider extends $AsyncNotifierProvider<ChatMess
   }
 }
 
-String _$chatMessagesNotifierHash() => r'c6bcb417dd8cb74ff08a866941cd462c6a2e530f';
+String _$chatMessagesNotifierHash() => r'39395df0e754248f7b11e3901ec3c950b7c47a98';
 
 final class ChatMessagesNotifierFamily extends $Family
     with

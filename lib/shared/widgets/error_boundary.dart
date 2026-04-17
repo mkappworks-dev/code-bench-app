@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/errors/app_exception.dart';
 
 export 'async_error_view.dart';
@@ -52,22 +52,23 @@ class _ErrorFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: ThemeConstants.error),
+            Icon(Icons.error_outline, size: 48, color: c.error),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Something went wrong',
-              style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
+              style: TextStyle(color: c.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 8),
             Text(
               error,
-              style: const TextStyle(color: ThemeConstants.textMuted, fontSize: 12),
+              style: TextStyle(color: c.textMuted, fontSize: 12),
               textAlign: TextAlign.center,
               maxLines: 4,
               overflow: TextOverflow.ellipsis,

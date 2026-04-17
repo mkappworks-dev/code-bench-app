@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/constants/theme_constants.dart';
+import '../core/theme/app_colors.dart';
 import '../features/chat/notifiers/chat_notifier.dart';
 import '../features/chat/widgets/changes_panel.dart';
 import '../features/project_sidebar/project_sidebar.dart';
@@ -37,15 +39,11 @@ class ChatShell extends ConsumerWidget {
 
     return AppLifecycleObserver(
       child: Material(
-        color: ThemeConstants.background,
+        color: AppColors.of(context).background,
         child: CallbackShortcuts(
           bindings: {
-            // The notifier logs createSession failures; swallow here so the
-            // shortcut never surfaces as an uncaught exception.
-            const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () =>
-                _newChat(ref, context).catchError((Object _) {}),
-            const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
-                _newChat(ref, context).catchError((Object _) {}),
+            const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () => unawaited(_newChat(ref, context)),
+            const SingleActivator(LogicalKeyboardKey.keyN, control: true): () => unawaited(_newChat(ref, context)),
             const SingleActivator(LogicalKeyboardKey.comma, meta: true): () => context.go('/settings'),
             const SingleActivator(LogicalKeyboardKey.comma, control: true): () => context.go('/settings'),
           },

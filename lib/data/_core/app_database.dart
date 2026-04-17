@@ -17,6 +17,11 @@ class ChatSessions extends Table {
   DateTimeColumn get updatedAt => dateTime()();
   BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
   BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
+  // Per-session settings (v6)
+  TextColumn get systemPrompt => text().nullable()();
+  TextColumn get mode => text().nullable()();
+  TextColumn get effort => text().nullable()();
+  TextColumn get permission => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {sessionId};
@@ -149,7 +154,19 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (m, from, to) async {
+      if (from < 6) {
+        await m.addColumn(chatSessions, chatSessions.systemPrompt);
+        await m.addColumn(chatSessions, chatSessions.mode);
+        await m.addColumn(chatSessions, chatSessions.effort);
+        await m.addColumn(chatSessions, chatSessions.permission);
+      }
+    },
+  );
 }
 
 QueryExecutor _openConnection() {

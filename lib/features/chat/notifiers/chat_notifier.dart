@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/apply/models/applied_change.dart';
+import '../../../data/session/models/session_settings.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/chat_session.dart';
 import '../../../services/session/session_service.dart';
@@ -38,6 +39,33 @@ class SelectedModelNotifier extends _$SelectedModelNotifier {
   AIModel build() => AIModels.claude35Sonnet;
 
   void select(AIModel model) => state = model;
+}
+
+// Mode for the current session (chat / plan / act)
+@Riverpod(keepAlive: true)
+class SessionModeNotifier extends _$SessionModeNotifier {
+  @override
+  ChatMode build() => ChatMode.chat;
+
+  void set(ChatMode mode) => state = mode;
+}
+
+// Effort level for the current session (low / medium / high / max)
+@Riverpod(keepAlive: true)
+class SessionEffortNotifier extends _$SessionEffortNotifier {
+  @override
+  ChatEffort build() => ChatEffort.high;
+
+  void set(ChatEffort effort) => state = effort;
+}
+
+// Permission level for the current session
+@Riverpod(keepAlive: true)
+class SessionPermissionNotifier extends _$SessionPermissionNotifier {
+  @override
+  ChatPermission build() => ChatPermission.fullAccess;
+
+  void set(ChatPermission permission) => state = permission;
 }
 
 // Messages for the current session

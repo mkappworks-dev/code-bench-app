@@ -62,13 +62,14 @@ class _FakeGitService extends Fake implements GitService {
   Future<List<String>> listLocalBranches(String projectPath) async => [];
 
   @override
-  Future<Map<String, String>> worktreeBranches(String projectPath) async => {};
+  Future<({Map<String, String> active, Set<String> stale})> worktreeBranches(String projectPath) async =>
+      (active: const <String, String>{}, stale: const <String>{});
 
   @override
   Future<void> checkout(String projectPath, String branch) async {}
 
   @override
-  Future<void> createBranch(String projectPath, String name) async {}
+  Future<void> createBranch(String projectPath, String name, {String? baseBranch}) async {}
 
   @override
   Future<GitLiveState> fetchLiveState(String projectPath) async => GitLiveState.notGit;

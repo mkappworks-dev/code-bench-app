@@ -78,7 +78,7 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
       if (ollamaUrl.trim().isNotEmpty) await svc.writeOllamaUrl(ollamaUrl.trim());
       await svc.writeCustomEndpoint(customEndpoint.trim());
       await svc.writeCustomApiKey(customApiKey.trim());
-      ref.invalidate(aiRepositoryProvider);
+      if (ref.mounted) ref.invalidate(aiRepositoryProvider);
       return true;
     } catch (e, st) {
       dLog('[ApiKeysNotifier] saveAll failed: $e\n$st');
@@ -90,7 +90,7 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
   Future<bool> deleteKey(AIProvider provider) async {
     try {
       await ref.read(settingsServiceProvider).deleteApiKey(provider.name);
-      ref.invalidate(aiRepositoryProvider);
+      if (ref.mounted) ref.invalidate(aiRepositoryProvider);
       return true;
     } catch (e, st) {
       dLog('[ApiKeysNotifier] deleteKey failed: $e\n$st');

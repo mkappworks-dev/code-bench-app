@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/utils/snackbar_helper.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/apply/models/applied_change.dart';
 import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
@@ -43,10 +45,11 @@ class ChangesPanel extends ConsumerWidget {
       _ => null,
     };
 
+    final c = AppColors.of(context);
     return Container(
-      decoration: const BoxDecoration(
-        color: ThemeConstants.sidebarBackground,
-        border: Border(left: BorderSide(color: ThemeConstants.borderColor)),
+      decoration: BoxDecoration(
+        color: c.sidebarBackground,
+        border: Border(left: BorderSide(color: c.borderColor)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -54,13 +57,13 @@ class ChangesPanel extends ConsumerWidget {
           // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: c.borderColor)),
             ),
-            child: const Text(
+            child: Text(
               'Changes',
               style: TextStyle(
-                color: ThemeConstants.textPrimary,
+                color: c.textPrimary,
                 fontSize: ThemeConstants.uiFontSizeSmall,
                 fontWeight: FontWeight.w600,
               ),
@@ -69,10 +72,10 @@ class ChangesPanel extends ConsumerWidget {
           // Change entries
           Expanded(
             child: changes.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'No changes yet',
-                      style: TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
+                      style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
                     ),
                   )
                 : ListView(
@@ -85,10 +88,7 @@ class ChangesPanel extends ConsumerWidget {
                           padding: const EdgeInsets.fromLTRB(10, 8, 10, 2),
                           child: Text(
                             'Message $groupIndex',
-                            style: const TextStyle(
-                              color: ThemeConstants.faintFg,
-                              fontSize: ThemeConstants.uiFontSizeLabel,
-                            ),
+                            style: TextStyle(color: c.faintFg, fontSize: ThemeConstants.uiFontSizeLabel),
                           ),
                         ),
                         ...entry.value.map((change) => _ChangeEntry(change: change, project: project)),
@@ -171,12 +171,11 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
     final isGit = ref.read(gitActionsProvider.notifier).isGitRepo(project.path);
     await showDialog<void>(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: ThemeConstants.inputSurface,
-        title: const Text(
-          'File externally modified',
-          style: TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
-        ),
+      builder: (dialogCtx) => AppDialog(
+        icon: AppIcons.warning,
+        iconType: AppDialogIconType.teal,
+        title: 'File externally modified',
+        maxWidth: 580,
         content: ConflictMergeView(
           change: widget.change,
           currentContent: currentContent,
@@ -193,6 +192,7 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
           },
           onKeepCurrent: () => Navigator.of(dialogCtx).pop(),
         ),
+        // ConflictMergeView provides its own action buttons.
       ),
     );
   }
@@ -213,6 +213,7 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
       });
     });
 
+    final c = AppColors.of(context);
     final change = widget.change;
     final project = widget.project;
     final filename = p.basename(change.filePath);
@@ -239,9 +240,9 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
                     Flexible(
                       child: Text(
                         filename,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: ThemeConstants.editorFontFamily,
-                          color: ThemeConstants.textPrimary,
+                          color: c.textPrimary,
                           fontSize: ThemeConstants.uiFontSizeSmall,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -252,18 +253,16 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
                       builder: (context, snap) {
                         final isEdited = snap.data ?? false;
                         if (!isEdited) return const SizedBox.shrink();
+                        final c2 = AppColors.of(context);
                         return Container(
                           margin: const EdgeInsets.only(left: 6),
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
-                            color: ThemeConstants.editedBadgeBg,
+                            color: c2.editedBadgeBg,
                             borderRadius: BorderRadius.circular(3),
-                            border: Border.all(color: ThemeConstants.editedBadgeBorder),
+                            border: Border.all(color: c2.editedBadgeBorder),
                           ),
-                          child: const Text(
-                            'edited',
-                            style: TextStyle(color: ThemeConstants.pendingAmber, fontSize: 9),
-                          ),
+                          child: Text('edited', style: TextStyle(color: c2.pendingAmber, fontSize: 9)),
                         );
                       },
                     ),
@@ -271,7 +270,7 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
                 ),
                 Text(
                   relativePath,
-                  style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeLabel),
+                  style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeLabel),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -281,8 +280,8 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
           // +N line count
           Text(
             '+$additions',
-            style: const TextStyle(
-              color: ThemeConstants.success,
+            style: TextStyle(
+              color: c.success,
               fontSize: ThemeConstants.uiFontSizeLabel,
               fontFamily: ThemeConstants.editorFontFamily,
             ),
@@ -291,8 +290,8 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
           // −N line count
           Text(
             '\u2212$deletions',
-            style: const TextStyle(
-              color: ThemeConstants.error,
+            style: TextStyle(
+              color: c.error,
               fontSize: ThemeConstants.uiFontSizeLabel,
               fontFamily: ThemeConstants.editorFontFamily,
             ),
@@ -301,7 +300,7 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
           // Revert button
           GestureDetector(
             onTap: _handleRevert,
-            child: const Icon(AppIcons.revert, size: 12, color: ThemeConstants.mutedFg),
+            child: Icon(AppIcons.revert, size: 12, color: c.mutedFg),
           ),
         ],
       ),

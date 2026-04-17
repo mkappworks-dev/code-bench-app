@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../notifiers/pr_notifier.dart';
@@ -149,19 +152,18 @@ class _PRCardState extends ConsumerState<PRCard> {
   }) {
     return showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: ThemeConstants.inputSurface,
-        title: Text(title, style: const TextStyle(color: ThemeConstants.textPrimary)),
-        content: Text(body, style: const TextStyle(color: ThemeConstants.textSecondary)),
+      builder: (ctx) => AppDialog(
+        icon: destructive ? AppIcons.warning : AppIcons.gitPullRequest,
+        iconType: destructive ? AppDialogIconType.destructive : AppDialogIconType.teal,
+        title: title,
+        content: Builder(
+          builder: (context) => Text(body, style: TextStyle(color: AppColors.of(context).textSecondary, fontSize: 12)),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(
-              actionLabel,
-              style: TextStyle(color: destructive ? ThemeConstants.error : ThemeConstants.success),
-            ),
-          ),
+          AppDialogAction.cancel(onPressed: () => Navigator.of(ctx).pop(false)),
+          destructive
+              ? AppDialogAction.destructive(label: actionLabel, onPressed: () => Navigator.of(ctx).pop(true))
+              : AppDialogAction.primary(label: actionLabel, onPressed: () => Navigator.of(ctx).pop(true)),
         ],
       ),
     );
@@ -192,24 +194,28 @@ class _PRCardState extends ConsumerState<PRCard> {
     final async = ref.watch(_provider);
 
     return async.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.all(8),
-        child: Row(
-          children: [
-            SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5)),
-            SizedBox(width: 8),
-            Text(
-              'Loading PR…',
-              style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-            ),
-          ],
+      loading: () => Builder(
+        builder: (context) => Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5)),
+              const SizedBox(width: 8),
+              Text(
+                'Loading PR…',
+                style: TextStyle(color: AppColors.of(context).textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+              ),
+            ],
+          ),
         ),
       ),
-      error: (e, _) => Padding(
-        padding: const EdgeInsets.all(8),
-        child: Text(
-          _friendlyError(e),
-          style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+      error: (e, _) => Builder(
+        builder: (context) => Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(
+            _friendlyError(e),
+            style: TextStyle(color: AppColors.of(context).textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+          ),
         ),
       ),
       data: (s) => _buildCard(s),
@@ -217,6 +223,7 @@ class _PRCardState extends ConsumerState<PRCard> {
   }
 
   Widget _buildCard(PrCardState s) {
+    final c = AppColors.of(context);
     final title = s.pr['title'] as String? ?? '';
     final prNum = s.pr['number'] as int? ?? widget.prNumber;
     final base = (s.pr['base'] as Map<String, dynamic>?)?['ref'] as String? ?? '';
@@ -225,17 +232,17 @@ class _PRCardState extends ConsumerState<PRCard> {
     final htmlUrl = s.pr['html_url'] as String? ?? '';
     final badgeText = s.merged ? 'merged' : (s.pr['state'] as String? ?? 'open');
     final badgeColor = switch (badgeText) {
-      'merged' => ThemeConstants.prMergedColor,
-      'closed' => ThemeConstants.error,
-      _ => ThemeConstants.success,
+      'merged' => c.prMergedColor,
+      'closed' => c.error,
+      _ => c.success,
     };
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: ThemeConstants.inputSurface,
+        color: c.inputSurface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: ThemeConstants.borderColor),
+        border: Border.all(color: c.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,16 +252,16 @@ class _PRCardState extends ConsumerState<PRCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: ThemeConstants.error.withValues(alpha: 0.12),
+                color: c.error.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: ThemeConstants.error.withValues(alpha: 0.4)),
+                border: Border.all(color: c.error.withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.warning_amber_rounded, size: 11, color: ThemeConstants.error),
+                  Icon(Icons.warning_amber_rounded, size: 11, color: c.error),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Text(s.pollError!, style: const TextStyle(color: ThemeConstants.error, fontSize: 10)),
+                    child: Text(s.pollError!, style: TextStyle(color: c.error, fontSize: 10)),
                   ),
                 ],
               ),
@@ -265,16 +272,16 @@ class _PRCardState extends ConsumerState<PRCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: ThemeConstants.error.withValues(alpha: 0.12),
+                color: c.error.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: ThemeConstants.error.withValues(alpha: 0.4)),
+                border: Border.all(color: c.error.withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, size: 11, color: ThemeConstants.error),
+                  Icon(Icons.error_outline, size: 11, color: c.error),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Text(s.actionError!, style: const TextStyle(color: ThemeConstants.error, fontSize: 10)),
+                    child: Text(s.actionError!, style: TextStyle(color: c.error, fontSize: 10)),
                   ),
                 ],
               ),
@@ -297,8 +304,8 @@ class _PRCardState extends ConsumerState<PRCard> {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    color: ThemeConstants.textPrimary,
+                  style: TextStyle(
+                    color: c.textPrimary,
                     fontSize: ThemeConstants.uiFontSize,
                     fontWeight: FontWeight.w500,
                   ),
@@ -306,14 +313,14 @@ class _PRCardState extends ConsumerState<PRCard> {
               ),
               Text(
                 '#$prNum',
-                style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
             '$base ← $head · $commits commit${commits == 1 ? '' : 's'}',
-            style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeLabel),
+            style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeLabel),
           ),
           if (s.checkRuns.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -328,11 +335,11 @@ class _PRCardState extends ConsumerState<PRCard> {
                   child: const Text('✓ Approve', style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall)),
                 )
               else if (s.approved && !s.merged)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
                     'Approved ✓',
-                    style: TextStyle(color: ThemeConstants.success, fontSize: ThemeConstants.uiFontSizeSmall),
+                    style: TextStyle(color: c.success, fontSize: ThemeConstants.uiFontSizeSmall),
                   ),
                 ),
               const SizedBox(width: 8),
@@ -353,13 +360,14 @@ class _PRCardState extends ConsumerState<PRCard> {
     );
   }
 
-  Widget _buildCheckChip(Map<String, dynamic> c) {
-    final name = c['name'] as String? ?? '';
-    final conclusion = c['conclusion'] as String?;
+  Widget _buildCheckChip(Map<String, dynamic> check) {
+    final c = AppColors.of(context);
+    final name = check['name'] as String? ?? '';
+    final conclusion = check['conclusion'] as String?;
     final (icon, color) = switch (conclusion) {
-      'success' => ('✓', ThemeConstants.success),
-      'failure' => ('✗', ThemeConstants.error),
-      _ => ('⏳', ThemeConstants.pendingAmber),
+      'success' => ('✓', c.success),
+      'failure' => ('✗', c.error),
+      _ => ('⏳', c.pendingAmber),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

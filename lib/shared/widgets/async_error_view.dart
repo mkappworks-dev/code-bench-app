@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/errors/app_exception.dart';
 
 /// A Riverpod-aware error view used in `AsyncValue.when` error callbacks.
@@ -12,17 +12,18 @@ class AsyncErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 40, color: ThemeConstants.error),
+            Icon(Icons.error_outline, size: 40, color: c.error),
             const SizedBox(height: 12),
             Text(
               userMessage(error, fallback: 'An unexpected error occurred.'),
-              style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 13),
+              style: TextStyle(color: c.textSecondary, fontSize: 13),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),

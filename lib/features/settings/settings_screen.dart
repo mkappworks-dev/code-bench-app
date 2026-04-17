@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_icons.dart';
-import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/utils/platform_utils.dart';
+import '../../core/widgets/app_dialog.dart';
+import '../../core/widgets/app_snack_bar.dart';
 import 'archive_screen.dart';
 import 'general_screen.dart';
 import 'notifiers/general_prefs_notifier.dart';
@@ -29,8 +31,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Scaffold(
-      backgroundColor: ThemeConstants.background,
+      backgroundColor: c.background,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -42,7 +45,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           Expanded(
             child: Container(
-              color: ThemeConstants.sidebarBackground,
+              color: c.sidebarBackground,
               padding: EdgeInsets.only(left: 24, right: 24, top: PlatformUtils.isMacOS ? 48 : 20),
               child: _buildContent(),
             ),
@@ -66,26 +69,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _restoreDefaults() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: ThemeConstants.panelBackground,
-        title: const Text(
-          'Restore General defaults?',
-          style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 14),
-        ),
-        content: const Text(
-          'Auto-commit, terminal app, and delete confirmation will be reset.\n\n'
-          'API keys, GitHub sign-in, chat history, and projects are not affected.',
-          style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 12),
+      builder: (ctx) => AppDialog(
+        icon: AppIcons.settings,
+        iconType: AppDialogIconType.teal,
+        title: 'Restore General defaults?',
+        content: Builder(
+          builder: (context) {
+            final c = AppColors.of(context);
+            return Text(
+              'Auto-commit, terminal app, and delete confirmation will be reset.\n\n'
+              'API keys, GitHub sign-in, chat history, and projects are not affected.',
+              style: TextStyle(color: c.textSecondary, fontSize: 12),
+            );
+          },
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Restore')),
+          AppDialogAction.cancel(onPressed: () => Navigator.pop(ctx, false)),
+          AppDialogAction.primary(label: 'Restore', onPressed: () => Navigator.pop(ctx, true)),
         ],
       ),
     );
     if (confirmed != true) return;
     await ref.read(generalPrefsProvider.notifier).restoreDefaults();
-    if (mounted) setState(() => _generalVersion++);
+    if (!mounted) return;
+    if (ref.read(generalPrefsProvider).hasError) {
+      AppSnackBar.show(context, 'Could not restore defaults — please try again.', type: AppSnackBarType.error);
+    } else {
+      setState(() => _generalVersion++);
+    }
   }
 }
 
@@ -106,21 +117,22 @@ class _SettingsLeftNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Container(
       width: 200,
-      decoration: const BoxDecoration(
-        color: ThemeConstants.activityBar,
-        border: Border(right: BorderSide(color: ThemeConstants.borderColor)),
+      decoration: BoxDecoration(
+        color: c.activityBar,
+        border: Border(right: BorderSide(color: c.borderColor)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (PlatformUtils.isMacOS) const SizedBox(height: 28),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 20, 16, 16),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
             child: Text(
               'Settings',
-              style: TextStyle(color: ThemeConstants.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(color: c.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ),
           _NavItem(
@@ -144,12 +156,34 @@ class _SettingsLeftNav extends StatelessWidget {
           const Spacer(),
           InkWell(
             onTap: onRestoreDefaults,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text('↺ Restore defaults', style: TextStyle(color: ThemeConstants.mutedFg, fontSize: 11)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text('↺ Restore defaults', style: TextStyle(color: c.mutedFg, fontSize: 11)),
             ),
           ),
-          _NavItem(icon: AppIcons.arrowLeft, label: 'Back', isActive: false, onTap: onBack),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+            child: InkWell(
+              onTap: onBack,
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: c.chipFill,
+                  border: Border.all(color: c.chipStroke),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(AppIcons.arrowLeft, size: 11, color: c.textSecondary),
+                    const SizedBox(width: 6),
+                    Text('Back', style: TextStyle(color: c.textSecondary, fontSize: 11)),
+                  ],
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
         ],
       ),
@@ -167,25 +201,22 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.only(left: isActive ? 14 : 16, right: 16, top: 8, bottom: 8),
+        margin: isActive ? const EdgeInsets.only(right: 6) : EdgeInsets.zero,
+        padding: EdgeInsets.only(left: isActive ? 11 : 16, right: 16, top: 8, bottom: 8),
         decoration: BoxDecoration(
-          color: isActive ? ThemeConstants.selectionBg : null,
-          border: isActive ? const Border(left: BorderSide(color: ThemeConstants.accent, width: 2)) : null,
+          color: isActive ? c.accentTintMid : null,
+          borderRadius: isActive ? const BorderRadius.horizontal(right: Radius.circular(6)) : null,
+          border: isActive ? Border(left: BorderSide(color: c.accent, width: 3)) : null,
         ),
         child: Row(
           children: [
-            Icon(icon, size: 14, color: isActive ? ThemeConstants.accent : ThemeConstants.textSecondary),
+            Icon(icon, size: 14, color: isActive ? c.accent : c.textSecondary),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
-                fontSize: 12,
-              ),
-            ),
+            Text(label, style: TextStyle(color: isActive ? c.textPrimary : c.textSecondary, fontSize: 12)),
           ],
         ),
       ),

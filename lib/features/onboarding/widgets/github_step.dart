@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../core/widgets/app_snack_bar.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../../data/github/models/repository.dart';
 import '../notifiers/github_auth_notifier.dart';
 
@@ -73,6 +75,7 @@ class _GithubStepState extends ConsumerState<GithubStep> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final authAsync = ref.watch(gitHubAuthProvider);
     final (account, isLoading) = switch (authAsync) {
       AsyncLoading() => (null, true),
@@ -95,7 +98,8 @@ class _GithubStepState extends ConsumerState<GithubStep> {
         // OAuth button
         FilledButton.icon(
           style: FilledButton.styleFrom(
-            backgroundColor: ThemeConstants.githubBrandColor, // GitHub brand colour
+            backgroundColor: c.githubBrandColor, // GitHub brand colour
+            foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
@@ -119,17 +123,13 @@ class _GithubStepState extends ConsumerState<GithubStep> {
               Text(
                 'Use a Personal Access Token instead',
                 style: TextStyle(
-                  color: ThemeConstants.accent,
+                  color: c.accent,
                   fontSize: ThemeConstants.uiFontSizeSmall,
                   decoration: TextDecoration.underline,
                 ),
               ),
               const SizedBox(width: 4),
-              Icon(
-                _showPat ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                size: 14,
-                color: ThemeConstants.accent,
-              ),
+              Icon(_showPat ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, size: 14, color: c.accent),
             ],
           ),
         ),
@@ -139,24 +139,17 @@ class _GithubStepState extends ConsumerState<GithubStep> {
           Row(
             children: [
               Expanded(
-                child: TextField(
+                child: AppTextField(
                   controller: _patController,
                   obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Personal Access Token',
-                    labelStyle: TextStyle(
-                      color: ThemeConstants.textSecondary,
-                      fontSize: ThemeConstants.uiFontSizeSmall,
-                    ),
-                    suffixIcon: _patValid == null
-                        ? null
-                        : Icon(
-                            _patValid! ? Icons.check_circle : Icons.error,
-                            color: _patValid! ? ThemeConstants.success : ThemeConstants.error,
-                            size: 16,
-                          ),
-                  ),
-                  style: TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
+                  labelText: 'Personal Access Token',
+                  suffixIcon: _patValid == null
+                      ? null
+                      : Icon(
+                          _patValid! ? Icons.check_circle : Icons.error,
+                          color: _patValid! ? c.success : c.error,
+                          size: 16,
+                        ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -174,7 +167,7 @@ class _GithubStepState extends ConsumerState<GithubStep> {
             child: Text(
               'Create a token on GitHub →',
               style: TextStyle(
-                color: ThemeConstants.accent,
+                color: c.accent,
                 fontSize: ThemeConstants.uiFontSizeSmall,
                 decoration: TextDecoration.underline,
               ),
@@ -189,7 +182,7 @@ class _GithubStepState extends ConsumerState<GithubStep> {
             TextButton(
               onPressed: widget.onSkip,
               style: TextButton.styleFrom(
-                foregroundColor: ThemeConstants.textMuted,
+                foregroundColor: c.textMuted,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               ),
               child: const Text('Skip for now', style: TextStyle(fontSize: 12)),
@@ -216,15 +209,16 @@ class _ConnectedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: ThemeConstants.panelBackground,
+            color: c.panelBackground,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: ThemeConstants.faintFg),
+            border: Border.all(color: c.faintFg),
           ),
           child: Row(
             children: [
@@ -234,19 +228,19 @@ class _ConnectedView extends StatelessWidget {
                   child: Image.network(account.avatarUrl, width: 40, height: 40),
                 )
               else
-                Icon(Icons.person, size: 40, color: ThemeConstants.textSecondary),
+                Icon(Icons.person, size: 40, color: c.textSecondary),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.check_circle, size: 14, color: ThemeConstants.success),
+                      Icon(Icons.check_circle, size: 14, color: c.success),
                       const SizedBox(width: 4),
                       Text(
                         account.username,
                         style: TextStyle(
-                          color: ThemeConstants.textPrimary,
+                          color: c.textPrimary,
                           fontSize: ThemeConstants.uiFontSize,
                           fontWeight: FontWeight.w600,
                         ),
@@ -256,7 +250,7 @@ class _ConnectedView extends StatelessWidget {
                   if (account.name != null)
                     Text(
                       account.name!,
-                      style: TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                      style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                     ),
                 ],
               ),
@@ -265,7 +259,7 @@ class _ConnectedView extends StatelessWidget {
                 onPressed: onDisconnect,
                 child: Text(
                   'Disconnect',
-                  style: TextStyle(color: ThemeConstants.textMuted, fontSize: ThemeConstants.uiFontSizeSmall),
+                  style: TextStyle(color: c.textMuted, fontSize: ThemeConstants.uiFontSizeSmall),
                 ),
               ),
             ],
@@ -279,14 +273,14 @@ class _ConnectedView extends StatelessWidget {
             TextButton(
               onPressed: onSkip,
               style: TextButton.styleFrom(
-                foregroundColor: ThemeConstants.textMuted,
+                foregroundColor: c.textMuted,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               ),
               child: const Text('Skip for now', style: TextStyle(fontSize: 12)),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: ThemeConstants.accent,
+                backgroundColor: c.accent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               ),
               onPressed: onContinue,

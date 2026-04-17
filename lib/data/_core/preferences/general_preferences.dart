@@ -1,3 +1,4 @@
+import '../../settings/models/app_theme_preference.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -39,5 +40,27 @@ class GeneralPreferences {
   Future<void> setDeleteConfirmation(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_deleteConfirm, value);
+  }
+
+  static const _themeMode = 'theme_mode'; // values: 'system', 'dark', 'light'
+
+  Future<AppThemePreference> getThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_themeMode) ?? 'system';
+    return switch (raw) {
+      'dark' => AppThemePreference.dark,
+      'light' => AppThemePreference.light,
+      _ => AppThemePreference.system,
+    };
+  }
+
+  Future<void> setThemeMode(AppThemePreference mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = switch (mode) {
+      AppThemePreference.dark => 'dark',
+      AppThemePreference.light => 'light',
+      AppThemePreference.system => 'system',
+    };
+    await prefs.setString(_themeMode, raw);
   }
 }

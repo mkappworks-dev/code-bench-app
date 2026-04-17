@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
@@ -71,6 +72,17 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource {
         }
       }
     } on DioException catch (e) {
+      String? errorBody;
+      if (e.response?.data is ResponseBody) {
+        try {
+          final bytes = await (e.response!.data as ResponseBody).stream.fold<List<int>>(
+            [],
+            (acc, chunk) => [...acc, ...chunk],
+          );
+          errorBody = utf8.decode(bytes);
+        } catch (_) {}
+      }
+      dLog('[AnthropicDatasource] request failed: status=${e.response?.statusCode} type=${e.type} body=$errorBody');
       throw NetworkException('Anthropic request failed', statusCode: e.response?.statusCode, originalError: e);
     }
   }

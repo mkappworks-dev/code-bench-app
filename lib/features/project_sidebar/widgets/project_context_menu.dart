@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 
@@ -14,6 +14,7 @@ class ProjectContextMenu {
     required bool isGit,
     bool isMissing = false,
   }) async {
+    final c = AppColors.of(context);
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     return showInstantMenu<String>(
       context: context,
@@ -23,52 +24,52 @@ class ProjectContextMenu {
         overlay.size.width - position.dx,
         overlay.size.height - position.dy,
       ),
-      color: ThemeConstants.panelBackground,
+      color: c.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(6),
-        side: const BorderSide(color: ThemeConstants.faintFg),
+        side: BorderSide(color: c.faintFg),
       ),
       items: [
         if (!isMissing) ...[
-          _buildItem('open_finder', 'Open in Finder', Icons.folder_open_outlined),
-          _buildItem('copy_path', 'Copy path', Icons.copy_outlined),
+          _buildItem('open_finder', 'Open in Finder', Icons.folder_open_outlined, c),
+          _buildItem('copy_path', 'Copy path', Icons.copy_outlined, c),
           const PopupMenuDivider(),
-          _buildItem('new_conversation', 'New conversation', Icons.add),
+          _buildItem('new_conversation', 'New conversation', Icons.add, c),
           const PopupMenuDivider(),
         ] else ...[
-          _buildItem('copy_path', 'Copy path', Icons.copy_outlined),
+          _buildItem('copy_path', 'Copy path', Icons.copy_outlined, c),
           const PopupMenuDivider(),
-          _buildItem('relocate', 'Relocate…', Icons.drive_file_move_outlined),
+          _buildItem('relocate', 'Relocate…', Icons.drive_file_move_outlined, c),
           const PopupMenuDivider(),
         ],
-        _buildDangerItem('remove', 'Remove from Code Bench'),
+        _buildDangerItem('remove', 'Remove from Code Bench', c),
       ],
     );
   }
 
-  static PopupMenuItem<String> _buildItem(String value, String label, IconData icon) {
+  static PopupMenuItem<String> _buildItem(String value, String label, IconData icon, AppColors c) {
     return PopupMenuItem<String>(
       value: value,
       height: 32,
       child: Row(
         children: [
-          Icon(icon, size: 14, color: ThemeConstants.textSecondary),
+          Icon(icon, size: 14, color: c.textSecondary),
           const SizedBox(width: 8),
-          Text(label, style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 11)),
+          Text(label, style: TextStyle(color: c.textPrimary, fontSize: 11)),
         ],
       ),
     );
   }
 
-  static PopupMenuItem<String> _buildDangerItem(String value, String label) {
+  static PopupMenuItem<String> _buildDangerItem(String value, String label, AppColors c) {
     return PopupMenuItem<String>(
       value: value,
       height: 32,
       child: Row(
         children: [
-          const Icon(Icons.close, size: 14, color: ThemeConstants.error),
+          Icon(Icons.close, size: 14, color: c.error),
           const SizedBox(width: 8),
-          Text(label, style: const TextStyle(color: ThemeConstants.error, fontSize: 11)),
+          Text(label, style: TextStyle(color: c.error, fontSize: 11)),
         ],
       ),
     );
@@ -85,12 +86,27 @@ class ProjectContextMenu {
   }) async {
     switch (action) {
       case 'open_finder':
-        final launched = await launchUrl(Uri.file(projectPath), mode: LaunchMode.platformDefault);
-        if (!launched && context.mounted) {
-          AppSnackBar.show(context, 'Could not open in Finder.', type: AppSnackBarType.error);
+        try {
+          final launched = await launchUrl(Uri.file(projectPath), mode: LaunchMode.platformDefault);
+          if (!launched && context.mounted) {
+            AppSnackBar.show(context, 'Could not open in Finder.', type: AppSnackBarType.error);
+          }
+        } catch (e) {
+          if (context.mounted) {
+            AppSnackBar.show(context, 'Could not open in Finder.', type: AppSnackBarType.error);
+          }
         }
       case 'copy_path':
-        await Clipboard.setData(ClipboardData(text: projectPath));
+        try {
+          await Clipboard.setData(ClipboardData(text: projectPath));
+          if (context.mounted) {
+            AppSnackBar.show(context, 'Path copied.', type: AppSnackBarType.success);
+          }
+        } catch (e) {
+          if (context.mounted) {
+            AppSnackBar.show(context, 'Could not copy path.', type: AppSnackBarType.error);
+          }
+        }
       case 'new_conversation':
         onNewConversation(projectId);
       case 'relocate':

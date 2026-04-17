@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'ai_model.freezed.dart';
@@ -82,11 +83,11 @@ class AIModels {
     supportsStreaming: true,
   );
 
-  static const geminiPro = AIModel(
-    id: 'gemini-1.5-pro',
+  static const geminiFlash = AIModel(
+    id: 'gemini-2.0-flash',
     provider: AIProvider.gemini,
-    name: 'Gemini 1.5 Pro',
-    modelId: 'gemini-1.5-pro',
+    name: 'Gemini 2.0 Flash',
+    modelId: 'gemini-2.0-flash',
     contextWindow: 1000000,
     supportsStreaming: true,
     isDefault: true,
@@ -101,5 +102,7 @@ class AIModels {
     supportsStreaming: true,
   );
 
-  static List<AIModel> get defaults => [gpt4o, gpt4oMini, claude35Sonnet, claude3Haiku, geminiPro, customModel];
+  static List<AIModel> get defaults => [gpt4o, gpt4oMini, claude35Sonnet, claude3Haiku, geminiFlash, customModel];
+
+  static AIModel? fromId(String modelId) => defaults.firstWhereOrNull((m) => m.modelId == modelId);
 }

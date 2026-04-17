@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../core/widgets/app_snack_bar.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../settings/notifiers/settings_actions.dart';
 
@@ -49,15 +51,16 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
   }
 
   Future<void> _showProviderPicker(BuildContext btnCtx) async {
+    final c = AppColors.of(btnCtx);
     final available = AIProvider.values.where((p) => !_addedProviders.contains(p)).toList();
     if (available.isEmpty) return;
 
     final picked = await showInstantMenuAnchoredTo<AIProvider>(
       buttonContext: btnCtx,
-      color: ThemeConstants.panelBackground,
+      color: c.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(6),
-        side: const BorderSide(color: ThemeConstants.faintFg),
+        side: BorderSide(color: c.faintFg),
       ),
       items: available
           .map(
@@ -66,7 +69,7 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
               height: 30,
               child: Text(
                 p.displayName,
-                style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+                style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
               ),
             ),
           )
@@ -117,6 +120,7 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     ref.listen(settingsActionsProvider, (_, next) {
       if (!_saving) return;
       if (next is! AsyncError || !mounted) return;
@@ -152,7 +156,7 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
                     icon: const Icon(Icons.add, size: 16),
                     label: const Text('Add another provider'),
                     style: TextButton.styleFrom(
-                      foregroundColor: ThemeConstants.accent,
+                      foregroundColor: c.accent,
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                     ),
@@ -168,14 +172,14 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
             TextButton(
               onPressed: widget.onSkip,
               style: TextButton.styleFrom(
-                foregroundColor: ThemeConstants.textMuted,
+                foregroundColor: c.textMuted,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               ),
               child: const Text('Skip for now', style: TextStyle(fontSize: 12)),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: ThemeConstants.accent,
+                backgroundColor: c.accent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
               ),
               onPressed: _saving ? null : _saveAll,
@@ -227,40 +231,28 @@ class _ProviderRowState extends State<_ProviderRow> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Row(
       children: [
         SizedBox(
           width: 90,
           child: Text(
             widget.provider.displayName.toUpperCase(),
-            style: const TextStyle(
-              color: ThemeConstants.textSecondary,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.6,
-            ),
+            style: TextStyle(color: c.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.6),
           ),
         ),
         Expanded(
-          child: TextField(
+          child: AppTextField(
             controller: widget.controller,
             obscureText: !_isUrlProvider && _obscure,
-            style: const TextStyle(
-              color: ThemeConstants.textPrimary,
-              fontSize: 13,
-              fontFamily: ThemeConstants.editorFontFamily,
-            ),
-            decoration: InputDecoration(hintText: _isUrlProvider ? 'http://localhost:11434' : 'API key...'),
+            hintText: _isUrlProvider ? 'http://localhost:11434' : 'API key...',
+            fontFamily: ThemeConstants.editorFontFamily,
           ),
         ),
         if (!_isUrlProvider) ...[
           const SizedBox(width: 6),
           IconButton(
-            icon: Icon(
-              _obscure ? Icons.visibility_off : Icons.visibility,
-              size: 16,
-              color: ThemeConstants.textSecondary,
-            ),
+            icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility, size: 16, color: c.textSecondary),
             onPressed: () => setState(() => _obscure = !_obscure),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -271,19 +263,20 @@ class _ProviderRowState extends State<_ProviderRow> {
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: widget.controller,
             builder: (context, value, _) {
+              final rc = AppColors.of(context);
               final hasKey = value.text.trim().isNotEmpty;
               final Color borderCol = !hasKey
-                  ? ThemeConstants.borderColor
+                  ? rc.borderColor
                   : widget.testResult == true
-                  ? ThemeConstants.success
+                  ? rc.success
                   : widget.testResult == false
-                  ? ThemeConstants.error
-                  : ThemeConstants.borderColor;
+                  ? rc.error
+                  : rc.borderColor;
               final Color fgCol = widget.testResult == true
-                  ? ThemeConstants.success
+                  ? rc.success
                   : widget.testResult == false
-                  ? ThemeConstants.error
-                  : ThemeConstants.textSecondary;
+                  ? rc.error
+                  : rc.textSecondary;
               final isEnabled = hasKey && !widget.isTesting;
               return GestureDetector(
                 onTap: isEnabled ? widget.onTest : null,
@@ -321,11 +314,7 @@ class _ProviderRowState extends State<_ProviderRow> {
         ],
         const SizedBox(width: 6),
         IconButton(
-          icon: Icon(
-            Icons.close,
-            size: 14,
-            color: widget.canRemove ? ThemeConstants.textSecondary : ThemeConstants.borderColor,
-          ),
+          icon: Icon(Icons.close, size: 14, color: widget.canRemove ? c.textSecondary : c.borderColor),
           onPressed: widget.canRemove ? widget.onRemove : null,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 24, minHeight: 32),

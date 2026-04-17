@@ -1,3 +1,4 @@
+import 'package:code_bench_app/core/theme/app_colors.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/data/session/models/tool_event.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
@@ -39,8 +40,9 @@ ToolEvent _done(String id, {String toolName = 'read_file'}) =>
 
 Widget _harness(ProviderContainer container) => UncontrolledProviderScope(
   container: container,
-  child: const MaterialApp(
-    home: Scaffold(
+  child: MaterialApp(
+    theme: ThemeData(extensions: [AppColors.dark]),
+    home: const Scaffold(
       body: WorkLogSection(sessionId: 's1', messageId: 'm1'),
     ),
   ),

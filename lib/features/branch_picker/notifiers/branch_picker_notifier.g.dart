@@ -17,7 +17,7 @@ final class BranchPickerNotifierProvider extends $AsyncNotifierProvider<BranchPi
     : super(
         retry: null,
         name: r'branchPickerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -47,7 +47,7 @@ final class BranchPickerNotifierProvider extends $AsyncNotifierProvider<BranchPi
   }
 }
 
-String _$branchPickerNotifierHash() => r'9ff362d82679cfed286d8bbdb48d985579d6e4c4';
+String _$branchPickerNotifierHash() => r'3e7597b0063eea84da685b31111f7c51b2695a16';
 
 final class BranchPickerNotifierFamily extends $Family
     with
@@ -64,7 +64,7 @@ final class BranchPickerNotifierFamily extends $Family
         name: r'branchPickerProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   BranchPickerNotifierProvider call(String projectPath) =>

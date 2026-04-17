@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ChatSession {
 
- String get sessionId; String get title; String get modelId; String get providerId; String? get projectId; DateTime get createdAt; DateTime get updatedAt; bool get isPinned; bool get isArchived;
+ String get sessionId; String get title; String get modelId; String get providerId; String? get projectId; DateTime get createdAt; DateTime get updatedAt; bool get isPinned; bool get isArchived; String? get systemPrompt; String? get mode; String? get effort; String? get permission;
 /// Create a copy of ChatSession
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $ChatSessionCopyWith<ChatSession> get copyWith => _$ChatSessionCopyWithImpl<Chat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatSession&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.title, title) || other.title == title)&&(identical(other.modelId, modelId) || other.modelId == modelId)&&(identical(other.providerId, providerId) || other.providerId == providerId)&&(identical(other.projectId, projectId) || other.projectId == projectId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatSession&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.title, title) || other.title == title)&&(identical(other.modelId, modelId) || other.modelId == modelId)&&(identical(other.providerId, providerId) || other.providerId == providerId)&&(identical(other.projectId, projectId) || other.projectId == projectId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived)&&(identical(other.systemPrompt, systemPrompt) || other.systemPrompt == systemPrompt)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.effort, effort) || other.effort == effort)&&(identical(other.permission, permission) || other.permission == permission));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,sessionId,title,modelId,providerId,projectId,createdAt,updatedAt,isPinned,isArchived);
+int get hashCode => Object.hash(runtimeType,sessionId,title,modelId,providerId,projectId,createdAt,updatedAt,isPinned,isArchived,systemPrompt,mode,effort,permission);
 
 @override
 String toString() {
-  return 'ChatSession(sessionId: $sessionId, title: $title, modelId: $modelId, providerId: $providerId, projectId: $projectId, createdAt: $createdAt, updatedAt: $updatedAt, isPinned: $isPinned, isArchived: $isArchived)';
+  return 'ChatSession(sessionId: $sessionId, title: $title, modelId: $modelId, providerId: $providerId, projectId: $projectId, createdAt: $createdAt, updatedAt: $updatedAt, isPinned: $isPinned, isArchived: $isArchived, systemPrompt: $systemPrompt, mode: $mode, effort: $effort, permission: $permission)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $ChatSessionCopyWith<$Res>  {
   factory $ChatSessionCopyWith(ChatSession value, $Res Function(ChatSession) _then) = _$ChatSessionCopyWithImpl;
 @useResult
 $Res call({
- String sessionId, String title, String modelId, String providerId, String? projectId, DateTime createdAt, DateTime updatedAt, bool isPinned, bool isArchived
+ String sessionId, String title, String modelId, String providerId, String? projectId, DateTime createdAt, DateTime updatedAt, bool isPinned, bool isArchived, String? systemPrompt, String? mode, String? effort, String? permission
 });
 
 
@@ -65,7 +65,7 @@ class _$ChatSessionCopyWithImpl<$Res>
 
 /// Create a copy of ChatSession
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? sessionId = null,Object? title = null,Object? modelId = null,Object? providerId = null,Object? projectId = freezed,Object? createdAt = null,Object? updatedAt = null,Object? isPinned = null,Object? isArchived = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? sessionId = null,Object? title = null,Object? modelId = null,Object? providerId = null,Object? projectId = freezed,Object? createdAt = null,Object? updatedAt = null,Object? isPinned = null,Object? isArchived = null,Object? systemPrompt = freezed,Object? mode = freezed,Object? effort = freezed,Object? permission = freezed,}) {
   return _then(_self.copyWith(
 sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -76,7 +76,11 @@ as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore:
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,isPinned: null == isPinned ? _self.isPinned : isPinned // ignore: cast_nullable_to_non_nullable
 as bool,isArchived: null == isArchived ? _self.isArchived : isArchived // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,systemPrompt: freezed == systemPrompt ? _self.systemPrompt : systemPrompt // ignore: cast_nullable_to_non_nullable
+as String?,mode: freezed == mode ? _self.mode : mode // ignore: cast_nullable_to_non_nullable
+as String?,effort: freezed == effort ? _self.effort : effort // ignore: cast_nullable_to_non_nullable
+as String?,permission: freezed == permission ? _self.permission : permission // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -161,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String sessionId,  String title,  String modelId,  String providerId,  String? projectId,  DateTime createdAt,  DateTime updatedAt,  bool isPinned,  bool isArchived)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String sessionId,  String title,  String modelId,  String providerId,  String? projectId,  DateTime createdAt,  DateTime updatedAt,  bool isPinned,  bool isArchived,  String? systemPrompt,  String? mode,  String? effort,  String? permission)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatSession() when $default != null:
-return $default(_that.sessionId,_that.title,_that.modelId,_that.providerId,_that.projectId,_that.createdAt,_that.updatedAt,_that.isPinned,_that.isArchived);case _:
+return $default(_that.sessionId,_that.title,_that.modelId,_that.providerId,_that.projectId,_that.createdAt,_that.updatedAt,_that.isPinned,_that.isArchived,_that.systemPrompt,_that.mode,_that.effort,_that.permission);case _:
   return orElse();
 
 }
@@ -182,10 +186,10 @@ return $default(_that.sessionId,_that.title,_that.modelId,_that.providerId,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String sessionId,  String title,  String modelId,  String providerId,  String? projectId,  DateTime createdAt,  DateTime updatedAt,  bool isPinned,  bool isArchived)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String sessionId,  String title,  String modelId,  String providerId,  String? projectId,  DateTime createdAt,  DateTime updatedAt,  bool isPinned,  bool isArchived,  String? systemPrompt,  String? mode,  String? effort,  String? permission)  $default,) {final _that = this;
 switch (_that) {
 case _ChatSession():
-return $default(_that.sessionId,_that.title,_that.modelId,_that.providerId,_that.projectId,_that.createdAt,_that.updatedAt,_that.isPinned,_that.isArchived);case _:
+return $default(_that.sessionId,_that.title,_that.modelId,_that.providerId,_that.projectId,_that.createdAt,_that.updatedAt,_that.isPinned,_that.isArchived,_that.systemPrompt,_that.mode,_that.effort,_that.permission);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +206,10 @@ return $default(_that.sessionId,_that.title,_that.modelId,_that.providerId,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String sessionId,  String title,  String modelId,  String providerId,  String? projectId,  DateTime createdAt,  DateTime updatedAt,  bool isPinned,  bool isArchived)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String sessionId,  String title,  String modelId,  String providerId,  String? projectId,  DateTime createdAt,  DateTime updatedAt,  bool isPinned,  bool isArchived,  String? systemPrompt,  String? mode,  String? effort,  String? permission)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatSession() when $default != null:
-return $default(_that.sessionId,_that.title,_that.modelId,_that.providerId,_that.projectId,_that.createdAt,_that.updatedAt,_that.isPinned,_that.isArchived);case _:
+return $default(_that.sessionId,_that.title,_that.modelId,_that.providerId,_that.projectId,_that.createdAt,_that.updatedAt,_that.isPinned,_that.isArchived,_that.systemPrompt,_that.mode,_that.effort,_that.permission);case _:
   return null;
 
 }
@@ -217,7 +221,7 @@ return $default(_that.sessionId,_that.title,_that.modelId,_that.providerId,_that
 @JsonSerializable()
 
 class _ChatSession implements ChatSession {
-  const _ChatSession({required this.sessionId, required this.title, required this.modelId, required this.providerId, this.projectId, required this.createdAt, required this.updatedAt, this.isPinned = false, this.isArchived = false});
+  const _ChatSession({required this.sessionId, required this.title, required this.modelId, required this.providerId, this.projectId, required this.createdAt, required this.updatedAt, this.isPinned = false, this.isArchived = false, this.systemPrompt, this.mode, this.effort, this.permission});
   factory _ChatSession.fromJson(Map<String, dynamic> json) => _$ChatSessionFromJson(json);
 
 @override final  String sessionId;
@@ -229,6 +233,10 @@ class _ChatSession implements ChatSession {
 @override final  DateTime updatedAt;
 @override@JsonKey() final  bool isPinned;
 @override@JsonKey() final  bool isArchived;
+@override final  String? systemPrompt;
+@override final  String? mode;
+@override final  String? effort;
+@override final  String? permission;
 
 /// Create a copy of ChatSession
 /// with the given fields replaced by the non-null parameter values.
@@ -243,16 +251,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatSession&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.title, title) || other.title == title)&&(identical(other.modelId, modelId) || other.modelId == modelId)&&(identical(other.providerId, providerId) || other.providerId == providerId)&&(identical(other.projectId, projectId) || other.projectId == projectId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatSession&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.title, title) || other.title == title)&&(identical(other.modelId, modelId) || other.modelId == modelId)&&(identical(other.providerId, providerId) || other.providerId == providerId)&&(identical(other.projectId, projectId) || other.projectId == projectId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived)&&(identical(other.systemPrompt, systemPrompt) || other.systemPrompt == systemPrompt)&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.effort, effort) || other.effort == effort)&&(identical(other.permission, permission) || other.permission == permission));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,sessionId,title,modelId,providerId,projectId,createdAt,updatedAt,isPinned,isArchived);
+int get hashCode => Object.hash(runtimeType,sessionId,title,modelId,providerId,projectId,createdAt,updatedAt,isPinned,isArchived,systemPrompt,mode,effort,permission);
 
 @override
 String toString() {
-  return 'ChatSession(sessionId: $sessionId, title: $title, modelId: $modelId, providerId: $providerId, projectId: $projectId, createdAt: $createdAt, updatedAt: $updatedAt, isPinned: $isPinned, isArchived: $isArchived)';
+  return 'ChatSession(sessionId: $sessionId, title: $title, modelId: $modelId, providerId: $providerId, projectId: $projectId, createdAt: $createdAt, updatedAt: $updatedAt, isPinned: $isPinned, isArchived: $isArchived, systemPrompt: $systemPrompt, mode: $mode, effort: $effort, permission: $permission)';
 }
 
 
@@ -263,7 +271,7 @@ abstract mixin class _$ChatSessionCopyWith<$Res> implements $ChatSessionCopyWith
   factory _$ChatSessionCopyWith(_ChatSession value, $Res Function(_ChatSession) _then) = __$ChatSessionCopyWithImpl;
 @override @useResult
 $Res call({
- String sessionId, String title, String modelId, String providerId, String? projectId, DateTime createdAt, DateTime updatedAt, bool isPinned, bool isArchived
+ String sessionId, String title, String modelId, String providerId, String? projectId, DateTime createdAt, DateTime updatedAt, bool isPinned, bool isArchived, String? systemPrompt, String? mode, String? effort, String? permission
 });
 
 
@@ -280,7 +288,7 @@ class __$ChatSessionCopyWithImpl<$Res>
 
 /// Create a copy of ChatSession
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? sessionId = null,Object? title = null,Object? modelId = null,Object? providerId = null,Object? projectId = freezed,Object? createdAt = null,Object? updatedAt = null,Object? isPinned = null,Object? isArchived = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? sessionId = null,Object? title = null,Object? modelId = null,Object? providerId = null,Object? projectId = freezed,Object? createdAt = null,Object? updatedAt = null,Object? isPinned = null,Object? isArchived = null,Object? systemPrompt = freezed,Object? mode = freezed,Object? effort = freezed,Object? permission = freezed,}) {
   return _then(_ChatSession(
 sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -291,7 +299,11 @@ as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore:
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,isPinned: null == isPinned ? _self.isPinned : isPinned // ignore: cast_nullable_to_non_nullable
 as bool,isArchived: null == isArchived ? _self.isArchived : isArchived // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,systemPrompt: freezed == systemPrompt ? _self.systemPrompt : systemPrompt // ignore: cast_nullable_to_non_nullable
+as String?,mode: freezed == mode ? _self.mode : mode // ignore: cast_nullable_to_non_nullable
+as String?,effort: freezed == effort ? _self.effort : effort // ignore: cast_nullable_to_non_nullable
+as String?,permission: freezed == permission ? _self.permission : permission // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

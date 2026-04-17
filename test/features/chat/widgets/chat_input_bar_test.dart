@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:code_bench_app/core/constants/app_icons.dart';
+import 'package:code_bench_app/core/theme/app_colors.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/data/project/models/project.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
@@ -76,7 +77,10 @@ Widget _wrap(
       chatMessagesProvider.overrideWith2((_) => _FakeChatMessages()),
       if (activeProjectId != null) activeProjectIdProvider.overrideWith(() => _FakeActiveProjectId(activeProjectId)),
     ],
-    child: MaterialApp(home: Scaffold(body: child)),
+    child: MaterialApp(
+      theme: ThemeData(extensions: [AppColors.dark]),
+      home: Scaffold(body: child),
+    ),
   );
 }
 

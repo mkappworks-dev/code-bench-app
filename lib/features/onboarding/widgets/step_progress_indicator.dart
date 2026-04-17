@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/theme_constants.dart';
+
+import '../../../core/theme/app_colors.dart';
 
 class StepProgressIndicator extends StatelessWidget {
   const StepProgressIndicator({
@@ -17,6 +18,7 @@ class StepProgressIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -25,11 +27,11 @@ class StepProgressIndicator extends StatelessWidget {
           children: List.generate(totalSteps, (i) {
             Color dotColor;
             if (i < currentStep) {
-              dotColor = ThemeConstants.accent; // completed
+              dotColor = c.accent; // completed
             } else if (i == currentStep) {
-              dotColor = ThemeConstants.accent.withValues(alpha: 0.45); // current
+              dotColor = c.accent.withValues(alpha: 0.45); // current
             } else {
-              dotColor = ThemeConstants.borderColor; // upcoming
+              dotColor = c.borderColor; // upcoming
             }
             return Padding(
               padding: EdgeInsets.only(right: i < totalSteps - 1 ? 6 : 0),
@@ -46,22 +48,17 @@ class StepProgressIndicator extends StatelessWidget {
         // Step label
         Text(
           'STEP ${currentStep + 1} OF $totalSteps',
-          style: const TextStyle(
-            color: ThemeConstants.textMuted,
-            fontSize: 10,
-            letterSpacing: 1.2,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: c.textMuted, fontSize: 10, letterSpacing: 1.2, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 6),
         // Step title
         Text(
           stepTitle,
-          style: const TextStyle(color: ThemeConstants.headingText, fontSize: 18, fontWeight: FontWeight.w600),
+          style: TextStyle(color: c.headingText, fontSize: 18, fontWeight: FontWeight.w600),
         ),
         if (stepSubtitle.isNotEmpty) ...[
           const SizedBox(height: 4),
-          Text(stepSubtitle, style: const TextStyle(color: ThemeConstants.textMuted, fontSize: 12)),
+          Text(stepSubtitle, style: TextStyle(color: c.textMuted, fontSize: 12)),
         ],
       ],
     );

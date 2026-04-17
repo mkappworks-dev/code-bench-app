@@ -214,11 +214,12 @@ class GitDatasourceProcess implements GitDatasource {
   /// This path-based skip is correct for both the main working tree (block 0
   /// = self) and linked worktrees (block 0 is the main repo, NOT self).
   @override
-  Future<Map<String, String>> worktreeBranches() async {
+  Future<({Map<String, String> active, Set<String> stale})> worktreeBranches() async {
     final result = await Process.run('git', ['worktree', 'list', '--porcelain'], workingDirectory: _projectPath);
-    if (result.exitCode != 0) return const {};
+    if (result.exitCode != 0) return (active: const <String, String>{}, stale: const <String>{});
     final blocks = (result.stdout as String).trim().split(RegExp(r'\n\n+'));
-    final map = <String, String>{};
+    final active = <String, String>{};
+    final stale = <String>{};
     for (final block in blocks) {
       final lines = block.split('\n');
       final worktreeLine = lines.firstWhere((l) => l.startsWith('worktree '), orElse: () => '');
@@ -231,9 +232,15 @@ class GitDatasourceProcess implements GitDatasource {
           break;
         }
       }
-      if (branch != null) map[branch] = worktreePath;
+      if (branch == null) continue;
+      final isPrunable = lines.any((l) => l.startsWith('prunable'));
+      if (isPrunable) {
+        stale.add(branch);
+      } else {
+        active[branch] = worktreePath;
+      }
     }
-    return map;
+    return (active: active, stale: stale);
   }
 
   /// Switches the working tree to [branch] using `git switch`.
@@ -261,16 +268,47 @@ class GitDatasourceProcess implements GitDatasource {
   /// Validates [name] and runs `git checkout -b [name]`.
   /// Throws [ArgumentError] for flag-shaped names, [GitException] on git failure.
   @override
-  Future<void> createBranch(String name) async {
+  Future<void> createBranch(String name, {String? baseBranch}) async {
     if (name.isEmpty) throw ArgumentError('Branch name must not be empty.');
     if (name.startsWith('-')) {
       sLog('[GitDatasourceProcess] flag-shaped createBranch name rejected: "$name"');
       throw ArgumentError('Branch name must not start with a dash.');
     }
     if (name.contains(' ')) throw ArgumentError('Branch name must not contain spaces.');
-    final result = await Process.run('git', ['checkout', '-b', name], workingDirectory: _projectPath);
+    if (baseBranch != null && baseBranch.startsWith('-')) {
+      sLog('[GitDatasourceProcess] flag-shaped baseBranch rejected in createBranch: "$baseBranch"');
+      throw ArgumentError('Base branch must not start with a dash.');
+    }
+    final args = ['checkout', '-b', name, ?baseBranch];
+    final result = await Process.run('git', args, workingDirectory: _projectPath);
     if (result.exitCode != 0) {
       throw GitException((result.stderr as String).trim());
+    }
+  }
+
+  /// Creates a new git worktree at [worktreePath] on a new branch [branchName].
+  /// Throws [ArgumentError] for flag-shaped names, [GitException] on git failure.
+  @override
+  Future<void> createWorktree(String branchName, String worktreePath, {String? baseBranch}) async {
+    if (branchName.isEmpty) throw ArgumentError('Branch name must not be empty.');
+    if (branchName.startsWith('-')) {
+      sLog('[GitDatasourceProcess] flag-shaped createWorktree branch rejected: "$branchName"');
+      throw ArgumentError('Branch name must not start with a dash.');
+    }
+    if (branchName.contains(' ')) throw ArgumentError('Branch name must not contain spaces.');
+    if (worktreePath.isEmpty) throw ArgumentError('Worktree path must not be empty.');
+    if (worktreePath.startsWith('-')) {
+      sLog('[GitDatasourceProcess] flag-shaped worktreePath rejected: "$worktreePath"');
+      throw ArgumentError('Worktree path must not start with a dash.');
+    }
+    if (baseBranch != null && baseBranch.startsWith('-')) {
+      sLog('[GitDatasourceProcess] flag-shaped baseBranch rejected in createWorktree: "$baseBranch"');
+      throw ArgumentError('Base branch must not start with a dash.');
+    }
+    final args = ['worktree', 'add', worktreePath, '-b', branchName, ?baseBranch];
+    final result = await Process.run('git', args, workingDirectory: _projectPath);
+    if (result.exitCode != 0) {
+      throw GitException('git worktree add failed: ${(result.stderr as String).trim()}');
     }
   }
 
@@ -308,7 +346,9 @@ class GitDatasourceProcess implements GitDatasource {
       result = await Process.run('git', ['diff', '--numstat', 'HEAD'], workingDirectory: _projectPath);
       output = (result.stdout as String).trim();
       if (result.exitCode != 0) {
-        dLog('[GitDatasourceProcess] getChangedFiles HEAD diff failed (exit ${result.exitCode}): ${(result.stderr as String).trim()}');
+        dLog(
+          '[GitDatasourceProcess] getChangedFiles HEAD diff failed (exit ${result.exitCode}): ${(result.stderr as String).trim()}',
+        );
         return [];
       }
     }

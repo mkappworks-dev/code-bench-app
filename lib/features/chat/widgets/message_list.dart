@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/errors/app_exception.dart';
 import '../notifiers/chat_notifier.dart';
 import 'message_bubble.dart';
@@ -108,15 +108,16 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: ThemeConstants.error, size: 40),
+          Icon(Icons.error_outline, color: c.error, size: 40),
           const SizedBox(height: 8),
           Text(
             error,
-            style: const TextStyle(color: ThemeConstants.textSecondary),
+            style: TextStyle(color: c.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -130,15 +131,16 @@ class _EmptyChat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.chat_bubble_outline, size: 48, color: ThemeConstants.textMuted.withAlpha(100)),
+          Icon(Icons.chat_bubble_outline, size: 48, color: c.textMuted.withAlpha(100)),
           const SizedBox(height: 16),
-          const Text('Start a conversation', style: TextStyle(color: ThemeConstants.textSecondary, fontSize: 16)),
+          Text('Start a conversation', style: TextStyle(color: c.textSecondary, fontSize: 16)),
           const SizedBox(height: 8),
-          const Text('Ask anything about your code', style: TextStyle(color: ThemeConstants.textMuted, fontSize: 13)),
+          Text('Ask anything about your code', style: TextStyle(color: c.textMuted, fontSize: 13)),
         ],
       ),
     );

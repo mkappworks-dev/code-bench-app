@@ -16,6 +16,10 @@ _ChatSession _$ChatSessionFromJson(Map<String, dynamic> json) => _ChatSession(
   updatedAt: DateTime.parse(json['updatedAt'] as String),
   isPinned: json['isPinned'] as bool? ?? false,
   isArchived: json['isArchived'] as bool? ?? false,
+  systemPrompt: json['systemPrompt'] as String?,
+  mode: json['mode'] as String?,
+  effort: json['effort'] as String?,
+  permission: json['permission'] as String?,
 );
 
 Map<String, dynamic> _$ChatSessionToJson(_ChatSession instance) => <String, dynamic>{
@@ -28,4 +32,8 @@ Map<String, dynamic> _$ChatSessionToJson(_ChatSession instance) => <String, dyna
   'updatedAt': instance.updatedAt.toIso8601String(),
   'isPinned': instance.isPinned,
   'isArchived': instance.isArchived,
+  'systemPrompt': instance.systemPrompt,
+  'mode': instance.mode,
+  'effort': instance.effort,
+  'permission': instance.permission,
 };

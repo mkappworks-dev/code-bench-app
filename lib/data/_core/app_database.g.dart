@@ -120,6 +120,42 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
     defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_archived" IN (0, 1))'),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _systemPromptMeta = const VerificationMeta('systemPrompt');
+  @override
+  late final GeneratedColumn<String> systemPrompt = GeneratedColumn<String>(
+    'system_prompt',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modeMeta = const VerificationMeta('mode');
+  @override
+  late final GeneratedColumn<String> mode = GeneratedColumn<String>(
+    'mode',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _effortMeta = const VerificationMeta('effort');
+  @override
+  late final GeneratedColumn<String> effort = GeneratedColumn<String>(
+    'effort',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _permissionMeta = const VerificationMeta('permission');
+  @override
+  late final GeneratedColumn<String> permission = GeneratedColumn<String>(
+    'permission',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     sessionId,
@@ -131,6 +167,10 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
     updatedAt,
     isPinned,
     isArchived,
+    systemPrompt,
+    mode,
+    effort,
+    permission,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -180,6 +220,18 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
     if (data.containsKey('is_archived')) {
       context.handle(_isArchivedMeta, isArchived.isAcceptableOrUnknown(data['is_archived']!, _isArchivedMeta));
     }
+    if (data.containsKey('system_prompt')) {
+      context.handle(_systemPromptMeta, systemPrompt.isAcceptableOrUnknown(data['system_prompt']!, _systemPromptMeta));
+    }
+    if (data.containsKey('mode')) {
+      context.handle(_modeMeta, mode.isAcceptableOrUnknown(data['mode']!, _modeMeta));
+    }
+    if (data.containsKey('effort')) {
+      context.handle(_effortMeta, effort.isAcceptableOrUnknown(data['effort']!, _effortMeta));
+    }
+    if (data.containsKey('permission')) {
+      context.handle(_permissionMeta, permission.isAcceptableOrUnknown(data['permission']!, _permissionMeta));
+    }
     return context;
   }
 
@@ -198,6 +250,10 @@ class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable,
       updatedAt: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
       isPinned: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}is_pinned'])!,
       isArchived: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}is_archived'])!,
+      systemPrompt: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}system_prompt']),
+      mode: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}mode']),
+      effort: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}effort']),
+      permission: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}permission']),
     );
   }
 
@@ -217,6 +273,10 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
   final DateTime updatedAt;
   final bool isPinned;
   final bool isArchived;
+  final String? systemPrompt;
+  final String? mode;
+  final String? effort;
+  final String? permission;
   const ChatSessionRow({
     required this.sessionId,
     required this.title,
@@ -227,6 +287,10 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
     required this.updatedAt,
     required this.isPinned,
     required this.isArchived,
+    this.systemPrompt,
+    this.mode,
+    this.effort,
+    this.permission,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -242,6 +306,18 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['is_pinned'] = Variable<bool>(isPinned);
     map['is_archived'] = Variable<bool>(isArchived);
+    if (!nullToAbsent || systemPrompt != null) {
+      map['system_prompt'] = Variable<String>(systemPrompt);
+    }
+    if (!nullToAbsent || mode != null) {
+      map['mode'] = Variable<String>(mode);
+    }
+    if (!nullToAbsent || effort != null) {
+      map['effort'] = Variable<String>(effort);
+    }
+    if (!nullToAbsent || permission != null) {
+      map['permission'] = Variable<String>(permission);
+    }
     return map;
   }
 
@@ -256,6 +332,10 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
       updatedAt: Value(updatedAt),
       isPinned: Value(isPinned),
       isArchived: Value(isArchived),
+      systemPrompt: systemPrompt == null && nullToAbsent ? const Value.absent() : Value(systemPrompt),
+      mode: mode == null && nullToAbsent ? const Value.absent() : Value(mode),
+      effort: effort == null && nullToAbsent ? const Value.absent() : Value(effort),
+      permission: permission == null && nullToAbsent ? const Value.absent() : Value(permission),
     );
   }
 
@@ -271,6 +351,10 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       isPinned: serializer.fromJson<bool>(json['isPinned']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
+      systemPrompt: serializer.fromJson<String?>(json['systemPrompt']),
+      mode: serializer.fromJson<String?>(json['mode']),
+      effort: serializer.fromJson<String?>(json['effort']),
+      permission: serializer.fromJson<String?>(json['permission']),
     );
   }
   @override
@@ -286,6 +370,10 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'isPinned': serializer.toJson<bool>(isPinned),
       'isArchived': serializer.toJson<bool>(isArchived),
+      'systemPrompt': serializer.toJson<String?>(systemPrompt),
+      'mode': serializer.toJson<String?>(mode),
+      'effort': serializer.toJson<String?>(effort),
+      'permission': serializer.toJson<String?>(permission),
     };
   }
 
@@ -299,6 +387,10 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
     DateTime? updatedAt,
     bool? isPinned,
     bool? isArchived,
+    Value<String?> systemPrompt = const Value.absent(),
+    Value<String?> mode = const Value.absent(),
+    Value<String?> effort = const Value.absent(),
+    Value<String?> permission = const Value.absent(),
   }) => ChatSessionRow(
     sessionId: sessionId ?? this.sessionId,
     title: title ?? this.title,
@@ -309,6 +401,10 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
     updatedAt: updatedAt ?? this.updatedAt,
     isPinned: isPinned ?? this.isPinned,
     isArchived: isArchived ?? this.isArchived,
+    systemPrompt: systemPrompt.present ? systemPrompt.value : this.systemPrompt,
+    mode: mode.present ? mode.value : this.mode,
+    effort: effort.present ? effort.value : this.effort,
+    permission: permission.present ? permission.value : this.permission,
   );
   ChatSessionRow copyWithCompanion(ChatSessionsCompanion data) {
     return ChatSessionRow(
@@ -321,6 +417,10 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isPinned: data.isPinned.present ? data.isPinned.value : this.isPinned,
       isArchived: data.isArchived.present ? data.isArchived.value : this.isArchived,
+      systemPrompt: data.systemPrompt.present ? data.systemPrompt.value : this.systemPrompt,
+      mode: data.mode.present ? data.mode.value : this.mode,
+      effort: data.effort.present ? data.effort.value : this.effort,
+      permission: data.permission.present ? data.permission.value : this.permission,
     );
   }
 
@@ -335,14 +435,31 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isPinned: $isPinned, ')
-          ..write('isArchived: $isArchived')
+          ..write('isArchived: $isArchived, ')
+          ..write('systemPrompt: $systemPrompt, ')
+          ..write('mode: $mode, ')
+          ..write('effort: $effort, ')
+          ..write('permission: $permission')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(sessionId, title, modelId, providerId, projectId, createdAt, updatedAt, isPinned, isArchived);
+  int get hashCode => Object.hash(
+    sessionId,
+    title,
+    modelId,
+    providerId,
+    projectId,
+    createdAt,
+    updatedAt,
+    isPinned,
+    isArchived,
+    systemPrompt,
+    mode,
+    effort,
+    permission,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -355,7 +472,11 @@ class ChatSessionRow extends DataClass implements Insertable<ChatSessionRow> {
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.isPinned == this.isPinned &&
-          other.isArchived == this.isArchived);
+          other.isArchived == this.isArchived &&
+          other.systemPrompt == this.systemPrompt &&
+          other.mode == this.mode &&
+          other.effort == this.effort &&
+          other.permission == this.permission);
 }
 
 class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
@@ -368,6 +489,10 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
   final Value<DateTime> updatedAt;
   final Value<bool> isPinned;
   final Value<bool> isArchived;
+  final Value<String?> systemPrompt;
+  final Value<String?> mode;
+  final Value<String?> effort;
+  final Value<String?> permission;
   final Value<int> rowid;
   const ChatSessionsCompanion({
     this.sessionId = const Value.absent(),
@@ -379,6 +504,10 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
     this.updatedAt = const Value.absent(),
     this.isPinned = const Value.absent(),
     this.isArchived = const Value.absent(),
+    this.systemPrompt = const Value.absent(),
+    this.mode = const Value.absent(),
+    this.effort = const Value.absent(),
+    this.permission = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ChatSessionsCompanion.insert({
@@ -391,6 +520,10 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
     required DateTime updatedAt,
     this.isPinned = const Value.absent(),
     this.isArchived = const Value.absent(),
+    this.systemPrompt = const Value.absent(),
+    this.mode = const Value.absent(),
+    this.effort = const Value.absent(),
+    this.permission = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : sessionId = Value(sessionId),
        title = Value(title),
@@ -408,6 +541,10 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
     Expression<DateTime>? updatedAt,
     Expression<bool>? isPinned,
     Expression<bool>? isArchived,
+    Expression<String>? systemPrompt,
+    Expression<String>? mode,
+    Expression<String>? effort,
+    Expression<String>? permission,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -420,6 +557,10 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (isPinned != null) 'is_pinned': isPinned,
       if (isArchived != null) 'is_archived': isArchived,
+      if (systemPrompt != null) 'system_prompt': systemPrompt,
+      if (mode != null) 'mode': mode,
+      if (effort != null) 'effort': effort,
+      if (permission != null) 'permission': permission,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -434,6 +575,10 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
     Value<DateTime>? updatedAt,
     Value<bool>? isPinned,
     Value<bool>? isArchived,
+    Value<String?>? systemPrompt,
+    Value<String?>? mode,
+    Value<String?>? effort,
+    Value<String?>? permission,
     Value<int>? rowid,
   }) {
     return ChatSessionsCompanion(
@@ -446,6 +591,10 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
       updatedAt: updatedAt ?? this.updatedAt,
       isPinned: isPinned ?? this.isPinned,
       isArchived: isArchived ?? this.isArchived,
+      systemPrompt: systemPrompt ?? this.systemPrompt,
+      mode: mode ?? this.mode,
+      effort: effort ?? this.effort,
+      permission: permission ?? this.permission,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -480,6 +629,18 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
     if (isArchived.present) {
       map['is_archived'] = Variable<bool>(isArchived.value);
     }
+    if (systemPrompt.present) {
+      map['system_prompt'] = Variable<String>(systemPrompt.value);
+    }
+    if (mode.present) {
+      map['mode'] = Variable<String>(mode.value);
+    }
+    if (effort.present) {
+      map['effort'] = Variable<String>(effort.value);
+    }
+    if (permission.present) {
+      map['permission'] = Variable<String>(permission.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -498,6 +659,10 @@ class ChatSessionsCompanion extends UpdateCompanion<ChatSessionRow> {
           ..write('updatedAt: $updatedAt, ')
           ..write('isPinned: $isPinned, ')
           ..write('isArchived: $isArchived, ')
+          ..write('systemPrompt: $systemPrompt, ')
+          ..write('mode: $mode, ')
+          ..write('effort: $effort, ')
+          ..write('permission: $permission, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1236,6 +1401,10 @@ typedef $$ChatSessionsTableCreateCompanionBuilder =
       required DateTime updatedAt,
       Value<bool> isPinned,
       Value<bool> isArchived,
+      Value<String?> systemPrompt,
+      Value<String?> mode,
+      Value<String?> effort,
+      Value<String?> permission,
       Value<int> rowid,
     });
 typedef $$ChatSessionsTableUpdateCompanionBuilder =
@@ -1249,6 +1418,10 @@ typedef $$ChatSessionsTableUpdateCompanionBuilder =
       Value<DateTime> updatedAt,
       Value<bool> isPinned,
       Value<bool> isArchived,
+      Value<String?> systemPrompt,
+      Value<String?> mode,
+      Value<String?> effort,
+      Value<String?> permission,
       Value<int> rowid,
     });
 
@@ -1307,6 +1480,17 @@ class $$ChatSessionsTableFilterComposer extends Composer<_$AppDatabase, $ChatSes
   ColumnFilters<bool> get isArchived =>
       $composableBuilder(column: $table.isArchived, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get systemPrompt =>
+      $composableBuilder(column: $table.systemPrompt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get mode => $composableBuilder(column: $table.mode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get effort =>
+      $composableBuilder(column: $table.effort, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get permission =>
+      $composableBuilder(column: $table.permission, builder: (column) => ColumnFilters(column));
+
   Expression<bool> chatMessagesRefs(Expression<bool> Function($$ChatMessagesTableFilterComposer f) f) {
     final $$ChatMessagesTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -1360,6 +1544,18 @@ class $$ChatSessionsTableOrderingComposer extends Composer<_$AppDatabase, $ChatS
 
   ColumnOrderings<bool> get isArchived =>
       $composableBuilder(column: $table.isArchived, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get systemPrompt =>
+      $composableBuilder(column: $table.systemPrompt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get mode =>
+      $composableBuilder(column: $table.mode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get effort =>
+      $composableBuilder(column: $table.effort, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get permission =>
+      $composableBuilder(column: $table.permission, builder: (column) => ColumnOrderings(column));
 }
 
 class $$ChatSessionsTableAnnotationComposer extends Composer<_$AppDatabase, $ChatSessionsTable> {
@@ -1387,6 +1583,15 @@ class $$ChatSessionsTableAnnotationComposer extends Composer<_$AppDatabase, $Cha
   GeneratedColumn<bool> get isPinned => $composableBuilder(column: $table.isPinned, builder: (column) => column);
 
   GeneratedColumn<bool> get isArchived => $composableBuilder(column: $table.isArchived, builder: (column) => column);
+
+  GeneratedColumn<String> get systemPrompt =>
+      $composableBuilder(column: $table.systemPrompt, builder: (column) => column);
+
+  GeneratedColumn<String> get mode => $composableBuilder(column: $table.mode, builder: (column) => column);
+
+  GeneratedColumn<String> get effort => $composableBuilder(column: $table.effort, builder: (column) => column);
+
+  GeneratedColumn<String> get permission => $composableBuilder(column: $table.permission, builder: (column) => column);
 
   Expression<T> chatMessagesRefs<T extends Object>(Expression<T> Function($$ChatMessagesTableAnnotationComposer a) f) {
     final $$ChatMessagesTableAnnotationComposer composer = $composerBuilder(
@@ -1441,6 +1646,10 @@ class $$ChatSessionsTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> isPinned = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
+                Value<String?> systemPrompt = const Value.absent(),
+                Value<String?> mode = const Value.absent(),
+                Value<String?> effort = const Value.absent(),
+                Value<String?> permission = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChatSessionsCompanion(
                 sessionId: sessionId,
@@ -1452,6 +1661,10 @@ class $$ChatSessionsTableTableManager
                 updatedAt: updatedAt,
                 isPinned: isPinned,
                 isArchived: isArchived,
+                systemPrompt: systemPrompt,
+                mode: mode,
+                effort: effort,
+                permission: permission,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1465,6 +1678,10 @@ class $$ChatSessionsTableTableManager
                 required DateTime updatedAt,
                 Value<bool> isPinned = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
+                Value<String?> systemPrompt = const Value.absent(),
+                Value<String?> mode = const Value.absent(),
+                Value<String?> effort = const Value.absent(),
+                Value<String?> permission = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChatSessionsCompanion.insert(
                 sessionId: sessionId,
@@ -1476,6 +1693,10 @@ class $$ChatSessionsTableTableManager
                 updatedAt: updatedAt,
                 isPinned: isPinned,
                 isArchived: isArchived,
+                systemPrompt: systemPrompt,
+                mode: mode,
+                effort: effort,
+                permission: permission,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) =>

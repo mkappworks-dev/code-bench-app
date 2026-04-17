@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 
 class SettingsGroup extends StatelessWidget {
   const SettingsGroup({super.key, required this.rows});
@@ -9,17 +9,16 @@ class SettingsGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: ThemeConstants.deepBorder),
-        borderRadius: BorderRadius.circular(8),
+        color: c.glassFill,
+        border: Border.all(color: c.subtleBorder),
+        borderRadius: BorderRadius.circular(9),
       ),
       child: Column(
         children: [
-          for (int i = 0; i < rows.length; i++) ...[
-            if (i > 0) const Divider(height: 1, color: ThemeConstants.deepBorder),
-            rows[i],
-          ],
+          for (int i = 0; i < rows.length; i++) ...[if (i > 0) Divider(height: 1, color: c.faintBorder), rows[i]],
         ],
       ),
     );
@@ -42,6 +41,7 @@ class SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
@@ -52,10 +52,10 @@ class SettingsRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
+                  style: TextStyle(color: c.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 2),
-                Text(description, style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11)),
+                Text(description, style: TextStyle(color: c.textSecondary, fontSize: 11)),
               ],
             ),
           ),

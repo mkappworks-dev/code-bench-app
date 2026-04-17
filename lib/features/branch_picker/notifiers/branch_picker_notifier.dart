@@ -7,15 +7,21 @@ import 'branch_picker_state.dart';
 
 part 'branch_picker_notifier.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class BranchPickerNotifier extends _$BranchPickerNotifier {
   @override
   Future<BranchPickerState> build(String projectPath) async {
     final git = ref.watch(gitServiceProvider);
     final branches = await git.listLocalBranches(projectPath);
-    final wtPaths = await git.worktreeBranches(projectPath);
-    return BranchPickerState(branches: branches, worktreePaths: wtPaths);
+    final wt = await git.worktreeBranches(projectPath);
+    return BranchPickerState(branches: branches, worktreePaths: wt.active, staleBranches: wt.stale);
   }
+
+  BranchPickerFailure _asWorktreeFailure(Object e) => switch (e) {
+    ArgumentError(:final message) => BranchPickerFailure.createWorktreeFailed(message?.toString() ?? 'Invalid input'),
+    GitException(:final message) => BranchPickerFailure.createWorktreeFailed(message),
+    _ => BranchPickerFailure.gitUnavailable(),
+  };
 
   BranchPickerFailure _asFailure(Object e) => switch (e) {
     ArgumentError(:final message) => BranchPickerFailure.invalidName(message?.toString() ?? 'Invalid branch name'),
@@ -34,7 +40,7 @@ class BranchPickerNotifier extends _$BranchPickerNotifier {
         await git.checkout(projectPath, branch);
         final branches = await git.listLocalBranches(projectPath);
         final wt = await git.worktreeBranches(projectPath);
-        return BranchPickerState(branches: branches, worktreePaths: wt);
+        return BranchPickerState(branches: branches, worktreePaths: wt.active, staleBranches: wt.stale);
       } catch (e, st) {
         dLog('[BranchPickerNotifier] checkout failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -46,15 +52,31 @@ class BranchPickerNotifier extends _$BranchPickerNotifier {
   /// to restore the branch list without leaving the popover in an error state.
   void reload() => ref.invalidateSelf();
 
-  Future<void> createBranch(String name) async {
+  Future<void> createWorktree(String branchName, String worktreePath, {String? baseBranch}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
         final git = ref.read(gitServiceProvider);
-        await git.createBranch(projectPath, name);
+        await git.createWorktree(projectPath, branchName, worktreePath, baseBranch: baseBranch);
         final branches = await git.listLocalBranches(projectPath);
         final wt = await git.worktreeBranches(projectPath);
-        return BranchPickerState(branches: branches, worktreePaths: wt);
+        return BranchPickerState(branches: branches, worktreePaths: wt.active, staleBranches: wt.stale);
+      } catch (e, st) {
+        dLog('[BranchPickerNotifier] createWorktree failed: $e');
+        Error.throwWithStackTrace(_asWorktreeFailure(e), st);
+      }
+    });
+  }
+
+  Future<void> createBranch(String name, {String? baseBranch}) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        final git = ref.read(gitServiceProvider);
+        await git.createBranch(projectPath, name, baseBranch: baseBranch);
+        final branches = await git.listLocalBranches(projectPath);
+        final wt = await git.worktreeBranches(projectPath);
+        return BranchPickerState(branches: branches, worktreePaths: wt.active, staleBranches: wt.stale);
       } catch (e, st) {
         dLog('[BranchPickerNotifier] createBranch failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);

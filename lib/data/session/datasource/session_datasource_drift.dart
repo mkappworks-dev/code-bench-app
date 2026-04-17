@@ -75,6 +75,27 @@ class SessionDatasourceDrift implements SessionDatasource {
   }
 
   @override
+  Future<void> patchSessionSettings(
+    String sessionId, {
+    String? modelId,
+    String? systemPrompt,
+    String? mode,
+    String? effort,
+    String? permission,
+  }) async {
+    await _db.sessionDao.updateSession(
+      sessionId,
+      ChatSessionsCompanion(
+        modelId: modelId != null ? Value(modelId) : const Value.absent(),
+        systemPrompt: systemPrompt != null ? Value(systemPrompt) : const Value.absent(),
+        mode: mode != null ? Value(mode) : const Value.absent(),
+        effort: effort != null ? Value(effort) : const Value.absent(),
+        permission: permission != null ? Value(permission) : const Value.absent(),
+      ),
+    );
+  }
+
+  @override
   Future<void> deleteSession(String sessionId) async {
     await _db.sessionDao.deleteSessionMessages(sessionId);
     await _db.sessionDao.deleteSession(sessionId);
@@ -133,6 +154,10 @@ class SessionDatasourceDrift implements SessionDatasource {
       updatedAt: row.updatedAt,
       isPinned: row.isPinned,
       isArchived: row.isArchived,
+      systemPrompt: row.systemPrompt,
+      mode: row.mode,
+      effort: row.effort,
+      permission: row.permission,
     );
   }
 

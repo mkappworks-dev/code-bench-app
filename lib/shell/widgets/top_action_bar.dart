@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../data/project/models/project.dart';
 import '../notifiers/top_action_bar_notifier.dart';
 import 'actions_dropdown.dart';
@@ -19,35 +20,32 @@ class TopActionBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = AppColors.of(context);
     final s = ref.watch(topActionBarStateProvider);
 
     return Container(
       height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: const BoxDecoration(
-        color: ThemeConstants.inputBackground,
-        border: Border(bottom: BorderSide(color: ThemeConstants.borderColor)),
+      decoration: BoxDecoration(
+        color: c.topBarFill,
+        border: Border(bottom: BorderSide(color: c.subtleBorder)),
       ),
       child: Row(
         children: [
           // ── Left: title + badges ────────────────────────────────────────
           Text(
             s.sessionTitle,
-            style: const TextStyle(
-              color: ThemeConstants.textPrimary,
-              fontSize: ThemeConstants.uiFontSize,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, fontWeight: FontWeight.w500),
           ),
           if (s.project != null) ...[
             const SizedBox(width: 8),
             // Project name badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(color: ThemeConstants.inputSurface, borderRadius: BorderRadius.circular(4)),
+              decoration: BoxDecoration(color: c.chipFill, borderRadius: BorderRadius.circular(4)),
               child: Text(
                 s.project!.name,
-                style: const TextStyle(color: ThemeConstants.mutedFg, fontSize: ThemeConstants.uiFontSizeLabel),
+                style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeLabel),
               ),
             ),
             // No Git badge (only when we've definitively observed the path
@@ -56,14 +54,11 @@ class TopActionBar extends ConsumerWidget {
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: ThemeConstants.worktreeBadgeBg,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
+                decoration: BoxDecoration(color: c.worktreeBadgeBg, borderRadius: BorderRadius.circular(4)),
+                child: Text(
                   'No Git',
                   style: TextStyle(
-                    color: ThemeConstants.worktreeBadgeFg,
+                    color: c.worktreeBadgeFg,
                     fontSize: ThemeConstants.uiFontSizeLabel,
                     fontWeight: FontWeight.w600,
                   ),
@@ -79,9 +74,11 @@ class TopActionBar extends ConsumerWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ActionsDropdown(project: s.project!),
+                  _GlassPill(child: ActionsDropdown(project: s.project!)),
                   const SizedBox(width: 5),
-                  CodeDropdown(projectId: s.project!.id, projectPath: s.project!.path),
+                  _GlassPill(
+                    child: CodeDropdown(projectId: s.project!.id, projectPath: s.project!.path),
+                  ),
                   const SizedBox(width: 5),
                   // Git action: Commit & Push (git) or Initialize Git
                   // (confirmed non-git). During loading/error (isGit == null)
@@ -98,6 +95,24 @@ class TopActionBar extends ConsumerWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _GlassPill extends StatelessWidget {
+  const _GlassPill({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: c.chipFill,
+        border: Border.all(color: c.chipStroke),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: child,
     );
   }
 }

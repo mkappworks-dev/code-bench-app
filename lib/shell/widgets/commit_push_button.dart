@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import '../../core/utils/instant_menu.dart';
 import '../../data/project/models/project.dart';
@@ -184,6 +185,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     ref.listen(gitActionsProvider, (prev, next) {
       if (next is! AsyncError || !mounted) return;
       final failure = next.error;
@@ -230,23 +232,29 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
               padding: const EdgeInsets.symmetric(horizontal: 10),
               constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
               decoration: BoxDecoration(
+                gradient: (busy || !s.canCommit)
+                    ? null
+                    : LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [c.accent, c.accentHover],
+                      ),
                 color: busy
-                    ? ThemeConstants.accentDark
+                    ? c.accentHover
                     : s.canCommit
-                    ? ThemeConstants.accent
-                    : ThemeConstants.inputSurface,
+                    ? null
+                    : c.inputSurface,
                 borderRadius: const BorderRadius.horizontal(left: Radius.circular(5)),
+                boxShadow: (busy || !s.canCommit)
+                    ? null
+                    : [BoxShadow(color: c.sendGlow, blurRadius: 10, offset: const Offset(0, 2))],
               ),
               child: Center(
                 widthFactor: 1,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      AppIcons.gitCommit,
-                      size: 12,
-                      color: s.canCommit ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
-                    ),
+                    Icon(AppIcons.gitCommit, size: 12, color: s.canCommit ? c.onAccent : c.mutedFg),
                     const SizedBox(width: 5),
                     Text(
                       _pushing
@@ -255,7 +263,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                           ? '● Pulling…'
                           : 'Commit',
                       style: TextStyle(
-                        color: s.canCommit ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
+                        color: s.canCommit ? c.onAccent : c.mutedFg,
                         fontSize: ThemeConstants.uiFontSizeSmall,
                       ),
                     ),
@@ -272,12 +280,13 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
             builder: (btnContext) => GestureDetector(
               onTap: s.canDropdown
                   ? () async {
+                      final bc = AppColors.of(btnContext);
                       final action = await showInstantMenuAnchoredTo<String>(
                         buttonContext: btnContext,
-                        color: ThemeConstants.panelBackground,
+                        color: bc.panelBackground,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(7),
-                          side: const BorderSide(color: ThemeConstants.faintFg),
+                          side: BorderSide(color: bc.faintFg),
                         ),
                         items: [
                           if (s.remotes.length > 1) ...[
@@ -292,32 +301,26 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                                   children: [
                                     Text(
                                       remote.name,
-                                      style: const TextStyle(
-                                        color: ThemeConstants.textSecondary,
+                                      style: TextStyle(
+                                        color: bc.textSecondary,
                                         fontSize: ThemeConstants.uiFontSizeSmall,
                                       ),
                                     ),
                                     Text(
                                       remote.url,
-                                      style: const TextStyle(
-                                        color: ThemeConstants.faintFg,
-                                        fontSize: ThemeConstants.uiFontSizeLabel,
-                                      ),
+                                      style: TextStyle(color: bc.faintFg, fontSize: ThemeConstants.uiFontSizeLabel),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
                               ),
                             const PopupMenuDivider(),
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'push_all',
                               height: 32,
                               child: Text(
                                 'Push to all remotes',
-                                style: TextStyle(
-                                  color: ThemeConstants.textSecondary,
-                                  fontSize: ThemeConstants.uiFontSizeSmall,
-                                ),
+                                style: TextStyle(color: bc.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                               ),
                             ),
                             const PopupMenuDivider(),
@@ -331,13 +334,13 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                                 Icon(
                                   AppIcons.cloudUpload,
                                   size: 12,
-                                  color: (s.canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                  color: (s.canPush && !busy) ? bc.textSecondary : bc.faintFg,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   _pushing ? '● Pushing…' : 'Push',
                                   style: TextStyle(
-                                    color: (s.canPush && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                    color: (s.canPush && !busy) ? bc.textSecondary : bc.faintFg,
                                     fontSize: ThemeConstants.uiFontSizeSmall,
                                   ),
                                 ),
@@ -353,13 +356,13 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                                 Icon(
                                   AppIcons.gitPullRequest,
                                   size: 12,
-                                  color: (s.canPr && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                  color: (s.canPr && !busy) ? bc.textSecondary : bc.faintFg,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Create PR',
                                   style: TextStyle(
-                                    color: (s.canPr && !busy) ? ThemeConstants.textSecondary : ThemeConstants.faintFg,
+                                    color: (s.canPr && !busy) ? bc.textSecondary : bc.faintFg,
                                     fontSize: ThemeConstants.uiFontSizeSmall,
                                   ),
                                 ),
@@ -378,7 +381,7 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                                   ? 'Pull${s.badgeLabel}'
                                   : 'Pull',
                               style: TextStyle(
-                                color: s.canPull ? ThemeConstants.accent : ThemeConstants.faintFg,
+                                color: s.canPull ? bc.accent : bc.faintFg,
                                 fontSize: ThemeConstants.uiFontSizeSmall,
                               ),
                             ),
@@ -408,10 +411,8 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                   padding: const EdgeInsets.symmetric(horizontal: 7),
                   constraints: const BoxConstraints.tightFor(height: ThemeConstants.actionButtonHeight),
                   decoration: BoxDecoration(
-                    color: s.canDropdown ? ThemeConstants.accentHover : ThemeConstants.inputSurface,
-                    border: Border(
-                      left: BorderSide(color: s.canDropdown ? ThemeConstants.accentDark : ThemeConstants.deepBorder),
-                    ),
+                    color: s.canDropdown ? c.accentHover : c.inputSurface,
+                    border: Border(left: BorderSide(color: s.canDropdown ? c.accentDark : c.deepBorder)),
                   ),
                   child: Center(
                     widthFactor: 1,
@@ -422,15 +423,11 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
                           Text(
                             s.badgeLabel,
                             style: TextStyle(
-                              color: s.canDropdown ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
+                              color: s.canDropdown ? c.onAccent : c.mutedFg,
                               fontSize: ThemeConstants.uiFontSizeLabel,
                             ),
                           ),
-                        Icon(
-                          AppIcons.chevronDown,
-                          size: 11,
-                          color: s.canDropdown ? ThemeConstants.onAccent : ThemeConstants.mutedFg,
-                        ),
+                        Icon(AppIcons.chevronDown, size: 11, color: s.canDropdown ? c.onAccent : c.mutedFg),
                       ],
                     ),
                   ),

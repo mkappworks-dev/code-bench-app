@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/instant_menu.dart';
@@ -13,6 +14,9 @@ import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/chat_notifier.dart';
+import '../../../data/session/models/session_settings.dart';
+import '../notifiers/session_settings_actions.dart';
+import '../notifiers/session_settings_failure.dart';
 
 /// Private in-memory store of per-session chat-input drafts.
 ///
@@ -34,37 +38,6 @@ final Map<String, String> _sessionDrafts = <String, String>{};
 @visibleForTesting
 void clearSessionDraftsForTesting() => _sessionDrafts.clear();
 
-enum _Effort { low, medium, high, max }
-
-enum _Mode { chat, plan, act }
-
-enum _Permission { readOnly, askBefore, fullAccess }
-
-extension _EffortLabel on _Effort {
-  String get label => switch (this) {
-    _Effort.low => 'Low',
-    _Effort.medium => 'Medium',
-    _Effort.high => 'High',
-    _Effort.max => 'Max',
-  };
-}
-
-extension _ModeLabel on _Mode {
-  String get label => switch (this) {
-    _Mode.chat => 'Chat',
-    _Mode.plan => 'Plan',
-    _Mode.act => 'Act',
-  };
-}
-
-extension _PermissionLabel on _Permission {
-  String get label => switch (this) {
-    _Permission.readOnly => 'Read only',
-    _Permission.askBefore => 'Ask before changes',
-    _Permission.fullAccess => 'Full access',
-  };
-}
-
 class ChatInputBar extends ConsumerStatefulWidget {
   const ChatInputBar({super.key, required this.sessionId});
   final String sessionId;
@@ -80,9 +53,6 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
   bool _isSending = false;
   late AnimationController _pulseController;
   late Animation<double> _pulseOpacity;
-  _Effort _effort = _Effort.high;
-  _Mode _mode = _Mode.chat;
-  _Permission _permission = _Permission.fullAccess;
 
   void _stashDraft(String sessionId, String text) {
     if (text.isEmpty) {
@@ -129,8 +99,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     // type in the same tree slot), so the text controller keeps whatever
     // the user typed in the previous chat. Save the outgoing draft
     // against oldWidget.sessionId and load the incoming one so drafts
-    // are isolated per session. Effort/mode/permission stay untouched —
-    // those are intentional global sender preferences.
+    // are isolated per session. Effort/mode/permission are now per-session
+    // and loaded by SessionSettingsActions; no local state to preserve here.
     if (oldWidget.sessionId != widget.sessionId) {
       _stashDraft(oldWidget.sessionId, _controller.text);
       _controller.text = _sessionDrafts[widget.sessionId] ?? '';
@@ -191,19 +161,16 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     // is on the wire, there's nothing to restore on a later switch.
     _sessionDrafts.remove(widget.sessionId);
     setState(() => _isSending = true);
-    try {
-      final systemPrompt = ref.read(sessionSystemPromptProvider)[widget.sessionId];
-      final sendError = await ref
-          .read(chatMessagesProvider(widget.sessionId).notifier)
-          .sendMessage(text, systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty) ? systemPrompt : null);
-      if (mounted && sendError != null) {
+    final systemPrompt = ref.read(sessionSystemPromptProvider)[widget.sessionId];
+    final sendError = await ref
+        .read(chatMessagesProvider(widget.sessionId).notifier)
+        .sendMessage(text, systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty) ? systemPrompt : null);
+    if (mounted) {
+      if (sendError != null) {
         showErrorSnackBar(context, userMessage(sendError, fallback: 'Failed to get a response.'));
       }
-    } finally {
-      if (mounted) {
-        setState(() => _isSending = false);
-        _focusNode.requestFocus();
-      }
+      setState(() => _isSending = false);
+      _focusNode.requestFocus();
     }
   }
 
@@ -230,13 +197,14 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
   ) {
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
+    final c = AppColors.of(context);
     showInstantMenu<T>(
       context: context,
       position: _menuAbove(context, box),
-      color: ThemeConstants.panelBackground,
+      color: c.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
-        side: const BorderSide(color: ThemeConstants.faintFg),
+        side: BorderSide(color: c.subtleBorder),
       ),
       items: items
           .map(
@@ -249,12 +217,12 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                     child: Text(
                       label(item),
                       style: TextStyle(
-                        color: item == selected ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
+                        color: item == selected ? c.textPrimary : c.textSecondary,
                         fontSize: ThemeConstants.uiFontSizeSmall,
                       ),
                     ),
                   ),
-                  if (item == selected) const Icon(AppIcons.check, size: 11, color: ThemeConstants.accent),
+                  if (item == selected) Icon(AppIcons.check, size: 11, color: c.accent),
                 ],
               ),
             ),
@@ -270,13 +238,14 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final selected = ref.read(selectedModelProvider);
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
+    final c = AppColors.of(context);
     showInstantMenu<AIModel>(
       context: context,
       position: _menuAbove(context, box),
-      color: ThemeConstants.panelBackground,
+      color: c.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
-        side: const BorderSide(color: ThemeConstants.faintFg),
+        side: BorderSide(color: c.subtleBorder),
       ),
       items: models
           .map(
@@ -286,7 +255,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
               child: Text(
                 '${m.provider.displayName} / ${m.name}',
                 style: TextStyle(
-                  color: m == selected ? ThemeConstants.textPrimary : ThemeConstants.textSecondary,
+                  color: m == selected ? c.textPrimary : c.textSecondary,
                   fontSize: ThemeConstants.uiFontSizeSmall,
                 ),
               ),
@@ -294,7 +263,9 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
           )
           .toList(),
     ).then((value) {
-      if (value != null) ref.read(selectedModelProvider.notifier).select(value);
+      if (value != null) {
+        ref.read(sessionSettingsActionsProvider.notifier).updateModel(widget.sessionId, value);
+      }
     });
   }
 
@@ -306,22 +277,36 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
       showErrorSnackBar(context, 'Failed to send message. Please try again.');
     });
 
+    // Initialise (idempotent after first call) and listen for persist errors.
+    ref.listen(sessionSettingsActionsProvider, (_, next) {
+      if (next is! AsyncError || !mounted) return;
+      if (next.error is! SessionSettingsFailure) return;
+      showErrorSnackBar(context, 'Could not save session settings.');
+    });
+
+    final c = AppColors.of(context);
     final model = ref.watch(selectedModelProvider);
+    final mode = ref.watch(sessionModeProvider);
+    final effort = ref.watch(sessionEffortProvider);
+    final permission = ref.watch(sessionPermissionProvider);
     // Re-render whenever the active project or its status changes so the
     // send button + Enter key disable the moment the folder goes missing
     // (e.g. app-resume refresh, write-button guard, or ApplyService catch).
     final project = ref.watch(activeProjectProvider);
     final isMissing = project?.status == ProjectStatus.missing;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: ThemeConstants.deepBorder)),
-      ),
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      decoration: BoxDecoration(color: c.background),
       child: Container(
         decoration: BoxDecoration(
-          color: ThemeConstants.inputSurface,
-          border: Border.all(color: ThemeConstants.deepBorder),
-          borderRadius: BorderRadius.circular(10),
+          color: c.glassFill,
+          border: Border.all(color: c.glassBorder),
+          borderRadius: BorderRadius.circular(11),
+          boxShadow: [
+            BoxShadow(color: c.chatBoxShadowOuter, blurRadius: 24, offset: const Offset(0, -6)),
+            BoxShadow(color: c.chatBoxShadowDrop, blurRadius: 8, offset: const Offset(0, 2)),
+            BoxShadow(color: c.chatBoxRimGlow, blurRadius: 0, spreadRadius: 0.5),
+          ],
         ),
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
         child: Column(
@@ -344,12 +329,12 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                 focusNode: _focusNode,
                 maxLines: null,
                 minLines: 1,
-                style: const TextStyle(color: ThemeConstants.textPrimary, fontSize: ThemeConstants.uiFontSize),
+                style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
                 decoration: InputDecoration(
                   hintText: isMissing
                       ? 'Project folder is missing — Relocate or Remove to continue'
                       : 'Ask anything, @tag files/folders, or use /command',
-                  hintStyle: const TextStyle(color: ThemeConstants.faintFg, fontSize: ThemeConstants.uiFontSize),
+                  hintStyle: TextStyle(color: c.faintFg, fontSize: ThemeConstants.uiFontSize),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -362,8 +347,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.only(top: 7),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: ThemeConstants.deepBorder)),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: c.faintBorder)),
               ),
               child: Row(
                 children: [
@@ -371,39 +356,44 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                     builder: (ctx) =>
                         _ControlChip(icon: AppIcons.aiMode, label: model.name, onTap: () => _showModelPicker(ctx)),
                   ),
-                  const _Separator(),
+                  const SizedBox(width: 4),
                   Builder(
                     builder: (ctx) => _ControlChip(
-                      label: _effort.label,
+                      label: effort.label,
                       onTap: () => _showDropdown(
                         ctx,
-                        _Effort.values,
-                        _effort,
+                        ChatEffort.values,
+                        effort,
                         (e) => e.label,
-                        (e) => setState(() => _effort = e),
+                        (e) => ref.read(sessionSettingsActionsProvider.notifier).updateEffort(widget.sessionId, e),
                       ),
                     ),
                   ),
-                  const _Separator(),
+                  const SizedBox(width: 4),
                   Builder(
                     builder: (ctx) => _ControlChip(
                       icon: AppIcons.chat,
-                      label: _mode.label,
-                      onTap: () =>
-                          _showDropdown(ctx, _Mode.values, _mode, (m) => m.label, (m) => setState(() => _mode = m)),
+                      label: mode.label,
+                      onTap: () => _showDropdown(
+                        ctx,
+                        ChatMode.values,
+                        mode,
+                        (m) => m.label,
+                        (m) => ref.read(sessionSettingsActionsProvider.notifier).updateMode(widget.sessionId, m),
+                      ),
                     ),
                   ),
-                  const _Separator(),
+                  const SizedBox(width: 4),
                   Builder(
                     builder: (ctx) => _ControlChip(
                       icon: AppIcons.lock,
-                      label: _permission.label,
+                      label: permission.label,
                       onTap: () => _showDropdown(
                         ctx,
-                        _Permission.values,
-                        _permission,
+                        ChatPermission.values,
+                        permission,
                         (p) => p.label,
-                        (p) => setState(() => _permission = p),
+                        (p) => ref.read(sessionSettingsActionsProvider.notifier).updatePermission(widget.sessionId, p),
                       ),
                     ),
                   ),
@@ -413,14 +403,27 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                     child: ListenableBuilder(
                       listenable: _controller,
                       builder: (context, _) {
+                        final lc = AppColors.of(context);
                         final hasText = _controller.text.trim().isNotEmpty;
                         final Color bg;
+                        final Border? border;
+                        final Color iconColor;
+                        final List<BoxShadow> shadows;
                         if (_isSending) {
-                          bg = ThemeConstants.accentDark;
+                          bg = lc.accentHover;
+                          border = null;
+                          iconColor = lc.onAccent;
+                          shadows = [];
                         } else if (hasText && !isMissing) {
-                          bg = ThemeConstants.accent;
+                          bg = lc.accent;
+                          border = null;
+                          iconColor = lc.onAccent;
+                          shadows = [BoxShadow(color: lc.sendGlow, blurRadius: 8, offset: const Offset(0, 2))];
                         } else {
-                          bg = ThemeConstants.inputSurface;
+                          bg = lc.sendDisabledFill;
+                          border = Border.all(color: lc.sendDisabledStroke);
+                          iconColor = lc.sendDisabledIconColor;
+                          shadows = [];
                         }
                         return GestureDetector(
                           onTap: _isSending ? null : _send,
@@ -428,11 +431,17 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                             width: 28,
                             height: 28,
                             decoration: BoxDecoration(
-                              color: bg,
-                              borderRadius: BorderRadius.circular(7),
-                              border: (!_isSending && (!hasText || isMissing))
-                                  ? Border.all(color: ThemeConstants.deepBorder)
+                              gradient: (!_isSending && hasText && !isMissing)
+                                  ? LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [lc.accent, lc.accentHover],
+                                    )
                                   : null,
+                              color: (_isSending || !hasText || isMissing) ? bg : null,
+                              borderRadius: BorderRadius.circular(7),
+                              border: border,
+                              boxShadow: shadows,
                             ),
                             child: Center(
                               child: _isSending
@@ -444,19 +453,13 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                                           width: 9,
                                           height: 9,
                                           decoration: BoxDecoration(
-                                            color: ThemeConstants.onAccent,
+                                            color: lc.onAccent,
                                             borderRadius: BorderRadius.circular(2),
                                           ),
                                         ),
                                       ),
                                     )
-                                  : Icon(
-                                      AppIcons.arrowUp,
-                                      size: 14,
-                                      color: (hasText && !isMissing)
-                                          ? ThemeConstants.onAccent
-                                          : ThemeConstants.iconInactive,
-                                    ),
+                                  : Icon(AppIcons.arrowUp, size: 14, color: iconColor),
                             ),
                           ),
                         );
@@ -481,38 +484,29 @@ class _ControlChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
-      child: Padding(
+      borderRadius: BorderRadius.circular(5),
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(
+          color: c.chipFill,
+          border: Border.all(color: c.chipStroke),
+          borderRadius: BorderRadius.circular(5),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[Icon(icon, size: 11, color: ThemeConstants.textSecondary), const SizedBox(width: 4)],
+            if (icon != null) ...[Icon(icon, size: 11, color: c.chipText), const SizedBox(width: 4)],
             Text(
               label,
-              style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+              style: TextStyle(color: c.chipText, fontSize: ThemeConstants.uiFontSizeSmall),
             ),
             const SizedBox(width: 3),
-            const Icon(AppIcons.chevronDown, size: 10, color: ThemeConstants.faintFg),
+            Icon(AppIcons.chevronDown, size: 10, color: c.faintFg),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _Separator extends StatelessWidget {
-  const _Separator();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 1),
-      child: Text(
-        '|',
-        style: TextStyle(color: ThemeConstants.deepBorder, fontSize: ThemeConstants.uiFontSizeSmall),
       ),
     );
   }

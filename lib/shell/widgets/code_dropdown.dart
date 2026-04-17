@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_icons.dart';
-import '../../core/constants/theme_constants.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/utils/instant_menu.dart';
 import '../../core/utils/snackbar_helper.dart';
 import '../notifiers/ide_launch_actions.dart';
@@ -53,19 +53,20 @@ class _CodeDropdownState extends ConsumerState<CodeDropdown> {
           label: 'VS Code',
           trailingCaret: true,
           onTap: () async {
+            final c = AppColors.of(btnContext);
             final action = await showInstantMenuAnchoredTo<String>(
               buttonContext: btnContext,
-              color: ThemeConstants.panelBackground,
+              color: c.panelBackground,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(7),
-                side: const BorderSide(color: ThemeConstants.faintFg),
+                side: BorderSide(color: c.faintFg),
               ),
               items: [
-                _menuItem('vscode', AppIcons.code, 'VS Code'),
-                _menuItem('cursor', AppIcons.aiMode, 'Cursor'),
+                _menuItem('vscode', AppIcons.code, 'VS Code', c),
+                _menuItem('cursor', AppIcons.aiMode, 'Cursor', c),
                 const PopupMenuDivider(),
-                _menuItem('finder', AppIcons.folderOpen, 'Open in Finder'),
-                _menuItem('terminal', AppIcons.terminal, 'Open in Terminal'),
+                _menuItem('finder', AppIcons.folderOpen, 'Open in Finder', c),
+                _menuItem('terminal', AppIcons.terminal, 'Open in Terminal', c),
               ],
             );
             if (action == null) return;
@@ -89,15 +90,15 @@ class _CodeDropdownState extends ConsumerState<CodeDropdown> {
     );
   }
 
-  PopupMenuItem<String> _menuItem(String value, IconData icon, String label) {
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String label, AppColors c) {
     return PopupMenuItem(
       value: value,
       height: 32,
       child: Row(
         children: [
-          Icon(icon, size: 12, color: ThemeConstants.textSecondary),
+          Icon(icon, size: 12, color: c.textSecondary),
           const SizedBox(width: 8),
-          Text(label, style: const TextStyle(color: ThemeConstants.textSecondary, fontSize: 11)),
+          Text(label, style: TextStyle(color: c.textSecondary, fontSize: 11)),
         ],
       ),
     );
