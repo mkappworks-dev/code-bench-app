@@ -81,6 +81,11 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.editedBadgeBg,
     required this.editedBadgeBorder,
     required this.githubBrandColor,
+    required this.githubButtonGradientStart,
+    required this.githubButtonGradientEnd,
+    required this.githubButtonBorder,
+    required this.githubButtonForeground,
+    required this.githubButtonShadow,
     // ── Diff ─────────────────────────────────────────────────────────────
     required this.diffAdditionBg,
     required this.diffDeletionBg,
@@ -210,6 +215,11 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color editedBadgeBg;
   final Color editedBadgeBorder;
   final Color githubBrandColor;
+  final Color githubButtonGradientStart;
+  final Color githubButtonGradientEnd;
+  final Color githubButtonBorder;
+  final Color githubButtonForeground;
+  final Color githubButtonShadow;
   final Color diffAdditionBg;
   final Color diffDeletionBg;
   final Color onAccent;
@@ -337,6 +347,11 @@ class AppColors extends ThemeExtension<AppColors> {
     editedBadgeBg: Color(0xFF3D2900),
     editedBadgeBorder: Color(0xFFAA7700),
     githubBrandColor: Color(0xFF24292E),
+    githubButtonGradientStart: Color(0x14FFFFFF),
+    githubButtonGradientEnd: Color(0x07FFFFFF),
+    githubButtonBorder: Color(0x1EFFFFFF),
+    githubButtonForeground: Color(0xD9FFFFFF),
+    githubButtonShadow: Color(0x59000000),
     diffAdditionBg: Color(0x3300CC66),
     diffDeletionBg: Color(0x33FF4444),
     onAccent: Color(0xFF0A0A0A),
@@ -460,6 +475,11 @@ class AppColors extends ThemeExtension<AppColors> {
     editedBadgeBg: Color(0xFFFFF3CD),
     editedBadgeBorder: Color(0xFFCC8800),
     githubBrandColor: Color(0xFF24292E),
+    githubButtonGradientStart: Color(0xF2FFFFFF),
+    githubButtonGradientEnd: Color(0xCCFFFFFF),
+    githubButtonBorder: Color(0x1A000000),
+    githubButtonForeground: Color(0xFF333333),
+    githubButtonShadow: Color(0x1A000000),
     diffAdditionBg: Color(0x3300BB55),
     diffDeletionBg: Color(0x33EE3333),
     onAccent: Color(0xFF0A0A0A),
@@ -585,6 +605,11 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? editedBadgeBg,
     Color? editedBadgeBorder,
     Color? githubBrandColor,
+    Color? githubButtonGradientStart,
+    Color? githubButtonGradientEnd,
+    Color? githubButtonBorder,
+    Color? githubButtonForeground,
+    Color? githubButtonShadow,
     Color? diffAdditionBg,
     Color? diffDeletionBg,
     Color? onAccent,
@@ -704,6 +729,11 @@ class AppColors extends ThemeExtension<AppColors> {
     editedBadgeBg: editedBadgeBg ?? this.editedBadgeBg,
     editedBadgeBorder: editedBadgeBorder ?? this.editedBadgeBorder,
     githubBrandColor: githubBrandColor ?? this.githubBrandColor,
+    githubButtonGradientStart: githubButtonGradientStart ?? this.githubButtonGradientStart,
+    githubButtonGradientEnd: githubButtonGradientEnd ?? this.githubButtonGradientEnd,
+    githubButtonBorder: githubButtonBorder ?? this.githubButtonBorder,
+    githubButtonForeground: githubButtonForeground ?? this.githubButtonForeground,
+    githubButtonShadow: githubButtonShadow ?? this.githubButtonShadow,
     diffAdditionBg: diffAdditionBg ?? this.diffAdditionBg,
     diffDeletionBg: diffDeletionBg ?? this.diffDeletionBg,
     onAccent: onAccent ?? this.onAccent,
@@ -828,6 +858,11 @@ class AppColors extends ThemeExtension<AppColors> {
       editedBadgeBg: Color.lerp(editedBadgeBg, other.editedBadgeBg, t)!,
       editedBadgeBorder: Color.lerp(editedBadgeBorder, other.editedBadgeBorder, t)!,
       githubBrandColor: Color.lerp(githubBrandColor, other.githubBrandColor, t)!,
+      githubButtonGradientStart: Color.lerp(githubButtonGradientStart, other.githubButtonGradientStart, t)!,
+      githubButtonGradientEnd: Color.lerp(githubButtonGradientEnd, other.githubButtonGradientEnd, t)!,
+      githubButtonBorder: Color.lerp(githubButtonBorder, other.githubButtonBorder, t)!,
+      githubButtonForeground: Color.lerp(githubButtonForeground, other.githubButtonForeground, t)!,
+      githubButtonShadow: Color.lerp(githubButtonShadow, other.githubButtonShadow, t)!,
       diffAdditionBg: Color.lerp(diffAdditionBg, other.diffAdditionBg, t)!,
       diffDeletionBg: Color.lerp(diffDeletionBg, other.diffDeletionBg, t)!,
       onAccent: Color.lerp(onAccent, other.onAccent, t)!,

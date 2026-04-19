@@ -21,7 +21,6 @@ class IntegrationsScreen extends ConsumerStatefulWidget {
 }
 
 class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
-  bool _showPat = false;
   final _patController = TextEditingController();
 
   @override
@@ -54,7 +53,6 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
     if (!ref.read(gitHubAuthProvider).hasError) {
       AppSnackBar.show(context, 'Connected to GitHub', type: AppSnackBarType.success);
       _patController.clear();
-      setState(() => _showPat = false);
     }
   }
 
@@ -110,10 +108,8 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
           else
             GithubDisconnectedCard(
               isLoading: isLoading,
-              showPat: _showPat,
               patController: _patController,
               onConnectOAuth: _connectOAuth,
-              onTogglePat: () => setState(() => _showPat = !_showPat),
               onSignInWithPat: _signInWithPat,
               onOpenTokenPage: _openTokenCreationPage,
             ),

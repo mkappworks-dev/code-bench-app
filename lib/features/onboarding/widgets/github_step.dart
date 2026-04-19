@@ -6,7 +6,8 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../core/widgets/app_snack_bar.dart';
-import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/github_glass_button.dart';
+import '../../../core/widgets/pat_section.dart';
 import '../../../data/github/models/repository.dart';
 import '../notifiers/github_auth_notifier.dart';
 
@@ -20,7 +21,6 @@ class GithubStep extends ConsumerStatefulWidget {
 }
 
 class _GithubStepState extends ConsumerState<GithubStep> {
-  bool _showPat = false;
   final _patController = TextEditingController();
   bool? _patValid;
 
@@ -95,85 +95,23 @@ class _GithubStepState extends ConsumerState<GithubStep> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // OAuth button
-        FilledButton.icon(
-          style: FilledButton.styleFrom(
-            backgroundColor: c.githubBrandColor, // GitHub brand colour
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-          ),
-          onPressed: isLoading ? null : _connectOAuth,
-          icon: isLoading
-              ? const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
-              : const Icon(Icons.link, size: 16),
-          label: Text(isLoading ? 'Connecting…' : 'Continue with GitHub', style: const TextStyle(fontSize: 13)),
-        ),
+        GitHubGlassButton(onPressed: _connectOAuth, isLoading: isLoading),
         const SizedBox(height: 20),
-
-        // PAT fallback
-        GestureDetector(
-          onTap: () => setState(() => _showPat = !_showPat),
-          child: Row(
-            children: [
-              Text(
-                'Use a Personal Access Token instead',
-                style: TextStyle(
-                  color: c.accent,
-                  fontSize: ThemeConstants.uiFontSizeSmall,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(_showPat ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, size: 14, color: c.accent),
-            ],
+        const OrDivider(),
+        const SizedBox(height: 12),
+        PatSection(
+          controller: _patController,
+          onOpenTokenPage: _openTokenCreationPage,
+          fieldSuffixIcon: _patValid == null
+              ? null
+              : Icon(_patValid! ? Icons.check_circle : Icons.error, color: _patValid! ? c.success : c.error, size: 16),
+          actionButton: TextButton(
+            onPressed: isLoading ? null : _testPat,
+            child: isLoading
+                ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
+                : Text('Test', style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall)),
           ),
         ),
-
-        if (_showPat) ...[
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: AppTextField(
-                  controller: _patController,
-                  obscureText: true,
-                  labelText: 'Personal Access Token',
-                  suffixIcon: _patValid == null
-                      ? null
-                      : Icon(
-                          _patValid! ? Icons.check_circle : Icons.error,
-                          color: _patValid! ? c.success : c.error,
-                          size: 16,
-                        ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: isLoading ? null : _testPat,
-                child: isLoading
-                    ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text('Test', style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: _openTokenCreationPage,
-            child: Text(
-              'Create a token on GitHub →',
-              style: TextStyle(
-                color: c.accent,
-                fontSize: ThemeConstants.uiFontSizeSmall,
-                decoration: TextDecoration.underline,
-              ),
-            ),
-          ),
-        ],
         const Spacer(),
         const SizedBox(height: 16),
         Row(
