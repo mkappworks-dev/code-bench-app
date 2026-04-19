@@ -126,7 +126,7 @@ class _InlineSaveButtonState extends State<InlineSaveButton> {
         width: 54,
         height: 26,
         child: Center(
-          child: SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+          child: SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: c.onAccent)),
         ),
       );
     }
@@ -145,11 +145,7 @@ class _InlineSaveButtonState extends State<InlineSaveButton> {
           decoration: BoxDecoration(color: _hovered ? c.accentHover : c.accent, borderRadius: BorderRadius.circular(5)),
           child: Text(
             'Save',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: ThemeConstants.uiFontSizeSmall,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(color: c.onAccent, fontSize: ThemeConstants.uiFontSizeSmall, fontWeight: FontWeight.w500),
           ),
         ),
       ),

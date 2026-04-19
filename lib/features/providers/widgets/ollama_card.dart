@@ -8,7 +8,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../notifiers/providers_actions.dart';
-import '../notifiers/providers_notifier.dart';
 import 'provider_card_helpers.dart';
 
 class OllamaCard extends ConsumerStatefulWidget {
@@ -120,9 +119,9 @@ class _OllamaCardState extends ConsumerState<OllamaCard> {
   }
 
   Future<void> _persist(String url, {required bool verified}) async {
-    final saved = await ref.read(apiKeysProvider.notifier).saveOllamaUrl(url);
+    await ref.read(providersActionsProvider.notifier).saveOllamaUrl(url);
     if (!mounted) return;
-    if (saved) {
+    if (!ref.read(providersActionsProvider).hasError) {
       _savedValue = url;
       setState(() {
         _dotStatus = verified ? DotStatus.savedVerified : DotStatus.savedUnverified;
@@ -137,20 +136,20 @@ class _OllamaCardState extends ConsumerState<OllamaCard> {
   }
 
   Future<void> _clear() async {
-    widget.controller.clear();
-    final ok = await ref.read(apiKeysProvider.notifier).clearOllamaUrl();
+    await ref.read(providersActionsProvider.notifier).clearOllamaUrl();
     if (!mounted) return;
-    _savedValue = '';
-    setState(() {
-      _dotStatus = DotStatus.empty;
-      _testPassed = false;
-      _showSaveAnyway = false;
-    });
-    AppSnackBar.show(
-      context,
-      ok ? 'Ollama URL cleared' : 'Failed to clear — please retry',
-      type: ok ? AppSnackBarType.success : AppSnackBarType.error,
-    );
+    if (!ref.read(providersActionsProvider).hasError) {
+      widget.controller.clear();
+      _savedValue = '';
+      setState(() {
+        _dotStatus = DotStatus.empty;
+        _testPassed = false;
+        _showSaveAnyway = false;
+      });
+      AppSnackBar.show(context, 'Ollama URL cleared', type: AppSnackBarType.success);
+    } else {
+      AppSnackBar.show(context, 'Failed to clear — please retry', type: AppSnackBarType.error);
+    }
   }
 
   Color _dotColor(AppColors c) => switch (_dotStatus) {

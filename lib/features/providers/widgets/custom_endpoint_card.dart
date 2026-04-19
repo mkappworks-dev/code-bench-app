@@ -8,7 +8,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../notifiers/providers_actions.dart';
-import '../notifiers/providers_notifier.dart';
 import 'provider_card_helpers.dart';
 
 class CustomEndpointCard extends ConsumerStatefulWidget {
@@ -142,9 +141,9 @@ class _CustomEndpointCardState extends ConsumerState<CustomEndpointCard> {
   }
 
   Future<void> _persist(String url, String apiKey, {required bool verified}) async {
-    final saved = await ref.read(apiKeysProvider.notifier).saveCustomEndpoint(url, apiKey);
+    await ref.read(providersActionsProvider.notifier).saveCustomEndpoint(url, apiKey);
     if (!mounted) return;
-    if (saved) {
+    if (!ref.read(providersActionsProvider).hasError) {
       _savedUrl = url;
       _savedApiKey = apiKey;
       setState(() {
@@ -164,11 +163,18 @@ class _CustomEndpointCardState extends ConsumerState<CustomEndpointCard> {
   }
 
   Future<void> _clearAll() async {
+    await ref.read(providersActionsProvider.notifier).clearCustomEndpoint();
+    if (!mounted || ref.read(providersActionsProvider).hasError) {
+      if (mounted) AppSnackBar.show(context, 'Failed to clear — please retry', type: AppSnackBarType.error);
+      return;
+    }
+    await ref.read(providersActionsProvider.notifier).clearCustomApiKey();
+    if (!mounted || ref.read(providersActionsProvider).hasError) {
+      if (mounted) AppSnackBar.show(context, 'Failed to clear — please retry', type: AppSnackBarType.error);
+      return;
+    }
     widget.urlController.clear();
     widget.apiKeyController.clear();
-    await ref.read(apiKeysProvider.notifier).clearCustomEndpoint();
-    await ref.read(apiKeysProvider.notifier).clearCustomApiKey();
-    if (!mounted) return;
     _savedUrl = '';
     _savedApiKey = '';
     setState(() {
