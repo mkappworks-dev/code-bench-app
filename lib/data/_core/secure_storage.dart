@@ -24,6 +24,7 @@ class SecureStorage {
   // Keys
   static String _apiKeyKey(String provider) => 'api_key_$provider';
   static const String _githubTokenKey = 'github_token';
+  static const String _githubAccountKey = 'github_account';
   static const String _ollamaUrlKey = 'ollama_base_url';
 
   // API Keys
@@ -85,6 +86,34 @@ class SecureStorage {
     }
   }
 
+  // GitHub Account cache (username, avatarUrl — avoids network call on startup)
+  Future<void> writeGitHubAccount(String json) async {
+    try {
+      await _storage.write(key: _githubAccountKey, value: json);
+    } catch (e) {
+      dLog('[SecureStorage] writeGitHubAccount failed: $e');
+      throw StorageException('Failed to store GitHub account', originalError: e);
+    }
+  }
+
+  Future<String?> readGitHubAccount() async {
+    try {
+      return await _storage.read(key: _githubAccountKey);
+    } catch (e) {
+      dLog('[SecureStorage] readGitHubAccount failed: $e');
+      throw StorageException('Failed to read GitHub account', originalError: e);
+    }
+  }
+
+  Future<void> deleteGitHubAccount() async {
+    try {
+      await _storage.delete(key: _githubAccountKey);
+    } catch (e) {
+      dLog('[SecureStorage] deleteGitHubAccount failed: $e');
+      throw StorageException('Failed to delete GitHub account', originalError: e);
+    }
+  }
+
   // Ollama URL
   Future<void> writeOllamaUrl(String url) async {
     try {
@@ -101,6 +130,15 @@ class SecureStorage {
     } catch (e) {
       dLog('[SecureStorage] readOllamaUrl failed: $e');
       throw StorageException('Failed to read Ollama URL', originalError: e);
+    }
+  }
+
+  Future<void> deleteOllamaUrl() async {
+    try {
+      await _storage.delete(key: _ollamaUrlKey);
+    } catch (e) {
+      dLog('[SecureStorage] deleteOllamaUrl failed: $e');
+      throw StorageException('Failed to delete Ollama URL', originalError: e);
     }
   }
 
@@ -178,6 +216,15 @@ class SecureStorage {
     }
   }
 
+  Future<void> deleteCustomEndpoint() async {
+    try {
+      await _storage.delete(key: _customEndpointKey);
+    } catch (e) {
+      dLog('[SecureStorage] deleteCustomEndpoint failed: $e');
+      throw StorageException('Failed to delete custom endpoint', originalError: e);
+    }
+  }
+
   Future<void> writeCustomApiKey(String apiKey) async {
     try {
       await _storage.write(key: _customApiKeyKey, value: apiKey);
@@ -193,6 +240,15 @@ class SecureStorage {
     } catch (e) {
       dLog('[SecureStorage] readCustomApiKey failed: $e');
       throw StorageException('Failed to read custom API key', originalError: e);
+    }
+  }
+
+  Future<void> deleteCustomApiKey() async {
+    try {
+      await _storage.delete(key: _customApiKeyKey);
+    } catch (e) {
+      dLog('[SecureStorage] deleteCustomApiKey failed: $e');
+      throw StorageException('Failed to delete custom API key', originalError: e);
     }
   }
 }

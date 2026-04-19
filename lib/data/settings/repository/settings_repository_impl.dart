@@ -1,9 +1,9 @@
+// lib/data/settings/repository/settings_repository_impl.dart
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../data/_core/preferences/general_preferences.dart';
-import '../models/app_theme_preference.dart';
 import '../../../data/_core/preferences/onboarding_preferences.dart';
-import '../../../data/_core/secure_storage.dart';
+import '../models/app_theme_preference.dart';
 import 'settings_repository.dart';
 
 part 'settings_repository_impl.g.dart';
@@ -16,43 +16,8 @@ class SettingsRepositoryImpl implements SettingsRepository {
 
   final Ref _ref;
 
-  SecureStorage get _storage => _ref.read(secureStorageProvider);
   GeneralPreferences get _generalPrefs => _ref.read(generalPreferencesProvider);
   OnboardingPreferences get _onboardingPrefs => _ref.read(onboardingPreferencesProvider);
-
-  // ── API keys ──────────────────────────────────────────────────────────────
-
-  @override
-  Future<String?> readApiKey(String provider) => _storage.readApiKey(provider);
-
-  @override
-  Future<void> writeApiKey(String provider, String key) => _storage.writeApiKey(provider, key);
-
-  @override
-  Future<void> deleteApiKey(String provider) => _storage.deleteApiKey(provider);
-
-  @override
-  Future<String?> readOllamaUrl() => _storage.readOllamaUrl();
-
-  @override
-  Future<void> writeOllamaUrl(String url) => _storage.writeOllamaUrl(url);
-
-  @override
-  Future<String?> readCustomEndpoint() => _storage.readCustomEndpoint();
-
-  @override
-  Future<void> writeCustomEndpoint(String url) => _storage.writeCustomEndpoint(url);
-
-  @override
-  Future<String?> readCustomApiKey() => _storage.readCustomApiKey();
-
-  @override
-  Future<void> writeCustomApiKey(String key) => _storage.writeCustomApiKey(key);
-
-  @override
-  Future<void> deleteAllSecureStorage() => _storage.deleteAll();
-
-  // ── General preferences ───────────────────────────────────────────────────
 
   @override
   Future<bool> getAutoCommit() => _generalPrefs.getAutoCommit();
@@ -77,8 +42,6 @@ class SettingsRepositoryImpl implements SettingsRepository {
 
   @override
   Future<void> setThemeMode(AppThemePreference mode) => _generalPrefs.setThemeMode(mode);
-
-  // ── Onboarding ────────────────────────────────────────────────────────────
 
   @override
   Future<void> markOnboardingCompleted() => _onboardingPrefs.markCompleted();

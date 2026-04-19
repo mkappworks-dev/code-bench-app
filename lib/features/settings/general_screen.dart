@@ -1,16 +1,18 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/debug_logger.dart';
 import '../../core/widgets/app_dialog.dart';
 import '../../core/widgets/app_snack_bar.dart';
-import '../../core/utils/instant_menu.dart';
 import 'notifiers/general_prefs_notifier.dart';
 import 'notifiers/settings_actions.dart';
 import '../../core/widgets/app_text_field.dart';
+import 'widgets/app_dropdown.dart';
 import 'widgets/section_label.dart';
 import 'widgets/settings_group.dart';
 
@@ -25,6 +27,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
   bool _autoCommit = false;
   bool _deleteConfirmation = true;
   ThemeMode _themeMode = ThemeMode.system;
+  String _version = '';
   final _terminalAppController = TextEditingController();
 
   @override
@@ -38,15 +41,19 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
 
   Future<void> _load() async {
     try {
-      final s = await ref.read(generalPrefsProvider.future);
+      final results = await Future.wait([ref.read(generalPrefsProvider.future), PackageInfo.fromPlatform()]);
+      final s = results[0] as GeneralPrefsNotifierState;
+      final info = results[1] as PackageInfo;
       if (!mounted) return;
       setState(() {
         _autoCommit = s.autoCommit;
         _deleteConfirmation = s.deleteConfirmation;
         _terminalAppController.text = s.terminalApp;
         _themeMode = s.themeMode;
+        _version = info.version;
       });
-    } catch (e) {
+    } catch (e, st) {
+      dLog('[GeneralScreen] _load failed: $e\n$st');
       if (mounted) {
         AppSnackBar.show(context, 'Could not load settings — showing defaults.', type: AppSnackBarType.warning);
       }
@@ -114,6 +121,10 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
       if (next is! AsyncError || !mounted) return;
       AppSnackBar.show(context, 'Could not save setting — please try again.', type: AppSnackBarType.error);
     });
+    ref.listen(settingsActionsProvider, (_, next) {
+      if (next is! AsyncError || !mounted) return;
+      AppSnackBar.show(context, 'Failed to reset — please try again.', type: AppSnackBarType.error);
+    });
     final c = AppColors.of(context);
     return SingleChildScrollView(
       child: Column(
@@ -127,7 +138,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                 label: 'Theme',
                 description: 'How Code Bench looks',
                 trailing: Builder(
-                  builder: (ctx) => _AppDropdown<ThemeMode>(
+                  builder: (ctx) => AppDropdown<ThemeMode>(
                     value: _themeMode,
                     items: const [ThemeMode.system, ThemeMode.dark, ThemeMode.light],
                     label: (m) => switch (m) {
@@ -216,11 +227,11 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                 description: 'Current app version',
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: c.success.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
+                  decoration: BoxDecoration(color: c.accentTintMid, borderRadius: BorderRadius.circular(4)),
+                  child: Text(
+                    _version.isEmpty ? '…' : _version,
+                    style: TextStyle(color: c.accent, fontSize: 10, fontWeight: FontWeight.w500),
                   ),
-                  child: Text('Up to Date', style: TextStyle(color: c.success, fontSize: 10)),
                 ),
                 isLast: true,
               ),
@@ -237,10 +248,12 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                   description:
                       'Show the 3-step wizard on next launch. Does not clear API keys, GitHub sign-in, or projects.',
                   trailing: Builder(
-                    builder: (ctx) => InkWell(
-                      onTap: () async {
+                    builder: (ctx) => _DebugChipButton(
+                      label: 'Replay',
+                      onPressed: () async {
                         await ref.read(settingsActionsProvider.notifier).replayOnboarding();
-                        if (ctx.mounted) {
+                        if (!ctx.mounted) return;
+                        if (!ref.read(settingsActionsProvider).hasError) {
                           AppSnackBar.show(
                             ctx,
                             'Wizard will replay on next launch',
@@ -249,41 +262,13 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                           );
                         }
                       },
-                      borderRadius: BorderRadius.circular(5),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: c.deepBorder),
-                          borderRadius: BorderRadius.circular(5),
-                          color: c.inputSurface,
-                        ),
-                        child: Text(
-                          'Replay',
-                          style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
-                        ),
-                      ),
                     ),
                   ),
                 ),
                 SettingsRow(
                   label: 'Wipe all data',
                   description: 'Delete API keys, GitHub sign-in, chat history, and projects. Cannot be undone.',
-                  trailing: InkWell(
-                    onTap: _confirmWipeAllData,
-                    borderRadius: BorderRadius.circular(5),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: c.error),
-                        borderRadius: BorderRadius.circular(5),
-                        color: c.inputSurface,
-                      ),
-                      child: Text(
-                        'Wipe',
-                        style: TextStyle(color: c.error, fontSize: ThemeConstants.uiFontSizeSmall),
-                      ),
-                    ),
-                  ),
+                  trailing: _DebugChipButton(label: 'Wipe', onPressed: _confirmWipeAllData, isDestructive: true),
                   isLast: true,
                 ),
               ],
@@ -295,92 +280,46 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
   }
 }
 
-// ── Dropdown — only used within General settings ──────────────────────────────
+class _DebugChipButton extends StatefulWidget {
+  const _DebugChipButton({required this.label, required this.onPressed, this.isDestructive = false});
 
-class _AppDropdown<T> extends StatelessWidget {
-  const _AppDropdown({
-    required this.value,
-    required this.items,
-    required this.label,
-    required this.onChanged,
-    required this.context,
-  });
+  final String label;
+  final VoidCallback onPressed;
+  final bool isDestructive;
 
-  final T value;
-  final List<T> items;
-  final String Function(T) label;
-  final void Function(T) onChanged;
-  final BuildContext context;
+  @override
+  State<_DebugChipButton> createState() => _DebugChipButtonState();
+}
 
-  void _open() {
-    final c = AppColors.of(context);
-    final box = context.findRenderObject();
-    if (box is! RenderBox || !box.hasSize) return;
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-    final origin = box.localToGlobal(Offset.zero, ancestor: overlay);
-    showInstantMenu<T>(
-      context: context,
-      position: RelativeRect.fromLTRB(
-        origin.dx,
-        origin.dy + box.size.height + 4,
-        overlay.size.width - origin.dx - box.size.width,
-        0,
-      ),
-      color: c.panelBackground,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(6),
-        side: BorderSide(color: c.faintFg),
-      ),
-      items: items
-          .map(
-            (item) => PopupMenuItem<T>(
-              value: item,
-              height: 30,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      label(item),
-                      style: TextStyle(
-                        color: item == value ? c.textPrimary : c.textSecondary,
-                        fontSize: ThemeConstants.uiFontSizeSmall,
-                      ),
-                    ),
-                  ),
-                  if (item == value) Icon(AppIcons.check, size: 11, color: c.accent),
-                ],
-              ),
-            ),
-          )
-          .toList(),
-    ).then((picked) {
-      if (picked != null) onChanged(picked);
-    });
-  }
+class _DebugChipButtonState extends State<_DebugChipButton> {
+  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    return InkWell(
-      onTap: _open,
-      borderRadius: BorderRadius.circular(5),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: c.chipFill,
-          border: Border.all(color: c.chipStroke),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label(value),
-              style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
-            ),
-            const SizedBox(width: 4),
-            Icon(AppIcons.chevronDown, size: 10, color: c.mutedFg),
-          ],
+    final fg = widget.isDestructive ? c.error : c.textPrimary;
+    final borderColor = widget.isDestructive ? c.error.withValues(alpha: 0.5) : c.chipStroke;
+    final bgRest = widget.isDestructive ? c.errorTintBg : c.chipFill;
+    final bgHover = widget.isDestructive ? c.error.withValues(alpha: 0.2) : c.chipStroke;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onPressed,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: _hovered ? bgHover : bgRest,
+            border: Border.all(color: borderColor),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: Text(
+            widget.label,
+            style: TextStyle(color: fg, fontSize: ThemeConstants.uiFontSizeSmall),
+          ),
         ),
       ),
     );

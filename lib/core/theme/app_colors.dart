@@ -81,6 +81,11 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.editedBadgeBg,
     required this.editedBadgeBorder,
     required this.githubBrandColor,
+    required this.githubButtonGradientStart,
+    required this.githubButtonGradientEnd,
+    required this.githubButtonBorder,
+    required this.githubButtonForeground,
+    required this.githubButtonShadow,
     // ── Diff ─────────────────────────────────────────────────────────────
     required this.diffAdditionBg,
     required this.diffDeletionBg,
@@ -107,6 +112,9 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.brandingGradientTop,
     required this.brandingGradientMid,
     required this.accentGlow,
+    required this.surfaceHoverOverlay,
+    required this.glassHoverOverlay,
+    required this.filledButtonHoverOverlay,
     required this.subtleTealFg,
     required this.accentTintLight,
     required this.accentTintMid,
@@ -210,6 +218,11 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color editedBadgeBg;
   final Color editedBadgeBorder;
   final Color githubBrandColor;
+  final Color githubButtonGradientStart;
+  final Color githubButtonGradientEnd;
+  final Color githubButtonBorder;
+  final Color githubButtonForeground;
+  final Color githubButtonShadow;
   final Color diffAdditionBg;
   final Color diffDeletionBg;
   final Color onAccent;
@@ -232,6 +245,9 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color brandingGradientTop;
   final Color brandingGradientMid;
   final Color accentGlow;
+  final Color surfaceHoverOverlay;
+  final Color glassHoverOverlay;
+  final Color filledButtonHoverOverlay;
   final Color subtleTealFg;
   final Color accentTintLight;
   final Color accentTintMid;
@@ -337,6 +353,11 @@ class AppColors extends ThemeExtension<AppColors> {
     editedBadgeBg: Color(0xFF3D2900),
     editedBadgeBorder: Color(0xFFAA7700),
     githubBrandColor: Color(0xFF24292E),
+    githubButtonGradientStart: Color(0x14FFFFFF),
+    githubButtonGradientEnd: Color(0x07FFFFFF),
+    githubButtonBorder: Color(0x1EFFFFFF),
+    githubButtonForeground: Color(0xD9FFFFFF),
+    githubButtonShadow: Color(0x59000000),
     diffAdditionBg: Color(0x3300CC66),
     diffDeletionBg: Color(0x33FF4444),
     onAccent: Color(0xFF0A0A0A),
@@ -359,6 +380,9 @@ class AppColors extends ThemeExtension<AppColors> {
     brandingGradientTop: Color(0xFF0E1A18),
     brandingGradientMid: Color(0xFF0A0E0D),
     accentGlow: Color(0x404EC9B0),
+    surfaceHoverOverlay: Color(0x08FFFFFF),
+    glassHoverOverlay: Color(0x12FFFFFF),
+    filledButtonHoverOverlay: Color(0x1EFFFFFF),
     subtleTealFg: Color(0xFF4A6660),
     accentTintLight: Color(0x0A4EC9B0),
     accentTintMid: Color(0x144EC9B0),
@@ -460,6 +484,11 @@ class AppColors extends ThemeExtension<AppColors> {
     editedBadgeBg: Color(0xFFFFF3CD),
     editedBadgeBorder: Color(0xFFCC8800),
     githubBrandColor: Color(0xFF24292E),
+    githubButtonGradientStart: Color(0xF2FFFFFF),
+    githubButtonGradientEnd: Color(0xCCFFFFFF),
+    githubButtonBorder: Color(0x1A000000),
+    githubButtonForeground: Color(0xFF333333),
+    githubButtonShadow: Color(0x1A000000),
     diffAdditionBg: Color(0x3300BB55),
     diffDeletionBg: Color(0x33EE3333),
     onAccent: Color(0xFF0A0A0A),
@@ -482,6 +511,9 @@ class AppColors extends ThemeExtension<AppColors> {
     brandingGradientTop: Color(0xFFD5F5EE),
     brandingGradientMid: Color(0xFFC0EDE3),
     accentGlow: Color(0x404EC9B0),
+    surfaceHoverOverlay: Color(0x0A000000),
+    glassHoverOverlay: Color(0x12FFFFFF),
+    filledButtonHoverOverlay: Color(0x1EFFFFFF),
     subtleTealFg: Color(0xFF2A7A6E),
     accentTintLight: Color(0x0A4EC9B0),
     accentTintMid: Color(0x144EC9B0),
@@ -585,6 +617,11 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? editedBadgeBg,
     Color? editedBadgeBorder,
     Color? githubBrandColor,
+    Color? githubButtonGradientStart,
+    Color? githubButtonGradientEnd,
+    Color? githubButtonBorder,
+    Color? githubButtonForeground,
+    Color? githubButtonShadow,
     Color? diffAdditionBg,
     Color? diffDeletionBg,
     Color? onAccent,
@@ -607,6 +644,9 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? brandingGradientTop,
     Color? brandingGradientMid,
     Color? accentGlow,
+    Color? surfaceHoverOverlay,
+    Color? glassHoverOverlay,
+    Color? filledButtonHoverOverlay,
     Color? subtleTealFg,
     Color? accentTintLight,
     Color? accentTintMid,
@@ -704,6 +744,11 @@ class AppColors extends ThemeExtension<AppColors> {
     editedBadgeBg: editedBadgeBg ?? this.editedBadgeBg,
     editedBadgeBorder: editedBadgeBorder ?? this.editedBadgeBorder,
     githubBrandColor: githubBrandColor ?? this.githubBrandColor,
+    githubButtonGradientStart: githubButtonGradientStart ?? this.githubButtonGradientStart,
+    githubButtonGradientEnd: githubButtonGradientEnd ?? this.githubButtonGradientEnd,
+    githubButtonBorder: githubButtonBorder ?? this.githubButtonBorder,
+    githubButtonForeground: githubButtonForeground ?? this.githubButtonForeground,
+    githubButtonShadow: githubButtonShadow ?? this.githubButtonShadow,
     diffAdditionBg: diffAdditionBg ?? this.diffAdditionBg,
     diffDeletionBg: diffDeletionBg ?? this.diffDeletionBg,
     onAccent: onAccent ?? this.onAccent,
@@ -726,6 +771,9 @@ class AppColors extends ThemeExtension<AppColors> {
     brandingGradientTop: brandingGradientTop ?? this.brandingGradientTop,
     brandingGradientMid: brandingGradientMid ?? this.brandingGradientMid,
     accentGlow: accentGlow ?? this.accentGlow,
+    surfaceHoverOverlay: surfaceHoverOverlay ?? this.surfaceHoverOverlay,
+    glassHoverOverlay: glassHoverOverlay ?? this.glassHoverOverlay,
+    filledButtonHoverOverlay: filledButtonHoverOverlay ?? this.filledButtonHoverOverlay,
     subtleTealFg: subtleTealFg ?? this.subtleTealFg,
     accentTintLight: accentTintLight ?? this.accentTintLight,
     accentTintMid: accentTintMid ?? this.accentTintMid,
@@ -828,6 +876,11 @@ class AppColors extends ThemeExtension<AppColors> {
       editedBadgeBg: Color.lerp(editedBadgeBg, other.editedBadgeBg, t)!,
       editedBadgeBorder: Color.lerp(editedBadgeBorder, other.editedBadgeBorder, t)!,
       githubBrandColor: Color.lerp(githubBrandColor, other.githubBrandColor, t)!,
+      githubButtonGradientStart: Color.lerp(githubButtonGradientStart, other.githubButtonGradientStart, t)!,
+      githubButtonGradientEnd: Color.lerp(githubButtonGradientEnd, other.githubButtonGradientEnd, t)!,
+      githubButtonBorder: Color.lerp(githubButtonBorder, other.githubButtonBorder, t)!,
+      githubButtonForeground: Color.lerp(githubButtonForeground, other.githubButtonForeground, t)!,
+      githubButtonShadow: Color.lerp(githubButtonShadow, other.githubButtonShadow, t)!,
       diffAdditionBg: Color.lerp(diffAdditionBg, other.diffAdditionBg, t)!,
       diffDeletionBg: Color.lerp(diffDeletionBg, other.diffDeletionBg, t)!,
       onAccent: Color.lerp(onAccent, other.onAccent, t)!,
@@ -850,6 +903,9 @@ class AppColors extends ThemeExtension<AppColors> {
       brandingGradientTop: Color.lerp(brandingGradientTop, other.brandingGradientTop, t)!,
       brandingGradientMid: Color.lerp(brandingGradientMid, other.brandingGradientMid, t)!,
       accentGlow: Color.lerp(accentGlow, other.accentGlow, t)!,
+      surfaceHoverOverlay: Color.lerp(surfaceHoverOverlay, other.surfaceHoverOverlay, t)!,
+      glassHoverOverlay: Color.lerp(glassHoverOverlay, other.glassHoverOverlay, t)!,
+      filledButtonHoverOverlay: Color.lerp(filledButtonHoverOverlay, other.filledButtonHoverOverlay, t)!,
       subtleTealFg: Color.lerp(subtleTealFg, other.subtleTealFg, t)!,
       accentTintLight: Color.lerp(accentTintLight, other.accentTintLight, t)!,
       accentTintMid: Color.lerp(accentTintMid, other.accentTintMid, t)!,

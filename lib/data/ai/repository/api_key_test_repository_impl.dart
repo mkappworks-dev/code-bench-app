@@ -28,4 +28,7 @@ class ApiKeyTestRepositoryImpl implements ApiKeyTestRepository {
 
   @override
   Future<bool> testOllamaUrl(String url) => _datasource.testOllamaUrl(url);
+
+  @override
+  Future<bool> testCustomEndpoint(String url, String apiKey) => _datasource.testCustomEndpoint(url, apiKey);
 }

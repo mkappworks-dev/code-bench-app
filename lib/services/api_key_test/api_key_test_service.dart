@@ -22,4 +22,6 @@ class ApiKeyTestService {
   Future<bool> testApiKey(AIProvider provider, String key) => _repo.testApiKey(provider, key);
 
   Future<bool> testOllamaUrl(String url) => _repo.testOllamaUrl(url);
+
+  Future<bool> testCustomEndpoint(String url, String apiKey) => _repo.testCustomEndpoint(url, apiKey);
 }

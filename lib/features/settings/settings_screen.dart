@@ -7,12 +7,13 @@ import '../../core/theme/app_colors.dart';
 import '../../core/utils/platform_utils.dart';
 import '../../core/widgets/app_dialog.dart';
 import '../../core/widgets/app_snack_bar.dart';
-import 'archive_screen.dart';
+import '../archive/archive_screen.dart';
+import '../integrations/integrations_screen.dart';
+import '../providers/providers_screen.dart';
 import 'general_screen.dart';
 import 'notifiers/general_prefs_notifier.dart';
-import 'providers_screen.dart';
 
-enum _SettingsNav { general, providers, archive }
+enum _SettingsNav { general, providers, integrations, archive }
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -61,6 +62,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return GeneralScreen(key: ValueKey('general-$_generalVersion'));
       case _SettingsNav.providers:
         return const ProvidersScreen();
+      case _SettingsNav.integrations:
+        return const IntegrationsScreen();
       case _SettingsNav.archive:
         return const ArchiveScreen();
     }
@@ -102,7 +105,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
 // ── Left nav ──────────────────────────────────────────────────────────────────
 
-class _SettingsLeftNav extends StatelessWidget {
+class _SettingsLeftNav extends StatefulWidget {
   const _SettingsLeftNav({
     required this.activeNav,
     required this.onSelect,
@@ -114,6 +117,14 @@ class _SettingsLeftNav extends StatelessWidget {
   final ValueChanged<_SettingsNav> onSelect;
   final VoidCallback onBack;
   final VoidCallback onRestoreDefaults;
+
+  @override
+  State<_SettingsLeftNav> createState() => _SettingsLeftNavState();
+}
+
+class _SettingsLeftNavState extends State<_SettingsLeftNav> {
+  bool _backHovered = false;
+  bool _restoreHovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -138,48 +149,83 @@ class _SettingsLeftNav extends StatelessWidget {
           _NavItem(
             icon: AppIcons.settings,
             label: 'General',
-            isActive: activeNav == _SettingsNav.general,
-            onTap: () => onSelect(_SettingsNav.general),
+            isActive: widget.activeNav == _SettingsNav.general,
+            onTap: () => widget.onSelect(_SettingsNav.general),
           ),
           _NavItem(
             icon: AppIcons.chat,
             label: 'Providers',
-            isActive: activeNav == _SettingsNav.providers,
-            onTap: () => onSelect(_SettingsNav.providers),
+            isActive: widget.activeNav == _SettingsNav.providers,
+            onTap: () => widget.onSelect(_SettingsNav.providers),
+          ),
+          _NavItem(
+            icon: AppIcons.gitPullRequest,
+            label: 'Integrations',
+            isActive: widget.activeNav == _SettingsNav.integrations,
+            onTap: () => widget.onSelect(_SettingsNav.integrations),
           ),
           _NavItem(
             icon: AppIcons.archive,
             label: 'Archive',
-            isActive: activeNav == _SettingsNav.archive,
-            onTap: () => onSelect(_SettingsNav.archive),
+            isActive: widget.activeNav == _SettingsNav.archive,
+            onTap: () => widget.onSelect(_SettingsNav.archive),
           ),
           const Spacer(),
-          InkWell(
-            onTap: onRestoreDefaults,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text('↺ Restore defaults', style: TextStyle(color: c.mutedFg, fontSize: 11)),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-            child: InkWell(
-              onTap: onBack,
-              borderRadius: BorderRadius.circular(6),
-              child: Container(
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) => setState(() => _restoreHovered = true),
+            onExit: (_) => setState(() => _restoreHovered = false),
+            child: GestureDetector(
+              onTap: widget.onRestoreDefaults,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                margin: const EdgeInsets.symmetric(horizontal: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: c.chipFill,
+                  color: _restoreHovered ? c.chipStroke : c.chipFill,
                   border: Border.all(color: c.chipStroke),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(AppIcons.arrowLeft, size: 11, color: c.textSecondary),
-                    const SizedBox(width: 6),
-                    Text('Back', style: TextStyle(color: c.textSecondary, fontSize: 11)),
+                    Text(
+                      '↺ Restore defaults',
+                      style: TextStyle(color: _restoreHovered ? c.textPrimary : c.mutedFg, fontSize: 11),
+                    ),
                   ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              onEnter: (_) => setState(() => _backHovered = true),
+              onExit: (_) => setState(() => _backHovered = false),
+              child: GestureDetector(
+                onTap: widget.onBack,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _backHovered ? c.chipStroke : c.chipFill,
+                    border: Border.all(color: c.chipStroke),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(AppIcons.arrowLeft, size: 11, color: _backHovered ? c.textPrimary : c.textSecondary),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Back',
+                        style: TextStyle(color: _backHovered ? c.textPrimary : c.textSecondary, fontSize: 11),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

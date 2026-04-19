@@ -8,17 +8,11 @@ part of 'providers_notifier.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Loads API keys on first watch and exposes save/delete actions.
-/// Auto-disposes when the settings screen is not in view.
 
 @ProviderFor(ApiKeysNotifier)
 final apiKeysProvider = ApiKeysNotifierProvider._();
 
-/// Loads API keys on first watch and exposes save/delete actions.
-/// Auto-disposes when the settings screen is not in view.
 final class ApiKeysNotifierProvider extends $AsyncNotifierProvider<ApiKeysNotifier, ApiKeysNotifierState> {
-  /// Loads API keys on first watch and exposes save/delete actions.
-  /// Auto-disposes when the settings screen is not in view.
   ApiKeysNotifierProvider._()
     : super(
         from: null,
@@ -38,10 +32,7 @@ final class ApiKeysNotifierProvider extends $AsyncNotifierProvider<ApiKeysNotifi
   ApiKeysNotifier create() => ApiKeysNotifier();
 }
 
-String _$apiKeysNotifierHash() => r'f386d86f69bc5042362be92f8dd565dc7bd07fa1';
-
-/// Loads API keys on first watch and exposes save/delete actions.
-/// Auto-disposes when the settings screen is not in view.
+String _$apiKeysNotifierHash() => r'8c2f68e7558a8fc5aa0d82a45315cf4e6c984ca5';
 
 abstract class _$ApiKeysNotifier extends $AsyncNotifier<ApiKeysNotifierState> {
   FutureOr<ApiKeysNotifierState> build();

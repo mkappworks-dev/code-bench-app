@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'settings_actions_failure.dart';
+part of 'providers_failure.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -12,7 +12,7 @@ part of 'settings_actions_failure.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
-mixin _$SettingsActionsFailure {
+mixin _$ProvidersFailure {
 
 
 
@@ -20,7 +20,7 @@ mixin _$SettingsActionsFailure {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsActionsFailure);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProvidersFailure);
 }
 
 
@@ -29,20 +29,20 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'SettingsActionsFailure()';
+  return 'ProvidersFailure()';
 }
 
 
 }
 
 /// @nodoc
-class $SettingsActionsFailureCopyWith<$Res>  {
-$SettingsActionsFailureCopyWith(SettingsActionsFailure _, $Res Function(SettingsActionsFailure) __);
+class $ProvidersFailureCopyWith<$Res>  {
+$ProvidersFailureCopyWith(ProvidersFailure _, $Res Function(ProvidersFailure) __);
 }
 
 
-/// Adds pattern-matching-related methods to [SettingsActionsFailure].
-extension SettingsActionsFailurePatterns on SettingsActionsFailure {
+/// Adds pattern-matching-related methods to [ProvidersFailure].
+extension ProvidersFailurePatterns on ProvidersFailure {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
@@ -55,11 +55,11 @@ extension SettingsActionsFailurePatterns on SettingsActionsFailure {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SettingsStorageFailed value)?  storageFailed,TResult Function( SettingsUnknownError value)?  unknown,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ProvidersStorageFailed value)?  storageFailed,TResult Function( ProvidersUnknownError value)?  unknown,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case SettingsStorageFailed() when storageFailed != null:
-return storageFailed(_that);case SettingsUnknownError() when unknown != null:
+case ProvidersStorageFailed() when storageFailed != null:
+return storageFailed(_that);case ProvidersUnknownError() when unknown != null:
 return unknown(_that);case _:
   return orElse();
 
@@ -78,11 +78,11 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SettingsStorageFailed value)  storageFailed,required TResult Function( SettingsUnknownError value)  unknown,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ProvidersStorageFailed value)  storageFailed,required TResult Function( ProvidersUnknownError value)  unknown,}){
 final _that = this;
 switch (_that) {
-case SettingsStorageFailed():
-return storageFailed(_that);case SettingsUnknownError():
+case ProvidersStorageFailed():
+return storageFailed(_that);case ProvidersUnknownError():
 return unknown(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -97,11 +97,11 @@ return unknown(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SettingsStorageFailed value)?  storageFailed,TResult? Function( SettingsUnknownError value)?  unknown,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ProvidersStorageFailed value)?  storageFailed,TResult? Function( ProvidersUnknownError value)?  unknown,}){
 final _that = this;
 switch (_that) {
-case SettingsStorageFailed() when storageFailed != null:
-return storageFailed(_that);case SettingsUnknownError() when unknown != null:
+case ProvidersStorageFailed() when storageFailed != null:
+return storageFailed(_that);case ProvidersUnknownError() when unknown != null:
 return unknown(_that);case _:
   return null;
 
@@ -121,8 +121,8 @@ return unknown(_that);case _:
 
 @optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String providerName)?  storageFailed,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case SettingsStorageFailed() when storageFailed != null:
-return storageFailed(_that.providerName);case SettingsUnknownError() when unknown != null:
+case ProvidersStorageFailed() when storageFailed != null:
+return storageFailed(_that.providerName);case ProvidersUnknownError() when unknown != null:
 return unknown(_that.error);case _:
   return orElse();
 
@@ -143,8 +143,8 @@ return unknown(_that.error);case _:
 
 @optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String providerName)  storageFailed,required TResult Function( Object error)  unknown,}) {final _that = this;
 switch (_that) {
-case SettingsStorageFailed():
-return storageFailed(_that.providerName);case SettingsUnknownError():
+case ProvidersStorageFailed():
+return storageFailed(_that.providerName);case ProvidersUnknownError():
 return unknown(_that.error);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -161,8 +161,8 @@ return unknown(_that.error);}
 
 @optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String providerName)?  storageFailed,TResult? Function( Object error)?  unknown,}) {final _that = this;
 switch (_that) {
-case SettingsStorageFailed() when storageFailed != null:
-return storageFailed(_that.providerName);case SettingsUnknownError() when unknown != null:
+case ProvidersStorageFailed() when storageFailed != null:
+return storageFailed(_that.providerName);case ProvidersUnknownError() when unknown != null:
 return unknown(_that.error);case _:
   return null;
 
@@ -174,23 +174,23 @@ return unknown(_that.error);case _:
 /// @nodoc
 
 
-class SettingsStorageFailed implements SettingsActionsFailure {
-  const SettingsStorageFailed(this.providerName);
+class ProvidersStorageFailed implements ProvidersFailure {
+  const ProvidersStorageFailed(this.providerName);
   
 
  final  String providerName;
 
-/// Create a copy of SettingsActionsFailure
+/// Create a copy of ProvidersFailure
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$SettingsStorageFailedCopyWith<SettingsStorageFailed> get copyWith => _$SettingsStorageFailedCopyWithImpl<SettingsStorageFailed>(this, _$identity);
+$ProvidersStorageFailedCopyWith<ProvidersStorageFailed> get copyWith => _$ProvidersStorageFailedCopyWithImpl<ProvidersStorageFailed>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsStorageFailed&&(identical(other.providerName, providerName) || other.providerName == providerName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProvidersStorageFailed&&(identical(other.providerName, providerName) || other.providerName == providerName));
 }
 
 
@@ -199,15 +199,15 @@ int get hashCode => Object.hash(runtimeType,providerName);
 
 @override
 String toString() {
-  return 'SettingsActionsFailure.storageFailed(providerName: $providerName)';
+  return 'ProvidersFailure.storageFailed(providerName: $providerName)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $SettingsStorageFailedCopyWith<$Res> implements $SettingsActionsFailureCopyWith<$Res> {
-  factory $SettingsStorageFailedCopyWith(SettingsStorageFailed value, $Res Function(SettingsStorageFailed) _then) = _$SettingsStorageFailedCopyWithImpl;
+abstract mixin class $ProvidersStorageFailedCopyWith<$Res> implements $ProvidersFailureCopyWith<$Res> {
+  factory $ProvidersStorageFailedCopyWith(ProvidersStorageFailed value, $Res Function(ProvidersStorageFailed) _then) = _$ProvidersStorageFailedCopyWithImpl;
 @useResult
 $Res call({
  String providerName
@@ -218,17 +218,17 @@ $Res call({
 
 }
 /// @nodoc
-class _$SettingsStorageFailedCopyWithImpl<$Res>
-    implements $SettingsStorageFailedCopyWith<$Res> {
-  _$SettingsStorageFailedCopyWithImpl(this._self, this._then);
+class _$ProvidersStorageFailedCopyWithImpl<$Res>
+    implements $ProvidersStorageFailedCopyWith<$Res> {
+  _$ProvidersStorageFailedCopyWithImpl(this._self, this._then);
 
-  final SettingsStorageFailed _self;
-  final $Res Function(SettingsStorageFailed) _then;
+  final ProvidersStorageFailed _self;
+  final $Res Function(ProvidersStorageFailed) _then;
 
-/// Create a copy of SettingsActionsFailure
+/// Create a copy of ProvidersFailure
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? providerName = null,}) {
-  return _then(SettingsStorageFailed(
+  return _then(ProvidersStorageFailed(
 null == providerName ? _self.providerName : providerName // ignore: cast_nullable_to_non_nullable
 as String,
   ));
@@ -240,23 +240,23 @@ as String,
 /// @nodoc
 
 
-class SettingsUnknownError implements SettingsActionsFailure {
-  const SettingsUnknownError(this.error);
+class ProvidersUnknownError implements ProvidersFailure {
+  const ProvidersUnknownError(this.error);
   
 
  final  Object error;
 
-/// Create a copy of SettingsActionsFailure
+/// Create a copy of ProvidersFailure
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$SettingsUnknownErrorCopyWith<SettingsUnknownError> get copyWith => _$SettingsUnknownErrorCopyWithImpl<SettingsUnknownError>(this, _$identity);
+$ProvidersUnknownErrorCopyWith<ProvidersUnknownError> get copyWith => _$ProvidersUnknownErrorCopyWithImpl<ProvidersUnknownError>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsUnknownError&&const DeepCollectionEquality().equals(other.error, error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProvidersUnknownError&&const DeepCollectionEquality().equals(other.error, error));
 }
 
 
@@ -265,15 +265,15 @@ int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(
 
 @override
 String toString() {
-  return 'SettingsActionsFailure.unknown(error: $error)';
+  return 'ProvidersFailure.unknown(error: $error)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $SettingsUnknownErrorCopyWith<$Res> implements $SettingsActionsFailureCopyWith<$Res> {
-  factory $SettingsUnknownErrorCopyWith(SettingsUnknownError value, $Res Function(SettingsUnknownError) _then) = _$SettingsUnknownErrorCopyWithImpl;
+abstract mixin class $ProvidersUnknownErrorCopyWith<$Res> implements $ProvidersFailureCopyWith<$Res> {
+  factory $ProvidersUnknownErrorCopyWith(ProvidersUnknownError value, $Res Function(ProvidersUnknownError) _then) = _$ProvidersUnknownErrorCopyWithImpl;
 @useResult
 $Res call({
  Object error
@@ -284,17 +284,17 @@ $Res call({
 
 }
 /// @nodoc
-class _$SettingsUnknownErrorCopyWithImpl<$Res>
-    implements $SettingsUnknownErrorCopyWith<$Res> {
-  _$SettingsUnknownErrorCopyWithImpl(this._self, this._then);
+class _$ProvidersUnknownErrorCopyWithImpl<$Res>
+    implements $ProvidersUnknownErrorCopyWith<$Res> {
+  _$ProvidersUnknownErrorCopyWithImpl(this._self, this._then);
 
-  final SettingsUnknownError _self;
-  final $Res Function(SettingsUnknownError) _then;
+  final ProvidersUnknownError _self;
+  final $Res Function(ProvidersUnknownError) _then;
 
-/// Create a copy of SettingsActionsFailure
+/// Create a copy of ProvidersFailure
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? error = null,}) {
-  return _then(SettingsUnknownError(
+  return _then(ProvidersUnknownError(
 null == error ? _self.error : error ,
   ));
 }

@@ -43,4 +43,4 @@ final class SettingsServiceProvider extends $FunctionalProvider<SettingsService,
   }
 }
 
-String _$settingsServiceHash() => r'ad6af0444a97f4bfc8171324515327e0f2e3fb0c';
+String _$settingsServiceHash() => r'867eeaaf7543d9bbbe08c894eb50e57e338db7d3';

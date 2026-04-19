@@ -6,8 +6,8 @@ import 'package:code_bench_app/data/session/models/chat_session.dart';
 import 'package:code_bench_app/data/project/models/project.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
-import 'package:code_bench_app/features/settings/archive_screen.dart';
-import 'package:code_bench_app/features/settings/notifiers/archive_actions.dart';
+import 'package:code_bench_app/features/archive/archive_screen.dart';
+import 'package:code_bench_app/features/archive/notifiers/archive_actions.dart';
 
 class _FakeArchiveActions extends ArchiveActions {
   final List<String> unarchiveCalls = [];

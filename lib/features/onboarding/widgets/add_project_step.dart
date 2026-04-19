@@ -172,14 +172,21 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
 
 // ── Selected folder preview ────────────────────────────────────────────────
 
-class _SelectedFolderPreview extends StatelessWidget {
+class _SelectedFolderPreview extends StatefulWidget {
   const _SelectedFolderPreview({required this.path, required this.isGit, required this.onBrowse});
 
   final String path;
   final bool isGit;
   final VoidCallback onBrowse;
 
-  String get _projectName => p.basename(path);
+  @override
+  State<_SelectedFolderPreview> createState() => _SelectedFolderPreviewState();
+}
+
+class _SelectedFolderPreviewState extends State<_SelectedFolderPreview> {
+  bool _changeHovered = false;
+
+  String get _projectName => p.basename(widget.path);
 
   @override
   Widget build(BuildContext context) {
@@ -213,7 +220,7 @@ class _SelectedFolderPreview extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        if (isGit) ...[
+                        if (widget.isGit) ...[
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -232,7 +239,7 @@ class _SelectedFolderPreview extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      path,
+                      widget.path,
                       style: TextStyle(color: c.textMuted, fontSize: ThemeConstants.uiFontSizeLabel),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -243,14 +250,23 @@ class _SelectedFolderPreview extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          GestureDetector(
-            onTap: onBrowse,
-            child: Text(
-              'Change folder',
-              style: TextStyle(
-                color: c.accent,
-                fontSize: ThemeConstants.uiFontSizeSmall,
-                decoration: TextDecoration.underline,
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) => setState(() => _changeHovered = true),
+            onExit: (_) => setState(() => _changeHovered = false),
+            child: GestureDetector(
+              onTap: widget.onBrowse,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 120),
+                opacity: _changeHovered ? 0.65 : 1.0,
+                child: Text(
+                  'Change folder',
+                  style: TextStyle(
+                    color: c.accent,
+                    fontSize: ThemeConstants.uiFontSizeSmall,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
               ),
             ),
           ),

@@ -1,3 +1,4 @@
+// lib/features/archive/notifiers/archive_failure.dart
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'archive_failure.freezed.dart';

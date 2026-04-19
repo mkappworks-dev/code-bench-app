@@ -130,7 +130,26 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
           );
       if (!mounted) return;
       final applyState = ref.read(codeApplyActionsProvider);
-      if (!applyState.hasError) {
+      if (applyState.hasError) {
+        final failure = applyState.error;
+        if (failure is CodeApplyFailure) {
+          switch (failure) {
+            case CodeApplyProjectMissing():
+              showErrorSnackBar(
+                context,
+                'Project folder is missing. Right-click the project in the sidebar to Relocate or Remove it.',
+              );
+            case CodeApplyOutsideProject():
+              showErrorSnackBar(context, 'This file is outside the current project.');
+            case CodeApplyDiskWrite(:final message):
+              showErrorSnackBar(context, 'Could not write file to disk: $message');
+            case CodeApplyTooLarge(:final bytes):
+              showErrorSnackBar(context, 'Content too large to apply ($bytes bytes).');
+            case CodeApplyUnknownError():
+              showErrorSnackBar(context, 'Unable to apply change.');
+          }
+        }
+      } else {
         ref.read(changesPanelVisibleProvider.notifier).show();
         setState(() => _diffRequested = false);
       }
@@ -141,28 +160,6 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(codeApplyActionsProvider, (_, next) {
-      if (!_applying) return;
-      if (next is! AsyncError || !mounted) return;
-      final failure = next.error;
-      if (failure is! CodeApplyFailure) return;
-      switch (failure) {
-        case CodeApplyProjectMissing():
-          showErrorSnackBar(
-            context,
-            'Project folder is missing. Right-click the project in the sidebar to Relocate or Remove it.',
-          );
-        case CodeApplyOutsideProject():
-          showErrorSnackBar(context, 'This file is outside the current project.');
-        case CodeApplyDiskWrite(:final message):
-          showErrorSnackBar(context, 'Could not write file to disk: $message');
-        case CodeApplyTooLarge(:final bytes):
-          showErrorSnackBar(context, 'Content too large to apply ($bytes bytes).');
-        case CodeApplyUnknownError():
-          showErrorSnackBar(context, 'Unable to apply change.');
-      }
-    });
-
     final project = ref.watch(activeProjectProvider);
 
     AsyncValue<DiffResult?>? diffAsync;
