@@ -43,6 +43,9 @@ class InlineTestButton extends StatelessWidget {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(5),
+      overlayColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.hovered) ? fgColor.withValues(alpha: 0.08) : null,
+      ),
       child: Container(
         height: 26,
         padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -85,6 +88,9 @@ class InlineSaveButton extends StatelessWidget {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(5),
+      overlayColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.hovered) ? Colors.white.withValues(alpha: 0.12) : null,
+      ),
       child: Container(
         width: 54,
         height: 26,
@@ -154,13 +160,16 @@ class InlineClearButton extends StatelessWidget {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(5),
+      overlayColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.hovered) ? c.error.withValues(alpha: 0.08) : null,
+      ),
       child: Container(
         height: 26,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         constraints: hasLabel ? null : const BoxConstraints(minWidth: 28),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          border: Border.all(color: c.deepBorder),
+          border: Border.all(color: c.error.withValues(alpha: 0.35)),
           borderRadius: BorderRadius.circular(5),
         ),
         child: hasLabel

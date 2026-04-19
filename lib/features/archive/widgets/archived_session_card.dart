@@ -62,19 +62,19 @@ class _ArchivedSessionCardState extends ConsumerState<ArchivedSessionCard> {
                 duration: const Duration(milliseconds: 120),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: _hovered ? c.borderColor : Colors.transparent,
-                  border: Border.all(color: c.borderColor),
+                  color: _hovered ? c.accentTintMid : c.chipFill,
+                  border: Border.all(color: _hovered ? c.accent.withValues(alpha: 0.35) : c.chipStroke),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(AppIcons.archiveRestore, size: 12, color: c.textSecondary),
+                    Icon(AppIcons.archiveRestore, size: 12, color: _hovered ? c.accent : c.chipText),
                     const SizedBox(width: 5),
                     Text(
                       'Unarchive',
                       style: TextStyle(
-                        color: c.textPrimary,
+                        color: _hovered ? c.accent : c.chipText,
                         fontSize: ThemeConstants.uiFontSizeSmall,
                         fontWeight: FontWeight.w500,
                       ),

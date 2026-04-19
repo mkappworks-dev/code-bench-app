@@ -70,13 +70,16 @@ class _GithubConnectedCardState extends State<GithubConnectedCard> {
                 duration: const Duration(milliseconds: 120),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: _disconnectHovered ? c.deepBorder : Colors.transparent,
-                  border: Border.all(color: c.deepBorder),
+                  color: _disconnectHovered ? c.errorTintBg : c.chipFill,
+                  border: Border.all(color: _disconnectHovered ? c.error.withValues(alpha: 0.3) : c.chipStroke),
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: Text(
                   'Disconnect',
-                  style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                  style: TextStyle(
+                    color: _disconnectHovered ? c.error : c.chipText,
+                    fontSize: ThemeConstants.uiFontSizeSmall,
+                  ),
                 ),
               ),
             ),
