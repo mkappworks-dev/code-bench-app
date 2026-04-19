@@ -167,6 +167,9 @@ class _ApiKeyCardState extends ConsumerState<ApiKeyCard> {
               if (!_expanded) _testPassed = false;
             }),
             borderRadius: BorderRadius.circular(8),
+            overlayColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.hovered) ? Colors.white.withValues(alpha: 0.03) : null,
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Row(

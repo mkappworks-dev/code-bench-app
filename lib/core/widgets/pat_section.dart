@@ -5,7 +5,7 @@ import '../constants/theme_constants.dart';
 import '../theme/app_colors.dart';
 import 'app_text_field.dart';
 
-class PatSection extends StatelessWidget {
+class PatSection extends StatefulWidget {
   const PatSection({
     super.key,
     required this.controller,
@@ -20,6 +20,13 @@ class PatSection extends StatelessWidget {
   final Widget? fieldSuffixIcon;
 
   @override
+  State<PatSection> createState() => _PatSectionState();
+}
+
+class _PatSectionState extends State<PatSection> {
+  bool _linkHovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     return Column(
@@ -29,25 +36,34 @@ class PatSection extends StatelessWidget {
           children: [
             Expanded(
               child: AppTextField(
-                controller: controller,
+                controller: widget.controller,
                 obscureText: true,
                 labelText: 'Personal Access Token',
-                suffixIcon: fieldSuffixIcon,
+                suffixIcon: widget.fieldSuffixIcon,
               ),
             ),
             const SizedBox(width: 8),
-            actionButton,
+            widget.actionButton,
           ],
         ),
         const SizedBox(height: 8),
-        GestureDetector(
-          onTap: onOpenTokenPage,
-          child: Text(
-            'Create a token on GitHub →',
-            style: TextStyle(
-              color: c.accent,
-              fontSize: ThemeConstants.uiFontSizeSmall,
-              decoration: TextDecoration.underline,
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _linkHovered = true),
+          onExit: (_) => setState(() => _linkHovered = false),
+          child: GestureDetector(
+            onTap: widget.onOpenTokenPage,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 120),
+              opacity: _linkHovered ? 0.65 : 1.0,
+              child: Text(
+                'Create a token on GitHub →',
+                style: TextStyle(
+                  color: c.accent,
+                  fontSize: ThemeConstants.uiFontSizeSmall,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
             ),
           ),
         ),

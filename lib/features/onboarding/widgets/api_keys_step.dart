@@ -278,13 +278,22 @@ class _ProviderRowState extends State<_ProviderRow> {
                   ? rc.error
                   : rc.textSecondary;
               final isEnabled = hasKey && !widget.isTesting;
-              return GestureDetector(
-                onTap: isEnabled ? widget.onTest : null,
-                child: Opacity(
-                  opacity: isEnabled ? 1.0 : 0.4,
+              return Opacity(
+                opacity: isEnabled ? 1.0 : 0.4,
+                child: InkWell(
+                  onTap: isEnabled ? widget.onTest : null,
+                  borderRadius: BorderRadius.circular(6),
+                  overlayColor: WidgetStateProperty.resolveWith(
+                    (states) => states.contains(WidgetState.hovered) ? fgCol.withValues(alpha: 0.08) : null,
+                  ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
+                      color: widget.testResult == null
+                          ? rc.accentTintMid
+                          : widget.testResult == true
+                          ? rc.success.withValues(alpha: 0.12)
+                          : rc.error.withValues(alpha: 0.12),
                       border: Border.all(color: borderCol),
                       borderRadius: BorderRadius.circular(6),
                     ),
