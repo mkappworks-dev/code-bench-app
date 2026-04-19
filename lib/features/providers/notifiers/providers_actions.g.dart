@@ -32,7 +32,7 @@ final class ProvidersActionsProvider extends $AsyncNotifierProvider<ProvidersAct
   ProvidersActions create() => ProvidersActions();
 }
 
-String _$providersActionsHash() => r'1a54259f4bb33efdc51a5dafc4c9b5091d341649';
+String _$providersActionsHash() => r'b3be82b8cd7dc4b837eb8f47acc8f85a83d97eb7';
 
 abstract class _$ProvidersActions extends $AsyncNotifier<void> {
   FutureOr<void> build();
