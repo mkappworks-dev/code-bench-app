@@ -18,7 +18,7 @@ class GitHubGlassButton extends StatelessWidget {
       onTap: isLoading ? null : onPressed,
       borderRadius: BorderRadius.circular(6),
       overlayColor: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.hovered) ? Colors.white.withValues(alpha: 0.07) : null,
+        (states) => states.contains(WidgetState.hovered) ? c.glassHoverOverlay : null,
       ),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),

@@ -89,7 +89,7 @@ class InlineSaveButton extends StatelessWidget {
       onTap: onPressed,
       borderRadius: BorderRadius.circular(5),
       overlayColor: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.hovered) ? Colors.white.withValues(alpha: 0.12) : null,
+        (states) => states.contains(WidgetState.hovered) ? c.filledButtonHoverOverlay : null,
       ),
       child: Container(
         width: 54,
@@ -132,6 +132,9 @@ class InlineErrorRow extends StatelessWidget {
           InkWell(
             onTap: onSaveAnyway,
             borderRadius: BorderRadius.circular(2),
+            overlayColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.hovered) ? c.surfaceHoverOverlay : null,
+            ),
             child: Text(
               'Save anyway',
               style: TextStyle(

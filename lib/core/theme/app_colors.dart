@@ -112,6 +112,9 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.brandingGradientTop,
     required this.brandingGradientMid,
     required this.accentGlow,
+    required this.surfaceHoverOverlay,
+    required this.glassHoverOverlay,
+    required this.filledButtonHoverOverlay,
     required this.subtleTealFg,
     required this.accentTintLight,
     required this.accentTintMid,
@@ -242,6 +245,9 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color brandingGradientTop;
   final Color brandingGradientMid;
   final Color accentGlow;
+  final Color surfaceHoverOverlay;
+  final Color glassHoverOverlay;
+  final Color filledButtonHoverOverlay;
   final Color subtleTealFg;
   final Color accentTintLight;
   final Color accentTintMid;
@@ -374,6 +380,9 @@ class AppColors extends ThemeExtension<AppColors> {
     brandingGradientTop: Color(0xFF0E1A18),
     brandingGradientMid: Color(0xFF0A0E0D),
     accentGlow: Color(0x404EC9B0),
+    surfaceHoverOverlay: Color(0x08FFFFFF),
+    glassHoverOverlay: Color(0x12FFFFFF),
+    filledButtonHoverOverlay: Color(0x1EFFFFFF),
     subtleTealFg: Color(0xFF4A6660),
     accentTintLight: Color(0x0A4EC9B0),
     accentTintMid: Color(0x144EC9B0),
@@ -502,6 +511,9 @@ class AppColors extends ThemeExtension<AppColors> {
     brandingGradientTop: Color(0xFFD5F5EE),
     brandingGradientMid: Color(0xFFC0EDE3),
     accentGlow: Color(0x404EC9B0),
+    surfaceHoverOverlay: Color(0x0A000000),
+    glassHoverOverlay: Color(0x12FFFFFF),
+    filledButtonHoverOverlay: Color(0x1EFFFFFF),
     subtleTealFg: Color(0xFF2A7A6E),
     accentTintLight: Color(0x0A4EC9B0),
     accentTintMid: Color(0x144EC9B0),
@@ -632,6 +644,9 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? brandingGradientTop,
     Color? brandingGradientMid,
     Color? accentGlow,
+    Color? surfaceHoverOverlay,
+    Color? glassHoverOverlay,
+    Color? filledButtonHoverOverlay,
     Color? subtleTealFg,
     Color? accentTintLight,
     Color? accentTintMid,
@@ -756,6 +771,9 @@ class AppColors extends ThemeExtension<AppColors> {
     brandingGradientTop: brandingGradientTop ?? this.brandingGradientTop,
     brandingGradientMid: brandingGradientMid ?? this.brandingGradientMid,
     accentGlow: accentGlow ?? this.accentGlow,
+    surfaceHoverOverlay: surfaceHoverOverlay ?? this.surfaceHoverOverlay,
+    glassHoverOverlay: glassHoverOverlay ?? this.glassHoverOverlay,
+    filledButtonHoverOverlay: filledButtonHoverOverlay ?? this.filledButtonHoverOverlay,
     subtleTealFg: subtleTealFg ?? this.subtleTealFg,
     accentTintLight: accentTintLight ?? this.accentTintLight,
     accentTintMid: accentTintMid ?? this.accentTintMid,
@@ -885,6 +903,9 @@ class AppColors extends ThemeExtension<AppColors> {
       brandingGradientTop: Color.lerp(brandingGradientTop, other.brandingGradientTop, t)!,
       brandingGradientMid: Color.lerp(brandingGradientMid, other.brandingGradientMid, t)!,
       accentGlow: Color.lerp(accentGlow, other.accentGlow, t)!,
+      surfaceHoverOverlay: Color.lerp(surfaceHoverOverlay, other.surfaceHoverOverlay, t)!,
+      glassHoverOverlay: Color.lerp(glassHoverOverlay, other.glassHoverOverlay, t)!,
+      filledButtonHoverOverlay: Color.lerp(filledButtonHoverOverlay, other.filledButtonHoverOverlay, t)!,
       subtleTealFg: Color.lerp(subtleTealFg, other.subtleTealFg, t)!,
       accentTintLight: Color.lerp(accentTintLight, other.accentTintLight, t)!,
       accentTintMid: Color.lerp(accentTintMid, other.accentTintMid, t)!,
