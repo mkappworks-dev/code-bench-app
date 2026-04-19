@@ -22,19 +22,18 @@ _ChatSession _$ChatSessionFromJson(Map<String, dynamic> json) => _ChatSession(
   permission: json['permission'] as String?,
 );
 
-Map<String, dynamic> _$ChatSessionToJson(_ChatSession instance) =>
-    <String, dynamic>{
-      'sessionId': instance.sessionId,
-      'title': instance.title,
-      'modelId': instance.modelId,
-      'providerId': instance.providerId,
-      'projectId': instance.projectId,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'updatedAt': instance.updatedAt.toIso8601String(),
-      'isPinned': instance.isPinned,
-      'isArchived': instance.isArchived,
-      'systemPrompt': instance.systemPrompt,
-      'mode': instance.mode,
-      'effort': instance.effort,
-      'permission': instance.permission,
-    };
+Map<String, dynamic> _$ChatSessionToJson(_ChatSession instance) => <String, dynamic>{
+  'sessionId': instance.sessionId,
+  'title': instance.title,
+  'modelId': instance.modelId,
+  'providerId': instance.providerId,
+  'projectId': instance.projectId,
+  'createdAt': instance.createdAt.toIso8601String(),
+  'updatedAt': instance.updatedAt.toIso8601String(),
+  'isPinned': instance.isPinned,
+  'isArchived': instance.isArchived,
+  'systemPrompt': instance.systemPrompt,
+  'mode': instance.mode,
+  'effort': instance.effort,
+  'permission': instance.permission,
+};

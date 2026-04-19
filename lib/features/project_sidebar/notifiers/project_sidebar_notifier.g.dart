@@ -14,8 +14,7 @@ part of 'project_sidebar_notifier.dart';
 final activeProjectIdProvider = ActiveProjectIdNotifierProvider._();
 
 /// Currently active project ID
-final class ActiveProjectIdNotifierProvider
-    extends $NotifierProvider<ActiveProjectIdNotifier, String?> {
+final class ActiveProjectIdNotifierProvider extends $NotifierProvider<ActiveProjectIdNotifier, String?> {
   /// Currently active project ID
   ActiveProjectIdNotifierProvider._()
     : super(
@@ -37,15 +36,11 @@ final class ActiveProjectIdNotifierProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(String? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<String?>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<String?>(value));
   }
 }
 
-String _$activeProjectIdNotifierHash() =>
-    r'032bad49dc96f9a471be8df596a2fdd7dee6737a';
+String _$activeProjectIdNotifierHash() => r'032bad49dc96f9a471be8df596a2fdd7dee6737a';
 
 /// Currently active project ID
 
@@ -55,14 +50,7 @@ abstract class _$ActiveProjectIdNotifier extends $Notifier<String?> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<String?, String?>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<String?, String?>,
-              String?,
-              Object?,
-              Object?
-            >;
+    final element = ref.element as $ClassProviderElement<AnyNotifier<String?, String?>, String?, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }
@@ -111,15 +99,11 @@ final class ActiveWorktreePathNotifierProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(Map<String, String> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<Map<String, String>>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<Map<String, String>>(value));
   }
 }
 
-String _$activeWorktreePathNotifierHash() =>
-    r'232db4ee6455b27903824e088648e9fa104a238d';
+String _$activeWorktreePathNotifierHash() => r'232db4ee6455b27903824e088648e9fa104a238d';
 
 /// Persisted worktree path overrides: sessionId → effective filesystem path.
 ///
@@ -128,8 +112,7 @@ String _$activeWorktreePathNotifierHash() =>
 /// so each thread remembers its worktree context across app restarts.
 /// Cleared when the user switches back to the main working tree.
 
-abstract class _$ActiveWorktreePathNotifier
-    extends $Notifier<Map<String, String>> {
+abstract class _$ActiveWorktreePathNotifier extends $Notifier<Map<String, String>> {
   Map<String, String> build();
   @$mustCallSuper
   @override
@@ -153,8 +136,7 @@ abstract class _$ActiveWorktreePathNotifier
 final expandedProjectIdsProvider = ExpandedProjectIdsNotifierProvider._();
 
 /// Set of expanded project IDs in the sidebar
-final class ExpandedProjectIdsNotifierProvider
-    extends $NotifierProvider<ExpandedProjectIdsNotifier, Set<String>> {
+final class ExpandedProjectIdsNotifierProvider extends $NotifierProvider<ExpandedProjectIdsNotifier, Set<String>> {
   /// Set of expanded project IDs in the sidebar
   ExpandedProjectIdsNotifierProvider._()
     : super(
@@ -176,15 +158,11 @@ final class ExpandedProjectIdsNotifierProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(Set<String> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<Set<String>>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<Set<String>>(value));
   }
 }
 
-String _$expandedProjectIdsNotifierHash() =>
-    r'b3106ff766a9bc2d09a4d5e1112b2311e21bf9d9';
+String _$expandedProjectIdsNotifierHash() => r'b3106ff766a9bc2d09a4d5e1112b2311e21bf9d9';
 
 /// Set of expanded project IDs in the sidebar
 
@@ -195,13 +173,7 @@ abstract class _$ExpandedProjectIdsNotifier extends $Notifier<Set<String>> {
   void runBuild() {
     final ref = this.ref as $Ref<Set<String>, Set<String>>;
     final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<Set<String>, Set<String>>,
-              Set<String>,
-              Object?,
-              Object?
-            >;
+        ref.element as $ClassProviderElement<AnyNotifier<Set<String>, Set<String>>, Set<String>, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }
@@ -209,8 +181,7 @@ abstract class _$ExpandedProjectIdsNotifier extends $Notifier<Set<String>> {
 @ProviderFor(ProjectSortNotifier)
 final projectSortProvider = ProjectSortNotifierProvider._();
 
-final class ProjectSortNotifierProvider
-    extends $AsyncNotifierProvider<ProjectSortNotifier, ProjectSortState> {
+final class ProjectSortNotifierProvider extends $AsyncNotifierProvider<ProjectSortNotifier, ProjectSortState> {
   ProjectSortNotifierProvider._()
     : super(
         from: null,
@@ -230,16 +201,14 @@ final class ProjectSortNotifierProvider
   ProjectSortNotifier create() => ProjectSortNotifier();
 }
 
-String _$projectSortNotifierHash() =>
-    r'de1aa25f10417f8a4f6be433b0613438fb1fcaff';
+String _$projectSortNotifierHash() => r'de1aa25f10417f8a4f6be433b0613438fb1fcaff';
 
 abstract class _$ProjectSortNotifier extends $AsyncNotifier<ProjectSortState> {
   FutureOr<ProjectSortState> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref =
-        this.ref as $Ref<AsyncValue<ProjectSortState>, ProjectSortState>;
+    final ref = this.ref as $Ref<AsyncValue<ProjectSortState>, ProjectSortState>;
     final element =
         ref.element
             as $ClassProviderElement<
@@ -260,12 +229,7 @@ final projectsProvider = ProjectsProvider._();
 /// Watch all projects from the database
 
 final class ProjectsProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Project>>,
-          List<Project>,
-          Stream<List<Project>>
-        >
+    extends $FunctionalProvider<AsyncValue<List<Project>>, List<Project>, Stream<List<Project>>>
     with $FutureModifier<List<Project>>, $StreamProvider<List<Project>> {
   /// Watch all projects from the database
   ProjectsProvider._()
@@ -284,9 +248,7 @@ final class ProjectsProvider
 
   @$internal
   @override
-  $StreamProviderElement<List<Project>> $createElement(
-    $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
+  $StreamProviderElement<List<Project>> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
 
   @override
   Stream<List<Project>> create(Ref ref) {
@@ -307,9 +269,7 @@ final activeProjectProvider = ActiveProjectProvider._();
 /// [projectsProvider]. Returns null while projects are loading or if no project
 /// is selected. Use `ref.watch` in build for reactivity; `ref.read` in handlers.
 
-final class ActiveProjectProvider
-    extends $FunctionalProvider<Project?, Project?, Project?>
-    with $Provider<Project?> {
+final class ActiveProjectProvider extends $FunctionalProvider<Project?, Project?, Project?> with $Provider<Project?> {
   /// Derives the currently active [Project] from [activeProjectIdProvider] and
   /// [projectsProvider]. Returns null while projects are loading or if no project
   /// is selected. Use `ref.watch` in build for reactivity; `ref.read` in handlers.
@@ -329,8 +289,7 @@ final class ActiveProjectProvider
 
   @$internal
   @override
-  $ProviderElement<Project?> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<Project?> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   Project? create(Ref ref) {
@@ -339,10 +298,7 @@ final class ActiveProjectProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(Project? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<Project?>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<Project?>(value));
   }
 }
 
