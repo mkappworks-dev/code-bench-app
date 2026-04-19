@@ -8,6 +8,7 @@ import '../../../core/widgets/app_snack_bar.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../providers/notifiers/providers_actions.dart';
+import '../../providers/widgets/provider_card_helpers.dart';
 
 class ApiKeysStep extends ConsumerStatefulWidget {
   const ApiKeysStep({super.key, required this.onContinue, required this.onSkip});
@@ -263,60 +264,15 @@ class _ProviderRowState extends State<_ProviderRow> {
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: widget.controller,
             builder: (context, value, _) {
-              final rc = AppColors.of(context);
               final hasKey = value.text.trim().isNotEmpty;
-              final Color borderCol = !hasKey
-                  ? rc.borderColor
-                  : widget.testResult == true
-                  ? rc.success
-                  : widget.testResult == false
-                  ? rc.error
-                  : rc.borderColor;
-              final Color fgCol = widget.testResult == true
-                  ? rc.success
-                  : widget.testResult == false
-                  ? rc.error
-                  : rc.textSecondary;
-              final isEnabled = hasKey && !widget.isTesting;
-              return Opacity(
-                opacity: isEnabled ? 1.0 : 0.4,
-                child: InkWell(
-                  onTap: isEnabled ? widget.onTest : null,
-                  borderRadius: BorderRadius.circular(6),
-                  overlayColor: WidgetStateProperty.resolveWith(
-                    (states) => states.contains(WidgetState.hovered) ? fgCol.withValues(alpha: 0.08) : null,
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: widget.testResult == null
-                          ? rc.accentTintMid
-                          : widget.testResult == true
-                          ? rc.success.withValues(alpha: 0.12)
-                          : rc.error.withValues(alpha: 0.12),
-                      border: Border.all(color: borderCol),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: widget.isTesting
-                        ? SizedBox(
-                            height: 12,
-                            width: 12,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: fgCol),
-                          )
-                        : Text(
-                            widget.testResult == true
-                                ? '✓ OK'
-                                : widget.testResult == false
-                                ? '✗ Fail'
-                                : 'Test',
-                            style: TextStyle(
-                              color: fgCol,
-                              fontSize: ThemeConstants.uiFontSizeSmall,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                  ),
-                ),
+              return InlineTestButton(
+                loading: widget.isTesting,
+                onPressed: widget.onTest,
+                testPassed: widget.testResult == true,
+                testFailed: widget.testResult == false,
+                disabled: !hasKey || widget.isTesting,
+                passedLabel: '✓ OK',
+                failedLabel: '✗ Fail',
               );
             },
           ),

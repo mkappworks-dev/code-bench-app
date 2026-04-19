@@ -9,6 +9,7 @@ import '../../../core/widgets/app_snack_bar.dart';
 import '../../../core/widgets/github_glass_button.dart';
 import '../../../core/widgets/pat_section.dart';
 import '../../../data/github/models/repository.dart';
+import '../../providers/widgets/provider_card_helpers.dart';
 import '../notifiers/github_auth_notifier.dart';
 
 class GithubStep extends ConsumerStatefulWidget {
@@ -99,18 +100,31 @@ class _GithubStepState extends ConsumerState<GithubStep> {
         const SizedBox(height: 20),
         const OrDivider(),
         const SizedBox(height: 12),
-        PatSection(
-          controller: _patController,
-          onOpenTokenPage: _openTokenCreationPage,
-          fieldSuffixIcon: _patValid == null
-              ? null
-              : Icon(_patValid! ? Icons.check_circle : Icons.error, color: _patValid! ? c.success : c.error, size: 16),
-          actionButton: TextButton(
-            onPressed: isLoading ? null : _testPat,
-            child: isLoading
-                ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
-                : Text('Test', style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall)),
-          ),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _patController,
+          builder: (context, value, _) {
+            final hasPat = value.text.trim().isNotEmpty;
+            return PatSection(
+              controller: _patController,
+              onOpenTokenPage: _openTokenCreationPage,
+              fieldSuffixIcon: _patValid == null
+                  ? null
+                  : Icon(
+                      _patValid! ? Icons.check_circle : Icons.error,
+                      color: _patValid! ? c.success : c.error,
+                      size: 16,
+                    ),
+              actionButton: InlineTestButton(
+                loading: isLoading,
+                onPressed: _testPat,
+                testPassed: _patValid == true,
+                testFailed: _patValid == false,
+                disabled: !hasPat || isLoading,
+                passedLabel: '✓ Valid',
+                failedLabel: '✗ Invalid',
+              ),
+            );
+          },
         ),
         const Spacer(),
         const SizedBox(height: 16),

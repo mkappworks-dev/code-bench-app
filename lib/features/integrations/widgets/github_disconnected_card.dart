@@ -47,30 +47,42 @@ class _GithubDisconnectedCardState extends State<GithubDisconnectedCard> {
           const SizedBox(height: 14),
           const OrDivider(),
           const SizedBox(height: 10),
-          PatSection(
-            controller: widget.patController,
-            onOpenTokenPage: widget.onOpenTokenPage,
-            actionButton: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              onEnter: (_) => setState(() => _patConnectHovered = true),
-              onExit: (_) => setState(() => _patConnectHovered = false),
-              child: GestureDetector(
-                onTap: widget.isLoading ? null : widget.onSignInWithPat,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 120),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _patConnectHovered ? c.accent.withValues(alpha: 0.2) : c.accentTintMid,
-                    border: Border.all(color: c.accent.withValues(alpha: 0.35)),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Text(
-                    'Connect',
-                    style: TextStyle(color: c.accent, fontSize: ThemeConstants.uiFontSizeSmall),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: widget.patController,
+            builder: (context, value, _) {
+              final hasPat = value.text.trim().isNotEmpty;
+              final interactive = hasPat && !widget.isLoading;
+              return PatSection(
+                controller: widget.patController,
+                onOpenTokenPage: widget.onOpenTokenPage,
+                actionButton: MouseRegion(
+                  cursor: interactive ? SystemMouseCursors.click : MouseCursor.defer,
+                  onEnter: (_) {
+                    if (interactive) setState(() => _patConnectHovered = true);
+                  },
+                  onExit: (_) => setState(() => _patConnectHovered = false),
+                  child: Opacity(
+                    opacity: interactive ? 1.0 : 0.4,
+                    child: GestureDetector(
+                      onTap: interactive ? widget.onSignInWithPat : null,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 120),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _patConnectHovered ? c.accent.withValues(alpha: 0.2) : c.accentTintMid,
+                          border: Border.all(color: c.accent.withValues(alpha: 0.35)),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          'Connect',
+                          style: TextStyle(color: c.accent, fontSize: ThemeConstants.uiFontSizeSmall),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),
