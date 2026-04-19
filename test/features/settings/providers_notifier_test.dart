@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/features/providers/notifiers/providers_notifier.dart';
 import 'package:code_bench_app/services/providers/providers_service.dart';
-import 'package:code_bench_app/services/ai/ai_service.dart';
 
 class _FakeProvidersService extends Fake implements ProvidersService {
   final Map<String, String> _keys = {};
@@ -14,109 +13,70 @@ class _FakeProvidersService extends Fake implements ProvidersService {
   @override
   Future<String?> readApiKey(String provider) async => _keys[provider];
   @override
-  Future<void> writeApiKey(String provider, String key) async => _keys[provider] = key;
-  @override
-  Future<void> deleteApiKey(String provider) async => _keys.remove(provider);
-  @override
   Future<String?> readOllamaUrl() async => ollamaUrl;
-  @override
-  Future<void> writeOllamaUrl(String url) async => ollamaUrl = url;
-  @override
-  Future<void> deleteOllamaUrl() async => ollamaUrl = null;
   @override
   Future<String?> readCustomEndpoint() async => customEndpoint;
   @override
-  Future<void> writeCustomEndpoint(String url) async => customEndpoint = url;
-  @override
-  Future<void> deleteCustomEndpoint() async => customEndpoint = null;
-  @override
   Future<String?> readCustomApiKey() async => customApiKey;
+}
+
+class _ThrowingProvidersService extends Fake implements ProvidersService {
   @override
-  Future<void> writeCustomApiKey(String key) async => customApiKey = key;
+  Future<String?> readApiKey(String provider) => Future.error(Exception('keychain unavailable'));
   @override
-  Future<void> deleteCustomApiKey() async => customApiKey = null;
+  Future<String?> readOllamaUrl() => Future.error(Exception('keychain unavailable'));
+  @override
+  Future<String?> readCustomEndpoint() => Future.error(Exception('keychain unavailable'));
+  @override
+  Future<String?> readCustomApiKey() => Future.error(Exception('keychain unavailable'));
 }
 
 void main() {
-  late _FakeProvidersService fakeSvc;
+  group('ApiKeysNotifier.build()', () {
+    test('loads stored keys into state', () async {
+      final fakeSvc = _FakeProvidersService()
+        .._keys['openai'] = 'sk-open'
+        .._keys['anthropic'] = 'sk-anth'
+        ..ollamaUrl = 'http://localhost:11434'
+        ..customEndpoint = 'http://custom/v1'
+        ..customApiKey = 'custom-key';
 
-  setUp(() => fakeSvc = _FakeProvidersService());
+      final c = ProviderContainer(overrides: [providersServiceProvider.overrideWithValue(fakeSvc)]);
+      addTearDown(c.dispose);
 
-  ProviderContainer makeContainer() {
-    final c = ProviderContainer(
-      overrides: [
-        providersServiceProvider.overrideWithValue(fakeSvc),
-        aiRepositoryProvider.overrideWith((ref) => throw UnimplementedError()),
-      ],
-    );
-    addTearDown(c.dispose);
-    return c;
-  }
-
-  group('saveKey', () {
-    test('writes key and returns true', () async {
-      final c = makeContainer();
-      final ok = await c.read(apiKeysProvider.notifier).saveKey(AIProvider.openai, 'sk-test');
-      expect(ok, isTrue);
-      expect(fakeSvc._keys['openai'], 'sk-test');
+      final state = await c.read(apiKeysProvider.future);
+      expect(state.openai, 'sk-open');
+      expect(state.anthropic, 'sk-anth');
+      expect(state.gemini, '');
+      expect(state.ollamaUrl, 'http://localhost:11434');
+      expect(state.customEndpoint, 'http://custom/v1');
+      expect(state.customApiKey, 'custom-key');
     });
 
-    test('returns false on write failure', () async {
-      fakeSvc._keys; // access ok, but override writeApiKey to throw
-      // We can't override a method post-construction easily here;
-      // verifying happy path is sufficient for the fake.
-      final c = makeContainer();
-      final ok = await c.read(apiKeysProvider.notifier).saveKey(AIProvider.gemini, 'key');
-      expect(ok, isTrue);
-    });
-  });
+    test('defaults to empty strings for missing keys', () async {
+      final fakeSvc = _FakeProvidersService();
+      final c = ProviderContainer(overrides: [providersServiceProvider.overrideWithValue(fakeSvc)]);
+      addTearDown(c.dispose);
 
-  group('saveOllamaUrl / clearOllamaUrl', () {
-    test('saveOllamaUrl writes and returns true', () async {
-      final c = makeContainer();
-      final ok = await c.read(apiKeysProvider.notifier).saveOllamaUrl('http://localhost:11434');
-      expect(ok, isTrue);
-      expect(fakeSvc.ollamaUrl, 'http://localhost:11434');
+      final state = await c.read(apiKeysProvider.future);
+      expect(state.openai, '');
+      expect(state.ollamaUrl, '');
     });
 
-    test('clearOllamaUrl removes url and returns true', () async {
-      fakeSvc.ollamaUrl = 'http://localhost:11434';
-      final c = makeContainer();
-      final ok = await c.read(apiKeysProvider.notifier).clearOllamaUrl();
-      expect(ok, isTrue);
-      expect(fakeSvc.ollamaUrl, isNull);
-    });
-  });
+    test('build() failure propagates as an error-carrying AsyncValue', () async {
+      final c = ProviderContainer(overrides: [providersServiceProvider.overrideWithValue(_ThrowingProvidersService())]);
+      addTearDown(c.dispose);
 
-  group('saveCustomEndpoint / clearCustomEndpoint / clearCustomApiKey', () {
-    test('saveCustomEndpoint writes both url and key', () async {
-      final c = makeContainer();
-      final ok = await c.read(apiKeysProvider.notifier).saveCustomEndpoint('http://lm/v1', 'mykey');
-      expect(ok, isTrue);
-      expect(fakeSvc.customEndpoint, 'http://lm/v1');
-      expect(fakeSvc.customApiKey, 'mykey');
-    });
+      // Attach a subscription to keep the provider alive through the async build.
+      final sub = c.listen<AsyncValue<ApiKeysNotifierState>>(apiKeysProvider, (prev, next) {});
+      addTearDown(sub.close);
 
-    test('saveCustomEndpoint with empty key writes empty string', () async {
-      final c = makeContainer();
-      await c.read(apiKeysProvider.notifier).saveCustomEndpoint('http://lm/v1', '');
-      expect(fakeSvc.customApiKey, '');
-    });
+      // Pump the event loop so the async build can fail.
+      await Future<void>.delayed(const Duration(milliseconds: 20));
 
-    test('clearCustomEndpoint removes url', () async {
-      fakeSvc.customEndpoint = 'http://lm/v1';
-      final c = makeContainer();
-      final ok = await c.read(apiKeysProvider.notifier).clearCustomEndpoint();
-      expect(ok, isTrue);
-      expect(fakeSvc.customEndpoint, isNull);
-    });
-
-    test('clearCustomApiKey removes key', () async {
-      fakeSvc.customApiKey = 'secret';
-      final c = makeContainer();
-      final ok = await c.read(apiKeysProvider.notifier).clearCustomApiKey();
-      expect(ok, isTrue);
-      expect(fakeSvc.customApiKey, isNull);
+      final state = c.read(apiKeysProvider);
+      expect(state.hasError, isTrue);
+      expect(state.error, isA<Exception>());
     });
   });
 }

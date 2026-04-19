@@ -88,6 +88,10 @@ void main() {
     );
     final failures = await svcWithError.wipeAllData();
     expect(failures, contains('secure storage'));
+    // Steps 2, 3, 4 must still run despite step 1 failing.
+    expect(session.deleted, isTrue);
+    expect(project.deleted, isTrue);
+    expect(settings.resetOnboardingCalled, isTrue);
   });
 
   test('wipeAllData step 2 failure is isolated — steps 3 and 4 still run', () async {
