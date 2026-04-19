@@ -26,12 +26,12 @@ class InlineTestButton extends StatelessWidget {
     final c = AppColors.of(context);
 
     if (loading) {
-      return SizedBox(
-        width: 62,
+      return Container(
         height: 26,
-        child: Center(
-          child: SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: c.accent)),
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        constraints: const BoxConstraints(minWidth: 62),
+        alignment: Alignment.center,
+        child: SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: c.accent)),
       );
     }
 
@@ -44,8 +44,9 @@ class InlineTestButton extends StatelessWidget {
       onTap: onPressed,
       borderRadius: BorderRadius.circular(5),
       child: Container(
-        width: 62,
         height: 26,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        constraints: const BoxConstraints(minWidth: 62),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: bgColor,

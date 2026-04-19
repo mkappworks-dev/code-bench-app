@@ -264,10 +264,10 @@ class _CustomEndpointCardState extends ConsumerState<CustomEndpointCard> {
                     ),
                   ),
                   if (_showSaveAnyway) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     InlineErrorRow(message: 'Cannot connect to endpoint', onSaveAnyway: _saveAnyway),
                   ],
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       InlineTestButton(
@@ -276,9 +276,9 @@ class _CustomEndpointCardState extends ConsumerState<CustomEndpointCard> {
                         passedLabel: '✓ Connected',
                         onPressed: _test,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 8),
                       InlineSaveButton(loading: false, onPressed: _save),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 8),
                       InlineClearButton(label: '✕ All', onPressed: _clearAll),
                     ],
                   ),

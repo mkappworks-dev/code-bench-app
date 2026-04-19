@@ -227,10 +227,10 @@ class _OllamaCardState extends ConsumerState<OllamaCard> {
                     hintText: 'http://localhost:11434',
                   ),
                   if (_showSaveAnyway) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     InlineErrorRow(message: 'Cannot connect to Ollama', onSaveAnyway: _saveAnyway),
                   ],
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       InlineTestButton(
@@ -239,9 +239,9 @@ class _OllamaCardState extends ConsumerState<OllamaCard> {
                         passedLabel: '✓ Connected',
                         onPressed: _test,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 8),
                       InlineSaveButton(loading: false, onPressed: _save),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 8),
                       InlineClearButton(onPressed: _clear),
                     ],
                   ),

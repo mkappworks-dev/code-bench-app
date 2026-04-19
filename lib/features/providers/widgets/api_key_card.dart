@@ -218,13 +218,13 @@ class _ApiKeyCardState extends ConsumerState<ApiKeyCard> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       InlineTestButton(loading: _saveLoading, testPassed: _testPassed, onPressed: _test),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 8),
                       InlineSaveButton(loading: false, onPressed: _save),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 8),
                       InlineClearButton(onPressed: _clear),
                     ],
                   ),
