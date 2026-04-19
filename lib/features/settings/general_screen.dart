@@ -6,6 +6,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/debug_logger.dart';
 import '../../core/widgets/app_dialog.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import 'notifiers/general_prefs_notifier.dart';
@@ -41,7 +42,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
   Future<void> _load() async {
     try {
       final results = await Future.wait([ref.read(generalPrefsProvider.future), PackageInfo.fromPlatform()]);
-      final s = results[0] as dynamic;
+      final s = results[0] as GeneralPrefsNotifierState;
       final info = results[1] as PackageInfo;
       if (!mounted) return;
       setState(() {
@@ -51,7 +52,8 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
         _themeMode = s.themeMode;
         _version = info.version;
       });
-    } catch (e) {
+    } catch (e, st) {
+      dLog('[GeneralScreen] _load failed: $e\n$st');
       if (mounted) {
         AppSnackBar.show(context, 'Could not load settings — showing defaults.', type: AppSnackBarType.warning);
       }
@@ -118,6 +120,10 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
     ref.listen(generalPrefsProvider, (_, next) {
       if (next is! AsyncError || !mounted) return;
       AppSnackBar.show(context, 'Could not save setting — please try again.', type: AppSnackBarType.error);
+    });
+    ref.listen(settingsActionsProvider, (_, next) {
+      if (next is! AsyncError || !mounted) return;
+      AppSnackBar.show(context, 'Failed to reset — please try again.', type: AppSnackBarType.error);
     });
     final c = AppColors.of(context);
     return SingleChildScrollView(
@@ -246,7 +252,8 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                       label: 'Replay',
                       onPressed: () async {
                         await ref.read(settingsActionsProvider.notifier).replayOnboarding();
-                        if (ctx.mounted) {
+                        if (!ctx.mounted) return;
+                        if (!ref.read(settingsActionsProvider).hasError) {
                           AppSnackBar.show(
                             ctx,
                             'Wizard will replay on next launch',

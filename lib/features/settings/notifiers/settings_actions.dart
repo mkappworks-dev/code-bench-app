@@ -25,7 +25,17 @@ class SettingsActions extends _$SettingsActions {
     }
   }
 
-  Future<void> replayOnboarding() => ref.read(settingsServiceProvider).resetOnboarding();
+  Future<void> replayOnboarding() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await ref.read(settingsServiceProvider).resetOnboarding();
+      } catch (e) {
+        dLog('[SettingsActions] replayOnboarding failed: $e');
+        rethrow;
+      }
+    });
+  }
 
   /// Wipes all user data in sequence. Returns a list of step names that
   /// failed (empty means full success).
