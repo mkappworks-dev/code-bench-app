@@ -169,6 +169,22 @@ ref.listen(fooActionsProvider, (prev, next) {
 });
 ```
 
+**Exception — multiple widget instances sharing the same provider:** When several instances of a widget are on screen at once and all watch the same `Actions` provider (e.g., a list of provider cards each listening to `providersActionsProvider`), `ref.listen` fires once per widget — producing N snackbars for a single operation. In this case, check `ref.read(fooActionsProvider).hasError` inline immediately after the `await` in the widget's own async method instead of relying on the listener for that operation:
+
+```dart
+Future<void> _save() async {
+  await ref.read(fooActionsProvider.notifier).doThing();
+  if (!mounted) return;
+  if (ref.read(fooActionsProvider).hasError) {
+    AppSnackBar.show(context, 'Failed — please retry', type: AppSnackBarType.error);
+    return;
+  }
+  // success path
+}
+```
+
+The `ref.listen` in `build()` is still needed to catch errors triggered from outside the widget (e.g., a sibling widget mutating the same provider). The inline check is only for operations the widget itself initiates.
+
 ### Rule 3 — Typed failure unions
 
 Each Actions/Notifier that can fail owns a `freezed` sealed class named `{Notifier}Failure`:
