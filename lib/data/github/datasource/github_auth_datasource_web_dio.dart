@@ -114,6 +114,7 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
       // Deliberately do NOT interpolate `e` here — a Dio error's toString()
       // can surface request headers (including the PAT). See
       // macos/Runner/README.md threat model.
+      dLog('[GitHubAuthDatasource] signInWithPat failed (${e.runtimeType}) — original suppressed for PAT safety');
       throw const AuthException('GitHub token rejected');
     }
   }
@@ -135,8 +136,8 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
       final account = await _fetchUserInfo(token);
       await _storage.writeGitHubAccount(jsonEncode(account.toJson()));
       return account;
-    } on DioException catch (e) {
-      dLog('[GitHubAuthDatasource] getStoredAccount network fallback failed: ${e.type} ${e.response?.statusCode}');
+    } catch (e) {
+      dLog('[GitHubAuthDatasource] getStoredAccount network fallback failed (${e.runtimeType})');
       return null;
     }
   }

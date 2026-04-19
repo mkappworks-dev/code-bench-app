@@ -12,7 +12,10 @@ class ApiKeyTestDatasourceDio {
       AIProvider.openai => _testOpenAI(key),
       AIProvider.anthropic => _testAnthropic(key),
       AIProvider.gemini => _testGemini(key),
-      _ => Future.value(false),
+      _ => Future(() {
+        dLog('[ApiKeyTestDatasource] testApiKey called for untested provider: ${provider.name}');
+        return false;
+      }),
     };
   }
 
@@ -74,12 +77,12 @@ class ApiKeyTestDatasourceDio {
       );
       return true;
     } on DioException catch (e) {
-      // Inspect the typed status code rather than searching e.toString() for
-      // "400" — a URL fragment or unrelated error message containing "400"
-      // would otherwise flip a broken key to "valid".
-      //   400 → key accepted, request body rejected → key is valid
-      //   401/403 → key rejected → key is invalid
-      //   anything else (timeout, 5xx, no response) → can't verify → invalid
+      // 400 → key accepted, request body rejected → key is valid
+      // 401/403 → key rejected → key is invalid
+      // anything else (timeout, 5xx, no response) → can't verify → invalid
+      if (e.response?.statusCode != 400) {
+        dLog('[ApiKeyTestDatasource] testAnthropic failed: ${e.type} ${e.response?.statusCode}');
+      }
       return e.response?.statusCode == 400;
     }
   }
