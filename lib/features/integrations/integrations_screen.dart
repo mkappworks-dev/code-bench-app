@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/theme_constants.dart';
+import '../../core/errors/app_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/debug_logger.dart';
 import '../../core/widgets/app_snack_bar.dart';
@@ -84,10 +85,10 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
     final c = AppColors.of(context);
 
     ref.listen(gitHubAuthProvider, (_, next) {
-      if (!mounted) return;
-      if (next is AsyncError) {
-        AppSnackBar.show(context, 'GitHub auth failed — please try again.', type: AppSnackBarType.error);
-      }
+      if (!mounted || next is! AsyncError) return;
+      final e = next.error;
+      final msg = e is AuthException ? e.message : 'GitHub auth failed — please try again.';
+      AppSnackBar.show(context, msg, type: AppSnackBarType.error);
     });
 
     final authAsync = ref.watch(gitHubAuthProvider);
