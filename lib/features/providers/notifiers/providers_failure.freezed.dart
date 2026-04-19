@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'providers_actions_failure.dart';
+part of 'providers_failure.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -12,7 +12,7 @@ part of 'providers_actions_failure.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
-mixin _$ProvidersActionsFailure {
+mixin _$ProvidersFailure {
 
 
 
@@ -20,7 +20,7 @@ mixin _$ProvidersActionsFailure {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProvidersActionsFailure);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProvidersFailure);
 }
 
 
@@ -29,20 +29,20 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'ProvidersActionsFailure()';
+  return 'ProvidersFailure()';
 }
 
 
 }
 
 /// @nodoc
-class $ProvidersActionsFailureCopyWith<$Res>  {
-$ProvidersActionsFailureCopyWith(ProvidersActionsFailure _, $Res Function(ProvidersActionsFailure) __);
+class $ProvidersFailureCopyWith<$Res>  {
+$ProvidersFailureCopyWith(ProvidersFailure _, $Res Function(ProvidersFailure) __);
 }
 
 
-/// Adds pattern-matching-related methods to [ProvidersActionsFailure].
-extension ProvidersActionsFailurePatterns on ProvidersActionsFailure {
+/// Adds pattern-matching-related methods to [ProvidersFailure].
+extension ProvidersFailurePatterns on ProvidersFailure {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
@@ -174,13 +174,13 @@ return unknown(_that.error);case _:
 /// @nodoc
 
 
-class ProvidersStorageFailed implements ProvidersActionsFailure {
+class ProvidersStorageFailed implements ProvidersFailure {
   const ProvidersStorageFailed(this.providerName);
   
 
  final  String providerName;
 
-/// Create a copy of ProvidersActionsFailure
+/// Create a copy of ProvidersFailure
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
@@ -199,14 +199,14 @@ int get hashCode => Object.hash(runtimeType,providerName);
 
 @override
 String toString() {
-  return 'ProvidersActionsFailure.storageFailed(providerName: $providerName)';
+  return 'ProvidersFailure.storageFailed(providerName: $providerName)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $ProvidersStorageFailedCopyWith<$Res> implements $ProvidersActionsFailureCopyWith<$Res> {
+abstract mixin class $ProvidersStorageFailedCopyWith<$Res> implements $ProvidersFailureCopyWith<$Res> {
   factory $ProvidersStorageFailedCopyWith(ProvidersStorageFailed value, $Res Function(ProvidersStorageFailed) _then) = _$ProvidersStorageFailedCopyWithImpl;
 @useResult
 $Res call({
@@ -225,7 +225,7 @@ class _$ProvidersStorageFailedCopyWithImpl<$Res>
   final ProvidersStorageFailed _self;
   final $Res Function(ProvidersStorageFailed) _then;
 
-/// Create a copy of ProvidersActionsFailure
+/// Create a copy of ProvidersFailure
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? providerName = null,}) {
   return _then(ProvidersStorageFailed(
@@ -240,13 +240,13 @@ as String,
 /// @nodoc
 
 
-class ProvidersUnknownError implements ProvidersActionsFailure {
+class ProvidersUnknownError implements ProvidersFailure {
   const ProvidersUnknownError(this.error);
   
 
  final  Object error;
 
-/// Create a copy of ProvidersActionsFailure
+/// Create a copy of ProvidersFailure
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
@@ -265,14 +265,14 @@ int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(
 
 @override
 String toString() {
-  return 'ProvidersActionsFailure.unknown(error: $error)';
+  return 'ProvidersFailure.unknown(error: $error)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $ProvidersUnknownErrorCopyWith<$Res> implements $ProvidersActionsFailureCopyWith<$Res> {
+abstract mixin class $ProvidersUnknownErrorCopyWith<$Res> implements $ProvidersFailureCopyWith<$Res> {
   factory $ProvidersUnknownErrorCopyWith(ProvidersUnknownError value, $Res Function(ProvidersUnknownError) _then) = _$ProvidersUnknownErrorCopyWithImpl;
 @useResult
 $Res call({
@@ -291,7 +291,7 @@ class _$ProvidersUnknownErrorCopyWithImpl<$Res>
   final ProvidersUnknownError _self;
   final $Res Function(ProvidersUnknownError) _then;
 
-/// Create a copy of ProvidersActionsFailure
+/// Create a copy of ProvidersFailure
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? error = null,}) {
   return _then(ProvidersUnknownError(
