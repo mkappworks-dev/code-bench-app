@@ -1755,12 +1755,36 @@ flutter test test/features/chat/notifiers/agent_cancel_notifier_test.dart
 
 Expected: PASS.
 
-- [ ] **Step 6: Format, analyze, commit**
+- [ ] **Step 6: Wire `AgentCancelNotifier` into `ChatMessagesNotifier`**
+
+> **Context (main already has this):** `cancelSend()` in `ChatMessagesNotifier` cancels the SSE stream via `_activeSubscription?.cancel()`. Without also flipping `agentCancelProvider`, the agent loop's cooperative cancel flag stays `false` and the loop continues after the stream is torn down.
+
+Edit `lib/features/chat/notifiers/chat_notifier.dart`:
+
+1. Add import at the top of the file:
+
+```dart
+import 'agent_cancel_notifier.dart';
+```
+
+2. At the top of `sendMessage`, after `_cancelRequested = false`, add:
+
+```dart
+ref.read(agentCancelProvider.notifier).clear();
+```
+
+3. In `cancelSend()`, after `_activeSubscription?.cancel()` / `_activeSubscription = null`, add:
+
+```dart
+ref.read(agentCancelProvider.notifier).request();
+```
+
+- [ ] **Step 7: Format, analyze, commit**
 
 ```bash
 dart format lib/features/chat/notifiers/ test/features/chat/notifiers/
 flutter analyze
-git add lib/features/chat/notifiers/agent_failure.dart lib/features/chat/notifiers/agent_failure.freezed.dart lib/features/chat/notifiers/agent_cancel_notifier.dart lib/features/chat/notifiers/agent_cancel_notifier.g.dart test/features/chat/notifiers/agent_cancel_notifier_test.dart
+git add lib/features/chat/notifiers/agent_failure.dart lib/features/chat/notifiers/agent_failure.freezed.dart lib/features/chat/notifiers/agent_cancel_notifier.dart lib/features/chat/notifiers/agent_cancel_notifier.g.dart lib/features/chat/notifiers/chat_notifier.dart test/features/chat/notifiers/agent_cancel_notifier_test.dart
 git commit -m "feat(chat): add AgentFailure sealed class and AgentCancelNotifier"
 ```
 
@@ -2503,7 +2527,11 @@ Replace `sendAndStream` with this branching version:
     yield userMsg;
 
     final history = await _session.loadHistory(sessionId, limit: 20);
-    final historyExcludingCurrent = history.where((m) => m.id != userMsg.id).toList();
+    // Preserve the existing interrupted-marker filter so MessageRole.interrupted
+    // rows never leak into the model's context window.
+    final historyExcludingCurrent = history
+        .where((m) => m.id != userMsg.id && m.role != MessageRole.interrupted)
+        .toList();
 
     if (mode == ChatMode.act && model.provider == AIProvider.custom && projectPath != null) {
       await for (final msg in _agent.runAgenticTurn(
@@ -2574,22 +2602,27 @@ Add these imports (if not already present):
 import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
 ```
 
-Inside `sendMessage`, replace the block that calls `service.sendAndStream(...)` with:
+Inside `sendMessage`, read mode/permission/projectPath just before the `_activeSubscription = service.sendAndStream(...)` call, and extend the named args on that existing call. **Do NOT replace the `StreamSubscription.listen` pattern with `await for`** — doing so would break `cancelSend()`, which cancels via `_activeSubscription?.cancel()`.
 
 ```dart
+// Read the three new args from their providers immediately before the call.
 final mode = ref.read(sessionModeProvider);
 final permission = ref.read(sessionPermissionProvider);
 final projectPath = ref.read(activeProjectProvider)?.path;
 
-await for (final msg in service.sendAndStream(
-  sessionId: sessionId,
-  userInput: input,
-  model: model,
-  systemPrompt: systemPrompt,
-  mode: mode,
-  permission: permission,
-  projectPath: projectPath,
-)) {
+// Existing subscription pattern — keep as-is; just add the new named args.
+_activeSubscription = service
+    .sendAndStream(
+      sessionId: sessionId,
+      userInput: input,
+      model: model,
+      systemPrompt: systemPrompt,
+      mode: mode,
+      permission: permission,
+      projectPath: projectPath,
+    )
+    .timeout(...)  // keep existing timeout wrapper
+    .listen(...)   // keep existing listen block unchanged
 ```
 
 - [ ] **Step 6: Generate + run tests**
@@ -2786,6 +2819,8 @@ git commit -m "feat(chat): strikethrough + muted styling for cancelled ToolCallR
 ---
 
 ## Task 4.2: `ChatMessagesNotifier.clearIterationCap` + `continueAgenticTurn`
+
+> **Context (main already has this):** PR #23 created `ChatMessagesActions` for non-streaming state mutations (`deleteMessage`, `loadMore`). `clearIterationCap` and `continueAgenticTurn` stay on `ChatMessagesNotifier` — not `ChatMessagesActions` — because `continueAgenticTurn` calls `sendMessage()` which owns streaming state on the notifier. `clearIterationCap` follows the same helper pattern as `removeFromState`/`prependOlder`. If `continueAgenticTurn` needs a new failure variant, add it to the existing `ChatMessagesFailure` sealed class in `chat_messages_failure.dart` rather than creating a new file.
 
 **Files:**
 - Modify: `lib/features/chat/notifiers/chat_notifier.dart`
