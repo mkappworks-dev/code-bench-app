@@ -10,3 +10,6 @@ targets:
       riverpod_generator:
         options:
           riverpod_version: 2
+      json_serializable:
+        options:
+          explicit_to_json: true
