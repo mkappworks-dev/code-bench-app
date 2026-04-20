@@ -171,6 +171,16 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     if (_sendCompleter != null && !_sendCompleter!.isCompleted) {
       _sendCompleter!.complete(null);
     }
+    unawaited(_persistInterrupted(sessionId, marker));
+  }
+
+  Future<void> _persistInterrupted(String sessionId, ChatMessage marker) async {
+    try {
+      final service = await ref.read(sessionServiceProvider.future);
+      await service.persistMessage(sessionId, marker);
+    } catch (e) {
+      dLog('[cancelSend] failed to persist interrupted marker: $e');
+    }
   }
 
   Future<void> deleteMessage(String messageId) async {

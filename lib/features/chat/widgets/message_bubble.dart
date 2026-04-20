@@ -62,6 +62,7 @@ class _UserBubbleState extends ConsumerState<_UserBubble> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final isSending = ref.watch(activeMessageIdProvider) != null;
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
@@ -71,7 +72,7 @@ class _UserBubbleState extends ConsumerState<_UserBubble> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            if (widget.isLast && _hovered) ...[
+            if (widget.isLast && _hovered && !isSending) ...[
               _DeleteButton(message: widget.message, sessionId: widget.sessionId),
               const SizedBox(width: 6),
             ],
@@ -144,7 +145,7 @@ class _InterruptedBubble extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('⏹', style: TextStyle(color: c.warning, fontSize: ThemeConstants.uiFontSizeSmall)),
+            Icon(AppIcons.stop, size: 11, color: c.warning),
             const SizedBox(width: 4),
             Text('Interrupted', style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall)),
           ],

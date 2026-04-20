@@ -595,14 +595,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                             borderRadius: BorderRadius.circular(7),
                           ),
                           alignment: Alignment.center,
-                          child: Text(
-                            '⏹',
-                            style: TextStyle(
-                              color: c.warning,
-                              fontSize: ThemeConstants.uiFontSizeSmall,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          child: Icon(AppIcons.stop, size: 13, color: c.warning),
                         ),
                       ),
                     )
