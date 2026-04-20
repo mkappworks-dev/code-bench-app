@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/apply/models/applied_change.dart';
@@ -71,6 +74,11 @@ class SessionPermissionNotifier extends _$SessionPermissionNotifier {
 // Messages for the current session
 @riverpod
 class ChatMessagesNotifier extends _$ChatMessagesNotifier {
+  StreamSubscription<ChatMessage>? _activeSubscription;
+  Completer<Object?>? _sendCompleter;
+  bool _cancelRequested = false;
+  List<ChatMessage> _preSendMessages = [];
+
   @override
   Future<List<ChatMessage>> build(String sessionId) async {
     final svc = await ref.watch(sessionServiceProvider.future);
@@ -83,58 +91,91 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
   /// The caller (widget) checks the return value to show a snackbar without
   /// needing a try-catch around a notifier call.
   Future<Object?> sendMessage(String input, {String? systemPrompt}) async {
+    _cancelRequested = false;
+
     final sessionId = ref.read(activeSessionIdProvider);
-    if (sessionId == null) {
-      throw StateError('No active session — cannot send message.');
-    }
+    if (sessionId == null) throw StateError('No active session — cannot send message.');
 
     final model = ref.read(selectedModelProvider);
     final service = await ref.read(sessionServiceProvider.future);
 
-    // Optimistically add user message
-    final currentMessages = state.value ?? [];
-    state = AsyncData([...currentMessages]);
+    _preSendMessages = state.value ?? [];
+    state = AsyncData(List.from(_preSendMessages));
 
-    // Track the currently-streaming assistant message so UI affordances
-    // like the "Working for Xs" pill in `status_bar.dart` can subscribe
-    // to tool-event updates on it. Always cleared in `finally` so a
-    // crashed stream doesn't leave the pill pinned to a stale id.
     final activeMessageIdNotifier = ref.read(activeMessageIdProvider.notifier);
     String? streamingAssistantId;
+    _sendCompleter = Completer<Object?>();
 
-    try {
-      await for (final msg in service.sendAndStream(
-        sessionId: sessionId,
-        userInput: input,
-        model: model,
-        systemPrompt: systemPrompt,
-      )) {
-        if (msg.role == MessageRole.assistant && streamingAssistantId == null) {
-          streamingAssistantId = msg.id;
-          activeMessageIdNotifier.set(msg.id);
-        }
-        final current = state.value ?? [];
-        final idx = current.indexWhere((m) => m.id == msg.id);
-        if (idx >= 0) {
-          final updated = List<ChatMessage>.from(current);
-          updated[idx] = msg;
-          state = AsyncData(updated);
-        } else {
-          state = AsyncData([...current, msg]);
-        }
-      }
+    _activeSubscription = service
+        .sendAndStream(sessionId: sessionId, userInput: input, model: model, systemPrompt: systemPrompt)
+        .timeout(
+          const Duration(seconds: 60),
+          onTimeout: (sink) =>
+              sink.addError(NetworkException('No response — the model may still be loading.'), StackTrace.current),
+        )
+        .listen(
+          (msg) {
+            if (msg.role == MessageRole.assistant && streamingAssistantId == null) {
+              streamingAssistantId = msg.id;
+              activeMessageIdNotifier.set(msg.id);
+            }
+            final current = state.value ?? [];
+            final idx = current.indexWhere((m) => m.id == msg.id);
+            if (idx >= 0) {
+              final updated = List<ChatMessage>.from(current);
+              updated[idx] = msg;
+              state = AsyncData(updated);
+            } else {
+              state = AsyncData([...current, msg]);
+            }
+          },
+          onError: (Object e, StackTrace st) {
+            dLog('[sendMessage] stream error: $e\n$st');
+            state = AsyncData(_preSendMessages);
+            if (!_sendCompleter!.isCompleted) _sendCompleter!.complete(e);
+          },
+          onDone: () {
+            if (!_sendCompleter!.isCompleted) _sendCompleter!.complete(null);
+          },
+          cancelOnError: true,
+        );
+
+    if (_cancelRequested) {
+      _activeSubscription?.cancel();
+      _activeSubscription = null;
+      // completer already completed by cancelSend, nothing more to do
       return null;
+    }
+
+    final result = await _sendCompleter!.future;
+    _sendCompleter = null;
+    _activeSubscription = null;
+    if (streamingAssistantId != null) activeMessageIdNotifier.set(null);
+    return result;
+  }
+
+  void cancelSend() {
+    _cancelRequested = true;
+    _activeSubscription?.cancel();
+    _activeSubscription = null;
+    state = AsyncData(List.from(_preSendMessages));
+    if (_sendCompleter != null && !_sendCompleter!.isCompleted) {
+      _sendCompleter!.complete(null);
+    }
+  }
+
+  Future<void> deleteMessage(String messageId) async {
+    final sessionId = ref.read(activeSessionIdProvider);
+    if (sessionId == null) return;
+    try {
+      final service = await ref.read(sessionServiceProvider.future);
+      await service.deleteMessage(sessionId, messageId);
+      final current = state.value ?? [];
+      state = AsyncData(current.where((m) => m.id != messageId).toList());
     } catch (e, st) {
-      dLog('[sendMessage] stream error: $e\n$st');
-      // Emit AsyncError so ref.listen subscribers (e.g. chat_input_bar) can
-      // react, then immediately restore AsyncData so the chat list stays intact.
+      dLog('[ChatMessagesNotifier] deleteMessage failed: $e');
       state = AsyncError(e, st);
-      state = AsyncData(currentMessages);
-      return e;
-    } finally {
-      if (streamingAssistantId != null) {
-        activeMessageIdNotifier.set(null);
-      }
+      state = AsyncData(state.value ?? []);
     }
   }
 
