@@ -26,10 +26,7 @@ class _FakeProvidersService extends Fake implements ProvidersService {
   final String ollamaUrl;
   final String customEndpoint;
 
-  _FakeProvidersService({
-    this.ollamaUrl = '',
-    this.customEndpoint = '',
-  });
+  _FakeProvidersService({this.ollamaUrl = '', this.customEndpoint = ''});
 
   @override
   Future<String?> readOllamaUrl() async => ollamaUrl.isEmpty ? null : ollamaUrl;
@@ -43,10 +40,7 @@ class _FakeProvidersService extends Fake implements ProvidersService {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-ProviderContainer _makeContainer({
-  required _FakeAIService svc,
-  required _FakeProvidersService providers,
-}) {
+ProviderContainer _makeContainer({required _FakeAIService svc, required _FakeProvidersService providers}) {
   return ProviderContainer(
     overrides: [
       aiServiceProvider.overrideWith((ref) async => svc),
@@ -55,30 +49,17 @@ ProviderContainer _makeContainer({
   );
 }
 
-AIModel _ollamaModel(String name) => AIModel(
-      id: 'ollama_$name',
-      provider: AIProvider.ollama,
-      name: name,
-      modelId: name,
-      supportsStreaming: true,
-    );
+AIModel _ollamaModel(String name) =>
+    AIModel(id: 'ollama_$name', provider: AIProvider.ollama, name: name, modelId: name, supportsStreaming: true);
 
-AIModel _customModel(String id) => AIModel(
-      id: id,
-      provider: AIProvider.custom,
-      name: id,
-      modelId: id,
-    );
+AIModel _customModel(String id) => AIModel(id: id, provider: AIProvider.custom, name: id, modelId: id);
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 void main() {
   group('AvailableModelsNotifier', () {
     test('returns only static defaults when no endpoints configured', () async {
-      final container = _makeContainer(
-        svc: _FakeAIService(),
-        providers: _FakeProvidersService(),
-      );
+      final container = _makeContainer(svc: _FakeAIService(), providers: _FakeProvidersService());
       addTearDown(container.dispose);
 
       final models = await container.read(availableModelsProvider.future);
@@ -117,10 +98,7 @@ void main() {
       final ollamaModels = [_ollamaModel('llama3.2')];
       final customModels = [_customModel('mistral-7b-instruct')];
       final container = _makeContainer(
-        svc: _FakeAIService(models: {
-          AIProvider.ollama: ollamaModels,
-          AIProvider.custom: customModels,
-        }),
+        svc: _FakeAIService(models: {AIProvider.ollama: ollamaModels, AIProvider.custom: customModels}),
         providers: _FakeProvidersService(
           ollamaUrl: 'http://localhost:11434',
           customEndpoint: 'http://localhost:1234/v1',
@@ -176,12 +154,7 @@ void main() {
 
     test('notifier resolves to AsyncData even when both fetches fail', () async {
       final container = _makeContainer(
-        svc: _FakeAIService(
-          errors: {
-            AIProvider.ollama: Exception('offline'),
-            AIProvider.custom: Exception('offline'),
-          },
-        ),
+        svc: _FakeAIService(errors: {AIProvider.ollama: Exception('offline'), AIProvider.custom: Exception('offline')}),
         providers: _FakeProvidersService(
           ollamaUrl: 'http://localhost:11434',
           customEndpoint: 'http://localhost:1234/v1',

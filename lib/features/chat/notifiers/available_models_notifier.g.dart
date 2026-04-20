@@ -12,8 +12,7 @@ part of 'available_models_notifier.dart';
 @ProviderFor(AvailableModelsNotifier)
 final availableModelsProvider = AvailableModelsNotifierProvider._();
 
-final class AvailableModelsNotifierProvider
-    extends $AsyncNotifierProvider<AvailableModelsNotifier, List<AIModel>> {
+final class AvailableModelsNotifierProvider extends $AsyncNotifierProvider<AvailableModelsNotifier, List<AIModel>> {
   AvailableModelsNotifierProvider._()
     : super(
         from: null,
@@ -33,8 +32,7 @@ final class AvailableModelsNotifierProvider
   AvailableModelsNotifier create() => AvailableModelsNotifier();
 }
 
-String _$availableModelsNotifierHash() =>
-    r'31a384029d4dbf1bc0523ea8b53c66c414a7ed56';
+String _$availableModelsNotifierHash() => r'31a384029d4dbf1bc0523ea8b53c66c414a7ed56';
 
 abstract class _$AvailableModelsNotifier extends $AsyncNotifier<List<AIModel>> {
   FutureOr<List<AIModel>> build();
