@@ -8,6 +8,7 @@ import '../../../data/session/models/session_settings.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../services/session/session_service.dart';
 import 'chat_notifier.dart';
+import 'available_models_notifier.dart';
 import 'session_settings_failure.dart';
 
 part 'session_settings_actions.g.dart';
@@ -40,8 +41,7 @@ class SessionSettingsActions extends _$SessionSettingsActions {
     final session = await svc.getSession(sessionId);
     if (session == null) return;
 
-    final AIModel model =
-        (session.modelId.isNotEmpty ? AIModels.fromId(session.modelId) : null) ?? ref.read(selectedModelProvider);
+    final model = _resolveModel(session.modelId);
     ref.read(selectedModelProvider.notifier).select(model);
 
     ref.read(sessionSystemPromptProvider.notifier).setPrompt(sessionId, session.systemPrompt ?? '');
@@ -127,6 +127,13 @@ class SessionSettingsActions extends _$SessionSettingsActions {
         Error.throwWithStackTrace(_asFailure(e), st);
       }
     });
+  }
+
+  AIModel _resolveModel(String modelId) {
+    if (modelId.isEmpty) return ref.read(selectedModelProvider);
+    return AIModels.fromId(modelId) ??
+        ref.read(availableModelsProvider).value?.firstWhereOrNull((m) => m.modelId == modelId) ??
+        ref.read(selectedModelProvider);
   }
 
   SessionSettingsFailure _asFailure(Object e) => SessionSettingsFailure.unknown(e);

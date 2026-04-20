@@ -25,12 +25,10 @@ class _FakeAIService extends Fake implements AIService {
 class _FakeProvidersService extends Fake implements ProvidersService {
   final String ollamaUrl;
   final String customEndpoint;
-  final String customApiKey;
 
   _FakeProvidersService({
     this.ollamaUrl = '',
     this.customEndpoint = '',
-    this.customApiKey = '',
   });
 
   @override
@@ -40,7 +38,7 @@ class _FakeProvidersService extends Fake implements ProvidersService {
   Future<String?> readCustomEndpoint() async => customEndpoint.isEmpty ? null : customEndpoint;
 
   @override
-  Future<String?> readCustomApiKey() async => customApiKey.isEmpty ? null : customApiKey;
+  Future<String?> readCustomApiKey() async => null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
