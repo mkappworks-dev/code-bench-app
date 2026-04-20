@@ -33,7 +33,7 @@ final class AvailableModelsNotifierProvider
   AvailableModelsNotifier create() => AvailableModelsNotifier();
 }
 
-String _$availableModelsNotifierHash() => r'2460cae9ad2e522d03789157d15387154d4626c5';
+String _$availableModelsNotifierHash() => r'd39ae718e153b97a1ce2415d5cccd2233ec3da14';
 
 abstract class _$AvailableModelsNotifier extends $AsyncNotifier<AvailableModelsResult> {
   FutureOr<AvailableModelsResult> build();

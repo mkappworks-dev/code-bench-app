@@ -41,7 +41,7 @@ class SessionSettingsActions extends _$SessionSettingsActions {
     final session = await svc.getSession(sessionId);
     if (session == null) return;
 
-    final model = _resolveModel(session.modelId);
+    final model = await _resolveModel(session.modelId);
     ref.read(selectedModelProvider.notifier).select(model);
 
     ref.read(sessionSystemPromptProvider.notifier).setPrompt(sessionId, session.systemPrompt ?? '');
@@ -129,11 +129,29 @@ class SessionSettingsActions extends _$SessionSettingsActions {
     });
   }
 
-  AIModel _resolveModel(String modelId) {
+  /// Resolves a persisted [modelId] to an [AIModel]:
+  ///   1. Empty id → current selected model.
+  ///   2. Match against static `AIModels.defaults` (fast, no I/O).
+  ///   3. Await the dynamic list (Ollama/Custom). Without this await the
+  ///      resolver would race on cold start — `.value` returns null while
+  ///      `availableModelsProvider` is still loading, silently downgrading a
+  ///      persisted dynamic model to the boot default before the real list
+  ///      arrives.
+  ///   4. If the dynamic fetch errored entirely, or the model is gone, fall
+  ///      back to the current selected model. The `isModelStale` chip in
+  ///      `ChatInputBar` reads the same dynamic list and warns the user.
+  Future<AIModel> _resolveModel(String modelId) async {
     if (modelId.isEmpty) return ref.read(selectedModelProvider);
-    return AIModels.fromId(modelId) ??
-        ref.read(availableModelsProvider).value?.models.firstWhereOrNull((m) => m.modelId == modelId) ??
-        ref.read(selectedModelProvider);
+    final fromStatic = AIModels.fromId(modelId);
+    if (fromStatic != null) return fromStatic;
+    try {
+      final result = await ref.read(availableModelsProvider.future);
+      final match = result.models.firstWhereOrNull((m) => m.modelId == modelId);
+      if (match != null) return match;
+    } catch (_) {
+      // availableModelsProvider errored — fall through to selected model.
+    }
+    return ref.read(selectedModelProvider);
   }
 
   SessionSettingsFailure _asFailure(Object e) => SessionSettingsFailure.unknown(e);
