@@ -81,24 +81,18 @@ class OllamaRemoteDatasourceDio implements AIRemoteDatasource {
 
   @override
   Future<List<AIModel>> fetchAvailableModels(String apiKey) async {
-    try {
-      final response = await _dio.get(ApiConstants.ollamaTagsEndpoint);
-      final data = response.data as Map<String, dynamic>;
-      final models = (data['models'] as List? ?? []).map((m) {
-        final name = m['name'] as String;
-        return AIModel(
-          id: 'ollama_$name',
-          provider: AIProvider.ollama,
-          name: name,
-          modelId: name,
-          supportsStreaming: true,
-        );
-      }).toList();
-      return models;
-    } on DioException catch (e) {
-      dLog('[OllamaRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode}');
-      return [];
-    }
+    final response = await _dio.get(ApiConstants.ollamaTagsEndpoint);
+    final data = response.data as Map<String, dynamic>;
+    return (data['models'] as List? ?? []).map((m) {
+      final name = m['name'] as String;
+      return AIModel(
+        id: 'ollama_$name',
+        provider: AIProvider.ollama,
+        name: name,
+        modelId: name,
+        supportsStreaming: true,
+      );
+    }).toList();
   }
 
   List<Map<String, String>> _buildMessages(List<ChatMessage> history, String prompt, String? systemPrompt) {

@@ -83,24 +83,18 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
 
   @override
   Future<List<AIModel>> fetchAvailableModels(String apiKey) async {
-    try {
-      final response = await _dio.get('/models');
-      final data = response.data as Map<String, dynamic>;
-      final models = (data['data'] as List)
-          .map(
-            (m) => AIModel(
-              id: m['id'] as String,
-              provider: AIProvider.custom,
-              name: m['id'] as String,
-              modelId: m['id'] as String,
-            ),
-          )
-          .toList();
-      return models;
-    } on DioException catch (e) {
-      dLog('[CustomRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode}');
-      return [];
-    }
+    final response = await _dio.get('/models');
+    final data = response.data as Map<String, dynamic>;
+    return (data['data'] as List)
+        .map(
+          (m) => AIModel(
+            id: m['id'] as String,
+            provider: AIProvider.custom,
+            name: m['id'] as String,
+            modelId: m['id'] as String,
+          ),
+        )
+        .toList();
   }
 
   List<Map<String, String>> _buildMessages(List<ChatMessage> history, String prompt, String? systemPrompt) {
