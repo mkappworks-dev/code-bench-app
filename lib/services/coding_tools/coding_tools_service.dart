@@ -96,7 +96,7 @@ class CodingToolsService {
       final normalRoot = p.normalize(p.absolute(projectPath));
       if (normalAbs != normalRoot) {
         ApplyService.assertWithinProject(abs, projectPath);
-      } else if (!Directory(normalRoot).existsSync()) {
+      } else if (!await _repo.directoryExists(normalRoot)) {
         throw ProjectMissingException(projectPath);
       }
       if (!await _repo.directoryExists(abs)) {

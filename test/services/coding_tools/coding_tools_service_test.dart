@@ -78,6 +78,18 @@ void main() {
       expect(r, isA<CodingToolResultError>());
       expect((r as CodingToolResultError).message, contains('not text-encoded'));
     });
+
+    test('returns error for non-existent file', () async {
+      final r = await svc.execute(
+        toolName: 'read_file',
+        args: {'path': 'missing.txt'},
+        projectPath: projectDir.path,
+        sessionId: 's',
+        messageId: 'm',
+      );
+      expect(r, isA<CodingToolResultError>());
+      expect((r as CodingToolResultError).message, contains('does not exist'));
+    });
   });
 
   group('list_dir', () {
