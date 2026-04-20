@@ -71,7 +71,7 @@ final class _RefreshChoice extends _ModelPickerChoice {
   const _RefreshChoice();
 }
 
-class _ChatInputBarState extends ConsumerState<ChatInputBar> {
+class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerProviderStateMixin {
   static const _pickerSectionOrder = [
     AIProvider.anthropic,
     AIProvider.openai,
@@ -84,6 +84,10 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
   final _focusNode = FocusNode();
   final _keyboardFocusNode = FocusNode();
   bool _isSending = false;
+  String _lastSentText = '';
+
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseOpacity;
 
   void _stashDraft(String sessionId, String text) {
     if (text.isEmpty) {
@@ -96,20 +100,21 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
   @override
   void initState() {
     super.initState();
-    // Restore any draft that was stashed for this session last time
-    // the user switched away. In-memory only, so a fresh app launch
-    // starts with an empty controller.
     final draft = _sessionDrafts[widget.sessionId];
     if (draft != null && draft.isNotEmpty) {
       _controller.text = draft;
     }
+    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))
+      ..repeat(reverse: true);
+    _pulseOpacity = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
   }
 
   @override
   void dispose() {
-    // Stash the current draft so a later ChatInputBar rebuild can
-    // restore it for this session.
     _stashDraft(widget.sessionId, _controller.text);
+    _pulseController.dispose();
     _controller.dispose();
     _focusNode.dispose();
     _keyboardFocusNode.dispose();
@@ -180,9 +185,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
+    _lastSentText = text;
     _controller.clear();
-    // Drop the stashed draft for this session too — once the message
-    // is on the wire, there's nothing to restore on a later switch.
     _sessionDrafts.remove(widget.sessionId);
     setState(() => _isSending = true);
     final systemPrompt = ref.read(sessionSystemPromptProvider)[widget.sessionId];
@@ -565,26 +569,35 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
                   ),
                   const Spacer(),
                   if (_isSending)
-                    GestureDetector(
-                      onTap: () {
-                        ref.read(chatMessagesProvider(widget.sessionId).notifier).cancelSend();
-                        setState(() => _isSending = false);
-                      },
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: c.glassFill,
-                          border: Border.all(color: c.glassBorder),
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          '✕',
-                          style: TextStyle(
-                            color: c.warning,
-                            fontSize: ThemeConstants.uiFontSizeSmall,
-                            fontWeight: FontWeight.w600,
+                    AnimatedBuilder(
+                      animation: _pulseOpacity,
+                      builder: (context, child) => Opacity(
+                        opacity: _pulseOpacity.value,
+                        child: child,
+                      ),
+                      child: GestureDetector(
+                        onTap: () {
+                          ref.read(chatMessagesProvider(widget.sessionId).notifier).cancelSend();
+                          _controller.text = _lastSentText;
+                          _controller.selection = TextSelection.collapsed(offset: _lastSentText.length);
+                          setState(() => _isSending = false);
+                        },
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: c.glassFill,
+                            border: Border.all(color: c.glassBorder),
+                            borderRadius: BorderRadius.circular(7),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '✕',
+                            style: TextStyle(
+                              color: c.warning,
+                              fontSize: ThemeConstants.uiFontSizeSmall,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
