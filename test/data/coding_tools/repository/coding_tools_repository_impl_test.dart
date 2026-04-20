@@ -25,6 +25,6 @@ void main() {
 
   test('readTextFile throws on invalid UTF-8 bytes', () async {
     File(p.join(tmp.path, 'bad.bin')).writeAsBytesSync([0xC3, 0x28]);
-    expect(() => repo.readTextFile(p.join(tmp.path, 'bad.bin')), throwsA(isA<FormatException>()));
+    await expectLater(() => repo.readTextFile(p.join(tmp.path, 'bad.bin')), throwsA(isA<FormatException>()));
   });
 }
