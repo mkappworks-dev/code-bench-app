@@ -510,7 +510,9 @@ class _FilePickerPanelState extends ConsumerState<_FilePickerPanel> {
   @override
   void initState() {
     super.initState();
-    _scanProjectFiles();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _scanProjectFiles();
+    });
   }
 
   @override
