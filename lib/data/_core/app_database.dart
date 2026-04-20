@@ -34,6 +34,7 @@ class ChatMessages extends Table {
   TextColumn get role => text()();
   TextColumn get content => text()();
   TextColumn get codeBlocksJson => text().withDefault(const Constant('[]'))();
+  TextColumn get toolEventsJson => text().withDefault(const Constant('[]'))();
   DateTimeColumn get timestamp => dateTime()();
 
   @override
@@ -167,7 +168,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -177,6 +178,9 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(chatSessions, chatSessions.mode);
         await m.addColumn(chatSessions, chatSessions.effort);
         await m.addColumn(chatSessions, chatSessions.permission);
+      }
+      if (from < 7) {
+        await m.addColumn(chatMessages, chatMessages.toolEventsJson);
       }
     },
   );

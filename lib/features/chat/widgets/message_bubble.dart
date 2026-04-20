@@ -234,21 +234,20 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (message.isStreaming) const StreamingDot(),
-                _MessageContent(message: message),
-                _AssistantActionRow(message: message, hovering: _hovering),
                 if (message.toolEvents.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
+                  WorkLogSection(sessionId: message.sessionId, messageId: message.id),
+                  const SizedBox(height: 4),
                   for (final event in message.toolEvents)
                     Padding(
                       key: ValueKey('tool-row-${event.id}'),
                       padding: const EdgeInsets.only(bottom: 4),
                       child: ToolCallRow(event: event),
                     ),
+                  if (message.content.isNotEmpty) const SizedBox(height: 8),
                 ],
-                if (message.toolEvents.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  WorkLogSection(sessionId: message.sessionId, messageId: message.id),
-                ],
+                _MessageContent(message: message),
+                _AssistantActionRow(message: message, hovering: _hovering),
                 if (message.iterationCapReached) ...[
                   IterationCapBanner(messageId: message.id, sessionId: message.sessionId, isActive: capIsActive),
                 ],
