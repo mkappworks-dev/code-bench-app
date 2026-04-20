@@ -187,17 +187,19 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     }
   }
 
-  /// Positions a showMenu popup above the tapped widget.
-  /// Setting bottom:0 tells Flutter the avoid-rect extends to the screen bottom,
-  /// leaving no space below and forcing the menu to open upward.
+  /// Returns a [RelativeRect] whose [bottom] encodes the distance from the
+  /// button's bottom edge to the overlay's bottom edge. Combined with
+  /// [showInstantMenu]'s [openAbove] flag, this lets [_MenuLayout] anchor the
+  /// popup from the screen bottom — which stays stable as the window resizes
+  /// vertically because the chat input bar is bottom-docked.
   RelativeRect _menuAbove(BuildContext context, RenderBox box) {
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final origin = box.localToGlobal(Offset.zero, ancestor: overlay);
     return RelativeRect.fromLTRB(
       origin.dx,
-      origin.dy, // button top → _MenuLayout places menu bottom here (non-covering)
+      origin.dy,
       overlay.size.width - origin.dx - box.size.width,
-      0,
+      overlay.size.height - origin.dy - box.size.height, // distance from button bottom to screen bottom
     );
   }
 
@@ -214,6 +216,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     showInstantMenu<T>(
       context: context,
       position: _menuAbove(context, box),
+      openAbove: true,
       color: c.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
@@ -335,6 +338,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     showInstantMenu<AIModel>(
       context: context,
       position: _menuAbove(context, box),
+      openAbove: true,
       color: c.panelBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),

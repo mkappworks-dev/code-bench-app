@@ -22,6 +22,7 @@ Future<T?> showInstantMenu<T>({
   double elevation = 8.0,
   double? minWidth,
   double? anchorCenterX,
+  bool openAbove = false,
 }) {
   return Navigator.of(context).push<T>(
     _InstantMenuRoute<T>(
@@ -32,6 +33,7 @@ Future<T?> showInstantMenu<T>({
       elevation: elevation,
       minWidth: minWidth,
       anchorCenterX: anchorCenterX,
+      openAbove: openAbove,
     ),
   );
 }
@@ -78,6 +80,7 @@ class _InstantMenuRoute<T> extends PopupRoute<T> {
     this.elevation = 8.0,
     this.minWidth,
     this.anchorCenterX,
+    this.openAbove = false,
   });
 
   final List<PopupMenuEntry<T>> items;
@@ -87,6 +90,7 @@ class _InstantMenuRoute<T> extends PopupRoute<T> {
   final double elevation;
   final double? minWidth;
   final double? anchorCenterX;
+  final bool openAbove;
 
   @override
   Duration get transitionDuration => Duration.zero;
@@ -107,7 +111,7 @@ class _InstantMenuRoute<T> extends PopupRoute<T> {
   Widget buildPage(BuildContext context, Animation<double> a, Animation<double> s) {
     final bg = color ?? Theme.of(context).popupMenuTheme.color ?? Theme.of(context).colorScheme.surface;
     return CustomSingleChildLayout(
-      delegate: _MenuLayout(position: position, anchorCenterX: anchorCenterX),
+      delegate: _MenuLayout(position: position, anchorCenterX: anchorCenterX, openAbove: openAbove),
       child: Material(
         color: bg,
         shape: shape,
@@ -135,12 +139,18 @@ class _InstantMenuRoute<T> extends PopupRoute<T> {
 }
 
 class _MenuLayout extends SingleChildLayoutDelegate {
-  const _MenuLayout({required this.position, this.anchorCenterX});
+  const _MenuLayout({required this.position, this.anchorCenterX, this.openAbove = false});
   final RelativeRect position;
 
   /// When set, the popup is centered on this x coordinate instead of
   /// left-aligning with [position.left].
   final double? anchorCenterX;
+
+  /// When true, the menu is anchored from the bottom of the screen using
+  /// [position.bottom] (distance from button bottom to screen bottom).
+  /// This stays stable when the window resizes vertically because bottom-docked
+  /// widgets maintain a constant distance from the screen bottom.
+  final bool openAbove;
 
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) => BoxConstraints.loose(constraints.biggest);
@@ -152,14 +162,25 @@ class _MenuLayout extends SingleChildLayoutDelegate {
         ? (anchorCenterX! - childSize.width / 2).clamp(8.0, maxX)
         : position.left.clamp(8.0, maxX);
 
-    // Open above if there's not enough room below the anchor point.
-    final double spaceBelow = size.height - position.top;
-    final double y = spaceBelow >= childSize.height + 8 ? position.top : position.top - childSize.height;
+    final double y;
+    if (openAbove) {
+      // Use position.bottom (distance from button bottom to screen bottom) as the
+      // anchor. size.height - position.bottom tracks the button's current bottom
+      // even as the window resizes, because the widget stays at a fixed distance
+      // from the screen bottom.
+      final double buttonBottomY = size.height - position.bottom;
+      y = buttonBottomY - childSize.height;
+    } else {
+      // Open below or auto: use position.top as anchor, prefer below, fall back above.
+      final double spaceBelow = size.height - position.top;
+      y = spaceBelow >= childSize.height + 8 ? position.top : position.top - childSize.height;
+    }
     final double maxY = math.max(8.0, size.height - childSize.height - 8.0);
 
     return Offset(x, y.clamp(8.0, maxY));
   }
 
   @override
-  bool shouldRelayout(_MenuLayout old) => position != old.position || anchorCenterX != old.anchorCenterX;
+  bool shouldRelayout(_MenuLayout old) =>
+      position != old.position || anchorCenterX != old.anchorCenterX || openAbove != old.openAbove;
 }
