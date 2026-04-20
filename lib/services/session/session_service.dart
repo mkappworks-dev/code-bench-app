@@ -76,7 +76,9 @@ class SessionService {
     yield userMsg;
 
     final history = await _session.loadHistory(sessionId, limit: 20);
-    final historyExcludingCurrent = history.where((m) => m.id != userMsg.id).toList();
+    final historyExcludingCurrent = history
+        .where((m) => m.id != userMsg.id && m.role != MessageRole.interrupted)
+        .toList();
 
     final assistantId = _uuid.v4();
     final buffer = StringBuffer();
