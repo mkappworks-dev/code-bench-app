@@ -21,8 +21,7 @@ import 'package:code_bench_app/features/project_sidebar/notifiers/project_sideba
 /// CircularProgressIndicator never appears and pumpAndSettle can settle.
 class _FakeAvailableModels extends AvailableModelsNotifier {
   @override
-  Future<AvailableModelsResult> build() async =>
-      AvailableModelsResult(models: List.from(AIModels.defaults));
+  Future<AvailableModelsResult> build() async => AvailableModelsResult(models: List.from(AIModels.defaults));
 }
 
 /// Minimal stub so the missing-project guard's `_isProjectAvailable` helper

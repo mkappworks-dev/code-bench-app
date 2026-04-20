@@ -15,6 +15,7 @@ import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/chat_notifier.dart';
 import '../../../data/session/models/session_settings.dart';
+import '../notifiers/available_models_failure.dart';
 import '../notifiers/available_models_notifier.dart';
 import '../notifiers/session_settings_actions.dart';
 import '../notifiers/session_settings_failure.dart';
@@ -47,11 +48,29 @@ class ChatInputBar extends ConsumerStatefulWidget {
   ConsumerState<ChatInputBar> createState() => _ChatInputBarState();
 }
 
-class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerProviderStateMixin {
-  // Sentinel returned when the user taps "Refresh models".
-  // Identity-checked (identical()) so null (dismissed) stays distinct.
-  static final _refreshSentinel = AIModel(id: '_refresh_sentinel', provider: AIProvider.custom, name: '', modelId: '');
+/// Hard cap on how many models the picker will render per provider. A
+/// misconfigured Custom endpoint returning thousands of entries would
+/// otherwise build that many `PopupMenuItem`s in a `Column`.
+const int _maxModelsPerProvider = 200;
 
+/// Sealed choice type for the model picker. Replaces the previous
+/// `PopupMenuItem<AIModel>` sentinel pattern: refresh-as-model smuggled the
+/// control action through the value channel, which was brittle (depends on
+/// reference identity of a sentinel value).
+sealed class _ModelPickerChoice {
+  const _ModelPickerChoice();
+}
+
+final class _ModelChoice extends _ModelPickerChoice {
+  const _ModelChoice(this.model);
+  final AIModel model;
+}
+
+final class _RefreshChoice extends _ModelPickerChoice {
+  const _RefreshChoice();
+}
+
+class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerProviderStateMixin {
   static const _pickerSectionOrder = [
     AIProvider.anthropic,
     AIProvider.openai,
@@ -257,22 +276,22 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
 
     final result = ref.read(availableModelsProvider).value;
     final allModels = result?.models ?? AIModels.defaults;
-    final failedProviders = result?.failedProviders ?? const <AIProvider>{};
+    final failures = result?.failures ?? const <AIProvider, ModelProviderFailure>{};
 
     final grouped = <AIProvider, List<AIModel>>{};
     for (final m in allModels) {
       grouped.putIfAbsent(m.provider, () => []).add(m);
     }
 
-    final items = <PopupMenuEntry<AIModel>>[];
+    final items = <PopupMenuEntry<_ModelPickerChoice>>[];
 
     for (final provider in _pickerSectionOrder) {
       final models = grouped[provider];
-      final hasFailed = failedProviders.contains(provider);
-      if ((models == null || models.isEmpty) && !hasFailed) continue;
+      final failure = failures[provider];
+      if ((models == null || models.isEmpty) && failure == null) continue;
 
       items.add(
-        PopupMenuItem<AIModel>(
+        PopupMenuItem<_ModelPickerChoice>(
           enabled: false,
           height: 24,
           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -283,9 +302,9 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
         ),
       );
 
-      if (hasFailed) {
+      if (failure != null) {
         items.add(
-          PopupMenuItem<AIModel>(
+          PopupMenuItem<_ModelPickerChoice>(
             enabled: false,
             height: 28,
             padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -295,7 +314,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
-                    'Unreachable — check that ${provider.displayName} is running',
+                    _failureMessage(failure),
                     style: TextStyle(color: c.warning, fontSize: ThemeConstants.uiFontSizeSmall),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -306,10 +325,11 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
         );
       }
 
-      for (final m in models ?? []) {
+      final visible = (models ?? const <AIModel>[]).take(_maxModelsPerProvider);
+      for (final m in visible) {
         items.add(
-          PopupMenuItem<AIModel>(
-            value: m,
+          PopupMenuItem<_ModelPickerChoice>(
+            value: _ModelChoice(m),
             height: 32,
             child: Text(
               m.name,
@@ -321,12 +341,26 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
           ),
         );
       }
+      final extra = (models?.length ?? 0) - _maxModelsPerProvider;
+      if (extra > 0) {
+        items.add(
+          PopupMenuItem<_ModelPickerChoice>(
+            enabled: false,
+            height: 24,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Text(
+              '…and $extra more — refine endpoint to narrow the list',
+              style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall, fontStyle: FontStyle.italic),
+            ),
+          ),
+        );
+      }
     }
 
     items.add(const PopupMenuDivider());
     items.add(
-      PopupMenuItem<AIModel>(
-        value: _refreshSentinel,
+      PopupMenuItem<_ModelPickerChoice>(
+        value: const _RefreshChoice(),
         height: 28,
         child: Text(
           '↺  Refresh models',
@@ -335,7 +369,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
       ),
     );
 
-    showInstantMenu<AIModel>(
+    showInstantMenu<_ModelPickerChoice>(
       context: context,
       position: _menuAbove(context, box),
       openAbove: true,
@@ -346,16 +380,29 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
       ),
       items: items,
     ).then((value) async {
-      if (identical(value, _refreshSentinel)) {
-        await ref.read(availableModelsProvider.notifier).refresh();
-        if (context.mounted) _showModelPicker(context);
-        return;
-      }
-      if (value != null) {
-        ref.read(sessionSettingsActionsProvider.notifier).updateModel(widget.sessionId, value);
+      if (value == null) return;
+      switch (value) {
+        case _RefreshChoice():
+          // Reopen the picker regardless of refresh outcome — any error is
+          // surfaced by the `ref.listen(availableModelsProvider, …)` listener
+          // in `build()` as a snackbar, and the prior model list is retained
+          // via copyWithPrevious so the reopened picker isn't empty.
+          await ref.read(availableModelsProvider.notifier).refresh();
+          if (!context.mounted) return;
+          _showModelPicker(context);
+        case _ModelChoice(:final model):
+          ref.read(sessionSettingsActionsProvider.notifier).updateModel(widget.sessionId, model);
       }
     });
   }
+
+  String _failureMessage(ModelProviderFailure failure) => switch (failure) {
+    ModelProviderUnreachable(:final provider) => 'Unreachable — check that ${provider.displayName} is running',
+    ModelProviderAuth(:final provider) => '${provider.displayName} rejected the API key — check Settings',
+    ModelProviderMalformedResponse(:final provider) =>
+      '${provider.displayName} returned an unexpected response — check the endpoint',
+    ModelProviderUnknown(:final provider) => 'Couldn\'t load ${provider.displayName} models',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -372,9 +419,28 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
       showErrorSnackBar(context, 'Could not save session settings.');
     });
 
+    // Top-level catastrophes in the dynamic-model fetch (storage read failure).
+    // Per-provider fetch failures are NOT surfaced here — they ride inside
+    // `AvailableModelsResult.failures` and render inline in the picker.
+    ref.listen(availableModelsProvider, (_, next) {
+      if (next is! AsyncError || !mounted) return;
+      final failure = next.error;
+      if (failure is! AvailableModelsFailure) return;
+      switch (failure) {
+        case AvailableModelsStorageError():
+          showErrorSnackBar(context, 'Couldn\'t load model list — storage unavailable.');
+      }
+    });
+
     final c = AppColors.of(context);
     final model = ref.watch(selectedModelProvider);
     final availableState = ref.watch(availableModelsProvider);
+    // `hasValue` stays true across a storage-failed refresh thanks to
+    // Riverpod's built-in `copyWithPrevious` — the prior list is retained so
+    // this flag reflects real staleness, not transient load/error churn.
+    // During the initial load (no prior value) we deliberately don't mark
+    // the model stale: `AIModels.fromId` matches and, if it doesn't, the
+    // picker itself is the place to warn.
     final isModelStale =
         availableState.hasValue && !availableState.value!.models.any((m) => m.modelId == model.modelId);
     final mode = ref.watch(sessionModeProvider);
