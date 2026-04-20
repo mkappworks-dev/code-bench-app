@@ -30,8 +30,7 @@ final prCardProvider = PrCardNotifierFamily._();
 /// Only `e.runtimeType` is ever logged. A full `$e` could invoke
 /// `DioException.toString()`, which serialises request headers and would
 /// leak the `Authorization: Bearer <PAT>` token. See `macos/Runner/README.md`.
-final class PrCardNotifierProvider
-    extends $AsyncNotifierProvider<PrCardNotifier, PrCardState> {
+final class PrCardNotifierProvider extends $AsyncNotifierProvider<PrCardNotifier, PrCardState> {
   /// Manages live state for a single GitHub pull request card.
   ///
   /// Widgets call [refresh] from their poll timer, [approve] and [merge] from
@@ -41,16 +40,14 @@ final class PrCardNotifierProvider
   /// Only `e.runtimeType` is ever logged. A full `$e` could invoke
   /// `DioException.toString()`, which serialises request headers and would
   /// leak the `Authorization: Bearer <PAT>` token. See `macos/Runner/README.md`.
-  PrCardNotifierProvider._({
-    required PrCardNotifierFamily super.from,
-    required (String, String, int) super.argument,
-  }) : super(
-         retry: null,
-         name: r'prCardProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+  PrCardNotifierProvider._({required PrCardNotifierFamily super.from, required (String, String, int) super.argument})
+    : super(
+        retry: null,
+        name: r'prCardProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$prCardNotifierHash();

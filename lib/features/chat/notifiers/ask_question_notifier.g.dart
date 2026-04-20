@@ -12,8 +12,7 @@ part of 'ask_question_notifier.dart';
 @ProviderFor(AskQuestionNotifier)
 final askQuestionProvider = AskQuestionNotifierProvider._();
 
-final class AskQuestionNotifierProvider
-    extends $NotifierProvider<AskQuestionNotifier, AskQuestionState> {
+final class AskQuestionNotifierProvider extends $NotifierProvider<AskQuestionNotifier, AskQuestionState> {
   AskQuestionNotifierProvider._()
     : super(
         from: null,
@@ -34,15 +33,11 @@ final class AskQuestionNotifierProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(AskQuestionState value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<AskQuestionState>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<AskQuestionState>(value));
   }
 }
 
-String _$askQuestionNotifierHash() =>
-    r'f4ec54ade058c965aaa1590b1ffc557a6f3b46ee';
+String _$askQuestionNotifierHash() => r'f4ec54ade058c965aaa1590b1ffc557a6f3b46ee';
 
 abstract class _$AskQuestionNotifier extends $Notifier<AskQuestionState> {
   AskQuestionState build();
