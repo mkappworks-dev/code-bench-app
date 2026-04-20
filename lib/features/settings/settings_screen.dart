@@ -8,12 +8,14 @@ import '../../core/utils/platform_utils.dart';
 import '../../core/widgets/app_dialog.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import '../archive/archive_screen.dart';
+import '../coding_tools/coding_tools_screen.dart';
+import '../coding_tools/notifiers/coding_tools_denylist_actions.dart';
 import '../integrations/integrations_screen.dart';
 import '../providers/providers_screen.dart';
 import 'general_screen.dart';
 import 'notifiers/general_prefs_notifier.dart';
 
-enum _SettingsNav { general, providers, integrations, archive }
+enum _SettingsNav { general, providers, integrations, codingTools, archive }
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -29,6 +31,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // rebuilds with a fresh ValueKey and re-runs its initState → _load()
   // against the new pref values.
   int _generalVersion = 0;
+
+  // Bumped whenever the user hits "Restore defaults" on Coding Tools so
+  // CodingToolsScreen rebuilds with a fresh ValueKey.
+  int _codingToolsVersion = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -64,12 +70,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return const ProvidersScreen();
       case _SettingsNav.integrations:
         return const IntegrationsScreen();
+      case _SettingsNav.codingTools:
+        return CodingToolsScreen(key: ValueKey('coding-tools-$_codingToolsVersion'));
       case _SettingsNav.archive:
         return const ArchiveScreen();
     }
   }
 
   Future<void> _restoreDefaults() async {
+    switch (_activeNav) {
+      case _SettingsNav.general:
+        await _restoreGeneralDefaults();
+      case _SettingsNav.codingTools:
+        await _restoreCodingToolsDefaults();
+      case _SettingsNav.providers:
+      case _SettingsNav.integrations:
+      case _SettingsNav.archive:
+        return;
+    }
+  }
+
+  Future<void> _restoreGeneralDefaults() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AppDialog(
@@ -101,6 +122,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       setState(() => _generalVersion++);
     }
   }
+
+  Future<void> _restoreCodingToolsDefaults() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AppDialog(
+        icon: AppIcons.settings,
+        iconType: AppDialogIconType.teal,
+        title: 'Restore coding-tools denylist defaults?',
+        content: Builder(
+          builder: (context) {
+            final c = AppColors.of(context);
+            return Text(
+              'Your additions and any defaults you have opted out of will be cleared.',
+              style: TextStyle(color: c.textSecondary, fontSize: 12),
+            );
+          },
+        ),
+        actions: [
+          AppDialogAction.cancel(onPressed: () => Navigator.pop(ctx, false)),
+          AppDialogAction.primary(label: 'Restore', onPressed: () => Navigator.pop(ctx, true)),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await ref.read(codingToolsDenylistActionsProvider.notifier).restoreAll();
+    if (!mounted) return;
+    if (ref.read(codingToolsDenylistActionsProvider).hasError) {
+      AppSnackBar.show(context, 'Could not restore defaults — please try again.', type: AppSnackBarType.error);
+    } else {
+      setState(() => _codingToolsVersion++);
+    }
+  }
 }
 
 // ── Left nav ──────────────────────────────────────────────────────────────────
@@ -129,6 +182,7 @@ class _SettingsLeftNavState extends State<_SettingsLeftNav> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final showRestore = widget.activeNav == _SettingsNav.general || widget.activeNav == _SettingsNav.codingTools;
     return Container(
       width: 200,
       decoration: BoxDecoration(
@@ -165,39 +219,46 @@ class _SettingsLeftNavState extends State<_SettingsLeftNav> {
             onTap: () => widget.onSelect(_SettingsNav.integrations),
           ),
           _NavItem(
+            icon: AppIcons.terminal,
+            label: 'Coding Tools',
+            isActive: widget.activeNav == _SettingsNav.codingTools,
+            onTap: () => widget.onSelect(_SettingsNav.codingTools),
+          ),
+          _NavItem(
             icon: AppIcons.archive,
             label: 'Archive',
             isActive: widget.activeNav == _SettingsNav.archive,
             onTap: () => widget.onSelect(_SettingsNav.archive),
           ),
           const Spacer(),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            onEnter: (_) => setState(() => _restoreHovered = true),
-            onExit: (_) => setState(() => _restoreHovered = false),
-            child: GestureDetector(
-              onTap: widget.onRestoreDefaults,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
-                margin: const EdgeInsets.symmetric(horizontal: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _restoreHovered ? c.chipStroke : c.chipFill,
-                  border: Border.all(color: c.chipStroke),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '↺ Restore defaults',
-                      style: TextStyle(color: _restoreHovered ? c.textPrimary : c.mutedFg, fontSize: 11),
-                    ),
-                  ],
+          if (showRestore)
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              onEnter: (_) => setState(() => _restoreHovered = true),
+              onExit: (_) => setState(() => _restoreHovered = false),
+              child: GestureDetector(
+                onTap: widget.onRestoreDefaults,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _restoreHovered ? c.chipStroke : c.chipFill,
+                    border: Border.all(color: c.chipStroke),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '↺ Restore defaults',
+                        style: TextStyle(color: _restoreHovered ? c.textPrimary : c.mutedFg, fontSize: 11),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
