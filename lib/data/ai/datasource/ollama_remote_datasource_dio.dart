@@ -126,7 +126,7 @@ class OllamaRemoteDatasourceDio implements AIRemoteDatasource {
     if (systemPrompt != null) {
       messages.add({'role': 'system', 'content': systemPrompt});
     }
-    for (final msg in history) {
+    for (final msg in history.where((m) => m.role != MessageRole.interrupted)) {
       messages.add({'role': msg.role.value, 'content': msg.content});
     }
     messages.add({'role': 'user', 'content': prompt});

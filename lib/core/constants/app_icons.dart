@@ -21,6 +21,7 @@ abstract final class AppIcons {
   static const IconData check = LucideIcons.check;
   static const IconData copy = LucideIcons.copy;
   static const IconData run = LucideIcons.play;
+  static const IconData stop = LucideIcons.circleStop;
   static const IconData apply = LucideIcons.download;
   static const IconData applying = LucideIcons.hourglass;
   static const IconData sort = LucideIcons.arrowUpDown;

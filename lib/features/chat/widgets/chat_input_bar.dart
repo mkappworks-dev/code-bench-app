@@ -83,8 +83,10 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
   final _focusNode = FocusNode();
   final _keyboardFocusNode = FocusNode();
   bool _isSending = false;
-  late AnimationController _pulseController;
-  late Animation<double> _pulseOpacity;
+  String _lastSentText = '';
+
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseOpacity;
 
   void _stashDraft(String sessionId, String text) {
     if (text.isEmpty) {
@@ -97,25 +99,19 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    // Restore any draft that was stashed for this session last time
-    // the user switched away. In-memory only, so a fresh app launch
-    // starts with an empty controller.
     final draft = _sessionDrafts[widget.sessionId];
     if (draft != null && draft.isNotEmpty) {
       _controller.text = draft;
     }
-    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800))
-      ..repeat(reverse: true);
+    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
     _pulseOpacity = Tween<double>(
-      begin: 0.35,
+      begin: 0.4,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
   }
 
   @override
   void dispose() {
-    // Stash the current draft so a later ChatInputBar rebuild can
-    // restore it for this session.
     _stashDraft(widget.sessionId, _controller.text);
     _pulseController.dispose();
     _controller.dispose();
@@ -188,11 +184,11 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
+    _lastSentText = text;
     _controller.clear();
-    // Drop the stashed draft for this session too — once the message
-    // is on the wire, there's nothing to restore on a later switch.
     _sessionDrafts.remove(widget.sessionId);
     setState(() => _isSending = true);
+    _pulseController.repeat(reverse: true);
     final systemPrompt = ref.read(sessionSystemPromptProvider)[widget.sessionId];
     final sendError = await ref
         .read(chatMessagesProvider(widget.sessionId).notifier)
@@ -201,6 +197,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
       if (sendError != null) {
         showErrorSnackBar(context, userMessage(sendError, fallback: 'Failed to get a response.'));
       }
+      _pulseController.stop();
+      _pulseController.reset();
       setState(() => _isSending = false);
       _focusNode.requestFocus();
     }
@@ -406,12 +404,6 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(chatMessagesProvider(widget.sessionId), (_, next) {
-      if (!_isSending) return;
-      if (next is! AsyncError || !mounted) return;
-      showErrorSnackBar(context, 'Failed to send message. Please try again.');
-    });
-
     // Initialise (idempotent after first call) and listen for persist errors.
     ref.listen(sessionSettingsActionsProvider, (_, next) {
       if (next is! AsyncError || !mounted) return;
@@ -560,74 +552,79 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                     ),
                   ),
                   const Spacer(),
-                  Tooltip(
-                    message: isMissing ? 'Project folder is missing. Relocate or Remove it from the sidebar.' : '',
-                    child: ListenableBuilder(
-                      listenable: _controller,
-                      builder: (context, _) {
-                        final lc = AppColors.of(context);
-                        final hasText = _controller.text.trim().isNotEmpty;
-                        final Color bg;
-                        final Border? border;
-                        final Color iconColor;
-                        final List<BoxShadow> shadows;
-                        if (_isSending) {
-                          bg = lc.accentHover;
-                          border = null;
-                          iconColor = lc.onAccent;
-                          shadows = [];
-                        } else if (hasText && !isMissing) {
-                          bg = lc.accent;
-                          border = null;
-                          iconColor = lc.onAccent;
-                          shadows = [BoxShadow(color: lc.sendGlow, blurRadius: 8, offset: const Offset(0, 2))];
-                        } else {
-                          bg = lc.sendDisabledFill;
-                          border = Border.all(color: lc.sendDisabledStroke);
-                          iconColor = lc.sendDisabledIconColor;
-                          shadows = [];
-                        }
-                        return GestureDetector(
-                          onTap: _isSending ? null : _send,
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              gradient: (!_isSending && hasText && !isMissing)
-                                  ? LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [lc.accent, lc.accentHover],
-                                    )
-                                  : null,
-                              color: (_isSending || !hasText || isMissing) ? bg : null,
-                              borderRadius: BorderRadius.circular(7),
-                              border: border,
-                              boxShadow: shadows,
-                            ),
-                            child: Center(
-                              child: _isSending
-                                  ? AnimatedBuilder(
-                                      animation: _pulseOpacity,
-                                      builder: (context, _) => Opacity(
-                                        opacity: _pulseOpacity.value,
-                                        child: Container(
-                                          width: 9,
-                                          height: 9,
-                                          decoration: BoxDecoration(
-                                            color: lc.onAccent,
-                                            borderRadius: BorderRadius.circular(2),
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  : Icon(AppIcons.arrowUp, size: 14, color: iconColor),
-                            ),
+                  if (_isSending)
+                    AnimatedBuilder(
+                      animation: _pulseOpacity,
+                      builder: (context, child) => Opacity(opacity: _pulseOpacity.value, child: child),
+                      child: GestureDetector(
+                        onTap: () {
+                          ref.read(chatMessagesProvider(widget.sessionId).notifier).cancelSend();
+                          _controller.text = _lastSentText;
+                          _controller.selection = TextSelection.collapsed(offset: _lastSentText.length);
+                          _pulseController.stop();
+                          _pulseController.reset();
+                          setState(() => _isSending = false);
+                        },
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: c.glassFill,
+                            border: Border.all(color: c.warning),
+                            borderRadius: BorderRadius.circular(7),
                           ),
-                        );
-                      },
+                          alignment: Alignment.center,
+                          child: Icon(AppIcons.stop, size: 13, color: c.warning),
+                        ),
+                      ),
+                    )
+                  else
+                    Tooltip(
+                      message: isMissing ? 'Project folder is missing. Relocate or Remove it from the sidebar.' : '',
+                      child: ListenableBuilder(
+                        listenable: _controller,
+                        builder: (context, _) {
+                          final lc = AppColors.of(context);
+                          final hasText = _controller.text.trim().isNotEmpty;
+                          final Color bg;
+                          final Border? border;
+                          final Color iconColor;
+                          final List<BoxShadow> shadows;
+                          if (hasText && !isMissing) {
+                            bg = lc.accent;
+                            border = null;
+                            iconColor = lc.onAccent;
+                            shadows = [BoxShadow(color: lc.sendGlow, blurRadius: 8, offset: const Offset(0, 2))];
+                          } else {
+                            bg = lc.sendDisabledFill;
+                            border = Border.all(color: lc.sendDisabledStroke);
+                            iconColor = lc.sendDisabledIconColor;
+                            shadows = [];
+                          }
+                          return GestureDetector(
+                            onTap: _send,
+                            child: Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                gradient: (hasText && !isMissing)
+                                    ? LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [lc.accent, lc.accentHover],
+                                      )
+                                    : null,
+                                color: (!hasText || isMissing) ? bg : null,
+                                borderRadius: BorderRadius.circular(7),
+                                border: border,
+                                boxShadow: shadows,
+                              ),
+                              child: Center(child: Icon(AppIcons.arrowUp, size: 14, color: iconColor)),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),

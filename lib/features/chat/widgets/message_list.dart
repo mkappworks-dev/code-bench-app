@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/utils/snackbar_helper.dart';
+import '../../../data/shared/chat_message.dart';
+import '../notifiers/chat_messages_actions.dart';
+import '../notifiers/chat_messages_failure.dart';
 import '../notifiers/chat_notifier.dart';
 import 'message_bubble.dart';
 
@@ -52,21 +56,23 @@ class _MessageListState extends ConsumerState<MessageList> {
     }
 
     setState(() => _loadingMore = true);
-    try {
-      final offset = messages.length;
-      await ref.read(chatMessagesProvider(widget.sessionId).notifier).loadMore(widget.sessionId, offset);
-      // If fewer than a full page came back, no more to load
-      final updated = ref.read(chatMessagesProvider(widget.sessionId)).value;
-      if (updated != null && updated.length - messages.length < _pageSize) {
-        setState(() => _hasMore = false);
-      }
-      // Cap in-memory list
-      if (updated != null && updated.length > _maxInMemory) {
-        setState(() => _hasMore = false);
-      }
-    } finally {
-      if (mounted) setState(() => _loadingMore = false);
+    final offset = messages.length;
+    await ref.read(chatMessagesActionsProvider.notifier).loadMore(widget.sessionId, offset);
+    if (!mounted) return;
+    final actionState = ref.read(chatMessagesActionsProvider);
+    if (actionState.hasError && actionState.error is ChatMessagesFailure) {
+      showErrorSnackBar(context, 'Couldn\'t load older messages.');
+      setState(() => _loadingMore = false);
+      return;
     }
+    final updated = ref.read(chatMessagesProvider(widget.sessionId)).value;
+    if (updated != null) {
+      // No more to load: short page returned, OR in-memory cap hit.
+      final shortPage = updated.length - messages.length < _pageSize;
+      final overCap = updated.length > _maxInMemory;
+      if (shortPage || overCap) _hasMore = false;
+    }
+    setState(() => _loadingMore = false);
   }
 
   @override
@@ -93,7 +99,9 @@ class _MessageListState extends ConsumerState<MessageList> {
               );
             }
             final msg = messages[messages.length - 1 - index];
-            return MessageBubble(message: msg, key: ValueKey(msg.id));
+            final effectiveLastIdx = messages.lastIndexWhere((m) => m.role != MessageRole.interrupted);
+            final isLast = effectiveLastIdx >= 0 && index == messages.length - 1 - effectiveLastIdx;
+            return MessageBubble(message: msg, sessionId: widget.sessionId, isLast: isLast, key: ValueKey(msg.id));
           },
         );
       },

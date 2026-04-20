@@ -50,6 +50,9 @@ class SessionService {
     permission: permission,
   );
   Future<void> deleteSession(String sessionId) => _session.deleteSession(sessionId);
+  Future<void> deleteMessage(String sessionId, String messageId) => _session.deleteMessage(sessionId, messageId);
+  Future<void> deleteMessages(String sessionId, List<String> messageIds) =>
+      _session.deleteMessages(sessionId, messageIds);
   Future<void> archiveSession(String sessionId) => _session.archiveSession(sessionId);
   Future<void> unarchiveSession(String sessionId) => _session.unarchiveSession(sessionId);
   Future<void> deleteAllSessionsAndMessages() => _session.deleteAllSessionsAndMessages();
@@ -75,7 +78,9 @@ class SessionService {
     yield userMsg;
 
     final history = await _session.loadHistory(sessionId, limit: 20);
-    final historyExcludingCurrent = history.where((m) => m.id != userMsg.id).toList();
+    final historyExcludingCurrent = history
+        .where((m) => m.id != userMsg.id && m.role != MessageRole.interrupted)
+        .toList();
 
     final assistantId = _uuid.v4();
     final buffer = StringBuffer();

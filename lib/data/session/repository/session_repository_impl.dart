@@ -77,5 +77,11 @@ class SessionRepositoryImpl implements SessionRepository {
   Future<void> persistMessage(String sessionId, ChatMessage message) => _ds.persistMessage(sessionId, message);
 
   @override
+  Future<void> deleteMessage(String sessionId, String messageId) => _ds.deleteMessage(sessionId, messageId);
+
+  @override
+  Future<void> deleteMessages(String sessionId, List<String> messageIds) => _ds.deleteMessages(sessionId, messageIds);
+
+  @override
   Future<List<ChatSession>> getSessionsByProject(String projectId) => watchSessionsByProject(projectId).first;
 }

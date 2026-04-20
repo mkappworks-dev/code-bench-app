@@ -70,6 +70,7 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
         }
       }
     } on DioException catch (e) {
+      dLog('[CustomRemoteDatasource] streamMessage failed: ${e.type} ${e.response?.statusCode ?? ''}');
       throw NetworkException('Custom endpoint request failed', statusCode: e.response?.statusCode, originalError: e);
     }
   }
@@ -133,7 +134,7 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
     if (systemPrompt != null) {
       messages.add({'role': 'system', 'content': systemPrompt});
     }
-    for (final msg in history) {
+    for (final msg in history.where((m) => m.role != MessageRole.interrupted)) {
       messages.add({'role': msg.role.value, 'content': msg.content});
     }
     messages.add({'role': 'user', 'content': prompt});
