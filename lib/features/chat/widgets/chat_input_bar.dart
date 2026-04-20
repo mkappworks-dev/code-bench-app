@@ -104,8 +104,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     if (draft != null && draft.isNotEmpty) {
       _controller.text = draft;
     }
-    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))
-      ..repeat(reverse: true);
+    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
     _pulseOpacity = Tween<double>(begin: 0.4, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
@@ -189,6 +188,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     _controller.clear();
     _sessionDrafts.remove(widget.sessionId);
     setState(() => _isSending = true);
+    _pulseController.repeat(reverse: true);
     final systemPrompt = ref.read(sessionSystemPromptProvider)[widget.sessionId];
     final sendError = await ref
         .read(chatMessagesProvider(widget.sessionId).notifier)
@@ -197,6 +197,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
       if (sendError != null) {
         showErrorSnackBar(context, userMessage(sendError, fallback: 'Failed to get a response.'));
       }
+      _pulseController.stop();
+      _pulseController.reset();
       setState(() => _isSending = false);
       _focusNode.requestFocus();
     }
@@ -580,6 +582,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                           ref.read(chatMessagesProvider(widget.sessionId).notifier).cancelSend();
                           _controller.text = _lastSentText;
                           _controller.selection = TextSelection.collapsed(offset: _lastSentText.length);
+                          _pulseController.stop();
+                          _pulseController.reset();
                           setState(() => _isSending = false);
                         },
                         child: Container(

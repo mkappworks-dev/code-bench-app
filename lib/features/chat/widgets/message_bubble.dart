@@ -10,7 +10,7 @@ import '../../../core/utils/snackbar_helper.dart';
 import '../../../data/shared/chat_message.dart';
 import '../notifiers/ask_question_notifier.dart';
 import '../notifiers/chat_notifier.dart';
-import '../notifiers/pending_message_action_notifier.dart';
+import '../../../core/constants/app_icons.dart';
 import 'ask_user_question_card.dart';
 import 'code_block_widget.dart';
 import 'streaming_dot.dart';
@@ -62,17 +62,22 @@ class _UserBubbleState extends ConsumerState<_UserBubble> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    return Align(
-      alignment: Alignment.centerRight,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
-        child: MouseRegion(
-          onEnter: (_) => setState(() => _hovered = true),
-          onExit: (_) => setState(() => _hovered = false),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (widget.isLast && _hovered) ...[
+              _DeleteButton(message: widget.message, sessionId: widget.sessionId),
+              const SizedBox(width: 6),
+            ],
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
+              child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
                 decoration: BoxDecoration(
                   color: c.userBubbleFill,
@@ -85,51 +90,6 @@ class _UserBubbleState extends ConsumerState<_UserBubble> {
                   style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),
                 ),
               ),
-              if (widget.isLast && _hovered) _ActionRow(message: widget.message, sessionId: widget.sessionId, c: c),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionRow extends ConsumerWidget {
-  const _ActionRow({required this.message, required this.sessionId, required this.c});
-
-  final ChatMessage message;
-  final String sessionId;
-  final AppColors c;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Positioned(
-      top: -28,
-      right: 0,
-      child: Container(
-        decoration: BoxDecoration(
-          color: c.panelBackground,
-          border: Border.all(color: c.subtleBorder),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _ActionButton(
-              label: '↺ Retry',
-              color: c.textSecondary,
-              onTap: () => ref.read(pendingMessageActionProvider(sessionId).notifier).retry(message.content),
-            ),
-            _ActionButton(
-              label: '✎ Edit',
-              color: c.textSecondary,
-              onTap: () => ref.read(pendingMessageActionProvider(sessionId).notifier).edit(message.content),
-            ),
-            _ActionButton(
-              label: '✕ Delete',
-              color: c.warning,
-              onTap: () => ref.read(chatMessagesProvider(sessionId).notifier).deleteMessage(message.id),
             ),
           ],
         ),
@@ -138,23 +98,27 @@ class _ActionRow extends ConsumerWidget {
   }
 }
 
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({required this.label, required this.color, required this.onTap});
+class _DeleteButton extends ConsumerWidget {
+  const _DeleteButton({required this.message, required this.sessionId});
 
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
+  final ChatMessage message;
+  final String sessionId;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = AppColors.of(context);
     return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        child: Text(
-          label,
-          style: TextStyle(color: color, fontSize: ThemeConstants.uiFontSizeSmall),
+      onTap: () => ref.read(chatMessagesProvider(sessionId).notifier).deleteMessage(message.id),
+      child: Container(
+        width: 26,
+        height: 26,
+        decoration: BoxDecoration(
+          color: c.panelBackground,
+          border: Border.all(color: c.subtleBorder),
+          borderRadius: BorderRadius.circular(5),
         ),
+        alignment: Alignment.center,
+        child: Icon(AppIcons.trash, size: 12, color: c.warning),
       ),
     );
   }
