@@ -9,17 +9,23 @@ import 'package:code_bench_app/data/filesystem/repository/filesystem_repository_
 import 'package:code_bench_app/data/apply/repository/apply_repository_impl.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
 import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:code_bench_app/data/_core/preferences/coding_tools_preferences.dart';
+import 'package:code_bench_app/data/coding_tools/models/denylist_category.dart';
+import 'package:code_bench_app/data/coding_tools/repository/coding_tools_denylist_repository_impl.dart';
 
 void main() {
   late Directory projectDir;
   late CodingToolsService svc;
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     projectDir = await Directory.systemTemp.createTemp('ct_svc_');
     final repo = CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo());
     final applyRepo = ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()));
     final applySvc = ApplyService(repo: applyRepo);
-    svc = CodingToolsService(repo: repo, applyService: applySvc);
+    final denylistRepo = CodingToolsDenylistRepositoryImpl(prefs: CodingToolsPreferences());
+    svc = CodingToolsService(repo: repo, applyService: applySvc, denylist: denylistRepo);
   });
 
   tearDown(() async {
@@ -186,6 +192,67 @@ void main() {
       );
       expect(r, isA<CodingToolResultError>());
       expect((r as CodingToolResultError).message, contains('matches 3 times'));
+    });
+  });
+
+  group('configurable denylist', () {
+    test('user-added filename is refused on read_file', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = CodingToolsPreferences();
+      final denylistRepo = CodingToolsDenylistRepositoryImpl(prefs: prefs);
+      await denylistRepo.save(
+        (await denylistRepo.load()).copyWith(
+          userAdded: {
+            DenylistCategory.filename: {'custom_secret'},
+            for (final c in DenylistCategory.values)
+              if (c != DenylistCategory.filename) c: <String>{},
+          },
+        ),
+      );
+      final svcWithRepo = CodingToolsService(
+        repo: CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo()),
+        applyService: ApplyService(repo: ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()))),
+        denylist: denylistRepo,
+      );
+      File(p.join(projectDir.path, 'custom_secret')).writeAsStringSync('sensitive');
+      final r = await svcWithRepo.execute(
+        toolName: 'read_file',
+        args: {'path': 'custom_secret'},
+        projectPath: projectDir.path,
+        sessionId: 's',
+        messageId: 'm',
+      );
+      expect(r, isA<CodingToolResultError>());
+      expect((r as CodingToolResultError).message, contains('blocked for safety'));
+    });
+
+    test('suppressed baseline filename is allowed on read_file', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = CodingToolsPreferences();
+      final denylistRepo = CodingToolsDenylistRepositoryImpl(prefs: prefs);
+      await denylistRepo.save(
+        (await denylistRepo.load()).copyWith(
+          suppressedDefaults: {
+            DenylistCategory.filename: {'credentials'},
+            for (final c in DenylistCategory.values)
+              if (c != DenylistCategory.filename) c: <String>{},
+          },
+        ),
+      );
+      final svcWithRepo = CodingToolsService(
+        repo: CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo()),
+        applyService: ApplyService(repo: ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()))),
+        denylist: denylistRepo,
+      );
+      File(p.join(projectDir.path, 'credentials')).writeAsStringSync('not-actually-secret');
+      final r = await svcWithRepo.execute(
+        toolName: 'read_file',
+        args: {'path': 'credentials'},
+        projectPath: projectDir.path,
+        sessionId: 's',
+        messageId: 'm',
+      );
+      expect(r, isA<CodingToolResultSuccess>());
     });
   });
 }
