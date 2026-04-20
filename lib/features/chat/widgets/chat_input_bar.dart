@@ -13,6 +13,7 @@ import '../../../data/shared/ai_model.dart';
 import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
+import '../notifiers/agent_cancel_notifier.dart';
 import '../notifiers/chat_notifier.dart';
 import '../../../data/session/models/session_settings.dart';
 import '../notifiers/available_models_failure.dart';
@@ -558,6 +559,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                       builder: (context, child) => Opacity(opacity: _pulseOpacity.value, child: child),
                       child: GestureDetector(
                         onTap: () {
+                          ref.read(agentCancelProvider.notifier).request();
                           ref.read(chatMessagesProvider(widget.sessionId).notifier).cancelSend();
                           _controller.text = _lastSentText;
                           _controller.selection = TextSelection.collapsed(offset: _lastSentText.length);
