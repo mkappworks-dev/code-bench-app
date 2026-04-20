@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../session/models/ask_user_question.dart';
+import '../session/models/permission_request.dart';
 import '../session/models/tool_event.dart';
 
 part 'chat_message.freezed.dart';
@@ -34,6 +35,8 @@ abstract class ChatMessage with _$ChatMessage {
     required DateTime timestamp,
     @Default(false) bool isStreaming,
     AskUserQuestion? askQuestion,
+    @Default(false) bool iterationCapReached,
+    PermissionRequest? pendingPermissionRequest,
   }) = _ChatMessage;
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => _$ChatMessageFromJson(json);

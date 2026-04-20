@@ -24,7 +24,7 @@ Map<String, dynamic> _$ProjectToJson(_Project instance) => <String, dynamic>{
   'path': instance.path,
   'createdAt': instance.createdAt.toIso8601String(),
   'sortOrder': instance.sortOrder,
-  'actions': instance.actions,
+  'actions': instance.actions.map((e) => e.toJson()).toList(),
   'status': _$ProjectStatusEnumMap[instance.status]!,
 };
 

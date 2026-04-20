@@ -54,24 +54,40 @@ class _ToolCallRowState extends State<ToolCallRow> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: c.inputSurface,
+              color: status == ToolStatus.cancelled ? c.inputSurface.withValues(alpha: 0.5) : c.inputSurface,
               borderRadius: BorderRadius.circular(_expanded ? 0 : 6),
-              border: Border.all(color: c.borderColor),
+              border: Border.all(
+                color: status == ToolStatus.cancelled ? c.borderColor.withValues(alpha: 0.5) : c.borderColor,
+              ),
             ),
             child: Row(
               children: [
-                Icon(_iconForTool(widget.event.toolName), size: 13, color: c.textSecondary),
+                Icon(
+                  _iconForTool(widget.event.toolName),
+                  size: 13,
+                  color: status == ToolStatus.cancelled ? c.dimFg : c.textSecondary,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   widget.event.toolName,
-                  style: TextStyle(color: c.textPrimary, fontSize: 11, fontFamily: 'monospace'),
+                  style: TextStyle(
+                    color: status == ToolStatus.cancelled ? c.textMuted : c.textPrimary,
+                    fontSize: 11,
+                    fontFamily: 'monospace',
+                  ),
                 ),
                 if (arg.isNotEmpty) ...[
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       arg,
-                      style: TextStyle(color: c.textSecondary, fontSize: 10),
+                      style: TextStyle(
+                        color: status == ToolStatus.cancelled ? c.dimFg : c.textSecondary,
+                        fontSize: 10,
+                        decoration: status == ToolStatus.cancelled ? TextDecoration.lineThrough : TextDecoration.none,
+                        decorationColor: status == ToolStatus.cancelled ? c.dimFg : null,
+                        decorationThickness: 1,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

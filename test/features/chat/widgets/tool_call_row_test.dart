@@ -62,4 +62,37 @@ void main() {
     expect(find.text('Permission denied'), findsOneWidget);
     expect(find.text('ERROR'), findsOneWidget);
   });
+
+  testWidgets('cancelled row renders the arg text with strikethrough decoration', (tester) async {
+    const event = ToolEvent(
+      id: 'e1',
+      type: 'tool_use',
+      toolName: 'read_file',
+      status: ToolStatus.cancelled,
+      input: {'path': 'lib/main.dart'},
+    );
+    await tester.pumpWidget(_host(event));
+    await tester.pumpAndSettle();
+
+    final argFinder = find.text('lib/main.dart');
+    expect(argFinder, findsOneWidget);
+    final argText = tester.widget<Text>(argFinder);
+    expect(argText.style?.decoration, TextDecoration.lineThrough);
+  });
+
+  testWidgets('success row does NOT apply strikethrough to the arg text', (tester) async {
+    const event = ToolEvent(
+      id: 'e2',
+      type: 'tool_use',
+      toolName: 'read_file',
+      status: ToolStatus.success,
+      input: {'path': 'lib/main.dart'},
+      output: 'hello',
+    );
+    await tester.pumpWidget(_host(event));
+    await tester.pumpAndSettle();
+
+    final argText = tester.widget<Text>(find.text('lib/main.dart'));
+    expect(argText.style?.decoration, anyOf(isNull, isNot(TextDecoration.lineThrough)));
+  });
 }

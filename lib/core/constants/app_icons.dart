@@ -57,4 +57,5 @@ abstract final class AppIcons {
   // UI chrome
   static const IconData settings = LucideIcons.settings;
   static const IconData warning = LucideIcons.triangleAlert;
+  static const IconData clock = LucideIcons.clock;
 }

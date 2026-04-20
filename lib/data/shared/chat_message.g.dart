@@ -34,6 +34,10 @@ _ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => _ChatMessage(
   askQuestion: json['askQuestion'] == null
       ? null
       : AskUserQuestion.fromJson(json['askQuestion'] as Map<String, dynamic>),
+  iterationCapReached: json['iterationCapReached'] as bool? ?? false,
+  pendingPermissionRequest: json['pendingPermissionRequest'] == null
+      ? null
+      : PermissionRequest.fromJson(json['pendingPermissionRequest'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$ChatMessageToJson(_ChatMessage instance) => <String, dynamic>{
@@ -41,11 +45,13 @@ Map<String, dynamic> _$ChatMessageToJson(_ChatMessage instance) => <String, dyna
   'sessionId': instance.sessionId,
   'role': _$MessageRoleEnumMap[instance.role]!,
   'content': instance.content,
-  'codeBlocks': instance.codeBlocks,
-  'toolEvents': instance.toolEvents,
+  'codeBlocks': instance.codeBlocks.map((e) => e.toJson()).toList(),
+  'toolEvents': instance.toolEvents.map((e) => e.toJson()).toList(),
   'timestamp': instance.timestamp.toIso8601String(),
   'isStreaming': instance.isStreaming,
-  'askQuestion': instance.askQuestion,
+  'askQuestion': instance.askQuestion?.toJson(),
+  'iterationCapReached': instance.iterationCapReached,
+  'pendingPermissionRequest': instance.pendingPermissionRequest?.toJson(),
 };
 
 const _$MessageRoleEnumMap = {

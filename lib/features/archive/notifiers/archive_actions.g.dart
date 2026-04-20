@@ -14,7 +14,8 @@ part of 'archive_actions.dart';
 final archiveActionsProvider = ArchiveActionsProvider._();
 
 /// Imperative actions for the Archive screen.
-final class ArchiveActionsProvider extends $AsyncNotifierProvider<ArchiveActions, void> {
+final class ArchiveActionsProvider
+    extends $AsyncNotifierProvider<ArchiveActions, void> {
   /// Imperative actions for the Archive screen.
   ArchiveActionsProvider._()
     : super(
@@ -46,7 +47,13 @@ abstract class _$ArchiveActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

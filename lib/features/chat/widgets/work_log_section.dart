@@ -4,7 +4,9 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/session/models/session_settings.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/tool_event.dart';
 import '../notifiers/chat_notifier.dart';
@@ -14,6 +16,9 @@ import '../notifiers/chat_notifier.dart';
 /// Reads [ToolEvent]s from [chatMessagesProvider] for [sessionId]/[messageId]
 /// rather than maintaining a parallel WorkLogNotifier — [ToolEvent] is the
 /// single source of truth for tool status.
+///
+/// Also handles the pre-tool "WORKING…" state shown in [ChatMode.act] sessions
+/// while the agent is thinking before its first tool call.
 class WorkLogSection extends ConsumerStatefulWidget {
   const WorkLogSection({super.key, required this.sessionId, required this.messageId});
 
@@ -24,14 +29,13 @@ class WorkLogSection extends ConsumerStatefulWidget {
   ConsumerState<WorkLogSection> createState() => _WorkLogSectionState();
 }
 
-class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
+class _WorkLogSectionState extends ConsumerState<WorkLogSection> with SingleTickerProviderStateMixin {
   Timer? _ticker;
 
   /// Accumulated "work time" in seconds. Incremented on each ticker fire
-  /// while a tool is running and deliberately *not* reset on running→
+  /// while the work log is active and deliberately *not* reset on running→
   /// idle transitions: the displayed counter reflects total seconds the
-  /// agent has been actively working on this message across bursts,
-  /// which matches the long-running UX this section is meant to show.
+  /// agent has been actively working on this message across bursts.
   ///
   /// Using an integer counter (rather than `DateTime.now()` minus a
   /// start time) keeps the value deterministic under `tester.pump` —
@@ -40,20 +44,25 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
   int _elapsedSeconds = 0;
   bool _isExpanded = false;
 
+  late final AnimationController _pulseCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat(reverse: true);
+  }
+
   @override
   void dispose() {
     _ticker?.cancel();
+    _pulseCtrl.dispose();
     super.dispose();
   }
 
   /// Idempotent ticker lifecycle management, driven from [build]. Starts
-  /// a 1Hz rebuild ticker when any event flips to running, cancels it
-  /// when none are running. Called on every rebuild so a running→idle→
-  /// running sequence (multi-tool turn) reliably restarts the ticker —
-  /// the earlier `initState`-only version silently froze the counter
-  /// after the first tool completed.
-  void _syncTicker({required bool anyRunning}) {
-    if (anyRunning) {
+  /// a 1Hz rebuild ticker when active, cancels it when inactive.
+  void _syncTicker({required bool active}) {
+    if (active) {
       _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
         if (mounted) setState(() => _elapsedSeconds++);
       });
@@ -66,21 +75,48 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    // Watch the tool events for this specific message. `select` trims
-    // rebuilds to changes in this message's toolEvents only — and uses
-    // firstWhereOrNull so a missing message just produces an empty list
-    // without the exception-swallowing try/catch we used to rely on.
-    final toolEvents = ref.watch(
+    final (toolEvents, isStreaming) = ref.watch(
       chatMessagesProvider(widget.sessionId).select((async) {
         final messages = async.asData?.value ?? const <ChatMessage>[];
-        return messages.firstWhereOrNull((m) => m.id == widget.messageId)?.toolEvents ?? const <ToolEvent>[];
+        final msg = messages.firstWhereOrNull((m) => m.id == widget.messageId);
+        return (msg?.toolEvents ?? const <ToolEvent>[], msg?.isStreaming ?? false);
       }),
     );
 
-    if (toolEvents.isEmpty) return const SizedBox.shrink();
+    if (toolEvents.isEmpty) {
+      _syncTicker(active: isStreaming);
+      if (!isStreaming) return const SizedBox.shrink();
+      final isActMode = ref.watch(sessionModeProvider) == ChatMode.act;
+      if (!isActMode) return const SizedBox.shrink();
+
+      // ── Pre-tool "WORKING…" state ──────────────────────────────────────
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            SizedBox(width: 10, height: 10, child: CircularProgressIndicator(strokeWidth: 1.5, color: c.blueAccent)),
+            const SizedBox(width: 6),
+            FadeTransition(
+              opacity: Tween<double>(
+                begin: 0.4,
+                end: 1.0,
+              ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut)),
+              child: Text(
+                'WORKING\u2026',
+                style: TextStyle(color: c.blueAccent, fontSize: 9, letterSpacing: 1.2, fontWeight: FontWeight.w600),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(AppIcons.clock, size: 9, color: c.textSecondary),
+            const SizedBox(width: 3),
+            Text('${_elapsedSeconds}s', style: TextStyle(color: c.textSecondary, fontSize: 9)),
+          ],
+        ),
+      );
+    }
 
     final anyRunning = toolEvents.any((e) => e.status == ToolStatus.running);
-    _syncTicker(anyRunning: anyRunning);
+    _syncTicker(active: anyRunning);
 
     final elapsedSeconds = _elapsedSeconds;
 
@@ -113,7 +149,9 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text('⏱ ${elapsedSeconds}s', style: TextStyle(color: c.textSecondary, fontSize: 9)),
+                Icon(AppIcons.clock, size: 9, color: c.textSecondary),
+                const SizedBox(width: 3),
+                Text('${elapsedSeconds}s', style: TextStyle(color: c.textSecondary, fontSize: 9)),
                 const Spacer(),
                 Icon(
                   _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,

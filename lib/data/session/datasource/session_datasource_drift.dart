@@ -8,6 +8,7 @@ import '../../../core/utils/debug_logger.dart';
 import '../../_core/app_database.dart';
 import '../../shared/chat_message.dart' as msg;
 import '../models/chat_session.dart';
+import '../models/tool_event.dart';
 import 'session_datasource.dart';
 
 part 'session_datasource_drift.g.dart';
@@ -136,6 +137,7 @@ class SessionDatasourceDrift implements SessionDatasource {
             message.codeBlocks.map((b) => {'code': b.code, 'language': b.language, 'filename': b.filename}).toList(),
           ),
         ),
+        toolEventsJson: Value(jsonEncode(message.toolEvents.map((e) => e.toJson()).toList())),
         timestamp: Value(message.timestamp),
       ),
     );
@@ -186,12 +188,21 @@ class SessionDatasourceDrift implements SessionDatasource {
       dLog('[SessionDatasourceDrift] failed to parse codeBlocksJson for message ${row.id}: $e');
     }
 
+    List<ToolEvent> toolEvents = [];
+    try {
+      final rawEvents = jsonDecode(row.toolEventsJson) as List;
+      toolEvents = rawEvents.map((e) => ToolEvent.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (e) {
+      dLog('[SessionDatasourceDrift] failed to parse toolEventsJson for message ${row.id}: $e');
+    }
+
     return msg.ChatMessage(
       id: row.id,
       sessionId: row.sessionId,
       role: msg.MessageRole.values.firstWhere((r) => r.value == row.role, orElse: () => msg.MessageRole.user),
       content: row.content,
       codeBlocks: codeBlocks,
+      toolEvents: toolEvents,
       timestamp: row.timestamp,
     );
   }
