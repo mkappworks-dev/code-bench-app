@@ -332,6 +332,9 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     ).then((value) {
       if (identical(value, _refreshSentinel)) {
         ref.read(availableModelsProvider.notifier).refresh();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showModelPicker(context);
+        });
         return;
       }
       if (value != null) {
