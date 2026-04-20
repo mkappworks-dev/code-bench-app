@@ -17,6 +17,7 @@ import '../notifiers/chat_notifier.dart';
 import '../../../core/constants/app_icons.dart';
 import 'ask_user_question_card.dart';
 import 'code_block_widget.dart';
+import 'iteration_cap_banner.dart';
 import 'streaming_dot.dart';
 import 'tool_call_row.dart';
 import 'work_log_section.dart';
@@ -211,6 +212,10 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
   @override
   Widget build(BuildContext context) {
     final message = widget.message;
+    final allMessages = message.iterationCapReached
+        ? (ref.watch(chatMessagesProvider(message.sessionId)).value ?? const <ChatMessage>[])
+        : const <ChatMessage>[];
+    final capIsActive = message.iterationCapReached && allMessages.isNotEmpty && allMessages.last.id == message.id;
     return MouseRegion(
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
@@ -242,6 +247,9 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
                 if (message.toolEvents.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   WorkLogSection(sessionId: message.sessionId, messageId: message.id),
+                ],
+                if (message.iterationCapReached) ...[
+                  IterationCapBanner(messageId: message.id, sessionId: message.sessionId, isActive: capIsActive),
                 ],
                 if (message.askQuestion != null) ...[
                   const SizedBox(height: 8),
