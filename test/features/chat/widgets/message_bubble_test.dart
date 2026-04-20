@@ -23,6 +23,18 @@ ChatMessage _msg(MessageRole role, {bool streaming = false}) => ChatMessage(
 );
 
 void main() {
+  testWidgets('assistant message prose is wrapped in a SelectionArea', (tester) async {
+    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.assistant), sessionId: 'sid')));
+    await tester.pumpAndSettle();
+    expect(find.byType(SelectionArea), findsOneWidget);
+  });
+
+  testWidgets('user message prose is NOT wrapped in a SelectionArea', (tester) async {
+    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.user), sessionId: 'sid')));
+    await tester.pumpAndSettle();
+    expect(find.byType(SelectionArea), findsNothing);
+  });
+
   testWidgets('user message is right-aligned', (tester) async {
     await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.user), sessionId: 'sid')));
     final align = tester.widget<Align>(find.byType(Align).first);
