@@ -8,6 +8,8 @@ import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
+import '../models/stream_event.dart';
+import '../../coding_tools/models/coding_tool_definition.dart';
 import 'ai_remote_datasource.dart';
 
 /// OpenAI-compatible AI datasource for custom endpoints (e.g. LM Studio, LocalAI).
@@ -140,4 +142,148 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
     messages.add({'role': 'user', 'content': prompt});
     return messages;
   }
+
+  /// OpenAI function-calling stream. Emits [StreamEvent]s as SSE chunks arrive.
+  ///
+  /// [messages] must already be in OpenAI wire shape (list of maps with `role`,
+  /// `content`, optionally `tool_calls` / `tool_call_id`). The [AgentService]
+  /// history translator is responsible for that layout — this datasource does
+  /// not re-translate.
+  Stream<StreamEvent> streamMessageWithTools({
+    required List<Map<String, dynamic>> messages,
+    required List<CodingToolDefinition> tools,
+    required AIModel model,
+  }) async* {
+    final body = {
+      'model': model.modelId,
+      'stream': true,
+      'messages': messages,
+      'tools': tools.map((t) => t.toOpenAiToolJson()).toList(),
+      'tool_choice': 'auto',
+    };
+
+    try {
+      final response = await _dio.post(
+        '/chat/completions',
+        data: body,
+        options: Options(responseType: ResponseType.stream),
+      );
+
+      final stream = response.data as ResponseBody;
+      final buffer = StringBuffer();
+      final idByIndex = <int, String>{};
+      final inFlightIds = <String>{};
+
+      await for (final chunk in stream.stream) {
+        buffer.write(utf8.decode(chunk));
+        final raw = buffer.toString();
+        buffer.clear();
+
+        for (final line in raw.split('\n')) {
+          if (line.trim().isEmpty) continue;
+          final event = parseOpenAiToolSseLine(line, idByIndex);
+          if (event == null) continue;
+
+          switch (event) {
+            case StreamToolCallStart(:final id):
+              inFlightIds.add(id);
+              yield event;
+            case StreamToolCallArgsDelta():
+              yield event;
+            case StreamFinish(reason: 'tool_calls'):
+              for (final id in inFlightIds) {
+                yield StreamEvent.toolCallEnd(id: id);
+              }
+              inFlightIds.clear();
+              yield event;
+              return;
+            case StreamFinish():
+              yield event;
+              return;
+            case StreamTextDelta():
+              yield event;
+            case StreamToolCallEnd():
+              yield event;
+          }
+        }
+      }
+    } on DioException catch (e) {
+      dLog('[CustomRemoteDatasource] streamMessageWithTools failed: ${e.type} ${e.response?.statusCode ?? ''}');
+      throw NetworkException(
+        'Custom endpoint tool stream failed',
+        statusCode: e.response?.statusCode,
+        originalError: e,
+      );
+    }
+  }
+}
+
+/// Parses a single SSE line from OpenAI chat-completions (tools enabled).
+///
+/// [idByIndex] carries tool-call `index → id` mapping across deltas. The
+/// first delta for each tool call carries `id`; subsequent args deltas carry
+/// only `index`. Callers own this map for the lifetime of one stream.
+///
+/// Returns `null` for lines that don't produce events (keep-alives, `[DONE]`,
+/// malformed JSON, tool-call deltas with no meaningful content).
+StreamEvent? parseOpenAiToolSseLine(String line, Map<int, String> idByIndex) {
+  final trimmed = line.trim();
+  if (!trimmed.startsWith('data: ')) return null;
+  final data = trimmed.substring(6);
+  if (data == '[DONE]') return null;
+
+  Map<String, dynamic> json;
+  try {
+    json = jsonDecode(data) as Map<String, dynamic>;
+  } on FormatException {
+    return null;
+  }
+
+  final choices = json['choices'];
+  if (choices is! List || choices.isEmpty) return null;
+  final choice = choices[0];
+  if (choice is! Map) return null;
+
+  final finishReason = choice['finish_reason'];
+  if (finishReason is String) {
+    return StreamEvent.finish(reason: finishReason);
+  }
+
+  final delta = choice['delta'];
+  if (delta is! Map) return null;
+
+  final content = delta['content'];
+  if (content is String && content.isNotEmpty) {
+    return StreamEvent.textDelta(content);
+  }
+
+  final toolCalls = delta['tool_calls'];
+  if (toolCalls is List && toolCalls.isNotEmpty) {
+    final tc = toolCalls[0];
+    if (tc is! Map) return null;
+    final index = tc['index'];
+    if (index is! int) return null;
+
+    final id = tc['id'];
+    final fnBlock = tc['function'];
+    if (id is String && id.isNotEmpty) {
+      idByIndex[index] = id;
+      final name = (fnBlock is Map) ? fnBlock['name'] : null;
+      if (name is String && name.isNotEmpty) {
+        return StreamEvent.toolCallStart(id: id, name: name);
+      }
+    }
+
+    if (fnBlock is Map) {
+      final args = fnBlock['arguments'];
+      if (args is String && args.isNotEmpty) {
+        final resolvedId = idByIndex[index];
+        if (resolvedId != null) {
+          return StreamEvent.toolCallArgsDelta(id: resolvedId, argsJsonFragment: args);
+        }
+      }
+    }
+  }
+
+  return null;
 }
