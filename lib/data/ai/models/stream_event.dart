@@ -2,6 +2,11 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'stream_event.freezed.dart';
 
+/// Provider-agnostic stream event emitted by [AIRepository.streamMessageWithTools].
+///
+/// The OpenAI wire format interleaves content deltas and tool-call deltas.
+/// This sealed class surfaces those as discrete events so the [AgentService]
+/// loop can append tool events as they appear without re-parsing SSE.
 @freezed
 sealed class StreamEvent with _$StreamEvent {
   const factory StreamEvent.textDelta(String text) = StreamTextDelta;
