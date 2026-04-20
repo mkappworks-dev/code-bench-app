@@ -12,7 +12,8 @@ part of 'available_models_notifier.dart';
 @ProviderFor(AvailableModelsNotifier)
 final availableModelsProvider = AvailableModelsNotifierProvider._();
 
-final class AvailableModelsNotifierProvider extends $AsyncNotifierProvider<AvailableModelsNotifier, List<AIModel>> {
+final class AvailableModelsNotifierProvider
+    extends $AsyncNotifierProvider<AvailableModelsNotifier, AvailableModelsResult> {
   AvailableModelsNotifierProvider._()
     : super(
         from: null,
@@ -32,19 +33,19 @@ final class AvailableModelsNotifierProvider extends $AsyncNotifierProvider<Avail
   AvailableModelsNotifier create() => AvailableModelsNotifier();
 }
 
-String _$availableModelsNotifierHash() => r'31a384029d4dbf1bc0523ea8b53c66c414a7ed56';
+String _$availableModelsNotifierHash() => r'2460cae9ad2e522d03789157d15387154d4626c5';
 
-abstract class _$AvailableModelsNotifier extends $AsyncNotifier<List<AIModel>> {
-  FutureOr<List<AIModel>> build();
+abstract class _$AvailableModelsNotifier extends $AsyncNotifier<AvailableModelsResult> {
+  FutureOr<AvailableModelsResult> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<List<AIModel>>, List<AIModel>>;
+    final ref = this.ref as $Ref<AsyncValue<AvailableModelsResult>, AvailableModelsResult>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<List<AIModel>>, List<AIModel>>,
-              AsyncValue<List<AIModel>>,
+              AnyNotifier<AsyncValue<AvailableModelsResult>, AvailableModelsResult>,
+              AsyncValue<AvailableModelsResult>,
               Object?,
               Object?
             >;

@@ -132,7 +132,7 @@ class SessionSettingsActions extends _$SessionSettingsActions {
   AIModel _resolveModel(String modelId) {
     if (modelId.isEmpty) return ref.read(selectedModelProvider);
     return AIModels.fromId(modelId) ??
-        ref.read(availableModelsProvider).value?.firstWhereOrNull((m) => m.modelId == modelId) ??
+        ref.read(availableModelsProvider).value?.models.firstWhereOrNull((m) => m.modelId == modelId) ??
         ref.read(selectedModelProvider);
   }
 

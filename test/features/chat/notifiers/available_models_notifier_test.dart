@@ -62,10 +62,11 @@ void main() {
       final container = _makeContainer(svc: _FakeAIService(), providers: _FakeProvidersService());
       addTearDown(container.dispose);
 
-      final models = await container.read(availableModelsProvider.future);
-      expect(models, equals(AIModels.defaults));
-      expect(models.any((m) => m.provider == AIProvider.ollama), isFalse);
-      expect(models.any((m) => m.provider == AIProvider.custom), isFalse);
+      final result = await container.read(availableModelsProvider.future);
+      expect(result.models, equals(AIModels.defaults));
+      expect(result.failedProviders, isEmpty);
+      expect(result.models.any((m) => m.provider == AIProvider.ollama), isFalse);
+      expect(result.models.any((m) => m.provider == AIProvider.custom), isFalse);
     });
 
     test('includes ollama models when ollama URL is configured', () async {
@@ -76,9 +77,10 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final models = await container.read(availableModelsProvider.future);
-      expect(models, containsAll(AIModels.defaults));
-      expect(models, containsAll(ollamaModels));
+      final result = await container.read(availableModelsProvider.future);
+      expect(result.models, containsAll(AIModels.defaults));
+      expect(result.models, containsAll(ollamaModels));
+      expect(result.failedProviders, isEmpty);
     });
 
     test('includes custom models when custom endpoint is configured', () async {
@@ -89,9 +91,10 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final models = await container.read(availableModelsProvider.future);
-      expect(models, containsAll(AIModels.defaults));
-      expect(models, containsAll(customModels));
+      final result = await container.read(availableModelsProvider.future);
+      expect(result.models, containsAll(AIModels.defaults));
+      expect(result.models, containsAll(customModels));
+      expect(result.failedProviders, isEmpty);
     });
 
     test('includes models from both dynamic providers when both configured', () async {
@@ -106,13 +109,14 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final models = await container.read(availableModelsProvider.future);
-      expect(models, containsAll(AIModels.defaults));
-      expect(models, containsAll(ollamaModels));
-      expect(models, containsAll(customModels));
+      final result = await container.read(availableModelsProvider.future);
+      expect(result.models, containsAll(AIModels.defaults));
+      expect(result.models, containsAll(ollamaModels));
+      expect(result.models, containsAll(customModels));
+      expect(result.failedProviders, isEmpty);
     });
 
-    test('ollama fetch failure does not affect static or custom models', () async {
+    test('ollama fetch failure excludes ollama models and reports failed provider', () async {
       final customModels = [_customModel('mistral-7b-instruct')];
       final container = _makeContainer(
         svc: _FakeAIService(
@@ -126,13 +130,15 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final models = await container.read(availableModelsProvider.future);
-      expect(models, containsAll(AIModels.defaults));
-      expect(models, containsAll(customModels));
-      expect(models.any((m) => m.provider == AIProvider.ollama), isFalse);
+      final result = await container.read(availableModelsProvider.future);
+      expect(result.models, containsAll(AIModels.defaults));
+      expect(result.models, containsAll(customModels));
+      expect(result.models.any((m) => m.provider == AIProvider.ollama), isFalse);
+      expect(result.failedProviders, contains(AIProvider.ollama));
+      expect(result.failedProviders, isNot(contains(AIProvider.custom)));
     });
 
-    test('custom fetch failure does not affect static or ollama models', () async {
+    test('custom fetch failure excludes custom models and reports failed provider', () async {
       final ollamaModels = [_ollamaModel('llama3.2')];
       final container = _makeContainer(
         svc: _FakeAIService(
@@ -146,13 +152,15 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final models = await container.read(availableModelsProvider.future);
-      expect(models, containsAll(AIModels.defaults));
-      expect(models, containsAll(ollamaModels));
-      expect(models.any((m) => m.provider == AIProvider.custom), isFalse);
+      final result = await container.read(availableModelsProvider.future);
+      expect(result.models, containsAll(AIModels.defaults));
+      expect(result.models, containsAll(ollamaModels));
+      expect(result.models.any((m) => m.provider == AIProvider.custom), isFalse);
+      expect(result.failedProviders, contains(AIProvider.custom));
+      expect(result.failedProviders, isNot(contains(AIProvider.ollama)));
     });
 
-    test('notifier resolves to AsyncData even when both fetches fail', () async {
+    test('resolves to AsyncData with both providers in failedProviders when both fetches fail', () async {
       final container = _makeContainer(
         svc: _FakeAIService(errors: {AIProvider.ollama: Exception('offline'), AIProvider.custom: Exception('offline')}),
         providers: _FakeProvidersService(
@@ -163,7 +171,8 @@ void main() {
       addTearDown(container.dispose);
 
       final result = await container.read(availableModelsProvider.future);
-      expect(result, equals(AIModels.defaults));
+      expect(result.models, equals(AIModels.defaults));
+      expect(result.failedProviders, containsAll([AIProvider.ollama, AIProvider.custom]));
     });
   });
 }
