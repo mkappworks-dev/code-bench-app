@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
@@ -74,6 +75,7 @@ class SessionPermissionNotifier extends _$SessionPermissionNotifier {
 // Messages for the current session
 @riverpod
 class ChatMessagesNotifier extends _$ChatMessagesNotifier {
+  static const _uuid = Uuid();
   StreamSubscription<ChatMessage>? _activeSubscription;
   Completer<Object?>? _sendCompleter;
   bool _cancelRequested = false;
@@ -103,6 +105,9 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     state = AsyncData(List.from(_preSendMessages));
 
     final activeMessageIdNotifier = ref.read(activeMessageIdProvider.notifier);
+    // Sentinel value: communicates "send in progress" to widgets that gate
+    // hover actions (Retry/Edit/Delete) on `activeMessageIdProvider`. Replaced
+    // with the real assistant message ID as soon as the first chunk arrives.
     activeMessageIdNotifier.set('pending');
     String? streamingAssistantId;
     _sendCompleter = Completer<Object?>();
@@ -133,10 +138,12 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
           onError: (Object e, StackTrace st) {
             dLog('[sendMessage] stream error: $e\n$st');
             state = AsyncData(_preSendMessages);
-            if (!_sendCompleter!.isCompleted) _sendCompleter!.complete(e);
+            final completer = _sendCompleter;
+            if (completer != null && !completer.isCompleted) completer.complete(e);
           },
           onDone: () {
-            if (!_sendCompleter!.isCompleted) _sendCompleter!.complete(null);
+            final completer = _sendCompleter;
+            if (completer != null && !completer.isCompleted) completer.complete(null);
           },
           cancelOnError: true,
         );
@@ -155,24 +162,44 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     return result;
   }
 
+  /// Cancels the in-flight send (if any) and appends an in-memory
+  /// `interrupted` marker. Persistence is fire-and-forget — failures are
+  /// logged via [sLog] so they remain visible in release builds, but no UI
+  /// error is surfaced (the badge is already on screen; only its survival
+  /// across app restarts is at risk).
   void cancelSend() {
+    if (_sendCompleter == null) return; // nothing to cancel
     _cancelRequested = true;
     _activeSubscription?.cancel();
     _activeSubscription = null;
     ref.read(activeMessageIdProvider.notifier).set(null);
-    final sessionId = ref.read(activeSessionIdProvider) ?? '';
+
+    final sessionId = ref.read(activeSessionIdProvider);
+    if (sessionId == null) {
+      // No active session — nothing to persist or attribute the marker to.
+      // Complete the completer so sendMessage unblocks.
+      final completer = _sendCompleter;
+      _sendCompleter = null;
+      if (completer != null && !completer.isCompleted) completer.complete(null);
+      return;
+    }
+
     final current = state.value ?? _preSendMessages;
     final marker = ChatMessage(
-      id: 'interrupted-${DateTime.now().millisecondsSinceEpoch}',
+      id: _uuid.v4(),
       sessionId: sessionId,
       role: MessageRole.interrupted,
       content: '',
       timestamp: DateTime.now(),
     );
     state = AsyncData([...current, marker]);
-    if (_sendCompleter != null && !_sendCompleter!.isCompleted) {
-      _sendCompleter!.complete(null);
-    }
+
+    // Null the completer BEFORE completing so a late `onDone` from the
+    // already-cancelled subscription doesn't double-complete and throw a
+    // StateError that Dart's stream infrastructure would silently swallow.
+    final completer = _sendCompleter;
+    _sendCompleter = null;
+    if (completer != null && !completer.isCompleted) completer.complete(null);
     unawaited(_persistInterrupted(sessionId, marker));
   }
 
@@ -181,43 +208,25 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
       final service = await ref.read(sessionServiceProvider.future);
       await service.persistMessage(sessionId, marker);
     } catch (e) {
-      dLog('[cancelSend] failed to persist interrupted marker: $e');
+      // Use sLog (survives release builds) — the marker is on screen, but its
+      // failure to persist is a data-integrity event the user can't see.
+      sLog('[ChatMessagesNotifier] failed to persist interrupted marker: sessionId=$sessionId error=$e');
     }
   }
 
-  Future<void> deleteMessage(String messageId) async {
-    final sessionId = ref.read(activeSessionIdProvider);
-    if (sessionId == null) return;
-    try {
-      final service = await ref.read(sessionServiceProvider.future);
-      final current = state.value ?? [];
-      final msgIdx = current.indexWhere((m) => m.id == messageId);
-      final trailing = msgIdx >= 0
-          ? current.skip(msgIdx + 1).takeWhile((m) => m.role == MessageRole.interrupted).toList()
-          : <ChatMessage>[];
-      await service.deleteMessage(sessionId, messageId);
-      for (final marker in trailing) {
-        await service.deleteMessage(sessionId, marker.id);
-      }
-      final removed = {messageId, ...trailing.map((m) => m.id)};
-      state = AsyncData(current.where((m) => !removed.contains(m.id)).toList());
-    } catch (e, st) {
-      dLog('[ChatMessagesNotifier] deleteMessage failed: $e');
-      state = AsyncError(e, st);
-      state = AsyncData(state.value ?? []);
-    }
+  /// State-mutator helper for [ChatMessagesActions.deleteMessage]. Removes
+  /// every message whose id is in [ids] from the in-memory list.
+  void removeFromState(Iterable<String> ids) {
+    final removed = ids.toSet();
+    final current = state.value ?? const <ChatMessage>[];
+    state = AsyncData(current.where((m) => !removed.contains(m.id)).toList());
   }
 
-  Future<void> loadMore(String sessionId, int offset) async {
-    try {
-      final service = await ref.read(sessionServiceProvider.future);
-      final older = await service.loadHistory(sessionId, limit: 50, offset: offset);
-      final current = state.value ?? [];
-      state = AsyncData([...older, ...current]);
-    } catch (e, st) {
-      dLog('[ChatMessagesNotifier] loadMore failed: $e');
-      state = AsyncError(e, st);
-    }
+  /// State-mutator helper for [ChatMessagesActions.loadMore]. Prepends a page
+  /// of [older] messages to the in-memory list.
+  void prependOlder(List<ChatMessage> older) {
+    final current = state.value ?? const <ChatMessage>[];
+    state = AsyncData([...older, ...current]);
   }
 }
 

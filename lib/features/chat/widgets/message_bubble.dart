@@ -9,6 +9,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../data/shared/chat_message.dart';
 import '../notifiers/ask_question_notifier.dart';
+import '../notifiers/chat_messages_actions.dart';
+import '../notifiers/chat_messages_failure.dart';
 import '../notifiers/chat_notifier.dart';
 import '../../../core/constants/app_icons.dart';
 import 'ask_user_question_card.dart';
@@ -59,10 +61,24 @@ class _UserBubble extends ConsumerStatefulWidget {
 class _UserBubbleState extends ConsumerState<_UserBubble> {
   bool _hovered = false;
 
+  /// Inline-checked delete (per CLAUDE.md Rule 2 exception): N user bubbles can
+  /// share the `chatMessagesActionsProvider`, so a `ref.listen` fires once per
+  /// instance and would yield N snackbars. Awaiting the action and reading
+  /// `hasError` inline keeps a single snackbar for the bubble that triggered it.
+  Future<void> _delete() async {
+    await ref.read(chatMessagesActionsProvider.notifier).deleteMessage(widget.sessionId, widget.message.id);
+    if (!mounted) return;
+    final actionState = ref.read(chatMessagesActionsProvider);
+    if (actionState.hasError && actionState.error is ChatMessagesFailure) {
+      showErrorSnackBar(context, 'Failed to delete message.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final isSending = ref.watch(activeMessageIdProvider) != null;
+    final showActions = widget.isLast && _hovered && !isSending;
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
@@ -72,8 +88,8 @@ class _UserBubbleState extends ConsumerState<_UserBubble> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            if (widget.isLast && _hovered && !isSending) ...[
-              _DeleteButton(message: widget.message, sessionId: widget.sessionId),
+            if (showActions) ...[
+              _BubbleActionButton(icon: AppIcons.trash, tooltip: 'Delete', color: c.warning, onTap: _delete),
               const SizedBox(width: 6),
             ],
             ConstrainedBox(
@@ -99,27 +115,32 @@ class _UserBubbleState extends ConsumerState<_UserBubble> {
   }
 }
 
-class _DeleteButton extends ConsumerWidget {
-  const _DeleteButton({required this.message, required this.sessionId});
+class _BubbleActionButton extends StatelessWidget {
+  const _BubbleActionButton({required this.icon, required this.tooltip, required this.color, required this.onTap});
 
-  final ChatMessage message;
-  final String sessionId;
+  final IconData icon;
+  final String tooltip;
+  final Color color;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    return GestureDetector(
-      onTap: () => ref.read(chatMessagesProvider(sessionId).notifier).deleteMessage(message.id),
-      child: Container(
-        width: 26,
-        height: 26,
-        decoration: BoxDecoration(
-          color: c.panelBackground,
-          border: Border.all(color: c.subtleBorder),
-          borderRadius: BorderRadius.circular(5),
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            color: c.panelBackground,
+            border: Border.all(color: c.subtleBorder),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 12, color: color),
         ),
-        alignment: Alignment.center,
-        child: Icon(AppIcons.trash, size: 12, color: c.warning),
       ),
     );
   }
@@ -178,10 +199,6 @@ class _AssistantBubble extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(chatMessagesProvider(message.sessionId), (_, next) {
-      if (next is! AsyncError || !context.mounted) return;
-      showErrorSnackBar(context, 'Failed to send response. Please try again.');
-    });
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
