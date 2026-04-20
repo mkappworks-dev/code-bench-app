@@ -18,6 +18,7 @@ import '../../../core/constants/app_icons.dart';
 import 'ask_user_question_card.dart';
 import 'code_block_widget.dart';
 import 'iteration_cap_banner.dart';
+import 'permission_request_card.dart';
 import 'streaming_dot.dart';
 import 'tool_call_row.dart';
 import 'work_log_section.dart';
@@ -250,6 +251,9 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
                 ],
                 if (message.iterationCapReached) ...[
                   IterationCapBanner(messageId: message.id, sessionId: message.sessionId, isActive: capIsActive),
+                ],
+                if (message.pendingPermissionRequest != null) ...[
+                  PermissionRequestCard(request: message.pendingPermissionRequest!),
                 ],
                 if (message.askQuestion != null) ...[
                   const SizedBox(height: 8),
