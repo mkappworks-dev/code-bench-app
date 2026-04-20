@@ -108,7 +108,7 @@ class SessionService {
         }
         yield msg;
       }
-      if (history.isEmpty) {
+      if (historyExcludingCurrent.isEmpty) {
         final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
         await _session.updateSessionTitle(sessionId, shortTitle);
       }
@@ -146,7 +146,7 @@ class SessionService {
     await _session.persistMessage(sessionId, finalMsg);
     yield finalMsg;
 
-    if (history.isEmpty) {
+    if (historyExcludingCurrent.isEmpty) {
       final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
       await _session.updateSessionTitle(sessionId, shortTitle);
     }
