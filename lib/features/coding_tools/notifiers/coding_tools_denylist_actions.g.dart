@@ -10,9 +10,11 @@ part of 'coding_tools_denylist_actions.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(CodingToolsDenylistActions)
-final codingToolsDenylistActionsProvider = CodingToolsDenylistActionsProvider._();
+final codingToolsDenylistActionsProvider =
+    CodingToolsDenylistActionsProvider._();
 
-final class CodingToolsDenylistActionsProvider extends $AsyncNotifierProvider<CodingToolsDenylistActions, void> {
+final class CodingToolsDenylistActionsProvider
+    extends $AsyncNotifierProvider<CodingToolsDenylistActions, void> {
   CodingToolsDenylistActionsProvider._()
     : super(
         from: null,
@@ -32,7 +34,8 @@ final class CodingToolsDenylistActionsProvider extends $AsyncNotifierProvider<Co
   CodingToolsDenylistActions create() => CodingToolsDenylistActions();
 }
 
-String _$codingToolsDenylistActionsHash() => r'eab09aa321530f787622a3c75c5661027880fe4f';
+String _$codingToolsDenylistActionsHash() =>
+    r'9757d73c20c0a0f59632b516774000c69543f012';
 
 abstract class _$CodingToolsDenylistActions extends $AsyncNotifier<void> {
   FutureOr<void> build();
@@ -41,7 +44,13 @@ abstract class _$CodingToolsDenylistActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

@@ -1,7 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../data/coding_tools/models/coding_tools_denylist_state.dart';
-import '../../../data/coding_tools/repository/coding_tools_denylist_repository_impl.dart';
+import '../../../services/coding_tools/coding_tools_denylist_service.dart';
 
 part 'coding_tools_denylist_notifier.g.dart';
 
@@ -10,5 +9,5 @@ part 'coding_tools_denylist_notifier.g.dart';
 @riverpod
 class CodingToolsDenylistNotifier extends _$CodingToolsDenylistNotifier {
   @override
-  Future<CodingToolsDenylistState> build() => ref.read(codingToolsDenylistRepositoryProvider).load();
+  Future<CodingToolsDenylistState> build() => ref.read(codingToolsDenylistServiceProvider).load();
 }

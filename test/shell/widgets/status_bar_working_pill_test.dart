@@ -1,18 +1,16 @@
 import 'package:code_bench_app/core/theme/app_colors.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
-import 'package:code_bench_app/data/project/models/project.dart';
 import 'package:code_bench_app/data/session/models/tool_event.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
-import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
-import 'package:code_bench_app/shell/widgets/status_bar.dart';
+import 'package:code_bench_app/shell/widgets/working_pill.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // ── Test harness ─────────────────────────────────────────────────────────────
-// The "Working for Xs" pill is a private widget inside StatusBar. To exercise
-// it we mount the full StatusBar and override every provider it touches so
-// the real services (SessionService, ProjectService, …) stay out of the test.
+// WorkingPill is now a standalone widget that receives sessionId/messageId
+// directly as constructor params. Mount it directly rather than going through
+// StatusBar, which no longer contains the pill.
 
 class _FakeChatMessages extends ChatMessagesNotifier {
   @override
@@ -43,21 +41,14 @@ Widget _harness(ProviderContainer container) => UncontrolledProviderScope(
   container: container,
   child: MaterialApp(
     theme: ThemeData(extensions: [AppColors.dark]),
-    home: const Scaffold(body: StatusBar()),
+    home: const Scaffold(
+      body: WorkingPill(sessionId: 's1', messageId: 'm1'),
+    ),
   ),
 );
 
-ProviderContainer _makeContainer({String? sessionId = 's1', String? messageId = 'm1'}) {
-  final container = ProviderContainer(
-    overrides: [
-      // Stub the projects stream so the status bar's unconditional
-      // ref.watch(projectsProvider) doesn't try to reach the real DB.
-      projectsProvider.overrideWith((ref) => Stream<List<Project>>.value(const <Project>[])),
-      chatMessagesProvider('s1').overrideWith(_FakeChatMessages.new),
-    ],
-  );
-  if (sessionId != null) container.read(activeSessionIdProvider.notifier).set(sessionId);
-  if (messageId != null) container.read(activeMessageIdProvider.notifier).set(messageId);
+ProviderContainer _makeContainer() {
+  final container = ProviderContainer(overrides: [chatMessagesProvider('s1').overrideWith(_FakeChatMessages.new)]);
   addTearDown(container.dispose);
   return container;
 }
@@ -65,26 +56,11 @@ ProviderContainer _makeContainer({String? sessionId = 's1', String? messageId = 
 void main() {
   tearDown(() => _seed = <String, List<ChatMessage>>{});
 
-  testWidgets('hides pill when there is no active session', (tester) async {
+  testWidgets('hides pill when there are no tool events', (tester) async {
     _seed = {
-      's1': [
-        _assistantMessage(sessionId: 's1', id: 'm1', toolEvents: [_running('e1')]),
-      ],
+      's1': [_assistantMessage(sessionId: 's1', id: 'm1')],
     };
-    final container = _makeContainer(sessionId: null, messageId: null);
-    await tester.pumpWidget(_harness(container));
-    await tester.pump();
-
-    expect(find.textContaining('Working for'), findsNothing);
-  });
-
-  testWidgets('hides pill when there is no active message id', (tester) async {
-    _seed = {
-      's1': [
-        _assistantMessage(sessionId: 's1', id: 'm1', toolEvents: [_running('e1')]),
-      ],
-    };
-    final container = _makeContainer(sessionId: 's1', messageId: null);
+    final container = _makeContainer();
     await tester.pumpWidget(_harness(container));
     await tester.pump();
 
@@ -154,8 +130,7 @@ void main() {
     expect(find.textContaining('Working for'), findsNothing);
 
     // Burst 2: a new tool kicks off → pill re-appears and starts counting
-    // from 0 (_WorkingPill clears _runStart on idle — this is intentional,
-    // each burst gets its own timer, unlike WorkLogSection which is sticky).
+    // from 0 (each burst gets its own timer).
     notifier.state = AsyncData([
       _assistantMessage(sessionId: 's1', id: 'm1', toolEvents: [_done('e1'), _running('e2')]),
     ]);
@@ -171,7 +146,8 @@ void main() {
       seconds,
       greaterThanOrEqualTo(1),
       reason:
-          'pill must resume ticking after idle → running transition; a frozen 0s means the ticker was never re-armed',
+          'pill must resume ticking after idle → running transition; '
+          'a frozen 0s means the ticker was never re-armed',
     );
   });
 }

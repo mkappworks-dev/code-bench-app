@@ -2,8 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/coding_tools/models/denylist_category.dart';
-import '../../../data/coding_tools/models/denylist_defaults.dart';
-import '../../../data/coding_tools/repository/coding_tools_denylist_repository_impl.dart';
+import '../../../services/coding_tools/coding_tools_denylist_service.dart';
 import 'coding_tools_denylist_failure.dart';
 import 'coding_tools_denylist_notifier.dart';
 
@@ -17,6 +16,8 @@ class CodingToolsDenylistActions extends _$CodingToolsDenylistActions {
   FutureOr<void> build() {}
 
   CodingToolsDenylistFailure _asFailure(Object e) => switch (e) {
+    CodingToolsInvalidEntryException() => const CodingToolsDenylistFailure.invalidEntry(),
+    CodingToolsDuplicateEntryException() => const CodingToolsDenylistFailure.duplicate(),
     CodingToolsDenylistFailure() => e,
     _ => CodingToolsDenylistFailure.unknown(e),
   };
@@ -28,16 +29,7 @@ class CodingToolsDenylistActions extends _$CodingToolsDenylistActions {
     state = await AsyncValue.guard(() async {
       try {
         final value = _normalize(raw);
-        if (value.isEmpty) throw const CodingToolsDenylistFailure.invalidEntry();
-        final repo = ref.read(codingToolsDenylistRepositoryProvider);
-        final current = await repo.load();
-        final added = {...(current.userAdded[category] ?? const <String>{})};
-        final baseline = DenylistDefaults.forCategory(category);
-        if (added.contains(value) || baseline.contains(value)) {
-          throw const CodingToolsDenylistFailure.duplicate();
-        }
-        added.add(value);
-        await repo.save(current.copyWith(userAdded: {...current.userAdded, category: added}));
+        await ref.read(codingToolsDenylistServiceProvider).addUserEntry(category, value);
         ref.invalidate(codingToolsDenylistProvider);
       } catch (e, st) {
         dLog('[CodingToolsDenylistActions] addUserEntry failed: $e');
@@ -50,10 +42,7 @@ class CodingToolsDenylistActions extends _$CodingToolsDenylistActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        final repo = ref.read(codingToolsDenylistRepositoryProvider);
-        final current = await repo.load();
-        final added = {...(current.userAdded[category] ?? const <String>{})}..remove(value);
-        await repo.save(current.copyWith(userAdded: {...current.userAdded, category: added}));
+        await ref.read(codingToolsDenylistServiceProvider).removeUserEntry(category, value);
         ref.invalidate(codingToolsDenylistProvider);
       } catch (e, st) {
         dLog('[CodingToolsDenylistActions] removeUserEntry failed: $e');
@@ -66,10 +55,7 @@ class CodingToolsDenylistActions extends _$CodingToolsDenylistActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        final repo = ref.read(codingToolsDenylistRepositoryProvider);
-        final current = await repo.load();
-        final suppressed = {...(current.suppressedDefaults[category] ?? const <String>{})}..add(value);
-        await repo.save(current.copyWith(suppressedDefaults: {...current.suppressedDefaults, category: suppressed}));
+        await ref.read(codingToolsDenylistServiceProvider).suppressBaseline(category, value);
         ref.invalidate(codingToolsDenylistProvider);
       } catch (e, st) {
         dLog('[CodingToolsDenylistActions] suppressBaseline failed: $e');
@@ -82,10 +68,7 @@ class CodingToolsDenylistActions extends _$CodingToolsDenylistActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        final repo = ref.read(codingToolsDenylistRepositoryProvider);
-        final current = await repo.load();
-        final suppressed = {...(current.suppressedDefaults[category] ?? const <String>{})}..remove(value);
-        await repo.save(current.copyWith(suppressedDefaults: {...current.suppressedDefaults, category: suppressed}));
+        await ref.read(codingToolsDenylistServiceProvider).restoreBaseline(category, value);
         ref.invalidate(codingToolsDenylistProvider);
       } catch (e, st) {
         dLog('[CodingToolsDenylistActions] restoreBaseline failed: $e');
@@ -98,14 +81,7 @@ class CodingToolsDenylistActions extends _$CodingToolsDenylistActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        final repo = ref.read(codingToolsDenylistRepositoryProvider);
-        final current = await repo.load();
-        await repo.save(
-          current.copyWith(
-            userAdded: {...current.userAdded, category: <String>{}},
-            suppressedDefaults: {...current.suppressedDefaults, category: <String>{}},
-          ),
-        );
+        await ref.read(codingToolsDenylistServiceProvider).restoreCategory(category);
         ref.invalidate(codingToolsDenylistProvider);
       } catch (e, st) {
         dLog('[CodingToolsDenylistActions] restoreCategory failed: $e');
@@ -118,7 +94,7 @@ class CodingToolsDenylistActions extends _$CodingToolsDenylistActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        await ref.read(codingToolsDenylistRepositoryProvider).restoreAllDefaults();
+        await ref.read(codingToolsDenylistServiceProvider).restoreAll();
         ref.invalidate(codingToolsDenylistProvider);
       } catch (e, st) {
         dLog('[CodingToolsDenylistActions] restoreAll failed: $e');

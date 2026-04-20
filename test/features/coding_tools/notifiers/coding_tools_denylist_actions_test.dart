@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:code_bench_app/data/coding_tools/models/denylist_category.dart';
 import 'package:code_bench_app/features/coding_tools/notifiers/coding_tools_denylist_actions.dart';
-import 'package:code_bench_app/features/coding_tools/notifiers/coding_tools_denylist_failure.dart';
 import 'package:code_bench_app/features/coding_tools/notifiers/coding_tools_denylist_notifier.dart';
 
 void main() {
