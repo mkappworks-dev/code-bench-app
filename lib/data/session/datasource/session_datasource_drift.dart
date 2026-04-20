@@ -142,8 +142,7 @@ class SessionDatasourceDrift implements SessionDatasource {
   }
 
   @override
-  Future<void> deleteMessage(String sessionId, String messageId) =>
-      _db.sessionDao.deleteMessage(messageId);
+  Future<void> deleteMessage(String sessionId, String messageId) => _db.sessionDao.deleteMessage(messageId);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 

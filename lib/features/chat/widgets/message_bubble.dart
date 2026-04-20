@@ -147,7 +147,10 @@ class _InterruptedBubble extends StatelessWidget {
           children: [
             Icon(AppIcons.stop, size: 11, color: c.warning),
             const SizedBox(width: 4),
-            Text('Interrupted', style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall)),
+            Text(
+              'Interrupted',
+              style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+            ),
           ],
         ),
       ),

@@ -105,9 +105,10 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
       _controller.text = draft;
     }
     _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
-    _pulseOpacity = Tween<double>(begin: 0.4, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
+    _pulseOpacity = Tween<double>(
+      begin: 0.4,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
   }
 
   @override
@@ -573,10 +574,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                   if (_isSending)
                     AnimatedBuilder(
                       animation: _pulseOpacity,
-                      builder: (context, child) => Opacity(
-                        opacity: _pulseOpacity.value,
-                        child: child,
-                      ),
+                      builder: (context, child) => Opacity(opacity: _pulseOpacity.value, child: child),
                       child: GestureDetector(
                         onTap: () {
                           ref.read(chatMessagesProvider(widget.sessionId).notifier).cancelSend();

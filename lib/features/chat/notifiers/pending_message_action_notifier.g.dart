@@ -41,16 +41,12 @@ final class PendingMessageActionNotifierProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(MessageAction? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<MessageAction?>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<MessageAction?>(value));
   }
 
   @override
   bool operator ==(Object other) {
-    return other is PendingMessageActionNotifierProvider &&
-        other.argument == argument;
+    return other is PendingMessageActionNotifierProvider && other.argument == argument;
   }
 
   @override
@@ -59,18 +55,10 @@ final class PendingMessageActionNotifierProvider
   }
 }
 
-String _$pendingMessageActionNotifierHash() =>
-    r'8dbd64cf780a13456222cd9cb3cb8e37571c82a9';
+String _$pendingMessageActionNotifierHash() => r'8dbd64cf780a13456222cd9cb3cb8e37571c82a9';
 
 final class PendingMessageActionNotifierFamily extends $Family
-    with
-        $ClassFamilyOverride<
-          PendingMessageActionNotifier,
-          MessageAction?,
-          MessageAction?,
-          MessageAction?,
-          String
-        > {
+    with $ClassFamilyOverride<PendingMessageActionNotifier, MessageAction?, MessageAction?, MessageAction?, String> {
   PendingMessageActionNotifierFamily._()
     : super(
         retry: null,
@@ -87,8 +75,7 @@ final class PendingMessageActionNotifierFamily extends $Family
   String toString() => r'pendingMessageActionProvider';
 }
 
-abstract class _$PendingMessageActionNotifier
-    extends $Notifier<MessageAction?> {
+abstract class _$PendingMessageActionNotifier extends $Notifier<MessageAction?> {
   late final _$args = ref.$arg as String;
   String get sessionId => _$args;
 
@@ -99,12 +86,7 @@ abstract class _$PendingMessageActionNotifier
     final ref = this.ref as $Ref<MessageAction?, MessageAction?>;
     final element =
         ref.element
-            as $ClassProviderElement<
-              AnyNotifier<MessageAction?, MessageAction?>,
-              MessageAction?,
-              Object?,
-              Object?
-            >;
+            as $ClassProviderElement<AnyNotifier<MessageAction?, MessageAction?>, MessageAction?, Object?, Object?>;
     element.handleCreate(ref, () => build(_$args));
   }
 }
