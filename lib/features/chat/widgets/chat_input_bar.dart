@@ -15,6 +15,7 @@ import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/chat_notifier.dart';
 import '../../../data/session/models/session_settings.dart';
+import '../notifiers/available_models_notifier.dart';
 import '../notifiers/session_settings_actions.dart';
 import '../notifiers/session_settings_failure.dart';
 
@@ -47,6 +48,18 @@ class ChatInputBar extends ConsumerStatefulWidget {
 }
 
 class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerProviderStateMixin {
+  // Sentinel returned when the user taps "Refresh models".
+  // Identity-checked (identical()) so null (dismissed) stays distinct.
+  static final _refreshSentinel = AIModel(id: '_refresh_sentinel', provider: AIProvider.custom, name: '', modelId: '');
+
+  static const _pickerSectionOrder = [
+    AIProvider.anthropic,
+    AIProvider.openai,
+    AIProvider.gemini,
+    AIProvider.ollama,
+    AIProvider.custom,
+  ];
+
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   final _keyboardFocusNode = FocusNode();
@@ -234,11 +247,79 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
   }
 
   void _showModelPicker(BuildContext context) {
-    final models = AIModels.defaults;
-    final selected = ref.read(selectedModelProvider);
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return;
     final c = AppColors.of(context);
+    final selected = ref.read(selectedModelProvider);
+
+    final allModels = ref.read(availableModelsProvider).value ?? AIModels.defaults;
+    final isRefreshing = ref.read(availableModelsProvider).isLoading;
+
+    final grouped = <AIProvider, List<AIModel>>{};
+    for (final m in allModels) {
+      grouped.putIfAbsent(m.provider, () => []).add(m);
+    }
+
+    final items = <PopupMenuEntry<AIModel>>[];
+
+    for (final provider in _pickerSectionOrder) {
+      final models = grouped[provider];
+      if (models == null || models.isEmpty) continue;
+
+      items.add(
+        PopupMenuItem<AIModel>(
+          enabled: false,
+          height: 24,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Text(
+            provider.displayName.toUpperCase(),
+            style: TextStyle(color: c.mutedFg, fontSize: 9, letterSpacing: 0.06, fontWeight: FontWeight.w600),
+          ),
+        ),
+      );
+
+      for (final m in models) {
+        items.add(
+          PopupMenuItem<AIModel>(
+            value: m,
+            height: 32,
+            child: Text(
+              m.name,
+              style: TextStyle(
+                color: m == selected ? c.textPrimary : c.textSecondary,
+                fontSize: ThemeConstants.uiFontSizeSmall,
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    if (isRefreshing) {
+      items.add(
+        PopupMenuItem<AIModel>(
+          enabled: false,
+          height: 28,
+          child: Text(
+            'Refreshing…',
+            style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall, fontStyle: FontStyle.italic),
+          ),
+        ),
+      );
+    }
+
+    items.add(const PopupMenuDivider());
+    items.add(
+      PopupMenuItem<AIModel>(
+        value: _refreshSentinel,
+        height: 28,
+        child: Text(
+          '↺  Refresh models',
+          style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
+        ),
+      ),
+    );
+
     showInstantMenu<AIModel>(
       context: context,
       position: _menuAbove(context, box),
@@ -247,22 +328,12 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
         borderRadius: BorderRadius.circular(7),
         side: BorderSide(color: c.subtleBorder),
       ),
-      items: models
-          .map(
-            (m) => PopupMenuItem<AIModel>(
-              value: m,
-              height: 32,
-              child: Text(
-                '${m.provider.displayName} / ${m.name}',
-                style: TextStyle(
-                  color: m == selected ? c.textPrimary : c.textSecondary,
-                  fontSize: ThemeConstants.uiFontSizeSmall,
-                ),
-              ),
-            ),
-          )
-          .toList(),
+      items: items,
     ).then((value) {
+      if (identical(value, _refreshSentinel)) {
+        ref.read(availableModelsProvider.notifier).refresh();
+        return;
+      }
       if (value != null) {
         ref.read(sessionSettingsActionsProvider.notifier).updateModel(widget.sessionId, value);
       }
