@@ -24,13 +24,13 @@ ChatMessage _msg(MessageRole role, {bool streaming = false}) => ChatMessage(
 
 void main() {
   testWidgets('user message is right-aligned', (tester) async {
-    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.user))));
+    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.user), sessionId: 'sid')));
     final align = tester.widget<Align>(find.byType(Align).first);
     expect(align.alignment, Alignment.centerRight);
   });
 
   testWidgets('assistant message has no background container', (tester) async {
-    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.assistant))));
+    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.assistant), sessionId: 'sid')));
     // No avatar icon
     expect(find.byIcon(Icons.smart_toy), findsNothing);
     // No role label text
@@ -38,7 +38,9 @@ void main() {
   });
 
   testWidgets('streaming shows pulsing dot, not CircularProgressIndicator', (tester) async {
-    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.assistant, streaming: true))));
+    await tester.pumpWidget(
+      _wrap(MessageBubble(message: _msg(MessageRole.assistant, streaming: true), sessionId: 'sid')),
+    );
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.byType(StreamingDot), findsOneWidget);
   });
@@ -52,7 +54,7 @@ void main() {
       timestamp: DateTime.now(),
     );
 
-    await tester.pumpWidget(_wrap(MessageBubble(message: msg)));
+    await tester.pumpWidget(_wrap(MessageBubble(message: msg, sessionId: 'sid')));
     await tester.pumpAndSettle();
 
     // Code blocks render via HighlightView (RichText under the hood), so
@@ -74,7 +76,7 @@ void main() {
       timestamp: DateTime.now(),
     );
 
-    await tester.pumpWidget(_wrap(MessageBubble(message: msg)));
+    await tester.pumpWidget(_wrap(MessageBubble(message: msg, sessionId: 'sid')));
     await tester.pumpAndSettle();
 
     // Diff button should be visible when filename is parsed from fence info.

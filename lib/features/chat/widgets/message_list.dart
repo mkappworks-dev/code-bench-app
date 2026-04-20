@@ -93,7 +93,7 @@ class _MessageListState extends ConsumerState<MessageList> {
               );
             }
             final msg = messages[messages.length - 1 - index];
-            return MessageBubble(message: msg, key: ValueKey(msg.id));
+            return MessageBubble(message: msg, sessionId: widget.sessionId, isLast: index == 0, key: ValueKey(msg.id));
           },
         );
       },
