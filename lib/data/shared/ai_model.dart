@@ -102,7 +102,7 @@ class AIModels {
     supportsStreaming: true,
   );
 
-  static List<AIModel> get defaults => [gpt4o, gpt4oMini, claude35Sonnet, claude3Haiku, geminiFlash, customModel];
+  static List<AIModel> get defaults => [gpt4o, gpt4oMini, claude35Sonnet, claude3Haiku, geminiFlash];
 
   static AIModel? fromId(String modelId) => defaults.firstWhereOrNull((m) => m.modelId == modelId);
 }
