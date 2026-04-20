@@ -196,14 +196,16 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
 
   /// Formats the answer map produced by [AskUserQuestionCard] into a
   /// plain user-message string and re-posts it via [chatMessagesProvider].
-  void _submitAnswer(Map<String, dynamic> answer) {
+  Future<void> _submitAnswer(Map<String, dynamic> answer) async {
     final parts = <String>[];
     final selected = answer['selectedOption'];
     final freeText = answer['freeText'];
     if (selected is String && selected.isNotEmpty) parts.add(selected);
     if (freeText is String && freeText.isNotEmpty) parts.add(freeText);
     if (parts.isEmpty) return;
-    unawaited(ref.read(chatMessagesProvider(widget.message.sessionId).notifier).sendMessage(parts.join('\n\n')));
+    final err = await ref.read(chatMessagesProvider(widget.message.sessionId).notifier).sendMessage(parts.join('\n\n'));
+    if (!mounted) return;
+    if (err != null) showErrorSnackBar(context, 'Failed to send answer. Please try again.');
   }
 
   @override
@@ -299,7 +301,7 @@ class _AssistantActionRowState extends State<_AssistantActionRow> {
         if (!mounted) return;
         setState(() => _copied = false);
       });
-    } catch (e) {
+    } on PlatformException catch (e) {
       dLog('[_AssistantActionRow] clipboard failed: $e');
       if (!mounted) return;
       showErrorSnackBar(context, 'Failed to copy. Please try again.');
