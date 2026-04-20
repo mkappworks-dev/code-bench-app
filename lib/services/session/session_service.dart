@@ -3,11 +3,13 @@ import 'package:uuid/uuid.dart';
 
 import '../../data/ai/repository/ai_repository.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
+import '../../data/session/models/session_settings.dart';
 import '../../data/shared/ai_model.dart';
 import '../../data/shared/chat_message.dart';
 import '../../data/session/models/chat_session.dart';
 import '../../data/session/repository/session_repository.dart';
 import '../../data/session/repository/session_repository_impl.dart';
+import '../agent/agent_service.dart';
 
 part 'session_service.g.dart';
 
@@ -15,14 +17,19 @@ part 'session_service.g.dart';
 Future<SessionService> sessionService(Ref ref) async {
   final session = ref.watch(sessionRepositoryProvider);
   final ai = await ref.watch(aiRepositoryProvider.future);
-  return SessionService(session: session, ai: ai);
+  final agent = await ref.watch(agentServiceProvider.future);
+  return SessionService(session: session, ai: ai, agent: agent);
 }
 
 class SessionService {
-  SessionService({required SessionRepository session, required AIRepository ai}) : _session = session, _ai = ai;
+  SessionService({required SessionRepository session, required AIRepository ai, required AgentService agent})
+    : _session = session,
+      _ai = ai,
+      _agent = agent;
 
   final SessionRepository _session;
   final AIRepository _ai;
+  final AgentService _agent;
   static const _uuid = Uuid();
 
   // ── CRUD delegation ────────────────────────────────────────────────────────
@@ -66,6 +73,9 @@ class SessionService {
     required String userInput,
     required AIModel model,
     String? systemPrompt,
+    ChatMode mode = ChatMode.chat,
+    ChatPermission permission = ChatPermission.fullAccess,
+    String? projectPath,
   }) async* {
     final userMsg = ChatMessage(
       id: _uuid.v4(),
@@ -78,10 +88,34 @@ class SessionService {
     yield userMsg;
 
     final history = await _session.loadHistory(sessionId, limit: 20);
+    // Preserve the existing interrupted-marker filter so MessageRole.interrupted
+    // rows never leak into the model's context window.
     final historyExcludingCurrent = history
         .where((m) => m.id != userMsg.id && m.role != MessageRole.interrupted)
         .toList();
 
+    if (mode == ChatMode.act && model.provider == AIProvider.custom && projectPath != null) {
+      await for (final msg in _agent.runAgenticTurn(
+        sessionId: sessionId,
+        history: historyExcludingCurrent,
+        userInput: userInput,
+        model: model,
+        permission: permission,
+        projectPath: projectPath,
+      )) {
+        if (!msg.isStreaming) {
+          await _session.persistMessage(sessionId, msg);
+        }
+        yield msg;
+      }
+      if (history.isEmpty) {
+        final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
+        await _session.updateSessionTitle(sessionId, shortTitle);
+      }
+      return;
+    }
+
+    // Plain text path (unchanged).
     final assistantId = _uuid.v4();
     final buffer = StringBuffer();
 

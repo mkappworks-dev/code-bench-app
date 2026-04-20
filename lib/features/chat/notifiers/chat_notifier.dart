@@ -11,6 +11,7 @@ import '../../../data/session/models/session_settings.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/chat_session.dart';
 import '../../../services/session/session_service.dart';
+import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'agent_cancel_notifier.dart';
 
 part 'chat_notifier.g.dart';
@@ -114,8 +115,20 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     String? streamingAssistantId;
     _sendCompleter = Completer<Object?>();
 
+    final mode = ref.read(sessionModeProvider);
+    final permission = ref.read(sessionPermissionProvider);
+    final projectPath = ref.read(activeProjectProvider)?.path;
+
     _activeSubscription = service
-        .sendAndStream(sessionId: sessionId, userInput: input, model: model, systemPrompt: systemPrompt)
+        .sendAndStream(
+          sessionId: sessionId,
+          userInput: input,
+          model: model,
+          systemPrompt: systemPrompt,
+          mode: mode,
+          permission: permission,
+          projectPath: projectPath,
+        )
         .timeout(
           const Duration(seconds: 60),
           onTimeout: (sink) =>
