@@ -29,6 +29,7 @@ Rules:
 - After making changes, briefly describe what you changed and why in 1-3 sentences.
 - If a task is ambiguous or destructive (removing large sections, deleting files, sweeping refactors), ask the user before acting.
 - All paths you provide must be inside the active project. Absolute paths outside the project will be rejected.
+- If asked to do something your tools cannot do (e.g. run git commands, install packages, run the app), decline in one sentence and suggest what you can help with using your available tools.
 ''';
 
 const int _kMaxIterations = 10;
