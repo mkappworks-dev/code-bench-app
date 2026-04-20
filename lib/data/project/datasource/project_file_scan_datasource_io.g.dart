@@ -13,12 +13,7 @@ part of 'project_file_scan_datasource_io.dart';
 final projectFileScanDatasourceProvider = ProjectFileScanDatasourceProvider._();
 
 final class ProjectFileScanDatasourceProvider
-    extends
-        $FunctionalProvider<
-          ProjectFileScanDatasource,
-          ProjectFileScanDatasource,
-          ProjectFileScanDatasource
-        >
+    extends $FunctionalProvider<ProjectFileScanDatasource, ProjectFileScanDatasource, ProjectFileScanDatasource>
     with $Provider<ProjectFileScanDatasource> {
   ProjectFileScanDatasourceProvider._()
     : super(
@@ -36,9 +31,7 @@ final class ProjectFileScanDatasourceProvider
 
   @$internal
   @override
-  $ProviderElement<ProjectFileScanDatasource> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<ProjectFileScanDatasource> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   ProjectFileScanDatasource create(Ref ref) {
@@ -47,12 +40,8 @@ final class ProjectFileScanDatasourceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ProjectFileScanDatasource value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ProjectFileScanDatasource>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ProjectFileScanDatasource>(value));
   }
 }
 
-String _$projectFileScanDatasourceHash() =>
-    r'9306e901df28cc32078759eb7a9eaa6ca4905281';
+String _$projectFileScanDatasourceHash() => r'9306e901df28cc32078759eb7a9eaa6ca4905281';

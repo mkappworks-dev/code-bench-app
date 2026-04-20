@@ -13,12 +13,7 @@ part of 'git_detector_datasource_io.dart';
 final gitDetectorDatasourceProvider = GitDetectorDatasourceProvider._();
 
 final class GitDetectorDatasourceProvider
-    extends
-        $FunctionalProvider<
-          GitDetectorDatasource,
-          GitDetectorDatasource,
-          GitDetectorDatasource
-        >
+    extends $FunctionalProvider<GitDetectorDatasource, GitDetectorDatasource, GitDetectorDatasource>
     with $Provider<GitDetectorDatasource> {
   GitDetectorDatasourceProvider._()
     : super(
@@ -36,9 +31,7 @@ final class GitDetectorDatasourceProvider
 
   @$internal
   @override
-  $ProviderElement<GitDetectorDatasource> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<GitDetectorDatasource> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   GitDetectorDatasource create(Ref ref) {
@@ -47,12 +40,8 @@ final class GitDetectorDatasourceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(GitDetectorDatasource value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<GitDetectorDatasource>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<GitDetectorDatasource>(value));
   }
 }
 
-String _$gitDetectorDatasourceHash() =>
-    r'7ab31dc1359bb1921fe8322fd5da109bcbcde654';
+String _$gitDetectorDatasourceHash() => r'7ab31dc1359bb1921fe8322fd5da109bcbcde654';

@@ -44,7 +44,7 @@ final class AgentPermissionRequestNotifierProvider
 }
 
 String _$agentPermissionRequestNotifierHash() =>
-    r'b7f7bcf1bc8688a2c2865353e69f46219524e736';
+    r'9206456f396eaad66b3806f259769b1fd972367c';
 
 abstract class _$AgentPermissionRequestNotifier
     extends $Notifier<PermissionRequest?> {

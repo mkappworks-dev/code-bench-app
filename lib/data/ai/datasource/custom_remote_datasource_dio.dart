@@ -47,30 +47,25 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
       );
 
       final stream = response.data as ResponseBody;
-      final buffer = StringBuffer();
+      // `utf8.decoder` handles multi-byte character boundaries across Dio
+      // chunks; `LineSplitter` splits on \n / \r\n / \r and buffers the
+      // incomplete trailing line internally. Replaces the old manual
+      // `utf8.decode(chunk)` which could raise on a split UTF-8 sequence.
+      final lineStream = stream.stream.cast<List<int>>().transform(utf8.decoder).transform(const LineSplitter());
 
-      await for (final chunk in stream.stream) {
-        buffer.write(utf8.decode(chunk));
-        final lines = buffer.toString().split('\n');
-        buffer.clear();
-        // Retain any incomplete trailing line for the next chunk.
-        buffer.write(lines.removeLast());
-
-        for (final line in lines) {
-          final trimmed = line.trim();
-          if (trimmed.startsWith('data: ')) {
-            final data = trimmed.substring(6);
-            if (data == '[DONE]') return;
-            try {
-              final json = jsonDecode(data) as Map<String, dynamic>;
-              final delta = json['choices']?[0]?['delta']?['content'];
-              if (delta is String && delta.isNotEmpty) {
-                yield delta;
-              }
-            } on FormatException catch (_) {
-              // skip malformed lines
-            }
+      await for (final line in lineStream) {
+        final trimmed = line.trim();
+        if (!trimmed.startsWith('data: ')) continue;
+        final data = trimmed.substring(6);
+        if (data == '[DONE]') return;
+        try {
+          final json = jsonDecode(data) as Map<String, dynamic>;
+          final delta = json['choices']?[0]?['delta']?['content'];
+          if (delta is String && delta.isNotEmpty) {
+            yield delta;
           }
+        } on FormatException {
+          dLog('[CustomRemoteDatasource] streamMessage dropped malformed SSE line (${data.length} bytes)');
         }
       }
     } on DioException catch (e) {
@@ -172,45 +167,49 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
       );
 
       final stream = response.data as ResponseBody;
-      final buffer = StringBuffer();
       final idByIndex = <int, String>{};
       final inFlightIds = <String>{};
+      // See streamMessage for why we use utf8.decoder + LineSplitter instead
+      // of buffering chunks and calling utf8.decode manually.
+      final lineStream = stream.stream.cast<List<int>>().transform(utf8.decoder).transform(const LineSplitter());
 
-      await for (final chunk in stream.stream) {
-        buffer.write(utf8.decode(chunk));
-        final lines = buffer.toString().split('\n');
-        buffer.clear();
-        // Retain any incomplete trailing line for the next chunk.
-        buffer.write(lines.removeLast());
+      await for (final line in lineStream) {
+        if (line.trim().isEmpty) continue;
+        final event = parseOpenAiToolSseLine(line, idByIndex);
+        if (event == null) continue;
 
-        for (final line in lines) {
-          if (line.trim().isEmpty) continue;
-          final event = parseOpenAiToolSseLine(line, idByIndex);
-          if (event == null) continue;
-
-          switch (event) {
-            case StreamToolCallStart(:final id):
-              inFlightIds.add(id);
-              yield event;
-            case StreamToolCallArgsDelta():
-              yield event;
-            case StreamFinish(reason: 'tool_calls'):
-              for (final id in inFlightIds) {
-                yield StreamEvent.toolCallEnd(id: id);
-              }
-              inFlightIds.clear();
-              yield event;
-              return;
-            case StreamFinish():
-              yield event;
-              return;
-            case StreamTextDelta():
-              yield event;
-            // StreamToolCallEnd is synthesised above (finish_reason=tool_calls),
-            // never returned by parseOpenAiToolSseLine — kept for exhaustiveness.
-            case StreamToolCallEnd():
-              yield event;
-          }
+        switch (event) {
+          case StreamToolCallStart(:final id):
+            inFlightIds.add(id);
+            yield event;
+          case StreamToolCallArgsDelta():
+            yield event;
+          case StreamFinish(reason: 'tool_calls'):
+            for (final id in inFlightIds) {
+              yield StreamEvent.toolCallEnd(id: id);
+            }
+            inFlightIds.clear();
+            yield event;
+            return;
+          case StreamFinish(:final reason):
+            // A non-tool_calls finish while tool-call deltas are still
+            // in-flight means the model aborted mid-call (context limit,
+            // content filter, etc.). Log so we can diagnose truncated
+            // tool_call arguments that arrive at the agent loop.
+            if (inFlightIds.isNotEmpty) {
+              dLog(
+                '[CustomRemoteDatasource] stream finished with reason="$reason" '
+                'while ${inFlightIds.length} tool call(s) still in-flight',
+              );
+            }
+            yield event;
+            return;
+          case StreamTextDelta():
+            yield event;
+          // StreamToolCallEnd is synthesised above (finish_reason=tool_calls),
+          // never returned by parseOpenAiToolSseLine — kept for exhaustiveness.
+          case StreamToolCallEnd():
+            yield event;
         }
       }
     } on DioException catch (e) {
@@ -242,6 +241,7 @@ StreamEvent? parseOpenAiToolSseLine(String line, Map<int, String> idByIndex) {
   try {
     json = jsonDecode(data) as Map<String, dynamic>;
   } on FormatException {
+    dLog('[CustomRemoteDatasource] dropped malformed SSE line (${data.length} bytes)');
     return null;
   }
 

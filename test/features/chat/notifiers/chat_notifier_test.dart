@@ -4,7 +4,7 @@ import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 
 void main() {
-  test('clearIterationCap flips iterationCapReached on the matching message', () {
+  test('setIterationCapReached flips the flag on the matching message', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
@@ -20,9 +20,10 @@ void main() {
     final notifier = container.read(chatMessagesProvider('s').notifier);
     notifier.state = AsyncData([capped]);
 
-    notifier.clearIterationCap('cap');
+    notifier.setIterationCapReached('cap', false);
+    expect(container.read(chatMessagesProvider('s')).value!.first.iterationCapReached, isFalse);
 
-    final afterMessage = container.read(chatMessagesProvider('s')).value!.first;
-    expect(afterMessage.iterationCapReached, isFalse);
+    notifier.setIterationCapReached('cap', true);
+    expect(container.read(chatMessagesProvider('s')).value!.first.iterationCapReached, isTrue);
   });
 }

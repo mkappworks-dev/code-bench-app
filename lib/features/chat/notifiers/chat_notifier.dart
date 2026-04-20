@@ -10,9 +10,12 @@ import '../../../data/apply/models/applied_change.dart';
 import '../../../data/session/models/session_settings.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/chat_session.dart';
+import '../../../services/agent/agent_exceptions.dart';
 import '../../../services/session/session_service.dart';
 import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'agent_cancel_notifier.dart';
+import 'agent_failure.dart';
+import 'agent_permission_request_notifier.dart';
 
 part 'chat_notifier.g.dart';
 
@@ -73,6 +76,14 @@ class SessionPermissionNotifier extends _$SessionPermissionNotifier {
 
   void set(ChatPermission permission) => state = permission;
 }
+
+/// Maps service-layer [AgentException]s into the widget-facing [AgentFailure]
+/// union. Kept file-private so widgets never see the raw exception types.
+AgentFailure _asAgentFailure(Object e) => switch (e) {
+  ProviderDoesNotSupportToolsException() => const AgentFailure.providerDoesNotSupportTools(),
+  StreamAbortedUnexpectedlyException(:final reason) => AgentFailure.streamAbortedUnexpectedly(reason),
+  _ => AgentFailure.unknown(e),
+};
 
 // Messages for the current session
 @riverpod
@@ -152,9 +163,12 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
           },
           onError: (Object e, StackTrace st) {
             dLog('[sendMessage] stream error: $e\n$st');
-            state = AsyncData(_preSendMessages);
+            // Preserve any partial assistant snapshot the agent loop yielded
+            // before the abort — rolling back to _preSendMessages would erase
+            // the user-visible content that already streamed in.
+            final failure = _asAgentFailure(e);
             final completer = _sendCompleter;
-            if (completer != null && !completer.isCompleted) completer.complete(e);
+            if (completer != null && !completer.isCompleted) completer.complete(failure);
           },
           onDone: () {
             final completer = _sendCompleter;
@@ -188,6 +202,10 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     _activeSubscription?.cancel();
     _activeSubscription = null;
     ref.read(agentCancelProvider.notifier).request();
+    // Unblock any in-flight permission dialog so the agent loop can exit its
+    // `await requestPermission(...)` rather than hanging until the UI is
+    // manually dismissed.
+    ref.read(agentPermissionRequestProvider.notifier).cancel();
     ref.read(activeMessageIdProvider.notifier).set(null);
 
     final sessionId = ref.read(activeSessionIdProvider);
@@ -245,20 +263,22 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     state = AsyncData([...older, ...current]);
   }
 
-  /// Clears the [ChatMessage.iterationCapReached] flag on the message with the
-  /// given [messageId]. No-op if the message is not found.
-  void clearIterationCap(String messageId) {
+  /// Sets the [ChatMessage.iterationCapReached] flag on [messageId]. No-op if
+  /// the message is not found. Used both to clear the cap before re-entering
+  /// the agentic loop and to restore it if that attempt itself fails.
+  void setIterationCapReached(String messageId, bool reached) {
     final current = state.value ?? [];
     final idx = current.indexWhere((m) => m.id == messageId);
     if (idx < 0) return;
     final updated = List<ChatMessage>.from(current);
-    updated[idx] = updated[idx].copyWith(iterationCapReached: false);
+    updated[idx] = updated[idx].copyWith(iterationCapReached: reached);
     state = AsyncData(updated);
   }
 
-  /// Clears the iteration cap on [messageId] and re-enters the agentic loop
-  /// without injecting a new user message (empty [userInput] is skipped by
-  /// [SessionService] and [AgentService]).
+  /// Clears the cap and re-enters the agentic loop without injecting a new
+  /// user message (empty [userInput] is skipped by [SessionService] and
+  /// [AgentService]). If the continuation itself fails, the cap is restored
+  /// so the banner reappears and the user can retry.
   ///
   /// Returns `null` on success, or the caught error object on failure.
   Future<Object?> continueAgenticTurn(String messageId) async {
@@ -266,8 +286,10 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     if (sessionId == null) {
       throw StateError('No active session — cannot continue agentic turn.');
     }
-    clearIterationCap(messageId);
-    return sendMessage('', systemPrompt: null);
+    setIterationCapReached(messageId, false);
+    final result = await sendMessage('', systemPrompt: null);
+    if (result != null) setIterationCapReached(messageId, true);
+    return result;
   }
 }
 

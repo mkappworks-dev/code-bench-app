@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import '../notifiers/chat_notifier.dart';
 
 /// Inline banner shown below a capped assistant bubble. [isActive] controls
 /// whether the `[Continue]` button is enabled. The dismissal rule lives in
 /// the caller: active when the capped message is the most recent in the
 /// session, otherwise dismissed.
-class IterationCapBanner extends ConsumerWidget {
+class IterationCapBanner extends ConsumerStatefulWidget {
   const IterationCapBanner({super.key, required this.messageId, required this.sessionId, required this.isActive});
 
   final String messageId;
@@ -16,7 +17,28 @@ class IterationCapBanner extends ConsumerWidget {
   final bool isActive;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<IterationCapBanner> createState() => _IterationCapBannerState();
+}
+
+class _IterationCapBannerState extends ConsumerState<IterationCapBanner> {
+  bool _busy = false;
+
+  Future<void> _onContinue() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final result = await ref
+        .read(chatMessagesProvider(widget.sessionId).notifier)
+        .continueAgenticTurn(widget.messageId);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (result != null) {
+      showErrorSnackBar(context, 'Could not continue — please retry.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = widget.isActive;
     final c = AppColors.of(context);
     final borderColor = isActive ? c.warning.withValues(alpha: 0.4) : c.borderColor;
     final bgColor = isActive ? c.warning.withValues(alpha: 0.07) : c.inputSurface.withValues(alpha: 0.02);
@@ -55,9 +77,7 @@ class IterationCapBanner extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           TextButton(
-            onPressed: isActive
-                ? () => ref.read(chatMessagesProvider(sessionId).notifier).continueAgenticTurn(messageId)
-                : null,
+            onPressed: (isActive && !_busy) ? _onContinue : null,
             style: TextButton.styleFrom(
               foregroundColor: isActive ? c.warning : c.textMuted,
               backgroundColor: isActive ? c.warning.withValues(alpha: 0.12) : Colors.transparent,
@@ -65,7 +85,9 @@ class IterationCapBanner extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
             ),
-            child: const Text('Continue'),
+            child: _busy
+                ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5))
+                : const Text('Continue'),
           ),
         ],
       ),

@@ -17,6 +17,9 @@ import '../../data/shared/chat_message.dart';
 import '../../features/chat/notifiers/agent_cancel_notifier.dart';
 import '../../features/chat/notifiers/agent_permission_request_notifier.dart';
 import '../coding_tools/coding_tools_service.dart';
+import 'agent_exceptions.dart';
+
+export 'agent_exceptions.dart';
 
 part 'agent_service.g.dart';
 
@@ -110,36 +113,64 @@ class AgentService {
     while (true) {
       iteration++;
       final tools = permission == ChatPermission.readOnly ? CodingTools.readOnly : CodingTools.all;
-      final wire = _buildWireMessages(workingHistory, _kActSystemPrompt, assistantId, textBuffer.toString(), events);
+      final wire = _buildWireMessages(workingHistory, _kActSystemPrompt, events);
       final roundCalls = <_PendingCall>[];
       String? finishReason;
 
-      await for (final event in _ai.streamMessageWithTools(wireMessages: wire, tools: tools, model: model)) {
-        switch (event) {
-          case StreamTextDelta(:final text):
-            textBuffer.write(text);
-            yield snapshot(streaming: true);
-          case StreamToolCallStart(:final id, :final name):
-            final call = _PendingCall(id: id, name: name);
-            pending[id] = call;
-            roundCalls.add(call);
-            events.add(ToolEvent(id: id, type: 'tool_use', toolName: name));
-            yield snapshot(streaming: true);
-          case StreamToolCallArgsDelta(:final id, :final argsJsonFragment):
-            pending[id]?.argsBuffer.write(argsJsonFragment);
-          case StreamToolCallEnd(:final id):
-            final call = pending[id];
-            if (call != null) {
-              call.args = _decodeArgs(call.argsBuffer.toString());
-              final idx = events.indexWhere((e) => e.id == id);
-              if (idx >= 0) {
-                events[idx] = events[idx].copyWith(input: call.args);
-              }
+      try {
+        await for (final event in _ai.streamMessageWithTools(wireMessages: wire, tools: tools, model: model)) {
+          switch (event) {
+            case StreamTextDelta(:final text):
+              textBuffer.write(text);
               yield snapshot(streaming: true);
-            }
-          case StreamFinish(:final reason):
-            finishReason = reason;
+            case StreamToolCallStart(:final id, :final name):
+              final call = _PendingCall(id: id, name: name);
+              pending[id] = call;
+              roundCalls.add(call);
+              events.add(ToolEvent(id: id, type: 'tool_use', toolName: name));
+              yield snapshot(streaming: true);
+            case StreamToolCallArgsDelta(:final id, :final argsJsonFragment):
+              pending[id]?.argsBuffer.write(argsJsonFragment);
+            case StreamToolCallEnd(:final id):
+              final call = pending[id];
+              if (call != null) {
+                final decoded = _decodeArgs(call.argsBuffer.toString());
+                if (decoded == null) {
+                  // Malformed JSON args — model bug or partial stream. Mark
+                  // the event as error so the wire builder surfaces a tool
+                  // result describing the decode failure. Don't execute.
+                  call.args = const {};
+                  call.decodeFailed = true;
+                  final idx = events.indexWhere((e) => e.id == id);
+                  if (idx >= 0) {
+                    events[idx] = events[idx].copyWith(
+                      status: ToolStatus.error,
+                      error: 'Tool arguments were malformed JSON and could not be decoded.',
+                    );
+                  }
+                } else {
+                  call.args = decoded;
+                  final idx = events.indexWhere((e) => e.id == id);
+                  if (idx >= 0) {
+                    events[idx] = events[idx].copyWith(input: decoded);
+                  }
+                }
+                yield snapshot(streaming: true);
+              }
+            case StreamFinish(:final reason):
+              finishReason = reason;
+          }
         }
+      } catch (e, st) {
+        // The SSE stream threw mid-iteration (Dio error, NetworkException,
+        // transport reset). Flip in-flight tool events to cancelled so the
+        // UI doesn't leave a spinner forever, yield one final snapshot so
+        // the partial text is persisted, and let the exception propagate —
+        // ChatMessagesNotifier.onError maps it to an AgentFailure.
+        dLog('[AgentService] stream threw during iteration $iteration: ${e.runtimeType} $e\n$st');
+        _flipRunningToCancelled(events);
+        yield snapshot(streaming: false);
+        rethrow;
       }
 
       if (finishReason == 'stop') {
@@ -149,9 +180,9 @@ class AgentService {
 
       if (finishReason != 'tool_calls') {
         dLog('[AgentService] unexpected finishReason=$finishReason');
-        textBuffer.write('\n\n_Stream ended unexpectedly._');
+        _flipRunningToCancelled(events);
         yield snapshot(streaming: false);
-        return;
+        throw StreamAbortedUnexpectedlyException(finishReason ?? 'null');
       }
 
       if (_cancelFlag()) {
@@ -169,6 +200,7 @@ class AgentService {
 
       for (final call in roundCalls) {
         if (_cancelFlag()) break;
+        if (call.decodeFailed) continue; // event already in error state
 
         final isDestructive = call.name == 'write_file' || call.name == 'str_replace';
         if (permission == ChatPermission.askBefore && isDestructive) {
@@ -182,24 +214,6 @@ class AgentService {
             if (idx >= 0) {
               events[idx] = events[idx].copyWith(status: ToolStatus.cancelled, error: 'Denied by user');
             }
-            workingHistory.add(
-              ChatMessage(
-                id: _idGen(),
-                sessionId: sessionId,
-                role: MessageRole.system,
-                content: 'User denied this change.',
-                timestamp: DateTime.now(),
-                toolEvents: [
-                  ToolEvent(
-                    id: call.id,
-                    type: 'tool_result',
-                    toolName: '__tool_result__',
-                    status: ToolStatus.cancelled,
-                    error: 'User denied this change.',
-                  ),
-                ],
-              ),
-            );
             yield snapshot(streaming: true);
             continue;
           }
@@ -213,19 +227,22 @@ class AgentService {
           messageId: assistantId,
         );
         _recordResult(events, call.id, result);
-        workingHistory.add(_toolResultMessage(sessionId, call.id, result));
         yield snapshot(streaming: true);
       }
     }
   }
 
-  Map<String, dynamic> _decodeArgs(String raw) {
+  /// Decodes JSON tool arguments. Returns `null` on malformed input (callers
+  /// surface that as an error event) and `const {}` for empty/non-map input
+  /// (valid: a tool that takes no arguments).
+  Map<String, dynamic>? _decodeArgs(String raw) {
     if (raw.trim().isEmpty) return const {};
     try {
       final decoded = jsonDecode(raw);
       return decoded is Map<String, dynamic> ? decoded : const {};
     } on FormatException {
-      return const {};
+      dLog('[AgentService] malformed tool args JSON (${raw.length} bytes)');
+      return null;
     }
   }
 
@@ -265,45 +282,23 @@ class AgentService {
     return call.args['path']?.toString() ?? '';
   }
 
-  ChatMessage _toolResultMessage(String sessionId, String toolCallId, CodingToolResult result) {
-    final (content, isSuccess, output, errMsg) = switch (result) {
-      CodingToolResultSuccess(:final output) => (output, true, output, null as String?),
-      CodingToolResultError(:final message) => (message, false, null as String?, message),
-    };
-    return ChatMessage(
-      id: _idGen(),
-      sessionId: sessionId,
-      role: MessageRole.system,
-      content: content,
-      timestamp: DateTime.now(),
-      toolEvents: [
-        ToolEvent(
-          id: toolCallId,
-          type: 'tool_result',
-          toolName: '__tool_result__',
-          status: isSuccess ? ToolStatus.success : ToolStatus.error,
-          output: output,
-          error: errMsg,
-        ),
-      ],
-    );
-  }
-
   /// Translates in-memory history → OpenAI chat-completions wire format.
+  ///
+  /// Tool results are *not* persisted as separate messages — they live on
+  /// each assistant message's `toolEvents`. Every assistant message carrying
+  /// tool calls emits one `role:'assistant'` block followed by one
+  /// `role:'tool'` block per terminal-status event. This keeps wire-replay
+  /// consistent across session reload without a dedicated system-message
+  /// persistence path.
   List<Map<String, dynamic>> _buildWireMessages(
     List<ChatMessage> history,
     String systemPrompt,
-    String currentAssistantId,
-    String currentTextBuffer,
     List<ToolEvent> currentEvents,
   ) {
     final wire = <Map<String, dynamic>>[];
     wire.add({'role': 'system', 'content': systemPrompt});
     for (final msg in history) {
-      if (msg.role == MessageRole.system && msg.toolEvents.isNotEmpty && msg.toolEvents.first.type == 'tool_result') {
-        final te = msg.toolEvents.first;
-        wire.add({'role': 'tool', 'tool_call_id': te.id, 'content': te.output ?? te.error ?? ''});
-      } else if (msg.role == MessageRole.assistant && msg.toolEvents.isNotEmpty) {
+      if (msg.role == MessageRole.assistant && msg.toolEvents.isNotEmpty) {
         wire.add({
           'role': 'assistant',
           'content': msg.content.isEmpty ? null : msg.content,
@@ -316,6 +311,11 @@ class AgentService {
               },
           ],
         });
+        for (final te in msg.toolEvents) {
+          if (_isTerminal(te.status)) {
+            wire.add({'role': 'tool', 'tool_call_id': te.id, 'content': te.output ?? te.error ?? ''});
+          }
+        }
       } else {
         wire.add({'role': msg.role.value, 'content': msg.content});
       }
@@ -323,7 +323,7 @@ class AgentService {
     if (currentEvents.isNotEmpty) {
       wire.add({
         'role': 'assistant',
-        'content': currentTextBuffer.isEmpty ? null : currentTextBuffer,
+        'content': null,
         'tool_calls': [
           for (final te in currentEvents)
             {
@@ -334,13 +334,16 @@ class AgentService {
         ],
       });
       for (final te in currentEvents) {
-        if (te.status == ToolStatus.success || te.status == ToolStatus.error) {
+        if (_isTerminal(te.status)) {
           wire.add({'role': 'tool', 'tool_call_id': te.id, 'content': te.output ?? te.error ?? ''});
         }
       }
     }
     return wire;
   }
+
+  static bool _isTerminal(ToolStatus s) =>
+      s == ToolStatus.success || s == ToolStatus.error || s == ToolStatus.cancelled;
 }
 
 class _PendingCall {
@@ -349,4 +352,5 @@ class _PendingCall {
   final String name;
   final StringBuffer argsBuffer = StringBuffer();
   Map<String, dynamic> args = const {};
+  bool decodeFailed = false;
 }

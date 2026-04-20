@@ -164,6 +164,9 @@ void main() {
       [const StreamEvent.finish(reason: 'stop')],
     ], onWire: (w) => capturedWire = w);
 
+    // Persisted assistant messages carry their terminal-status toolEvents.
+    // The wire builder synthesises `role: 'tool'` entries from them — there
+    // is no separate system+tool_result message in DB.
     final priorHistory = [
       ChatMessage(
         id: 'u_prev',
@@ -179,20 +182,11 @@ void main() {
         content: '',
         timestamp: DateTime(2026),
         toolEvents: [
-          const ToolEvent(id: prevCallId, type: 'tool_use', toolName: 'read_file', input: {'path': 'a.txt'}),
-        ],
-      ),
-      ChatMessage(
-        id: 's_prev',
-        sessionId: 's',
-        role: MessageRole.system,
-        content: 'hello',
-        timestamp: DateTime(2026),
-        toolEvents: [
           const ToolEvent(
             id: prevCallId,
-            type: 'tool_result',
-            toolName: '__tool_result__',
+            type: 'tool_use',
+            toolName: 'read_file',
+            input: {'path': 'a.txt'},
             status: ToolStatus.success,
             output: 'hello',
           ),

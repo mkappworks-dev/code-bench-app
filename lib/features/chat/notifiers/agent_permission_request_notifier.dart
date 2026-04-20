@@ -25,4 +25,15 @@ class AgentPermissionRequestNotifier extends _$AgentPermissionRequestNotifier {
     _completer = null;
     state = null;
   }
+
+  /// Completes any in-flight permission request with `false` and clears the
+  /// dialog. Used by [ChatMessagesNotifier.cancelSend] so cancelling a turn
+  /// that is currently awaiting user approval unblocks the agent loop rather
+  /// than leaving it wedged until the dialog is manually dismissed.
+  void cancel() {
+    if (_completer == null && state == null) return;
+    _completer?.complete(false);
+    _completer = null;
+    state = null;
+  }
 }

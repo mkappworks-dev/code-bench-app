@@ -23,3 +23,14 @@ class PathEscapeException extends ApplyException {
   @override
   String toString() => 'Path "$filePath" is outside project root "$projectPath"';
 }
+
+/// Thrown when a path matches the in-project denylist (dotfiles, key material,
+/// credential filenames). Distinct from [PathEscapeException] so the caller can
+/// render a user-appropriate message without leaking that a denylist exists.
+class BlockedPathException extends ApplyException {
+  BlockedPathException(this.filePath, this.reason);
+  final String filePath;
+  final String reason;
+  @override
+  String toString() => 'Blocked: "$filePath" ($reason)';
+}
