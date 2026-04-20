@@ -12,7 +12,12 @@ import '../../../data/shared/chat_message.dart';
 import 'ai_remote_datasource.dart';
 
 class OllamaRemoteDatasourceDio implements AIRemoteDatasource {
-  OllamaRemoteDatasourceDio(String baseUrl) : _dio = DioFactory.create(baseUrl: baseUrl);
+  OllamaRemoteDatasourceDio(String baseUrl)
+    : _dio = DioFactory.create(
+        baseUrl: baseUrl,
+        // See CustomRemoteDatasourceDio for the redirect-replay rationale.
+        followRedirects: false,
+      );
 
   final Dio _dio;
 
@@ -60,11 +65,10 @@ class OllamaRemoteDatasourceDio implements AIRemoteDatasource {
       if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('Ollama is not running. Start it with: ollama serve', originalError: e);
       }
-      throw NetworkException(
-        e.message ?? 'Ollama request failed',
-        statusCode: e.response?.statusCode,
-        originalError: e,
-      );
+      // Static message — `e.message` can embed the request URL which may
+      // include RFC-3986 userinfo (e.g. http://user:token@host/...) that would
+      // then leak into the snackbar. The status code is safe to surface.
+      throw NetworkException('Ollama request failed', statusCode: e.response?.statusCode, originalError: e);
     }
   }
 
@@ -81,23 +85,39 @@ class OllamaRemoteDatasourceDio implements AIRemoteDatasource {
 
   @override
   Future<List<AIModel>> fetchAvailableModels(String apiKey) async {
+    // See CustomRemoteDatasourceDio.fetchAvailableModels — Ollama and Custom
+    // are the only two AI datasources that propagate typed errors. Cloud
+    // datasources continue to swallow because their model lists are static.
     try {
       final response = await _dio.get(ApiConstants.ollamaTagsEndpoint);
-      final data = response.data as Map<String, dynamic>;
-      final models = (data['models'] as List? ?? []).map((m) {
-        final name = m['name'] as String;
-        return AIModel(
-          id: 'ollama_$name',
-          provider: AIProvider.ollama,
-          name: name,
-          modelId: name,
-          supportsStreaming: true,
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        throw const ParseException('Ollama returned an unexpected payload (expected JSON object)');
+      }
+      final list = data['models'];
+      if (list is! List) {
+        // Missing or null `models` field — treat as empty, not an error.
+        return const [];
+      }
+      final models = <AIModel>[];
+      for (final entry in list) {
+        if (entry is! Map) continue;
+        final name = entry['name'];
+        if (name is! String || name.isEmpty) continue;
+        models.add(
+          AIModel(id: 'ollama_$name', provider: AIProvider.ollama, name: name, modelId: name, supportsStreaming: true),
         );
-      }).toList();
+      }
       return models;
     } on DioException catch (e) {
-      dLog('[OllamaRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode}');
-      return [];
+      final status = e.response?.statusCode;
+      dLog('[OllamaRemoteDatasource] fetchAvailableModels failed: ${e.type} ${status ?? ''}');
+      throw NetworkException('Ollama request failed', statusCode: status, originalError: e);
+    } on ParseException {
+      rethrow;
+    } catch (e) {
+      dLog('[OllamaRemoteDatasource] fetchAvailableModels unexpected ${e.runtimeType}');
+      throw ParseException('Malformed Ollama /api/tags response', originalError: e);
     }
   }
 

@@ -8,6 +8,7 @@ import '../../../data/session/models/session_settings.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../services/session/session_service.dart';
 import 'chat_notifier.dart';
+import 'available_models_notifier.dart';
 import 'session_settings_failure.dart';
 
 part 'session_settings_actions.g.dart';
@@ -40,8 +41,7 @@ class SessionSettingsActions extends _$SessionSettingsActions {
     final session = await svc.getSession(sessionId);
     if (session == null) return;
 
-    final AIModel model =
-        (session.modelId.isNotEmpty ? AIModels.fromId(session.modelId) : null) ?? ref.read(selectedModelProvider);
+    final model = await _resolveModel(session.modelId);
     ref.read(selectedModelProvider.notifier).select(model);
 
     ref.read(sessionSystemPromptProvider.notifier).setPrompt(sessionId, session.systemPrompt ?? '');
@@ -127,6 +127,31 @@ class SessionSettingsActions extends _$SessionSettingsActions {
         Error.throwWithStackTrace(_asFailure(e), st);
       }
     });
+  }
+
+  /// Resolves a persisted [modelId] to an [AIModel]:
+  ///   1. Empty id → current selected model.
+  ///   2. Match against static `AIModels.defaults` (fast, no I/O).
+  ///   3. Await the dynamic list (Ollama/Custom). Without this await the
+  ///      resolver would race on cold start — `.value` returns null while
+  ///      `availableModelsProvider` is still loading, silently downgrading a
+  ///      persisted dynamic model to the boot default before the real list
+  ///      arrives.
+  ///   4. If the dynamic fetch errored entirely, or the model is gone, fall
+  ///      back to the current selected model. The `isModelStale` chip in
+  ///      `ChatInputBar` reads the same dynamic list and warns the user.
+  Future<AIModel> _resolveModel(String modelId) async {
+    if (modelId.isEmpty) return ref.read(selectedModelProvider);
+    final fromStatic = AIModels.fromId(modelId);
+    if (fromStatic != null) return fromStatic;
+    try {
+      final result = await ref.read(availableModelsProvider.future);
+      final match = result.models.firstWhereOrNull((m) => m.modelId == modelId);
+      if (match != null) return match;
+    } catch (_) {
+      // availableModelsProvider errored — fall through to selected model.
+    }
+    return ref.read(selectedModelProvider);
   }
 
   SessionSettingsFailure _asFailure(Object e) => SessionSettingsFailure.unknown(e);

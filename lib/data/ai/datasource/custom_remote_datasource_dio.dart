@@ -16,6 +16,10 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
     : _dio = DioFactory.create(
         baseUrl: endpoint,
         headers: {if (apiKey.isNotEmpty) 'Authorization': 'Bearer $apiKey', 'Content-Type': 'application/json'},
+        // Redirects are disabled because a hostile endpoint could 302 us to an
+        // internal host and we'd replay the Authorization header. The caller
+        // typed this URL; we trust only that host.
+        followRedirects: false,
       );
 
   final Dio _dio;
@@ -83,23 +87,44 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
 
   @override
   Future<List<AIModel>> fetchAvailableModels(String apiKey) async {
+    // NOTE: Unlike the cloud datasources (openai/anthropic/gemini) which still
+    // swallow fetchAvailableModels errors, Ollama and Custom propagate typed
+    // AppException subclasses so AvailableModelsNotifier can classify them
+    // (auth vs unreachable vs malformed) in the picker. See
+    // available_models_failure.dart.
     try {
       final response = await _dio.get('/models');
-      final data = response.data as Map<String, dynamic>;
-      final models = (data['data'] as List)
-          .map(
-            (m) => AIModel(
-              id: m['id'] as String,
-              provider: AIProvider.custom,
-              name: m['id'] as String,
-              modelId: m['id'] as String,
-            ),
-          )
-          .toList();
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        throw const ParseException('Custom endpoint returned an unexpected payload (expected JSON object)');
+      }
+      final list = data['data'];
+      if (list is! List) {
+        throw const ParseException('Custom endpoint response is missing the "data" list');
+      }
+      final models = <AIModel>[];
+      for (final entry in list) {
+        if (entry is! Map) continue; // skip malformed entries; don't fail the whole list
+        final id = entry['id'];
+        if (id is! String || id.isEmpty) continue;
+        models.add(AIModel(id: id, provider: AIProvider.custom, name: id, modelId: id));
+      }
       return models;
     } on DioException catch (e) {
-      dLog('[CustomRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode}');
-      return [];
+      final status = e.response?.statusCode;
+      dLog('[CustomRemoteDatasource] fetchAvailableModels failed: ${e.type} ${status ?? ''}');
+      if (status == 401 || status == 403) {
+        throw AuthException('Custom endpoint rejected the API key', originalError: e);
+      }
+      throw NetworkException('Custom endpoint request failed', statusCode: status, originalError: e);
+    } on ParseException {
+      rethrow;
+    } catch (e) {
+      // Defensive: unexpected non-Dio, non-Parse error (e.g. a CastError from
+      // some nested field). Log only the runtime type so we don't spill
+      // response content.
+      dLog('[CustomRemoteDatasource] fetchAvailableModels unexpected ${e.runtimeType}');
+      throw ParseException('Malformed model list response', originalError: e);
     }
   }
 

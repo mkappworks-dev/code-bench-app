@@ -93,16 +93,7 @@ class AIModels {
     isDefault: true,
   );
 
-  static const customModel = AIModel(
-    id: 'custom',
-    provider: AIProvider.custom,
-    name: 'Custom',
-    modelId: 'custom',
-    contextWindow: 128000,
-    supportsStreaming: true,
-  );
-
-  static List<AIModel> get defaults => [gpt4o, gpt4oMini, claude35Sonnet, claude3Haiku, geminiFlash, customModel];
+  static List<AIModel> get defaults => [gpt4o, gpt4oMini, claude35Sonnet, claude3Haiku, geminiFlash];
 
   static AIModel? fromId(String modelId) => defaults.firstWhereOrNull((m) => m.modelId == modelId);
 }
