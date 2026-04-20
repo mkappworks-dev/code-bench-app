@@ -20,6 +20,8 @@ class CodingToolNotTextEncodedException implements Exception {
 /// Raised when `str_replace`'s `old_str` does not occur exactly once.
 class CodingToolAmbiguousMatchException implements Exception {
   const CodingToolAmbiguousMatchException(this.matchCount);
+
+  /// 0 = not found; >1 = multiple occurrences.
   final int matchCount;
 
   @override
