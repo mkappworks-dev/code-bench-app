@@ -115,7 +115,7 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource {
 
   List<Map<String, dynamic>> _buildContents(List<ChatMessage> history, String prompt) {
     final contents = <Map<String, dynamic>>[];
-    for (final msg in history.where((m) => m.role != MessageRole.system)) {
+    for (final msg in history.where((m) => m.role != MessageRole.system && m.role != MessageRole.interrupted)) {
       contents.add({
         'role': msg.role == MessageRole.user ? 'user' : 'model',
         'parts': [

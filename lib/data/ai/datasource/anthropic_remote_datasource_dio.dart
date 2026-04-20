@@ -122,7 +122,7 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource {
 
   List<Map<String, String>> _buildMessages(List<ChatMessage> history, String prompt) {
     final messages = <Map<String, String>>[];
-    for (final msg in history.where((m) => m.role != MessageRole.system)) {
+    for (final msg in history.where((m) => m.role != MessageRole.system && m.role != MessageRole.interrupted)) {
       messages.add({'role': msg.role.value, 'content': msg.content});
     }
     messages.add({'role': 'user', 'content': prompt});
