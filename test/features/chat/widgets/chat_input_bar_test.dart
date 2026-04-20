@@ -13,7 +13,17 @@ import 'package:code_bench_app/features/chat/widgets/chat_input_bar.dart';
 import 'package:code_bench_app/data/project/models/project_action.dart';
 import 'package:code_bench_app/data/project/repository/project_repository.dart';
 import 'package:code_bench_app/data/project/repository/project_repository_impl.dart';
+import 'package:code_bench_app/features/chat/notifiers/available_models_notifier.dart';
+import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
+
+/// Pre-settled stub — makes availableModelsProvider return immediately so
+/// CircularProgressIndicator never appears and pumpAndSettle can settle.
+class _FakeAvailableModels extends AvailableModelsNotifier {
+  @override
+  Future<AvailableModelsResult> build() async =>
+      AvailableModelsResult(models: List.from(AIModels.defaults));
+}
 
 /// Minimal stub so the missing-project guard's `_isProjectAvailable` helper
 /// can fire `refreshProjectStatus` in tests without pulling in a real Drift
@@ -75,6 +85,7 @@ Widget _wrap(
       projectsProvider.overrideWith((ref) => Stream<List<Project>>.value(projects)),
       projectRepositoryProvider.overrideWith((ref) => fakeRepo),
       chatMessagesProvider.overrideWith2((_) => _FakeChatMessages()),
+      availableModelsProvider.overrideWith(() => _FakeAvailableModels()),
       if (activeProjectId != null) activeProjectIdProvider.overrideWith(() => _FakeActiveProjectId(activeProjectId)),
     ],
     child: MaterialApp(

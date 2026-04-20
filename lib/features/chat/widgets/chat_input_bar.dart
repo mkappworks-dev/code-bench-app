@@ -252,8 +252,9 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final c = AppColors.of(context);
     final selected = ref.read(selectedModelProvider);
 
-    final allModels = ref.read(availableModelsProvider).value ?? AIModels.defaults;
-    final isRefreshing = ref.read(availableModelsProvider).isLoading;
+    final result = ref.read(availableModelsProvider).value;
+    final allModels = result?.models ?? AIModels.defaults;
+    final failedProviders = result?.failedProviders ?? const <AIProvider>{};
 
     final grouped = <AIProvider, List<AIModel>>{};
     for (final m in allModels) {
@@ -264,7 +265,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
 
     for (final provider in _pickerSectionOrder) {
       final models = grouped[provider];
-      if (models == null || models.isEmpty) continue;
+      final hasFailed = failedProviders.contains(provider);
+      if ((models == null || models.isEmpty) && !hasFailed) continue;
 
       items.add(
         PopupMenuItem<AIModel>(
@@ -278,7 +280,30 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
         ),
       );
 
-      for (final m in models) {
+      if (hasFailed) {
+        items.add(
+          PopupMenuItem<AIModel>(
+            enabled: false,
+            height: 28,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              children: [
+                Icon(AppIcons.warning, size: 11, color: c.warning),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    'Unreachable — check that ${provider.displayName} is running',
+                    style: TextStyle(color: c.warning, fontSize: ThemeConstants.uiFontSizeSmall),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      for (final m in models ?? []) {
         items.add(
           PopupMenuItem<AIModel>(
             value: m,
@@ -293,19 +318,6 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
           ),
         );
       }
-    }
-
-    if (isRefreshing) {
-      items.add(
-        PopupMenuItem<AIModel>(
-          enabled: false,
-          height: 28,
-          child: Text(
-            'Refreshing…',
-            style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall, fontStyle: FontStyle.italic),
-          ),
-        ),
-      );
     }
 
     items.add(const PopupMenuDivider());
@@ -329,12 +341,10 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
         side: BorderSide(color: c.subtleBorder),
       ),
       items: items,
-    ).then((value) {
+    ).then((value) async {
       if (identical(value, _refreshSentinel)) {
-        ref.read(availableModelsProvider.notifier).refresh();
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _showModelPicker(context);
-        });
+        await ref.read(availableModelsProvider.notifier).refresh();
+        if (context.mounted) _showModelPicker(context);
         return;
       }
       if (value != null) {
@@ -361,7 +371,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final c = AppColors.of(context);
     final model = ref.watch(selectedModelProvider);
     final availableState = ref.watch(availableModelsProvider);
-    final isModelStale = availableState.hasValue && !availableState.value!.any((m) => m.modelId == model.modelId);
+    final isModelStale =
+        availableState.hasValue && !availableState.value!.models.any((m) => m.modelId == model.modelId);
     final mode = ref.watch(sessionModeProvider);
     final effort = ref.watch(sessionEffortProvider);
     final permission = ref.watch(sessionPermissionProvider);
@@ -433,6 +444,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                       icon: AppIcons.aiMode,
                       label: model.name,
                       isWarning: isModelStale,
+                      isLoading: availableState.isLoading,
                       onTap: () => _showModelPicker(ctx),
                     ),
                   ),
@@ -557,11 +569,18 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
 }
 
 class _ControlChip extends StatelessWidget {
-  const _ControlChip({this.icon, required this.label, required this.onTap, this.isWarning = false});
+  const _ControlChip({
+    this.icon,
+    required this.label,
+    required this.onTap,
+    this.isWarning = false,
+    this.isLoading = false,
+  });
   final IconData? icon;
   final String label;
   final VoidCallback onTap;
   final bool isWarning;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -586,7 +605,14 @@ class _ControlChip extends StatelessWidget {
               style: TextStyle(color: c.chipText, fontSize: ThemeConstants.uiFontSizeSmall),
             ),
             const SizedBox(width: 3),
-            Icon(AppIcons.chevronDown, size: 10, color: c.faintFg),
+            if (isLoading)
+              SizedBox(
+                width: 10,
+                height: 10,
+                child: CircularProgressIndicator(strokeWidth: 1.2, valueColor: AlwaysStoppedAnimation(c.faintFg)),
+              )
+            else
+              Icon(AppIcons.chevronDown, size: 10, color: c.faintFg),
           ],
         ),
       ),
