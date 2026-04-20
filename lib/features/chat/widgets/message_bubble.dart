@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../data/shared/chat_message.dart';
 import '../notifiers/ask_question_notifier.dart';
@@ -181,70 +183,154 @@ class _InterruptedBubble extends StatelessWidget {
 
 // ── Assistant bubble ─────────────────────────────────────────────────────────
 
-class _AssistantBubble extends ConsumerWidget {
+class _AssistantBubble extends ConsumerStatefulWidget {
   const _AssistantBubble({required this.message});
   final ChatMessage message;
 
+  @override
+  ConsumerState<_AssistantBubble> createState() => _AssistantBubbleState();
+}
+
+class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
+  bool _hovering = false;
+
   /// Formats the answer map produced by [AskUserQuestionCard] into a
   /// plain user-message string and re-posts it via [chatMessagesProvider].
-  void _submitAnswer(WidgetRef ref, Map<String, dynamic> answer) {
+  void _submitAnswer(Map<String, dynamic> answer) {
     final parts = <String>[];
     final selected = answer['selectedOption'];
     final freeText = answer['freeText'];
     if (selected is String && selected.isNotEmpty) parts.add(selected);
     if (freeText is String && freeText.isNotEmpty) parts.add(freeText);
     if (parts.isEmpty) return;
-    unawaited(ref.read(chatMessagesProvider(message.sessionId).notifier).sendMessage(parts.join('\n\n')));
+    unawaited(ref.read(chatMessagesProvider(widget.message.sessionId).notifier).sendMessage(parts.join('\n\n')));
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(width: 2, margin: const EdgeInsets.only(top: 3, bottom: 3), color: AppColors.of(context).borderColor),
-        const SizedBox(width: 9),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (message.isStreaming) const StreamingDot(),
-              _MessageContent(message: message),
-              if (message.toolEvents.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                for (final event in message.toolEvents)
-                  Padding(
-                    key: ValueKey('tool-row-${event.id}'),
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: ToolCallRow(event: event),
+  Widget build(BuildContext context) {
+    final message = widget.message;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 2,
+            margin: const EdgeInsets.only(top: 3, bottom: 3),
+            color: AppColors.of(context).borderColor,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (message.isStreaming) const StreamingDot(),
+                _MessageContent(message: message),
+                _AssistantActionRow(message: message, hovering: _hovering),
+                if (message.toolEvents.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  for (final event in message.toolEvents)
+                    Padding(
+                      key: ValueKey('tool-row-${event.id}'),
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: ToolCallRow(event: event),
+                    ),
+                ],
+                if (message.toolEvents.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  WorkLogSection(sessionId: message.sessionId, messageId: message.id),
+                ],
+                if (message.askQuestion != null) ...[
+                  const SizedBox(height: 8),
+                  AskUserQuestionCard(
+                    question: message.askQuestion!,
+                    sessionId: message.sessionId,
+                    onSubmit: _submitAnswer,
+                    onBack: message.askQuestion!.stepIndex > 0
+                        ? () => ref
+                              .read(askQuestionProvider.notifier)
+                              .setAnswer(
+                                sessionId: message.sessionId,
+                                stepIndex: message.askQuestion!.stepIndex,
+                                selectedOption: null,
+                                freeText: null,
+                              )
+                        : null,
                   ),
+                ],
               ],
-              if (message.toolEvents.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                WorkLogSection(sessionId: message.sessionId, messageId: message.id),
-              ],
-              if (message.askQuestion != null) ...[
-                const SizedBox(height: 8),
-                AskUserQuestionCard(
-                  question: message.askQuestion!,
-                  sessionId: message.sessionId,
-                  onSubmit: (answer) => _submitAnswer(ref, answer),
-                  onBack: message.askQuestion!.stepIndex > 0
-                      ? () => ref
-                            .read(askQuestionProvider.notifier)
-                            .setAnswer(
-                              sessionId: message.sessionId,
-                              stepIndex: message.askQuestion!.stepIndex,
-                              selectedOption: null,
-                              freeText: null,
-                            )
-                      : null,
-                ),
-              ],
-            ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Assistant action row (copy-as-markdown) ──────────────────────────────────
+
+class _AssistantActionRow extends StatefulWidget {
+  const _AssistantActionRow({required this.message, required this.hovering});
+  final ChatMessage message;
+  final bool hovering;
+
+  @override
+  State<_AssistantActionRow> createState() => _AssistantActionRowState();
+}
+
+class _AssistantActionRowState extends State<_AssistantActionRow> {
+  bool _copied = false;
+  Timer? _resetTimer;
+
+  @override
+  void dispose() {
+    _resetTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _copy() async {
+    try {
+      await Clipboard.setData(ClipboardData(text: widget.message.content));
+      if (!mounted) return;
+      setState(() => _copied = true);
+      _resetTimer?.cancel();
+      _resetTimer = Timer(const Duration(milliseconds: 1500), () {
+        if (!mounted) return;
+        setState(() => _copied = false);
+      });
+    } catch (e) {
+      dLog('[_AssistantActionRow] clipboard failed: $e');
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Failed to copy. Please try again.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.message.isStreaming || widget.message.content.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final c = AppColors.of(context);
+    final icon = _copied ? AppIcons.check : AppIcons.copy;
+    final iconColor = _copied ? c.success : c.textMuted;
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
+      child: AnimatedOpacity(
+        opacity: widget.hovering ? 1.0 : 0.4,
+        duration: const Duration(milliseconds: 150),
+        child: Tooltip(
+          message: 'Copy as markdown',
+          child: IconButton(
+            icon: Icon(icon, size: 14, color: iconColor),
+            onPressed: _copy,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+            visualDensity: VisualDensity.compact,
+            splashRadius: 14,
           ),
         ),
-      ],
+      ),
     );
   }
 }
