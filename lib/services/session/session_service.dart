@@ -10,6 +10,7 @@ import '../../data/session/models/chat_session.dart';
 import '../../data/session/repository/session_repository.dart';
 import '../../data/session/repository/session_repository_impl.dart';
 import '../agent/agent_service.dart';
+import '../../features/chat/notifiers/agent_failure.dart';
 
 part 'session_service.g.dart';
 
@@ -99,6 +100,10 @@ class SessionService {
     final historyExcludingCurrent = history
         .where((m) => m.id != persistedUserMsgId && m.role != MessageRole.interrupted)
         .toList();
+
+    if (mode == ChatMode.act && model.provider != AIProvider.custom) {
+      throw const AgentProviderDoesNotSupportTools();
+    }
 
     if (mode == ChatMode.act && model.provider == AIProvider.custom && projectPath != null) {
       await for (final msg in _agent.runAgenticTurn(

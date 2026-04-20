@@ -20,6 +20,7 @@ import '../notifiers/available_models_failure.dart';
 import '../notifiers/available_models_notifier.dart';
 import '../notifiers/session_settings_actions.dart';
 import '../notifiers/session_settings_failure.dart';
+import '../notifiers/agent_failure.dart';
 
 /// Private in-memory store of per-session chat-input drafts.
 ///
@@ -196,7 +197,25 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
         .sendMessage(text, systemPrompt: (systemPrompt != null && systemPrompt.isNotEmpty) ? systemPrompt : null);
     if (mounted) {
       if (sendError != null) {
-        showErrorSnackBar(context, userMessage(sendError, fallback: 'Failed to get a response.'));
+        if (sendError is AgentFailure) {
+          switch (sendError) {
+            case AgentIterationCapReached():
+              break; // banner communicates this
+            case AgentProviderDoesNotSupportTools():
+              showErrorSnackBar(
+                context,
+                "The selected provider doesn't support tool use. Switch to a compatible model or leave Act mode.",
+              );
+            case AgentStreamAbortedUnexpectedly():
+              showErrorSnackBar(context, 'Stream ended unexpectedly — try again.');
+            case AgentToolDispatchFailed():
+              break; // surfaced to the model as a tool_result
+            case AgentUnknownError():
+              showErrorSnackBar(context, 'Something went wrong.');
+          }
+        } else {
+          showErrorSnackBar(context, userMessage(sendError, fallback: 'Failed to get a response.'));
+        }
       }
       _pulseController.stop();
       _pulseController.reset();
