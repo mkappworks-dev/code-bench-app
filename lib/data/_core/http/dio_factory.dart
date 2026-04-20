@@ -13,6 +13,7 @@ class DioFactory {
     Map<String, dynamic>? headers,
     Duration? connectTimeout,
     Duration? receiveTimeout,
+    bool followRedirects = true,
   }) {
     return Dio(
       BaseOptions(
@@ -20,6 +21,7 @@ class DioFactory {
         headers: headers ?? const {},
         connectTimeout: connectTimeout ?? ApiConstants.connectTimeout,
         receiveTimeout: receiveTimeout ?? ApiConstants.receiveTimeout,
+        followRedirects: followRedirects,
       ),
     );
   }
