@@ -14,7 +14,6 @@ import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/chat_notifier.dart';
-import '../notifiers/pending_message_action_notifier.dart';
 import '../../../data/session/models/session_settings.dart';
 import '../notifiers/available_models_failure.dart';
 import '../notifiers/available_models_notifier.dart';
@@ -405,24 +404,6 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(chatMessagesProvider(widget.sessionId), (_, next) {
-      if (!_isSending) return;
-      if (next is! AsyncError || !mounted) return;
-      showErrorSnackBar(context, 'Failed to send message. Please try again.');
-    });
-
-    ref.listen(pendingMessageActionProvider(widget.sessionId), (_, action) {
-      if (action == null) return;
-      ref.read(pendingMessageActionProvider(widget.sessionId).notifier).clear();
-      _controller.text = action.content;
-      _controller.selection = TextSelection.collapsed(offset: action.content.length);
-      if (action is RetryAction) {
-        _send();
-      } else {
-        _focusNode.requestFocus();
-      }
-    });
-
     // Initialise (idempotent after first call) and listen for persist errors.
     ref.listen(sessionSettingsActionsProvider, (_, next) {
       if (next is! AsyncError || !mounted) return;
@@ -589,7 +570,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                           height: 28,
                           decoration: BoxDecoration(
                             color: c.glassFill,
-                            border: Border.all(color: c.glassBorder),
+                            border: Border.all(color: c.warning),
                             borderRadius: BorderRadius.circular(7),
                           ),
                           alignment: Alignment.center,
