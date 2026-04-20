@@ -8,38 +8,20 @@ part of 'agent_service.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Provides an [AgentService] with a no-op cancel flag.
-///
-/// The cancel flag is intentionally left as `() => false` here because the
-/// service layer must not import from `lib/features/`. Callers that need
-/// cooperative cancellation (e.g. [ChatMessagesActions]) should supply their
-/// own cancel closure by constructing an [AgentService] directly — or by
-/// reading [agentCancelProvider] themselves and passing it as a closure to
-/// [AgentService.runAgenticTurn] via a wrapper.
+/// Provides an [AgentService] wired to the cancel flag and permission-request
+/// notifier from the chat feature layer.
 
 @ProviderFor(agentService)
 final agentServiceProvider = AgentServiceProvider._();
 
-/// Provides an [AgentService] with a no-op cancel flag.
-///
-/// The cancel flag is intentionally left as `() => false` here because the
-/// service layer must not import from `lib/features/`. Callers that need
-/// cooperative cancellation (e.g. [ChatMessagesActions]) should supply their
-/// own cancel closure by constructing an [AgentService] directly — or by
-/// reading [agentCancelProvider] themselves and passing it as a closure to
-/// [AgentService.runAgenticTurn] via a wrapper.
+/// Provides an [AgentService] wired to the cancel flag and permission-request
+/// notifier from the chat feature layer.
 
 final class AgentServiceProvider
     extends $FunctionalProvider<AsyncValue<AgentService>, AgentService, FutureOr<AgentService>>
     with $FutureModifier<AgentService>, $FutureProvider<AgentService> {
-  /// Provides an [AgentService] with a no-op cancel flag.
-  ///
-  /// The cancel flag is intentionally left as `() => false` here because the
-  /// service layer must not import from `lib/features/`. Callers that need
-  /// cooperative cancellation (e.g. [ChatMessagesActions]) should supply their
-  /// own cancel closure by constructing an [AgentService] directly — or by
-  /// reading [agentCancelProvider] themselves and passing it as a closure to
-  /// [AgentService.runAgenticTurn] via a wrapper.
+  /// Provides an [AgentService] wired to the cancel flag and permission-request
+  /// notifier from the chat feature layer.
   AgentServiceProvider._()
     : super(
         from: null,
@@ -64,4 +46,4 @@ final class AgentServiceProvider
   }
 }
 
-String _$agentServiceHash() => r'1a74d26ba9b66f9f1f86874e0b73eeab9bd40d2e';
+String _$agentServiceHash() => r'2130bb33a618761f9172877da92f4f082d2d6b56';

@@ -245,6 +245,36 @@ void main() {
 
     expect(sentTools!.map((t) => t.name).toList(), ['read_file', 'list_dir']);
   });
+
+  test('askBefore + deny: tool result reports user denial and next round sees it', () async {
+    final aiRepo = _FakeAIRepo([
+      [
+        const StreamEvent.toolCallStart(id: 'c1', name: 'write_file'),
+        const StreamEvent.toolCallArgsDelta(id: 'c1', argsJsonFragment: '{"path":"new.txt","content":"hi"}'),
+        const StreamEvent.toolCallEnd(id: 'c1'),
+        const StreamEvent.finish(reason: 'tool_calls'),
+      ],
+      [const StreamEvent.textDelta('Understood — aborted.'), const StreamEvent.finish(reason: 'stop')],
+    ]);
+
+    Future<bool> deny(_) async => false;
+    final svc = AgentService(ai: aiRepo, codingTools: toolsSvc, cancelFlag: () => false, requestPermission: deny);
+    final messages = <ChatMessage>[];
+    await for (final msg in svc.runAgenticTurn(
+      sessionId: 's',
+      history: const [],
+      userInput: 'write new.txt',
+      model: const AIModel(id: 'm', provider: AIProvider.custom, name: 'm', modelId: 'm'),
+      permission: ChatPermission.askBefore,
+      projectPath: projectDir.path,
+    )) {
+      messages.add(msg);
+    }
+
+    final finalMsg = messages.last;
+    expect(finalMsg.toolEvents.first.status, ToolStatus.cancelled);
+    expect(finalMsg.toolEvents.first.error, contains('Denied'));
+  });
 }
 
 class _WireCapturingFakeRepo extends _FakeAIRepo {

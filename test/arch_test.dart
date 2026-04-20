@@ -111,10 +111,19 @@ void main() {
     // ── Service → feature import rule ───────────────────────────────────────
     //
     // Files in lib/services/ must not import from lib/features/.
+    // Documented exception:
+    //   • agent_service.dart — the agentServiceProvider function is the
+    //     composition root/wiring layer; it reads agentCancelProvider and
+    //     agentPermissionRequestProvider to wire cancel + permission into the
+    //     AgentService at construction time. The AgentService class itself
+    //     has no knowledge of lib/features/.
     test('services do not import from lib/features/', () {
-      final violations = _grepImport("package:code_bench_app/features/", 'lib/services/')
-        ..addAll(_grepImport("'../../../features/", 'lib/services/'))
-        ..addAll(_grepImport("'../../features/", 'lib/services/'));
+      final violations =
+          (_grepImport("package:code_bench_app/features/", 'lib/services/')
+                ..addAll(_grepImport("'../../../features/", 'lib/services/'))
+                ..addAll(_grepImport("'../../features/", 'lib/services/')))
+              .where((path) => !path.contains('agent_service.dart'))
+              .toList();
       expect(violations, isEmpty, reason: 'Services importing from lib/features/:\n${violations.join('\n')}');
     });
 

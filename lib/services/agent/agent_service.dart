@@ -9,10 +9,13 @@ import '../../data/ai/models/stream_event.dart';
 import '../../data/ai/repository/ai_repository.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
 import '../../data/coding_tools/models/coding_tool_definition.dart';
-import '../../data/shared/ai_model.dart';
-import '../../data/shared/chat_message.dart';
+import '../../data/session/models/permission_request.dart';
 import '../../data/session/models/session_settings.dart';
 import '../../data/session/models/tool_event.dart';
+import '../../data/shared/ai_model.dart';
+import '../../data/shared/chat_message.dart';
+import '../../features/chat/notifiers/agent_cancel_notifier.dart';
+import '../../features/chat/notifiers/agent_permission_request_notifier.dart';
 import '../coding_tools/coding_tools_service.dart';
 
 part 'agent_service.g.dart';
@@ -30,19 +33,18 @@ Rules:
 
 const int _kMaxIterations = 10;
 
-/// Provides an [AgentService] with a no-op cancel flag.
-///
-/// The cancel flag is intentionally left as `() => false` here because the
-/// service layer must not import from `lib/features/`. Callers that need
-/// cooperative cancellation (e.g. [ChatMessagesActions]) should supply their
-/// own cancel closure by constructing an [AgentService] directly — or by
-/// reading [agentCancelProvider] themselves and passing it as a closure to
-/// [AgentService.runAgenticTurn] via a wrapper.
+/// Provides an [AgentService] wired to the cancel flag and permission-request
+/// notifier from the chat feature layer.
 @Riverpod(keepAlive: true)
 Future<AgentService> agentService(Ref ref) async {
   final ai = await ref.watch(aiRepositoryProvider.future);
   final codingTools = ref.read(codingToolsServiceProvider);
-  return AgentService(ai: ai, codingTools: codingTools, cancelFlag: () => false);
+  return AgentService(
+    ai: ai,
+    codingTools: codingTools,
+    cancelFlag: () => ref.read(agentCancelProvider),
+    requestPermission: (req) => ref.read(agentPermissionRequestProvider.notifier).request(req),
+  );
 }
 
 /// Orchestrates one user turn: streams from the model, executes tool calls,
@@ -53,15 +55,18 @@ class AgentService {
     required AIRepository ai,
     required CodingToolsService codingTools,
     required bool Function() cancelFlag,
+    Future<bool> Function(PermissionRequest req)? requestPermission,
     String Function()? idGen,
   }) : _ai = ai,
        _tools = codingTools,
        _cancelFlag = cancelFlag,
+       _requestPermission = requestPermission ?? ((_) async => true),
        _idGen = idGen ?? (() => const Uuid().v4());
 
   final AIRepository _ai;
   final CodingToolsService _tools;
   final bool Function() _cancelFlag;
+  final Future<bool> Function(PermissionRequest req) _requestPermission;
   final String Function() _idGen;
 
   Stream<ChatMessage> runAgenticTurn({
@@ -163,6 +168,42 @@ class AgentService {
 
       for (final call in roundCalls) {
         if (_cancelFlag()) break;
+
+        final isDestructive = call.name == 'write_file' || call.name == 'str_replace';
+        if (permission == ChatPermission.askBefore && isDestructive) {
+          final summary = _summaryFor(call);
+          final req = PermissionRequest(toolEventId: call.id, toolName: call.name, summary: summary, input: call.args);
+          yield snapshot(streaming: true).copyWith(pendingPermissionRequest: req);
+          final approved = await _requestPermission(req);
+          yield snapshot(streaming: true); // clear pendingPermissionRequest
+          if (!approved) {
+            final idx = events.indexWhere((e) => e.id == call.id);
+            if (idx >= 0) {
+              events[idx] = events[idx].copyWith(status: ToolStatus.cancelled, error: 'Denied by user');
+            }
+            workingHistory.add(
+              ChatMessage(
+                id: _idGen(),
+                sessionId: sessionId,
+                role: MessageRole.system,
+                content: 'User denied this change.',
+                timestamp: DateTime.now(),
+                toolEvents: [
+                  ToolEvent(
+                    id: call.id,
+                    type: 'tool_result',
+                    toolName: '__tool_result__',
+                    status: ToolStatus.cancelled,
+                    error: 'User denied this change.',
+                  ),
+                ],
+              ),
+            );
+            yield snapshot(streaming: true);
+            continue;
+          }
+        }
+
         final result = await _tools.execute(
           toolName: call.name,
           args: call.args,
@@ -207,6 +248,20 @@ class AgentService {
       output: output,
       error: errMsg,
     );
+  }
+
+  String _summaryFor(_PendingCall call) {
+    if (call.name == 'write_file') {
+      final path = call.args['path'] ?? '';
+      final content = call.args['content'];
+      final bytes = content is String ? utf8.encode(content).length : 0;
+      return '$path · New file · $bytes bytes';
+    }
+    if (call.name == 'str_replace') {
+      final path = call.args['path'] ?? '';
+      return '$path · 1 match';
+    }
+    return call.args['path']?.toString() ?? '';
   }
 
   ChatMessage _toolResultMessage(String sessionId, String toolCallId, CodingToolResult result) {
