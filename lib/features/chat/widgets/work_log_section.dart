@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/tool_event.dart';
@@ -30,8 +31,7 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
   /// Accumulated "work time" in seconds. Incremented on each ticker fire
   /// while a tool is running and deliberately *not* reset on running→
   /// idle transitions: the displayed counter reflects total seconds the
-  /// agent has been actively working on this message across bursts,
-  /// which matches the long-running UX this section is meant to show.
+  /// agent has been actively working on this message across bursts.
   ///
   /// Using an integer counter (rather than `DateTime.now()` minus a
   /// start time) keeps the value deterministic under `tester.pump` —
@@ -113,7 +113,9 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text('⏱ ${elapsedSeconds}s', style: TextStyle(color: c.textSecondary, fontSize: 9)),
+                Icon(AppIcons.clock, size: 9, color: c.textSecondary),
+                const SizedBox(width: 3),
+                Text('${elapsedSeconds}s', style: TextStyle(color: c.textSecondary, fontSize: 9)),
                 const Spacer(),
                 Icon(
                   _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,

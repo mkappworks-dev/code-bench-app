@@ -9,6 +9,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../core/utils/snackbar_helper.dart';
+import '../../../data/session/models/tool_event.dart';
 import '../../../data/shared/chat_message.dart';
 import '../notifiers/ask_question_notifier.dart';
 import '../notifiers/chat_messages_actions.dart';
@@ -244,7 +245,13 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
                       padding: const EdgeInsets.only(bottom: 4),
                       child: ToolCallRow(event: event),
                     ),
-                  if (message.content.isNotEmpty) const SizedBox(height: 8),
+                  if (message.isStreaming &&
+                      !message.toolEvents.any((e) => e.status == ToolStatus.running) &&
+                      message.content.isEmpty) ...[
+                    const SizedBox(height: 8),
+                    const _SkeletonLines(),
+                  ] else if (message.content.isNotEmpty)
+                    const SizedBox(height: 8),
                 ],
                 _MessageContent(message: message),
                 _AssistantActionRow(message: message, hovering: _hovering),
@@ -389,4 +396,51 @@ class _MessageContent extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Skeleton lines (shown while agent generates text after tool calls) ────────
+
+class _SkeletonLines extends StatefulWidget {
+  const _SkeletonLines();
+
+  @override
+  State<_SkeletonLines> createState() => _SkeletonLinesState();
+}
+
+class _SkeletonLinesState extends State<_SkeletonLines> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat(reverse: true);
+    _opacity = Tween(begin: 0.3, end: 0.75).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return FadeTransition(
+      opacity: _opacity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [_line(c.borderColor, 0.88), const SizedBox(height: 7), _line(c.borderColor, 0.60)],
+      ),
+    );
+  }
+
+  Widget _line(Color color, double widthFactor) => FractionallySizedBox(
+    widthFactor: widthFactor,
+    child: Container(
+      height: 10,
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
+    ),
+  );
 }
