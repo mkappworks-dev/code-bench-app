@@ -9,7 +9,8 @@ part 'chat_message.g.dart';
 enum MessageRole {
   user,
   assistant,
-  system;
+  system,
+  interrupted;
 
   String get value => name;
 }

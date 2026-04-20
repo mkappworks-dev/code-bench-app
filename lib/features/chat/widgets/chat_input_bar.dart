@@ -592,7 +592,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            '✕',
+                            '⏹',
                             style: TextStyle(
                               color: c.warning,
                               fontSize: ThemeConstants.uiFontSizeSmall,

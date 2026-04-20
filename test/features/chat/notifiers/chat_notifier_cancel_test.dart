@@ -69,10 +69,11 @@ void main() {
       container.read(chatMessagesProvider('session-1').notifier).cancelSend();
       await Future.microtask(() {});
 
-      // State is AsyncData (not AsyncError, not AsyncLoading).
+      // State is AsyncData with a single interrupted marker.
       final state = container.read(chatMessagesProvider('session-1'));
       expect(state, isA<AsyncData<List<ChatMessage>>>());
-      expect(state.value, isEmpty);
+      expect(state.value?.length, 1);
+      expect(state.value?.first.role, MessageRole.interrupted);
     });
   });
 

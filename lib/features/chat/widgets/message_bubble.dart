@@ -30,15 +30,15 @@ class MessageBubble extends StatelessWidget {
   final String sessionId;
   final bool isLast;
 
-  bool get _isUser => message.role == MessageRole.user;
-
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: _isUser
-          ? _UserBubble(message: message, sessionId: sessionId, isLast: isLast)
-          : _AssistantBubble(message: message),
+      child: switch (message.role) {
+        MessageRole.user => _UserBubble(message: message, sessionId: sessionId, isLast: isLast),
+        MessageRole.interrupted => const _InterruptedBubble(),
+        _ => _AssistantBubble(message: message),
+      },
     );
   }
 }
@@ -154,6 +154,36 @@ class _ActionButton extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(color: color, fontSize: ThemeConstants.uiFontSizeSmall),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Interrupted badge ────────────────────────────────────────────────────────
+
+class _InterruptedBubble extends StatelessWidget {
+  const _InterruptedBubble();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: c.panelBackground,
+          border: Border.all(color: c.subtleBorder),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('⏹', style: TextStyle(color: c.warning, fontSize: ThemeConstants.uiFontSizeSmall)),
+            const SizedBox(width: 4),
+            Text('Interrupted', style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall)),
+          ],
         ),
       ),
     );

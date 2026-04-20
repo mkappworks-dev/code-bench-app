@@ -158,7 +158,16 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     _cancelRequested = true;
     _activeSubscription?.cancel();
     _activeSubscription = null;
-    state = AsyncData(List.from(_preSendMessages));
+    final sessionId = ref.read(activeSessionIdProvider) ?? '';
+    final current = state.value ?? _preSendMessages;
+    final marker = ChatMessage(
+      id: 'interrupted-${DateTime.now().millisecondsSinceEpoch}',
+      sessionId: sessionId,
+      role: MessageRole.interrupted,
+      content: '',
+      timestamp: DateTime.now(),
+    );
+    state = AsyncData([...current, marker]);
     if (_sendCompleter != null && !_sendCompleter!.isCompleted) {
       _sendCompleter!.complete(null);
     }
