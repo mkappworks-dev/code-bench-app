@@ -103,6 +103,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     state = AsyncData(List.from(_preSendMessages));
 
     final activeMessageIdNotifier = ref.read(activeMessageIdProvider.notifier);
+    activeMessageIdNotifier.set('pending');
     String? streamingAssistantId;
     _sendCompleter = Completer<Object?>();
 
@@ -150,7 +151,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final result = await _sendCompleter!.future;
     _sendCompleter = null;
     _activeSubscription = null;
-    if (streamingAssistantId != null) activeMessageIdNotifier.set(null);
+    activeMessageIdNotifier.set(null);
     return result;
   }
 
@@ -158,6 +159,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     _cancelRequested = true;
     _activeSubscription?.cancel();
     _activeSubscription = null;
+    ref.read(activeMessageIdProvider.notifier).set(null);
     final sessionId = ref.read(activeSessionIdProvider) ?? '';
     final current = state.value ?? _preSendMessages;
     final marker = ChatMessage(
@@ -188,9 +190,17 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     if (sessionId == null) return;
     try {
       final service = await ref.read(sessionServiceProvider.future);
-      await service.deleteMessage(sessionId, messageId);
       final current = state.value ?? [];
-      state = AsyncData(current.where((m) => m.id != messageId).toList());
+      final msgIdx = current.indexWhere((m) => m.id == messageId);
+      final trailing = msgIdx >= 0
+          ? current.skip(msgIdx + 1).takeWhile((m) => m.role == MessageRole.interrupted).toList()
+          : <ChatMessage>[];
+      await service.deleteMessage(sessionId, messageId);
+      for (final marker in trailing) {
+        await service.deleteMessage(sessionId, marker.id);
+      }
+      final removed = {messageId, ...trailing.map((m) => m.id)};
+      state = AsyncData(current.where((m) => !removed.contains(m.id)).toList());
     } catch (e, st) {
       dLog('[ChatMessagesNotifier] deleteMessage failed: $e');
       state = AsyncError(e, st);

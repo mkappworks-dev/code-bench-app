@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../data/shared/chat_message.dart';
 import '../notifiers/chat_notifier.dart';
 import 'message_bubble.dart';
 
@@ -93,7 +94,9 @@ class _MessageListState extends ConsumerState<MessageList> {
               );
             }
             final msg = messages[messages.length - 1 - index];
-            return MessageBubble(message: msg, sessionId: widget.sessionId, isLast: index == 0, key: ValueKey(msg.id));
+            final effectiveLastIdx = messages.lastIndexWhere((m) => m.role != MessageRole.interrupted);
+            final isLast = effectiveLastIdx >= 0 && index == messages.length - 1 - effectiveLastIdx;
+            return MessageBubble(message: msg, sessionId: widget.sessionId, isLast: isLast, key: ValueKey(msg.id));
           },
         );
       },
