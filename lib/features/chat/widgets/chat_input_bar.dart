@@ -357,6 +357,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
 
     final c = AppColors.of(context);
     final model = ref.watch(selectedModelProvider);
+    final availableState = ref.watch(availableModelsProvider);
+    final isModelStale = availableState.hasValue && !availableState.value!.any((m) => m.modelId == model.modelId);
     final mode = ref.watch(sessionModeProvider);
     final effort = ref.watch(sessionEffortProvider);
     final permission = ref.watch(sessionPermissionProvider);
@@ -424,8 +426,12 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
               child: Row(
                 children: [
                   Builder(
-                    builder: (ctx) =>
-                        _ControlChip(icon: AppIcons.aiMode, label: model.name, onTap: () => _showModelPicker(ctx)),
+                    builder: (ctx) => _ControlChip(
+                      icon: AppIcons.aiMode,
+                      label: model.name,
+                      isWarning: isModelStale,
+                      onTap: () => _showModelPicker(ctx),
+                    ),
                   ),
                   const SizedBox(width: 4),
                   Builder(
@@ -548,10 +554,11 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
 }
 
 class _ControlChip extends StatelessWidget {
-  const _ControlChip({this.icon, required this.label, required this.onTap});
+  const _ControlChip({this.icon, required this.label, required this.onTap, this.isWarning = false});
   final IconData? icon;
   final String label;
   final VoidCallback onTap;
+  final bool isWarning;
 
   @override
   Widget build(BuildContext context) {
@@ -562,14 +569,15 @@ class _ControlChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
         decoration: BoxDecoration(
-          color: c.chipFill,
-          border: Border.all(color: c.chipStroke),
+          color: isWarning ? c.warningTintBg : c.chipFill,
+          border: Border.all(color: isWarning ? c.warning.withValues(alpha: 0.4) : c.chipStroke),
           borderRadius: BorderRadius.circular(5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[Icon(icon, size: 11, color: c.chipText), const SizedBox(width: 4)],
+            if (isWarning) ...[Icon(AppIcons.warning, size: 10, color: c.warning), const SizedBox(width: 3)],
             Text(
               label,
               style: TextStyle(color: c.chipText, fontSize: ThemeConstants.uiFontSizeSmall),
