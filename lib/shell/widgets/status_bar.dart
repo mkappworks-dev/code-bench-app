@@ -9,8 +9,6 @@ import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/branch_picker/widgets/branch_picker_popover.dart';
 import '../../data/git/models/git_live_state.dart';
 import '../notifiers/status_bar_notifier.dart';
-import 'working_pill.dart';
-
 export '../notifiers/status_bar_notifier.dart' show activeWorktreePathProvider;
 
 class StatusBar extends ConsumerStatefulWidget {
@@ -51,19 +49,6 @@ class _StatusBarState extends ConsumerState<StatusBar> {
       child: Row(
         children: [
           const Spacer(),
-          // Working pill — shown while the agent is running tool calls.
-          Consumer(
-            builder: (context, ref, child) {
-              final sessionId = ref.watch(activeSessionIdProvider);
-              if (sessionId == null) return const SizedBox.shrink();
-              final messageId = ref.watch(activeMessageIdProvider);
-              if (messageId == null) return const SizedBox.shrink();
-              return Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: WorkingPill(sessionId: sessionId, messageId: messageId),
-              );
-            },
-          ),
           // Centre-right: N changes indicator (hidden when 0)
           if (changeCount > 0) ...[
             GestureDetector(

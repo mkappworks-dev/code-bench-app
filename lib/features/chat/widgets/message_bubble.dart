@@ -235,9 +235,11 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (message.isStreaming) const StreamingDot(),
-                if (message.toolEvents.isNotEmpty) ...[
+                if (message.isStreaming || message.toolEvents.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   WorkLogSection(sessionId: message.sessionId, messageId: message.id),
+                ],
+                if (message.toolEvents.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   for (final event in message.toolEvents)
                     Padding(
