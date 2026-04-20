@@ -30,11 +30,11 @@ sealed class CodingToolsDenylistState with _$CodingToolsDenylistState {
   /// union user-added, lowercased.
   Set<String> effective(DenylistCategory category) {
     final base = DenylistDefaults.forCategory(category);
-    final suppressed = suppressedDefaults[category] ?? const <String>{};
+    final suppressed = (suppressedDefaults[category] ?? const <String>{}).map((e) => e.toLowerCase()).toSet();
     final added = userAdded[category] ?? const <String>{};
     return {
       for (final v in base)
-        if (!suppressed.contains(v)) v.toLowerCase(),
+        if (!suppressed.contains(v.toLowerCase())) v.toLowerCase(),
       for (final v in added) v.toLowerCase(),
     };
   }

@@ -27,10 +27,12 @@ class DenylistDefaults {
 
   static const Set<String> prefixes = {'.env.'};
 
-  static Set<String> forCategory(DenylistCategory category) => switch (category) {
-    DenylistCategory.segment => segments,
-    DenylistCategory.filename => filenames,
-    DenylistCategory.extension => extensions,
-    DenylistCategory.prefix => prefixes,
+  static const Map<DenylistCategory, Set<String>> _all = {
+    DenylistCategory.segment: segments,
+    DenylistCategory.filename: filenames,
+    DenylistCategory.extension: extensions,
+    DenylistCategory.prefix: prefixes,
   };
+
+  static Set<String> forCategory(DenylistCategory category) => _all[category]!;
 }
