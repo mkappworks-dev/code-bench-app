@@ -80,13 +80,14 @@ class AgentService {
 
     final workingHistory = <ChatMessage>[
       ...history,
-      ChatMessage(
-        id: _idGen(),
-        sessionId: sessionId,
-        role: MessageRole.user,
-        content: userInput,
-        timestamp: DateTime.now(),
-      ),
+      if (userInput.isNotEmpty)
+        ChatMessage(
+          id: _idGen(),
+          sessionId: sessionId,
+          role: MessageRole.user,
+          content: userInput,
+          timestamp: DateTime.now(),
+        ),
     ];
 
     ChatMessage snapshot({required bool streaming, bool capReached = false}) => ChatMessage(

@@ -77,21 +77,27 @@ class SessionService {
     ChatPermission permission = ChatPermission.fullAccess,
     String? projectPath,
   }) async* {
-    final userMsg = ChatMessage(
-      id: _uuid.v4(),
-      sessionId: sessionId,
-      role: MessageRole.user,
-      content: userInput,
-      timestamp: DateTime.now(),
-    );
-    await _session.persistMessage(sessionId, userMsg);
-    yield userMsg;
+    String? persistedUserMsgId;
+    if (userInput.isNotEmpty) {
+      final userMsg = ChatMessage(
+        id: _uuid.v4(),
+        sessionId: sessionId,
+        role: MessageRole.user,
+        content: userInput,
+        timestamp: DateTime.now(),
+      );
+      persistedUserMsgId = userMsg.id;
+      await _session.persistMessage(sessionId, userMsg);
+      yield userMsg;
+    }
 
     final history = await _session.loadHistory(sessionId, limit: 20);
     // Preserve the existing interrupted-marker filter so MessageRole.interrupted
     // rows never leak into the model's context window.
+    // When persistedUserMsgId is null (no user message was added), no message
+    // is filtered by id — which is correct.
     final historyExcludingCurrent = history
-        .where((m) => m.id != userMsg.id && m.role != MessageRole.interrupted)
+        .where((m) => m.id != persistedUserMsgId && m.role != MessageRole.interrupted)
         .toList();
 
     if (mode == ChatMode.act && model.provider == AIProvider.custom && projectPath != null) {
@@ -108,7 +114,7 @@ class SessionService {
         }
         yield msg;
       }
-      if (historyExcludingCurrent.isEmpty) {
+      if (historyExcludingCurrent.isEmpty && userInput.isNotEmpty) {
         final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
         await _session.updateSessionTitle(sessionId, shortTitle);
       }
@@ -146,7 +152,7 @@ class SessionService {
     await _session.persistMessage(sessionId, finalMsg);
     yield finalMsg;
 
-    if (historyExcludingCurrent.isEmpty) {
+    if (historyExcludingCurrent.isEmpty && userInput.isNotEmpty) {
       final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
       await _session.updateSessionTitle(sessionId, shortTitle);
     }

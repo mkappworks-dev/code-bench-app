@@ -244,6 +244,31 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final current = state.value ?? const <ChatMessage>[];
     state = AsyncData([...older, ...current]);
   }
+
+  /// Clears the [ChatMessage.iterationCapReached] flag on the message with the
+  /// given [messageId]. No-op if the message is not found.
+  void clearIterationCap(String messageId) {
+    final current = state.value ?? [];
+    final idx = current.indexWhere((m) => m.id == messageId);
+    if (idx < 0) return;
+    final updated = List<ChatMessage>.from(current);
+    updated[idx] = updated[idx].copyWith(iterationCapReached: false);
+    state = AsyncData(updated);
+  }
+
+  /// Clears the iteration cap on [messageId] and re-enters the agentic loop
+  /// without injecting a new user message (empty [userInput] is skipped by
+  /// [SessionService] and [AgentService]).
+  ///
+  /// Returns `null` on success, or the caught error object on failure.
+  Future<Object?> continueAgenticTurn(String messageId) async {
+    final sessionId = ref.read(activeSessionIdProvider);
+    if (sessionId == null) {
+      throw StateError('No active session — cannot continue agentic turn.');
+    }
+    clearIterationCap(messageId);
+    return sendMessage('', systemPrompt: null);
+  }
 }
 
 // Sessions list
