@@ -85,7 +85,18 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
 
   Future<void> insertMessage(ChatMessagesCompanion message) => into(chatMessages).insert(message);
 
-  Future<void> deleteMessage(String id) => (delete(chatMessages)..where((t) => t.id.equals(id))).go();
+  Future<void> deleteMessage(String sessionId, String id) =>
+      (delete(chatMessages)..where((t) => t.id.equals(id) & t.sessionId.equals(sessionId))).go();
+
+  /// Deletes [ids] from [sessionId] in a single transaction so a failure
+  /// midway leaves no orphaned rows (e.g. interrupted markers without their
+  /// parent user message).
+  Future<void> deleteMessages(String sessionId, List<String> ids) async {
+    if (ids.isEmpty) return;
+    await transaction(() async {
+      await (delete(chatMessages)..where((t) => t.id.isIn(ids) & t.sessionId.equals(sessionId))).go();
+    });
+  }
 
   Future<void> deleteSessionMessages(String sessionId) =>
       (delete(chatMessages)..where((t) => t.sessionId.equals(sessionId))).go();

@@ -52,4 +52,5 @@ const _$MessageRoleEnumMap = {
   MessageRole.user: 'user',
   MessageRole.assistant: 'assistant',
   MessageRole.system: 'system',
+  MessageRole.interrupted: 'interrupted',
 };

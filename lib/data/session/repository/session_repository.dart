@@ -24,6 +24,7 @@ abstract interface class SessionRepository {
   Future<List<ChatMessage>> loadHistory(String sessionId, {int limit, int offset});
   Future<void> persistMessage(String sessionId, ChatMessage message);
   Future<void> deleteMessage(String sessionId, String messageId);
+  Future<void> deleteMessages(String sessionId, List<String> messageIds);
 
   /// One-shot fetch of all non-archived sessions for [projectId].
   Future<List<ChatSession>> getSessionsByProject(String projectId);

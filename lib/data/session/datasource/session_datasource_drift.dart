@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/utils/debug_logger.dart';
 import '../../_core/app_database.dart';
 import '../../shared/chat_message.dart' as msg;
 import '../models/chat_session.dart';
@@ -142,7 +143,11 @@ class SessionDatasourceDrift implements SessionDatasource {
   }
 
   @override
-  Future<void> deleteMessage(String sessionId, String messageId) => _db.sessionDao.deleteMessage(messageId);
+  Future<void> deleteMessage(String sessionId, String messageId) => _db.sessionDao.deleteMessage(sessionId, messageId);
+
+  @override
+  Future<void> deleteMessages(String sessionId, List<String> messageIds) =>
+      _db.sessionDao.deleteMessages(sessionId, messageIds);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -177,7 +182,9 @@ class SessionDatasourceDrift implements SessionDatasource {
             ),
           )
           .toList();
-    } catch (_) {}
+    } catch (e) {
+      dLog('[SessionDatasourceDrift] failed to parse codeBlocksJson for message ${row.id}: $e');
+    }
 
     return msg.ChatMessage(
       id: row.id,
