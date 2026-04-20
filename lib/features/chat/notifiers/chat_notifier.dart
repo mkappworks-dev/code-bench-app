@@ -11,6 +11,7 @@ import '../../../data/session/models/session_settings.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/chat_session.dart';
 import '../../../services/session/session_service.dart';
+import 'agent_cancel_notifier.dart';
 
 part 'chat_notifier.g.dart';
 
@@ -94,6 +95,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
   /// needing a try-catch around a notifier call.
   Future<Object?> sendMessage(String input, {String? systemPrompt}) async {
     _cancelRequested = false;
+    ref.read(agentCancelProvider.notifier).clear();
 
     final sessionId = ref.read(activeSessionIdProvider);
     if (sessionId == null) throw StateError('No active session — cannot send message.');
@@ -172,6 +174,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     _cancelRequested = true;
     _activeSubscription?.cancel();
     _activeSubscription = null;
+    ref.read(agentCancelProvider.notifier).request();
     ref.read(activeMessageIdProvider.notifier).set(null);
 
     final sessionId = ref.read(activeSessionIdProvider);
