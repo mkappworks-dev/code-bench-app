@@ -85,6 +85,9 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
 
   Future<void> insertMessage(ChatMessagesCompanion message) => into(chatMessages).insert(message);
 
+  Future<void> deleteMessage(String id) =>
+      (delete(chatMessages)..where((t) => t.id.equals(id))).go();
+
   Future<void> deleteSessionMessages(String sessionId) =>
       (delete(chatMessages)..where((t) => t.sessionId.equals(sessionId))).go();
 

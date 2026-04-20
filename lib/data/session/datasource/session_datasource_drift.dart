@@ -141,6 +141,10 @@ class SessionDatasourceDrift implements SessionDatasource {
     await _db.sessionDao.updateSession(sessionId, ChatSessionsCompanion(updatedAt: Value(DateTime.now())));
   }
 
+  @override
+  Future<void> deleteMessage(String sessionId, String messageId) =>
+      _db.sessionDao.deleteMessage(messageId);
+
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   ChatSession _sessionFromRow(ChatSessionRow row) {

@@ -50,6 +50,7 @@ class SessionService {
     permission: permission,
   );
   Future<void> deleteSession(String sessionId) => _session.deleteSession(sessionId);
+  Future<void> deleteMessage(String sessionId, String messageId) => _session.deleteMessage(sessionId, messageId);
   Future<void> archiveSession(String sessionId) => _session.archiveSession(sessionId);
   Future<void> unarchiveSession(String sessionId) => _session.unarchiveSession(sessionId);
   Future<void> deleteAllSessionsAndMessages() => _session.deleteAllSessionsAndMessages();

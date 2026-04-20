@@ -22,4 +22,5 @@ abstract interface class SessionDatasource {
   Future<void> deleteAllSessionsAndMessages();
   Future<List<msg.ChatMessage>> loadHistory(String sessionId, {int limit, int offset});
   Future<void> persistMessage(String sessionId, msg.ChatMessage message);
+  Future<void> deleteMessage(String sessionId, String messageId);
 }
