@@ -95,7 +95,7 @@ void main() {
 
     expect(find.text('WORK LOG'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.text('⏱ 0s'), findsOneWidget);
+    expect(find.text('0s'), findsOneWidget);
 
     // Advance fake clock by 3 periodic ticks.
     await tester.pump(const Duration(seconds: 1));
@@ -104,15 +104,18 @@ void main() {
 
     // Counter is wall-clock based; after ~3 seconds of fake time it should
     // be at least 2 (tolerance for timer drift on the first tick).
-    final elapsedText = tester.widgetList<Text>(find.textContaining('⏱ ')).first.data!;
-    final seconds = int.parse(RegExp(r'⏱ (\d+)s').firstMatch(elapsedText)!.group(1)!);
+    final elapsedText = tester
+        .widgetList<Text>(find.byWidgetPredicate((w) => w is Text && RegExp(r'^\d+s$').hasMatch(w.data ?? '')))
+        .first
+        .data!;
+    final seconds = int.parse(RegExp(r'(\d+)s').firstMatch(elapsedText)!.group(1)!);
     expect(seconds, greaterThanOrEqualTo(2), reason: 'counter should tick while running');
   });
 
   testWidgets('counter keeps ticking across running → done → running transitions', (tester) async {
     // Regression guard for the silent-failure bug where `Timer.periodic`
     // self-cancelled on first `!anyRunning` observation and never
-    // restarted, leaving "⏱ Xs" frozen for any subsequent tool call.
+    // restarted, leaving the elapsed counter frozen for any subsequent tool call.
     _seed = {
       's1': [
         _assistantMessage(sessionId: 's1', id: 'm1', toolEvents: [_running('e1')]),
@@ -147,8 +150,11 @@ void main() {
     // where it was (sticky `_runStart`), NOT frozen at the old value.
     await tester.pump(const Duration(seconds: 2));
 
-    final elapsedText = tester.widgetList<Text>(find.textContaining('⏱ ')).first.data!;
-    final seconds = int.parse(RegExp(r'⏱ (\d+)s').firstMatch(elapsedText)!.group(1)!);
+    final elapsedText = tester
+        .widgetList<Text>(find.byWidgetPredicate((w) => w is Text && RegExp(r'^\d+s$').hasMatch(w.data ?? '')))
+        .first
+        .data!;
+    final seconds = int.parse(RegExp(r'(\d+)s').firstMatch(elapsedText)!.group(1)!);
     expect(seconds, greaterThanOrEqualTo(3), reason: 'counter must not freeze after running → done → running cycle');
   });
 

@@ -5,6 +5,9 @@ import 'package:code_bench_app/data/ai/models/stream_event.dart';
 import 'package:code_bench_app/data/ai/repository/ai_repository.dart';
 import 'package:code_bench_app/data/coding_tools/datasource/coding_tools_datasource_io.dart';
 import 'package:code_bench_app/data/coding_tools/models/coding_tool_definition.dart';
+import 'package:code_bench_app/data/coding_tools/models/coding_tools_denylist_state.dart';
+import 'package:code_bench_app/data/coding_tools/models/denylist_category.dart';
+import 'package:code_bench_app/data/coding_tools/repository/coding_tools_denylist_repository.dart';
 import 'package:code_bench_app/data/coding_tools/repository/coding_tools_repository_impl.dart';
 import 'package:code_bench_app/data/filesystem/datasource/filesystem_datasource_io.dart';
 import 'package:code_bench_app/data/filesystem/repository/filesystem_repository_impl.dart';
@@ -17,6 +20,20 @@ import 'package:code_bench_app/services/agent/agent_service.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
 import 'package:code_bench_app/services/coding_tools/coding_tools_service.dart';
 import 'package:code_bench_app/services/session/session_service.dart';
+
+class _FakeDenylistRepository implements CodingToolsDenylistRepository {
+  @override
+  Future<CodingToolsDenylistState> load() async => CodingToolsDenylistState.empty();
+
+  @override
+  Future<CodingToolsDenylistState> save(CodingToolsDenylistState state) async => state;
+
+  @override
+  Future<Set<String>> effective(DenylistCategory category) async => {};
+
+  @override
+  Future<void> restoreAllDefaults() async {}
+}
 
 class _FakeSessionRepo extends Fake implements SessionRepository {
   final messages = <ChatMessage>[];
@@ -81,6 +98,7 @@ AgentService _buildAgent({required AIRepository ai}) {
   final tools = CodingToolsService(
     repo: CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo()),
     applyService: ApplyService(repo: ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()))),
+    denylist: _FakeDenylistRepository(),
   );
   return AgentService(ai: ai, codingTools: tools, cancelFlag: () => false);
 }

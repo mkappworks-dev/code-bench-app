@@ -5,10 +5,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/core/constants/app_icons.dart';
 import 'package:code_bench_app/core/theme/app_colors.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
+import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/widgets/message_bubble.dart'
     show MessageBubble, StreamingDot, parseCodeFenceInfo;
 
+// Stubs chatMessagesProvider so mounting a streaming MessageBubble doesn't
+// boot the real drift database (WorkLogSection watches this provider).
+class _EmptyChatMessages extends ChatMessagesNotifier {
+  @override
+  Future<List<ChatMessage>> build(String sessionId) async => const [];
+}
+
 Widget _wrap(Widget child) => ProviderScope(
+  overrides: [chatMessagesProvider('sid').overrideWith(_EmptyChatMessages.new)],
   child: MaterialApp(
     theme: ThemeData(extensions: [AppColors.dark]),
     home: Scaffold(body: child),

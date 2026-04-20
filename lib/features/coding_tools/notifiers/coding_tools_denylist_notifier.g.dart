@@ -17,11 +17,7 @@ final codingToolsDenylistProvider = CodingToolsDenylistNotifierProvider._();
 /// Loads the user's denylist divergence and rebuilds when the Actions
 /// notifier invalidates this provider after a mutation.
 final class CodingToolsDenylistNotifierProvider
-    extends
-        $AsyncNotifierProvider<
-          CodingToolsDenylistNotifier,
-          CodingToolsDenylistState
-        > {
+    extends $AsyncNotifierProvider<CodingToolsDenylistNotifier, CodingToolsDenylistState> {
   /// Loads the user's denylist divergence and rebuilds when the Actions
   /// notifier invalidates this provider after a mutation.
   CodingToolsDenylistNotifierProvider._()
@@ -43,31 +39,21 @@ final class CodingToolsDenylistNotifierProvider
   CodingToolsDenylistNotifier create() => CodingToolsDenylistNotifier();
 }
 
-String _$codingToolsDenylistNotifierHash() =>
-    r'57f462bb09016bfc0e9b76d4bea145d84a8c4a3e';
+String _$codingToolsDenylistNotifierHash() => r'57f462bb09016bfc0e9b76d4bea145d84a8c4a3e';
 
 /// Loads the user's denylist divergence and rebuilds when the Actions
 /// notifier invalidates this provider after a mutation.
 
-abstract class _$CodingToolsDenylistNotifier
-    extends $AsyncNotifier<CodingToolsDenylistState> {
+abstract class _$CodingToolsDenylistNotifier extends $AsyncNotifier<CodingToolsDenylistState> {
   FutureOr<CodingToolsDenylistState> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref =
-        this.ref
-            as $Ref<
-              AsyncValue<CodingToolsDenylistState>,
-              CodingToolsDenylistState
-            >;
+    final ref = this.ref as $Ref<AsyncValue<CodingToolsDenylistState>, CodingToolsDenylistState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<
-                AsyncValue<CodingToolsDenylistState>,
-                CodingToolsDenylistState
-              >,
+              AnyNotifier<AsyncValue<CodingToolsDenylistState>, CodingToolsDenylistState>,
               AsyncValue<CodingToolsDenylistState>,
               Object?,
               Object?

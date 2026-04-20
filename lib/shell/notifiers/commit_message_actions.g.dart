@@ -28,8 +28,7 @@ final commitMessageActionsProvider = CommitMessageActionsProvider._();
 /// On [NetworkException], the notifier emits [AsyncError] carrying a
 /// [CommitMessageFailure] so widgets can surface an inline "AI unavailable"
 /// notice via [ref.listen] without needing a try/catch in widget code.
-final class CommitMessageActionsProvider
-    extends $AsyncNotifierProvider<CommitMessageActions, void> {
+final class CommitMessageActionsProvider extends $AsyncNotifierProvider<CommitMessageActions, void> {
   /// Generates AI-assisted text for git workflows: commit messages and PR
   /// title / body. Both methods always return a usable value — the fallback
   /// string — even when the AI call fails, so the commit / PR flow is never
@@ -57,8 +56,7 @@ final class CommitMessageActionsProvider
   CommitMessageActions create() => CommitMessageActions();
 }
 
-String _$commitMessageActionsHash() =>
-    r'c2bd299e8cb9ffe50b5eab7f8510f2cf10991507';
+String _$commitMessageActionsHash() => r'c2bd299e8cb9ffe50b5eab7f8510f2cf10991507';
 
 /// Generates AI-assisted text for git workflows: commit messages and PR
 /// title / body. Both methods always return a usable value — the fallback
@@ -76,13 +74,7 @@ abstract class _$CommitMessageActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<AsyncValue<void>, void>,
-              AsyncValue<void>,
-              Object?,
-              Object?
-            >;
+        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }
