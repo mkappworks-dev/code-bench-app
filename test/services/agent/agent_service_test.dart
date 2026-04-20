@@ -157,6 +157,74 @@ void main() {
     expect(finalMsg.content, contains('Cancelled by user'));
   });
 
+  test('historical replay: prior agentic turn emits tool result exactly once', () async {
+    const prevCallId = 'prev_c1';
+    List<Map<String, dynamic>>? capturedWire;
+    final aiRepo = _WireCapturingFakeRepo([
+      [const StreamEvent.finish(reason: 'stop')],
+    ], onWire: (w) => capturedWire = w);
+
+    final priorHistory = [
+      ChatMessage(
+        id: 'u_prev',
+        sessionId: 's',
+        role: MessageRole.user,
+        content: 'read the file',
+        timestamp: DateTime(2026),
+      ),
+      ChatMessage(
+        id: 'a_prev',
+        sessionId: 's',
+        role: MessageRole.assistant,
+        content: '',
+        timestamp: DateTime(2026),
+        toolEvents: [
+          const ToolEvent(id: prevCallId, type: 'tool_use', toolName: 'read_file', input: {'path': 'a.txt'}),
+        ],
+      ),
+      ChatMessage(
+        id: 's_prev',
+        sessionId: 's',
+        role: MessageRole.system,
+        content: 'hello',
+        timestamp: DateTime(2026),
+        toolEvents: [
+          const ToolEvent(
+            id: prevCallId,
+            type: 'tool_result',
+            toolName: '__tool_result__',
+            status: ToolStatus.success,
+            output: 'hello',
+          ),
+        ],
+      ),
+      ChatMessage(
+        id: 'a_final',
+        sessionId: 's',
+        role: MessageRole.assistant,
+        content: 'Done.',
+        timestamp: DateTime(2026),
+      ),
+    ];
+
+    final svc = AgentService(ai: aiRepo, codingTools: toolsSvc, cancelFlag: () => false);
+    await svc
+        .runAgenticTurn(
+          sessionId: 's',
+          history: priorHistory,
+          userInput: 'next question',
+          model: const AIModel(id: 'm', provider: AIProvider.custom, name: 'm', modelId: 'm'),
+          permission: ChatPermission.fullAccess,
+          projectPath: projectDir.path,
+        )
+        .drain();
+
+    final wire = capturedWire!;
+    final toolEntries = wire.where((m) => m['role'] == 'tool').toList();
+    expect(toolEntries, hasLength(1), reason: 'tool result must appear exactly once, not duplicated');
+    expect(toolEntries.first['tool_call_id'], prevCallId);
+  });
+
   test('readOnly mode filters write tools from the tools list', () async {
     List<CodingToolDefinition>? sentTools;
     final aiRepo = _CapturingFakeRepo([
@@ -177,6 +245,21 @@ void main() {
 
     expect(sentTools!.map((t) => t.name).toList(), ['read_file', 'list_dir']);
   });
+}
+
+class _WireCapturingFakeRepo extends _FakeAIRepo {
+  _WireCapturingFakeRepo(super.scripts, {required this.onWire});
+  final void Function(List<Map<String, dynamic>>) onWire;
+
+  @override
+  Stream<StreamEvent> streamMessageWithTools({
+    required List<Map<String, dynamic>> wireMessages,
+    required List<CodingToolDefinition> tools,
+    required AIModel model,
+  }) {
+    onWire(wireMessages);
+    return super.streamMessageWithTools(wireMessages: wireMessages, tools: tools, model: model);
+  }
 }
 
 class _CapturingFakeRepo extends _FakeAIRepo {

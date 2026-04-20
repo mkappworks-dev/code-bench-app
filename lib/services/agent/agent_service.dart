@@ -41,7 +41,7 @@ const int _kMaxIterations = 10;
 @Riverpod(keepAlive: true)
 Future<AgentService> agentService(Ref ref) async {
   final ai = await ref.watch(aiRepositoryProvider.future);
-  final codingTools = ref.watch(codingToolsServiceProvider);
+  final codingTools = ref.read(codingToolsServiceProvider);
   return AgentService(ai: ai, codingTools: codingTools, cancelFlag: () => false);
 }
 
@@ -259,9 +259,6 @@ class AgentService {
               },
           ],
         });
-        for (final te in msg.toolEvents) {
-          wire.add({'role': 'tool', 'tool_call_id': te.id, 'content': te.output ?? te.error ?? ''});
-        }
       } else {
         wire.add({'role': msg.role.value, 'content': msg.content});
       }
