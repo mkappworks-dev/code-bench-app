@@ -51,10 +51,12 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
 
       await for (final chunk in stream.stream) {
         buffer.write(utf8.decode(chunk));
-        final raw = buffer.toString();
+        final lines = buffer.toString().split('\n');
         buffer.clear();
+        // Retain any incomplete trailing line for the next chunk.
+        buffer.write(lines.removeLast());
 
-        for (final line in raw.split('\n')) {
+        for (final line in lines) {
           final trimmed = line.trim();
           if (trimmed.startsWith('data: ')) {
             final data = trimmed.substring(6);
@@ -176,10 +178,12 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
 
       await for (final chunk in stream.stream) {
         buffer.write(utf8.decode(chunk));
-        final raw = buffer.toString();
+        final lines = buffer.toString().split('\n');
         buffer.clear();
+        // Retain any incomplete trailing line for the next chunk.
+        buffer.write(lines.removeLast());
 
-        for (final line in raw.split('\n')) {
+        for (final line in lines) {
           if (line.trim().isEmpty) continue;
           final event = parseOpenAiToolSseLine(line, idByIndex);
           if (event == null) continue;
@@ -202,6 +206,8 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
               return;
             case StreamTextDelta():
               yield event;
+            // StreamToolCallEnd is synthesised above (finish_reason=tool_calls),
+            // never returned by parseOpenAiToolSseLine — kept for exhaustiveness.
             case StreamToolCallEnd():
               yield event;
           }

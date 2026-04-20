@@ -5,7 +5,7 @@ import 'package:code_bench_app/data/ai/models/stream_event.dart';
 void main() {
   group('parseOpenAiToolSseLine', () {
     test('text delta → StreamTextDelta', () {
-      final event = parseOpenAiToolSseLine('data: {"choices":[{"delta":{"content":"hello"}}]}', const {});
+      final event = parseOpenAiToolSseLine('data: {"choices":[{"delta":{"content":"hello"}}]}', <int, String>{});
       expect(event, isA<StreamTextDelta>());
       expect((event as StreamTextDelta).text, 'hello');
     });
@@ -33,27 +33,35 @@ void main() {
       expect(event.argsJsonFragment, '{"path":');
     });
 
+    test('args delta with unregistered index returns null', () {
+      final event = parseOpenAiToolSseLine(
+        'data: {"choices":[{"delta":{"tool_calls":[{"index":5,"function":{"arguments":"{\\"x\\":"}}]}}]}',
+        <int, String>{},
+      );
+      expect(event, isNull);
+    });
+
     test('finish_reason stop → StreamFinish("stop")', () {
-      final event = parseOpenAiToolSseLine('data: {"choices":[{"finish_reason":"stop"}]}', const {});
+      final event = parseOpenAiToolSseLine('data: {"choices":[{"finish_reason":"stop"}]}', <int, String>{});
       expect(event, isA<StreamFinish>());
       expect((event as StreamFinish).reason, 'stop');
     });
 
     test('finish_reason tool_calls → StreamFinish("tool_calls")', () {
-      final event = parseOpenAiToolSseLine('data: {"choices":[{"finish_reason":"tool_calls"}]}', const {});
+      final event = parseOpenAiToolSseLine('data: {"choices":[{"finish_reason":"tool_calls"}]}', <int, String>{});
       expect((event as StreamFinish).reason, 'tool_calls');
     });
 
     test('[DONE] line returns null', () {
-      expect(parseOpenAiToolSseLine('data: [DONE]', const {}), isNull);
+      expect(parseOpenAiToolSseLine('data: [DONE]', <int, String>{}), isNull);
     });
 
     test('malformed JSON returns null (no throw)', () {
-      expect(parseOpenAiToolSseLine('data: {bad', const {}), isNull);
+      expect(parseOpenAiToolSseLine('data: {bad', <int, String>{}), isNull);
     });
 
     test('non-data line returns null', () {
-      expect(parseOpenAiToolSseLine(': keep-alive', const {}), isNull);
+      expect(parseOpenAiToolSseLine(': keep-alive', <int, String>{}), isNull);
     });
   });
 }
