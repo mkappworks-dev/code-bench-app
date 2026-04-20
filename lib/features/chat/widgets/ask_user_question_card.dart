@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,7 +18,7 @@ class AskUserQuestionCard extends ConsumerStatefulWidget {
 
   final AskUserQuestion question;
   final String sessionId;
-  final ValueChanged<Map<String, dynamic>> onSubmit;
+  final Future<void> Function(Map<String, dynamic>) onSubmit;
   final VoidCallback? onBack;
 
   @override
@@ -60,11 +62,13 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
           selectedOption: _selectedOption,
           freeText: _freeTextController.text.trim().isEmpty ? null : _freeTextController.text.trim(),
         );
-    widget.onSubmit({
-      'step': widget.question.stepIndex,
-      'selectedOption': _selectedOption,
-      'freeText': _freeTextController.text.trim().isEmpty ? null : _freeTextController.text.trim(),
-    });
+    unawaited(
+      widget.onSubmit({
+        'step': widget.question.stepIndex,
+        'selectedOption': _selectedOption,
+        'freeText': _freeTextController.text.trim().isEmpty ? null : _freeTextController.text.trim(),
+      }),
+    );
   }
 
   @override

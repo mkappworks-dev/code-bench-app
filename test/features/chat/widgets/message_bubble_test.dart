@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/core/constants/app_icons.dart';
 import 'package:code_bench_app/core/theme/app_colors.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/features/chat/widgets/message_bubble.dart'
@@ -23,6 +25,87 @@ ChatMessage _msg(MessageRole role, {bool streaming = false}) => ChatMessage(
 );
 
 void main() {
+  testWidgets('assistant message prose is wrapped in a SelectionArea', (tester) async {
+    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.assistant), sessionId: 'sid')));
+    await tester.pumpAndSettle();
+    expect(find.byType(SelectionArea), findsOneWidget);
+  });
+
+  testWidgets('user message prose is NOT wrapped in a SelectionArea', (tester) async {
+    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.user), sessionId: 'sid')));
+    await tester.pumpAndSettle();
+    expect(find.byType(SelectionArea), findsNothing);
+  });
+
+  testWidgets('completed assistant message renders the copy-as-markdown icon', (tester) async {
+    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.assistant), sessionId: 'sid')));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(AppIcons.copy), findsOneWidget);
+  });
+
+  testWidgets('streaming assistant message hides the copy icon', (tester) async {
+    await tester.pumpWidget(
+      _wrap(MessageBubble(message: _msg(MessageRole.assistant, streaming: true), sessionId: 'sid')),
+    );
+    // StreamingDot owns a periodic Timer; `pumpAndSettle` would never resolve
+    // and `pump()` triggers an unowned-Timer assertion at teardown. The single
+    // pumpWidget frame is enough to assert the icon is absent.
+    expect(find.byIcon(AppIcons.copy), findsNothing);
+  });
+
+  testWidgets('empty assistant message hides the copy icon', (tester) async {
+    final msg = ChatMessage(
+      id: 'id',
+      sessionId: 'sid',
+      role: MessageRole.assistant,
+      content: '   ',
+      timestamp: DateTime.now(),
+    );
+    await tester.pumpWidget(_wrap(MessageBubble(message: msg, sessionId: 'sid')));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(AppIcons.copy), findsNothing);
+  });
+
+  testWidgets('user message has no copy-as-markdown icon', (tester) async {
+    await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.user), sessionId: 'sid')));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(AppIcons.copy), findsNothing);
+  });
+
+  testWidgets('tapping copy button copies raw markdown and swaps icon to check', (tester) async {
+    final msg = ChatMessage(
+      id: 'id',
+      sessionId: 'sid',
+      role: MessageRole.assistant,
+      content: '**hello** `world`',
+      timestamp: DateTime.now(),
+    );
+
+    String? copied;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copied = (call.arguments as Map)['text'] as String;
+        }
+        return null;
+      },
+    );
+
+    await tester.pumpWidget(_wrap(MessageBubble(message: msg, sessionId: 'sid')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(AppIcons.copy));
+    await tester.pump();
+
+    expect(copied, '**hello** `world`');
+    expect(find.byIcon(AppIcons.check), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 1600));
+    expect(find.byIcon(AppIcons.check), findsNothing);
+    expect(find.byIcon(AppIcons.copy), findsOneWidget);
+  });
+
   testWidgets('user message is right-aligned', (tester) async {
     await tester.pumpWidget(_wrap(MessageBubble(message: _msg(MessageRole.user), sessionId: 'sid')));
     final align = tester.widget<Align>(find.byType(Align).first);
