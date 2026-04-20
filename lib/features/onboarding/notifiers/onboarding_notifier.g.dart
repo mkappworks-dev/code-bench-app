@@ -12,7 +12,8 @@ part of 'onboarding_notifier.dart';
 @ProviderFor(OnboardingNotifier)
 final onboardingProvider = OnboardingNotifierProvider._();
 
-final class OnboardingNotifierProvider extends $NotifierProvider<OnboardingNotifier, int> {
+final class OnboardingNotifierProvider
+    extends $NotifierProvider<OnboardingNotifier, int> {
   OnboardingNotifierProvider._()
     : super(
         from: null,
@@ -33,11 +34,15 @@ final class OnboardingNotifierProvider extends $NotifierProvider<OnboardingNotif
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(int value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<int>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
   }
 }
 
-String _$onboardingNotifierHash() => r'44e7ec86531554bfd639e411f8501ace89aa6e38';
+String _$onboardingNotifierHash() =>
+    r'44e7ec86531554bfd639e411f8501ace89aa6e38';
 
 abstract class _$OnboardingNotifier extends $Notifier<int> {
   int build();
@@ -45,7 +50,14 @@ abstract class _$OnboardingNotifier extends $Notifier<int> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<int, int>;
-    final element = ref.element as $ClassProviderElement<AnyNotifier<int, int>, int, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

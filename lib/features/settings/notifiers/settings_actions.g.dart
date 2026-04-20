@@ -16,7 +16,8 @@ final settingsActionsProvider = SettingsActionsProvider._();
 
 /// Imperative actions for onboarding and data wipe. API key test/save
 /// methods have moved to ProvidersActions in features/providers/.
-final class SettingsActionsProvider extends $AsyncNotifierProvider<SettingsActions, void> {
+final class SettingsActionsProvider
+    extends $AsyncNotifierProvider<SettingsActions, void> {
   /// Imperative actions for onboarding and data wipe. API key test/save
   /// methods have moved to ProvidersActions in features/providers/.
   SettingsActionsProvider._()
@@ -50,7 +51,13 @@ abstract class _$SettingsActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

@@ -13,7 +13,12 @@ part of 'project_datasource_drift.dart';
 final projectDatasourceProvider = ProjectDatasourceProvider._();
 
 final class ProjectDatasourceProvider
-    extends $FunctionalProvider<ProjectDatasource, ProjectDatasource, ProjectDatasource>
+    extends
+        $FunctionalProvider<
+          ProjectDatasource,
+          ProjectDatasource,
+          ProjectDatasource
+        >
     with $Provider<ProjectDatasource> {
   ProjectDatasourceProvider._()
     : super(
@@ -31,7 +36,9 @@ final class ProjectDatasourceProvider
 
   @$internal
   @override
-  $ProviderElement<ProjectDatasource> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<ProjectDatasource> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   ProjectDatasource create(Ref ref) {
@@ -40,7 +47,10 @@ final class ProjectDatasourceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ProjectDatasource value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ProjectDatasource>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProjectDatasource>(value),
+    );
   }
 }
 

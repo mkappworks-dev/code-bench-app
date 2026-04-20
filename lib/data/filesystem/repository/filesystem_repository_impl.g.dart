@@ -13,7 +13,12 @@ part of 'filesystem_repository_impl.dart';
 final filesystemRepositoryProvider = FilesystemRepositoryProvider._();
 
 final class FilesystemRepositoryProvider
-    extends $FunctionalProvider<FilesystemRepository, FilesystemRepository, FilesystemRepository>
+    extends
+        $FunctionalProvider<
+          FilesystemRepository,
+          FilesystemRepository,
+          FilesystemRepository
+        >
     with $Provider<FilesystemRepository> {
   FilesystemRepositoryProvider._()
     : super(
@@ -31,7 +36,9 @@ final class FilesystemRepositoryProvider
 
   @$internal
   @override
-  $ProviderElement<FilesystemRepository> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<FilesystemRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   FilesystemRepository create(Ref ref) {
@@ -40,8 +47,12 @@ final class FilesystemRepositoryProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(FilesystemRepository value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<FilesystemRepository>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<FilesystemRepository>(value),
+    );
   }
 }
 
-String _$filesystemRepositoryHash() => r'3c601e4b604c4972f7cab5eee796fb043d165d15';
+String _$filesystemRepositoryHash() =>
+    r'3c601e4b604c4972f7cab5eee796fb043d165d15';

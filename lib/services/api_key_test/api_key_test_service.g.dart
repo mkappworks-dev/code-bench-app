@@ -13,7 +13,12 @@ part of 'api_key_test_service.dart';
 final apiKeyTestServiceProvider = ApiKeyTestServiceProvider._();
 
 final class ApiKeyTestServiceProvider
-    extends $FunctionalProvider<ApiKeyTestService, ApiKeyTestService, ApiKeyTestService>
+    extends
+        $FunctionalProvider<
+          ApiKeyTestService,
+          ApiKeyTestService,
+          ApiKeyTestService
+        >
     with $Provider<ApiKeyTestService> {
   ApiKeyTestServiceProvider._()
     : super(
@@ -31,7 +36,9 @@ final class ApiKeyTestServiceProvider
 
   @$internal
   @override
-  $ProviderElement<ApiKeyTestService> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<ApiKeyTestService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   ApiKeyTestService create(Ref ref) {
@@ -40,7 +47,10 @@ final class ApiKeyTestServiceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ApiKeyTestService value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ApiKeyTestService>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ApiKeyTestService>(value),
+    );
   }
 }
 

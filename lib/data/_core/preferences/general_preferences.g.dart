@@ -13,7 +13,12 @@ part of 'general_preferences.dart';
 final generalPreferencesProvider = GeneralPreferencesProvider._();
 
 final class GeneralPreferencesProvider
-    extends $FunctionalProvider<GeneralPreferences, GeneralPreferences, GeneralPreferences>
+    extends
+        $FunctionalProvider<
+          GeneralPreferences,
+          GeneralPreferences,
+          GeneralPreferences
+        >
     with $Provider<GeneralPreferences> {
   GeneralPreferencesProvider._()
     : super(
@@ -31,7 +36,9 @@ final class GeneralPreferencesProvider
 
   @$internal
   @override
-  $ProviderElement<GeneralPreferences> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<GeneralPreferences> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   GeneralPreferences create(Ref ref) {
@@ -40,8 +47,12 @@ final class GeneralPreferencesProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(GeneralPreferences value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<GeneralPreferences>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<GeneralPreferences>(value),
+    );
   }
 }
 
-String _$generalPreferencesHash() => r'45c3499e243189d6a6bd66afdeb2736ffba541dc';
+String _$generalPreferencesHash() =>
+    r'45c3499e243189d6a6bd66afdeb2736ffba541dc';
