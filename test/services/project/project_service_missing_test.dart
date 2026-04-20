@@ -9,20 +9,28 @@ import 'package:code_bench_app/data/project/repository/project_repository_impl.d
 import 'package:drift/native.dart';
 
 void main() {
-  late Directory tmpDir;
+  late AppDatabase db;
   late ProviderContainer container;
   late ProjectRepository service;
+  late Directory tmpDir;
 
-  setUp(() async {
-    tmpDir = await Directory.systemTemp.createTemp('project_missing_test_');
-    container = ProviderContainer(
-      overrides: [appDatabaseProvider.overrideWith((ref) => AppDatabase.forTesting(NativeDatabase.memory()))],
-    );
+  setUpAll(() async {
+    db = AppDatabase.forTesting(NativeDatabase.memory());
+    container = ProviderContainer(overrides: [appDatabaseProvider.overrideWith((ref) => db)]);
     service = container.read(projectRepositoryProvider);
   });
 
-  tearDown(() async {
+  tearDownAll(() async {
     container.dispose();
+    await db.close();
+  });
+
+  setUp(() async {
+    await db.projectDao.deleteAllProjects();
+    tmpDir = await Directory.systemTemp.createTemp('project_missing_test_');
+  });
+
+  tearDown(() async {
     if (tmpDir.existsSync()) await tmpDir.delete(recursive: true);
   });
 
