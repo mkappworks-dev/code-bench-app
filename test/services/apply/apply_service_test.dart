@@ -88,7 +88,7 @@ void main() {
       expect(change.filePath, tmpFile);
       expect(change.originalContent, 'original content');
       expect(change.newContent, 'new content');
-      expect(change.contentChecksum, ApplyService.sha256OfString('new content'));
+      expect(change.contentChecksum, ApplyRepository.sha256OfString('new content'));
     });
 
     test('throws PathEscapeException for path outside project', () async {
@@ -264,7 +264,7 @@ void main() {
       repo.setReadContent(content);
       final service = makeService(repo: repo);
 
-      final checksum = ApplyService.sha256OfString(content);
+      final checksum = ApplyRepository.sha256OfString(content);
       final result = await service.isExternallyModified('/tmp/file.dart', checksum);
       expect(result, isFalse);
     });
@@ -287,7 +287,7 @@ void main() {
     });
   });
 
-  group('ApplyService.assertWithinProject (static)', () {
+  group('ApplyRepository.assertWithinProject (static)', () {
     late Directory tmpProj;
 
     setUp(() async {
@@ -299,32 +299,35 @@ void main() {
     });
 
     test('does not throw for path inside project', () {
-      expect(() => ApplyService.assertWithinProject('${tmpProj.path}/src/file.dart', tmpProj.path), returnsNormally);
+      expect(() => ApplyRepository.assertWithinProject('${tmpProj.path}/src/file.dart', tmpProj.path), returnsNormally);
     });
 
     test('throws PathEscapeException for traversal', () {
       expect(
-        () => ApplyService.assertWithinProject('/tmp/other/evil.dart', tmpProj.path),
+        () => ApplyRepository.assertWithinProject('/tmp/other/evil.dart', tmpProj.path),
         throwsA(isA<PathEscapeException>()),
       );
     });
 
     test('throws PathEscapeException for path equal to project root', () {
-      expect(() => ApplyService.assertWithinProject(tmpProj.path, tmpProj.path), throwsA(isA<PathEscapeException>()));
+      expect(
+        () => ApplyRepository.assertWithinProject(tmpProj.path, tmpProj.path),
+        throwsA(isA<PathEscapeException>()),
+      );
     });
   });
 
-  group('ApplyService.sha256OfString (static)', () {
+  group('ApplyRepository.sha256OfString (static)', () {
     test('produces consistent hex digest', () {
-      final digest1 = ApplyService.sha256OfString('hello');
-      final digest2 = ApplyService.sha256OfString('hello');
+      final digest1 = ApplyRepository.sha256OfString('hello');
+      final digest2 = ApplyRepository.sha256OfString('hello');
       expect(digest1, digest2);
       expect(digest1, hasLength(64));
     });
 
     test('differs for different inputs', () {
-      final d1 = ApplyService.sha256OfString('a');
-      final d2 = ApplyService.sha256OfString('b');
+      final d1 = ApplyRepository.sha256OfString('a');
+      final d2 = ApplyRepository.sha256OfString('b');
       expect(d1, isNot(equals(d2)));
     });
   });

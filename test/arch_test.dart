@@ -7,7 +7,9 @@ void main() {
     //
     // Permitted locations for `import 'dart:io'`:
     //   • Datasource files: *_io.dart, *_process.dart
-    //   • apply_service.dart — static security guard (documented in CLAUDE.md)
+    //   • apply_service.dart — catches dart:io exception types (PathNotFoundException,
+    //     FileSystemException) thrown by the repository. The static assertWithinProject
+    //     security guard lives on ApplyRepository (lib/data/apply/repository/).
     //   • platform_utils.dart — read-only Platform detection, no I/O
     //   • action_output_notifier.dart — Process.start for user-defined actions
     //     (documented in shell/notifiers/ with a SECURITY note; this notifier
@@ -63,7 +65,8 @@ void main() {
     //
     // Widgets and screens must not import from lib/services/, lib/data/**/datasource/,
     // or lib/data/**/repository/ directly. Documented exceptions:
-    //   • apply_service.dart — static assertWithinProject security guard
+    //   • apply_service.dart — ApplyRepository.assertWithinProject static security
+    //     guard (imported via apply_service.dart's re-exports)
     test('widgets do not import services or datasources directly', () {
       final widgetFiles = _dartFiles(
         'lib/',

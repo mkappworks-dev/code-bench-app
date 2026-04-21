@@ -32,7 +32,7 @@ final class CodingToolsDenylistActionsProvider extends $AsyncNotifierProvider<Co
   CodingToolsDenylistActions create() => CodingToolsDenylistActions();
 }
 
-String _$codingToolsDenylistActionsHash() => r'9757d73c20c0a0f59632b516774000c69543f012';
+String _$codingToolsDenylistActionsHash() => r'7b685303e4f4e682f23259388cbb3eb0f4b35c65';
 
 abstract class _$CodingToolsDenylistActions extends $AsyncNotifier<void> {
   FutureOr<void> build();

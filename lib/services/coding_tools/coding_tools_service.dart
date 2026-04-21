@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/utils/debug_logger.dart';
+import '../../data/apply/repository/apply_repository.dart';
 import '../../data/coding_tools/models/coding_tool_result.dart';
 import '../../data/coding_tools/models/denylist_category.dart';
 import '../../data/coding_tools/repository/coding_tools_denylist_repository.dart';
@@ -85,7 +86,7 @@ class CodingToolsService {
 
   /// Throws [BlockedPathException] if [abs] lands on a sensitive dotfile,
   /// credential file, or key-material extension _inside_ the project root.
-  /// Complements [ApplyService.assertWithinProject], which only bounds the
+  /// Complements [ApplyRepository.assertWithinProject], which only bounds the
   /// project boundary. Called from every tool handler.
   void _assertNotDenied(String abs, String projectPath, _EffectiveDenylist denylist) {
     final rel = p.relative(abs, from: projectPath);
@@ -150,7 +151,7 @@ class CodingToolsService {
     final denylist = await _loadEffectiveDenylist();
 
     try {
-      ApplyService.assertWithinProject(abs, projectPath);
+      ApplyRepository.assertWithinProject(abs, projectPath);
       _assertNotDenied(abs, projectPath, denylist);
       final size = await _repo.fileSizeBytes(abs);
       if (size > _kMaxReadBytes) {
@@ -190,7 +191,7 @@ class CodingToolsService {
       final normalAbs = p.normalize(p.absolute(abs));
       final normalRoot = p.normalize(p.absolute(projectPath));
       if (normalAbs != normalRoot) {
-        ApplyService.assertWithinProject(abs, projectPath);
+        ApplyRepository.assertWithinProject(abs, projectPath);
         _assertNotDenied(abs, projectPath, denylist);
       } else if (!await _repo.directoryExists(normalRoot)) {
         throw ProjectMissingException(projectPath);
@@ -250,7 +251,7 @@ class CodingToolsService {
     final denylist = await _loadEffectiveDenylist();
 
     try {
-      ApplyService.assertWithinProject(abs, projectPath);
+      ApplyRepository.assertWithinProject(abs, projectPath);
       _assertNotDenied(abs, projectPath, denylist);
       await _apply.applyChange(
         filePath: abs,
@@ -292,7 +293,7 @@ class CodingToolsService {
     final denylist = await _loadEffectiveDenylist();
 
     try {
-      ApplyService.assertWithinProject(abs, projectPath);
+      ApplyRepository.assertWithinProject(abs, projectPath);
       _assertNotDenied(abs, projectPath, denylist);
       final original = await _repo.readTextFile(abs);
       final matchCount = _countOccurrences(original, oldStr);

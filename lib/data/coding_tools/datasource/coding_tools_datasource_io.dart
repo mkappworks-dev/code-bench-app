@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 /// Raw filesystem I/O for the coding tools. No path guards — callers
-/// (`CodingToolsRepository` + `ApplyService.assertWithinProject`) own that.
+/// (`CodingToolsRepository` + `ApplyRepository.assertWithinProject`) own that.
 class CodingToolsDatasourceIo {
   Future<Uint8List> readFileBytes(String path) => File(path).readAsBytes();
   Future<int> fileSizeBytes(String path) => File(path).length();

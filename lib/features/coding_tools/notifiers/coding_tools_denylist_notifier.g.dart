@@ -39,7 +39,7 @@ final class CodingToolsDenylistNotifierProvider
   CodingToolsDenylistNotifier create() => CodingToolsDenylistNotifier();
 }
 
-String _$codingToolsDenylistNotifierHash() => r'57f462bb09016bfc0e9b76d4bea145d84a8c4a3e';
+String _$codingToolsDenylistNotifierHash() => r'e0264f7bc56669fffac0580edbff8b129bbf8e7b';
 
 /// Loads the user's denylist divergence and rebuilds when the Actions
 /// notifier invalidates this provider after a mutation.

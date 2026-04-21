@@ -3,7 +3,8 @@
 import 'package:path/path.dart' as p;
 
 import '../../../core/utils/debug_logger.dart';
-import '../../../services/apply/apply_service.dart';
+import '../../apply/apply_exceptions.dart';
+import '../../apply/repository/apply_repository.dart';
 import 'coding_tool_result.dart';
 import 'effective_denylist.dart';
 import 'path_result.dart';
@@ -45,7 +46,7 @@ class ToolContext {
     final abs = p.isAbsolute(raw) ? p.normalize(raw) : p.normalize(p.join(projectPath, raw));
 
     try {
-      ApplyService.assertWithinProject(abs, projectPath);
+      ApplyRepository.assertWithinProject(abs, projectPath);
     } on PathEscapeException {
       return PathErr(CodingToolResult.error('Path "$displayRaw" is outside the project root.'));
     }
