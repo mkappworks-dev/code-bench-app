@@ -6,6 +6,9 @@ import 'package:code_bench_app/data/ai/models/stream_event.dart';
 import 'package:code_bench_app/data/ai/repository/ai_repository.dart';
 import 'package:code_bench_app/data/coding_tools/datasource/coding_tools_datasource_io.dart';
 import 'package:code_bench_app/data/coding_tools/models/coding_tool_definition.dart';
+import 'package:code_bench_app/data/coding_tools/models/coding_tools_denylist_state.dart';
+import 'package:code_bench_app/data/coding_tools/models/denylist_category.dart';
+import 'package:code_bench_app/data/coding_tools/repository/coding_tools_denylist_repository.dart';
 import 'package:code_bench_app/data/coding_tools/repository/coding_tools_repository_impl.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
@@ -18,6 +21,20 @@ import 'package:code_bench_app/services/apply/apply_service.dart';
 import 'package:code_bench_app/services/coding_tools/coding_tools_service.dart';
 import 'package:code_bench_app/services/agent/agent_service.dart';
 import 'package:path/path.dart' as p;
+
+class _FakeDenylistRepository implements CodingToolsDenylistRepository {
+  @override
+  Future<CodingToolsDenylistState> load() async => CodingToolsDenylistState.empty();
+
+  @override
+  Future<CodingToolsDenylistState> save(CodingToolsDenylistState state) async => state;
+
+  @override
+  Future<Set<String>> effective(DenylistCategory category) async => {};
+
+  @override
+  Future<void> restoreAllDefaults() async {}
+}
 
 class _FakeAIRepo implements AIRepository {
   _FakeAIRepo(this.scripts);
@@ -61,7 +78,7 @@ void main() {
     final repo = CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo());
     final applyRepo = ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()));
     final applySvc = ApplyService(repo: applyRepo);
-    toolsSvc = CodingToolsService(repo: repo, applyService: applySvc);
+    toolsSvc = CodingToolsService(repo: repo, applyService: applySvc, denylist: _FakeDenylistRepository());
   });
 
   tearDown(() async {

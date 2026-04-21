@@ -6,6 +6,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/utils/debug_logger.dart';
 import '../../data/coding_tools/models/coding_tool_result.dart';
+import '../../data/coding_tools/models/denylist_category.dart';
+import '../../data/coding_tools/repository/coding_tools_denylist_repository.dart';
+import '../../data/coding_tools/repository/coding_tools_denylist_repository_impl.dart';
 import '../../data/coding_tools/repository/coding_tools_repository.dart';
 import '../../data/coding_tools/repository/coding_tools_repository_impl.dart';
 import '../apply/apply_service.dart';
@@ -15,48 +18,37 @@ export '../../data/coding_tools/models/coding_tool_result.dart';
 part 'coding_tools_service.g.dart';
 
 @Riverpod(keepAlive: true)
-CodingToolsService codingToolsService(Ref ref) =>
-    CodingToolsService(repo: ref.watch(codingToolsRepositoryProvider), applyService: ref.watch(applyServiceProvider));
+CodingToolsService codingToolsService(Ref ref) => CodingToolsService(
+  repo: ref.watch(codingToolsRepositoryProvider),
+  applyService: ref.watch(applyServiceProvider),
+  denylist: ref.watch(codingToolsDenylistRepositoryProvider),
+);
+
+typedef _EffectiveDenylist = ({
+  Set<String> segments,
+  Set<String> filenames,
+  Set<String> extensions,
+  Set<String> prefixes,
+});
 
 /// Executes a single tool call. Each handler is path-guarded, size-capped,
 /// and scrubs error messages before returning them to the loop.
 class CodingToolsService {
-  CodingToolsService({required CodingToolsRepository repo, required ApplyService applyService})
-    : _repo = repo,
-      _apply = applyService;
+  CodingToolsService({
+    required CodingToolsRepository repo,
+    required ApplyService applyService,
+    required CodingToolsDenylistRepository denylist,
+  }) : _repo = repo,
+       _apply = applyService,
+       _denylist = denylist;
 
   final CodingToolsRepository _repo;
   final ApplyService _apply;
+  final CodingToolsDenylistRepository _denylist;
 
   static const int _kMaxReadBytes = 2 * 1024 * 1024; // 2 MB
   static const int _kMaxListEntries = 500;
   static const int _kMaxListDepth = 3;
-
-  // Segment-level denylist: any path whose relative segments include one of
-  // these (case-insensitive) is refused. Covers directory trees (.git/,
-  // .ssh/, node_modules/ won't stop at .git). Segments are matched whole.
-  static const Set<String> _deniedSegments = {'.git', '.ssh', '.aws', '.gnupg', '.config'};
-
-  // Filename denylist (exact, case-insensitive) at any depth.
-  static const Set<String> _deniedFilenames = {
-    '.env',
-    '.netrc',
-    '.npmrc',
-    '.pypirc',
-    '.htpasswd',
-    'credentials',
-    'secrets',
-    'id_rsa',
-    'id_dsa',
-    'id_ecdsa',
-    'id_ed25519',
-  };
-
-  // Extension denylist (case-insensitive). Matched on the trailing extension.
-  static const Set<String> _deniedExtensions = {'.pem', '.key', '.p12', '.pfx', '.jks'};
-
-  // Filename prefix denylist: `.env.local`, `.env.production`, etc.
-  static const List<String> _deniedFilenamePrefixes = ['.env.'];
 
   Future<CodingToolResult> execute({
     required String toolName,
@@ -95,25 +87,25 @@ class CodingToolsService {
   /// credential file, or key-material extension _inside_ the project root.
   /// Complements [ApplyService.assertWithinProject], which only bounds the
   /// project boundary. Called from every tool handler.
-  void _assertNotDenied(String abs, String projectPath) {
+  void _assertNotDenied(String abs, String projectPath, _EffectiveDenylist denylist) {
     final rel = p.relative(abs, from: projectPath);
     for (final segRaw in p.split(rel)) {
       final seg = segRaw.toLowerCase();
       if (seg.isEmpty || seg == '.' || seg == '..') continue;
-      if (_deniedSegments.contains(seg)) {
+      if (denylist.segments.contains(seg)) {
         sLog('[CodingTools] denied segment: "$rel" (segment=$seg)');
         throw BlockedPathException(rel, 'blocked directory');
       }
-      if (_deniedFilenames.contains(seg)) {
+      if (denylist.filenames.contains(seg)) {
         sLog('[CodingTools] denied filename: "$rel" (name=$seg)');
         throw BlockedPathException(rel, 'blocked filename');
       }
-      if (_deniedFilenamePrefixes.any(seg.startsWith)) {
+      if (denylist.prefixes.any(seg.startsWith)) {
         sLog('[CodingTools] denied filename prefix: "$rel" (name=$seg)');
         throw BlockedPathException(rel, 'blocked filename');
       }
       final ext = p.extension(seg).toLowerCase();
-      if (ext.isNotEmpty && _deniedExtensions.contains(ext)) {
+      if (ext.isNotEmpty && denylist.extensions.contains(ext)) {
         sLog('[CodingTools] denied extension: "$rel" (ext=$ext)');
         throw BlockedPathException(rel, 'blocked extension');
       }
@@ -123,18 +115,25 @@ class CodingToolsService {
   /// Returns `true` if [relPath] (a path relative to the project root) would
   /// match the denylist. Used by `list_dir` to filter entries without
   /// revealing that they exist.
-  bool _isDeniedRel(String relPath) {
+  bool _isDeniedRel(String relPath, _EffectiveDenylist denylist) {
     for (final segRaw in p.split(relPath)) {
       final seg = segRaw.toLowerCase();
       if (seg.isEmpty || seg == '.' || seg == '..') continue;
-      if (_deniedSegments.contains(seg)) return true;
-      if (_deniedFilenames.contains(seg)) return true;
-      if (_deniedFilenamePrefixes.any(seg.startsWith)) return true;
+      if (denylist.segments.contains(seg)) return true;
+      if (denylist.filenames.contains(seg)) return true;
+      if (denylist.prefixes.any(seg.startsWith)) return true;
       final ext = p.extension(seg).toLowerCase();
-      if (ext.isNotEmpty && _deniedExtensions.contains(ext)) return true;
+      if (ext.isNotEmpty && denylist.extensions.contains(ext)) return true;
     }
     return false;
   }
+
+  Future<_EffectiveDenylist> _loadEffectiveDenylist() async => (
+    segments: await _denylist.effective(DenylistCategory.segment),
+    filenames: await _denylist.effective(DenylistCategory.filename),
+    extensions: await _denylist.effective(DenylistCategory.extension),
+    prefixes: await _denylist.effective(DenylistCategory.prefix),
+  );
 
   // Newlines or control chars in a model-supplied path would pollute the
   // tool_result message fed back to the next iteration. Strip and truncate.
@@ -148,10 +147,11 @@ class CodingToolsService {
     if (raw is! String || raw.isEmpty) return CodingToolResult.error('read_file requires a non-empty "path"');
     final safeRaw = _sanitize(raw);
     final abs = _resolve(raw, projectPath);
+    final denylist = await _loadEffectiveDenylist();
 
     try {
       ApplyService.assertWithinProject(abs, projectPath);
-      _assertNotDenied(abs, projectPath);
+      _assertNotDenied(abs, projectPath, denylist);
       final size = await _repo.fileSizeBytes(abs);
       if (size > _kMaxReadBytes) {
         return CodingToolResult.error(
@@ -182,6 +182,7 @@ class CodingToolsService {
     final safeRaw = _sanitize(raw);
     final recursive = args['recursive'] == true;
     final abs = _resolve(raw, projectPath);
+    final denylist = await _loadEffectiveDenylist();
 
     try {
       // Allow the project root itself; assertWithinProject only accepts paths
@@ -190,7 +191,7 @@ class CodingToolsService {
       final normalRoot = p.normalize(p.absolute(projectPath));
       if (normalAbs != normalRoot) {
         ApplyService.assertWithinProject(abs, projectPath);
-        _assertNotDenied(abs, projectPath);
+        _assertNotDenied(abs, projectPath, denylist);
       } else if (!await _repo.directoryExists(normalRoot)) {
         throw ProjectMissingException(projectPath);
       }
@@ -206,13 +207,12 @@ class CodingToolsService {
         if (recursive && depth > _kMaxListDepth) continue;
         // Filter: never reveal denied entries in the listing. The model
         // should not learn a `.env` exists.
-        if (_isDeniedRel(p.relative(entry.path, from: projectPath))) continue;
+        if (_isDeniedRel(p.relative(entry.path, from: projectPath), denylist)) continue;
         final String typeStr;
         try {
           typeStr = entry.statSync().type.toString().split('.').last;
-        } on FileSystemException {
-          // Races, broken symlinks, permission-denied — skip the entry rather
-          // than abort the whole listing.
+        } on FileSystemException catch (e) {
+          dLog('[CodingToolsService] list_dir stat failed for "${entry.path}": ${e.osError?.message ?? e.message}');
           continue;
         }
         buffer.writeln('- $rel ($typeStr)');
@@ -247,9 +247,11 @@ class CodingToolsService {
     if (content is! String) return CodingToolResult.error('write_file requires a string "content"');
     final safeRaw = _sanitize(raw);
     final abs = _resolve(raw, projectPath);
+    final denylist = await _loadEffectiveDenylist();
 
     try {
-      _assertNotDenied(abs, projectPath);
+      ApplyService.assertWithinProject(abs, projectPath);
+      _assertNotDenied(abs, projectPath, denylist);
       await _apply.applyChange(
         filePath: abs,
         projectPath: projectPath,
@@ -287,10 +289,11 @@ class CodingToolsService {
     if (newStr is! String) return CodingToolResult.error('str_replace requires "new_str"');
     final safeRaw = _sanitize(raw);
     final abs = _resolve(raw, projectPath);
+    final denylist = await _loadEffectiveDenylist();
 
     try {
       ApplyService.assertWithinProject(abs, projectPath);
-      _assertNotDenied(abs, projectPath);
+      _assertNotDenied(abs, projectPath, denylist);
       final original = await _repo.readTextFile(abs);
       final matchCount = _countOccurrences(original, oldStr);
       if (matchCount == 0) {

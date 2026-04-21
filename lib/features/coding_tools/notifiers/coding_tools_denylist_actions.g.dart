@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'archive_actions.dart';
+part of 'coding_tools_denylist_actions.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -8,38 +8,33 @@ part of 'archive_actions.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Imperative actions for the Archive screen.
 
-@ProviderFor(ArchiveActions)
-final archiveActionsProvider = ArchiveActionsProvider._();
+@ProviderFor(CodingToolsDenylistActions)
+final codingToolsDenylistActionsProvider = CodingToolsDenylistActionsProvider._();
 
-/// Imperative actions for the Archive screen.
-final class ArchiveActionsProvider extends $AsyncNotifierProvider<ArchiveActions, void> {
-  /// Imperative actions for the Archive screen.
-  ArchiveActionsProvider._()
+final class CodingToolsDenylistActionsProvider extends $AsyncNotifierProvider<CodingToolsDenylistActions, void> {
+  CodingToolsDenylistActionsProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'archiveActionsProvider',
+        name: r'codingToolsDenylistActionsProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$archiveActionsHash();
+  String debugGetCreateSourceHash() => _$codingToolsDenylistActionsHash();
 
   @$internal
   @override
-  ArchiveActions create() => ArchiveActions();
+  CodingToolsDenylistActions create() => CodingToolsDenylistActions();
 }
 
-String _$archiveActionsHash() => r'ff8468b6a8b20631596608fe141a348b5009c26d';
+String _$codingToolsDenylistActionsHash() => r'9757d73c20c0a0f59632b516774000c69543f012';
 
-/// Imperative actions for the Archive screen.
-
-abstract class _$ArchiveActions extends $AsyncNotifier<void> {
+abstract class _$CodingToolsDenylistActions extends $AsyncNotifier<void> {
   FutureOr<void> build();
   @$mustCallSuper
   @override

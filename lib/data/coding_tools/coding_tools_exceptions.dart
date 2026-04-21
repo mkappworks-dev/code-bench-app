@@ -1,3 +1,20 @@
+/// Raised by denylist mutations when the entry value is blank after trimming.
+class CodingToolsInvalidEntryException implements Exception {
+  const CodingToolsInvalidEntryException();
+
+  @override
+  String toString() => 'CodingToolsInvalidEntryException()';
+}
+
+/// Raised by denylist mutations when the entry already exists in the
+/// user-added set or in the baseline defaults.
+class CodingToolsDuplicateEntryException implements Exception {
+  const CodingToolsDuplicateEntryException();
+
+  @override
+  String toString() => 'CodingToolsDuplicateEntryException()';
+}
+
 /// Raised when `read_file` is asked for a file larger than [maxBytes].
 class CodingToolFileTooLargeException implements Exception {
   const CodingToolFileTooLargeException(this.actualBytes, this.maxBytes);
