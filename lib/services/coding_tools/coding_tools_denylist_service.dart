@@ -32,35 +32,39 @@ class CodingToolsDenylistService {
   /// Throws [CodingToolsInvalidEntryException] when [value] is blank.
   /// Throws [CodingToolsDuplicateEntryException] when already present.
   Future<void> addUserEntry(DenylistCategory category, String value) async {
-    if (value.isEmpty) throw const CodingToolsInvalidEntryException();
+    final normalised = value.trim().toLowerCase();
+    if (normalised.isEmpty) throw const CodingToolsInvalidEntryException();
     final current = await _repo.load();
     final added = {...(current.userAdded[category] ?? const <String>{})};
     final baseline = DenylistDefaults.forCategory(category);
-    if (added.contains(value) || baseline.contains(value)) {
+    if (added.contains(normalised) || baseline.contains(normalised)) {
       throw const CodingToolsDuplicateEntryException();
     }
-    added.add(value);
+    added.add(normalised);
     await _repo.save(current.copyWith(userAdded: {...current.userAdded, category: added}));
   }
 
   /// Removes [value] from the user-added set for [category].
   Future<void> removeUserEntry(DenylistCategory category, String value) async {
+    final normalised = value.trim().toLowerCase();
     final current = await _repo.load();
-    final added = {...(current.userAdded[category] ?? const <String>{})}..remove(value);
+    final added = {...(current.userAdded[category] ?? const <String>{})}..remove(normalised);
     await _repo.save(current.copyWith(userAdded: {...current.userAdded, category: added}));
   }
 
   /// Adds [value] to the suppressed-defaults set for [category].
   Future<void> suppressBaseline(DenylistCategory category, String value) async {
+    final normalised = value.trim().toLowerCase();
     final current = await _repo.load();
-    final suppressed = {...(current.suppressedDefaults[category] ?? const <String>{})}..add(value);
+    final suppressed = {...(current.suppressedDefaults[category] ?? const <String>{})}..add(normalised);
     await _repo.save(current.copyWith(suppressedDefaults: {...current.suppressedDefaults, category: suppressed}));
   }
 
   /// Removes [value] from the suppressed-defaults set for [category].
   Future<void> restoreBaseline(DenylistCategory category, String value) async {
+    final normalised = value.trim().toLowerCase();
     final current = await _repo.load();
-    final suppressed = {...(current.suppressedDefaults[category] ?? const <String>{})}..remove(value);
+    final suppressed = {...(current.suppressedDefaults[category] ?? const <String>{})}..remove(normalised);
     await _repo.save(current.copyWith(suppressedDefaults: {...current.suppressedDefaults, category: suppressed}));
   }
 

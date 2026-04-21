@@ -211,9 +211,8 @@ class CodingToolsService {
         final String typeStr;
         try {
           typeStr = entry.statSync().type.toString().split('.').last;
-        } on FileSystemException {
-          // Races, broken symlinks, permission-denied — skip the entry rather
-          // than abort the whole listing.
+        } on FileSystemException catch (e) {
+          dLog('[CodingToolsService] list_dir stat failed for "${entry.path}": ${e.osError?.message ?? e.message}');
           continue;
         }
         buffer.writeln('- $rel ($typeStr)');
@@ -251,6 +250,7 @@ class CodingToolsService {
     final denylist = await _loadEffectiveDenylist();
 
     try {
+      ApplyService.assertWithinProject(abs, projectPath);
       _assertNotDenied(abs, projectPath, denylist);
       await _apply.applyChange(
         filePath: abs,

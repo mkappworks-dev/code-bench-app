@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
@@ -18,7 +19,7 @@ class CodingToolsDenylistActions extends _$CodingToolsDenylistActions {
   CodingToolsDenylistFailure _asFailure(Object e) => switch (e) {
     CodingToolsInvalidEntryException() => const CodingToolsDenylistFailure.invalidEntry(),
     CodingToolsDuplicateEntryException() => const CodingToolsDenylistFailure.duplicate(),
-    CodingToolsDenylistFailure() => e,
+    PlatformException() => const CodingToolsDenylistFailure.saveFailed(),
     _ => CodingToolsDenylistFailure.unknown(e),
   };
 

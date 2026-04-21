@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/utils/debug_logger.dart';
 import '../../coding_tools/models/coding_tools_denylist_state.dart';
 import '../../coding_tools/models/denylist_category.dart';
 
@@ -19,9 +20,17 @@ class CodingToolsPreferences {
     final raw = prefs.getString(_kDenylistState);
     if (raw == null || raw.isEmpty) return CodingToolsDenylistState.empty();
     try {
-      final decoded = jsonDecode(raw) as Map<String, dynamic>;
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) {
+        dLog('[CodingToolsPreferences] getDenylistState: stored value is not a JSON object; resetting');
+        return CodingToolsDenylistState.empty();
+      }
       return _deserialize(decoded);
-    } on FormatException {
+    } on FormatException catch (e) {
+      dLog('[CodingToolsPreferences] getDenylistState: malformed JSON, resetting — $e');
+      return CodingToolsDenylistState.empty();
+    } on TypeError catch (e) {
+      dLog('[CodingToolsPreferences] getDenylistState: unexpected type in stored data, resetting — $e');
       return CodingToolsDenylistState.empty();
     }
   }
@@ -48,10 +57,9 @@ class CodingToolsPreferences {
       final out = <DenylistCategory, Set<String>>{for (final c in DenylistCategory.values) c: <String>{}};
       if (raw is! Map) return out;
       for (final entry in raw.entries) {
-        final cat = DenylistCategory.values.firstWhere(
-          (c) => c.name == entry.key,
-          orElse: () => DenylistCategory.filename,
-        );
+        final matching = DenylistCategory.values.where((c) => c.name == entry.key);
+        if (matching.isEmpty) continue;
+        final cat = matching.first;
         final list = entry.value;
         if (list is! List) continue;
         out[cat] = {
