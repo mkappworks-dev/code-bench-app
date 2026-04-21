@@ -8,7 +8,7 @@ import '../../core/utils/debug_logger.dart';
 import '../../data/ai/models/stream_event.dart';
 import '../../data/ai/repository/ai_repository.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
-import '../../data/coding_tools/models/coding_tool_definition.dart';
+import '../../data/coding_tools/models/coding_tool_result.dart';
 import '../../data/session/models/permission_request.dart';
 import '../../data/session/models/session_settings.dart';
 import '../../data/session/models/tool_event.dart';
@@ -16,7 +16,7 @@ import '../../data/shared/ai_model.dart';
 import '../../data/shared/chat_message.dart';
 import '../../features/chat/notifiers/agent_cancel_notifier.dart';
 import '../../features/chat/notifiers/agent_permission_request_notifier.dart';
-import '../coding_tools/coding_tools_service.dart';
+import '../coding_tools/tool_registry.dart';
 import 'agent_exceptions.dart';
 
 export 'agent_exceptions.dart';
@@ -42,10 +42,10 @@ const int _kMaxIterations = 10;
 @Riverpod(keepAlive: true)
 Future<AgentService> agentService(Ref ref) async {
   final ai = await ref.watch(aiRepositoryProvider.future);
-  final codingTools = ref.read(codingToolsServiceProvider);
+  final registry = ref.read(toolRegistryProvider);
   return AgentService(
     ai: ai,
-    codingTools: codingTools,
+    registry: registry,
     cancelFlag: () => ref.read(agentCancelProvider),
     requestPermission: (req) => ref.read(agentPermissionRequestProvider.notifier).request(req),
   );
@@ -57,18 +57,18 @@ Future<AgentService> agentService(Ref ref) async {
 class AgentService {
   AgentService({
     required AIRepository ai,
-    required CodingToolsService codingTools,
+    required ToolRegistry registry,
     required bool Function() cancelFlag,
     Future<bool> Function(PermissionRequest req)? requestPermission,
     String Function()? idGen,
   }) : _ai = ai,
-       _tools = codingTools,
+       _registry = registry,
        _cancelFlag = cancelFlag,
        _requestPermission = requestPermission ?? ((_) async => true),
        _idGen = idGen ?? (() => const Uuid().v4());
 
   final AIRepository _ai;
-  final CodingToolsService _tools;
+  final ToolRegistry _registry;
   final bool Function() _cancelFlag;
   final Future<bool> Function(PermissionRequest req) _requestPermission;
   final String Function() _idGen;
@@ -112,7 +112,7 @@ class AgentService {
 
     while (true) {
       iteration++;
-      final tools = permission == ChatPermission.readOnly ? CodingTools.readOnly : CodingTools.all;
+      final tools = _registry.visibleTools(permission);
       final wire = _buildWireMessages(workingHistory, _kActSystemPrompt, events);
       final roundCalls = <_PendingCall>[];
       String? finishReason;
@@ -202,8 +202,8 @@ class AgentService {
         if (_cancelFlag()) break;
         if (call.decodeFailed) continue; // event already in error state
 
-        final isDestructive = call.name == 'write_file' || call.name == 'str_replace';
-        if (permission == ChatPermission.askBefore && isDestructive) {
+        final tool = _registry.byName(call.name);
+        if (tool != null && _registry.requiresPrompt(tool, permission)) {
           final summary = _summaryFor(call);
           final req = PermissionRequest(toolEventId: call.id, toolName: call.name, summary: summary, input: call.args);
           yield snapshot(streaming: true).copyWith(pendingPermissionRequest: req);
@@ -219,8 +219,8 @@ class AgentService {
           }
         }
 
-        final result = await _tools.execute(
-          toolName: call.name,
+        final result = await _registry.execute(
+          name: call.name,
           args: call.args,
           projectPath: projectPath,
           sessionId: sessionId,

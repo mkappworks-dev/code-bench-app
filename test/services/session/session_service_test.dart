@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/ai/models/stream_event.dart';
 import 'package:code_bench_app/data/ai/repository/ai_repository.dart';
 import 'package:code_bench_app/data/coding_tools/datasource/coding_tools_datasource_io.dart';
-import 'package:code_bench_app/data/coding_tools/models/coding_tool_definition.dart';
 import 'package:code_bench_app/data/coding_tools/models/coding_tools_denylist_state.dart';
 import 'package:code_bench_app/data/coding_tools/models/denylist_category.dart';
+import 'package:code_bench_app/data/coding_tools/models/tool.dart';
 import 'package:code_bench_app/data/coding_tools/repository/coding_tools_denylist_repository.dart';
 import 'package:code_bench_app/data/coding_tools/repository/coding_tools_repository_impl.dart';
 import 'package:code_bench_app/data/filesystem/datasource/filesystem_datasource_io.dart';
@@ -18,7 +18,11 @@ import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/services/agent/agent_service.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
-import 'package:code_bench_app/services/coding_tools/coding_tools_service.dart';
+import 'package:code_bench_app/services/coding_tools/tool_registry.dart';
+import 'package:code_bench_app/services/coding_tools/tools/list_dir_tool.dart';
+import 'package:code_bench_app/services/coding_tools/tools/read_file_tool.dart';
+import 'package:code_bench_app/services/coding_tools/tools/str_replace_tool.dart';
+import 'package:code_bench_app/services/coding_tools/tools/write_file_tool.dart';
 import 'package:code_bench_app/services/session/session_service.dart';
 
 class _FakeDenylistRepository implements CodingToolsDenylistRepository {
@@ -69,7 +73,7 @@ class _ScriptedAI implements AIRepository {
   @override
   Stream<StreamEvent> streamMessageWithTools({
     required List<Map<String, dynamic>> wireMessages,
-    required List<CodingToolDefinition> tools,
+    required List<Tool> tools,
     required AIModel model,
   }) async* {
     for (final e in rounds[_r++]) {
@@ -95,12 +99,19 @@ class _ScriptedAI implements AIRepository {
 }
 
 AgentService _buildAgent({required AIRepository ai}) {
-  final tools = CodingToolsService(
-    repo: CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo()),
-    applyService: ApplyService(repo: ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()))),
-    denylist: _FakeDenylistRepository(),
+  final repo = CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo());
+  final applyRepo = ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()));
+  final applySvc = ApplyService(repo: applyRepo);
+  final registry = ToolRegistry(
+    builtIns: [
+      ReadFileTool(repo: repo),
+      ListDirTool(repo: repo),
+      WriteFileTool(applyService: applySvc),
+      StrReplaceTool(repo: repo, applyService: applySvc),
+    ],
+    denylistRepo: _FakeDenylistRepository(),
   );
-  return AgentService(ai: ai, codingTools: tools, cancelFlag: () => false);
+  return AgentService(ai: ai, registry: registry, cancelFlag: () => false);
 }
 
 void main() {

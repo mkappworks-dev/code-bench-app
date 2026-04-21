@@ -9,7 +9,7 @@ import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import '../models/stream_event.dart';
-import '../../coding_tools/models/coding_tool_definition.dart';
+import '../../coding_tools/models/tool.dart';
 import 'ai_remote_datasource.dart';
 
 /// OpenAI-compatible AI datasource for custom endpoints (e.g. LM Studio, LocalAI).
@@ -148,7 +148,7 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
   /// not re-translate.
   Stream<StreamEvent> streamMessageWithTools({
     required List<Map<String, dynamic>> messages,
-    required List<CodingToolDefinition> tools,
+    required List<Tool> tools,
     required AIModel model,
   }) async* {
     final body = {

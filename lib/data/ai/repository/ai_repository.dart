@@ -1,4 +1,4 @@
-import '../../coding_tools/models/coding_tool_definition.dart';
+import '../../coding_tools/models/tool.dart';
 import '../../shared/ai_model.dart';
 import '../../shared/chat_message.dart';
 import '../models/stream_event.dart';
@@ -16,7 +16,7 @@ abstract interface class AIRepository {
   /// other providers this throws [UnsupportedError] (caller gates on provider).
   Stream<StreamEvent> streamMessageWithTools({
     required List<Map<String, dynamic>> wireMessages,
-    required List<CodingToolDefinition> tools,
+    required List<Tool> tools,
     required AIModel model,
   });
 
