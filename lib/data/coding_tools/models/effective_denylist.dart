@@ -1,0 +1,11 @@
+// lib/data/coding_tools/models/effective_denylist.dart
+
+/// Snapshot of the user's effective denylist (defaults + userAdded −
+/// suppressedDefaults). Loaded once per [ToolRegistry.execute] call
+/// and embedded in every [ToolContext] for the duration of that call.
+typedef EffectiveDenylist = ({
+  Set<String> segments,
+  Set<String> filenames,
+  Set<String> extensions,
+  Set<String> prefixes,
+});
