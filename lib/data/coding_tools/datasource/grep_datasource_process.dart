@@ -27,6 +27,7 @@ class GrepDatasourceProcess implements GrepDatasource {
       '--context',
       '$contextLines',
       ...fileExtensions.expand((e) => ['--glob', '*.$e']),
+      '--', // end-of-options — pattern after this is never parsed as a flag
       pattern,
       rootPath,
     ];
@@ -39,13 +40,21 @@ class GrepDatasourceProcess implements GrepDatasource {
       throw CodingToolsDiskException('ripgrep not available: ${e.message}');
     }
 
-    // Exit code 1 = no matches (normal); 2 = rg error (bad regex, path, etc.)
+    final stderr = result.stderr?.toString() ?? '';
+
+    // Exit code 0 = matches found; 1 = no matches (normal); 2 = rg error.
     if (result.exitCode == 2) {
-      final msg = (result.stderr as String).trim().split('\n').first;
+      final msg = stderr.trim().isNotEmpty
+          ? stderr.trim().split('\n').first
+          : 'rg error (exit code 2)';
       throw CodingToolsDiskException(msg);
     }
+    if (result.exitCode != 0 && result.exitCode != 1) {
+      dLog('[GrepDatasourceProcess] rg exited with unexpected code ${result.exitCode}: $stderr');
+      throw CodingToolsDiskException('rg exited unexpectedly (code ${result.exitCode})');
+    }
 
-    return _parseJson(result.stdout as String, rootPath, maxMatches);
+    return _parseJson(result.stdout?.toString() ?? '', rootPath, maxMatches);
   }
 
   GrepResult _parseJson(String stdout, String rootPath, int maxMatches) {
@@ -92,7 +101,9 @@ class GrepDatasourceProcess implements GrepDatasource {
       if (line.isEmpty) continue;
       Map<String, dynamic> event;
       try {
-        event = jsonDecode(line) as Map<String, dynamic>;
+        final decoded = jsonDecode(line);
+        if (decoded is! Map<String, dynamic>) continue; // skip non-object lines
+        event = decoded;
       } on FormatException {
         continue;
       }
