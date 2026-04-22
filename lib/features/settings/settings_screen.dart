@@ -13,9 +13,10 @@ import '../coding_tools/notifiers/coding_tools_denylist_actions.dart';
 import '../integrations/integrations_screen.dart';
 import '../providers/providers_screen.dart';
 import 'general_screen.dart';
+import 'mcp_servers_screen.dart';
 import 'notifiers/general_prefs_notifier.dart';
 
-enum _SettingsNav { general, providers, integrations, codingTools, archive }
+enum _SettingsNav { general, providers, integrations, codingTools, mcpServers, archive }
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -63,18 +64,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildContent() {
-    switch (_activeNav) {
-      case _SettingsNav.general:
-        return GeneralScreen(key: ValueKey('general-$_generalVersion'));
-      case _SettingsNav.providers:
-        return const ProvidersScreen();
-      case _SettingsNav.integrations:
-        return const IntegrationsScreen();
-      case _SettingsNav.codingTools:
-        return CodingToolsScreen(key: ValueKey('coding-tools-$_codingToolsVersion'));
-      case _SettingsNav.archive:
-        return const ArchiveScreen();
-    }
+    return switch (_activeNav) {
+      _SettingsNav.general => GeneralScreen(key: ValueKey('general-$_generalVersion')),
+      _SettingsNav.providers => const ProvidersScreen(),
+      _SettingsNav.integrations => const IntegrationsScreen(),
+      _SettingsNav.codingTools => CodingToolsScreen(key: ValueKey('coding-tools-$_codingToolsVersion')),
+      _SettingsNav.mcpServers => const McpServersScreen(),
+      _SettingsNav.archive => const ArchiveScreen(),
+    };
   }
 
   Future<void> _restoreDefaults() async {
@@ -85,6 +82,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         await _restoreCodingToolsDefaults();
       case _SettingsNav.providers:
       case _SettingsNav.integrations:
+      case _SettingsNav.mcpServers:
       case _SettingsNav.archive:
         return;
     }
@@ -223,6 +221,12 @@ class _SettingsLeftNavState extends State<_SettingsLeftNav> {
             label: 'Coding Tools',
             isActive: widget.activeNav == _SettingsNav.codingTools,
             onTap: () => widget.onSelect(_SettingsNav.codingTools),
+          ),
+          _NavItem(
+            icon: Icons.extension_outlined,
+            label: 'MCP Servers',
+            isActive: widget.activeNav == _SettingsNav.mcpServers,
+            onTap: () => widget.onSelect(_SettingsNav.mcpServers),
           ),
           _NavItem(
             icon: AppIcons.archive,
