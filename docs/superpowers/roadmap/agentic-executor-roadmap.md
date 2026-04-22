@@ -13,7 +13,7 @@ This document is the source of truth for the agentic executor build-out. Read th
 | ----- | ----------------------------------- | ---------------------------------- |
 | 1     | Tool Registry Refactor              | ✅ Done — PR #27, commit `1188b55` |
 | 2     | Grep + Glob + Parallel execution    | ✅ Done — PR #28, commit `f7acbc8` |
-| 3     | Tool-output truncation              | 🗂 Planned — `docs/superpowers/plans/2026-04-22-tool-output-truncation.md` |
+| 3     | Tool-output truncation              | ✅ Done — commit `5b257c8` |
 | 4     | Bash tool (permission-gated)        | ⬜ Not started                     |
 | 5     | MCP client (stdio + HTTP/SSE)       | ⬜ Not started                     |
 | 6     | WebFetch                            | ⬜ Not started                     |
@@ -67,7 +67,7 @@ Key decisions already locked in the spec — do not re-litigate:
 
 ---
 
-## Phase 3 — Tool-output Truncation
+## Phase 3 — Tool-output Truncation ✅
 
 **Spec:** `docs/superpowers/specs/2026-04-22-tool-output-truncation-design.md`
 **Plan:** `docs/superpowers/plans/2026-04-22-tool-output-truncation.md`

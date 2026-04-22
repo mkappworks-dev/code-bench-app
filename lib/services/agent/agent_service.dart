@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -338,7 +339,7 @@ class AgentService {
         });
         for (final te in msg.toolEvents) {
           if (_isTerminal(te.status)) {
-            wire.add({'role': 'tool', 'tool_call_id': te.id, 'content': te.output ?? te.error ?? ''});
+            wire.add({'role': 'tool', 'tool_call_id': te.id, 'content': _toolContentFor(te)});
           }
         }
       } else {
@@ -360,7 +361,7 @@ class AgentService {
       });
       for (final te in currentEvents) {
         if (_isTerminal(te.status)) {
-          wire.add({'role': 'tool', 'tool_call_id': te.id, 'content': te.output ?? te.error ?? ''});
+          wire.add({'role': 'tool', 'tool_call_id': te.id, 'content': _toolContentFor(te)});
         }
       }
     }
@@ -369,6 +370,32 @@ class AgentService {
 
   static bool _isTerminal(ToolStatus s) =>
       s == ToolStatus.success || s == ToolStatus.error || s == ToolStatus.cancelled;
+
+  static String _toolContentFor(ToolEvent te) {
+    final raw = te.output ?? te.error ?? '';
+    if (te.output == null && te.error == null) {
+      dLog('[AgentService] terminal ToolEvent ${te.id} (${te.toolName}) has neither output nor error');
+    }
+    final capped = capContent(raw);
+    if (te.output == null && te.error != null && !identical(capped, raw)) {
+      dLog('[AgentService] tool error for ${te.toolName}/${te.id} exceeds cap — truncating');
+    }
+    return capped;
+  }
+
+  static const int _kToolOutputCap = 50 * 1024;
+
+  @visibleForTesting
+  static const int kToolOutputCapBytes = _kToolOutputCap;
+
+  @visibleForTesting
+  static String capContent(String s) {
+    final bytes = utf8.encode(s);
+    if (bytes.length <= _kToolOutputCap) return s;
+    final head = utf8.decode(bytes.sublist(0, _kToolOutputCap), allowMalformed: true);
+    return '$head\n[Output truncated at 50 KB. '
+        'Use grep to search for specific content or read a narrower file range.]';
+  }
 
   bool _isParallelizable(_PendingCall call, ChatPermission permission) {
     if (call.decodeFailed) return false;
