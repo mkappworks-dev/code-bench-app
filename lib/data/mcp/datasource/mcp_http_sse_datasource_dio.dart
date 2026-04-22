@@ -75,14 +75,23 @@ class McpHttpSseDatasourceDio implements McpTransportDatasource {
       throw StateError('MCP endpoint not yet received from SSE');
     }
     final id = _nextId++;
-    final body = jsonEncode({'jsonrpc': '2.0', 'id': id, 'method': method, 'params': ?params});
-    await _dio.post<void>(
-      _postUrl!,
-      data: body,
-      options: Options(headers: {'Content-Type': 'application/json'}),
-    );
+    // Register BEFORE sending so SSE responses arriving mid-await are not dropped.
     final completer = Completer<Map<String, dynamic>>();
     _pending[id] = completer;
+    try {
+      final body = jsonEncode({'jsonrpc': '2.0', 'id': id, 'method': method, 'params': ?params});
+      await _dio.post<void>(
+        _postUrl!,
+        data: body,
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+    } catch (e) {
+      // Remove the pending completer so _failPending does not double-complete
+      // it later. Rethrow so the caller receives the error directly — the
+      // completer future is abandoned and must not be completed separately.
+      _pending.remove(id);
+      rethrow;
+    }
     return completer.future;
   }
 
