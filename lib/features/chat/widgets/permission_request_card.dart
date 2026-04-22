@@ -16,6 +16,16 @@ class PermissionRequestCard extends ConsumerStatefulWidget {
 class _PermissionRequestCardState extends ConsumerState<PermissionRequestCard> {
   bool _expanded = false;
 
+  // Strips characters that could visually mislead an approver: ANSI escapes,
+  // Unicode bidi overrides, and non-printable controls (preserving \n and \t).
+  static String _sanitizeCommand(String command) {
+    var s = command.replaceAll(RegExp(r'\x1b\[[0-9;]*[A-Za-z]'), '');
+    // Bidi override / directional isolate / directional marks
+    s = s.replaceAll(RegExp('[‪-‮⁦-⁩‏؜]'), '');
+    s = s.replaceAll(RegExp(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]'), '');
+    return s;
+  }
+
   List<String>? _buildPreviewLines() {
     final req = widget.request;
     if (req.toolName == 'write_file') {
@@ -39,7 +49,7 @@ class _PermissionRequestCardState extends ConsumerState<PermissionRequestCard> {
     if (req.toolName == 'bash') {
       final command = req.input['command'];
       if (command is! String || command.isEmpty) return null;
-      return [command];
+      return [_sanitizeCommand(command)];
     }
     return null;
   }
@@ -131,6 +141,11 @@ class _PermissionRequestCardState extends ConsumerState<PermissionRequestCard> {
                 previewLines.first,
                 style: TextStyle(color: c.textPrimary, fontSize: 11, fontFamily: 'monospace'),
               ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Denylist rules do not restrict bash commands.',
+              style: TextStyle(color: c.textMuted, fontSize: 10),
             ),
           ],
           const SizedBox(height: 8),
