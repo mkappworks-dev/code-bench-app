@@ -12,8 +12,7 @@ part of 'mcp_servers_notifier.dart';
 @ProviderFor(McpServersNotifier)
 final mcpServersProvider = McpServersNotifierProvider._();
 
-final class McpServersNotifierProvider
-    extends $StreamNotifierProvider<McpServersNotifier, List<McpServerConfig>> {
+final class McpServersNotifierProvider extends $StreamNotifierProvider<McpServersNotifier, List<McpServerConfig>> {
   McpServersNotifierProvider._()
     : super(
         from: null,
@@ -33,25 +32,18 @@ final class McpServersNotifierProvider
   McpServersNotifier create() => McpServersNotifier();
 }
 
-String _$mcpServersNotifierHash() =>
-    r'e0b7e5af8dfd086d3a1bb34f58f66782687f8fd1';
+String _$mcpServersNotifierHash() => r'e0b7e5af8dfd086d3a1bb34f58f66782687f8fd1';
 
-abstract class _$McpServersNotifier
-    extends $StreamNotifier<List<McpServerConfig>> {
+abstract class _$McpServersNotifier extends $StreamNotifier<List<McpServerConfig>> {
   Stream<List<McpServerConfig>> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref =
-        this.ref
-            as $Ref<AsyncValue<List<McpServerConfig>>, List<McpServerConfig>>;
+    final ref = this.ref as $Ref<AsyncValue<List<McpServerConfig>>, List<McpServerConfig>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<
-                AsyncValue<List<McpServerConfig>>,
-                List<McpServerConfig>
-              >,
+              AnyNotifier<AsyncValue<List<McpServerConfig>>, List<McpServerConfig>>,
               AsyncValue<List<McpServerConfig>>,
               Object?,
               Object?

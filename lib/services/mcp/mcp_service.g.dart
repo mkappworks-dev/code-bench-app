@@ -27,8 +27,7 @@ final mcpServiceProvider = McpServiceProvider._();
 /// callback. The [McpService] class itself has no direct knowledge of
 /// `lib/features/`. Pattern mirrors [agentServiceProvider].
 
-final class McpServiceProvider
-    extends $FunctionalProvider<McpService, McpService, McpService>
+final class McpServiceProvider extends $FunctionalProvider<McpService, McpService, McpService>
     with $Provider<McpService> {
   /// Provides a [McpService] wired to [McpServerStatusNotifier] from the
   /// settings feature.
@@ -53,8 +52,7 @@ final class McpServiceProvider
 
   @$internal
   @override
-  $ProviderElement<McpService> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<McpService> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   McpService create(Ref ref) {
@@ -63,10 +61,7 @@ final class McpServiceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(McpService value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<McpService>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<McpService>(value));
   }
 }
 
