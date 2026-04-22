@@ -1,23 +1,28 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as html_parser;
 
+import '../../../core/utils/debug_logger.dart';
+import '../../../data/_core/http/dio_factory.dart';
 import 'web_fetch_datasource.dart';
 
 class WebFetchDatasourceDio implements WebFetchDatasource {
   WebFetchDatasourceDio()
-    : _dio = Dio(
-        BaseOptions(
-          connectTimeout: const Duration(seconds: 15),
-          receiveTimeout: const Duration(seconds: 30),
-          headers: const {
-            'User-Agent': 'CodeBench/1.0 (web fetch)',
-            'Accept': 'text/html,text/plain,application/json,*/*',
-          },
-          followRedirects: true,
-          maxRedirects: 5,
-        ),
+    : _dio = DioFactory.create(
+        baseUrl: '',
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: const {
+          'User-Agent': 'CodeBench/1.0 (web fetch)',
+          'Accept': 'text/html,text/plain,application/json,*/*',
+        },
       );
+
+  /// Test-only constructor that accepts a pre-configured [Dio] instance so
+  /// tests can inject a fake [HttpClientAdapter] without hitting real URLs.
+  @visibleForTesting
+  WebFetchDatasourceDio.withDio(this._dio);
 
   final Dio _dio;
 
@@ -33,13 +38,14 @@ class WebFetchDatasourceDio implements WebFetchDatasource {
       throw ArgumentError('Only http and https URLs are supported. Got: ${uri.scheme}');
     }
     if (isPrivateHost(uri.host)) {
+      sLog('[WebFetchDatasourceDio] SSRF blocked: $url');
       throw ArgumentError('Fetching private or internal network addresses is not allowed.');
     }
 
     final response = await _dio.get<String>(url, options: Options(responseType: ResponseType.plain));
 
     final body = response.data ?? '';
-    final contentType = response.headers.value('content-type') ?? '';
+    final contentType = (response.headers.value('content-type') ?? '').toLowerCase();
 
     if (contentType.contains('text/html') || contentType.isEmpty) {
       return htmlToText(body);
@@ -70,6 +76,7 @@ class WebFetchDatasourceDio implements WebFetchDatasource {
 
     final a = octets[0]!, b = octets[1]!;
     if (a == 127) return true;
+    if (a == 0) return true;
     if (a == 10) return true;
     if (a == 192 && b == 168) return true;
     if (a == 172 && b >= 16 && b <= 31) return true;
@@ -78,8 +85,8 @@ class WebFetchDatasourceDio implements WebFetchDatasource {
   }
 
   /// Converts an HTML string to readable markdown-ish plain text.
-  /// Removes script, style, nav, footer. Preserves headings, links,
-  /// code blocks, lists, and bold/italic inline markers.
+  /// Removes script, style, nav, footer, header, noscript, and iframe.
+  /// Preserves headings, links, code blocks, lists, and bold/italic inline markers.
   static String htmlToText(String htmlContent) {
     final document = html_parser.parse(htmlContent);
 

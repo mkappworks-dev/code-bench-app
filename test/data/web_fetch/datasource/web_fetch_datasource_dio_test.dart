@@ -46,6 +46,10 @@ void main() {
     test('blocks bare ::1', () {
       expect(WebFetchDatasourceDio.isPrivateHost('::1'), isTrue);
     });
+
+    test('blocks 0.0.0.0', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('0.0.0.0'), isTrue);
+    });
   });
 
   group('WebFetchDatasourceDio.htmlToText', () {
