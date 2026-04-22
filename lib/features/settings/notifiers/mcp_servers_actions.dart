@@ -13,6 +13,11 @@ class McpServersActions extends _$McpServersActions {
   @override
   FutureOr<void> build() {}
 
+  McpServersFailure _asFailure(Object e) => switch (e) {
+    McpServersFailure() => e,
+    _ => McpServersFailure.unknown(e),
+  };
+
   Future<void> save(McpServerConfig config) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
@@ -20,7 +25,7 @@ class McpServersActions extends _$McpServersActions {
         await ref.read(mcpServiceProvider).save(config);
       } catch (e, st) {
         dLog('[McpServersActions] save failed: $e');
-        Error.throwWithStackTrace(McpServersFailure.saveError(e.toString()), st);
+        Error.throwWithStackTrace(_asFailure(e), st);
       }
     });
   }
@@ -36,7 +41,7 @@ class McpServersActions extends _$McpServersActions {
         dLog('[McpServersActions] remove failed: $e');
         // Restore status so the card doesn't stay in pendingRemoval state.
         ref.read(mcpServerStatusProvider.notifier).setStatus(id, const McpServerStatus.stopped());
-        Error.throwWithStackTrace(McpServersFailure.removeError(e.toString()), st);
+        Error.throwWithStackTrace(_asFailure(e), st);
       }
     });
   }

@@ -50,13 +50,13 @@ void main() {
       expect(repo._configs, hasLength(1));
     });
 
-    test('transitions to AsyncError with McpServersSaveError on failure', () async {
+    test('transitions to AsyncError with McpServersFailure on failure', () async {
       final repo = _FakeRepo()..throwOnSave = true;
       final c = ProviderContainer(overrides: [mcpServiceProvider.overrideWithValue(_buildService(repo))]);
       addTearDown(c.dispose);
       await c.read(mcpServersActionsProvider.notifier).save(_cfg);
       expect(c.read(mcpServersActionsProvider).hasError, isTrue);
-      expect(c.read(mcpServersActionsProvider).error, isA<McpServersSaveError>());
+      expect(c.read(mcpServersActionsProvider).error, isA<McpServersFailure>());
     });
   });
 
@@ -70,14 +70,14 @@ void main() {
       expect(repo._configs, isEmpty);
     });
 
-    test('transitions to AsyncError with McpServersRemoveError on failure', () async {
+    test('transitions to AsyncError with McpServersFailure on failure', () async {
       final repo = _FakeRepo()
         .._configs.add(_cfg)
         ..throwOnDelete = true;
       final c = ProviderContainer(overrides: [mcpServiceProvider.overrideWithValue(_buildService(repo))]);
       addTearDown(c.dispose);
       await c.read(mcpServersActionsProvider.notifier).remove('x');
-      expect(c.read(mcpServersActionsProvider).error, isA<McpServersRemoveError>());
+      expect(c.read(mcpServersActionsProvider).error, isA<McpServersFailure>());
     });
 
     test('restores status to stopped when delete fails', () async {
