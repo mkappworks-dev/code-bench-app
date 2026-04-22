@@ -17,6 +17,7 @@ This document is the source of truth for the agentic executor build-out. Read th
 | 4 | Bash tool (permission-gated) | ⬜ Not started |
 | 5 | MCP client (stdio + HTTP/SSE) | ⬜ Not started |
 | 6 | WebFetch | ⬜ Not started |
+| 7 | CLI Provider Detection & Delegation | ⬜ Not started |
 | — | Anthropic provider adapter | 🚫 Deferred / YAGNI |
 | — | Subagent delegation | 🚫 Deferred / YAGNI |
 | — | WebSearch | 🚫 Deferred |
@@ -147,7 +148,78 @@ None — ready to spec and plan when Phase 3 is merged.
 
 ---
 
-## Deferred / YAGNI
+## Phase 7 — CLI Provider Detection & Delegation
+
+**Status:** Not started. No spec or plan yet.
+
+### What this is
+
+A multi-provider CLI detection and task delegation system. Code Bench learns which AI CLI tools are installed on the host machine (e.g. `claude`, `codex`, custom CLIs), validates their authentication status, and can delegate tasks to them — streaming their responses back to the UI in real time.
+
+Layered provider architecture:
+
+```
+UI Layer (provider status, streamed results)
+        ↓
+Orchestration (Riverpod — task routing, state transitions)
+        ↓
+Provider Registry / Adapters (ClaudeAdapter, CodexAdapter, …)
+        ↓
+CLI / Process layer (Process.start, stdout streaming)
+```
+
+### Core capabilities
+
+1. **CLI Detection Service** — runs `<cli> --version` to detect installation; parses version; checks auth status via `<cli> auth status` (or equivalent). Results are cached with a TTL to avoid re-running on every build.
+2. **Provider Registry** — aggregates status from all adapters; exposes `AsyncValue<List<CliProvider>>` via Riverpod; supports force-refresh per provider.
+3. **Adapter pattern** — each CLI implements a common `CliAdapter` interface (`startSession`, `streamTaskResponse`, `sendInput`, `stopSession`, `supports`). New CLIs can be added without touching existing adapters.
+4. **Task Delegation Repository** — routes a `TaskRequest` to the correct adapter by provider name; manages session lifecycle; exposes response `Stream<TaskResponse>` to the Riverpod layer.
+5. **Streaming UI** — `StreamProvider` accumulates `TaskResponse` chunks line-by-line; `ProviderSelectorWidget` shows detection status; `TaskResponseDisplayWidget` updates in real time without UI freezes.
+
+### Key data models
+
+```dart
+class CliProvider { name, binaryPath, isInstalled, version, authStatus, checkedAt, message }
+enum CliAuthStatus { authenticated, unauthenticated, unknown }
+class TaskRequest { taskDescription, workspaceContext, metadata }
+class TaskResponse { content, status, createdAt }
+enum TaskStatus { running, completed, failed, interrupted }
+```
+
+### Architecture constraints (from CLAUDE.md)
+
+- `Process.start` / `dart:io` is only allowed inside `lib/data/**/datasource/` and `lib/services/`. Detection and CLI-spawning code lives in `*_process.dart` datasource files.
+- Adapter classes are services (suffix `Service` or named `*Adapter` — document the deviation if `Adapter` suffix is used).
+- Riverpod providers for detection results follow the `FutureProvider` / `AsyncValue` exhaustive-switch pattern.
+- No `try/catch` in widgets — errors surface via typed `*Failure` freezed unions and `ref.listen`.
+
+### Settled decisions
+
+**Distinct from "Anthropic provider adapter" (Deferred):** That deferred item was about exposing the Anthropic HTTP API as a selectable provider. This phase is about CLI-level providers — processes on the user's machine. No API key routing, no HTTP client changes.
+
+**Distinct from "Subagent delegation" (Deferred):** Subagent delegation meant spawning parallel Code Bench agent sessions. This phase is sequential task routing to a single external CLI per request — far simpler.
+
+**Session tracking:** Each delegated task gets a UUID session ID. Active sessions are tracked in a `StateProvider<TaskSession?>`. The UI drives loading/error state from `ref.watch(fooActionsProvider).isLoading` per CLAUDE.md Rule 2.
+
+**Auth check strategy:** Run `<cli> auth status` (Claude) or `<cli> login status` (Codex) after installation is confirmed. Parse stdout for known unauthenticated strings. Auth status is `unknown` on any error — not a hard failure.
+
+**Process exit code handling:** A non-zero exit emits `TaskStatus.failed`; the UI shows a typed failure, not a raw exception.
+
+### Open questions
+
+- **Which CLIs to ship in v1?** Likely `claude` and `codex` as the two highest-value targets — confirm with user before speccing.
+- **Provider selector UX:** Does this live in the Settings screen (provider configuration), in the session start flow (per-task selection), or both?
+- **Default provider fallback:** If the preferred provider is unavailable, does the app auto-fall-back to another installed CLI or block with an error?
+- **Working directory propagation:** Each delegated task should receive the active project path as context — confirm the exact flags each CLI accepts.
+- **Streaming parse format:** Claude CLI and Codex CLI may emit JSON events rather than plain text. Parser strategy needs to be per-adapter.
+
+### Timing
+
+After Phase 6 (WebFetch). MCP (Phase 5) and WebFetch (Phase 6) prove the tool registry and permission-gate patterns at scale. CLI adapters can reuse those patterns cleanly once they are stable in production.
+
+---
+
+
 
 ### Anthropic provider adapter
 
