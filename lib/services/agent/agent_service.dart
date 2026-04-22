@@ -305,6 +305,10 @@ class AgentService {
       final path = call.args['path'] ?? '';
       return '$path · 1 match';
     }
+    if (call.name == 'bash') {
+      final cmd = call.args['command'] ?? '';
+      return cmd is String && cmd.length > 80 ? '${cmd.substring(0, 80)}…' : cmd.toString();
+    }
     return call.args['path']?.toString() ?? '';
   }
 

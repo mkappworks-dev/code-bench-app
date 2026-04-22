@@ -13,6 +13,7 @@ import '../../data/coding_tools/models/tool_context.dart';
 import '../../data/coding_tools/repository/coding_tools_denylist_repository.dart';
 import '../../data/coding_tools/repository/coding_tools_denylist_repository_impl.dart';
 import '../../data/session/models/session_settings.dart';
+import 'tools/bash_tool.dart';
 import 'tools/glob_tool.dart';
 import 'tools/grep_tool.dart';
 import 'tools/list_dir_tool.dart';
@@ -31,6 +32,7 @@ ToolRegistry toolRegistry(Ref ref) => ToolRegistry(
     ref.watch(strReplaceToolProvider),
     ref.watch(grepToolProvider),
     ref.watch(globToolProvider),
+    ref.watch(bashToolProvider),
   ],
   denylistRepo: ref.watch(codingToolsDenylistRepositoryProvider),
 );
