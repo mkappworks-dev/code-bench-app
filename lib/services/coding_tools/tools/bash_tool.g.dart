@@ -42,4 +42,4 @@ final class BashToolProvider extends $FunctionalProvider<BashTool, BashTool, Bas
   }
 }
 
-String _$bashToolHash() => r'c52f594bccb99c0c4d816ec05fdcf838a1ec2794';
+String _$bashToolHash() => r'fdeb934f125fda210692e67f7d7448076598eb2f';
