@@ -1,4 +1,7 @@
-# Code Bench
+<p align="center">
+  <img src="assets/images/app_icon.png" width="128" alt="Code Bench">
+</p>
+<h1 align="center">Code Bench</h1>
 
 AI-powered desktop code assistant that combines a code editor, multi-provider AI chat, and GitHub integration — runs fully offline with Ollama.
 
@@ -298,7 +301,7 @@ dart format --set-exit-if-changed lib/ test/   # CI format check
 | HTTP / streaming  | Dio (SSE via `ResponseType.stream`)                                         |
 | AI providers      | OpenAI · Anthropic · Gemini · Ollama · Custom                               |
 | Code editor       | re_editor · re_highlight                                                    |
-| Chat rendering    | flutter_markdown · flutter_highlight                                        |
+| Chat rendering    | flutter_markdown_plus · flutter_highlight                                   |
 | GitHub OAuth      | flutter_web_auth_2                                                          |
 | Window management | window_manager                                                              |
 | Serialization     | freezed · json_annotation                                                   |
