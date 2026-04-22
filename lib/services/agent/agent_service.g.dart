@@ -18,12 +18,7 @@ final agentServiceProvider = AgentServiceProvider._();
 /// notifier from the chat feature layer.
 
 final class AgentServiceProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<AgentService>,
-          AgentService,
-          FutureOr<AgentService>
-        >
+    extends $FunctionalProvider<AsyncValue<AgentService>, AgentService, FutureOr<AgentService>>
     with $FutureModifier<AgentService>, $FutureProvider<AgentService> {
   /// Provides an [AgentService] wired to the cancel flag and permission-request
   /// notifier from the chat feature layer.
@@ -43,9 +38,7 @@ final class AgentServiceProvider
 
   @$internal
   @override
-  $FutureProviderElement<AgentService> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  $FutureProviderElement<AgentService> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<AgentService> create(Ref ref) {
@@ -53,4 +46,4 @@ final class AgentServiceProvider
   }
 }
 
-String _$agentServiceHash() => r'756ce404747bcf7f9293c8b7fd02f3994d370f39';
+String _$agentServiceHash() => r'7f61a20f73cac4e7c77521e12253b93c8111e54a';

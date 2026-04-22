@@ -23,7 +23,11 @@ import 'package:code_bench_app/services/coding_tools/tools/list_dir_tool.dart';
 import 'package:code_bench_app/services/coding_tools/tools/read_file_tool.dart';
 import 'package:code_bench_app/services/coding_tools/tools/str_replace_tool.dart';
 import 'package:code_bench_app/services/coding_tools/tools/write_file_tool.dart';
+import 'package:code_bench_app/data/mcp/models/mcp_server_config.dart';
+import 'package:code_bench_app/data/mcp/repository/mcp_repository.dart';
+import 'package:code_bench_app/features/settings/notifiers/mcp_server_status_notifier.dart';
 import 'package:code_bench_app/services/agent/agent_service.dart';
+import 'package:code_bench_app/services/mcp/mcp_service.dart';
 import 'package:path/path.dart' as p;
 
 class _FakeDenylistRepository implements CodingToolsDenylistRepository {
@@ -72,6 +76,28 @@ class _FakeAIRepo implements AIRepository {
   Future<List<AIModel>> fetchAvailableModels(AIProvider provider, String apiKey) async => [];
 }
 
+/// No-op McpService for tests: startSession immediately returns a no-op teardown.
+class _FakeMcpService extends McpService {
+  _FakeMcpService() : super(repository: _FakeMcpRepository(), statusNotifier: McpServerStatusNotifier());
+
+  @override
+  Future<Future<void> Function()> startSession({required ToolRegistry registry, required String sessionId}) async =>
+      () async {};
+}
+
+class _FakeMcpRepository implements McpRepository {
+  @override
+  Stream<List<McpServerConfig>> watchAll() => const Stream.empty();
+  @override
+  Future<List<McpServerConfig>> getAll() async => [];
+  @override
+  Future<List<McpServerConfig>> getEnabled() async => [];
+  @override
+  Future<void> upsert(McpServerConfig config) async {}
+  @override
+  Future<void> delete(String id) async {}
+}
+
 void main() {
   late Directory projectDir;
   late ToolRegistry registry;
@@ -109,7 +135,7 @@ void main() {
       [const StreamEvent.textDelta('It says hello.'), const StreamEvent.finish(reason: 'stop')],
     ]);
 
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry, mcpService: _FakeMcpService(), cancelFlag: () => false);
     final messages = <ChatMessage>[];
     await for (final msg in svc.runAgenticTurn(
       sessionId: 's',
@@ -140,7 +166,7 @@ void main() {
     ];
     final aiRepo = _FakeAIRepo(List.generate(10, (_) => round));
 
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry, mcpService: _FakeMcpService(), cancelFlag: () => false);
     final messages = <ChatMessage>[];
     await for (final msg in svc.runAgenticTurn(
       sessionId: 's',
@@ -168,7 +194,7 @@ void main() {
       ],
     ]);
 
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => cancel);
+    final svc = AgentService(ai: aiRepo, registry: registry, mcpService: _FakeMcpService(), cancelFlag: () => cancel);
     cancel = true;
     final messages = <ChatMessage>[];
     await for (final msg in svc.runAgenticTurn(
@@ -230,7 +256,7 @@ void main() {
       ),
     ];
 
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry, mcpService: _FakeMcpService(), cancelFlag: () => false);
     await svc
         .runAgenticTurn(
           sessionId: 's',
@@ -254,7 +280,7 @@ void main() {
       [const StreamEvent.finish(reason: 'stop')],
     ], onSend: (tools) => sentTools = tools);
 
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry, mcpService: _FakeMcpService(), cancelFlag: () => false);
     await svc
         .runAgenticTurn(
           sessionId: 's',
@@ -281,7 +307,13 @@ void main() {
     ]);
 
     Future<bool> deny(_) async => false;
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false, requestPermission: deny);
+    final svc = AgentService(
+      ai: aiRepo,
+      registry: registry,
+      mcpService: _FakeMcpService(),
+      cancelFlag: () => false,
+      requestPermission: deny,
+    );
     final messages = <ChatMessage>[];
     await for (final msg in svc.runAgenticTurn(
       sessionId: 's',
@@ -327,7 +359,7 @@ void main() {
       ),
     ];
 
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry, mcpService: _FakeMcpService(), cancelFlag: () => false);
     await svc
         .runAgenticTurn(
           sessionId: 's',
