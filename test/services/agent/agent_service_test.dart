@@ -298,6 +298,52 @@ void main() {
     expect(finalMsg.toolEvents.first.status, ToolStatus.cancelled);
     expect(finalMsg.toolEvents.first.error, contains('Denied'));
   });
+
+  test('wire: oversized tool output is capped and contains truncation notice', () async {
+    List<Map<String, dynamic>>? capturedWire;
+    final aiRepo = _WireCapturingFakeRepo([
+      [const StreamEvent.finish(reason: 'stop')],
+    ], onWire: (w) => capturedWire = w);
+
+    final oversizedOutput = 'x' * (AgentService.kToolOutputCapBytes + 1);
+    final priorHistory = [
+      ChatMessage(id: 'u1', sessionId: 's', role: MessageRole.user, content: 'do it', timestamp: DateTime(2026)),
+      ChatMessage(
+        id: 'a1',
+        sessionId: 's',
+        role: MessageRole.assistant,
+        content: '',
+        timestamp: DateTime(2026),
+        toolEvents: [
+          ToolEvent(
+            id: 'te1',
+            type: 'tool_use',
+            toolName: 'read_file',
+            input: const {'path': 'a.txt'},
+            status: ToolStatus.success,
+            output: oversizedOutput,
+          ),
+        ],
+      ),
+    ];
+
+    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
+    await svc
+        .runAgenticTurn(
+          sessionId: 's',
+          history: priorHistory,
+          userInput: 'continue',
+          model: const AIModel(id: 'm', provider: AIProvider.custom, name: 'm', modelId: 'm'),
+          permission: ChatPermission.fullAccess,
+          projectPath: projectDir.path,
+        )
+        .drain();
+
+    final wire = capturedWire!;
+    final toolEntries = wire.where((m) => m['role'] == 'tool').toList();
+    expect(toolEntries, hasLength(1));
+    expect(toolEntries.first['content'] as String, contains('[Output truncated at 50 KB.'));
+  });
 }
 
 class _WireCapturingFakeRepo extends _FakeAIRepo {
