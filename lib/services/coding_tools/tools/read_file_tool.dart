@@ -44,6 +44,7 @@ class ReadFileTool extends Tool {
     try {
       final size = await repo.fileSizeBytes(abs);
       if (size > _kMaxReadBytes) {
+        dLog('[ReadFileTool] rejected oversized file: $abs ($size bytes)');
         return CodingToolResult.error(
           'File too large ($size bytes; max $_kMaxReadBytes bytes). '
           'Consider str_replace for targeted edits.',
