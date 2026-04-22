@@ -11,7 +11,7 @@ class RipgrepAvailabilityStateNotifier extends _$RipgrepAvailabilityStateNotifie
   @override
   Future<bool> build() => ref.watch(svc.ripgrepAvailabilityProvider.future);
 
-  Future<void> recheck() async {
+  void recheck() {
     state = const AsyncLoading();
     ref.invalidate(svc.ripgrepAvailabilityProvider);
   }
