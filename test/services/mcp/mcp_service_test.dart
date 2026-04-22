@@ -1,6 +1,5 @@
 import 'package:code_bench_app/data/coding_tools/models/coding_tools_denylist_state.dart';
 import 'package:code_bench_app/data/coding_tools/models/denylist_category.dart';
-import 'package:code_bench_app/data/coding_tools/models/effective_denylist.dart';
 import 'package:code_bench_app/data/coding_tools/models/tool_capability.dart';
 import 'package:code_bench_app/data/coding_tools/repository/coding_tools_denylist_repository.dart';
 import 'package:code_bench_app/data/mcp/datasource/mcp_transport_datasource.dart';
@@ -101,7 +100,8 @@ void main() {
         repository: _FakeRepo([
           const McpServerConfig(id: 'srv', name: 'test', transport: McpTransport.stdio, command: 'cmd'),
         ]),
-        statusNotifier: statusNotifier,
+        onStatusChanged: statusNotifier.setStatus,
+        onServerRemoved: statusNotifier.remove,
         transportFactory: (_) => _FakeTransport(),
       );
 
@@ -123,7 +123,8 @@ void main() {
         repository: _FakeRepo([
           const McpServerConfig(id: 'bad', name: 'broken', transport: McpTransport.stdio, command: 'bad-cmd'),
         ]),
-        statusNotifier: statusNotifier,
+        onStatusChanged: statusNotifier.setStatus,
+        onServerRemoved: statusNotifier.remove,
         transportFactory: (_) => throw Exception('process not found'),
       );
 

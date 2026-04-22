@@ -63,7 +63,7 @@ class AgentService {
   AgentService({
     required AIRepository ai,
     required ToolRegistry registry,
-    required McpService mcpService,
+    McpService? mcpService,
     required bool Function() cancelFlag,
     Future<bool> Function(PermissionRequest req)? requestPermission,
     String Function()? idGen,
@@ -76,7 +76,7 @@ class AgentService {
 
   final AIRepository _ai;
   final ToolRegistry _registry;
-  final McpService _mcpService;
+  final McpService? _mcpService;
   final bool Function() _cancelFlag;
   final Future<bool> Function(PermissionRequest req) _requestPermission;
   final String Function() _idGen;
@@ -89,7 +89,12 @@ class AgentService {
     required ChatPermission permission,
     required String projectPath,
   }) async* {
-    final teardown = await _mcpService.startSession(registry: _registry, sessionId: sessionId);
+    final Future<void> Function() teardown;
+    if (_mcpService != null) {
+      teardown = await _mcpService.startSession(registry: _registry, sessionId: sessionId);
+    } else {
+      teardown = () async {};
+    }
     try {
       final assistantId = _idGen();
       final textBuffer = StringBuffer();

@@ -24,8 +24,7 @@ final actionOutputProvider = ActionOutputNotifierProvider._();
 /// Lives in `lib/shell/notifiers/` because [ActionOutputPanel] (the widget
 /// that displays it) is a shell-level widget. Process lifecycle is owned by
 /// [ActionRunnerService] — widgets only call [run] and [clear].
-final class ActionOutputNotifierProvider
-    extends $NotifierProvider<ActionOutputNotifier, ActionOutputState> {
+final class ActionOutputNotifierProvider extends $NotifierProvider<ActionOutputNotifier, ActionOutputState> {
   /// Notifier that runs a user-defined [ProjectAction] as a subprocess and
   /// streams its stdout/stderr lines into [ActionOutputState].
   ///
@@ -52,15 +51,11 @@ final class ActionOutputNotifierProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ActionOutputState value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ActionOutputState>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ActionOutputState>(value));
   }
 }
 
-String _$actionOutputNotifierHash() =>
-    r'6053dac27fd2ca9ffb51fb91dc4cbe1bb9d07c4b';
+String _$actionOutputNotifierHash() => r'6053dac27fd2ca9ffb51fb91dc4cbe1bb9d07c4b';
 
 /// Notifier that runs a user-defined [ProjectAction] as a subprocess and
 /// streams its stdout/stderr lines into [ActionOutputState].

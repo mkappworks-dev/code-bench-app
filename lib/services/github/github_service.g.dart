@@ -13,12 +13,7 @@ part of 'github_service.dart';
 final githubServiceProvider = GithubServiceProvider._();
 
 final class GithubServiceProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<GitHubService>,
-          GitHubService,
-          FutureOr<GitHubService>
-        >
+    extends $FunctionalProvider<AsyncValue<GitHubService>, GitHubService, FutureOr<GitHubService>>
     with $FutureModifier<GitHubService>, $FutureProvider<GitHubService> {
   GithubServiceProvider._()
     : super(
@@ -36,9 +31,7 @@ final class GithubServiceProvider
 
   @$internal
   @override
-  $FutureProviderElement<GitHubService> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  $FutureProviderElement<GitHubService> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<GitHubService> create(Ref ref) {

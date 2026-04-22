@@ -18,8 +18,7 @@ final agentCancelProvider = AgentCancelNotifierProvider._();
 /// Cooperative cancel flag read by [AgentService] at each tool boundary.
 /// Separate from the plain-text stream cancel so both can be flipped by a
 /// single stop-button press without coupling their wiring.
-final class AgentCancelNotifierProvider
-    extends $NotifierProvider<AgentCancelNotifier, bool> {
+final class AgentCancelNotifierProvider extends $NotifierProvider<AgentCancelNotifier, bool> {
   /// Cooperative cancel flag read by [AgentService] at each tool boundary.
   /// Separate from the plain-text stream cancel so both can be flipped by a
   /// single stop-button press without coupling their wiring.
@@ -43,15 +42,11 @@ final class AgentCancelNotifierProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(bool value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<bool>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<bool>(value));
   }
 }
 
-String _$agentCancelNotifierHash() =>
-    r'c43ce94e836454f64ec244ec3e23302b76465627';
+String _$agentCancelNotifierHash() => r'c43ce94e836454f64ec244ec3e23302b76465627';
 
 /// Cooperative cancel flag read by [AgentService] at each tool boundary.
 /// Separate from the plain-text stream cancel so both can be flipped by a
@@ -63,14 +58,7 @@ abstract class _$AgentCancelNotifier extends $Notifier<bool> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<bool, bool>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<bool, bool>,
-              bool,
-              Object?,
-              Object?
-            >;
+    final element = ref.element as $ClassProviderElement<AnyNotifier<bool, bool>, bool, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }

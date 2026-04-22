@@ -13,12 +13,7 @@ part of 'ide_launch_repository_impl.dart';
 final ideLaunchRepositoryProvider = IdeLaunchRepositoryProvider._();
 
 final class IdeLaunchRepositoryProvider
-    extends
-        $FunctionalProvider<
-          IdeLaunchRepository,
-          IdeLaunchRepository,
-          IdeLaunchRepository
-        >
+    extends $FunctionalProvider<IdeLaunchRepository, IdeLaunchRepository, IdeLaunchRepository>
     with $Provider<IdeLaunchRepository> {
   IdeLaunchRepositoryProvider._()
     : super(
@@ -36,9 +31,7 @@ final class IdeLaunchRepositoryProvider
 
   @$internal
   @override
-  $ProviderElement<IdeLaunchRepository> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<IdeLaunchRepository> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   IdeLaunchRepository create(Ref ref) {
@@ -47,12 +40,8 @@ final class IdeLaunchRepositoryProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(IdeLaunchRepository value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<IdeLaunchRepository>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<IdeLaunchRepository>(value));
   }
 }
 
-String _$ideLaunchRepositoryHash() =>
-    r'f71a246fb5d1550b8b448f9df2779ec31342183b';
+String _$ideLaunchRepositoryHash() => r'f71a246fb5d1550b8b448f9df2779ec31342183b';

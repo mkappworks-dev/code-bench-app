@@ -34,7 +34,7 @@ final class McpServersNotifierProvider
 }
 
 String _$mcpServersNotifierHash() =>
-    r'eeff3896d4761d8aebdb64e16713033a477a5cd7';
+    r'e0b7e5af8dfd086d3a1bb34f58f66782687f8fd1';
 
 abstract class _$McpServersNotifier
     extends $StreamNotifier<List<McpServerConfig>> {

@@ -1,8 +1,8 @@
 import 'package:code_bench_app/data/mcp/models/mcp_server_config.dart';
 import 'package:code_bench_app/data/mcp/repository/mcp_repository.dart';
-import 'package:code_bench_app/data/mcp/repository/mcp_repository_impl.dart';
 import 'package:code_bench_app/features/settings/notifiers/mcp_servers_actions.dart';
 import 'package:code_bench_app/features/settings/notifiers/mcp_servers_failure.dart';
+import 'package:code_bench_app/services/mcp/mcp_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -34,13 +34,15 @@ class _FakeRepo extends Fake implements McpRepository {
   }
 }
 
+McpService _buildService(_FakeRepo repo) => McpService(repository: repo);
+
 const _cfg = McpServerConfig(id: 'x', name: 'server', transport: McpTransport.stdio, command: 'cmd');
 
 void main() {
   group('McpServersActions.save()', () {
     test('calls upsert and transitions to AsyncData', () async {
       final repo = _FakeRepo();
-      final c = ProviderContainer(overrides: [mcpRepositoryProvider.overrideWithValue(repo)]);
+      final c = ProviderContainer(overrides: [mcpServiceProvider.overrideWithValue(_buildService(repo))]);
       addTearDown(c.dispose);
       await c.read(mcpServersActionsProvider.notifier).save(_cfg);
       expect(c.read(mcpServersActionsProvider).hasValue, isTrue);
@@ -49,7 +51,7 @@ void main() {
 
     test('transitions to AsyncError with McpServersSaveError on failure', () async {
       final repo = _FakeRepo()..throwOnSave = true;
-      final c = ProviderContainer(overrides: [mcpRepositoryProvider.overrideWithValue(repo)]);
+      final c = ProviderContainer(overrides: [mcpServiceProvider.overrideWithValue(_buildService(repo))]);
       addTearDown(c.dispose);
       await c.read(mcpServersActionsProvider.notifier).save(_cfg);
       expect(c.read(mcpServersActionsProvider).hasError, isTrue);
@@ -60,7 +62,7 @@ void main() {
   group('McpServersActions.remove()', () {
     test('calls delete and transitions to AsyncData', () async {
       final repo = _FakeRepo().._configs.add(_cfg);
-      final c = ProviderContainer(overrides: [mcpRepositoryProvider.overrideWithValue(repo)]);
+      final c = ProviderContainer(overrides: [mcpServiceProvider.overrideWithValue(_buildService(repo))]);
       addTearDown(c.dispose);
       await c.read(mcpServersActionsProvider.notifier).remove('x');
       expect(c.read(mcpServersActionsProvider).hasValue, isTrue);
@@ -71,7 +73,7 @@ void main() {
       final repo = _FakeRepo()
         .._configs.add(_cfg)
         ..throwOnDelete = true;
-      final c = ProviderContainer(overrides: [mcpRepositoryProvider.overrideWithValue(repo)]);
+      final c = ProviderContainer(overrides: [mcpServiceProvider.overrideWithValue(_buildService(repo))]);
       addTearDown(c.dispose);
       await c.read(mcpServersActionsProvider.notifier).remove('x');
       expect(c.read(mcpServersActionsProvider).error, isA<McpServersRemoveError>());

@@ -13,12 +13,7 @@ part of 'coding_tools_preferences.dart';
 final codingToolsPreferencesProvider = CodingToolsPreferencesProvider._();
 
 final class CodingToolsPreferencesProvider
-    extends
-        $FunctionalProvider<
-          CodingToolsPreferences,
-          CodingToolsPreferences,
-          CodingToolsPreferences
-        >
+    extends $FunctionalProvider<CodingToolsPreferences, CodingToolsPreferences, CodingToolsPreferences>
     with $Provider<CodingToolsPreferences> {
   CodingToolsPreferencesProvider._()
     : super(
@@ -36,9 +31,7 @@ final class CodingToolsPreferencesProvider
 
   @$internal
   @override
-  $ProviderElement<CodingToolsPreferences> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<CodingToolsPreferences> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   CodingToolsPreferences create(Ref ref) {
@@ -47,12 +40,8 @@ final class CodingToolsPreferencesProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(CodingToolsPreferences value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<CodingToolsPreferences>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<CodingToolsPreferences>(value));
   }
 }
 
-String _$codingToolsPreferencesHash() =>
-    r'91b63a335088c7a07f8a4a0c5c76ec64469dddc4';
+String _$codingToolsPreferencesHash() => r'91b63a335088c7a07f8a4a0c5c76ec64469dddc4';

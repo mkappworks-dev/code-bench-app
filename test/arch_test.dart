@@ -112,12 +112,21 @@ void main() {
     //   • session_service.dart — throws AgentProviderDoesNotSupportTools when act mode
     //     is used with a non-custom provider; the exception type lives in features because
     //     it's surfaced directly by the chat widget layer.
+    //   • mcp_service.dart — the mcpServiceProvider function (composition root)
+    //     wires McpServerStatusNotifier callbacks into McpService at construction
+    //     time. The McpService class itself has no direct knowledge of lib/features/.
+    //     Pattern mirrors agent_service.dart.
     test('services do not import from lib/features/', () {
       final violations =
           (_grepImport("package:code_bench_app/features/", 'lib/services/')
                 ..addAll(_grepImport("'../../../features/", 'lib/services/'))
                 ..addAll(_grepImport("'../../features/", 'lib/services/')))
-              .where((path) => !path.contains('agent_service.dart') && !path.contains('session_service.dart'))
+              .where(
+                (path) =>
+                    !path.contains('agent_service.dart') &&
+                    !path.contains('session_service.dart') &&
+                    !path.contains('mcp_service.dart'),
+              )
               .toList();
       expect(violations, isEmpty, reason: 'Services importing from lib/features/:\n${violations.join('\n')}');
     });

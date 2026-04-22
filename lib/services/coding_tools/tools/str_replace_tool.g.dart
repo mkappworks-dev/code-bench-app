@@ -12,8 +12,7 @@ part of 'str_replace_tool.dart';
 @ProviderFor(strReplaceTool)
 final strReplaceToolProvider = StrReplaceToolProvider._();
 
-final class StrReplaceToolProvider
-    extends $FunctionalProvider<StrReplaceTool, StrReplaceTool, StrReplaceTool>
+final class StrReplaceToolProvider extends $FunctionalProvider<StrReplaceTool, StrReplaceTool, StrReplaceTool>
     with $Provider<StrReplaceTool> {
   StrReplaceToolProvider._()
     : super(
@@ -31,8 +30,7 @@ final class StrReplaceToolProvider
 
   @$internal
   @override
-  $ProviderElement<StrReplaceTool> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<StrReplaceTool> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   StrReplaceTool create(Ref ref) {
@@ -41,10 +39,7 @@ final class StrReplaceToolProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(StrReplaceTool value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<StrReplaceTool>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<StrReplaceTool>(value));
   }
 }
 

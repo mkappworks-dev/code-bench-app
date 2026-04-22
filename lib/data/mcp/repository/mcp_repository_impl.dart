@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:drift/drift.dart' show Value;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
@@ -27,7 +26,7 @@ class McpRepositoryImpl implements McpRepository {
   Future<List<McpServerConfig>> getEnabled() async => (await _ds.getEnabled()).map(_toDomain).toList();
 
   @override
-  Future<void> upsert(McpServerConfig config) => _ds.upsert(_toCompanion(config));
+  Future<void> upsert(McpServerConfig config) => _ds.upsertConfig(config);
 
   @override
   Future<void> delete(String id) => _ds.deleteById(id);
@@ -56,15 +55,4 @@ class McpRepositoryImpl implements McpRepository {
       enabled: row.enabled == 1,
     );
   }
-
-  McpServersCompanion _toCompanion(McpServerConfig c) => McpServersCompanion(
-    id: Value(c.id),
-    name: Value(c.name),
-    transport: Value(c.transport.name),
-    command: Value(c.command),
-    args: Value(jsonEncode(c.args)),
-    env: Value(jsonEncode(c.env)),
-    url: Value(c.url),
-    enabled: Value(c.enabled ? 1 : 0),
-  );
 }

@@ -12,9 +12,8 @@ _McpToolInfo _$McpToolInfoFromJson(Map<String, dynamic> json) => _McpToolInfo(
   inputSchema: json['inputSchema'] as Map<String, dynamic>,
 );
 
-Map<String, dynamic> _$McpToolInfoToJson(_McpToolInfo instance) =>
-    <String, dynamic>{
-      'name': instance.name,
-      'description': instance.description,
-      'inputSchema': instance.inputSchema,
-    };
+Map<String, dynamic> _$McpToolInfoToJson(_McpToolInfo instance) => <String, dynamic>{
+  'name': instance.name,
+  'description': instance.description,
+  'inputSchema': instance.inputSchema,
+};

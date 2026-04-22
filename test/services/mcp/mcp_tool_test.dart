@@ -12,22 +12,22 @@ const _info = McpToolInfo(name: 'search', description: 'Search the web', inputSc
 void main() {
   group('McpTool', () {
     test('name is "serverName/toolName"', () {
-      final tool = McpTool(serverName: 'github', info: _info, execute: (_, __) async => 'ok');
+      final tool = McpTool(serverName: 'github', info: _info, execute: (name, args) async => 'ok');
       expect(tool.name, 'github/search');
     });
 
     test('capability is shell', () {
-      final tool = McpTool(serverName: 'github', info: _info, execute: (_, __) async => 'ok');
+      final tool = McpTool(serverName: 'github', info: _info, execute: (name, args) async => 'ok');
       expect(tool.capability, ToolCapability.shell);
     });
 
     test('description delegates to info.description', () {
-      final tool = McpTool(serverName: 'github', info: _info, execute: (_, __) async => 'ok');
+      final tool = McpTool(serverName: 'github', info: _info, execute: (name, args) async => 'ok');
       expect(tool.description, 'Search the web');
     });
 
     test('inputSchema delegates to info.inputSchema', () {
-      final tool = McpTool(serverName: 'github', info: _info, execute: (_, __) async => 'ok');
+      final tool = McpTool(serverName: 'github', info: _info, execute: (name, args) async => 'ok');
       expect(tool.inputSchema, {'type': 'object'});
     });
 
@@ -42,7 +42,7 @@ void main() {
       final tool = McpTool(
         serverName: 'github',
         info: _info,
-        execute: (_, __) async => throw McpToolCallException('server error'),
+        execute: (name, args) async => throw McpToolCallException('server error'),
       );
       final result = await tool.execute(fakeCtx(projectPath: '/tmp/proj'));
       expect(result, isA<CodingToolResultError>());
@@ -50,14 +50,18 @@ void main() {
     });
 
     test('execute returns CodingToolResult.error on unexpected exception', () async {
-      final tool = McpTool(serverName: 'github', info: _info, execute: (_, __) async => throw StateError('unexpected'));
+      final tool = McpTool(
+        serverName: 'github',
+        info: _info,
+        execute: (name, args) async => throw StateError('unexpected'),
+      );
       final result = await tool.execute(fakeCtx(projectPath: '/tmp/proj'));
       expect(result, isA<CodingToolResultError>());
       expect((result as CodingToolResultError).message, contains('MCP tool call failed'));
     });
 
     test('toOpenAiToolJson() returns valid OpenAI schema', () {
-      final tool = McpTool(serverName: 'github', info: _info, execute: (_, __) async => 'ok');
+      final tool = McpTool(serverName: 'github', info: _info, execute: (name, args) async => 'ok');
       final json = tool.toOpenAiToolJson();
       expect(json['type'], 'function');
       expect(json['function']['name'], 'github/search');

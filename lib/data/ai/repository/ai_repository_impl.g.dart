@@ -13,12 +13,7 @@ part of 'ai_repository_impl.dart';
 final aiRepositoryProvider = AiRepositoryProvider._();
 
 final class AiRepositoryProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<AIRepository>,
-          AIRepository,
-          FutureOr<AIRepository>
-        >
+    extends $FunctionalProvider<AsyncValue<AIRepository>, AIRepository, FutureOr<AIRepository>>
     with $FutureModifier<AIRepository>, $FutureProvider<AIRepository> {
   AiRepositoryProvider._()
     : super(
@@ -36,9 +31,7 @@ final class AiRepositoryProvider
 
   @$internal
   @override
-  $FutureProviderElement<AIRepository> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  $FutureProviderElement<AIRepository> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<AIRepository> create(Ref ref) {

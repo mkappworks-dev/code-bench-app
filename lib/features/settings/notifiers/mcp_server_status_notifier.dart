@@ -1,17 +1,10 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'mcp_server_status_notifier.freezed.dart';
-part 'mcp_server_status_notifier.g.dart';
+import '../../../data/mcp/models/mcp_server_status.dart';
 
-@freezed
-sealed class McpServerStatus with _$McpServerStatus {
-  const factory McpServerStatus.stopped() = McpServerStopped;
-  const factory McpServerStatus.starting() = McpServerStarting;
-  const factory McpServerStatus.running() = McpServerRunning;
-  const factory McpServerStatus.error(String message) = McpServerError;
-  const factory McpServerStatus.pendingRemoval() = McpServerPendingRemoval;
-}
+export '../../../data/mcp/models/mcp_server_status.dart';
+
+part 'mcp_server_status_notifier.g.dart';
 
 @riverpod
 class McpServerStatusNotifier extends _$McpServerStatusNotifier {

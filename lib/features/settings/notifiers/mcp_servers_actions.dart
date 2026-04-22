@@ -2,7 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/mcp/models/mcp_server_config.dart';
-import '../../../data/mcp/repository/mcp_repository_impl.dart';
+import '../../../services/mcp/mcp_service.dart';
 import 'mcp_server_status_notifier.dart';
 import 'mcp_servers_failure.dart';
 
@@ -17,7 +17,7 @@ class McpServersActions extends _$McpServersActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        await ref.read(mcpRepositoryProvider).upsert(config);
+        await ref.read(mcpServiceProvider).save(config);
       } catch (e, st) {
         dLog('[McpServersActions] save failed: $e');
         Error.throwWithStackTrace(McpServersFailure.saveError(e.toString()), st);
@@ -30,7 +30,7 @@ class McpServersActions extends _$McpServersActions {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
-        await ref.read(mcpRepositoryProvider).delete(id);
+        await ref.read(mcpServiceProvider).delete(id);
         ref.read(mcpServerStatusProvider.notifier).remove(id);
       } catch (e, st) {
         dLog('[McpServersActions] remove failed: $e');

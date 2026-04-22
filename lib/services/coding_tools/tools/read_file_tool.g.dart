@@ -12,8 +12,7 @@ part of 'read_file_tool.dart';
 @ProviderFor(readFileTool)
 final readFileToolProvider = ReadFileToolProvider._();
 
-final class ReadFileToolProvider
-    extends $FunctionalProvider<ReadFileTool, ReadFileTool, ReadFileTool>
+final class ReadFileToolProvider extends $FunctionalProvider<ReadFileTool, ReadFileTool, ReadFileTool>
     with $Provider<ReadFileTool> {
   ReadFileToolProvider._()
     : super(
@@ -31,8 +30,7 @@ final class ReadFileToolProvider
 
   @$internal
   @override
-  $ProviderElement<ReadFileTool> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<ReadFileTool> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   ReadFileTool create(Ref ref) {
@@ -41,10 +39,7 @@ final class ReadFileToolProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ReadFileTool value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ReadFileTool>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ReadFileTool>(value));
   }
 }
 

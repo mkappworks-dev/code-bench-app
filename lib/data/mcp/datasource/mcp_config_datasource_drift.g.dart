@@ -13,12 +13,7 @@ part of 'mcp_config_datasource_drift.dart';
 final mcpConfigDatasourceProvider = McpConfigDatasourceProvider._();
 
 final class McpConfigDatasourceProvider
-    extends
-        $FunctionalProvider<
-          McpConfigDatasourceDrift,
-          McpConfigDatasourceDrift,
-          McpConfigDatasourceDrift
-        >
+    extends $FunctionalProvider<McpConfigDatasourceDrift, McpConfigDatasourceDrift, McpConfigDatasourceDrift>
     with $Provider<McpConfigDatasourceDrift> {
   McpConfigDatasourceProvider._()
     : super(
@@ -36,9 +31,7 @@ final class McpConfigDatasourceProvider
 
   @$internal
   @override
-  $ProviderElement<McpConfigDatasourceDrift> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<McpConfigDatasourceDrift> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   McpConfigDatasourceDrift create(Ref ref) {
@@ -47,12 +40,8 @@ final class McpConfigDatasourceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(McpConfigDatasourceDrift value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<McpConfigDatasourceDrift>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<McpConfigDatasourceDrift>(value));
   }
 }
 
-String _$mcpConfigDatasourceHash() =>
-    r'b50694b4a93a91651a49cb1b7ad8f85787636bae';
+String _$mcpConfigDatasourceHash() => r'b50694b4a93a91651a49cb1b7ad8f85787636bae';

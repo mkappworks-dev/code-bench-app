@@ -22,8 +22,7 @@ final projectFileScanActionsProvider = ProjectFileScanActionsProvider._();
 /// On scan failure the notifier emits [AsyncError] carrying a
 /// [ProjectFileScanFailure] so widgets can surface an inline error message
 /// via [ref.listen] without catching exceptions themselves.
-final class ProjectFileScanActionsProvider
-    extends $AsyncNotifierProvider<ProjectFileScanActions, void> {
+final class ProjectFileScanActionsProvider extends $AsyncNotifierProvider<ProjectFileScanActions, void> {
   /// Command notifier for the file picker's project scan.
   ///
   /// On scan failure the notifier emits [AsyncError] carrying a
@@ -48,8 +47,7 @@ final class ProjectFileScanActionsProvider
   ProjectFileScanActions create() => ProjectFileScanActions();
 }
 
-String _$projectFileScanActionsHash() =>
-    r'9a35b04182fb77270f1a6904107be89721aadccf';
+String _$projectFileScanActionsHash() => r'9a35b04182fb77270f1a6904107be89721aadccf';
 
 /// Command notifier for the file picker's project scan.
 ///
@@ -64,13 +62,7 @@ abstract class _$ProjectFileScanActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<AsyncValue<void>, void>,
-              AsyncValue<void>,
-              Object?,
-              Object?
-            >;
+        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }

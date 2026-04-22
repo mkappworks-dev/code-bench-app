@@ -12,8 +12,7 @@ part of 'ide_service.dart';
 @ProviderFor(ideService)
 final ideServiceProvider = IdeServiceProvider._();
 
-final class IdeServiceProvider
-    extends $FunctionalProvider<IdeService, IdeService, IdeService>
+final class IdeServiceProvider extends $FunctionalProvider<IdeService, IdeService, IdeService>
     with $Provider<IdeService> {
   IdeServiceProvider._()
     : super(
@@ -31,8 +30,7 @@ final class IdeServiceProvider
 
   @$internal
   @override
-  $ProviderElement<IdeService> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<IdeService> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   IdeService create(Ref ref) {
@@ -41,10 +39,7 @@ final class IdeServiceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(IdeService value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<IdeService>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<IdeService>(value));
   }
 }
 

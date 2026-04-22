@@ -10,16 +10,11 @@ part of 'coding_tools_denylist_repository_impl.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(codingToolsDenylistRepository)
-final codingToolsDenylistRepositoryProvider =
-    CodingToolsDenylistRepositoryProvider._();
+final codingToolsDenylistRepositoryProvider = CodingToolsDenylistRepositoryProvider._();
 
 final class CodingToolsDenylistRepositoryProvider
     extends
-        $FunctionalProvider<
-          CodingToolsDenylistRepository,
-          CodingToolsDenylistRepository,
-          CodingToolsDenylistRepository
-        >
+        $FunctionalProvider<CodingToolsDenylistRepository, CodingToolsDenylistRepository, CodingToolsDenylistRepository>
     with $Provider<CodingToolsDenylistRepository> {
   CodingToolsDenylistRepositoryProvider._()
     : super(
@@ -37,9 +32,7 @@ final class CodingToolsDenylistRepositoryProvider
 
   @$internal
   @override
-  $ProviderElement<CodingToolsDenylistRepository> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<CodingToolsDenylistRepository> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   CodingToolsDenylistRepository create(Ref ref) {
@@ -48,14 +41,8 @@ final class CodingToolsDenylistRepositoryProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(CodingToolsDenylistRepository value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<CodingToolsDenylistRepository>(
-        value,
-      ),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<CodingToolsDenylistRepository>(value));
   }
 }
 
-String _$codingToolsDenylistRepositoryHash() =>
-    r'30e39cce4a24e7dd6ade97c84d58eb61b7153dee';
+String _$codingToolsDenylistRepositoryHash() => r'30e39cce4a24e7dd6ade97c84d58eb61b7153dee';

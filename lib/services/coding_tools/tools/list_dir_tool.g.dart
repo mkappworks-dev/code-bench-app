@@ -12,8 +12,7 @@ part of 'list_dir_tool.dart';
 @ProviderFor(listDirTool)
 final listDirToolProvider = ListDirToolProvider._();
 
-final class ListDirToolProvider
-    extends $FunctionalProvider<ListDirTool, ListDirTool, ListDirTool>
+final class ListDirToolProvider extends $FunctionalProvider<ListDirTool, ListDirTool, ListDirTool>
     with $Provider<ListDirTool> {
   ListDirToolProvider._()
     : super(
@@ -31,8 +30,7 @@ final class ListDirToolProvider
 
   @$internal
   @override
-  $ProviderElement<ListDirTool> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<ListDirTool> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   ListDirTool create(Ref ref) {
@@ -41,10 +39,7 @@ final class ListDirToolProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ListDirTool value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ListDirTool>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ListDirTool>(value));
   }
 }
 

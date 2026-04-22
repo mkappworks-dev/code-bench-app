@@ -18,15 +18,8 @@ final githubApiDatasourceProvider = GithubApiDatasourceProvider._();
 /// or `null` when no token is available.
 
 final class GithubApiDatasourceProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<GitHubApiDatasource?>,
-          GitHubApiDatasource?,
-          FutureOr<GitHubApiDatasource?>
-        >
-    with
-        $FutureModifier<GitHubApiDatasource?>,
-        $FutureProvider<GitHubApiDatasource?> {
+    extends $FunctionalProvider<AsyncValue<GitHubApiDatasource?>, GitHubApiDatasource?, FutureOr<GitHubApiDatasource?>>
+    with $FutureModifier<GitHubApiDatasource?>, $FutureProvider<GitHubApiDatasource?> {
   /// Provides a [GitHubApiDatasource] initialised with the stored token,
   /// or `null` when no token is available.
   GithubApiDatasourceProvider._()
@@ -45,9 +38,8 @@ final class GithubApiDatasourceProvider
 
   @$internal
   @override
-  $FutureProviderElement<GitHubApiDatasource?> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  $FutureProviderElement<GitHubApiDatasource?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
   FutureOr<GitHubApiDatasource?> create(Ref ref) {
@@ -55,5 +47,4 @@ final class GithubApiDatasourceProvider
   }
 }
 
-String _$githubApiDatasourceHash() =>
-    r'abbfd833c5946af9da45d67350263800eec8beee';
+String _$githubApiDatasourceHash() => r'abbfd833c5946af9da45d67350263800eec8beee';
