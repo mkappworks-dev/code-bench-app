@@ -1,5 +1,9 @@
 // lib/core/theme/app_colors.dart
 import 'package:flutter/material.dart';
+import 'package:re_editor/re_editor.dart';
+import 'package:re_highlight/languages/json.dart';
+import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:re_highlight/styles/atom-one-dark.dart';
 
 /// All colour tokens for Code Bench.
 ///
@@ -155,6 +159,8 @@ class AppColors extends ThemeExtension<AppColors> {
     // ── Switch (unselected track) ─────────────────────────────────────────
     required this.switchTrackUnselected,
     required this.switchTrackOutline,
+    // ── JSON editor ───────────────────────────────────────────────────────
+    required this.jsonEditorBg,
   });
 
   // ── Field declarations ────────────────────────────────────────────────────
@@ -286,6 +292,15 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color scrimColor;
   final Color switchTrackUnselected;
   final Color switchTrackOutline;
+  final Color jsonEditorBg;
+
+  CodeHighlightTheme get jsonHighlightTheme {
+    final isDark = ThemeData.estimateBrightnessForColor(background) == Brightness.dark;
+    return CodeHighlightTheme(
+      languages: {'json': CodeHighlightThemeMode(mode: langJson)},
+      theme: isDark ? atomOneDarkTheme : atomOneLightTheme,
+    );
+  }
 
   // ── Convenience accessor ─────────────────────────────────────────────────
 
@@ -421,6 +436,7 @@ class AppColors extends ThemeExtension<AppColors> {
     scrimColor: Color(0x99000000),
     switchTrackUnselected: Color(0x1FFFFFFF),
     switchTrackOutline: Color(0x2EFFFFFF),
+    jsonEditorBg: Color(0xFF0D1117),
   );
 
   static const AppColors light = AppColors(
@@ -552,6 +568,7 @@ class AppColors extends ThemeExtension<AppColors> {
     scrimColor: Color(0x33000000),
     switchTrackUnselected: Color(0xFF8C96A0),
     switchTrackOutline: Color(0xFF7A8490),
+    jsonEditorBg: Color(0xFFF5F5F5),
   );
 
   // ── ThemeExtension overrides ──────────────────────────────────────────────
@@ -684,6 +701,7 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? scrimColor,
     Color? switchTrackUnselected,
     Color? switchTrackOutline,
+    Color? jsonEditorBg,
   }) => AppColors(
     background: background ?? this.background,
     sidebarBackground: sidebarBackground ?? this.sidebarBackground,
@@ -811,6 +829,7 @@ class AppColors extends ThemeExtension<AppColors> {
     scrimColor: scrimColor ?? this.scrimColor,
     switchTrackUnselected: switchTrackUnselected ?? this.switchTrackUnselected,
     switchTrackOutline: switchTrackOutline ?? this.switchTrackOutline,
+    jsonEditorBg: jsonEditorBg ?? this.jsonEditorBg,
   );
 
   @override
@@ -943,6 +962,7 @@ class AppColors extends ThemeExtension<AppColors> {
       scrimColor: Color.lerp(scrimColor, other.scrimColor, t)!,
       switchTrackUnselected: Color.lerp(switchTrackUnselected, other.switchTrackUnselected, t)!,
       switchTrackOutline: Color.lerp(switchTrackOutline, other.switchTrackOutline, t)!,
+      jsonEditorBg: Color.lerp(jsonEditorBg, other.jsonEditorBg, t)!,
     );
   }
 }

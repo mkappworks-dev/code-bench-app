@@ -302,7 +302,7 @@ class _ErrorBanner extends StatelessWidget {
   }
 }
 
-class _Footer extends StatelessWidget {
+class _Footer extends StatefulWidget {
   const _Footer({required this.saving, required this.onCancel, required this.onSave});
 
   final bool saving;
@@ -310,59 +310,84 @@ class _Footer extends StatelessWidget {
   final VoidCallback onSave;
 
   @override
+  State<_Footer> createState() => _FooterState();
+}
+
+class _FooterState extends State<_Footer> {
+  bool _cancelHovered = false;
+  bool _saveHovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        // Cancel — ghost style matching AppDialogAction.cancel
-        GestureDetector(
-          onTap: saving ? null : onCancel,
-          child: Opacity(
-            opacity: saving ? 0.5 : 1.0,
-            child: Container(
+        MouseRegion(
+          cursor: widget.saving ? SystemMouseCursors.basic : SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _cancelHovered = true),
+          onExit: (_) => setState(() => _cancelHovered = false),
+          child: GestureDetector(
+            onTap: widget.saving ? null : widget.onCancel,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 100),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: c.chipFill,
+                color: _cancelHovered && !widget.saving ? c.chipStroke : c.chipFill,
                 border: Border.all(color: c.chipStroke),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: c.textPrimary,
-                  fontSize: ThemeConstants.uiFontSizeSmall,
-                  fontWeight: FontWeight.w500,
+              child: Opacity(
+                opacity: widget.saving ? 0.5 : 1.0,
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: c.textPrimary,
+                    fontSize: ThemeConstants.uiFontSizeSmall,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
           ),
         ),
         const SizedBox(width: 8),
-        // Save — primary style matching AppDialogAction.primary
-        GestureDetector(
-          onTap: saving ? null : onSave,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [c.accent, c.accentHover],
-              ),
-              borderRadius: BorderRadius.circular(6),
-              boxShadow: [BoxShadow(color: c.sendGlow, blurRadius: 10, offset: const Offset(0, 2))],
-            ),
-            child: saving
-                ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: c.onAccent))
-                : Text(
-                    'Save',
-                    style: TextStyle(
-                      color: c.onAccent,
-                      fontSize: ThemeConstants.uiFontSizeSmall,
-                      fontWeight: FontWeight.w600,
-                    ),
+        MouseRegion(
+          cursor: widget.saving ? SystemMouseCursors.basic : SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _saveHovered = true),
+          onExit: (_) => setState(() => _saveHovered = false),
+          child: GestureDetector(
+            onTap: widget.saving ? null : widget.onSave,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 100),
+              opacity: _saveHovered && !widget.saving ? 0.82 : 1.0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [c.accent, c.accentHover],
                   ),
+                  borderRadius: BorderRadius.circular(6),
+                  boxShadow: [BoxShadow(color: c.sendGlow, blurRadius: 10, offset: const Offset(0, 2))],
+                ),
+                child: widget.saving
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: c.onAccent),
+                      )
+                    : Text(
+                        'Save',
+                        style: TextStyle(
+                          color: c.onAccent,
+                          fontSize: ThemeConstants.uiFontSizeSmall,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
           ),
         ),
       ],
@@ -453,6 +478,51 @@ class _EnvEntry {
   String get value => valCtrl.text;
 }
 
+class _AddEnvButton extends StatefulWidget {
+  const _AddEnvButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  State<_AddEnvButton> createState() => _AddEnvButtonState();
+}
+
+class _AddEnvButtonState extends State<_AddEnvButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: _hovered ? c.chipStroke : c.chipFill,
+            border: Border.all(color: c.chipStroke),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.add, size: 12, color: c.textSecondary),
+              const SizedBox(width: 4),
+              Text(
+                'Add',
+                style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _EnvVarsEditor extends StatelessWidget {
   const _EnvVarsEditor({required this.s});
   final _State s;
@@ -476,28 +546,7 @@ class _EnvVarsEditor extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            GestureDetector(
-              onTap: () => s.update(() => s._envEntries.add(_EnvEntry('', ''))),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: c.chipFill,
-                  border: Border.all(color: c.chipStroke),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add, size: 12, color: c.textSecondary),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Add',
-                      style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _AddEnvButton(onTap: () => s.update(() => s._envEntries.add(_EnvEntry('', '')))),
           ],
         ),
         if (entries.isNotEmpty) ...[
@@ -578,27 +627,61 @@ class _TabToggle<T extends Object> extends StatelessWidget {
             children: [
               for (int i = 0; i < options.length; i++) ...[
                 if (i > 0) VerticalDivider(width: 1, thickness: 1, color: c.chipStroke),
-                GestureDetector(
+                _TabToggleItem(
+                  label: labels[i],
+                  isSelected: options[i] == selected,
                   onTap: () {
                     if (options[i] == selected) return;
                     onChanged(options[i]);
                   },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 100),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    color: options[i] == selected ? c.accentTintMid : c.chipFill,
-                    child: Text(
-                      labels[i],
-                      style: TextStyle(
-                        color: options[i] == selected ? c.textPrimary : c.textSecondary,
-                        fontSize: ThemeConstants.uiFontSizeSmall,
-                        fontWeight: options[i] == selected ? FontWeight.w500 : FontWeight.normal,
-                      ),
-                    ),
-                  ),
                 ),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TabToggleItem extends StatefulWidget {
+  const _TabToggleItem({required this.label, required this.isSelected, required this.onTap});
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  State<_TabToggleItem> createState() => _TabToggleItemState();
+}
+
+class _TabToggleItemState extends State<_TabToggleItem> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          color: widget.isSelected
+              ? c.accentTintMid
+              : _hovered
+              ? c.chipStroke
+              : c.chipFill,
+          child: Text(
+            widget.label,
+            style: TextStyle(
+              color: widget.isSelected || _hovered ? c.textPrimary : c.textSecondary,
+              fontSize: ThemeConstants.uiFontSizeSmall,
+              fontWeight: widget.isSelected ? FontWeight.w500 : FontWeight.normal,
+            ),
           ),
         ),
       ),
@@ -618,8 +701,8 @@ class _JsonView extends StatelessWidget {
       child: CodeEditor(
         controller: s._jsonCtrl,
         style: CodeEditorStyle(
-          backgroundColor: c.codeBlockBg,
-          textColor: c.textPrimary,
+          backgroundColor: c.jsonEditorBg,
+          codeTheme: c.jsonHighlightTheme,
           cursorColor: c.accent,
           selectionColor: c.selectionBg,
           fontSize: ThemeConstants.editorFontSize,

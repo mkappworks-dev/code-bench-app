@@ -21,6 +21,8 @@ class McpServersScreen extends ConsumerStatefulWidget {
 }
 
 class _McpServersScreenState extends ConsumerState<McpServersScreen> {
+  bool _addHovered = false;
+
   Future<void> _saveServer(McpServerConfig config) async {
     await ref.read(mcpServersActionsProvider.notifier).save(config);
     if (!mounted) return;
@@ -63,25 +65,31 @@ class _McpServersScreenState extends ConsumerState<McpServersScreen> {
               children: [
                 SectionLabel('MCP Servers'),
                 const Spacer(),
-                GestureDetector(
-                  onTap: _openAdd,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: c.chipFill,
-                      border: Border.all(color: c.chipStroke),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add, size: 12, color: c.textSecondary),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Add Server',
-                          style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-                        ),
-                      ],
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  onEnter: (_) => setState(() => _addHovered = true),
+                  onExit: (_) => setState(() => _addHovered = false),
+                  child: GestureDetector(
+                    onTap: _openAdd,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 100),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: _addHovered ? c.chipStroke : c.chipFill,
+                        border: Border.all(color: c.chipStroke),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add, size: 12, color: c.textSecondary),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Add Server',
+                            style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -122,9 +130,16 @@ class _McpServersScreenState extends ConsumerState<McpServersScreen> {
   }
 }
 
-class _EmptyState extends StatelessWidget {
+class _EmptyState extends StatefulWidget {
   const _EmptyState({required this.onAdd});
   final VoidCallback onAdd;
+
+  @override
+  State<_EmptyState> createState() => _EmptyStateState();
+}
+
+class _EmptyStateState extends State<_EmptyState> {
+  bool _linkHovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -140,11 +155,35 @@ class _EmptyState extends StatelessWidget {
             style: TextStyle(color: c.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
-          GestureDetector(
-            onTap: onAdd,
-            child: Text(
-              '+ Add your first server',
-              style: TextStyle(color: c.accent, fontSize: ThemeConstants.uiFontSizeSmall),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) => setState(() => _linkHovered = true),
+            onExit: (_) => setState(() => _linkHovered = false),
+            child: GestureDetector(
+              onTap: widget.onAdd,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 100),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: _linkHovered
+                      ? LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [c.accent, c.accentHover],
+                        )
+                      : LinearGradient(colors: [c.accentTintMid, c.accentTintMid]),
+                  border: Border.all(color: c.accentBorderTeal),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '+ Add your first server',
+                  style: TextStyle(
+                    color: _linkHovered ? c.onAccent : c.accent,
+                    fontSize: ThemeConstants.uiFontSizeSmall,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
