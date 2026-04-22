@@ -24,7 +24,7 @@ class ApplyGitDatasource {
       throw GitCheckoutException('git checkout timed out after ${kGitCheckoutTimeout.inSeconds}s');
     }
     if (result.exitCode != 0) {
-      dLog('[ApplyGitDatasource] gitCheckout failed (exit ${result.exitCode}): ${result.stderr}');
+      dLog('[ApplyGitDatasource] gitCheckout failed with exit ${result.exitCode}');
       throw GitCheckoutException('git checkout failed (exit ${result.exitCode}): ${result.stderr}');
     }
   }

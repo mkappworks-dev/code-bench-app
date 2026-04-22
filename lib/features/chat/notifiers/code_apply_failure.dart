@@ -17,6 +17,9 @@ sealed class CodeApplyFailure with _$CodeApplyFailure {
   const factory CodeApplyFailure.diskWrite(String message) = CodeApplyDiskWrite;
 
   /// git checkout -- failed (non-zero exit or timeout).
+  ///
+  /// [detail] is for developer logging only — never interpolate it into
+  /// user-facing strings, as it may contain raw git stderr output.
   const factory CodeApplyFailure.gitRevert(String detail) = CodeApplyGitRevert;
 
   /// File was modified externally between the tool's read and write.
