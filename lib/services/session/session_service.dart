@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../data/ai/repository/ai_repository.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
+import '../../data/session/models/permission_request.dart';
 import '../../data/session/models/session_settings.dart';
 import '../../data/shared/ai_model.dart';
 import '../../data/shared/chat_message.dart';
@@ -10,6 +11,7 @@ import '../../data/session/models/chat_session.dart';
 import '../../data/session/repository/session_repository.dart';
 import '../../data/session/repository/session_repository_impl.dart';
 import '../agent/agent_service.dart';
+import '../mcp/mcp_service.dart' show McpRemoveCallback, McpStatusCallback;
 
 part 'session_service.g.dart';
 
@@ -68,6 +70,8 @@ class SessionService {
   Future<void> persistMessage(String sessionId, ChatMessage message) => _session.persistMessage(sessionId, message);
   Future<List<ChatSession>> getSessionsByProject(String projectId) => _session.getSessionsByProject(projectId);
 
+  static bool _neverCancel() => false;
+
   Stream<ChatMessage> sendAndStream({
     required String sessionId,
     required String userInput,
@@ -76,6 +80,10 @@ class SessionService {
     ChatMode mode = ChatMode.chat,
     ChatPermission permission = ChatPermission.fullAccess,
     String? projectPath,
+    bool Function() cancelFlag = _neverCancel,
+    Future<bool> Function(PermissionRequest req)? requestPermission,
+    McpStatusCallback? onMcpStatusChanged,
+    McpRemoveCallback? onMcpServerRemoved,
   }) async* {
     String? persistedUserMsgId;
     if (userInput.isNotEmpty) {
@@ -112,6 +120,10 @@ class SessionService {
         model: model,
         permission: permission,
         projectPath: projectPath,
+        cancelFlag: cancelFlag,
+        requestPermission: requestPermission,
+        onMcpStatusChanged: onMcpStatusChanged,
+        onMcpServerRemoved: onMcpServerRemoved,
       )) {
         if (!msg.isStreaming) {
           await _session.persistMessage(sessionId, msg);

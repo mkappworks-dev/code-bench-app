@@ -16,8 +16,6 @@ import '../../data/session/models/session_settings.dart';
 import '../../data/session/models/tool_event.dart';
 import '../../data/shared/ai_model.dart';
 import '../../data/shared/chat_message.dart';
-import '../../features/chat/notifiers/agent_cancel_notifier.dart';
-import '../../features/chat/notifiers/agent_permission_request_notifier.dart';
 import '../coding_tools/tool_registry.dart';
 import '../mcp/mcp_service.dart';
 import 'agent_exceptions.dart';
@@ -40,20 +38,12 @@ Rules:
 
 const int _kMaxIterations = 10;
 
-/// Provides an [AgentService] wired to the cancel flag and permission-request
-/// notifier from the chat feature layer.
 @Riverpod(keepAlive: true)
 Future<AgentService> agentService(Ref ref) async {
   final ai = await ref.watch(aiRepositoryProvider.future);
   final registry = ref.watch(toolRegistryProvider);
   final mcpSvc = ref.watch(mcpServiceProvider);
-  return AgentService(
-    ai: ai,
-    registry: registry,
-    mcpService: mcpSvc,
-    cancelFlag: () => ref.read(agentCancelProvider),
-    requestPermission: (req) => ref.read(agentPermissionRequestProvider.notifier).request(req),
-  );
+  return AgentService(ai: ai, registry: registry, mcpService: mcpSvc);
 }
 
 /// Orchestrates one user turn: streams from the model, executes tool calls,
@@ -64,22 +54,18 @@ class AgentService {
     required AIRepository ai,
     required ToolRegistry registry,
     McpService? mcpService,
-    required bool Function() cancelFlag,
-    Future<bool> Function(PermissionRequest req)? requestPermission,
     String Function()? idGen,
   }) : _ai = ai,
        _registry = registry,
        _mcpService = mcpService,
-       _cancelFlag = cancelFlag,
-       _requestPermission = requestPermission ?? ((_) async => true),
        _idGen = idGen ?? (() => const Uuid().v4());
 
   final AIRepository _ai;
   final ToolRegistry _registry;
   final McpService? _mcpService;
-  final bool Function() _cancelFlag;
-  final Future<bool> Function(PermissionRequest req) _requestPermission;
   final String Function() _idGen;
+
+  static bool _neverCancel() => false;
 
   Stream<ChatMessage> runAgenticTurn({
     required String sessionId,
@@ -88,10 +74,20 @@ class AgentService {
     required AIModel model,
     required ChatPermission permission,
     required String projectPath,
+    bool Function() cancelFlag = _neverCancel,
+    Future<bool> Function(PermissionRequest req)? requestPermission,
+    McpStatusCallback? onMcpStatusChanged,
+    McpRemoveCallback? onMcpServerRemoved,
   }) async* {
+    final reqPermission = requestPermission ?? ((_) async => true);
     final Future<void> Function() teardown;
     if (_mcpService != null) {
-      teardown = await _mcpService.startSession(registry: _registry, sessionId: sessionId);
+      teardown = await _mcpService.startSession(
+        registry: _registry,
+        sessionId: sessionId,
+        onStatusChanged: onMcpStatusChanged,
+        onServerRemoved: onMcpServerRemoved,
+      );
     } else {
       teardown = () async {};
     }
@@ -200,7 +196,7 @@ class AgentService {
           throw StreamAbortedUnexpectedlyException(finishReason ?? 'null');
         }
 
-        if (_cancelFlag()) {
+        if (cancelFlag()) {
           _flipRunningToCancelled(events);
           textBuffer.write('\n\n_Cancelled by user._');
           yield snapshot(streaming: false);
@@ -218,7 +214,7 @@ class AgentService {
         final serial = roundCalls.where((c) => !parallelizable.contains(c)).toList();
 
         for (var i = 0; i < parallelizable.length; i += 4) {
-          if (_cancelFlag()) break;
+          if (cancelFlag()) break;
           final chunk = parallelizable.skip(i).take(4).toList();
           await Future.wait(
             chunk.map(
@@ -235,7 +231,7 @@ class AgentService {
         }
 
         for (final call in serial) {
-          if (_cancelFlag()) break;
+          if (cancelFlag()) break;
           if (call.decodeFailed) continue;
 
           final tool = _registry.byName(call.name);
@@ -248,7 +244,7 @@ class AgentService {
               input: call.args,
             );
             yield snapshot(streaming: true).copyWith(pendingPermissionRequest: req);
-            final approved = await _requestPermission(req);
+            final approved = await reqPermission(req);
             yield snapshot(streaming: true);
             if (!approved) {
               final idx = events.indexWhere((e) => e.id == call.id);

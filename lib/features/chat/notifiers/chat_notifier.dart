@@ -13,6 +13,7 @@ import '../../../data/session/models/chat_session.dart';
 import '../../../services/agent/agent_exceptions.dart';
 import '../../../services/session/session_service.dart';
 import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
+import '../../settings/notifiers/mcp_server_status_notifier.dart';
 import 'agent_cancel_notifier.dart';
 import 'agent_failure.dart';
 import 'agent_permission_request_notifier.dart';
@@ -139,6 +140,10 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
           mode: mode,
           permission: permission,
           projectPath: projectPath,
+          cancelFlag: () => ref.read(agentCancelProvider),
+          requestPermission: (req) => ref.read(agentPermissionRequestProvider.notifier).request(req),
+          onMcpStatusChanged: ref.read(mcpServerStatusProvider.notifier).setStatus,
+          onMcpServerRemoved: ref.read(mcpServerStatusProvider.notifier).remove,
         )
         .timeout(
           const Duration(seconds: 60),

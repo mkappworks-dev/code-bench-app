@@ -5,10 +5,8 @@ import 'package:code_bench_app/data/coding_tools/repository/coding_tools_denylis
 import 'package:code_bench_app/data/mcp/datasource/mcp_transport_datasource.dart';
 import 'package:code_bench_app/data/mcp/models/mcp_server_config.dart';
 import 'package:code_bench_app/data/mcp/repository/mcp_repository.dart';
-import 'package:code_bench_app/features/settings/notifiers/mcp_server_status_notifier.dart';
 import 'package:code_bench_app/services/coding_tools/tool_registry.dart';
 import 'package:code_bench_app/services/mcp/mcp_service.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _FakeRepo extends Fake implements McpRepository {
@@ -83,29 +81,24 @@ class _EmptyDenylistRepo implements CodingToolsDenylistRepository {
   Future<void> restoreAllDefaults() async {}
 }
 
-ProviderContainer _makeContainer() {
-  final container = ProviderContainer();
-  addTearDown(container.dispose);
-  return container;
-}
-
 void main() {
   group('McpService.startSession()', () {
     test('registers one McpTool per discovered server tool', () async {
       final registry = ToolRegistry(builtIns: [], denylistRepo: _EmptyDenylistRepo());
-      final container = _makeContainer();
-      final statusNotifier = container.read(mcpServerStatusProvider.notifier);
+      final statuses = <String, McpServerStatus>{};
 
       final svc = McpService(
         repository: _FakeRepo([
           const McpServerConfig(id: 'srv', name: 'test', transport: McpTransport.stdio, command: 'cmd'),
         ]),
-        onStatusChanged: statusNotifier.setStatus,
-        onServerRemoved: statusNotifier.remove,
         transportFactory: (_) => _FakeTransport(),
       );
 
-      final teardown = await svc.startSession(registry: registry, sessionId: 'session-1');
+      final teardown = await svc.startSession(
+        registry: registry,
+        sessionId: 'session-1',
+        onStatusChanged: (id, status) => statuses[id] = status,
+      );
 
       expect(registry.tools.where((t) => t.name == 'test/search'), hasLength(1));
       expect(registry.tools.firstWhere((t) => t.name == 'test/search').capability, ToolCapability.shell);
@@ -116,15 +109,11 @@ void main() {
 
     test('skips a server on startup error without failing the session', () async {
       final registry = ToolRegistry(builtIns: [], denylistRepo: _EmptyDenylistRepo());
-      final container = _makeContainer();
-      final statusNotifier = container.read(mcpServerStatusProvider.notifier);
 
       final svc = McpService(
         repository: _FakeRepo([
           const McpServerConfig(id: 'bad', name: 'broken', transport: McpTransport.stdio, command: 'bad-cmd'),
         ]),
-        onStatusChanged: statusNotifier.setStatus,
-        onServerRemoved: statusNotifier.remove,
         transportFactory: (_) => throw Exception('process not found'),
       );
 

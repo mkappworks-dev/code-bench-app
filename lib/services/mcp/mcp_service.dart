@@ -5,9 +5,9 @@ import '../../data/mcp/datasource/mcp_http_sse_datasource_dio.dart';
 import '../../data/mcp/datasource/mcp_stdio_datasource_process.dart';
 import '../../data/mcp/datasource/mcp_transport_datasource.dart';
 import '../../data/mcp/models/mcp_server_config.dart';
+import '../../data/mcp/models/mcp_server_status.dart';
 import '../../data/mcp/repository/mcp_repository.dart';
 import '../../data/mcp/repository/mcp_repository_impl.dart';
-import '../../features/settings/notifiers/mcp_server_status_notifier.dart';
 import '../../services/coding_tools/tool_registry.dart';
 import 'mcp_client_session.dart';
 import 'mcp_tool.dart';
@@ -22,37 +22,19 @@ typedef McpStatusCallback = void Function(String serverId, McpServerStatus statu
 /// Callback signature used to report server removal after teardown.
 typedef McpRemoveCallback = void Function(String serverId);
 
-/// Provides a [McpService] wired to [McpServerStatusNotifier] from the
-/// settings feature.
-///
-/// Documented exception: this provider (the composition root / wiring layer)
-/// imports [McpServerStatusNotifier] from `lib/features/` to wire the status
-/// callback. The [McpService] class itself has no direct knowledge of
-/// `lib/features/`. Pattern mirrors [agentServiceProvider].
 @riverpod
 McpService mcpService(Ref ref) {
-  final notifier = ref.watch(mcpServerStatusProvider.notifier);
-  return McpService(
-    repository: ref.watch(mcpRepositoryProvider),
-    onStatusChanged: notifier.setStatus,
-    onServerRemoved: notifier.remove,
-  );
+  return McpService(repository: ref.watch(mcpRepositoryProvider));
 }
 
 class McpService {
   McpService({
     required McpRepository repository,
-    McpStatusCallback? onStatusChanged,
-    McpRemoveCallback? onServerRemoved,
     McpTransportDatasource Function(McpServerConfig)? transportFactory,
   }) : _repository = repository,
-       _onStatusChanged = onStatusChanged ?? _noopStatus,
-       _onServerRemoved = onServerRemoved ?? _noopRemove,
        _transportFactory = transportFactory ?? _defaultTransport;
 
   final McpRepository _repository;
-  final McpStatusCallback _onStatusChanged;
-  final McpRemoveCallback _onServerRemoved;
   final McpTransportDatasource Function(McpServerConfig) _transportFactory;
 
   static void _noopStatus(String id, McpServerStatus status) {}
@@ -77,13 +59,21 @@ class McpService {
 
   // ── Session lifecycle ─────────────────────────────────────────────────────
 
-  Future<Future<void> Function()> startSession({required ToolRegistry registry, required String sessionId}) async {
+  Future<Future<void> Function()> startSession({
+    required ToolRegistry registry,
+    required String sessionId,
+    McpStatusCallback? onStatusChanged,
+    McpRemoveCallback? onServerRemoved,
+  }) async {
+    final statusCb = onStatusChanged ?? _noopStatus;
+    final removeCb = onServerRemoved ?? _noopRemove;
+
     final configs = await _repository.getEnabled();
     final sessions = <McpClientSession>[];
     final registeredNames = <String>[];
 
     for (final config in configs) {
-      _onStatusChanged(config.id, const McpServerStatus.starting());
+      statusCb(config.id, const McpServerStatus.starting());
       try {
         final transport = _transportFactory(config);
         final session = await McpClientSession.start(
@@ -99,11 +89,11 @@ class McpService {
           registeredNames.add(tool.name);
         }
 
-        _onStatusChanged(config.id, const McpServerStatus.running());
+        statusCb(config.id, const McpServerStatus.running());
       } catch (e, st) {
         dLog('[McpService] failed to start "${config.name}": $e\n$st');
         sLog('[McpService] server startup error for "${config.name}": ${e.runtimeType}');
-        _onStatusChanged(config.id, McpServerStatus.error(e.toString()));
+        statusCb(config.id, McpServerStatus.error(e.toString()));
       }
     }
 
@@ -114,8 +104,8 @@ class McpService {
       for (final session in sessions) {
         try {
           await session.teardown();
-          _onStatusChanged(session.config.id, const McpServerStatus.stopped());
-          _onServerRemoved(session.config.id);
+          statusCb(session.config.id, const McpServerStatus.stopped());
+          removeCb(session.config.id);
         } catch (e) {
           dLog('[McpService] teardown error for "${session.config.name}": $e');
         }
