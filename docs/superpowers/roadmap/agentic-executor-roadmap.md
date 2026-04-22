@@ -95,15 +95,14 @@ None.
 **Spec:** `docs/superpowers/specs/2026-04-22-bash-tool-design.md`
 **Plan:** `docs/superpowers/plans/2026-04-22-bash-tool.md`
 
-**Done.** See commits `a51871d` (plan), `d435681` (implementation). No further decisions needed.
+**Done.** Implementation commits: `cf2e889` (BashDatasource), `14ed4b8` (BashTool), `4ee01e9` (permission card), `2ff9be9` (wiring).
 
-Key decisions already locked in the spec and implemented:
+Key decisions locked in:
 
-- `runInShell: true` to support pipes and redirects — security risk does not apply to AI-generated, user-approved commands
-- Every Bash call requires explicit user approval — no auto-approve path
-- Working directory locked to project root
-- Existing coding tools denylist applies to the command string
-- CLAUDE.md updated to document `bash_datasource_process.dart` as a `runInShell: true` exception (like `ApplyRepository.assertWithinProject`)
+- Spawns `/bin/sh -c <command>` via `Process.start` with `runInShell: false` — pipes and redirects work via the shell
+- Every bash call requires explicit user approval — no auto-approve path
+- Working directory locked to project root (`ctx.projectPath`)
+- CLAUDE.md updated to document `bash_datasource_process.dart` as an approved exception to the `runInShell: true` ban
 
 ---
 
