@@ -30,6 +30,17 @@ class ProjectDaoManager {
       $$WorkspaceProjectsTableTableManager(_db.attachedDatabase, _db.workspaceProjects);
 }
 
+mixin _$McpDaoMixin on DatabaseAccessor<AppDatabase> {
+  $McpServersTable get mcpServers => attachedDatabase.mcpServers;
+  McpDaoManager get managers => McpDaoManager(this);
+}
+
+class McpDaoManager {
+  final _$McpDaoMixin _db;
+  McpDaoManager(this._db);
+  $$McpServersTableTableManager get mcpServers => $$McpServersTableTableManager(_db.attachedDatabase, _db.mcpServers);
+}
+
 class $ChatSessionsTable extends ChatSessions with TableInfo<$ChatSessionsTable, ChatSessionRow> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -1416,18 +1427,476 @@ class WorkspaceProjectsCompanion extends UpdateCompanion<WorkspaceProjectRow> {
   }
 }
 
+class $McpServersTable extends McpServers with TableInfo<$McpServersTable, McpServerRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $McpServersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _transportMeta = const VerificationMeta('transport');
+  @override
+  late final GeneratedColumn<String> transport = GeneratedColumn<String>(
+    'transport',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _commandMeta = const VerificationMeta('command');
+  @override
+  late final GeneratedColumn<String> command = GeneratedColumn<String>(
+    'command',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _argsMeta = const VerificationMeta('args');
+  @override
+  late final GeneratedColumn<String> args = GeneratedColumn<String>(
+    'args',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _envMeta = const VerificationMeta('env');
+  @override
+  late final GeneratedColumn<String> env = GeneratedColumn<String>(
+    'env',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  @override
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+    'url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta('enabled');
+  @override
+  late final GeneratedColumn<int> enabled = GeneratedColumn<int>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta('sortOrder');
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, transport, command, args, env, url, enabled, sortOrder];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'mcp_servers';
+  @override
+  VerificationContext validateIntegrity(Insertable<McpServerRow> instance, {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(_nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('transport')) {
+      context.handle(_transportMeta, transport.isAcceptableOrUnknown(data['transport']!, _transportMeta));
+    } else if (isInserting) {
+      context.missing(_transportMeta);
+    }
+    if (data.containsKey('command')) {
+      context.handle(_commandMeta, command.isAcceptableOrUnknown(data['command']!, _commandMeta));
+    }
+    if (data.containsKey('args')) {
+      context.handle(_argsMeta, args.isAcceptableOrUnknown(data['args']!, _argsMeta));
+    }
+    if (data.containsKey('env')) {
+      context.handle(_envMeta, env.isAcceptableOrUnknown(data['env']!, _envMeta));
+    }
+    if (data.containsKey('url')) {
+      context.handle(_urlMeta, url.isAcceptableOrUnknown(data['url']!, _urlMeta));
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(_enabledMeta, enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta));
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(_sortOrderMeta, sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  McpServerRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return McpServerRow(
+      id: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      transport: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}transport'])!,
+      command: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}command']),
+      args: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}args'])!,
+      env: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}env'])!,
+      url: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}url']),
+      enabled: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}enabled'])!,
+      sortOrder: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
+    );
+  }
+
+  @override
+  $McpServersTable createAlias(String alias) {
+    return $McpServersTable(attachedDatabase, alias);
+  }
+}
+
+class McpServerRow extends DataClass implements Insertable<McpServerRow> {
+  final String id;
+  final String name;
+  final String transport;
+  final String? command;
+  final String args;
+  final String env;
+  final String? url;
+  final int enabled;
+  final int sortOrder;
+  const McpServerRow({
+    required this.id,
+    required this.name,
+    required this.transport,
+    this.command,
+    required this.args,
+    required this.env,
+    this.url,
+    required this.enabled,
+    required this.sortOrder,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['transport'] = Variable<String>(transport);
+    if (!nullToAbsent || command != null) {
+      map['command'] = Variable<String>(command);
+    }
+    map['args'] = Variable<String>(args);
+    map['env'] = Variable<String>(env);
+    if (!nullToAbsent || url != null) {
+      map['url'] = Variable<String>(url);
+    }
+    map['enabled'] = Variable<int>(enabled);
+    map['sort_order'] = Variable<int>(sortOrder);
+    return map;
+  }
+
+  McpServersCompanion toCompanion(bool nullToAbsent) {
+    return McpServersCompanion(
+      id: Value(id),
+      name: Value(name),
+      transport: Value(transport),
+      command: command == null && nullToAbsent ? const Value.absent() : Value(command),
+      args: Value(args),
+      env: Value(env),
+      url: url == null && nullToAbsent ? const Value.absent() : Value(url),
+      enabled: Value(enabled),
+      sortOrder: Value(sortOrder),
+    );
+  }
+
+  factory McpServerRow.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return McpServerRow(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      transport: serializer.fromJson<String>(json['transport']),
+      command: serializer.fromJson<String?>(json['command']),
+      args: serializer.fromJson<String>(json['args']),
+      env: serializer.fromJson<String>(json['env']),
+      url: serializer.fromJson<String?>(json['url']),
+      enabled: serializer.fromJson<int>(json['enabled']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'transport': serializer.toJson<String>(transport),
+      'command': serializer.toJson<String?>(command),
+      'args': serializer.toJson<String>(args),
+      'env': serializer.toJson<String>(env),
+      'url': serializer.toJson<String?>(url),
+      'enabled': serializer.toJson<int>(enabled),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+    };
+  }
+
+  McpServerRow copyWith({
+    String? id,
+    String? name,
+    String? transport,
+    Value<String?> command = const Value.absent(),
+    String? args,
+    String? env,
+    Value<String?> url = const Value.absent(),
+    int? enabled,
+    int? sortOrder,
+  }) => McpServerRow(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    transport: transport ?? this.transport,
+    command: command.present ? command.value : this.command,
+    args: args ?? this.args,
+    env: env ?? this.env,
+    url: url.present ? url.value : this.url,
+    enabled: enabled ?? this.enabled,
+    sortOrder: sortOrder ?? this.sortOrder,
+  );
+  McpServerRow copyWithCompanion(McpServersCompanion data) {
+    return McpServerRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      transport: data.transport.present ? data.transport.value : this.transport,
+      command: data.command.present ? data.command.value : this.command,
+      args: data.args.present ? data.args.value : this.args,
+      env: data.env.present ? data.env.value : this.env,
+      url: data.url.present ? data.url.value : this.url,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('McpServerRow(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('transport: $transport, ')
+          ..write('command: $command, ')
+          ..write('args: $args, ')
+          ..write('env: $env, ')
+          ..write('url: $url, ')
+          ..write('enabled: $enabled, ')
+          ..write('sortOrder: $sortOrder')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, transport, command, args, env, url, enabled, sortOrder);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is McpServerRow &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.transport == this.transport &&
+          other.command == this.command &&
+          other.args == this.args &&
+          other.env == this.env &&
+          other.url == this.url &&
+          other.enabled == this.enabled &&
+          other.sortOrder == this.sortOrder);
+}
+
+class McpServersCompanion extends UpdateCompanion<McpServerRow> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> transport;
+  final Value<String?> command;
+  final Value<String> args;
+  final Value<String> env;
+  final Value<String?> url;
+  final Value<int> enabled;
+  final Value<int> sortOrder;
+  final Value<int> rowid;
+  const McpServersCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.transport = const Value.absent(),
+    this.command = const Value.absent(),
+    this.args = const Value.absent(),
+    this.env = const Value.absent(),
+    this.url = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  McpServersCompanion.insert({
+    required String id,
+    required String name,
+    required String transport,
+    this.command = const Value.absent(),
+    this.args = const Value.absent(),
+    this.env = const Value.absent(),
+    this.url = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       transport = Value(transport);
+  static Insertable<McpServerRow> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? transport,
+    Expression<String>? command,
+    Expression<String>? args,
+    Expression<String>? env,
+    Expression<String>? url,
+    Expression<int>? enabled,
+    Expression<int>? sortOrder,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (transport != null) 'transport': transport,
+      if (command != null) 'command': command,
+      if (args != null) 'args': args,
+      if (env != null) 'env': env,
+      if (url != null) 'url': url,
+      if (enabled != null) 'enabled': enabled,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  McpServersCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String>? transport,
+    Value<String?>? command,
+    Value<String>? args,
+    Value<String>? env,
+    Value<String?>? url,
+    Value<int>? enabled,
+    Value<int>? sortOrder,
+    Value<int>? rowid,
+  }) {
+    return McpServersCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      transport: transport ?? this.transport,
+      command: command ?? this.command,
+      args: args ?? this.args,
+      env: env ?? this.env,
+      url: url ?? this.url,
+      enabled: enabled ?? this.enabled,
+      sortOrder: sortOrder ?? this.sortOrder,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (transport.present) {
+      map['transport'] = Variable<String>(transport.value);
+    }
+    if (command.present) {
+      map['command'] = Variable<String>(command.value);
+    }
+    if (args.present) {
+      map['args'] = Variable<String>(args.value);
+    }
+    if (env.present) {
+      map['env'] = Variable<String>(env.value);
+    }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<int>(enabled.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('McpServersCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('transport: $transport, ')
+          ..write('command: $command, ')
+          ..write('args: $args, ')
+          ..write('env: $env, ')
+          ..write('url: $url, ')
+          ..write('enabled: $enabled, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $ChatSessionsTable chatSessions = $ChatSessionsTable(this);
   late final $ChatMessagesTable chatMessages = $ChatMessagesTable(this);
   late final $WorkspaceProjectsTable workspaceProjects = $WorkspaceProjectsTable(this);
+  late final $McpServersTable mcpServers = $McpServersTable(this);
   late final SessionDao sessionDao = SessionDao(this as AppDatabase);
   late final ProjectDao projectDao = ProjectDao(this as AppDatabase);
+  late final McpDao mcpDao = McpDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables => allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [chatSessions, chatMessages, workspaceProjects];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [chatSessions, chatMessages, workspaceProjects, mcpServers];
   @override
   DriftDatabaseOptions get options => const DriftDatabaseOptions(storeDateTimeAsText: true);
 }
@@ -2244,6 +2713,217 @@ typedef $$WorkspaceProjectsTableProcessedTableManager =
       WorkspaceProjectRow,
       PrefetchHooks Function()
     >;
+typedef $$McpServersTableCreateCompanionBuilder =
+    McpServersCompanion Function({
+      required String id,
+      required String name,
+      required String transport,
+      Value<String?> command,
+      Value<String> args,
+      Value<String> env,
+      Value<String?> url,
+      Value<int> enabled,
+      Value<int> sortOrder,
+      Value<int> rowid,
+    });
+typedef $$McpServersTableUpdateCompanionBuilder =
+    McpServersCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String> transport,
+      Value<String?> command,
+      Value<String> args,
+      Value<String> env,
+      Value<String?> url,
+      Value<int> enabled,
+      Value<int> sortOrder,
+      Value<int> rowid,
+    });
+
+class $$McpServersTableFilterComposer extends Composer<_$AppDatabase, $McpServersTable> {
+  $$McpServersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get transport =>
+      $composableBuilder(column: $table.transport, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get command =>
+      $composableBuilder(column: $table.command, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get args => $composableBuilder(column: $table.args, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get env => $composableBuilder(column: $table.env, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get url => $composableBuilder(column: $table.url, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => ColumnFilters(column));
+}
+
+class $$McpServersTableOrderingComposer extends Composer<_$AppDatabase, $McpServersTable> {
+  $$McpServersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get transport =>
+      $composableBuilder(column: $table.transport, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get command =>
+      $composableBuilder(column: $table.command, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get args =>
+      $composableBuilder(column: $table.args, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get env =>
+      $composableBuilder(column: $table.env, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
+}
+
+class $$McpServersTableAnnotationComposer extends Composer<_$AppDatabase, $McpServersTable> {
+  $$McpServersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id => $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name => $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get transport => $composableBuilder(column: $table.transport, builder: (column) => column);
+
+  GeneratedColumn<String> get command => $composableBuilder(column: $table.command, builder: (column) => column);
+
+  GeneratedColumn<String> get args => $composableBuilder(column: $table.args, builder: (column) => column);
+
+  GeneratedColumn<String> get env => $composableBuilder(column: $table.env, builder: (column) => column);
+
+  GeneratedColumn<String> get url => $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumn<int> get enabled => $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder => $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+}
+
+class $$McpServersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $McpServersTable,
+          McpServerRow,
+          $$McpServersTableFilterComposer,
+          $$McpServersTableOrderingComposer,
+          $$McpServersTableAnnotationComposer,
+          $$McpServersTableCreateCompanionBuilder,
+          $$McpServersTableUpdateCompanionBuilder,
+          (McpServerRow, BaseReferences<_$AppDatabase, $McpServersTable, McpServerRow>),
+          McpServerRow,
+          PrefetchHooks Function()
+        > {
+  $$McpServersTableTableManager(_$AppDatabase db, $McpServersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () => $$McpServersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$McpServersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$McpServersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> transport = const Value.absent(),
+                Value<String?> command = const Value.absent(),
+                Value<String> args = const Value.absent(),
+                Value<String> env = const Value.absent(),
+                Value<String?> url = const Value.absent(),
+                Value<int> enabled = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => McpServersCompanion(
+                id: id,
+                name: name,
+                transport: transport,
+                command: command,
+                args: args,
+                env: env,
+                url: url,
+                enabled: enabled,
+                sortOrder: sortOrder,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                required String transport,
+                Value<String?> command = const Value.absent(),
+                Value<String> args = const Value.absent(),
+                Value<String> env = const Value.absent(),
+                Value<String?> url = const Value.absent(),
+                Value<int> enabled = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => McpServersCompanion.insert(
+                id: id,
+                name: name,
+                transport: transport,
+                command: command,
+                args: args,
+                env: env,
+                url: url,
+                enabled: enabled,
+                sortOrder: sortOrder,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0.map((e) => (e.readTable(table), BaseReferences(db, table, e))).toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$McpServersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $McpServersTable,
+      McpServerRow,
+      $$McpServersTableFilterComposer,
+      $$McpServersTableOrderingComposer,
+      $$McpServersTableAnnotationComposer,
+      $$McpServersTableCreateCompanionBuilder,
+      $$McpServersTableUpdateCompanionBuilder,
+      (McpServerRow, BaseReferences<_$AppDatabase, $McpServersTable, McpServerRow>),
+      McpServerRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2252,6 +2932,7 @@ class $AppDatabaseManager {
   $$ChatMessagesTableTableManager get chatMessages => $$ChatMessagesTableTableManager(_db, _db.chatMessages);
   $$WorkspaceProjectsTableTableManager get workspaceProjects =>
       $$WorkspaceProjectsTableTableManager(_db, _db.workspaceProjects);
+  $$McpServersTableTableManager get mcpServers => $$McpServersTableTableManager(_db, _db.mcpServers);
 }
 
 // **************************************************************************

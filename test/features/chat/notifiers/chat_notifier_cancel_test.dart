@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:code_bench_app/data/session/models/permission_request.dart';
 import 'package:code_bench_app/data/session/models/session_settings.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
@@ -10,7 +11,10 @@ import 'package:code_bench_app/features/chat/notifiers/chat_messages_actions.dar
 import 'package:code_bench_app/features/chat/notifiers/chat_messages_failure.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
+import 'package:code_bench_app/services/mcp/mcp_service.dart' show McpRemoveCallback, McpStatusCallback;
 import 'package:code_bench_app/services/session/session_service.dart';
+
+bool _neverCancel() => false;
 
 // ── Fake SessionService ───────────────────────────────────────────────────────
 
@@ -31,6 +35,10 @@ class _FakeSessionService extends Fake implements SessionService {
     ChatMode mode = ChatMode.chat,
     ChatPermission permission = ChatPermission.fullAccess,
     String? projectPath,
+    bool Function() cancelFlag = _neverCancel,
+    Future<bool> Function(PermissionRequest req)? requestPermission,
+    McpStatusCallback? onMcpStatusChanged,
+    McpRemoveCallback? onMcpServerRemoved,
   }) {
     sendCalled = true;
     return controller.stream;

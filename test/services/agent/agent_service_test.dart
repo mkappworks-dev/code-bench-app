@@ -109,7 +109,7 @@ void main() {
       [const StreamEvent.textDelta('It says hello.'), const StreamEvent.finish(reason: 'stop')],
     ]);
 
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry);
     final messages = <ChatMessage>[];
     await for (final msg in svc.runAgenticTurn(
       sessionId: 's',
@@ -140,7 +140,7 @@ void main() {
     ];
     final aiRepo = _FakeAIRepo(List.generate(10, (_) => round));
 
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry);
     final messages = <ChatMessage>[];
     await for (final msg in svc.runAgenticTurn(
       sessionId: 's',
@@ -168,7 +168,7 @@ void main() {
       ],
     ]);
 
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => cancel);
+    final svc = AgentService(ai: aiRepo, registry: registry);
     cancel = true;
     final messages = <ChatMessage>[];
     await for (final msg in svc.runAgenticTurn(
@@ -178,6 +178,7 @@ void main() {
       model: const AIModel(id: 'm', provider: AIProvider.custom, name: 'm', modelId: 'm'),
       permission: ChatPermission.fullAccess,
       projectPath: projectDir.path,
+      cancelFlag: () => cancel,
     )) {
       messages.add(msg);
     }
@@ -230,7 +231,7 @@ void main() {
       ),
     ];
 
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry);
     await svc
         .runAgenticTurn(
           sessionId: 's',
@@ -254,7 +255,7 @@ void main() {
       [const StreamEvent.finish(reason: 'stop')],
     ], onSend: (tools) => sentTools = tools);
 
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry);
     await svc
         .runAgenticTurn(
           sessionId: 's',
@@ -281,7 +282,7 @@ void main() {
     ]);
 
     Future<bool> deny(_) async => false;
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false, requestPermission: deny);
+    final svc = AgentService(ai: aiRepo, registry: registry);
     final messages = <ChatMessage>[];
     await for (final msg in svc.runAgenticTurn(
       sessionId: 's',
@@ -290,6 +291,7 @@ void main() {
       model: const AIModel(id: 'm', provider: AIProvider.custom, name: 'm', modelId: 'm'),
       permission: ChatPermission.askBefore,
       projectPath: projectDir.path,
+      requestPermission: deny,
     )) {
       messages.add(msg);
     }
@@ -327,7 +329,7 @@ void main() {
       ),
     ];
 
-    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry);
     await svc
         .runAgenticTurn(
           sessionId: 's',

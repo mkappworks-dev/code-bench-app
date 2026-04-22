@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_theme.dart';
-import 'features/settings/notifiers/general_prefs_notifier.dart';
+import 'features/general/notifiers/general_prefs_notifier.dart';
 import 'router/app_router.dart';
 
 class CodeBenchApp extends ConsumerWidget {

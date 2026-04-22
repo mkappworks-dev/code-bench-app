@@ -54,6 +54,22 @@ class WorkspaceProjects extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+@DataClassName('McpServerRow')
+class McpServers extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get transport => text()();
+  TextColumn get command => text().nullable()();
+  TextColumn get args => text().withDefault(const Constant('[]'))();
+  TextColumn get env => text().withDefault(const Constant('{}'))();
+  TextColumn get url => text().nullable()();
+  IntColumn get enabled => integer().withDefault(const Constant(1))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 // ── DAOs ─────────────────────────────────────────────────────────────────────
 
 @DriftAccessor(tables: [ChatSessions, ChatMessages])
@@ -160,15 +176,38 @@ class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
   Future<void> deleteAllProjects() => delete(workspaceProjects).go();
 }
 
+@DriftAccessor(tables: [McpServers])
+class McpDao extends DatabaseAccessor<AppDatabase> with _$McpDaoMixin {
+  McpDao(super.db);
+
+  Stream<List<McpServerRow>> watchAll() =>
+      (select(mcpServers)..orderBy([(t) => OrderingTerm.asc(t.sortOrder)])).watch();
+
+  Future<List<McpServerRow>> getAll() => (select(mcpServers)..orderBy([(t) => OrderingTerm.asc(t.sortOrder)])).get();
+
+  Future<List<McpServerRow>> getEnabled() =>
+      (select(mcpServers)
+            ..where((t) => t.enabled.equals(1))
+            ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+          .get();
+
+  Future<void> upsert(McpServersCompanion companion) => into(mcpServers).insertOnConflictUpdate(companion);
+
+  Future<void> deleteById(String id) => (delete(mcpServers)..where((t) => t.id.equals(id))).go();
+}
+
 // ── Database ─────────────────────────────────────────────────────────────────
 
-@DriftDatabase(tables: [ChatSessions, ChatMessages, WorkspaceProjects], daos: [SessionDao, ProjectDao])
+@DriftDatabase(
+  tables: [ChatSessions, ChatMessages, WorkspaceProjects, McpServers],
+  daos: [SessionDao, ProjectDao, McpDao],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -181,6 +220,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 7) {
         await m.addColumn(chatMessages, chatMessages.toolEventsJson);
+      }
+      if (from < 8) {
+        await m.createTable(mcpServers);
       }
     },
   );

@@ -10,10 +10,10 @@ import '../../core/utils/debug_logger.dart';
 import '../../core/widgets/app_dialog.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import 'notifiers/general_prefs_notifier.dart';
-import 'notifiers/settings_actions.dart';
+import '../settings/notifiers/settings_actions.dart';
 import '../../core/widgets/app_text_field.dart';
 import 'widgets/app_dropdown.dart';
-import 'widgets/section_label.dart';
+import '../settings/widgets/section_label.dart';
 import 'widgets/settings_group.dart';
 
 class GeneralScreen extends ConsumerStatefulWidget {

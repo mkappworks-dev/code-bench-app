@@ -111,7 +111,7 @@ AgentService _buildAgent({required AIRepository ai}) {
     ],
     denylistRepo: _FakeDenylistRepository(),
   );
-  return AgentService(ai: ai, registry: registry, cancelFlag: () => false);
+  return AgentService(ai: ai, registry: registry);
 }
 
 void main() {

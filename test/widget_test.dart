@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:code_bench_app/app.dart';
-import 'package:code_bench_app/features/settings/notifiers/general_prefs_notifier.dart';
+import 'package:code_bench_app/features/general/notifiers/general_prefs_notifier.dart';
 
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
