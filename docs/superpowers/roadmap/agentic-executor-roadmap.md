@@ -13,8 +13,8 @@ This document is the source of truth for the agentic executor build-out. Read th
 | ----- | ----------------------------------- | ---------------------------------- |
 | 1     | Tool Registry Refactor              | ✅ Done — PR #27, commit `1188b55` |
 | 2     | Grep + Glob + Parallel execution    | ✅ Done — PR #28, commit `f7acbc8` |
-| 3     | Tool-output truncation              | ✅ Done — commit `5b257c8` |
-| 4     | Bash tool (permission-gated)        | ⬜ Not started                     |
+| 3     | Tool-output truncation              | ✅ Done — commit `5b257c8`         |
+| 4     | Bash tool (permission-gated)        | 🗂 Planned — `docs/superpowers/plans/2026-04-22-bash-tool.md` |
 | 5     | MCP client (stdio + HTTP/SSE)       | ⬜ Not started                     |
 | 6     | WebFetch                            | ⬜ Not started                     |
 | 7     | CLI Provider Detection & Delegation | ⬜ Not started                     |
@@ -92,7 +92,8 @@ None.
 
 ## Phase 4 — Bash Tool (permission-gated)
 
-**Status:** Not started. No spec or plan yet.
+**Spec:** `docs/superpowers/specs/2026-04-22-bash-tool-design.md`
+**Plan:** `docs/superpowers/plans/2026-04-22-bash-tool.md`
 
 ### Settled decisions
 
