@@ -65,8 +65,11 @@ class ToolRegistry {
       : List.unmodifiable(_tools);
 
   /// Whether invoking [t] should raise a PermissionRequest in [p].
-  bool requiresPrompt(Tool t, ChatPermission p) =>
-      p == ChatPermission.askBefore && t.capability != ToolCapability.readOnly;
+  /// Shell-capability tools always require a prompt — no auto-approve path.
+  bool requiresPrompt(Tool t, ChatPermission p) {
+    if (t.capability == ToolCapability.shell) return true;
+    return p == ChatPermission.askBefore && t.capability != ToolCapability.readOnly;
+  }
 
   /// Dispatcher. Loads the effective denylist, builds a [ToolContext],
   /// delegates to the tool, wraps crash-catch + timing log.
