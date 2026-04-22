@@ -72,9 +72,10 @@ WebFetchDatasourceDio.fetch
        User-Agent: CodeBench/1.0 (web fetch)
   4. Content-type branch:
        text/html              → htmlToText(body) → 100k char cap
-       text/*, app/json,
-       app/*+json, app/xml,
-       app/*+xml              → raw string       → 100k char cap
+       text/*, application/json,
+       application/*+json,
+       application/xml,
+       application/*+xml      → raw string       → 100k char cap
        anything else          → ArgumentError("web_fetch only supports text
                                 content. The URL returned <mime-type>.")
   5. Return capped string
