@@ -67,6 +67,37 @@ class _FakeTransport implements McpTransportDatasource {
   Future<void> close() async {}
 }
 
+/// Transport that succeeds on connect/initialize/tools-list but throws on close().
+class _ThrowingCloseFakeTransport implements McpTransportDatasource {
+  @override
+  Future<void> connect(McpServerConfig c) async {}
+
+  @override
+  Future<Map<String, dynamic>> sendRequest(String m, [Map<String, dynamic>? p]) async {
+    if (m == 'initialize') {
+      return {
+        'jsonrpc': '2.0',
+        'id': 1,
+        'result': {'protocolVersion': '2024-11-05', 'capabilities': {}, 'serverInfo': {}},
+      };
+    }
+    if (m == 'tools/list') {
+      return {
+        'jsonrpc': '2.0',
+        'id': 2,
+        'result': {'tools': []},
+      };
+    }
+    return {'jsonrpc': '2.0', 'id': 3, 'result': {}};
+  }
+
+  @override
+  void sendNotification(String m, [Map<String, dynamic>? p]) {}
+
+  @override
+  Future<void> close() async => throw Exception('close failed');
+}
+
 class _EmptyDenylistRepo implements CodingToolsDenylistRepository {
   @override
   Future<CodingToolsDenylistState> load() async => CodingToolsDenylistState.empty();
@@ -120,6 +151,36 @@ void main() {
       final teardown = await svc.startSession(registry: registry, sessionId: 's2');
       expect(registry.tools.where((t) => t.name.startsWith('broken/')), isEmpty);
       await teardown();
+    });
+
+    test('calls onStatusChanged(stopped) and onServerRemoved even when teardown throws', () async {
+      final registry = ToolRegistry(builtIns: [], denylistRepo: _EmptyDenylistRepo());
+      final statuses = <String, McpServerStatus>{};
+      final removedIds = <String>[];
+
+      final svc = McpService(
+        repository: _FakeRepo([
+          const McpServerConfig(id: 'srv2', name: 'flaky', transport: McpTransport.stdio, command: 'cmd'),
+        ]),
+        transportFactory: (_) => _ThrowingCloseFakeTransport(),
+      );
+
+      final teardown = await svc.startSession(
+        registry: registry,
+        sessionId: 'session-teardown-throws',
+        onStatusChanged: (id, status) => statuses[id] = status,
+        onServerRemoved: (id) => removedIds.add(id),
+      );
+
+      // Teardown should not throw to the caller.
+      await teardown();
+
+      expect(
+        statuses['srv2'],
+        isA<McpServerStopped>(),
+        reason: 'onStatusChanged must be called with stopped even when teardown throws',
+      );
+      expect(removedIds, contains('srv2'), reason: 'onServerRemoved must be called even when teardown throws');
     });
   });
 }

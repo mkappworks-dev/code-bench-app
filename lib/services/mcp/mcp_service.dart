@@ -28,11 +28,9 @@ McpService mcpService(Ref ref) {
 }
 
 class McpService {
-  McpService({
-    required McpRepository repository,
-    McpTransportDatasource Function(McpServerConfig)? transportFactory,
-  }) : _repository = repository,
-       _transportFactory = transportFactory ?? _defaultTransport;
+  McpService({required McpRepository repository, McpTransportDatasource Function(McpServerConfig)? transportFactory})
+    : _repository = repository,
+      _transportFactory = transportFactory ?? _defaultTransport;
 
   final McpRepository _repository;
   final McpTransportDatasource Function(McpServerConfig) _transportFactory;
@@ -104,10 +102,11 @@ class McpService {
       for (final session in sessions) {
         try {
           await session.teardown();
-          statusCb(session.config.id, const McpServerStatus.stopped());
-          removeCb(session.config.id);
         } catch (e) {
           dLog('[McpService] teardown error for "${session.config.name}": $e');
+        } finally {
+          statusCb(session.config.id, const McpServerStatus.stopped());
+          removeCb(session.config.id);
         }
       }
     };
