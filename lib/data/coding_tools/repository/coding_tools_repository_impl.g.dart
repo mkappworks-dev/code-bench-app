@@ -13,7 +13,12 @@ part of 'coding_tools_repository_impl.dart';
 final codingToolsRepositoryProvider = CodingToolsRepositoryProvider._();
 
 final class CodingToolsRepositoryProvider
-    extends $FunctionalProvider<CodingToolsRepository, CodingToolsRepository, CodingToolsRepository>
+    extends
+        $FunctionalProvider<
+          CodingToolsRepository,
+          CodingToolsRepository,
+          CodingToolsRepository
+        >
     with $Provider<CodingToolsRepository> {
   CodingToolsRepositoryProvider._()
     : super(
@@ -31,7 +36,9 @@ final class CodingToolsRepositoryProvider
 
   @$internal
   @override
-  $ProviderElement<CodingToolsRepository> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<CodingToolsRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   CodingToolsRepository create(Ref ref) {
@@ -40,8 +47,12 @@ final class CodingToolsRepositoryProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(CodingToolsRepository value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<CodingToolsRepository>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CodingToolsRepository>(value),
+    );
   }
 }
 
-String _$codingToolsRepositoryHash() => r'c0358c38496a234263503949702769d4e37e4231';
+String _$codingToolsRepositoryHash() =>
+    r'c0358c38496a234263503949702769d4e37e4231';

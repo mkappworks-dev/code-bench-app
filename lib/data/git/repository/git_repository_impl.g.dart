@@ -12,7 +12,8 @@ part of 'git_repository_impl.dart';
 @ProviderFor(gitRepository)
 final gitRepositoryProvider = GitRepositoryProvider._();
 
-final class GitRepositoryProvider extends $FunctionalProvider<GitRepository, GitRepository, GitRepository>
+final class GitRepositoryProvider
+    extends $FunctionalProvider<GitRepository, GitRepository, GitRepository>
     with $Provider<GitRepository> {
   GitRepositoryProvider._()
     : super(
@@ -30,7 +31,8 @@ final class GitRepositoryProvider extends $FunctionalProvider<GitRepository, Git
 
   @$internal
   @override
-  $ProviderElement<GitRepository> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<GitRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   GitRepository create(Ref ref) {
@@ -39,7 +41,10 @@ final class GitRepositoryProvider extends $FunctionalProvider<GitRepository, Git
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(GitRepository value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<GitRepository>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<GitRepository>(value),
+    );
   }
 }
 

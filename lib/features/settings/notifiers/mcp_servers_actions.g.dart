@@ -12,7 +12,8 @@ part of 'mcp_servers_actions.dart';
 @ProviderFor(McpServersActions)
 final mcpServersActionsProvider = McpServersActionsProvider._();
 
-final class McpServersActionsProvider extends $AsyncNotifierProvider<McpServersActions, void> {
+final class McpServersActionsProvider
+    extends $AsyncNotifierProvider<McpServersActions, void> {
   McpServersActionsProvider._()
     : super(
         from: null,
@@ -41,7 +42,13 @@ abstract class _$McpServersActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

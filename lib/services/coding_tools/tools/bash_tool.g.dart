@@ -12,7 +12,9 @@ part of 'bash_tool.dart';
 @ProviderFor(bashTool)
 final bashToolProvider = BashToolProvider._();
 
-final class BashToolProvider extends $FunctionalProvider<BashTool, BashTool, BashTool> with $Provider<BashTool> {
+final class BashToolProvider
+    extends $FunctionalProvider<BashTool, BashTool, BashTool>
+    with $Provider<BashTool> {
   BashToolProvider._()
     : super(
         from: null,
@@ -29,7 +31,8 @@ final class BashToolProvider extends $FunctionalProvider<BashTool, BashTool, Bas
 
   @$internal
   @override
-  $ProviderElement<BashTool> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<BashTool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   BashTool create(Ref ref) {
@@ -38,7 +41,10 @@ final class BashToolProvider extends $FunctionalProvider<BashTool, BashTool, Bas
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(BashTool value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<BashTool>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<BashTool>(value),
+    );
   }
 }
 

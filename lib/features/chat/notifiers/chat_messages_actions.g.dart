@@ -34,7 +34,8 @@ final chatMessagesActionsProvider = ChatMessagesActionsProvider._();
 /// Single global slot (no family): only one session is active at a time, and
 /// we want one snackbar per failed operation regardless of how many bubbles
 /// are on screen.
-final class ChatMessagesActionsProvider extends $AsyncNotifierProvider<ChatMessagesActions, void> {
+final class ChatMessagesActionsProvider
+    extends $AsyncNotifierProvider<ChatMessagesActions, void> {
   /// Command notifier for message-list mutations that can fail and need a
   /// stable, observable error surface (typed `AsyncError` carrying a
   /// [ChatMessagesFailure]).
@@ -65,7 +66,8 @@ final class ChatMessagesActionsProvider extends $AsyncNotifierProvider<ChatMessa
   ChatMessagesActions create() => ChatMessagesActions();
 }
 
-String _$chatMessagesActionsHash() => r'59e1975ca5267407dbd3d7b12fe6056b96694416';
+String _$chatMessagesActionsHash() =>
+    r'59e1975ca5267407dbd3d7b12fe6056b96694416';
 
 /// Command notifier for message-list mutations that can fail and need a
 /// stable, observable error surface (typed `AsyncError` carrying a
@@ -86,7 +88,13 @@ abstract class _$ChatMessagesActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

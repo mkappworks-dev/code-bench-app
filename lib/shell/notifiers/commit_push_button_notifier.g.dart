@@ -18,18 +18,25 @@ final commitPushButtonStateProvider = CommitPushButtonStateFamily._();
 /// behind-count, and the loaded remote list for [path].
 
 final class CommitPushButtonStateProvider
-    extends $FunctionalProvider<CommitPushButtonState, CommitPushButtonState, CommitPushButtonState>
+    extends
+        $FunctionalProvider<
+          CommitPushButtonState,
+          CommitPushButtonState,
+          CommitPushButtonState
+        >
     with $Provider<CommitPushButtonState> {
   /// Derives all [CommitPushButton] display flags from live git state,
   /// behind-count, and the loaded remote list for [path].
-  CommitPushButtonStateProvider._({required CommitPushButtonStateFamily super.from, required String super.argument})
-    : super(
-        retry: null,
-        name: r'commitPushButtonStateProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+  CommitPushButtonStateProvider._({
+    required CommitPushButtonStateFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'commitPushButtonStateProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$commitPushButtonStateHash();
@@ -43,7 +50,9 @@ final class CommitPushButtonStateProvider
 
   @$internal
   @override
-  $ProviderElement<CommitPushButtonState> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<CommitPushButtonState> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   CommitPushButtonState create(Ref ref) {
@@ -53,7 +62,10 @@ final class CommitPushButtonStateProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(CommitPushButtonState value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<CommitPushButtonState>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CommitPushButtonState>(value),
+    );
   }
 
   @override
@@ -67,12 +79,14 @@ final class CommitPushButtonStateProvider
   }
 }
 
-String _$commitPushButtonStateHash() => r'a676ab7b21566e09a203891e0fc7225e59f50da0';
+String _$commitPushButtonStateHash() =>
+    r'a676ab7b21566e09a203891e0fc7225e59f50da0';
 
 /// Derives all [CommitPushButton] display flags from live git state,
 /// behind-count, and the loaded remote list for [path].
 
-final class CommitPushButtonStateFamily extends $Family with $FunctionalFamilyOverride<CommitPushButtonState, String> {
+final class CommitPushButtonStateFamily extends $Family
+    with $FunctionalFamilyOverride<CommitPushButtonState, String> {
   CommitPushButtonStateFamily._()
     : super(
         retry: null,
@@ -85,7 +99,8 @@ final class CommitPushButtonStateFamily extends $Family with $FunctionalFamilyOv
   /// Derives all [CommitPushButton] display flags from live git state,
   /// behind-count, and the loaded remote list for [path].
 
-  CommitPushButtonStateProvider call(String path) => CommitPushButtonStateProvider._(argument: path, from: this);
+  CommitPushButtonStateProvider call(String path) =>
+      CommitPushButtonStateProvider._(argument: path, from: this);
 
   @override
   String toString() => r'commitPushButtonStateProvider';

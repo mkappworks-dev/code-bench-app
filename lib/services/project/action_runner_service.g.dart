@@ -13,7 +13,12 @@ part of 'action_runner_service.dart';
 final actionRunnerServiceProvider = ActionRunnerServiceProvider._();
 
 final class ActionRunnerServiceProvider
-    extends $FunctionalProvider<ActionRunnerService, ActionRunnerService, ActionRunnerService>
+    extends
+        $FunctionalProvider<
+          ActionRunnerService,
+          ActionRunnerService,
+          ActionRunnerService
+        >
     with $Provider<ActionRunnerService> {
   ActionRunnerServiceProvider._()
     : super(
@@ -31,7 +36,9 @@ final class ActionRunnerServiceProvider
 
   @$internal
   @override
-  $ProviderElement<ActionRunnerService> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<ActionRunnerService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   ActionRunnerService create(Ref ref) {
@@ -40,8 +47,12 @@ final class ActionRunnerServiceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ActionRunnerService value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ActionRunnerService>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ActionRunnerService>(value),
+    );
   }
 }
 
-String _$actionRunnerServiceHash() => r'9c75da84fb7f4e5306b60cacdae2e3c3f7b191b4';
+String _$actionRunnerServiceHash() =>
+    r'9c75da84fb7f4e5306b60cacdae2e3c3f7b191b4';

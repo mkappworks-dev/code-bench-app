@@ -12,11 +12,12 @@ _CodeBlock _$CodeBlockFromJson(Map<String, dynamic> json) => _CodeBlock(
   filename: json['filename'] as String?,
 );
 
-Map<String, dynamic> _$CodeBlockToJson(_CodeBlock instance) => <String, dynamic>{
-  'code': instance.code,
-  'language': instance.language,
-  'filename': instance.filename,
-};
+Map<String, dynamic> _$CodeBlockToJson(_CodeBlock instance) =>
+    <String, dynamic>{
+      'code': instance.code,
+      'language': instance.language,
+      'filename': instance.filename,
+    };
 
 _ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => _ChatMessage(
   id: json['id'] as String,
@@ -24,10 +25,14 @@ _ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => _ChatMessage(
   role: $enumDecode(_$MessageRoleEnumMap, json['role']),
   content: json['content'] as String,
   codeBlocks:
-      (json['codeBlocks'] as List<dynamic>?)?.map((e) => CodeBlock.fromJson(e as Map<String, dynamic>)).toList() ??
+      (json['codeBlocks'] as List<dynamic>?)
+          ?.map((e) => CodeBlock.fromJson(e as Map<String, dynamic>))
+          .toList() ??
       const [],
   toolEvents:
-      (json['toolEvents'] as List<dynamic>?)?.map((e) => ToolEvent.fromJson(e as Map<String, dynamic>)).toList() ??
+      (json['toolEvents'] as List<dynamic>?)
+          ?.map((e) => ToolEvent.fromJson(e as Map<String, dynamic>))
+          .toList() ??
       const [],
   timestamp: DateTime.parse(json['timestamp'] as String),
   isStreaming: json['isStreaming'] as bool? ?? false,
@@ -37,22 +42,25 @@ _ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => _ChatMessage(
   iterationCapReached: json['iterationCapReached'] as bool? ?? false,
   pendingPermissionRequest: json['pendingPermissionRequest'] == null
       ? null
-      : PermissionRequest.fromJson(json['pendingPermissionRequest'] as Map<String, dynamic>),
+      : PermissionRequest.fromJson(
+          json['pendingPermissionRequest'] as Map<String, dynamic>,
+        ),
 );
 
-Map<String, dynamic> _$ChatMessageToJson(_ChatMessage instance) => <String, dynamic>{
-  'id': instance.id,
-  'sessionId': instance.sessionId,
-  'role': _$MessageRoleEnumMap[instance.role]!,
-  'content': instance.content,
-  'codeBlocks': instance.codeBlocks.map((e) => e.toJson()).toList(),
-  'toolEvents': instance.toolEvents.map((e) => e.toJson()).toList(),
-  'timestamp': instance.timestamp.toIso8601String(),
-  'isStreaming': instance.isStreaming,
-  'askQuestion': instance.askQuestion?.toJson(),
-  'iterationCapReached': instance.iterationCapReached,
-  'pendingPermissionRequest': instance.pendingPermissionRequest?.toJson(),
-};
+Map<String, dynamic> _$ChatMessageToJson(_ChatMessage instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'sessionId': instance.sessionId,
+      'role': _$MessageRoleEnumMap[instance.role]!,
+      'content': instance.content,
+      'codeBlocks': instance.codeBlocks.map((e) => e.toJson()).toList(),
+      'toolEvents': instance.toolEvents.map((e) => e.toJson()).toList(),
+      'timestamp': instance.timestamp.toIso8601String(),
+      'isStreaming': instance.isStreaming,
+      'askQuestion': instance.askQuestion?.toJson(),
+      'iterationCapReached': instance.iterationCapReached,
+      'pendingPermissionRequest': instance.pendingPermissionRequest?.toJson(),
+    };
 
 const _$MessageRoleEnumMap = {
   MessageRole.user: 'user',

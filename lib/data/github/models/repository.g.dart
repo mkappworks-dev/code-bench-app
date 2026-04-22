@@ -16,37 +16,46 @@ _Repository _$RepositoryFromJson(Map<String, dynamic> json) => _Repository(
   starCount: (json['starCount'] as num?)?.toInt() ?? 0,
   description: json['description'] as String?,
   htmlUrl: json['htmlUrl'] as String?,
-  updatedAt: json['updatedAt'] == null ? null : DateTime.parse(json['updatedAt'] as String),
+  updatedAt: json['updatedAt'] == null
+      ? null
+      : DateTime.parse(json['updatedAt'] as String),
 );
 
-Map<String, dynamic> _$RepositoryToJson(_Repository instance) => <String, dynamic>{
-  'id': instance.id,
-  'name': instance.name,
-  'owner': instance.owner,
-  'defaultBranch': instance.defaultBranch,
-  'isPrivate': instance.isPrivate,
-  'language': instance.language,
-  'starCount': instance.starCount,
-  'description': instance.description,
-  'htmlUrl': instance.htmlUrl,
-  'updatedAt': instance.updatedAt?.toIso8601String(),
-};
+Map<String, dynamic> _$RepositoryToJson(_Repository instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'owner': instance.owner,
+      'defaultBranch': instance.defaultBranch,
+      'isPrivate': instance.isPrivate,
+      'language': instance.language,
+      'starCount': instance.starCount,
+      'description': instance.description,
+      'htmlUrl': instance.htmlUrl,
+      'updatedAt': instance.updatedAt?.toIso8601String(),
+    };
 
-_GitHubAccount _$GitHubAccountFromJson(Map<String, dynamic> json) => _GitHubAccount(
-  username: json['username'] as String,
-  avatarUrl: json['avatarUrl'] as String,
-  email: json['email'] as String?,
-  scopes: (json['scopes'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
-  name: json['name'] as String?,
-);
+_GitHubAccount _$GitHubAccountFromJson(Map<String, dynamic> json) =>
+    _GitHubAccount(
+      username: json['username'] as String,
+      avatarUrl: json['avatarUrl'] as String,
+      email: json['email'] as String?,
+      scopes:
+          (json['scopes'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      name: json['name'] as String?,
+    );
 
-Map<String, dynamic> _$GitHubAccountToJson(_GitHubAccount instance) => <String, dynamic>{
-  'username': instance.username,
-  'avatarUrl': instance.avatarUrl,
-  'email': instance.email,
-  'scopes': instance.scopes,
-  'name': instance.name,
-};
+Map<String, dynamic> _$GitHubAccountToJson(_GitHubAccount instance) =>
+    <String, dynamic>{
+      'username': instance.username,
+      'avatarUrl': instance.avatarUrl,
+      'email': instance.email,
+      'scopes': instance.scopes,
+      'name': instance.name,
+    };
 
 _GitTreeItem _$GitTreeItemFromJson(Map<String, dynamic> json) => _GitTreeItem(
   path: json['path'] as String,
@@ -55,9 +64,10 @@ _GitTreeItem _$GitTreeItemFromJson(Map<String, dynamic> json) => _GitTreeItem(
   size: (json['size'] as num?)?.toInt(),
 );
 
-Map<String, dynamic> _$GitTreeItemToJson(_GitTreeItem instance) => <String, dynamic>{
-  'path': instance.path,
-  'type': instance.type,
-  'sha': instance.sha,
-  'size': instance.size,
-};
+Map<String, dynamic> _$GitTreeItemToJson(_GitTreeItem instance) =>
+    <String, dynamic>{
+      'path': instance.path,
+      'type': instance.type,
+      'sha': instance.sha,
+      'size': instance.size,
+    };

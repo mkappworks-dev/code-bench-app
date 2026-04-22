@@ -12,7 +12,9 @@ part of 'glob_tool.dart';
 @ProviderFor(globTool)
 final globToolProvider = GlobToolProvider._();
 
-final class GlobToolProvider extends $FunctionalProvider<GlobTool, GlobTool, GlobTool> with $Provider<GlobTool> {
+final class GlobToolProvider
+    extends $FunctionalProvider<GlobTool, GlobTool, GlobTool>
+    with $Provider<GlobTool> {
   GlobToolProvider._()
     : super(
         from: null,
@@ -29,7 +31,8 @@ final class GlobToolProvider extends $FunctionalProvider<GlobTool, GlobTool, Glo
 
   @$internal
   @override
-  $ProviderElement<GlobTool> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<GlobTool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   GlobTool create(Ref ref) {
@@ -38,7 +41,10 @@ final class GlobToolProvider extends $FunctionalProvider<GlobTool, GlobTool, Glo
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(GlobTool value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<GlobTool>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<GlobTool>(value),
+    );
   }
 }
 

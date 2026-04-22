@@ -12,7 +12,8 @@ part of 'ripgrep_availability_notifier.dart';
 /// Widgets watch [ripgrepAvailabilityStateProvider]; "Check again" calls [recheck].
 
 @ProviderFor(RipgrepAvailabilityStateNotifier)
-final ripgrepAvailabilityStateProvider = RipgrepAvailabilityStateNotifierProvider._();
+final ripgrepAvailabilityStateProvider =
+    RipgrepAvailabilityStateNotifierProvider._();
 
 /// Feature-layer state notifier for the ripgrep availability check.
 /// Widgets watch [ripgrepAvailabilityStateProvider]; "Check again" calls [recheck].
@@ -36,10 +37,12 @@ final class RipgrepAvailabilityStateNotifierProvider
 
   @$internal
   @override
-  RipgrepAvailabilityStateNotifier create() => RipgrepAvailabilityStateNotifier();
+  RipgrepAvailabilityStateNotifier create() =>
+      RipgrepAvailabilityStateNotifier();
 }
 
-String _$ripgrepAvailabilityStateNotifierHash() => r'f8ab68db9907f5f30b7fb7e7310ab8523ca65cb2';
+String _$ripgrepAvailabilityStateNotifierHash() =>
+    r'f8ab68db9907f5f30b7fb7e7310ab8523ca65cb2';
 
 /// Feature-layer state notifier for the ripgrep availability check.
 /// Widgets watch [ripgrepAvailabilityStateProvider]; "Check again" calls [recheck].
@@ -51,7 +54,13 @@ abstract class _$RipgrepAvailabilityStateNotifier extends $AsyncNotifier<bool> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<bool>, bool>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<bool>, bool>, AsyncValue<bool>, Object?, Object?>;
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<bool>, bool>,
+              AsyncValue<bool>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

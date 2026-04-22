@@ -13,7 +13,12 @@ part of 'ide_launch_datasource_process.dart';
 final ideLaunchDatasourceProvider = IdeLaunchDatasourceProvider._();
 
 final class IdeLaunchDatasourceProvider
-    extends $FunctionalProvider<IdeLaunchDatasource, IdeLaunchDatasource, IdeLaunchDatasource>
+    extends
+        $FunctionalProvider<
+          IdeLaunchDatasource,
+          IdeLaunchDatasource,
+          IdeLaunchDatasource
+        >
     with $Provider<IdeLaunchDatasource> {
   IdeLaunchDatasourceProvider._()
     : super(
@@ -31,7 +36,9 @@ final class IdeLaunchDatasourceProvider
 
   @$internal
   @override
-  $ProviderElement<IdeLaunchDatasource> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<IdeLaunchDatasource> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   IdeLaunchDatasource create(Ref ref) {
@@ -40,8 +47,12 @@ final class IdeLaunchDatasourceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(IdeLaunchDatasource value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<IdeLaunchDatasource>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<IdeLaunchDatasource>(value),
+    );
   }
 }
 
-String _$ideLaunchDatasourceHash() => r'0cb49a5bd4e3a1c28b6d47d675cd99feefb2ea8b';
+String _$ideLaunchDatasourceHash() =>
+    r'0cb49a5bd4e3a1c28b6d47d675cd99feefb2ea8b';

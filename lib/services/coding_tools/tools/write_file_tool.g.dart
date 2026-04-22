@@ -12,7 +12,8 @@ part of 'write_file_tool.dart';
 @ProviderFor(writeFileTool)
 final writeFileToolProvider = WriteFileToolProvider._();
 
-final class WriteFileToolProvider extends $FunctionalProvider<WriteFileTool, WriteFileTool, WriteFileTool>
+final class WriteFileToolProvider
+    extends $FunctionalProvider<WriteFileTool, WriteFileTool, WriteFileTool>
     with $Provider<WriteFileTool> {
   WriteFileToolProvider._()
     : super(
@@ -30,7 +31,8 @@ final class WriteFileToolProvider extends $FunctionalProvider<WriteFileTool, Wri
 
   @$internal
   @override
-  $ProviderElement<WriteFileTool> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<WriteFileTool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   WriteFileTool create(Ref ref) {
@@ -39,7 +41,10 @@ final class WriteFileToolProvider extends $FunctionalProvider<WriteFileTool, Wri
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(WriteFileTool value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<WriteFileTool>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<WriteFileTool>(value),
+    );
   }
 }
 

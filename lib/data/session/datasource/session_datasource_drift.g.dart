@@ -13,7 +13,12 @@ part of 'session_datasource_drift.dart';
 final sessionDatasourceProvider = SessionDatasourceProvider._();
 
 final class SessionDatasourceProvider
-    extends $FunctionalProvider<SessionDatasource, SessionDatasource, SessionDatasource>
+    extends
+        $FunctionalProvider<
+          SessionDatasource,
+          SessionDatasource,
+          SessionDatasource
+        >
     with $Provider<SessionDatasource> {
   SessionDatasourceProvider._()
     : super(
@@ -31,7 +36,9 @@ final class SessionDatasourceProvider
 
   @$internal
   @override
-  $ProviderElement<SessionDatasource> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<SessionDatasource> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   SessionDatasource create(Ref ref) {
@@ -40,7 +47,10 @@ final class SessionDatasourceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(SessionDatasource value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<SessionDatasource>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SessionDatasource>(value),
+    );
   }
 }
 

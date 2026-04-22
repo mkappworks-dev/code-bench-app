@@ -12,7 +12,8 @@ part of 'tool_registry.dart';
 @ProviderFor(toolRegistry)
 final toolRegistryProvider = ToolRegistryProvider._();
 
-final class ToolRegistryProvider extends $FunctionalProvider<ToolRegistry, ToolRegistry, ToolRegistry>
+final class ToolRegistryProvider
+    extends $FunctionalProvider<ToolRegistry, ToolRegistry, ToolRegistry>
     with $Provider<ToolRegistry> {
   ToolRegistryProvider._()
     : super(
@@ -30,7 +31,8 @@ final class ToolRegistryProvider extends $FunctionalProvider<ToolRegistry, ToolR
 
   @$internal
   @override
-  $ProviderElement<ToolRegistry> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<ToolRegistry> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   ToolRegistry create(Ref ref) {
@@ -39,7 +41,10 @@ final class ToolRegistryProvider extends $FunctionalProvider<ToolRegistry, ToolR
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ToolRegistry value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ToolRegistry>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ToolRegistry>(value),
+    );
   }
 }
 

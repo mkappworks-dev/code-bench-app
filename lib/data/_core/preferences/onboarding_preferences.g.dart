@@ -13,7 +13,12 @@ part of 'onboarding_preferences.dart';
 final onboardingPreferencesProvider = OnboardingPreferencesProvider._();
 
 final class OnboardingPreferencesProvider
-    extends $FunctionalProvider<OnboardingPreferences, OnboardingPreferences, OnboardingPreferences>
+    extends
+        $FunctionalProvider<
+          OnboardingPreferences,
+          OnboardingPreferences,
+          OnboardingPreferences
+        >
     with $Provider<OnboardingPreferences> {
   OnboardingPreferencesProvider._()
     : super(
@@ -31,7 +36,9 @@ final class OnboardingPreferencesProvider
 
   @$internal
   @override
-  $ProviderElement<OnboardingPreferences> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<OnboardingPreferences> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   OnboardingPreferences create(Ref ref) {
@@ -40,8 +47,12 @@ final class OnboardingPreferencesProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(OnboardingPreferences value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<OnboardingPreferences>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<OnboardingPreferences>(value),
+    );
   }
 }
 
-String _$onboardingPreferencesHash() => r'3c6c84da8828282f8d3848a4a4a2bd3a14e5a646';
+String _$onboardingPreferencesHash() =>
+    r'3c6c84da8828282f8d3848a4a4a2bd3a14e5a646';

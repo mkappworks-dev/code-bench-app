@@ -13,7 +13,12 @@ part of 'session_service.dart';
 final sessionServiceProvider = SessionServiceProvider._();
 
 final class SessionServiceProvider
-    extends $FunctionalProvider<AsyncValue<SessionService>, SessionService, FutureOr<SessionService>>
+    extends
+        $FunctionalProvider<
+          AsyncValue<SessionService>,
+          SessionService,
+          FutureOr<SessionService>
+        >
     with $FutureModifier<SessionService>, $FutureProvider<SessionService> {
   SessionServiceProvider._()
     : super(
@@ -31,7 +36,9 @@ final class SessionServiceProvider
 
   @$internal
   @override
-  $FutureProviderElement<SessionService> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+  $FutureProviderElement<SessionService> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<SessionService> create(Ref ref) {

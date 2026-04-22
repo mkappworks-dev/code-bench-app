@@ -12,7 +12,9 @@ part of 'grep_tool.dart';
 @ProviderFor(grepTool)
 final grepToolProvider = GrepToolProvider._();
 
-final class GrepToolProvider extends $FunctionalProvider<GrepTool, GrepTool, GrepTool> with $Provider<GrepTool> {
+final class GrepToolProvider
+    extends $FunctionalProvider<GrepTool, GrepTool, GrepTool>
+    with $Provider<GrepTool> {
   GrepToolProvider._()
     : super(
         from: null,
@@ -29,7 +31,8 @@ final class GrepToolProvider extends $FunctionalProvider<GrepTool, GrepTool, Gre
 
   @$internal
   @override
-  $ProviderElement<GrepTool> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<GrepTool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   GrepTool create(Ref ref) {
@@ -38,7 +41,10 @@ final class GrepToolProvider extends $FunctionalProvider<GrepTool, GrepTool, Gre
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(GrepTool value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<GrepTool>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<GrepTool>(value),
+    );
   }
 }
 

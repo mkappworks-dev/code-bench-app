@@ -18,7 +18,8 @@ final projectSidebarActionsProvider = ProjectSidebarActionsProvider._();
 /// Command notifier that mediates every imperative project/session mutation
 /// triggered from the sidebar. Widgets never reach into [ProjectService] or
 /// [SessionService] directly — they call methods here instead.
-final class ProjectSidebarActionsProvider extends $AsyncNotifierProvider<ProjectSidebarActions, void> {
+final class ProjectSidebarActionsProvider
+    extends $AsyncNotifierProvider<ProjectSidebarActions, void> {
   /// Command notifier that mediates every imperative project/session mutation
   /// triggered from the sidebar. Widgets never reach into [ProjectService] or
   /// [SessionService] directly — they call methods here instead.
@@ -41,7 +42,8 @@ final class ProjectSidebarActionsProvider extends $AsyncNotifierProvider<Project
   ProjectSidebarActions create() => ProjectSidebarActions();
 }
 
-String _$projectSidebarActionsHash() => r'0f1c766c136555c97a41953c4c5cb3ff4c216e54';
+String _$projectSidebarActionsHash() =>
+    r'0f1c766c136555c97a41953c4c5cb3ff4c216e54';
 
 /// Command notifier that mediates every imperative project/session mutation
 /// triggered from the sidebar. Widgets never reach into [ProjectService] or
@@ -54,7 +56,13 @@ abstract class _$ProjectSidebarActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

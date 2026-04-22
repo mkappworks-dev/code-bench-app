@@ -34,7 +34,8 @@ final createPrActionsProvider = CreatePrActionsProvider._();
 /// `DioException.toString()`, which serialises request headers and would
 /// leak the `Authorization: Bearer <PAT>` token. Same discipline as
 /// [PrCardNotifier]; see `macos/Runner/README.md`.
-final class CreatePrActionsProvider extends $AsyncNotifierProvider<CreatePrActions, void> {
+final class CreatePrActionsProvider
+    extends $AsyncNotifierProvider<CreatePrActions, void> {
   /// Command notifier mediating every GitHub-API call the "Create PR"
   /// dialog flow makes. Widgets never touch [GitHubRepository] or
   /// [SecureStorage] directly — they go through here so the
@@ -86,7 +87,13 @@ abstract class _$CreatePrActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

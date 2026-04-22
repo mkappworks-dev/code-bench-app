@@ -17,7 +17,8 @@ final ripgrepAvailabilityProvider = RipgrepAvailabilityProvider._();
 /// Returns true if ripgrep (`rg`) is installed. Cached for the session.
 /// The user can force a re-check via [RipgrepAvailabilityStateNotifier.recheck].
 
-final class RipgrepAvailabilityProvider extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+final class RipgrepAvailabilityProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
     with $FutureModifier<bool>, $FutureProvider<bool> {
   /// Returns true if ripgrep (`rg`) is installed. Cached for the session.
   /// The user can force a re-check via [RipgrepAvailabilityStateNotifier.recheck].
@@ -37,7 +38,8 @@ final class RipgrepAvailabilityProvider extends $FunctionalProvider<AsyncValue<b
 
   @$internal
   @override
-  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
   FutureOr<bool> create(Ref ref) {
@@ -45,4 +47,5 @@ final class RipgrepAvailabilityProvider extends $FunctionalProvider<AsyncValue<b
   }
 }
 
-String _$ripgrepAvailabilityHash() => r'ea6bd8a45fe4875bedad6bfc9b5d76d948a2b094';
+String _$ripgrepAvailabilityHash() =>
+    r'ea6bd8a45fe4875bedad6bfc9b5d76d948a2b094';

@@ -13,7 +13,12 @@ part of 'github_repository_impl.dart';
 final githubRepositoryProvider = GithubRepositoryProvider._();
 
 final class GithubRepositoryProvider
-    extends $FunctionalProvider<AsyncValue<GitHubRepository>, GitHubRepository, FutureOr<GitHubRepository>>
+    extends
+        $FunctionalProvider<
+          AsyncValue<GitHubRepository>,
+          GitHubRepository,
+          FutureOr<GitHubRepository>
+        >
     with $FutureModifier<GitHubRepository>, $FutureProvider<GitHubRepository> {
   GithubRepositoryProvider._()
     : super(
@@ -31,7 +36,9 @@ final class GithubRepositoryProvider
 
   @$internal
   @override
-  $FutureProviderElement<GitHubRepository> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+  $FutureProviderElement<GitHubRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<GitHubRepository> create(Ref ref) {

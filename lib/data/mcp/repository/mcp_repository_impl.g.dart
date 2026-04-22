@@ -12,7 +12,8 @@ part of 'mcp_repository_impl.dart';
 @ProviderFor(mcpRepository)
 final mcpRepositoryProvider = McpRepositoryProvider._();
 
-final class McpRepositoryProvider extends $FunctionalProvider<McpRepository, McpRepository, McpRepository>
+final class McpRepositoryProvider
+    extends $FunctionalProvider<McpRepository, McpRepository, McpRepository>
     with $Provider<McpRepository> {
   McpRepositoryProvider._()
     : super(
@@ -30,7 +31,8 @@ final class McpRepositoryProvider extends $FunctionalProvider<McpRepository, Mcp
 
   @$internal
   @override
-  $ProviderElement<McpRepository> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<McpRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   McpRepository create(Ref ref) {
@@ -39,7 +41,10 @@ final class McpRepositoryProvider extends $FunctionalProvider<McpRepository, Mcp
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(McpRepository value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<McpRepository>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<McpRepository>(value),
+    );
   }
 }
 
