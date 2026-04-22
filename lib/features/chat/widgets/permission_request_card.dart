@@ -36,6 +36,11 @@ class _PermissionRequestCardState extends ConsumerState<PermissionRequestCard> {
       final newLines = newStr.split('\n').take(3).map((l) => '+ $l').toList();
       return [...oldLines, ...newLines];
     }
+    if (req.toolName == 'bash') {
+      final command = req.input['command'];
+      if (command is! String || command.isEmpty) return null;
+      return [command];
+    }
     return null;
   }
 
@@ -79,7 +84,8 @@ class _PermissionRequestCardState extends ConsumerState<PermissionRequestCard> {
             widget.request.summary,
             style: TextStyle(color: c.textSecondary, fontSize: 11, fontFamily: 'monospace'),
           ),
-          if (previewLines != null) ...[
+          // existing collapsible diff — skip for bash
+          if (previewLines != null && widget.request.toolName != 'bash') ...[
             const SizedBox(height: 6),
             GestureDetector(
               onTap: () => setState(() => _expanded = !_expanded),
@@ -109,6 +115,23 @@ class _PermissionRequestCardState extends ConsumerState<PermissionRequestCard> {
                 ),
               ),
             ],
+          ],
+          // bash: always-visible command code block
+          if (widget.request.toolName == 'bash' && previewLines != null) ...[
+            const SizedBox(height: 6),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: c.codeBlockBg,
+                border: Border.all(color: c.subtleBorder),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                previewLines.first,
+                style: TextStyle(color: c.textPrimary, fontSize: 11, fontFamily: 'monospace'),
+              ),
+            ),
           ],
           const SizedBox(height: 8),
           Row(
