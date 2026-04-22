@@ -9,18 +9,18 @@ This document is the source of truth for the agentic executor build-out. Read th
 
 ## Status Overview
 
-| Phase | Description | Status |
-|---|---|---|
-| 1 | Tool Registry Refactor | ✅ Done — PR #27, commit `1188b55` |
-| 2 | Grep + Glob + Parallel execution | 🗂 Planned — `docs/superpowers/plans/2026-04-22-grep-glob-parallel.md` |
-| 3 | Tool-output truncation | ⬜ Not started |
-| 4 | Bash tool (permission-gated) | ⬜ Not started |
-| 5 | MCP client (stdio + HTTP/SSE) | ⬜ Not started |
-| 6 | WebFetch | ⬜ Not started |
-| 7 | CLI Provider Detection & Delegation | ⬜ Not started |
-| — | Anthropic provider adapter | 🚫 Deferred / YAGNI |
-| — | Subagent delegation | 🚫 Deferred / YAGNI |
-| — | WebSearch | 🚫 Deferred |
+| Phase | Description                         | Status                             |
+| ----- | ----------------------------------- | ---------------------------------- |
+| 1     | Tool Registry Refactor              | ✅ Done — PR #27, commit `1188b55` |
+| 2     | Grep + Glob + Parallel execution    | ✅ Done — PR #28, commit `f7acbc8` |
+| 3     | Tool-output truncation              | 🗂 Planned — `docs/superpowers/plans/2026-04-22-tool-output-truncation.md` |
+| 4     | Bash tool (permission-gated)        | ⬜ Not started                     |
+| 5     | MCP client (stdio + HTTP/SSE)       | ⬜ Not started                     |
+| 6     | WebFetch                            | ⬜ Not started                     |
+| 7     | CLI Provider Detection & Delegation | ⬜ Not started                     |
+| —     | Anthropic provider adapter          | 🚫 Deferred / YAGNI                |
+| —     | Subagent delegation                 | 🚫 Deferred / YAGNI                |
+| —     | WebSearch                           | 🚫 Deferred                        |
 
 ---
 
@@ -28,17 +28,17 @@ This document is the source of truth for the agentic executor build-out. Read th
 
 From the initial 6-gap roadmap session:
 
-| # | Phase | Gap | Why here |
-|---|---|---|---|
-| 1 | Tool registry refactor | 1A | Prerequisite for 2, 5, and MCP. Pure win, contained blast radius. |
-| 2 | Grep + Glob tools | 2 (partial) | Highest capability gain per LOC. Registry from Phase 1 makes this a one-file add. |
-| 3 | Parallel read-only tools | 3B | Dramatic perceived speedup. Isolated to the loop; no wire/schema changes. |
-| 4 | Tool-output truncation | 4B | Needed as soon as tool breadth grows — more tools = more bloat per round. |
-| 5 | Bash tool (permission-gated) | 2 (partial) | Highest capability, highest risk. Defer so Phases 1–4 give usage telemetry to inform the denylist. |
-| 6 | Anthropic provider via adapter | 5B | Pure new-market work. Deferred — no concrete use case identified. |
-| 7 | MCP client | 1B | Biggest protocol surface. Only worth it once registry/adapter abstractions are stable. |
-| 8 | Subagent delegation | 6 | YAGNI until a concrete workflow demands it. |
-| 9 | WebFetch / WebSearch | 2 (partial) | Needs network-policy UX which is its own design problem. |
+| #   | Phase                          | Gap         | Why here                                                                                           |
+| --- | ------------------------------ | ----------- | -------------------------------------------------------------------------------------------------- |
+| 1   | Tool registry refactor         | 1A          | Prerequisite for 2, 5, and MCP. Pure win, contained blast radius.                                  |
+| 2   | Grep + Glob tools              | 2 (partial) | Highest capability gain per LOC. Registry from Phase 1 makes this a one-file add.                  |
+| 3   | Parallel read-only tools       | 3B          | Dramatic perceived speedup. Isolated to the loop; no wire/schema changes.                          |
+| 4   | Tool-output truncation         | 4B          | Needed as soon as tool breadth grows — more tools = more bloat per round.                          |
+| 5   | Bash tool (permission-gated)   | 2 (partial) | Highest capability, highest risk. Defer so Phases 1–4 give usage telemetry to inform the denylist. |
+| 6   | Anthropic provider via adapter | 5B          | Pure new-market work. Deferred — no concrete use case identified.                                  |
+| 7   | MCP client                     | 1B          | Biggest protocol surface. Only worth it once registry/adapter abstractions are stable.             |
+| 8   | Subagent delegation            | 6           | YAGNI until a concrete workflow demands it.                                                        |
+| 9   | WebFetch / WebSearch           | 2 (partial) | Needs network-policy UX which is its own design problem.                                           |
 
 > **Note:** Original Phases 2 and 3 (Grep+Glob and Parallel) were combined into a single implementation plan because they share the same AgentService change surface and are low risk together.
 
@@ -52,12 +52,13 @@ The `ToolRegistry.register()` seam is the hook for future MCP tool injection.
 
 ---
 
-## Phase 2 — Grep + Glob + Parallel Execution 🗂
+## Phase 2 — Grep + Glob + Parallel Execution ✅
 
 **Spec:** `docs/superpowers/specs/2026-04-22-grep-glob-parallel-design.md`
 **Plan:** `docs/superpowers/plans/2026-04-22-grep-glob-parallel.md`
 
 Key decisions already locked in the spec — do not re-litigate:
+
 - ripgrep when available, pure-Dart fallback (progressive enhancement)
 - Missing rg → persistent UI warning in Settings, not an error; fall back silently
 - 2 context lines, 100-match cap, flat `file:line:content` format (matches Claude Code)
@@ -68,7 +69,8 @@ Key decisions already locked in the spec — do not re-litigate:
 
 ## Phase 3 — Tool-output Truncation
 
-**Status:** Not started. No spec or plan yet.
+**Spec:** `docs/superpowers/specs/2026-04-22-tool-output-truncation-design.md`
+**Plan:** `docs/superpowers/plans/2026-04-22-tool-output-truncation.md`
 
 ### Settled decisions
 
@@ -76,10 +78,15 @@ Key decisions already locked in the spec — do not re-litigate:
 
 **Cap size:** 50 KB per tool result. Rationale: Claude Code uses 200 KB but Code Bench hits the Anthropic API directly — context window bloat affects cost and quality. `read_file` allows 2 MB files; without this cap one large read could consume ~500 K tokens. 50 KB ≈ ~12 K tokens, substantial but not window-dominating.
 
-**Truncation notice:** Append `\n[Output truncated at 50 KB. Use a more specific path or pattern.]` when cut.
+**Enforcement point:** Wire time (`_buildWireMessages`) — full output stays in DB and UI; only the API payload is capped.
+
+**Scope:** Both `te.output` and `te.error` — both fields go into the same `content` wire field. Phase 4 (Bash) will route large stderr through `te.error`.
+
+**Truncation notice:** `\n[Output truncated at 50 KB. Use grep to search for specific content or read a narrower file range.]`
 
 ### Open questions
-None — ready to spec and plan when Phase 2 is merged.
+
+None.
 
 ---
 
@@ -102,6 +109,7 @@ None — ready to spec and plan when Phase 2 is merged.
 **Timing:** Implement after Phase 3. The original rationale (telemetry to inform the denylist) still applies — having grep/glob/truncation in production first gives real usage data before the highest-risk tool ships.
 
 ### Open questions
+
 None — ready to spec and plan when Phase 3 is merged.
 
 ---
@@ -121,6 +129,7 @@ None — ready to spec and plan when Phase 3 is merged.
 **Timing:** After Phase 4 (Bash). The registry and adapter abstractions need to be proven stable before adding the biggest protocol surface.
 
 ### Open questions
+
 - Configuration UX: how does the user configure MCP server connections? (stdio command, HTTP URL, env vars) — needs brainstorming session.
 - Lifecycle: who starts/stops stdio server processes? (app startup vs on-demand)
 
@@ -143,6 +152,7 @@ None — ready to spec and plan when Phase 3 is merged.
 **Primary use case:** "Fetch the docs for this package," "read this GitHub issue," "check this API reference." The AI receives a URL and fetches it.
 
 ### Open questions
+
 - Content size cap (probably same 50 KB as tool-output truncation, or a separate web-specific cap)
 - Whether to support authenticated requests (e.g., private GitHub repos) — likely YAGNI
 
@@ -218,8 +228,6 @@ enum TaskStatus { running, completed, failed, interrupted }
 After Phase 6 (WebFetch). MCP (Phase 5) and WebFetch (Phase 6) prove the tool registry and permission-gate patterns at scale. CLI adapters can reuse those patterns cleanly once they are stable in production.
 
 ---
-
-
 
 ### Anthropic provider adapter
 
