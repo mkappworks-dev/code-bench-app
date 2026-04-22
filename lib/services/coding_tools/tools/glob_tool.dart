@@ -1,11 +1,10 @@
-import 'dart:io';
-
 import 'package:glob/glob.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/coding_tools/models/coding_tool_result.dart';
+import '../../../data/coding_tools/models/effective_denylist.dart';
 import '../../../data/coding_tools/models/tool.dart';
 import '../../../data/coding_tools/models/tool_capability.dart';
 import '../../../data/coding_tools/models/tool_context.dart';
@@ -70,13 +69,12 @@ class GlobTool extends Tool {
 
     try {
       final globs = _buildGlobs(pattern);
-      // Walk the project directory recursively and filter with glob.matches()
-      // so that `**` is treated as zero-or-more path segments (standard expectation).
-      final root = Directory(ctx.projectPath);
+      final entries = await repo.listDirectory(ctx.projectPath, recursive: true);
       final paths = <String>[];
-      await for (final entity in root.list(recursive: true, followLinks: false)) {
-        if (entity is! File) continue;
-        final rel = p.relative(entity.path, from: ctx.projectPath);
+      for (final entry in entries) {
+        if (entry.entityType != 'file') continue;
+        final rel = p.relative(entry.path, from: ctx.projectPath);
+        if (_isDeniedRel(rel, ctx.denylist)) continue;
         if (globs.any((g) => g.matches(rel))) paths.add(rel);
       }
       paths.sort();
@@ -99,9 +97,22 @@ class GlobTool extends Tool {
         buf.write('$n ${n == 1 ? 'path' : 'paths'} matched.');
       }
       return CodingToolResult.success(buf.toString());
-    } catch (e, st) {
-      dLog('[GlobTool] error: $e\n$st');
+    } on CodingToolsDiskException catch (e) {
+      dLog('[GlobTool] disk error: $e');
       return CodingToolResult.error('Glob error: $e');
     }
+  }
+
+  static bool _isDeniedRel(String relPath, EffectiveDenylist denylist) {
+    for (final segRaw in p.split(relPath)) {
+      final seg = segRaw.toLowerCase();
+      if (seg.isEmpty || seg == '.' || seg == '..') continue;
+      if (denylist.segments.contains(seg)) return true;
+      if (denylist.filenames.contains(seg)) return true;
+      if (denylist.prefixes.any(seg.startsWith)) return true;
+      final ext = p.extension(seg).toLowerCase();
+      if (ext.isNotEmpty && denylist.extensions.contains(ext)) return true;
+    }
+    return false;
   }
 }

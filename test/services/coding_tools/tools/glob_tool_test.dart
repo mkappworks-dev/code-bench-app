@@ -59,4 +59,19 @@ void main() {
     final r = await tool.execute(fakeCtx(projectPath: tmp.path, args: {}));
     expect(r, isA<CodingToolResultError>());
   });
+
+  test('denylist filtering removes denied paths from results', () async {
+    await makeFile('lib/a.dart');
+    await makeFile('.env');
+    await makeFile('node_modules/package.json');
+
+    final denylist = (segments: {'node_modules'}, filenames: {'.env'}, extensions: <String>{}, prefixes: <String>{});
+
+    final r = await tool.execute(fakeCtx(projectPath: tmp.path, args: {'pattern': '**/*'}, denylist: denylist));
+    expect(r, isA<CodingToolResultSuccess>());
+    final out = (r as CodingToolResultSuccess).output;
+    expect(out, contains('lib/a.dart'));
+    expect(out, isNot(contains('.env')));
+    expect(out, isNot(contains('node_modules/package.json')));
+  });
 }
