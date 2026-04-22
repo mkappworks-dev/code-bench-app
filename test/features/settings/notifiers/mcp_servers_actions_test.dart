@@ -1,5 +1,6 @@
 import 'package:code_bench_app/data/mcp/models/mcp_server_config.dart';
 import 'package:code_bench_app/data/mcp/repository/mcp_repository.dart';
+import 'package:code_bench_app/features/settings/notifiers/mcp_server_status_notifier.dart';
 import 'package:code_bench_app/features/settings/notifiers/mcp_servers_actions.dart';
 import 'package:code_bench_app/features/settings/notifiers/mcp_servers_failure.dart';
 import 'package:code_bench_app/services/mcp/mcp_service.dart';
@@ -77,6 +78,17 @@ void main() {
       addTearDown(c.dispose);
       await c.read(mcpServersActionsProvider.notifier).remove('x');
       expect(c.read(mcpServersActionsProvider).error, isA<McpServersRemoveError>());
+    });
+
+    test('restores status to stopped when delete fails', () async {
+      final repo = _FakeRepo()
+        .._configs.add(_cfg)
+        ..throwOnDelete = true;
+      final c = ProviderContainer(overrides: [mcpServiceProvider.overrideWithValue(_buildService(repo))]);
+      addTearDown(c.dispose);
+      await c.read(mcpServersActionsProvider.notifier).remove('x');
+      final statusMap = c.read(mcpServerStatusProvider);
+      expect(statusMap['x'], isA<McpServerStopped>());
     });
   });
 }

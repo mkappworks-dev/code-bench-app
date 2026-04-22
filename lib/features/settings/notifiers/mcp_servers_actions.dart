@@ -34,6 +34,8 @@ class McpServersActions extends _$McpServersActions {
         ref.read(mcpServerStatusProvider.notifier).remove(id);
       } catch (e, st) {
         dLog('[McpServersActions] remove failed: $e');
+        // Restore status so the card doesn't stay in pendingRemoval state.
+        ref.read(mcpServerStatusProvider.notifier).setStatus(id, const McpServerStatus.stopped());
         Error.throwWithStackTrace(McpServersFailure.removeError(e.toString()), st);
       }
     });
