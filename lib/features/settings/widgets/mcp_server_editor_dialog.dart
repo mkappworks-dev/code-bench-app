@@ -161,7 +161,13 @@ class _McpServerEditorDialogState extends State<McpServerEditorDialog> {
     }
 
     setState(() => _saving = true);
-    await widget.onSave(config);
+    try {
+      await widget.onSave(config);
+    } catch (_) {
+      // onSave threw — stay open so user can retry.
+      if (mounted) setState(() => _saving = false);
+      return;
+    }
     if (!mounted) return;
     setState(() => _saving = false);
     Navigator.of(context).pop();

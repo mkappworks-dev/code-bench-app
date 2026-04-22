@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_snack_bar.dart';
+import '../../data/mcp/models/mcp_server_config.dart';
 import 'notifiers/mcp_server_status_notifier.dart';
 import 'notifiers/mcp_servers_actions.dart';
 import 'notifiers/mcp_servers_failure.dart';
@@ -18,11 +19,16 @@ class McpServersScreen extends ConsumerStatefulWidget {
 }
 
 class _McpServersScreenState extends ConsumerState<McpServersScreen> {
+  Future<void> _saveServer(McpServerConfig config) async {
+    await ref.read(mcpServersActionsProvider.notifier).save(config);
+    if (!mounted) return;
+    if (ref.read(mcpServersActionsProvider).hasError) throw Exception('save failed');
+  }
+
   void _openAdd() {
     showDialog<void>(
       context: context,
-      builder: (_) =>
-          McpServerEditorDialog(onSave: (config) => ref.read(mcpServersActionsProvider.notifier).save(config)),
+      builder: (_) => McpServerEditorDialog(onSave: _saveServer),
     );
   }
 
@@ -74,10 +80,7 @@ class _McpServersScreenState extends ConsumerState<McpServersScreen> {
                         onEdit: (config) {
                           showDialog<void>(
                             context: context,
-                            builder: (_) => McpServerEditorDialog(
-                              initial: config,
-                              onSave: (updated) => ref.read(mcpServersActionsProvider.notifier).save(updated),
-                            ),
+                            builder: (_) => McpServerEditorDialog(initial: config, onSave: _saveServer),
                           );
                         },
                         onRemove: (id) => ref.read(mcpServersActionsProvider.notifier).remove(id),
