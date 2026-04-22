@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/utils/debug_logger.dart';
 import '../models/grep_match.dart';
 import 'grep_datasource.dart';
 
@@ -42,7 +43,8 @@ class GrepDatasourceIo implements GrepDatasource {
     List<FileSystemEntity> entries;
     try {
       entries = await Directory(dir).list(followLinks: false).toList();
-    } on FileSystemException {
+    } on FileSystemException catch (e) {
+      dLog('[GrepDatasourceIo] skipping unreadable directory $dir: ${e.message}');
       return;
     }
     for (final entity in entries) {
@@ -71,7 +73,8 @@ class GrepDatasourceIo implements GrepDatasource {
     List<int> bytes;
     try {
       bytes = await File(filePath).readAsBytes();
-    } on FileSystemException {
+    } on FileSystemException catch (e) {
+      dLog('[GrepDatasourceIo] skipping unreadable file $filePath: ${e.message}');
       return;
     }
     if (bytes.contains(0)) return; // binary file
