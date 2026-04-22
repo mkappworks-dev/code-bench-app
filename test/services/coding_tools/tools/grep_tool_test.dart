@@ -84,7 +84,7 @@ void main() {
     final r = await tool.execute(fakeCtx(projectPath: projectDir.path, args: {'pattern': 'MATCH', 'path': '.'}));
     final out = (r as CodingToolResultSuccess).output;
     expect(out, contains('100+ matches'));
-    expect(out, contains('showing first 100'));
+    expect(out, contains('showing 100'));
   });
 
   test('returns "No matches found." when result is empty', () async {
@@ -166,6 +166,7 @@ void main() {
         denylist: denylist,
       ),
     );
+    expect(fake.callCount, 1);
     expect(r, isA<CodingToolResultSuccess>());
     final out = (r as CodingToolResultSuccess).output;
     expect(out, isNot(contains('.env')));

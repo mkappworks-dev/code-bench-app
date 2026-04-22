@@ -162,8 +162,9 @@ class GrepTool extends Tool {
     }
     buf.writeln();
     if (result.wasCapped) {
+      final shown = result.matches.length;
       buf.write(
-        'Found 100+ matches (showing first $_kMaxMatches). '
+        'Found 100+ matches (showing $shown). '
         'Narrow your search with a more specific pattern or path.',
       );
     } else {
