@@ -19,11 +19,20 @@ class _PermissionRequestCardState extends ConsumerState<PermissionRequestCard> {
   // Strips characters that could visually mislead an approver: ANSI escapes,
   // Unicode bidi overrides, and non-printable controls (preserving \n and \t).
   static String _sanitizeCommand(String command) {
-    var s = command.replaceAll(RegExp(r'\x1b\[[0-9;]*[A-Za-z]'), '');
-    // Bidi override / directional isolate / directional marks
-    s = s.replaceAll(RegExp('[‪-‮⁦-⁩‏؜]'), '');
-    s = s.replaceAll(RegExp(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]'), '');
-    return s;
+    // Strip ANSI escape sequences first.
+    final noAnsi = command.replaceAll(RegExp(r'\x1b\[[0-9;]*[A-Za-z]'), '');
+    final buf = StringBuffer();
+    for (final rune in noAnsi.runes) {
+      // Skip bidi overrides (U+202A-202E), directional isolates (U+2066-2069),
+      // right-to-left mark (U+200F), and Arabic letter mark (U+061C).
+      if ((rune >= 0x202a && rune <= 0x202e) || (rune >= 0x2066 && rune <= 0x2069) || rune == 0x200f || rune == 0x061c)
+        continue;
+      // Skip non-printable controls except \t (0x09) and \n (0x0a).
+      if (rune != 0x09 && rune != 0x0a && rune < 0x20) continue;
+      if (rune == 0x7f) continue;
+      buf.writeCharCode(rune);
+    }
+    return buf.toString();
   }
 
   List<String>? _buildPreviewLines() {
@@ -143,10 +152,7 @@ class _PermissionRequestCardState extends ConsumerState<PermissionRequestCard> {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              'Denylist rules do not restrict bash commands.',
-              style: TextStyle(color: c.textMuted, fontSize: 10),
-            ),
+            Text('Denylist rules do not restrict bash commands.', style: TextStyle(color: c.textMuted, fontSize: 10)),
           ],
           const SizedBox(height: 8),
           Row(
