@@ -9,41 +9,42 @@ part of 'ripgrep_availability_notifier.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Feature-layer state notifier for the ripgrep availability check.
-/// Widgets watch [ripgrepAvailabilityProvider]; "Check again" calls [recheck].
+/// Widgets watch [ripgrepAvailabilityStateProvider]; "Check again" calls [recheck].
 
-@ProviderFor(RipgrepAvailabilityNotifier)
-final ripgrepAvailabilityProvider = RipgrepAvailabilityNotifierProvider._();
+@ProviderFor(RipgrepAvailabilityStateNotifier)
+final ripgrepAvailabilityStateProvider = RipgrepAvailabilityStateNotifierProvider._();
 
 /// Feature-layer state notifier for the ripgrep availability check.
-/// Widgets watch [ripgrepAvailabilityProvider]; "Check again" calls [recheck].
-final class RipgrepAvailabilityNotifierProvider extends $AsyncNotifierProvider<RipgrepAvailabilityNotifier, bool> {
+/// Widgets watch [ripgrepAvailabilityStateProvider]; "Check again" calls [recheck].
+final class RipgrepAvailabilityStateNotifierProvider
+    extends $AsyncNotifierProvider<RipgrepAvailabilityStateNotifier, bool> {
   /// Feature-layer state notifier for the ripgrep availability check.
-  /// Widgets watch [ripgrepAvailabilityProvider]; "Check again" calls [recheck].
-  RipgrepAvailabilityNotifierProvider._()
+  /// Widgets watch [ripgrepAvailabilityStateProvider]; "Check again" calls [recheck].
+  RipgrepAvailabilityStateNotifierProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'ripgrepAvailabilityProvider',
+        name: r'ripgrepAvailabilityStateProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$ripgrepAvailabilityNotifierHash();
+  String debugGetCreateSourceHash() => _$ripgrepAvailabilityStateNotifierHash();
 
   @$internal
   @override
-  RipgrepAvailabilityNotifier create() => RipgrepAvailabilityNotifier();
+  RipgrepAvailabilityStateNotifier create() => RipgrepAvailabilityStateNotifier();
 }
 
-String _$ripgrepAvailabilityNotifierHash() => r'edec1fa5a3cb93bc95aa0ed97efe65560b681399';
+String _$ripgrepAvailabilityStateNotifierHash() => r'f5de85bf99386a43367d62ec37bc6a934db56f78';
 
 /// Feature-layer state notifier for the ripgrep availability check.
-/// Widgets watch [ripgrepAvailabilityProvider]; "Check again" calls [recheck].
+/// Widgets watch [ripgrepAvailabilityStateProvider]; "Check again" calls [recheck].
 
-abstract class _$RipgrepAvailabilityNotifier extends $AsyncNotifier<bool> {
+abstract class _$RipgrepAvailabilityStateNotifier extends $AsyncNotifier<bool> {
   FutureOr<bool> build();
   @$mustCallSuper
   @override

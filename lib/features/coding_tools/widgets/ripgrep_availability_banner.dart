@@ -30,11 +30,11 @@ class _RipgrepAvailabilityBannerState extends ConsumerState<RipgrepAvailabilityB
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(ripgrepAvailabilityProvider);
+    final state = ref.watch(ripgrepAvailabilityStateProvider);
 
     if (state.hasValue) _lastKnown = state.value;
 
-    ref.listen(ripgrepAvailabilityProvider, (prev, next) {
+    ref.listen(ripgrepAvailabilityStateProvider, (prev, next) {
       if (!_recheckRequested) return;
       if (next.isLoading || !next.hasValue) return;
       _recheckRequested = false;
@@ -165,7 +165,7 @@ class _RipgrepAvailabilityBannerState extends ConsumerState<RipgrepAvailabilityB
 
   void _recheck() {
     _recheckRequested = true;
-    ref.read(ripgrepAvailabilityProvider.notifier).recheck();
+    ref.read(ripgrepAvailabilityStateProvider.notifier).recheck();
   }
 
   Future<void> _copyCmd(String cmd) async {
