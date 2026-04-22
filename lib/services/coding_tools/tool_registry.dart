@@ -74,22 +74,21 @@ class ToolRegistry {
     final tool = byName(name);
     if (tool == null) return CodingToolResult.error('Unknown tool "$name"');
 
-    final effective = await _loadEffectiveDenylist();
-    final ctx = ToolContext(
-      projectPath: projectPath,
-      sessionId: sessionId,
-      messageId: messageId,
-      args: args,
-      denylist: effective,
-    );
-
     final started = DateTime.now();
     dLog('[ToolRegistry] $name start');
     try {
+      final effective = await _loadEffectiveDenylist();
+      final ctx = ToolContext(
+        projectPath: projectPath,
+        sessionId: sessionId,
+        messageId: messageId,
+        args: args,
+        denylist: effective,
+      );
       return await tool.execute(ctx);
     } catch (e, st) {
       dLog('[ToolRegistry] $name crashed: ${e.runtimeType} $e\n$st');
-      return CodingToolResult.error('Tool "$name" crashed unexpectedly (${e.runtimeType}).');
+      return CodingToolResult.error('Tool "$name" encountered an internal error.');
     } finally {
       final ms = DateTime.now().difference(started).inMilliseconds;
       dLog('[ToolRegistry] $name done in ${ms}ms');

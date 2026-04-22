@@ -55,6 +55,20 @@ class _AlwaysCrashesTool implements Tool {
   }
 }
 
+class _ThrowingDenylistRepo implements CodingToolsDenylistRepository {
+  @override
+  Future<CodingToolsDenylistState> load() async => CodingToolsDenylistState.empty();
+  @override
+  Future<CodingToolsDenylistState> save(CodingToolsDenylistState state) async => state;
+  @override
+  Future<Set<String>> effective(DenylistCategory category) async {
+    throw StateError('prefs unavailable');
+  }
+
+  @override
+  Future<void> restoreAllDefaults() async {}
+}
+
 ToolRegistry _newRegistry({required Directory projectDir, CodingToolsDenylistRepository? denylistRepo}) {
   final applyRepo = ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()));
   final applySvc = ApplyService(repo: applyRepo);
@@ -206,7 +220,30 @@ void main() {
         args: const {},
       );
       expect(result, isA<CodingToolResultError>());
-      expect((result as CodingToolResultError).message, contains('crashed unexpectedly'));
+      final msg = (result as CodingToolResultError).message;
+      expect(msg, isNot(contains('StateError')));
+      expect(msg, contains('encountered an internal error'));
+    });
+  });
+
+  group('execute — denylist load failure', () {
+    test('returns error result instead of throwing', () async {
+      final codingRepo = CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo());
+      final registry = ToolRegistry(
+        builtIns: [ReadFileTool(repo: codingRepo)],
+        denylistRepo: _ThrowingDenylistRepo(),
+      );
+      final result = await registry.execute(
+        name: 'read_file',
+        projectPath: projectDir.path,
+        sessionId: 's',
+        messageId: 'm',
+        args: {'path': 'a.txt'},
+      );
+      expect(result, isA<CodingToolResultError>());
+      final msg = (result as CodingToolResultError).message;
+      expect(msg, contains('read_file'));
+      expect(msg, isNot(contains('StateError')));
     });
   });
 
