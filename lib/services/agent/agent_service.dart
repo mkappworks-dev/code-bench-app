@@ -25,7 +25,7 @@ export 'agent_exceptions.dart';
 part 'agent_service.g.dart';
 
 const String _kActSystemPrompt = '''
-You are a coding assistant embedded in a local IDE. You have four tools: read_file, list_dir, write_file, str_replace.
+You are a coding assistant embedded in a local IDE. You have six tools: read_file, list_dir, write_file, str_replace, grep, glob.
 
 Rules:
 - Read before you edit. Always call read_file on a file before write_file or str_replace against it, unless you're creating a brand-new file.
@@ -260,7 +260,11 @@ class AgentService {
     if (raw.trim().isEmpty) return const {};
     try {
       final decoded = jsonDecode(raw);
-      return decoded is Map<String, dynamic> ? decoded : const {};
+      if (decoded is! Map<String, dynamic>) {
+        dLog('[AgentService] tool args JSON is not an object: ${decoded.runtimeType}');
+        return null;
+      }
+      return decoded;
     } on FormatException {
       dLog('[AgentService] malformed tool args JSON (${raw.length} bytes)');
       return null;
