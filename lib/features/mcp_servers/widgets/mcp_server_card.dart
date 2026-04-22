@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_icons.dart';
+import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/mcp/models/mcp_server_config.dart';
 import '../notifiers/mcp_server_status_notifier.dart';
@@ -21,40 +23,68 @@ class McpServerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _StatusDot(status: status),
-                const SizedBox(width: 8),
-                Text(config.name, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(width: 8),
-                _TransportBadge(transport: config.transport),
-                const Spacer(),
-                _ActionMenu(config: config, onEdit: onEdit, onRemove: onRemove),
-              ],
-            ),
-            const SizedBox(height: 8),
+    final detail = config.transport == McpTransport.stdio ? (config.command ?? '') : (config.url ?? '');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: c.inputSurface,
+        border: Border.all(color: c.deepBorder),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _StatusDot(status: status),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  config.name,
+                  style: TextStyle(
+                    color: c.textPrimary,
+                    fontSize: ThemeConstants.uiFontSizeSmall,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _TransportBadge(transport: config.transport),
+              const SizedBox(width: 8),
+              _ActionButtons(config: config, onEdit: onEdit, onRemove: onRemove),
+            ],
+          ),
+          if (detail.isNotEmpty) ...[
+            const SizedBox(height: 4),
             Text(
-              config.transport == McpTransport.stdio ? (config.command ?? '') : (config.url ?? ''),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontFamily: 'monospace', color: c.textSecondary),
+              detail,
+              style: TextStyle(
+                color: c.textSecondary,
+                fontSize: ThemeConstants.uiFontSize,
+                fontFamily: ThemeConstants.editorFontFamily,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
-            if (status case McpServerRunning()) ...[
-              const SizedBox(height: 8),
-              Text('Tools loaded', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: c.success)),
-            ],
-            if (status case McpServerError(:final message)) ...[
-              const SizedBox(height: 8),
-              Text(message, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: c.error)),
-            ],
           ],
-        ),
+          if (status case McpServerRunning()) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Tools loaded',
+              style: TextStyle(color: c.success, fontSize: ThemeConstants.uiFontSizeSmall),
+            ),
+          ],
+          if (status case McpServerError(:final message)) ...[
+            const SizedBox(height: 4),
+            Text(
+              message,
+              style: TextStyle(color: c.error, fontSize: ThemeConstants.uiFontSizeSmall),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -71,11 +101,11 @@ class _StatusDot extends StatelessWidget {
       McpServerRunning() => c.success,
       McpServerError() => c.error,
       McpServerStarting() => c.warning,
-      McpServerStopped() || McpServerPendingRemoval() => c.textSecondary,
+      McpServerStopped() || McpServerPendingRemoval() => c.mutedFg,
     };
     return Container(
-      width: 10,
-      height: 10,
+      width: 7,
+      height: 7,
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
@@ -97,14 +127,14 @@ class _TransportBadge extends StatelessWidget {
       ),
       child: Text(
         transport == McpTransport.stdio ? 'stdio' : 'HTTP/SSE',
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: c.chipText),
+        style: TextStyle(color: c.chipText, fontSize: ThemeConstants.uiFontSizeLabel),
       ),
     );
   }
 }
 
-class _ActionMenu extends StatelessWidget {
-  const _ActionMenu({required this.config, required this.onEdit, required this.onRemove});
+class _ActionButtons extends StatelessWidget {
+  const _ActionButtons({required this.config, required this.onEdit, required this.onRemove});
 
   final McpServerConfig config;
   final void Function(McpServerConfig) onEdit;
@@ -113,18 +143,63 @@ class _ActionMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    return PopupMenuButton<String>(
-      onSelected: (value) {
-        if (value == 'edit') onEdit(config);
-        if (value == 'remove') onRemove(config.id);
-      },
-      itemBuilder: (_) => [
-        const PopupMenuItem(value: 'edit', child: Text('Edit')),
-        PopupMenuItem(
-          value: 'remove',
-          child: Text('Remove', style: TextStyle(color: c.error)),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _IconActionButton(
+          icon: AppIcons.rename,
+          color: c.mutedFg,
+          hoverColor: c.textPrimary,
+          onTap: () => onEdit(config),
+        ),
+        const SizedBox(width: 2),
+        _IconActionButton(
+          icon: AppIcons.trash,
+          color: c.mutedFg,
+          hoverColor: c.error,
+          onTap: () => onRemove(config.id),
         ),
       ],
+    );
+  }
+}
+
+class _IconActionButton extends StatefulWidget {
+  const _IconActionButton({required this.icon, required this.color, required this.hoverColor, required this.onTap});
+
+  final IconData icon;
+  final Color color;
+  final Color hoverColor;
+  final VoidCallback onTap;
+
+  @override
+  State<_IconActionButton> createState() => _IconActionButtonState();
+}
+
+class _IconActionButtonState extends State<_IconActionButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 100),
+            child: Icon(
+              widget.icon,
+              key: ValueKey(_hovered),
+              size: 13,
+              color: _hovered ? widget.hoverColor : widget.color,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
