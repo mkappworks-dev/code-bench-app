@@ -44,4 +44,30 @@ void main() {
     expect(r, isA<CodingToolResultError>());
     expect((r as CodingToolResultError).message, contains('outside'));
   });
+
+  test('recursive listing skips denied subtrees without walking into them', () async {
+    // Create .git with 600 objects — more than _kMaxListEntries (500).
+    // If the walk enters .git, the cap fires and real.txt is lost from output.
+    final gitDir = Directory(p.join(projectDir.path, '.git'));
+    await gitDir.create();
+    for (var i = 0; i < 600; i++) {
+      File(p.join(gitDir.path, 'obj$i')).writeAsStringSync('');
+    }
+    File(p.join(projectDir.path, 'real.txt')).writeAsStringSync('hello');
+
+    final denylist = (
+      segments: const <String>{'.git'},
+      filenames: const <String>{},
+      extensions: const <String>{},
+      prefixes: const <String>{},
+    );
+    final r = await tool.execute(
+      fakeCtx(projectPath: projectDir.path, args: {'path': '.', 'recursive': true}, denylist: denylist),
+    );
+    expect(r, isA<CodingToolResultSuccess>());
+    final out = (r as CodingToolResultSuccess).output;
+    expect(out, contains('real.txt'));
+    expect(out, isNot(contains('obj0')));
+    expect(out, isNot(contains('(truncated')));
+  });
 }

@@ -8,6 +8,7 @@ import '../../../data/coding_tools/models/path_result.dart';
 import '../../../data/coding_tools/models/tool.dart';
 import '../../../data/coding_tools/models/tool_capability.dart';
 import '../../../data/coding_tools/models/tool_context.dart';
+import '../../../data/coding_tools/models/directory_entry.dart';
 import '../../../data/coding_tools/repository/coding_tools_repository.dart';
 import '../../../data/coding_tools/repository/coding_tools_repository_impl.dart';
 import '../../../data/apply/apply_exceptions.dart';
@@ -71,7 +72,18 @@ class ListDirTool extends Tool {
         return CodingToolResult.error('"$displayRaw" is not a directory or does not exist.');
       }
 
-      final entries = await repo.listDirectory(abs, recursive: recursive);
+      // For recursive listing, walk iteratively to prune denied subtrees before
+      // descending into them. This avoids walking .git/objects or node_modules
+      // in full before the denylist filter fires (DoS foot-gun + error leakage).
+      final List<DirectoryEntry> entries;
+      if (recursive) {
+        final walked = <DirectoryEntry>[];
+        await _walkDir(abs, ctx.projectPath, ctx.denylist, 1, walked);
+        entries = walked;
+      } else {
+        entries = await repo.listDirectory(abs, recursive: false);
+      }
+
       final buffer = StringBuffer();
       var count = 0;
       for (final entry in entries) {
@@ -92,6 +104,35 @@ class ListDirTool extends Tool {
     } catch (e, st) {
       dLog('[ListDirTool] listDirectory failed: ${e.runtimeType} $e\n$st');
       return CodingToolResult.error('Cannot list "$displayRaw": I/O error.');
+    }
+  }
+
+  /// Walks [dir] recursively, pruning denied paths before descending into them.
+  /// [depth] is 1-based (1 = direct children of the original listing root).
+  /// Stops at [_kMaxListDepth] or [_kMaxListEntries] to bound I/O.
+  Future<void> _walkDir(
+    String dir,
+    String projectPath,
+    EffectiveDenylist denylist,
+    int depth,
+    List<DirectoryEntry> result,
+  ) async {
+    if (depth > _kMaxListDepth || result.length >= _kMaxListEntries) return;
+    List<DirectoryEntry> dirEntries;
+    try {
+      dirEntries = await repo.listDirectory(dir, recursive: false);
+    } on CodingToolsDiskException {
+      // Skip directories we cannot read (permission denied, etc.) rather than
+      // aborting the whole listing or leaking that a denied dir had odd permissions.
+      return;
+    }
+    for (final entry in dirEntries) {
+      if (result.length >= _kMaxListEntries) break;
+      if (_isDeniedRel(p.relative(entry.path, from: projectPath), denylist)) continue;
+      result.add(entry);
+      if (entry.entityType == 'directory') {
+        await _walkDir(entry.path, projectPath, denylist, depth + 1, result);
+      }
     }
   }
 
