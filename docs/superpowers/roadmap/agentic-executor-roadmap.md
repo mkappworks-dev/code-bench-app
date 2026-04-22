@@ -9,18 +9,18 @@ This document is the source of truth for the agentic executor build-out. Read th
 
 ## Status Overview
 
-| Phase | Description                         | Status                             |
-| ----- | ----------------------------------- | ---------------------------------- |
-| 1     | Tool Registry Refactor              | ✅ Done — PR #27, commit `1188b55` |
-| 2     | Grep + Glob + Parallel execution    | ✅ Done — PR #28, commit `f7acbc8` |
-| 3     | Tool-output truncation              | ✅ Done — commit `5b257c8`         |
+| Phase | Description                         | Status                                                        |
+| ----- | ----------------------------------- | ------------------------------------------------------------- |
+| 1     | Tool Registry Refactor              | ✅ Done — PR #27, commit `1188b55`                            |
+| 2     | Grep + Glob + Parallel execution    | ✅ Done — PR #28, commit `f7acbc8`                            |
+| 3     | Tool-output truncation              | ✅ Done — commit `5b257c8`                                    |
 | 4     | Bash tool (permission-gated)        | 🗂 Planned — `docs/superpowers/plans/2026-04-22-bash-tool.md` |
-| 5     | MCP client (stdio + HTTP/SSE)       | ⬜ Not started                     |
-| 6     | WebFetch                            | ⬜ Not started                     |
-| 7     | CLI Provider Detection & Delegation | ⬜ Not started                     |
-| —     | Anthropic provider adapter          | 🚫 Deferred / YAGNI                |
-| —     | Subagent delegation                 | 🚫 Deferred / YAGNI                |
-| —     | WebSearch                           | 🚫 Deferred                        |
+| 5     | MCP client (stdio + HTTP/SSE)       | ⬜ Not started                                                |
+| 6     | WebFetch                            | ⬜ Not started                                                |
+| 7     | CLI Provider Detection & Delegation | ⬜ Not started                                                |
+| —     | Anthropic provider adapter          | 🚫 Deferred / YAGNI                                           |
+| —     | Subagent delegation                 | 🚫 Deferred / YAGNI                                           |
+| —     | WebSearch                           | 🚫 Deferred                                                   |
 
 ---
 
