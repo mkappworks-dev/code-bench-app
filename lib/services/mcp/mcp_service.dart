@@ -1,3 +1,6 @@
+import 'dart:async' show TimeoutException;
+import 'dart:io' show IOException, ProcessException;
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/utils/debug_logger.dart';
@@ -42,6 +45,14 @@ class McpService {
   static McpTransportDatasource _defaultTransport(McpServerConfig config) => switch (config.transport) {
     McpTransport.stdio => McpStdioDatasourceProcess(),
     McpTransport.httpSse => McpHttpSseDatasourceDio(),
+  };
+
+  static String _friendlyError(Object e) => switch (e) {
+    McpHandshakeException(:final message) => 'Handshake failed: $message',
+    TimeoutException() => 'Connection timed out',
+    ProcessException(:final message) => 'Process error: $message',
+    IOException() => 'I/O error — check server command and path',
+    _ => 'Failed to connect',
   };
 
   // ── CRUD delegation ──────────────────────────────────────────────────────
@@ -91,7 +102,7 @@ class McpService {
       } catch (e, st) {
         dLog('[McpService] failed to start "${config.name}": $e\n$st');
         sLog('[McpService] server startup error for "${config.name}": ${e.runtimeType}');
-        statusCb(config.id, McpServerStatus.error(e.toString()));
+        statusCb(config.id, McpServerStatus.error(_friendlyError(e)));
       }
     }
 
