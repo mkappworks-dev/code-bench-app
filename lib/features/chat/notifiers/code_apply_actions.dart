@@ -30,6 +30,7 @@ class CodeApplyActions extends _$CodeApplyActions {
     PathEscapeException() => const CodeApplyFailure.outsideProject(),
     ApplyTooLargeException(:final bytes) => CodeApplyFailure.tooLarge(bytes),
     ApplyDiskException(:final message) => CodeApplyFailure.diskWrite(message),
+    ApplyContentChangedException() => const CodeApplyFailure.contentChanged(),
     _ => CodeApplyFailure.unknown(e),
   };
 

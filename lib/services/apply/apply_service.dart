@@ -139,10 +139,6 @@ class ApplyService {
     }
   }
 
-  /// Returns the SHA-256 hex digest of [content].
-  /// Exposed so tools can compute a pre-read checksum to pass to [applyChange].
-  String checksumOf(String content) => ApplyRepository.sha256OfString(content);
-
   static (int additions, int deletions) _computeLineCounts(String? original, String newContent) {
     final a = original ?? '';
     final aLines = a.isEmpty ? <String>[] : a.split('\n');

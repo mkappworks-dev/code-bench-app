@@ -2,6 +2,7 @@
 
 import 'dart:io';
 
+import 'package:code_bench_app/data/apply/models/applied_change.dart';
 import 'package:code_bench_app/data/apply/repository/apply_repository_impl.dart';
 import 'package:code_bench_app/data/coding_tools/datasource/coding_tools_datasource_io.dart';
 import 'package:code_bench_app/data/coding_tools/models/coding_tool_result.dart';
@@ -14,6 +15,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 import '../_helpers/tool_test_helpers.dart';
+
+// ---------------------------------------------------------------------------
+// Stub that always throws [ApplyContentChangedException] from [applyChange].
+// Used to test the catch clause in StrReplaceTool without a real race condition.
+// ---------------------------------------------------------------------------
+class _ContentChangedApplyService extends ApplyService {
+  _ContentChangedApplyService({required super.repo});
+
+  @override
+  Future<AppliedChange> applyChange({
+    required String filePath,
+    required String projectPath,
+    required String newContent,
+    required String sessionId,
+    required String messageId,
+    String? expectedChecksum,
+  }) async {
+    throw const ApplyContentChangedException();
+  }
+}
 
 void main() {
   late Directory projectDir;
@@ -65,5 +86,19 @@ void main() {
     );
     expect(r, isA<CodingToolResultError>());
     expect((r as CodingToolResultError).message, contains('outside'));
+  });
+
+  test('returns error with "was modified externally" when ApplyContentChangedException is thrown', () async {
+    final applyRepo = ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()));
+    final toolWithStub = StrReplaceTool(
+      repo: CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo()),
+      applyService: _ContentChangedApplyService(repo: applyRepo),
+    );
+    File(p.join(projectDir.path, 'race.txt')).writeAsStringSync('hello world');
+    final r = await toolWithStub.execute(
+      fakeCtx(projectPath: projectDir.path, args: {'path': 'race.txt', 'old_str': 'world', 'new_str': 'dart'}),
+    );
+    expect(r, isA<CodingToolResultError>());
+    expect((r as CodingToolResultError).message, contains('was modified externally'));
   });
 }

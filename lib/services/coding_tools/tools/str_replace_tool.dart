@@ -7,6 +7,7 @@ import '../../../data/coding_tools/models/tool.dart';
 import '../../../data/coding_tools/models/tool_capability.dart';
 import '../../../data/coding_tools/models/tool_context.dart';
 import '../../../data/coding_tools/repository/coding_tools_repository.dart';
+import '../../../data/apply/repository/apply_repository.dart';
 import '../../../data/coding_tools/repository/coding_tools_repository_impl.dart';
 import '../../../services/apply/apply_service.dart';
 
@@ -57,7 +58,7 @@ class StrReplaceTool extends Tool {
 
     try {
       final original = await repo.readTextFile(abs);
-      final checksum = applyService.checksumOf(original);
+      final checksum = ApplyRepository.sha256OfString(original);
       final matchCount = _countOccurrences(original, oldStr);
       if (matchCount == 0) {
         return CodingToolResult.error(

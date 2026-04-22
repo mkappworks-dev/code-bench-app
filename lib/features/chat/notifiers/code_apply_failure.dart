@@ -16,5 +16,8 @@ sealed class CodeApplyFailure with _$CodeApplyFailure {
   /// Low-level disk write failure.
   const factory CodeApplyFailure.diskWrite(String message) = CodeApplyDiskWrite;
 
+  /// File was modified externally between the tool's read and write.
+  const factory CodeApplyFailure.contentChanged() = CodeApplyContentChanged;
+
   const factory CodeApplyFailure.unknown(Object error) = CodeApplyUnknownError;
 }
