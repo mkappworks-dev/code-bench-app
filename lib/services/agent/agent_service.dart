@@ -339,7 +339,7 @@ class AgentService {
         });
         for (final te in msg.toolEvents) {
           if (_isTerminal(te.status)) {
-            wire.add({'role': 'tool', 'tool_call_id': te.id, 'content': te.output ?? te.error ?? ''});
+            wire.add({'role': 'tool', 'tool_call_id': te.id, 'content': capContent(te.output ?? te.error ?? '')});
           }
         }
       } else {
@@ -361,7 +361,7 @@ class AgentService {
       });
       for (final te in currentEvents) {
         if (_isTerminal(te.status)) {
-          wire.add({'role': 'tool', 'tool_call_id': te.id, 'content': te.output ?? te.error ?? ''});
+          wire.add({'role': 'tool', 'tool_call_id': te.id, 'content': capContent(te.output ?? te.error ?? '')});
         }
       }
     }
