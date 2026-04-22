@@ -17,13 +17,18 @@ class McpClientSession {
   }) async {
     await datasource.connect(config);
 
-    await datasource
+    final initResponse = await datasource
         .sendRequest('initialize', {
           'protocolVersion': '2024-11-05',
           'capabilities': {},
           'clientInfo': {'name': 'code-bench', 'version': '1.0'},
         })
         .timeout(initTimeout);
+
+    if (initResponse['error'] != null) {
+      final err = initResponse['error'] as Map<String, dynamic>;
+      throw McpHandshakeException(err['message']?.toString() ?? 'initialize rejected');
+    }
 
     datasource.sendNotification('notifications/initialized');
 
@@ -68,6 +73,13 @@ class McpClientSession {
   }
 
   Future<void> teardown() => _datasource.close();
+}
+
+class McpHandshakeException implements Exception {
+  McpHandshakeException(this.message);
+  final String message;
+  @override
+  String toString() => 'McpHandshakeException: $message';
 }
 
 class McpToolCallException implements Exception {

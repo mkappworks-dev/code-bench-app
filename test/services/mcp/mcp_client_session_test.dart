@@ -109,6 +109,22 @@ void main() {
     });
   });
 
+  group('McpClientSession.start() — error handling', () {
+    test('start throws McpHandshakeException when initialize returns a JSON-RPC error', () async {
+      final transport = _FakeTransport();
+      transport._responses['initialize'] = {
+        'jsonrpc': '2.0',
+        'id': 1,
+        'error': {'code': -32600, 'message': 'Unsupported protocol version'},
+      };
+
+      await expectLater(
+        McpClientSession.start(config: _cfg, datasource: transport, initTimeout: const Duration(seconds: 5)),
+        throwsA(isA<McpHandshakeException>()),
+      );
+    });
+  });
+
   group('McpClientSession.teardown()', () {
     test('closes the transport', () async {
       final transport = _FakeTransport();
