@@ -12,89 +12,89 @@ dependencies:
     sdk: flutter
 
   # State management
-  flutter_riverpod: ^3.3.1
-  riverpod_annotation: ^4.0.2
+  flutter_riverpod: 3.3.1
+  riverpod_annotation: 4.0.2
 
   # Navigation
-  go_router: ^17.2.0
+  go_router: 17.2.2
 
   # HTTP & Streaming
-  dio: ^5.7.0
+  dio: 5.9.2
 
   # Database
-  drift: ^2.31.0
-  sqlite3_flutter_libs: ^0.5.26
-  drift_flutter: ^0.2.8
+  drift: 2.31.0
+  sqlite3_flutter_libs: 0.5.42
+  drift_flutter: 0.2.8
 
   # Secure storage
-  flutter_secure_storage: ^10.0.0
+  flutter_secure_storage: 10.0.0
 
   # Code generation annotations
-  freezed_annotation: ^3.1.0
-  json_annotation: ^4.11.0
+  freezed_annotation: 3.1.0
+  json_annotation: 4.11.0
 
   # Code editor
-  re_editor: ^0.8.0
-  re_highlight: ^0.0.2
+  re_editor: 0.8.0
+  re_highlight: 0.0.3
 
   # Markdown & code highlighting in chat
-  flutter_highlight: ^0.7.0
-  flutter_markdown: ^0.7.4
+  flutter_highlight: 0.7.0
+  flutter_markdown: 0.7.7+1  # discontinued; replacement is flutter_markdown_plus
 
   # OAuth
-  flutter_web_auth_2: ^5.0.1
+  flutter_web_auth_2: 5.0.2
 
   # File system
-  path_provider: ^2.1.4
-  file_picker: ^11.0.2
-  desktop_drop: ^0.7.0
-  path: ^1.9.0
+  path_provider: 2.1.5
+  file_picker: 11.0.2
+  desktop_drop: 0.7.1
+  path: 1.9.1
 
   # Window management
-  window_manager: ^0.5.1
+  window_manager: 0.5.1
 
   # Utilities
-  package_info_plus: ^8.3.0
-  uuid: ^4.5.1
-  collection: ^1.18.0
-  glob: ^2.1.3
-  crypto: ^3.0.3
-  diff_match_patch: ^0.4.1
-  intl: ^0.20.2
-  rxdart: ^0.28.0
-  url_launcher: ^6.3.1
+  package_info_plus: 8.3.1  # blocked: 10.1.0 needs win32 ^6.0.1, file_picker 11.0.2 needs win32 ^5.9.0
+  uuid: 4.5.3
+  collection: 1.19.1
+  glob: 2.1.3
+  crypto: 3.0.7
+  diff_match_patch: 0.4.1
+  intl: 0.20.2
+  rxdart: 0.28.0
+  url_launcher: 6.3.2
 
   # Fonts
-  google_fonts: ^8.0.2
+  google_fonts: 8.0.2
 
   # Preferences
-  shared_preferences: ^2.5.5
+  shared_preferences: 2.5.5
 
   # Icons
-  cupertino_icons: ^1.0.9
-  lucide_icons_flutter: ^3.1.12
+  cupertino_icons: 1.0.9
+  lucide_icons_flutter: 3.1.13
 
   # Splash screen
-  flutter_native_splash: ^2.4.1
+  flutter_native_splash: 2.4.7
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   # Code generators
-  build_runner: ^2.13.1
-  riverpod_generator: ^4.0.3
-  freezed: ^3.2.5
-  json_serializable: ^6.13.0
-  drift_dev: ^2.31.0
+  build_runner: 2.14.0
+  riverpod_generator: 4.0.3
+  freezed: 3.2.5
+  json_serializable: 6.13.0  # blocked: 6.13.1 needs analyzer >=10.0.0, riverpod_generator 4.0.3 caps at ^9.0.0
+  drift_dev: 2.31.0
 
   # Testing
-  mockito: ^5.6.4
+  mockito: 5.6.4
 
-  flutter_lints: ^6.0.0
+  flutter_lints: 6.0.0
 
   # App icon
-  flutter_launcher_icons: ^0.14.1
+  flutter_launcher_icons: 0.14.4
 
 flutter:
   uses-material-design: true
