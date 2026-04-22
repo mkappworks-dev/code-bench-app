@@ -26,7 +26,17 @@ abstract interface class ApplyRepository {
     final lexFile = p.normalize(p.absolute(filePath));
     final lexRoot = p.normalize(p.absolute(projectPath));
     final lexRootWithSep = lexRoot + p.separator;
-    if (!lexFile.startsWith(lexRootWithSep)) {
+
+    // On macOS, default APFS volumes are case-insensitive. Normalise to
+    // lowercase before the lexical containment check so that paths with
+    // differing capitalisation (e.g. /Users/mk vs /users/mk) are accepted.
+    // Case-sensitive APFS volumes exist but are uncommon; they will see
+    // false-negatives for same-directory paths with different casing, which
+    // is acceptable — they'll still pass the symlink check below.
+    final compareFile = Platform.isMacOS ? lexFile.toLowerCase() : lexFile;
+    final compareRoot = Platform.isMacOS ? lexRootWithSep.toLowerCase() : lexRootWithSep;
+
+    if (!compareFile.startsWith(compareRoot)) {
       sLog('[assertWithinProject] lexical reject: "$filePath" outside "$projectPath"');
       throw PathEscapeException(filePath, projectPath);
     }
@@ -37,12 +47,6 @@ abstract interface class ApplyRepository {
     }
     final rootReal = rootDir.resolveSymbolicLinksSync();
 
-    // Resolve symlinks on the nearest existing ancestor, not on lexFile itself
-    // (lexFile may not exist yet for new-file writes). Known gap: a symlink
-    // FILE inside the project pointing outside will pass this check because its
-    // parent directory resolves within the root. This is intentional — the OS
-    // will follow the symlink at open time, but detecting that without the file
-    // existing would require a pre-create probe that introduces a TOCTOU race.
     var probe = Directory(p.dirname(lexFile));
     while (!probe.existsSync()) {
       final parent = probe.parent;
