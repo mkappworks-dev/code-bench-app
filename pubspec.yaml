@@ -22,9 +22,9 @@ dependencies:
   dio: 5.9.2
 
   # Database
-  drift: 2.31.0
-  sqlite3_flutter_libs: 0.5.42
-  drift_flutter: 0.2.8
+  drift: 2.31.0  # blocked: 2.32.1/drift_flutter 0.3.0 need analyzer >=10.0.0 via drift_dev; riverpod_generator 4.0.3 caps at ^9.0.0
+  sqlite3_flutter_libs: 0.5.42  # blocked: 0.6.0+eol needs drift_flutter 0.3.0 which needs analyzer >=10.0.0
+  drift_flutter: 0.2.8  # blocked: 0.3.0 needs sqlite3 ^3.0.0, incompatible with drift_dev 2.31.0
 
   # Secure storage
   flutter_secure_storage: 10.0.0
@@ -86,7 +86,7 @@ dev_dependencies:
   riverpod_generator: 4.0.3
   freezed: 3.2.5
   json_serializable: 6.13.0  # blocked: 6.13.1 needs analyzer >=10.0.0, riverpod_generator 4.0.3 caps at ^9.0.0
-  drift_dev: 2.31.0
+  drift_dev: 2.31.0  # blocked: same analyzer conflict as drift
 
   # Testing
   mockito: 5.6.4
