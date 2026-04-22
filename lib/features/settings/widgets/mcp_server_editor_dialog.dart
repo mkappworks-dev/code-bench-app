@@ -143,10 +143,29 @@ class _McpServerEditorDialogState extends State<McpServerEditorDialog> {
     }
   }
 
+  // ── URL validation ───────────────────────────────────────────────────────
+
+  String? _validateUrl(String url) {
+    if (url.isEmpty) return 'URL is required for HTTP/SSE transport';
+    final uri = Uri.tryParse(url);
+    if (uri == null) return 'Invalid URL';
+    if (uri.scheme != 'http' && uri.scheme != 'https') {
+      return 'URL must start with http:// or https://';
+    }
+    return null;
+  }
+
   Future<void> _save() async {
     McpServerConfig config;
 
     if (_view == _EditorView.form) {
+      if (_draft.transport == McpTransport.httpSse) {
+        final urlError = _validateUrl(_urlCtrl.text.trim());
+        if (urlError != null) {
+          setState(() => _jsonError = urlError);
+          return;
+        }
+      }
       config = _buildFromForm();
     } else {
       // JSON view — parse first; surface error inline rather than dismissing
@@ -157,6 +176,14 @@ class _McpServerEditorDialogState extends State<McpServerEditorDialog> {
       } catch (e) {
         setState(() => _jsonError = 'Invalid JSON: ${e.toString()}');
         return;
+      }
+      // Validate URL scheme from JSON view too
+      if (config.transport == McpTransport.httpSse) {
+        final urlError = _validateUrl(config.url ?? '');
+        if (urlError != null) {
+          setState(() => _jsonError = urlError);
+          return;
+        }
       }
     }
 

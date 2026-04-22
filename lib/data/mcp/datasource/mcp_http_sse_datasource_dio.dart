@@ -115,7 +115,14 @@ class McpHttpSseDatasourceDio implements McpTransportDatasource {
 
   void _onEvent(_SseEvent event) {
     if (event.type == 'endpoint') {
-      _postUrl = event.data.trim();
+      final raw = event.data.trim();
+      final uri = Uri.tryParse(raw);
+      if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+        _postUrl = raw;
+      } else {
+        dLog('[McpHttpSse] rejected endpoint URL with invalid scheme: $raw');
+        sLog('[McpHttpSse] rejected endpoint URL with invalid scheme: ${uri?.scheme}');
+      }
       return;
     }
     if (event.data.isEmpty) return;
