@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../../data/session/models/permission_request.dart';
 
 /// Pure display helpers for [PermissionRequest].
@@ -7,6 +9,12 @@ import '../../../data/session/models/permission_request.dart';
 abstract final class PermissionRequestPreview {
   /// Returns display lines for [req], or `null` when no preview is available.
   static List<String>? buildLines(PermissionRequest req) {
+    // MCP tool: name contains "/"
+    if (req.toolName.contains('/')) {
+      if (req.input.isEmpty) return null;
+      final encoded = const JsonEncoder.withIndent('  ').convert(req.input);
+      return encoded.split('\n');
+    }
     if (req.toolName == 'write_file') {
       final content = req.input['content'];
       if (content is! String || content.isEmpty) return null;

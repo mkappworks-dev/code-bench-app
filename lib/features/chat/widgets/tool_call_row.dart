@@ -19,6 +19,7 @@ class _ToolCallRowState extends State<ToolCallRow> {
   bool _expanded = false;
 
   IconData _iconForTool(String toolName) {
+    if (toolName.contains('/')) return Icons.extension_outlined;
     return switch (toolName) {
       'read_file' || 'read' => Icons.description_outlined,
       'write_file' || 'write' => Icons.edit_outlined,
@@ -26,6 +27,12 @@ class _ToolCallRowState extends State<ToolCallRow> {
       'search' || 'grep' => Icons.search,
       _ => Icons.build_outlined,
     };
+  }
+
+  String _displayName(String toolName) {
+    if (!toolName.contains('/')) return toolName;
+    final parts = toolName.split('/');
+    return '${parts.first} › ${parts.skip(1).join('/')}';
   }
 
   String _primaryArg(ToolEvent event) {
@@ -69,7 +76,7 @@ class _ToolCallRowState extends State<ToolCallRow> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  widget.event.toolName,
+                  _displayName(widget.event.toolName),
                   style: TextStyle(
                     color: status == ToolStatus.cancelled ? c.textMuted : c.textPrimary,
                     fontSize: 11,
