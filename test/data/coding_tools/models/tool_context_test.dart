@@ -78,6 +78,15 @@ void main() {
       final ctx = _ctx(projectPath: projectDir.path, args: {'path': '/etc/passwd'});
       expect(ctx.safePath('path', verb: 'Read'), isA<PathErr>());
     });
+
+    test('returns PathErr when project folder is missing', () async {
+      final path = projectDir.path;
+      await projectDir.delete(recursive: true);
+      final ctx = _ctx(projectPath: path, args: {'path': 'a.txt'});
+      final r = ctx.safePath('path', verb: 'Read');
+      expect(r, isA<PathErr>());
+      expect(((r as PathErr).result as CodingToolResultError).message, contains('Project folder is missing'));
+    });
   });
 
   group('safePath — denylist', () {

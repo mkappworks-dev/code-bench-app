@@ -13,13 +13,13 @@ import 'path_result.dart';
 /// plus safety helpers that centralize the resolve + assertWithinProject
 /// + denylist ritual every file-touching tool used to repeat.
 class ToolContext {
-  const ToolContext({
+  ToolContext({
     required this.projectPath,
     required this.sessionId,
     required this.messageId,
     required this.args,
     required this.denylist,
-  });
+  }) : assert(p.isAbsolute(projectPath), 'projectPath must be absolute');
 
   final String projectPath;
   final String sessionId;
@@ -48,7 +48,11 @@ class ToolContext {
     try {
       ApplyRepository.assertWithinProject(abs, projectPath);
     } on PathEscapeException {
+      sLog('[ToolContext] path-escape rejected: verb=$verb rel="${sanitizeForError(raw)}"');
       return PathErr(CodingToolResult.error('Path "$displayRaw" is outside the project root.'));
+    } on ProjectMissingException {
+      sLog('[ToolContext] project-missing rejected: verb=$verb');
+      return PathErr(CodingToolResult.error('Project folder is missing.'));
     }
 
     final block = _checkDenied(abs);
