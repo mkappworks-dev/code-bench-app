@@ -16,6 +16,9 @@ sealed class CodeApplyFailure with _$CodeApplyFailure {
   /// Low-level disk write failure.
   const factory CodeApplyFailure.diskWrite(String message) = CodeApplyDiskWrite;
 
+  /// git checkout -- failed (non-zero exit or timeout).
+  const factory CodeApplyFailure.gitRevert(String detail) = CodeApplyGitRevert;
+
   /// File was modified externally between the tool's read and write.
   const factory CodeApplyFailure.contentChanged() = CodeApplyContentChanged;
 

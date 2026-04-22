@@ -55,3 +55,11 @@ class ApplyContentChangedException extends ApplyException {
   @override
   String toString() => 'File was modified externally between read and write';
 }
+
+/// Thrown when `git checkout --` fails (non-zero exit code or timeout).
+class GitCheckoutException extends ApplyException {
+  GitCheckoutException(this.message);
+  final String message;
+  @override
+  String toString() => 'git checkout failed: $message';
+}
