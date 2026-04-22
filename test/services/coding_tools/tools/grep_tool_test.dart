@@ -6,12 +6,12 @@ import 'package:code_bench_app/services/coding_tools/tools/grep_tool.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../_helpers/tool_test_helpers.dart';
 
-/// Fake datasource that returns a preset [GrepResult].
 class _FakeDatasource implements GrepDatasource {
   _FakeDatasource(this._result);
   final GrepResult _result;
   int callCount = 0;
   String? lastPattern;
+  List<String> lastExtensions = [];
 
   @override
   Future<GrepResult> grep({
@@ -23,6 +23,7 @@ class _FakeDatasource implements GrepDatasource {
   }) async {
     callCount++;
     lastPattern = pattern;
+    lastExtensions = fileExtensions;
     return _result;
   }
 }
@@ -128,5 +129,62 @@ void main() {
       ),
     );
     expect(fake.callCount, 1);
+  });
+
+  test('denylist filtering removes denied files from results', () async {
+    final fake = _FakeDatasource(GrepResult(
+      matches: [
+        GrepMatch(
+          file: '.env',
+          lineNumber: 1,
+          lineContent: 'API_KEY=secret',
+          contextBefore: const [],
+          contextAfter: const [],
+        ),
+        GrepMatch(
+          file: 'lib/foo.dart',
+          lineNumber: 1,
+          lineContent: 'API_KEY',
+          contextBefore: const [],
+          contextAfter: const [],
+        ),
+      ],
+      totalFound: 2,
+      wasCapped: false,
+    ));
+    final tool = GrepTool(datasource: fake);
+    final denylist = (
+      segments: const <String>{},
+      filenames: const {'.env'},
+      extensions: const <String>{},
+      prefixes: const <String>{},
+    );
+    final r = await tool.execute(
+      fakeCtx(
+        projectPath: projectDir.path,
+        args: {'pattern': 'API_KEY', 'path': '.'},
+        denylist: denylist,
+      ),
+    );
+    expect(r, isA<CodingToolResultSuccess>());
+    final out = (r as CodingToolResultSuccess).output;
+    expect(out, isNot(contains('.env')));
+    expect(out, contains('lib/foo.dart'));
+  });
+
+  test('strips extensions with invalid characters before passing to datasource', () async {
+    final fake = _FakeDatasource(_singleMatch());
+    final tool = GrepTool(datasource: fake);
+    await tool.execute(
+      fakeCtx(
+        projectPath: projectDir.path,
+        args: {
+          'pattern': 'foo',
+          'path': '.',
+          'extensions': ['{dart,yaml}', 'dart'],
+        },
+      ),
+    );
+    expect(fake.lastExtensions, ['dart']); // {dart,yaml} was stripped
   });
 }

@@ -6,6 +6,7 @@ import '../../../data/coding_tools/datasource/grep_datasource.dart';
 import '../../../data/coding_tools/datasource/grep_datasource_io.dart';
 import '../../../data/coding_tools/datasource/grep_datasource_process.dart';
 import '../../../data/coding_tools/models/coding_tool_result.dart';
+import '../../../data/coding_tools/models/effective_denylist.dart';
 import '../../../data/coding_tools/models/grep_match.dart';
 import '../../../data/coding_tools/models/path_result.dart';
 import '../../../data/coding_tools/models/tool.dart';
@@ -20,7 +21,11 @@ part 'grep_tool.g.dart';
 
 @riverpod
 GrepTool grepTool(Ref ref) {
-  final isAvailable = ref.watch(ripgrepAvailabilityProvider).value ?? false;
+  final availability = ref.watch(ripgrepAvailabilityProvider);
+  if (availability is AsyncError) {
+    dLog('[GrepTool] ripgrep availability check failed: ${availability.error}');
+  }
+  final isAvailable = availability.value ?? false;
   return GrepTool(datasource: isAvailable ? GrepDatasourceProcess() : GrepDatasourceIo());
 }
 
@@ -29,6 +34,7 @@ class GrepTool extends Tool {
   final GrepDatasource datasource;
 
   static const int _kMaxMatches = 100;
+  static final _validExtensionRe = RegExp(r'^[A-Za-z0-9_]+$');
 
   @override
   String get name => 'grep';
@@ -67,19 +73,21 @@ class GrepTool extends Tool {
     if (rawPath is! String || rawPath.isEmpty) {
       return CodingToolResult.error('grep requires a non-empty "path"');
     }
-    final abs = p.isAbsolute(rawPath) ? p.normalize(rawPath) : p.normalize(p.join(ctx.projectPath, rawPath));
-    final normalAbs = p.normalize(p.absolute(abs));
+    final normalAbs = p.normalize(
+      p.absolute(p.isAbsolute(rawPath) ? rawPath : p.join(ctx.projectPath, rawPath)),
+    );
     final normalRoot = p.normalize(p.absolute(ctx.projectPath));
 
     // If the resolved path is the project root itself, trust it directly
-    // (assertWithinProject requires the file to be strictly *inside* the root).
+    // (assertWithinProject requires the path to be strictly *inside* the root).
     // For all subdirectory paths, run the full boundary + denylist check.
+    String searchPath;
     if (normalAbs != normalRoot) {
       final pr = ctx.safePath('path', verb: 'Search', noun: 'directory');
       if (pr is PathErr) return pr.result;
+      searchPath = (pr as PathOk).abs;
     } else {
-      // Root path is always trusted — validate that pattern arg exists before
-      // proceeding (the path check is skipped but pattern must still be valid).
+      searchPath = ctx.projectPath;
     }
 
     final patternRaw = ctx.args['pattern'];
@@ -93,22 +101,46 @@ class GrepTool extends Tool {
     }
 
     final extensionsRaw = ctx.args['extensions'];
-    final extensions = extensionsRaw is List ? extensionsRaw.whereType<String>().toList() : const <String>[];
+    final extensions = extensionsRaw is List
+        ? extensionsRaw.whereType<String>().where(_validExtensionRe.hasMatch).toList()
+        : const <String>[];
 
     try {
       final result = await datasource.grep(
         pattern: patternRaw,
-        rootPath: abs,
+        rootPath: searchPath,
         maxMatches: _kMaxMatches,
         fileExtensions: extensions,
       );
-      return CodingToolResult.success(_formatResult(result));
+      final filteredMatches = result.matches
+          .where((m) => !_isDeniedRel(m.file, ctx.denylist))
+          .toList();
+      return CodingToolResult.success(
+        _formatResult(GrepResult(
+          matches: filteredMatches,
+          totalFound: filteredMatches.length,
+          wasCapped: result.wasCapped,
+        )),
+      );
     } on CodingToolsNotFoundException {
       return CodingToolResult.error('Path does not exist.');
     } on CodingToolsDiskException catch (e) {
       dLog('[GrepTool] disk error: $e');
       return CodingToolResult.error('Cannot search: ${e.message}');
     }
+  }
+
+  static bool _isDeniedRel(String relPath, EffectiveDenylist denylist) {
+    for (final segRaw in p.split(relPath)) {
+      final seg = segRaw.toLowerCase();
+      if (seg.isEmpty || seg == '.' || seg == '..') continue;
+      if (denylist.segments.contains(seg)) return true;
+      if (denylist.filenames.contains(seg)) return true;
+      if (denylist.prefixes.any(seg.startsWith)) return true;
+      final ext = p.extension(seg).toLowerCase();
+      if (ext.isNotEmpty && denylist.extensions.contains(ext)) return true;
+    }
+    return false;
   }
 
   static String _formatResult(GrepResult result) {
