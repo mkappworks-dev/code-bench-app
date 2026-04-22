@@ -15,8 +15,8 @@ This document is the source of truth for the agentic executor build-out. Read th
 | 2     | Grep + Glob + Parallel execution    | ✅ Done — PR #28, commit `f7acbc8`     |
 | 3     | Tool-output truncation              | ✅ Done — commit `5b257c8`             |
 | 4     | Bash tool (permission-gated)        | ✅ Done — commits `a51871d`, `d435681` |
-| 5     | MCP client (stdio + HTTP/SSE)       | 🔄 In progress — plan written          |
-| 6     | WebFetch                            | ⬜ Not started                         |
+| 5     | MCP client (stdio + HTTP/SSE)       | ✅ Done — PR #31, commit `7d9fb1a`     |
+| 6     | WebFetch                            | 🔄 In progress — plan written          |
 | 7     | CLI Provider Detection & Delegation | ⬜ Not started                         |
 | —     | Anthropic provider adapter          | 🚫 Deferred / YAGNI                    |
 | —     | Subagent delegation                 | 🚫 Deferred / YAGNI                    |
@@ -106,9 +106,9 @@ Key decisions locked in:
 
 ---
 
-## Phase 5 — MCP Client (stdio + HTTP/SSE)
+## Phase 5 — MCP Client (stdio + HTTP/SSE) ✅
 
-**Status:** In progress.
+**Done.** See PR #31 (`7d9fb1a`).
 **Spec:** `docs/superpowers/specs/2026-04-22-mcp-client-design.md`
 **Plan:** `docs/superpowers/plans/2026-04-22-mcp-client.md`
 
@@ -140,7 +140,8 @@ None — all design questions resolved in the 2026-04-22 design session.
 
 ## Phase 6 — WebFetch
 
-**Status:** Not started. No spec or plan yet.
+**Status:** In progress.
+**Plan:** `docs/superpowers/plans/2026-04-22-web-fetch.md`
 
 ### Settled decisions
 
