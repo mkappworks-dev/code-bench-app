@@ -25,8 +25,8 @@ class ProjectFileScanActions extends _$ProjectFileScanActions {
       try {
         result = await ref.read(projectFileScanDatasourceProvider).scanCodeFiles(rootPath);
       } catch (e, st) {
-        dLog('[ProjectFileScanActions] scan failed: ${e.runtimeType}');
-        Error.throwWithStackTrace(ProjectFileScanFailure.scan(e.toString()), st);
+        dLog('[ProjectFileScanActions] scan failed: ${e.runtimeType} $e\n$st');
+        Error.throwWithStackTrace(const ProjectFileScanFailure.scan("Couldn't scan project."), st);
       }
     });
     return result;
