@@ -44,9 +44,7 @@ class GrepDatasourceProcess implements GrepDatasource {
 
     // Exit code 0 = matches found; 1 = no matches (normal); 2 = rg error.
     if (result.exitCode == 2) {
-      final msg = stderr.trim().isNotEmpty
-          ? stderr.trim().split('\n').first
-          : 'rg error (exit code 2)';
+      final msg = stderr.trim().isNotEmpty ? stderr.trim().split('\n').first : 'rg error (exit code 2)';
       throw CodingToolsDiskException(msg);
     }
     if (result.exitCode != 0 && result.exitCode != 1) {

@@ -73,9 +73,7 @@ class GrepTool extends Tool {
     if (rawPath is! String || rawPath.isEmpty) {
       return CodingToolResult.error('grep requires a non-empty "path"');
     }
-    final normalAbs = p.normalize(
-      p.absolute(p.isAbsolute(rawPath) ? rawPath : p.join(ctx.projectPath, rawPath)),
-    );
+    final normalAbs = p.normalize(p.absolute(p.isAbsolute(rawPath) ? rawPath : p.join(ctx.projectPath, rawPath)));
     final normalRoot = p.normalize(p.absolute(ctx.projectPath));
 
     // If the resolved path is the project root itself, trust it directly
@@ -112,15 +110,11 @@ class GrepTool extends Tool {
         maxMatches: _kMaxMatches,
         fileExtensions: extensions,
       );
-      final filteredMatches = result.matches
-          .where((m) => !_isDeniedRel(m.file, ctx.denylist))
-          .toList();
+      final filteredMatches = result.matches.where((m) => !_isDeniedRel(m.file, ctx.denylist)).toList();
       return CodingToolResult.success(
-        _formatResult(GrepResult(
-          matches: filteredMatches,
-          totalFound: filteredMatches.length,
-          wasCapped: result.wasCapped,
-        )),
+        _formatResult(
+          GrepResult(matches: filteredMatches, totalFound: filteredMatches.length, wasCapped: result.wasCapped),
+        ),
       );
     } on CodingToolsNotFoundException {
       return CodingToolResult.error('Path does not exist.');

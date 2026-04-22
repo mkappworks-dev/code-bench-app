@@ -132,26 +132,28 @@ void main() {
   });
 
   test('denylist filtering removes denied files from results', () async {
-    final fake = _FakeDatasource(GrepResult(
-      matches: [
-        GrepMatch(
-          file: '.env',
-          lineNumber: 1,
-          lineContent: 'API_KEY=secret',
-          contextBefore: const [],
-          contextAfter: const [],
-        ),
-        GrepMatch(
-          file: 'lib/foo.dart',
-          lineNumber: 1,
-          lineContent: 'API_KEY',
-          contextBefore: const [],
-          contextAfter: const [],
-        ),
-      ],
-      totalFound: 2,
-      wasCapped: false,
-    ));
+    final fake = _FakeDatasource(
+      GrepResult(
+        matches: [
+          GrepMatch(
+            file: '.env',
+            lineNumber: 1,
+            lineContent: 'API_KEY=secret',
+            contextBefore: const [],
+            contextAfter: const [],
+          ),
+          GrepMatch(
+            file: 'lib/foo.dart',
+            lineNumber: 1,
+            lineContent: 'API_KEY',
+            contextBefore: const [],
+            contextAfter: const [],
+          ),
+        ],
+        totalFound: 2,
+        wasCapped: false,
+      ),
+    );
     final tool = GrepTool(datasource: fake);
     final denylist = (
       segments: const <String>{},
@@ -160,11 +162,7 @@ void main() {
       prefixes: const <String>{},
     );
     final r = await tool.execute(
-      fakeCtx(
-        projectPath: projectDir.path,
-        args: {'pattern': 'API_KEY', 'path': '.'},
-        denylist: denylist,
-      ),
+      fakeCtx(projectPath: projectDir.path, args: {'pattern': 'API_KEY', 'path': '.'}, denylist: denylist),
     );
     expect(fake.callCount, 1);
     expect(r, isA<CodingToolResultSuccess>());
