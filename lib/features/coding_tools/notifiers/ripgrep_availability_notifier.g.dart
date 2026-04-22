@@ -39,7 +39,7 @@ final class RipgrepAvailabilityStateNotifierProvider
   RipgrepAvailabilityStateNotifier create() => RipgrepAvailabilityStateNotifier();
 }
 
-String _$ripgrepAvailabilityStateNotifierHash() => r'f5de85bf99386a43367d62ec37bc6a934db56f78';
+String _$ripgrepAvailabilityStateNotifierHash() => r'f8ab68db9907f5f30b7fb7e7310ab8523ca65cb2';
 
 /// Feature-layer state notifier for the ripgrep availability check.
 /// Widgets watch [ripgrepAvailabilityStateProvider]; "Check again" calls [recheck].

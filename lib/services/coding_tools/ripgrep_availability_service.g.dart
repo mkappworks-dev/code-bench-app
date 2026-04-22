@@ -9,18 +9,18 @@ part of 'ripgrep_availability_service.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Returns true if ripgrep (`rg`) is installed. Cached for the session.
-/// The user can force a re-check via [RipgrepAvailabilityNotifier.recheck].
+/// The user can force a re-check via [RipgrepAvailabilityStateNotifier.recheck].
 
 @ProviderFor(ripgrepAvailability)
 final ripgrepAvailabilityProvider = RipgrepAvailabilityProvider._();
 
 /// Returns true if ripgrep (`rg`) is installed. Cached for the session.
-/// The user can force a re-check via [RipgrepAvailabilityNotifier.recheck].
+/// The user can force a re-check via [RipgrepAvailabilityStateNotifier.recheck].
 
 final class RipgrepAvailabilityProvider extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
     with $FutureModifier<bool>, $FutureProvider<bool> {
   /// Returns true if ripgrep (`rg`) is installed. Cached for the session.
-  /// The user can force a re-check via [RipgrepAvailabilityNotifier.recheck].
+  /// The user can force a re-check via [RipgrepAvailabilityStateNotifier.recheck].
   RipgrepAvailabilityProvider._()
     : super(
         from: null,
