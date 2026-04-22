@@ -56,6 +56,9 @@ class BashTool extends Tool {
     } on ProcessException catch (e) {
       dLog('[BashTool] ProcessException: $e');
       return CodingToolResult.error('bash failed to start: ${e.message}');
+    } on IOException catch (e) {
+      dLog('[BashTool] IOException: $e');
+      return CodingToolResult.error('bash failed to start: $e');
     }
   }
 }

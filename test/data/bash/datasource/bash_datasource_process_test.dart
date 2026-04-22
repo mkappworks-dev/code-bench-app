@@ -31,5 +31,16 @@ void main() {
       final result = await ds.run(command: 'sleep 200', workingDirectory: '/tmp');
       expect(result.timedOut, isTrue);
     });
+
+    test('caps output at 50 KB and appends sentinel', () async {
+      final ds = BashDatasourceProcess();
+      // ~1 KB per iteration × 60 = ~60 KB total
+      final result = await ds.run(
+        command: r"for i in $(seq 1 60); do printf '%1000s\n'; done",
+        workingDirectory: '/tmp',
+      );
+      expect(result.timedOut, isFalse);
+      expect(result.output, contains('[Output capped'));
+    });
   });
 }
