@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -369,6 +370,16 @@ class AgentService {
 
   static bool _isTerminal(ToolStatus s) =>
       s == ToolStatus.success || s == ToolStatus.error || s == ToolStatus.cancelled;
+
+  static const int _kToolOutputCap = 50 * 1024;
+
+  @visibleForTesting
+  static String capContent(String s) {
+    if (s.length <= _kToolOutputCap) return s;
+    return '${s.substring(0, _kToolOutputCap)}'
+        '\n[Output truncated at 50 KB. '
+        'Use grep to search for specific content or read a narrower file range.]';
+  }
 
   bool _isParallelizable(_PendingCall call, ChatPermission permission) {
     if (call.decodeFailed) return false;
