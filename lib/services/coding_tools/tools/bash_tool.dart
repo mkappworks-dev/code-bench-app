@@ -12,7 +12,7 @@ import '../../../data/coding_tools/models/tool_context.dart';
 part 'bash_tool.g.dart';
 
 @riverpod
-BashTool bashTool(Ref ref) => BashTool(datasource: BashDatasource());
+BashTool bashTool(Ref ref) => BashTool(datasource: BashDatasourceProcess());
 
 class BashTool extends Tool {
   BashTool({required this.datasource});

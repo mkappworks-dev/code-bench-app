@@ -6,16 +6,21 @@ import '../../../core/utils/debug_logger.dart';
 
 typedef BashResult = ({int exitCode, String output, bool timedOut});
 
-class BashDatasource {
-  BashDatasource({this.timeout = const Duration(seconds: 120)});
+abstract class BashDatasource {
+  Future<BashResult> run({required String command, required String workingDirectory});
+}
+
+class BashDatasourceProcess implements BashDatasource {
+  BashDatasourceProcess({this.timeout = const Duration(seconds: 120)});
   final Duration timeout;
 
+  @override
   Future<BashResult> run({required String command, required String workingDirectory}) async {
     late final Process process;
     try {
       process = await Process.start('/bin/sh', ['-c', command], workingDirectory: workingDirectory);
     } on ProcessException catch (e) {
-      dLog('[BashDatasource] Process.start failed: $e');
+      dLog('[BashDatasource] Process.start failed (ProcessException): $e');
       rethrow;
     }
 
