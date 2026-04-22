@@ -5,33 +5,24 @@ void main() {
   group('Architectural boundary rules', () {
     // ── dart:io import rule ──────────────────────────────────────────────────
     //
-    // Permitted locations for `import 'dart:io'`:
+    // CLAUDE.md rule: dart:io is allowed only in `lib/data/**/datasource/` and
+    // `lib/services/`. Everything else requires a documented exception below.
+    //
+    // Permitted locations:
     //   • Datasource files: *_io.dart, *_process.dart
-    //   • apply_service.dart — static security guard (documented in CLAUDE.md)
+    //   • All of lib/services/ — CLAUDE.md explicitly permits dart:io there
+    //   • apply_repository.dart — the static assertWithinProject security guard
+    //     uses dart:io Directory/symlink APIs; documented exception in CLAUDE.md
     //   • platform_utils.dart — read-only Platform detection, no I/O
-    //   • action_output_notifier.dart — Process.start for user-defined actions
-    //     (documented in shell/notifiers/ with a SECURITY note; this notifier
-    //      predates the clean-arch data layer and is intentionally kept here)
-    //   • Notifiers that only catch dart:io exception types (FileSystemException,
-    //     IOException) thrown by service/datasource calls — catching an exception
-    //     type does not make the notifier an I/O layer.
-    //   • add_project_step.dart — Platform.pathSeparator for display only
     test('dart:io import only in permitted paths', () {
-      // Only check actual import lines (not comments or string literals).
-      final violations = _grepImport("import 'dart:io'", 'lib/')
+      final violations = _grepImport("dart:io", 'lib/')
           .where(
             (path) =>
                 !path.endsWith('_io.dart') &&
                 !path.endsWith('_process.dart') &&
-                !path.contains('apply_service.dart') &&
-                // Documented pre-existing exceptions below:
-                !path.contains('platform_utils.dart') &&
-                !path.contains('action_output_notifier.dart') &&
-                !path.contains('code_apply_actions.dart') &&
-                !path.contains('code_diff_provider.dart') &&
-                !path.contains('project_file_scan_actions.dart') &&
-                !path.contains('project_sidebar_actions.dart') &&
-                !path.contains('add_project_step.dart'),
+                !path.contains('/services/') &&
+                !path.contains('apply_repository.dart') &&
+                !path.contains('platform_utils.dart'),
           )
           .toList();
       expect(violations, isEmpty, reason: 'dart:io imported outside permitted paths:\n${violations.join('\n')}');
@@ -63,7 +54,8 @@ void main() {
     //
     // Widgets and screens must not import from lib/services/, lib/data/**/datasource/,
     // or lib/data/**/repository/ directly. Documented exceptions:
-    //   • apply_service.dart — static assertWithinProject security guard
+    //   • apply_service.dart — ApplyRepository.assertWithinProject static security
+    //     guard (imported via apply_service.dart's re-exports)
     test('widgets do not import services or datasources directly', () {
       final widgetFiles = _dartFiles(
         'lib/',

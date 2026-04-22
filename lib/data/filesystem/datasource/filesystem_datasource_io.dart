@@ -41,6 +41,8 @@ class FilesystemDatasourceIo implements FilesystemDatasource {
   Future<String> readFile(String filePath) async {
     try {
       return await File(filePath).readAsString();
+    } on PathNotFoundException catch (e) {
+      throw app_errors.FileNotFoundException('File not found: $filePath', path: filePath, originalError: e);
     } catch (e) {
       throw app_errors.FileSystemException('Failed to read file: $filePath', path: filePath, originalError: e);
     }

@@ -26,6 +26,7 @@ class _FakeApplyService extends Fake implements ApplyService {
     required String newContent,
     required String sessionId,
     required String messageId,
+    String? expectedChecksum,
   }) async {
     if (_applyError != null) throw _applyError!;
     return AppliedChange(
@@ -201,8 +202,8 @@ void main() {
       expect(c.read(codeApplyActionsProvider).error, isA<CodeApplyTooLarge>());
     });
 
-    test('FileSystemException → CodeApplyDiskWrite', () async {
-      fakeService.throwOnApply(const FileSystemException('disk full', '/p/f.dart'));
+    test('ApplyDiskException → CodeApplyDiskWrite', () async {
+      fakeService.throwOnApply(ApplyDiskException('disk full'));
 
       final c = makeContainer();
       await c

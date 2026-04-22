@@ -46,4 +46,4 @@ final class AgentServiceProvider
   }
 }
 
-String _$agentServiceHash() => r'2130bb33a618761f9172877da92f4f082d2d6b56';
+String _$agentServiceHash() => r'756ce404747bcf7f9293c8b7fd02f3994d370f39';

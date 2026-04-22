@@ -5,9 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/ai/models/stream_event.dart';
 import 'package:code_bench_app/data/ai/repository/ai_repository.dart';
 import 'package:code_bench_app/data/coding_tools/datasource/coding_tools_datasource_io.dart';
-import 'package:code_bench_app/data/coding_tools/models/coding_tool_definition.dart';
 import 'package:code_bench_app/data/coding_tools/models/coding_tools_denylist_state.dart';
 import 'package:code_bench_app/data/coding_tools/models/denylist_category.dart';
+import 'package:code_bench_app/data/coding_tools/models/tool.dart';
 import 'package:code_bench_app/data/coding_tools/repository/coding_tools_denylist_repository.dart';
 import 'package:code_bench_app/data/coding_tools/repository/coding_tools_repository_impl.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
@@ -18,7 +18,11 @@ import 'package:code_bench_app/data/filesystem/datasource/filesystem_datasource_
 import 'package:code_bench_app/data/filesystem/repository/filesystem_repository_impl.dart';
 import 'package:code_bench_app/data/apply/repository/apply_repository_impl.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
-import 'package:code_bench_app/services/coding_tools/coding_tools_service.dart';
+import 'package:code_bench_app/services/coding_tools/tool_registry.dart';
+import 'package:code_bench_app/services/coding_tools/tools/list_dir_tool.dart';
+import 'package:code_bench_app/services/coding_tools/tools/read_file_tool.dart';
+import 'package:code_bench_app/services/coding_tools/tools/str_replace_tool.dart';
+import 'package:code_bench_app/services/coding_tools/tools/write_file_tool.dart';
 import 'package:code_bench_app/services/agent/agent_service.dart';
 import 'package:path/path.dart' as p;
 
@@ -44,7 +48,7 @@ class _FakeAIRepo implements AIRepository {
   @override
   Stream<StreamEvent> streamMessageWithTools({
     required List<Map<String, dynamic>> wireMessages,
-    required List<CodingToolDefinition> tools,
+    required List<Tool> tools,
     required AIModel model,
   }) async* {
     final events = scripts[_round++];
@@ -70,7 +74,7 @@ class _FakeAIRepo implements AIRepository {
 
 void main() {
   late Directory projectDir;
-  late CodingToolsService toolsSvc;
+  late ToolRegistry registry;
 
   setUp(() async {
     projectDir = await Directory.systemTemp.createTemp('agent_svc_');
@@ -78,7 +82,15 @@ void main() {
     final repo = CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo());
     final applyRepo = ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()));
     final applySvc = ApplyService(repo: applyRepo);
-    toolsSvc = CodingToolsService(repo: repo, applyService: applySvc, denylist: _FakeDenylistRepository());
+    registry = ToolRegistry(
+      builtIns: [
+        ReadFileTool(repo: repo),
+        ListDirTool(repo: repo),
+        WriteFileTool(applyService: applySvc),
+        StrReplaceTool(repo: repo, applyService: applySvc),
+      ],
+      denylistRepo: _FakeDenylistRepository(),
+    );
   });
 
   tearDown(() async {
@@ -97,7 +109,7 @@ void main() {
       [const StreamEvent.textDelta('It says hello.'), const StreamEvent.finish(reason: 'stop')],
     ]);
 
-    final svc = AgentService(ai: aiRepo, codingTools: toolsSvc, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
     final messages = <ChatMessage>[];
     await for (final msg in svc.runAgenticTurn(
       sessionId: 's',
@@ -128,7 +140,7 @@ void main() {
     ];
     final aiRepo = _FakeAIRepo(List.generate(10, (_) => round));
 
-    final svc = AgentService(ai: aiRepo, codingTools: toolsSvc, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
     final messages = <ChatMessage>[];
     await for (final msg in svc.runAgenticTurn(
       sessionId: 's',
@@ -156,7 +168,7 @@ void main() {
       ],
     ]);
 
-    final svc = AgentService(ai: aiRepo, codingTools: toolsSvc, cancelFlag: () => cancel);
+    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => cancel);
     cancel = true;
     final messages = <ChatMessage>[];
     await for (final msg in svc.runAgenticTurn(
@@ -218,7 +230,7 @@ void main() {
       ),
     ];
 
-    final svc = AgentService(ai: aiRepo, codingTools: toolsSvc, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
     await svc
         .runAgenticTurn(
           sessionId: 's',
@@ -237,12 +249,12 @@ void main() {
   });
 
   test('readOnly mode filters write tools from the tools list', () async {
-    List<CodingToolDefinition>? sentTools;
+    List<Tool>? sentTools;
     final aiRepo = _CapturingFakeRepo([
       [const StreamEvent.finish(reason: 'stop')],
     ], onSend: (tools) => sentTools = tools);
 
-    final svc = AgentService(ai: aiRepo, codingTools: toolsSvc, cancelFlag: () => false);
+    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false);
     await svc
         .runAgenticTurn(
           sessionId: 's',
@@ -269,7 +281,7 @@ void main() {
     ]);
 
     Future<bool> deny(_) async => false;
-    final svc = AgentService(ai: aiRepo, codingTools: toolsSvc, cancelFlag: () => false, requestPermission: deny);
+    final svc = AgentService(ai: aiRepo, registry: registry, cancelFlag: () => false, requestPermission: deny);
     final messages = <ChatMessage>[];
     await for (final msg in svc.runAgenticTurn(
       sessionId: 's',
@@ -295,7 +307,7 @@ class _WireCapturingFakeRepo extends _FakeAIRepo {
   @override
   Stream<StreamEvent> streamMessageWithTools({
     required List<Map<String, dynamic>> wireMessages,
-    required List<CodingToolDefinition> tools,
+    required List<Tool> tools,
     required AIModel model,
   }) {
     onWire(wireMessages);
@@ -305,12 +317,12 @@ class _WireCapturingFakeRepo extends _FakeAIRepo {
 
 class _CapturingFakeRepo extends _FakeAIRepo {
   _CapturingFakeRepo(super.scripts, {required this.onSend});
-  final void Function(List<CodingToolDefinition>) onSend;
+  final void Function(List<Tool>) onSend;
 
   @override
   Stream<StreamEvent> streamMessageWithTools({
     required List<Map<String, dynamic>> wireMessages,
-    required List<CodingToolDefinition> tools,
+    required List<Tool> tools,
     required AIModel model,
   }) {
     onSend(tools);

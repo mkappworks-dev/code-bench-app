@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/data/coding_tools/coding_tools_exceptions.dart';
 import 'package:code_bench_app/data/coding_tools/datasource/coding_tools_datasource_io.dart';
 import 'package:path/path.dart' as p;
 
@@ -45,7 +46,10 @@ void main() {
     expect(names.contains('b.txt'), isTrue);
   });
 
-  test('fileSizeBytes on missing path throws PathNotFoundException', () async {
-    expect(() => ds.fileSizeBytes(p.join(tmp.path, 'missing.txt')), throwsA(isA<PathNotFoundException>()));
+  test('fileSizeBytes on missing path throws CodingToolsNotFoundException', () async {
+    await expectLater(
+      () => ds.fileSizeBytes(p.join(tmp.path, 'missing.txt')),
+      throwsA(isA<CodingToolsNotFoundException>()),
+    );
   });
 }

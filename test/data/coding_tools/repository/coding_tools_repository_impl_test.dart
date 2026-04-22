@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/data/coding_tools/coding_tools_exceptions.dart';
 import 'package:code_bench_app/data/coding_tools/datasource/coding_tools_datasource_io.dart';
 import 'package:code_bench_app/data/coding_tools/repository/coding_tools_repository_impl.dart';
 import 'package:path/path.dart' as p;
@@ -23,8 +24,11 @@ void main() {
     expect(await repo.readTextFile(p.join(tmp.path, 'a.txt')), 'héllo');
   });
 
-  test('readTextFile throws on invalid UTF-8 bytes', () async {
+  test('readTextFile throws CodingToolNotTextEncodedException on invalid UTF-8 bytes', () async {
     File(p.join(tmp.path, 'bad.bin')).writeAsBytesSync([0xC3, 0x28]);
-    await expectLater(() => repo.readTextFile(p.join(tmp.path, 'bad.bin')), throwsA(isA<FormatException>()));
+    await expectLater(
+      () => repo.readTextFile(p.join(tmp.path, 'bad.bin')),
+      throwsA(isA<CodingToolNotTextEncodedException>()),
+    );
   });
 }

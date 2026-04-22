@@ -12,27 +12,21 @@ class FakeApplyRepository implements ApplyRepository {
   String? _writtenContent;
   bool _deleted = false;
   bool _gitCheckedOut = false;
-  bool _shouldThrowNonPathError = false;
-  bool _shouldThrowFsOnRead = false;
+  bool _shouldThrowDiskError = false;
 
   void setReadContent(String content) => _readContent = content;
-  void setReadThrowsNonPathError() => _shouldThrowNonPathError = true;
 
-  /// Makes [readFile] throw [FileSystemException] (simulates disk error).
-  void setReadThrowsFileSystemException() => _shouldThrowFsOnRead = true;
+  /// Makes [readFile] throw [ApplyDiskException] (simulates a disk I/O error).
+  void setReadThrowsApplyDiskException() => _shouldThrowDiskError = true;
 
   String? get writtenContent => _writtenContent;
   bool get deleted => _deleted;
   bool get gitCheckedOut => _gitCheckedOut;
 
   @override
-  Future<String> readFile(String path) async {
-    if (_shouldThrowFsOnRead) throw FileSystemException('Disk read error', path);
-    if (_shouldThrowNonPathError) throw FileSystemException('Disk read error', path);
-    if (_readContent == null) {
-      throw PathNotFoundException(path, const OSError('Not found', 2));
-    }
-    return _readContent!;
+  Future<String?> readFile(String path) async {
+    if (_shouldThrowDiskError) throw ApplyDiskException('Disk read error');
+    return _readContent; // null = file not found
   }
 
   @override
@@ -88,7 +82,7 @@ void main() {
       expect(change.filePath, tmpFile);
       expect(change.originalContent, 'original content');
       expect(change.newContent, 'new content');
-      expect(change.contentChecksum, ApplyService.sha256OfString('new content'));
+      expect(change.contentChecksum, ApplyRepository.sha256OfString('new content'));
     });
 
     test('throws PathEscapeException for path outside project', () async {
@@ -127,8 +121,8 @@ void main() {
       );
     });
 
-    test('sets originalContent=null for new file (PathNotFoundException)', () async {
-      final repo = FakeApplyRepository(); // no content set → throws PathNotFoundException
+    test('sets originalContent=null for new file', () async {
+      final repo = FakeApplyRepository(); // no content set → readFile returns null
       final service = makeService(repo: repo);
 
       const tmpProject = '/tmp';
@@ -145,9 +139,9 @@ void main() {
       expect(change.originalContent, isNull);
     });
 
-    test('throws FileSystemException for non-path-not-found disk error', () async {
+    test('throws ApplyDiskException for disk I/O error', () async {
       final repo = FakeApplyRepository();
-      repo.setReadThrowsNonPathError();
+      repo.setReadThrowsApplyDiskException();
       final service = makeService(repo: repo);
 
       const tmpProject = '/tmp';
@@ -161,7 +155,7 @@ void main() {
           sessionId: 's',
           messageId: 'm',
         ),
-        throwsA(isA<FileSystemException>()),
+        throwsA(isA<ApplyDiskException>()),
       );
     });
   });
@@ -264,7 +258,7 @@ void main() {
       repo.setReadContent(content);
       final service = makeService(repo: repo);
 
-      final checksum = ApplyService.sha256OfString(content);
+      final checksum = ApplyRepository.sha256OfString(content);
       final result = await service.isExternallyModified('/tmp/file.dart', checksum);
       expect(result, isFalse);
     });
@@ -279,7 +273,7 @@ void main() {
     });
 
     test('returns true when file missing', () async {
-      final repo = FakeApplyRepository(); // no content → PathNotFoundException
+      final repo = FakeApplyRepository(); // no content → readFile returns null
       final service = makeService(repo: repo);
 
       final result = await service.isExternallyModified('/tmp/missing.dart', 'any-checksum');
@@ -287,7 +281,7 @@ void main() {
     });
   });
 
-  group('ApplyService.assertWithinProject (static)', () {
+  group('ApplyRepository.assertWithinProject (static)', () {
     late Directory tmpProj;
 
     setUp(() async {
@@ -299,32 +293,35 @@ void main() {
     });
 
     test('does not throw for path inside project', () {
-      expect(() => ApplyService.assertWithinProject('${tmpProj.path}/src/file.dart', tmpProj.path), returnsNormally);
+      expect(() => ApplyRepository.assertWithinProject('${tmpProj.path}/src/file.dart', tmpProj.path), returnsNormally);
     });
 
     test('throws PathEscapeException for traversal', () {
       expect(
-        () => ApplyService.assertWithinProject('/tmp/other/evil.dart', tmpProj.path),
+        () => ApplyRepository.assertWithinProject('/tmp/other/evil.dart', tmpProj.path),
         throwsA(isA<PathEscapeException>()),
       );
     });
 
     test('throws PathEscapeException for path equal to project root', () {
-      expect(() => ApplyService.assertWithinProject(tmpProj.path, tmpProj.path), throwsA(isA<PathEscapeException>()));
+      expect(
+        () => ApplyRepository.assertWithinProject(tmpProj.path, tmpProj.path),
+        throwsA(isA<PathEscapeException>()),
+      );
     });
   });
 
-  group('ApplyService.sha256OfString (static)', () {
+  group('ApplyRepository.sha256OfString (static)', () {
     test('produces consistent hex digest', () {
-      final digest1 = ApplyService.sha256OfString('hello');
-      final digest2 = ApplyService.sha256OfString('hello');
+      final digest1 = ApplyRepository.sha256OfString('hello');
+      final digest2 = ApplyRepository.sha256OfString('hello');
       expect(digest1, digest2);
       expect(digest1, hasLength(64));
     });
 
     test('differs for different inputs', () {
-      final d1 = ApplyService.sha256OfString('a');
-      final d2 = ApplyService.sha256OfString('b');
+      final d1 = ApplyRepository.sha256OfString('a');
+      final d2 = ApplyRepository.sha256OfString('b');
       expect(d1, isNot(equals(d2)));
     });
   });
@@ -340,11 +337,65 @@ void main() {
     });
 
     test('returns null when file not found', () async {
-      final repo = FakeApplyRepository(); // throws PathNotFoundException
+      final repo = FakeApplyRepository(); // readFile returns null
       final service = makeService(repo: repo);
 
       final result = await service.readFileContent('/tmp/missing.dart', '/tmp');
       expect(result, isNull);
+    });
+  });
+
+  group('applyChange — checksum guard', () {
+    test('throws ApplyContentChangedException when expectedChecksum does not match on-disk content', () async {
+      final repo = FakeApplyRepository();
+      repo.setReadContent('original');
+      final service = makeService(repo: repo);
+
+      await expectLater(
+        () => service.applyChange(
+          filePath: '/tmp/guarded.txt',
+          projectPath: '/tmp',
+          newContent: 'updated',
+          sessionId: 's',
+          messageId: 'm',
+          expectedChecksum: ApplyRepository.sha256OfString('different content'),
+        ),
+        throwsA(isA<ApplyContentChangedException>()),
+      );
+      // file not written
+      expect(repo.writtenContent, isNull);
+    });
+
+    test('succeeds when expectedChecksum matches on-disk content', () async {
+      final repo = FakeApplyRepository();
+      repo.setReadContent('original');
+      final service = makeService(repo: repo);
+
+      final change = await service.applyChange(
+        filePath: '/tmp/guarded2.txt',
+        projectPath: '/tmp',
+        newContent: 'updated',
+        sessionId: 's',
+        messageId: 'm',
+        expectedChecksum: ApplyRepository.sha256OfString('original'),
+      );
+      expect(repo.writtenContent, 'updated');
+      expect(change.originalContent, 'original');
+    });
+
+    test('succeeds when expectedChecksum is null (no guard)', () async {
+      final repo = FakeApplyRepository();
+      repo.setReadContent('original');
+      final service = makeService(repo: repo);
+
+      await service.applyChange(
+        filePath: '/tmp/guarded3.txt',
+        projectPath: '/tmp',
+        newContent: 'updated',
+        sessionId: 's',
+        messageId: 'm',
+      );
+      expect(repo.writtenContent, 'updated');
     });
   });
 
@@ -358,22 +409,22 @@ void main() {
       expect(result, 'original');
     });
 
-    test('returns null for new file (PathNotFoundException)', () async {
-      final repo = FakeApplyRepository();
+    test('returns null for new file', () async {
+      final repo = FakeApplyRepository(); // readFile returns null
       final service = makeService(repo: repo);
 
       final result = await service.readOriginalForDiff('/tmp/new_file.dart', '/tmp');
       expect(result, isNull);
     });
 
-    test('rethrows FileSystemException (unlike readFileContent which swallows it)', () async {
+    test('rethrows ApplyDiskException (unlike readFileContent which swallows it)', () async {
       final repo = FakeApplyRepository();
-      repo.setReadThrowsFileSystemException();
+      repo.setReadThrowsApplyDiskException();
       final service = makeService(repo: repo);
 
       await expectLater(
         () => service.readOriginalForDiff('/tmp/file.dart', '/tmp'),
-        throwsA(isA<FileSystemException>()),
+        throwsA(isA<ApplyDiskException>()),
       );
     });
   });

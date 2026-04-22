@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -30,7 +29,9 @@ class CodeApplyActions extends _$CodeApplyActions {
     ProjectMissingException() => const CodeApplyFailure.projectMissing(),
     PathEscapeException() => const CodeApplyFailure.outsideProject(),
     ApplyTooLargeException(:final bytes) => CodeApplyFailure.tooLarge(bytes),
-    FileSystemException(:final message) => CodeApplyFailure.diskWrite(message),
+    ApplyDiskException(:final message) => CodeApplyFailure.diskWrite(message),
+    GitCheckoutException(:final message) => CodeApplyFailure.gitRevert(message),
+    ApplyContentChangedException() => const CodeApplyFailure.contentChanged(),
     _ => CodeApplyFailure.unknown(e),
   };
 

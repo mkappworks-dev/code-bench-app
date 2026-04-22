@@ -33,6 +33,13 @@ final class FileSystemException extends AppException {
   final String? path;
 }
 
+/// Thrown when a file or directory lookup finds nothing at the given path.
+/// Subclass of [FileSystemException] so callers that only care about "any I/O
+/// error" can still catch the parent type.
+final class FileNotFoundException extends FileSystemException {
+  const FileNotFoundException(super.message, {super.code, super.originalError, super.path});
+}
+
 final class ValidationException extends AppException {
   const ValidationException(super.message, {super.code, super.originalError});
 }

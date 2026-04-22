@@ -209,6 +209,8 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
         CodeApplyOutsideProject() => 'This file is outside the current project.',
         CodeApplyTooLarge(:final bytes) => 'Content too large to apply ($bytes bytes).',
         CodeApplyDiskWrite(:final message) => 'Could not write file: $message',
+        CodeApplyGitRevert() => 'Git revert failed. Run `git checkout` manually.',
+        CodeApplyContentChanged() => 'File was modified externally. Please retry.',
         CodeApplyUnknownError() => 'Revert failed. Please try again.',
       });
     });

@@ -1,9 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:crypto/crypto.dart';
 import 'package:diff_match_patch/diff_match_patch.dart';
-import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -34,87 +31,47 @@ class ApplyService {
   final ApplyRepository _repo;
   final String Function() _uuidGen;
 
-  /// Throws [PathEscapeException] if [filePath] escapes [projectPath]
-  /// (lexical and symlink checks). Also throws [ProjectMissingException]
-  /// if the project root is gone.
-  static void assertWithinProject(String filePath, String projectPath) {
-    final lexFile = p.normalize(p.absolute(filePath));
-    final lexRoot = p.normalize(p.absolute(projectPath));
-    final lexRootWithSep = lexRoot + p.separator;
-    if (!lexFile.startsWith(lexRootWithSep)) {
-      sLog('[assertWithinProject] lexical reject: "$filePath" outside "$projectPath"');
-      throw PathEscapeException(filePath, projectPath);
-    }
-
-    final rootDir = Directory(lexRoot);
-    if (!rootDir.existsSync()) {
-      throw ProjectMissingException(projectPath);
-    }
-    final rootReal = rootDir.resolveSymbolicLinksSync();
-
-    var probe = Directory(p.dirname(lexFile));
-    while (!probe.existsSync()) {
-      final parent = probe.parent;
-      if (parent.path == probe.path) break;
-      probe = parent;
-    }
-    String probeReal;
-    try {
-      probeReal = probe.resolveSymbolicLinksSync();
-    } on FileSystemException {
-      sLog('[assertWithinProject] symlink resolve failed: "$filePath"');
-      throw PathEscapeException(filePath, projectPath);
-    }
-    final rootRealWithSep = rootReal + p.separator;
-    if (probeReal != rootReal && !probeReal.startsWith(rootRealWithSep)) {
-      sLog('[assertWithinProject] symlink escape: "$filePath" → "$probeReal" outside "$rootReal"');
-      throw PathEscapeException(filePath, projectPath);
-    }
-  }
-
-  /// Returns the SHA-256 hex digest of [content].
-  static String sha256OfString(String content) {
-    final bytes = utf8.encode(content);
-    return sha256.convert(bytes).toString();
-  }
-
   /// Applies [newContent] to [filePath], snapshots the original for revert,
   /// and returns the recorded [AppliedChange]. Throws [PathEscapeException],
-  /// [ProjectMissingException], or [ApplyTooLargeException] on guard failures.
+  /// [ProjectMissingException], [ApplyTooLargeException], [ApplyDiskException],
+  /// or [ApplyContentChangedException] on guard or I/O failures.
+  ///
+  /// When [expectedChecksum] is non-null and the file exists, the on-disk
+  /// content is verified against the checksum before writing. If they differ
+  /// (indicating an external modification since the caller last read the file),
+  /// [ApplyContentChangedException] is thrown and the file is left unchanged.
   Future<AppliedChange> applyChange({
     required String filePath,
     required String projectPath,
     required String newContent,
     required String sessionId,
     required String messageId,
+    String? expectedChecksum,
   }) async {
-    assertWithinProject(filePath, projectPath);
+    ApplyRepository.assertWithinProject(filePath, projectPath);
 
     final newByteLen = utf8.encode(newContent).length;
     if (newByteLen > kMaxApplyContentBytes) {
       throw ApplyTooLargeException(newByteLen);
     }
 
-    String? originalContent;
-    try {
-      originalContent = await _repo.readFile(filePath);
-    } on PathNotFoundException {
-      originalContent = null;
-    } on FileSystemException {
-      rethrow;
-    }
+    // null = file does not exist yet (new-file apply)
+    final originalContent = await _repo.readFile(filePath);
 
     if (originalContent != null) {
       final originalByteLen = utf8.encode(originalContent).length;
       if (originalByteLen > kMaxApplyContentBytes) {
         throw ApplyTooLargeException(originalByteLen);
       }
+      if (expectedChecksum != null && ApplyRepository.sha256OfString(originalContent) != expectedChecksum) {
+        throw const ApplyContentChangedException();
+      }
     }
 
     await _repo.writeFile(filePath, newContent);
 
     final (additions, deletions) = _computeLineCounts(originalContent, newContent);
-    final checksum = sha256OfString(newContent);
+    final checksum = ApplyRepository.sha256OfString(newContent);
 
     return AppliedChange(
       id: _uuidGen(),
@@ -134,7 +91,7 @@ class ApplyService {
   /// [AppliedChange.originalContent]. Deletes the file when originalContent
   /// is null (file was created by apply).
   Future<void> revertChange({required AppliedChange change, required bool isGit, required String projectPath}) async {
-    assertWithinProject(change.filePath, projectPath);
+    ApplyRepository.assertWithinProject(change.filePath, projectPath);
     if (change.originalContent == null) {
       await _repo.deleteFile(change.filePath);
     } else if (isGit) {
@@ -147,12 +104,10 @@ class ApplyService {
   /// Returns current on-disk content of [filePath] for the conflict-merge
   /// view. Returns `null` if the file cannot be read.
   Future<String?> readFileContent(String filePath, String projectPath) async {
-    assertWithinProject(filePath, projectPath);
+    ApplyRepository.assertWithinProject(filePath, projectPath);
     try {
       return await _repo.readFile(filePath);
-    } on PathNotFoundException {
-      return null;
-    } on FileSystemException catch (e) {
+    } on ApplyDiskException catch (e) {
       dLog('[ApplyService] readFileContent failed: $e');
       return null;
     }
@@ -160,14 +115,13 @@ class ApplyService {
 
   /// Returns current on-disk content of [absolutePath] for diff rendering.
   /// Returns `null` when the file does not exist yet (new-file apply).
+  /// Throws [ApplyDiskException] on other I/O failures.
   Future<String?> readOriginalForDiff(String absolutePath, String projectPath) async {
-    assertWithinProject(absolutePath, projectPath);
+    ApplyRepository.assertWithinProject(absolutePath, projectPath);
     try {
       return await _repo.readFile(absolutePath);
-    } on PathNotFoundException {
-      return null;
-    } on FileSystemException catch (e) {
-      dLog('[ApplyService] readOriginalForDiff failed: ${e.message}');
+    } on ApplyDiskException catch (e) {
+      dLog('[ApplyService] readOriginalForDiff failed: $e');
       rethrow;
     }
   }
@@ -177,10 +131,9 @@ class ApplyService {
   Future<bool> isExternallyModified(String filePath, String storedChecksum) async {
     try {
       final current = await _repo.readFile(filePath);
-      return sha256OfString(current) != storedChecksum;
-    } on PathNotFoundException {
-      return true;
-    } on FileSystemException catch (e) {
+      if (current == null) return true;
+      return ApplyRepository.sha256OfString(current) != storedChecksum;
+    } on ApplyDiskException catch (e) {
       dLog('[ApplyService] isExternallyModified read failed: ${e.runtimeType}');
       return true;
     }

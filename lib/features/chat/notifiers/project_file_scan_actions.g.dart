@@ -10,7 +10,7 @@ part of 'project_file_scan_actions.dart';
 // ignore_for_file: type=lint, type=warning
 /// Command notifier for the file picker's project scan.
 ///
-/// On [FileSystemException] the notifier emits [AsyncError] carrying a
+/// On scan failure the notifier emits [AsyncError] carrying a
 /// [ProjectFileScanFailure] so widgets can surface an inline error message
 /// via [ref.listen] without catching exceptions themselves.
 
@@ -19,13 +19,13 @@ final projectFileScanActionsProvider = ProjectFileScanActionsProvider._();
 
 /// Command notifier for the file picker's project scan.
 ///
-/// On [FileSystemException] the notifier emits [AsyncError] carrying a
+/// On scan failure the notifier emits [AsyncError] carrying a
 /// [ProjectFileScanFailure] so widgets can surface an inline error message
 /// via [ref.listen] without catching exceptions themselves.
 final class ProjectFileScanActionsProvider extends $AsyncNotifierProvider<ProjectFileScanActions, void> {
   /// Command notifier for the file picker's project scan.
   ///
-  /// On [FileSystemException] the notifier emits [AsyncError] carrying a
+  /// On scan failure the notifier emits [AsyncError] carrying a
   /// [ProjectFileScanFailure] so widgets can surface an inline error message
   /// via [ref.listen] without catching exceptions themselves.
   ProjectFileScanActionsProvider._()
@@ -47,11 +47,11 @@ final class ProjectFileScanActionsProvider extends $AsyncNotifierProvider<Projec
   ProjectFileScanActions create() => ProjectFileScanActions();
 }
 
-String _$projectFileScanActionsHash() => r'6b46c5180f9a00a800433c382546ed9ef06089e9';
+String _$projectFileScanActionsHash() => r'1cdec77e27ce3eb96369accc9fdf9b8cf7dee1e0';
 
 /// Command notifier for the file picker's project scan.
 ///
-/// On [FileSystemException] the notifier emits [AsyncError] carrying a
+/// On scan failure the notifier emits [AsyncError] carrying a
 /// [ProjectFileScanFailure] so widgets can surface an inline error message
 /// via [ref.listen] without catching exceptions themselves.
 

@@ -145,6 +145,10 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
               showErrorSnackBar(context, 'Could not write file to disk: $message');
             case CodeApplyTooLarge(:final bytes):
               showErrorSnackBar(context, 'Content too large to apply ($bytes bytes).');
+            case CodeApplyGitRevert():
+              showErrorSnackBar(context, 'Git revert failed. Run `git checkout -- <file>` manually to restore.');
+            case CodeApplyContentChanged():
+              showErrorSnackBar(context, 'File was modified externally. Please retry.');
             case CodeApplyUnknownError():
               showErrorSnackBar(context, 'Unable to apply change.');
           }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/data/apply/apply_exceptions.dart';
 import 'package:code_bench_app/data/apply/repository/apply_repository_impl.dart';
 import 'package:code_bench_app/data/filesystem/datasource/filesystem_datasource_io.dart';
 import 'package:code_bench_app/data/filesystem/repository/filesystem_repository_impl.dart';
@@ -27,8 +28,9 @@ void main() {
       expect(content, 'hello world');
     });
 
-    test('throws PathNotFoundException for missing file', () async {
-      await expectLater(() => repo.readFile('${tmpDir.path}/nonexistent.dart'), throwsA(isA<PathNotFoundException>()));
+    test('returns null for missing file', () async {
+      final result = await repo.readFile('${tmpDir.path}/nonexistent.dart');
+      expect(result, isNull);
     });
   });
 
@@ -64,11 +66,11 @@ void main() {
   });
 
   group('ApplyRepositoryImpl.gitCheckout', () {
-    test('throws StateError when not inside a git repo', () async {
+    test('throws GitCheckoutException when not inside a git repo', () async {
       final filePath = '${tmpDir.path}/file.dart';
       File(filePath).writeAsStringSync('content');
 
-      await expectLater(() => repo.gitCheckout(filePath, tmpDir.path), throwsA(isA<StateError>()));
+      await expectLater(() => repo.gitCheckout(filePath, tmpDir.path), throwsA(isA<GitCheckoutException>()));
     });
   });
 }
