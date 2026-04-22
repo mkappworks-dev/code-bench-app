@@ -9,18 +9,18 @@ This document is the source of truth for the agentic executor build-out. Read th
 
 ## Status Overview
 
-| Phase | Description                         | Status                                                        |
-| ----- | ----------------------------------- | ------------------------------------------------------------- |
-| 1     | Tool Registry Refactor              | ✅ Done — PR #27, commit `1188b55`                            |
-| 2     | Grep + Glob + Parallel execution    | ✅ Done — PR #28, commit `f7acbc8`                            |
-| 3     | Tool-output truncation              | ✅ Done — commit `5b257c8`                                    |
-| 4     | Bash tool (permission-gated)        | 🗂 Planned — `docs/superpowers/plans/2026-04-22-bash-tool.md` |
-| 5     | MCP client (stdio + HTTP/SSE)       | ⬜ Not started                                                |
-| 6     | WebFetch                            | ⬜ Not started                                                |
-| 7     | CLI Provider Detection & Delegation | ⬜ Not started                                                |
-| —     | Anthropic provider adapter          | 🚫 Deferred / YAGNI                                           |
-| —     | Subagent delegation                 | 🚫 Deferred / YAGNI                                           |
-| —     | WebSearch                           | 🚫 Deferred                                                   |
+| Phase | Description                         | Status                             |
+| ----- | ----------------------------------- | ---------------------------------- |
+| 1     | Tool Registry Refactor              | ✅ Done — PR #27, commit `1188b55` |
+| 2     | Grep + Glob + Parallel execution    | ✅ Done — PR #28, commit `f7acbc8` |
+| 3     | Tool-output truncation              | ✅ Done — commit `5b257c8`         |
+| 4     | Bash tool (permission-gated)        | ✅ Done — commits `a51871d`, `d435681` |
+| 5     | MCP client (stdio + HTTP/SSE)       | ⬜ Not started                     |
+| 6     | WebFetch                            | ⬜ Not started                     |
+| 7     | CLI Provider Detection & Delegation | ⬜ Not started                     |
+| —     | Anthropic provider adapter          | 🚫 Deferred / YAGNI                |
+| —     | Subagent delegation                 | 🚫 Deferred / YAGNI                |
+| —     | WebSearch                           | 🚫 Deferred                        |
 
 ---
 
@@ -90,28 +90,19 @@ None.
 
 ---
 
-## Phase 4 — Bash Tool (permission-gated)
+## Phase 4 — Bash Tool (permission-gated) ✅
 
 **Spec:** `docs/superpowers/specs/2026-04-22-bash-tool-design.md`
 **Plan:** `docs/superpowers/plans/2026-04-22-bash-tool.md`
 
-### Settled decisions
+**Done.** Implementation commits: `cf2e889` (BashDatasource), `14ed4b8` (BashTool), `4ee01e9` (permission card), `2ff9be9` (wiring).
 
-**Shell mode:** `runInShell: true`. A no-shell Bash tool (no pipes, no redirects) is too crippled to be useful — `grep foo | wc -l` would not work. Claude Code runs a real shell. The CLAUDE.md restriction on `runInShell: true` was written for services that construct commands programmatically from user data (branch names, commit messages) where shell injection is the risk. The Bash tool is different: the AI generates the command and the user explicitly approves it before execution.
+Key decisions locked in:
 
-**CLAUDE.md update required:** Narrow the `runInShell: true` restriction. The existing ban applies to services constructing commands from external/user data. `bash_datasource_process.dart` is a documented exception — it executes an AI-generated, user-approved shell command. Document this the same way `ApplyRepository.assertWithinProject` is documented as a `dart:io` exception.
-
-**Permission gate:** Every Bash call requires explicit user approval. No auto-approve path, ever.
-
-**Working directory:** Locked to project root — same pattern as all other tools.
-
-**Denylist:** Existing coding tools denylist applies to the command string.
-
-**Timing:** Implement after Phase 3. The original rationale (telemetry to inform the denylist) still applies — having grep/glob/truncation in production first gives real usage data before the highest-risk tool ships.
-
-### Open questions
-
-None — ready to spec and plan when Phase 3 is merged.
+- Spawns `/bin/sh -c <command>` via `Process.start` with `runInShell: false` — pipes and redirects work via the shell
+- Every bash call requires explicit user approval — no auto-approve path
+- Working directory locked to project root (`ctx.projectPath`)
+- CLAUDE.md updated to document `bash_datasource_process.dart` as an approved exception to the `runInShell: true` ban
 
 ---
 

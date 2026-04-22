@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/session/models/permission_request.dart';
 import '../notifiers/agent_permission_request_notifier.dart';
+import '../utils/permission_request_preview.dart';
 
 class PermissionRequestCard extends ConsumerStatefulWidget {
   const PermissionRequestCard({super.key, required this.request});
@@ -16,28 +17,7 @@ class PermissionRequestCard extends ConsumerStatefulWidget {
 class _PermissionRequestCardState extends ConsumerState<PermissionRequestCard> {
   bool _expanded = false;
 
-  List<String>? _buildPreviewLines() {
-    final req = widget.request;
-    if (req.toolName == 'write_file') {
-      final content = req.input['content'];
-      if (content is! String || content.isEmpty) return null;
-      final allLines = content.split('\n');
-      final truncated = allLines.length > 5;
-      final lines = allLines.take(5).toList();
-      if (truncated) lines.add('…');
-      return lines;
-    }
-    if (req.toolName == 'str_replace') {
-      final oldStr = req.input['old_str'];
-      final newStr = req.input['new_str'];
-      if (oldStr is! String || oldStr.isEmpty) return null;
-      if (newStr is! String) return null;
-      final oldLines = oldStr.split('\n').take(3).map((l) => '- $l').toList();
-      final newLines = newStr.split('\n').take(3).map((l) => '+ $l').toList();
-      return [...oldLines, ...newLines];
-    }
-    return null;
-  }
+  List<String>? _buildPreviewLines() => PermissionRequestPreview.buildLines(widget.request);
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +59,8 @@ class _PermissionRequestCardState extends ConsumerState<PermissionRequestCard> {
             widget.request.summary,
             style: TextStyle(color: c.textSecondary, fontSize: 11, fontFamily: 'monospace'),
           ),
-          if (previewLines != null) ...[
+          // existing collapsible diff — skip for bash
+          if (previewLines != null && widget.request.toolName != 'bash') ...[
             const SizedBox(height: 6),
             GestureDetector(
               onTap: () => setState(() => _expanded = !_expanded),
@@ -109,6 +90,25 @@ class _PermissionRequestCardState extends ConsumerState<PermissionRequestCard> {
                 ),
               ),
             ],
+          ],
+          // bash: always-visible command code block
+          if (widget.request.toolName == 'bash' && previewLines != null) ...[
+            const SizedBox(height: 6),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: c.codeBlockBg,
+                border: Border.all(color: c.subtleBorder),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                previewLines.first,
+                style: TextStyle(color: c.textPrimary, fontSize: 11, fontFamily: 'monospace'),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text('Denylist rules do not restrict bash commands.', style: TextStyle(color: c.textMuted, fontSize: 10)),
           ],
           const SizedBox(height: 8),
           Row(

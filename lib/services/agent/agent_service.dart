@@ -305,6 +305,14 @@ class AgentService {
       final path = call.args['path'] ?? '';
       return '$path · 1 match';
     }
+    if (call.name == 'bash') {
+      final raw = call.args['command'];
+      if (raw is! String) {
+        dLog('[AgentService] bash command arg is ${raw.runtimeType}, expected String');
+        return '<invalid bash command>';
+      }
+      return raw.length > 80 ? '${raw.substring(0, 80)}…' : raw;
+    }
     return call.args['path']?.toString() ?? '';
   }
 

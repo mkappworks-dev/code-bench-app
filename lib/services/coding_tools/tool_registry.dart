@@ -13,6 +13,7 @@ import '../../data/coding_tools/models/tool_context.dart';
 import '../../data/coding_tools/repository/coding_tools_denylist_repository.dart';
 import '../../data/coding_tools/repository/coding_tools_denylist_repository_impl.dart';
 import '../../data/session/models/session_settings.dart';
+import 'tools/bash_tool.dart';
 import 'tools/glob_tool.dart';
 import 'tools/grep_tool.dart';
 import 'tools/list_dir_tool.dart';
@@ -31,6 +32,7 @@ ToolRegistry toolRegistry(Ref ref) => ToolRegistry(
     ref.watch(strReplaceToolProvider),
     ref.watch(grepToolProvider),
     ref.watch(globToolProvider),
+    ref.watch(bashToolProvider),
   ],
   denylistRepo: ref.watch(codingToolsDenylistRepositoryProvider),
 );
@@ -63,8 +65,11 @@ class ToolRegistry {
       : List.unmodifiable(_tools);
 
   /// Whether invoking [t] should raise a PermissionRequest in [p].
-  bool requiresPrompt(Tool t, ChatPermission p) =>
-      p == ChatPermission.askBefore && t.capability != ToolCapability.readOnly;
+  /// Shell-capability tools always require a prompt — no auto-approve path.
+  bool requiresPrompt(Tool t, ChatPermission p) {
+    if (t.capability == ToolCapability.shell) return true;
+    return p == ChatPermission.askBefore && t.capability != ToolCapability.readOnly;
+  }
 
   /// Dispatcher. Loads the effective denylist, builds a [ToolContext],
   /// delegates to the tool, wraps crash-catch + timing log.

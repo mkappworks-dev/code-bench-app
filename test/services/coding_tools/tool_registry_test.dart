@@ -38,6 +38,21 @@ class _EmptyDenylistRepo implements CodingToolsDenylistRepository {
   Future<void> restoreAllDefaults() async {}
 }
 
+class _FakeShellTool implements Tool {
+  @override
+  String get name => 'fake_shell';
+  @override
+  ToolCapability get capability => ToolCapability.shell;
+  @override
+  String get description => 'test shell tool';
+  @override
+  Map<String, dynamic> get inputSchema => const {'type': 'object'};
+  @override
+  Map<String, dynamic> toOpenAiToolJson() => const {};
+  @override
+  Future<CodingToolResult> execute(ToolContext ctx) async => CodingToolResult.success('');
+}
+
 class _AlwaysCrashesTool implements Tool {
   @override
   String get name => 'crasher';
@@ -152,6 +167,15 @@ void main() {
       final r = _newRegistry(projectDir: projectDir);
       for (final t in r.tools) {
         expect(r.requiresPrompt(t, ChatPermission.readOnly), isFalse);
+      }
+    });
+
+    test('shell-capability tool always requires prompt under every ChatPermission', () {
+      final r = _newRegistry(projectDir: projectDir);
+      r.register(_FakeShellTool());
+      final t = r.byName('fake_shell')!;
+      for (final p in ChatPermission.values) {
+        expect(r.requiresPrompt(t, p), isTrue, reason: 'expected prompt for $p');
       }
     });
   });
