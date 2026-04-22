@@ -29,6 +29,14 @@ class _McpServersScreenState extends ConsumerState<McpServersScreen> {
     if (ref.read(mcpServersActionsProvider).hasError) throw Exception('save failed');
   }
 
+  Future<void> _removeServer(String id, String name) async {
+    await ref.read(mcpServersActionsProvider.notifier).remove(id);
+    final hasError = ref.read(mcpServersActionsProvider).hasError;
+    if (!mounted) return;
+    if (hasError) return;
+    AppSnackBar.show(context, 'Server "$name" removed', type: AppSnackBarType.success);
+  }
+
   void _openAdd() {
     showDialog<void>(
       context: context,
@@ -119,7 +127,7 @@ class _McpServersScreenState extends ConsumerState<McpServersScreen> {
                             builder: (_) => McpServerEditorDialog(initial: config, onSave: _saveServer),
                           );
                         },
-                        onRemove: (id) => ref.read(mcpServersActionsProvider.notifier).remove(id),
+                        onRemove: (id) => _removeServer(id, servers[i].name),
                       ),
                     ),
             ),
