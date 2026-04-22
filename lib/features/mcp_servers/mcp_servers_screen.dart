@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/constants/theme_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_snack_bar.dart';
+import '../settings/widgets/section_label.dart';
 import '../../data/mcp/models/mcp_server_config.dart';
 import 'notifiers/mcp_server_status_notifier.dart';
 import 'notifiers/mcp_servers_actions.dart';
@@ -56,19 +58,45 @@ class _McpServersScreenState extends ConsumerState<McpServersScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
             child: Row(
               children: [
-                Text('MCP Servers', style: Theme.of(context).textTheme.headlineSmall),
+                SectionLabel('MCP Servers'),
                 const Spacer(),
-                FilledButton.icon(onPressed: _openAdd, icon: const Icon(Icons.add), label: const Text('Add Server')),
+                GestureDetector(
+                  onTap: _openAdd,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: c.chipFill,
+                      border: Border.all(color: c.chipStroke),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add, size: 12, color: c.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Add Server',
+                          style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
           Expanded(
             child: serversAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              loading: () => Center(child: CircularProgressIndicator(color: c.accent, strokeWidth: 2)),
+              error: (e, _) => Center(
+                child: Text(
+                  'Error: $e',
+                  style: TextStyle(color: c.error, fontSize: ThemeConstants.uiFontSizeSmall),
+                ),
+              ),
               data: (servers) => servers.isEmpty
                   ? _EmptyState(onAdd: _openAdd)
                   : ListView.builder(
@@ -105,11 +133,20 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.extension_outlined, size: 48, color: c.textSecondary),
-          const SizedBox(height: 16),
-          Text('No MCP servers configured', style: Theme.of(context).textTheme.titleMedium),
+          Icon(Icons.extension_outlined, size: 40, color: c.mutedFg),
+          const SizedBox(height: 12),
+          Text(
+            'No MCP servers configured',
+            style: TextStyle(color: c.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
+          ),
           const SizedBox(height: 8),
-          TextButton(onPressed: onAdd, child: const Text('+ Add your first MCP server')),
+          GestureDetector(
+            onTap: onAdd,
+            child: Text(
+              '+ Add your first server',
+              style: TextStyle(color: c.accent, fontSize: ThemeConstants.uiFontSizeSmall),
+            ),
+          ),
         ],
       ),
     );

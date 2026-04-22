@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../../data/mcp/models/mcp_server_config.dart';
 
 class McpServerEditorDialog extends StatefulWidget {
@@ -190,34 +193,41 @@ class _McpServerEditorDialogState extends State<McpServerEditorDialog> {
     final isEdit = widget.initial != null;
 
     return Dialog(
-      backgroundColor: c.dialogFill,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: c.dialogBorder),
-      ),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 560, maxHeight: 640),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header
-              _Header(isEdit: isEdit, view: _view, onViewChanged: _switchView),
-              const SizedBox(height: 16),
-
-              // JSON error banner
-              if (_jsonError != null) ...[_ErrorBanner(message: _jsonError!), const SizedBox(height: 12)],
-
-              // Body
-              Expanded(
-                child: _view == _EditorView.form ? _FormView(s: this) : _JsonView(s: this),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(13),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: Container(
+              decoration: BoxDecoration(
+                color: c.dialogFill,
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(color: c.dialogBorder),
+                boxShadow: [
+                  BoxShadow(color: c.shadowDeep, blurRadius: 64, offset: const Offset(0, 24)),
+                  BoxShadow(color: c.dialogHighlight, blurRadius: 0, spreadRadius: 0, offset: const Offset(0, 1)),
+                ],
               ),
-              const SizedBox(height: 20),
-
-              // Footer
-              _Footer(saving: _saving, onCancel: () => Navigator.of(context).pop(), onSave: _save),
-            ],
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _Header(isEdit: isEdit, view: _view, onViewChanged: _switchView),
+                    const SizedBox(height: 16),
+                    if (_jsonError != null) ...[_ErrorBanner(message: _jsonError!), const SizedBox(height: 12)],
+                    Expanded(
+                      child: _view == _EditorView.form ? _FormView(s: this) : _JsonView(s: this),
+                    ),
+                    const SizedBox(height: 16),
+                    _Footer(saving: _saving, onCancel: () => Navigator.of(context).pop(), onSave: _save),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -234,20 +244,36 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Row(
       children: [
-        Expanded(
-          child: Text(isEdit ? 'Edit MCP Server' : 'Add MCP Server', style: Theme.of(context).textTheme.titleLarge),
+        // Icon badge — matches AppDialog hasInputField:true sizing
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: c.accent.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(color: c.accentBorderTeal),
+            boxShadow: [BoxShadow(color: c.accentGlowBadge, blurRadius: 14)],
+          ),
+          child: Icon(Icons.extension_outlined, size: 14, color: c.accent),
         ),
-        const SizedBox(width: 16),
-        SegmentedButton<_EditorView>(
-          segments: const [
-            ButtonSegment(value: _EditorView.form, label: Text('Form')),
-            ButtonSegment(value: _EditorView.json, label: Text('JSON')),
-          ],
-          selected: {view},
-          onSelectionChanged: (sel) => onViewChanged(sel.first),
-          style: const ButtonStyle(visualDensity: VisualDensity(horizontal: -2, vertical: -2)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            isEdit ? 'Edit MCP Server' : 'Add MCP Server',
+            style: TextStyle(color: c.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+        ),
+        const SizedBox(width: 12),
+        _TabToggle<_EditorView>(
+          options: _EditorView.values,
+          labels: const ['Form', 'JSON'],
+          selected: view,
+          onChanged: (v) {
+            onViewChanged(v);
+          },
         ),
       ],
     );
@@ -268,7 +294,10 @@ class _ErrorBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: c.destructiveBorder),
       ),
-      child: Text(message, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: c.error)),
+      child: Text(
+        message,
+        style: TextStyle(color: c.error, fontSize: ThemeConstants.uiFontSizeSmall),
+      ),
     );
   }
 }
@@ -282,16 +311,59 @@ class _Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        TextButton(onPressed: saving ? null : onCancel, child: const Text('Cancel')),
+        // Cancel — ghost style matching AppDialogAction.cancel
+        GestureDetector(
+          onTap: saving ? null : onCancel,
+          child: Opacity(
+            opacity: saving ? 0.5 : 1.0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: c.chipFill,
+                border: Border.all(color: c.chipStroke),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: c.textPrimary,
+                  fontSize: ThemeConstants.uiFontSizeSmall,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ),
         const SizedBox(width: 8),
-        FilledButton(
-          onPressed: saving ? null : onSave,
-          child: saving
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Save'),
+        // Save — primary style matching AppDialogAction.primary
+        GestureDetector(
+          onTap: saving ? null : onSave,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [c.accent, c.accentHover],
+              ),
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: [BoxShadow(color: c.sendGlow, blurRadius: 10, offset: const Offset(0, 2))],
+            ),
+            child: saving
+                ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: c.onAccent))
+                : Text(
+                    'Save',
+                    style: TextStyle(
+                      color: c.onAccent,
+                      fontSize: ThemeConstants.uiFontSizeSmall,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+          ),
         ),
       ],
     );
@@ -304,81 +376,49 @@ class _FormView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = AppColors.of(context);
     final transport = s._draft.transport;
 
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Name
           _FieldLabel(text: 'Name'),
           const SizedBox(height: 6),
-          TextField(
-            controller: s._nameCtrl,
-            decoration: _inputDec(c, hint: 'e.g. My MCP Server'),
-          ),
+          AppTextField(controller: s._nameCtrl, hintText: 'e.g. My MCP Server'),
           const SizedBox(height: 16),
 
-          // Transport selector
           _FieldLabel(text: 'Transport'),
           const SizedBox(height: 6),
-          SegmentedButton<McpTransport>(
-            segments: const [
-              ButtonSegment(value: McpTransport.stdio, label: Text('stdio')),
-              ButtonSegment(value: McpTransport.httpSse, label: Text('HTTP/SSE')),
-            ],
-            selected: {transport},
-            onSelectionChanged: (sel) {
-              s.update(() => s._draft = s._draft.copyWith(transport: sel.first));
+          _TabToggle<McpTransport>(
+            options: McpTransport.values,
+            labels: const ['stdio', 'HTTP/SSE'],
+            selected: transport,
+            onChanged: (t) {
+              s.update(() => s._draft = s._draft.copyWith(transport: t));
             },
           ),
           const SizedBox(height: 16),
 
-          // Conditional transport fields
           if (transport == McpTransport.stdio) ...[
             _FieldLabel(text: 'Command'),
             const SizedBox(height: 6),
-            TextField(
+            AppTextField(
               controller: s._commandCtrl,
-              decoration: _inputDec(c, hint: 'e.g. npx -y @modelcontextprotocol/server-filesystem /tmp'),
+              hintText: 'e.g. npx -y @modelcontextprotocol/server-filesystem /tmp',
+              fontFamily: ThemeConstants.editorFontFamily,
             ),
           ] else ...[
             _FieldLabel(text: 'URL'),
             const SizedBox(height: 6),
-            TextField(
-              controller: s._urlCtrl,
-              decoration: _inputDec(c, hint: 'e.g. http://localhost:3000/sse'),
-            ),
+            AppTextField(controller: s._urlCtrl, hintText: 'e.g. http://localhost:3000/sse'),
           ],
           const SizedBox(height: 20),
 
-          // Env vars
           _EnvVarsEditor(s: s),
         ],
       ),
     );
   }
-
-  InputDecoration _inputDec(AppColors c, {String? hint}) => InputDecoration(
-    hintText: hint,
-    filled: true,
-    fillColor: c.fieldFill,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(6),
-      borderSide: BorderSide(color: c.fieldStroke),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(6),
-      borderSide: BorderSide(color: c.fieldStroke),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(6),
-      borderSide: BorderSide(color: c.accent, width: 1.5),
-    ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-    isDense: true,
-  );
 }
 
 class _FieldLabel extends StatelessWidget {
@@ -388,7 +428,10 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    return Text(text, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: c.textSecondary));
+    return Text(
+      text,
+      style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall, fontWeight: FontWeight.w500),
+    );
   }
 }
 
@@ -423,16 +466,34 @@ class _EnvVarsEditor extends StatelessWidget {
           children: [
             Text(
               'Environment Variables',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(color: c.textSecondary),
+              style: TextStyle(
+                color: c.textSecondary,
+                fontSize: ThemeConstants.uiFontSizeSmall,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             const Spacer(),
-            TextButton.icon(
-              onPressed: () {
-                s.update(() => s._envEntries.add(_EnvEntry('', '')));
-              },
-              icon: const Icon(Icons.add, size: 16),
-              label: const Text('Add'),
-              style: TextButton.styleFrom(visualDensity: const VisualDensity(horizontal: -2, vertical: -2)),
+            GestureDetector(
+              onTap: () => s.update(() => s._envEntries.add(_EnvEntry('', ''))),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: c.chipFill,
+                  border: Border.all(color: c.chipStroke),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add, size: 12, color: c.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Add',
+                      style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -445,7 +506,6 @@ class _EnvVarsEditor extends StatelessWidget {
                 entries[i].dispose();
                 s.update(() => s._envEntries.removeAt(i));
               },
-              c: c,
             ),
             if (i < entries.length - 1) const SizedBox(height: 6),
           ],
@@ -456,59 +516,89 @@ class _EnvVarsEditor extends StatelessWidget {
 }
 
 class _EnvRow extends StatelessWidget {
-  const _EnvRow({required this.entry, required this.onRemove, required this.c});
+  const _EnvRow({required this.entry, required this.onRemove});
 
   final _EnvEntry entry;
   final VoidCallback onRemove;
-  final AppColors c;
 
   @override
   Widget build(BuildContext context) {
-    final inputDec = InputDecoration(
-      filled: true,
-      fillColor: c.fieldFill,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: BorderSide(color: c.fieldStroke),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: BorderSide(color: c.fieldStroke),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: BorderSide(color: c.accent, width: 1.5),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      isDense: true,
-    );
-
+    final c = AppColors.of(context);
     return Row(
       children: [
         Expanded(
-          child: TextField(
+          child: AppTextField(
             controller: entry.keyCtrl,
-            decoration: inputDec.copyWith(hintText: 'KEY'),
-            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            hintText: 'KEY',
+            fontFamily: ThemeConstants.editorFontFamily,
+            fontSize: ThemeConstants.uiFontSize,
           ),
         ),
         const SizedBox(width: 6),
         Expanded(
           flex: 2,
-          child: TextField(
-            controller: entry.valCtrl,
-            decoration: inputDec.copyWith(hintText: 'value'),
-            style: const TextStyle(fontSize: 13),
-          ),
+          child: AppTextField(controller: entry.valCtrl, hintText: 'value'),
         ),
         const SizedBox(width: 4),
         IconButton(
-          icon: Icon(Icons.close, size: 16, color: c.textSecondary),
+          icon: Icon(Icons.close, size: 14, color: c.textSecondary),
           onPressed: onRemove,
           tooltip: 'Remove',
           visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
         ),
       ],
+    );
+  }
+}
+
+class _TabToggle<T extends Object> extends StatelessWidget {
+  const _TabToggle({required this.options, required this.labels, required this.selected, required this.onChanged});
+
+  final List<T> options;
+  final List<String> labels;
+  final T selected;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: c.chipStroke),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (int i = 0; i < options.length; i++) ...[
+                if (i > 0) VerticalDivider(width: 1, thickness: 1, color: c.chipStroke),
+                GestureDetector(
+                  onTap: () {
+                    if (options[i] == selected) return;
+                    onChanged(options[i]);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 100),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    color: options[i] == selected ? c.accentTintMid : c.chipFill,
+                    child: Text(
+                      labels[i],
+                      style: TextStyle(
+                        color: options[i] == selected ? c.textPrimary : c.textSecondary,
+                        fontSize: ThemeConstants.uiFontSizeSmall,
+                        fontWeight: options[i] == selected ? FontWeight.w500 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -529,8 +619,8 @@ class _JsonView extends StatelessWidget {
           textColor: c.textPrimary,
           cursorColor: c.accent,
           selectionColor: c.selectionBg,
-          fontSize: 13,
-          fontFamily: 'monospace',
+          fontSize: ThemeConstants.editorFontSize,
+          fontFamily: ThemeConstants.editorFontFamily,
         ),
         wordWrap: true,
         indicatorBuilder: (context, editingController, chunkController, notifier) {
@@ -539,7 +629,7 @@ class _JsonView extends StatelessWidget {
               DefaultCodeLineNumber(
                 controller: editingController,
                 notifier: notifier,
-                textStyle: TextStyle(fontSize: 12, color: c.editorGutterForeground),
+                textStyle: TextStyle(fontSize: ThemeConstants.uiFontSize, color: c.editorGutterForeground),
               ),
               DefaultCodeChunkIndicator(width: 20, controller: chunkController, notifier: notifier),
             ],
