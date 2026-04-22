@@ -45,6 +45,16 @@ class McpStdioDatasourceProcess implements McpTransportDatasource {
       _onMessage,
       onError: (Object e) => dLog('[McpStdio] stdout error for "${config.name}": $e'),
     );
+
+    // Drain stderr to prevent pipe-full deadlock in the child process.
+    // If stderr is never read, the OS pipe buffer (~64 KB on macOS) fills up
+    // and the child blocks on its write syscall, silently hanging all pending
+    // sendRequest futures.
+    _process!.stderr.listen(
+      (data) => dLog('[McpStdio] stderr from "${config.name}": ${utf8.decode(data, allowMalformed: true)}'),
+      onError: (_) {},
+      cancelOnError: false,
+    );
   }
 
   @override
