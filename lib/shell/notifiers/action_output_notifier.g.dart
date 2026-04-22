@@ -12,8 +12,8 @@ part of 'action_output_notifier.dart';
 /// streams its stdout/stderr lines into [ActionOutputState].
 ///
 /// Lives in `lib/shell/notifiers/` because [ActionOutputPanel] (the widget
-/// that displays it) is a shell-level widget. The actual process lifecycle
-/// (`Process.start`) is confined here — widgets only call [run] and [clear].
+/// that displays it) is a shell-level widget. Process lifecycle is owned by
+/// [ActionRunnerService] — widgets only call [run] and [clear].
 
 @ProviderFor(ActionOutputNotifier)
 final actionOutputProvider = ActionOutputNotifierProvider._();
@@ -22,15 +22,15 @@ final actionOutputProvider = ActionOutputNotifierProvider._();
 /// streams its stdout/stderr lines into [ActionOutputState].
 ///
 /// Lives in `lib/shell/notifiers/` because [ActionOutputPanel] (the widget
-/// that displays it) is a shell-level widget. The actual process lifecycle
-/// (`Process.start`) is confined here — widgets only call [run] and [clear].
+/// that displays it) is a shell-level widget. Process lifecycle is owned by
+/// [ActionRunnerService] — widgets only call [run] and [clear].
 final class ActionOutputNotifierProvider extends $NotifierProvider<ActionOutputNotifier, ActionOutputState> {
   /// Notifier that runs a user-defined [ProjectAction] as a subprocess and
   /// streams its stdout/stderr lines into [ActionOutputState].
   ///
   /// Lives in `lib/shell/notifiers/` because [ActionOutputPanel] (the widget
-  /// that displays it) is a shell-level widget. The actual process lifecycle
-  /// (`Process.start`) is confined here — widgets only call [run] and [clear].
+  /// that displays it) is a shell-level widget. Process lifecycle is owned by
+  /// [ActionRunnerService] — widgets only call [run] and [clear].
   ActionOutputNotifierProvider._()
     : super(
         from: null,
@@ -55,14 +55,14 @@ final class ActionOutputNotifierProvider extends $NotifierProvider<ActionOutputN
   }
 }
 
-String _$actionOutputNotifierHash() => r'81cbe3e6347b9994a55c3b84429c6678fd6e5adc';
+String _$actionOutputNotifierHash() => r'6053dac27fd2ca9ffb51fb91dc4cbe1bb9d07c4b';
 
 /// Notifier that runs a user-defined [ProjectAction] as a subprocess and
 /// streams its stdout/stderr lines into [ActionOutputState].
 ///
 /// Lives in `lib/shell/notifiers/` because [ActionOutputPanel] (the widget
-/// that displays it) is a shell-level widget. The actual process lifecycle
-/// (`Process.start`) is confined here — widgets only call [run] and [clear].
+/// that displays it) is a shell-level widget. Process lifecycle is owned by
+/// [ActionRunnerService] — widgets only call [run] and [clear].
 
 abstract class _$ActionOutputNotifier extends $Notifier<ActionOutputState> {
   ActionOutputState build();

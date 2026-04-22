@@ -34,3 +34,13 @@ class BlockedPathException extends ApplyException {
   @override
   String toString() => 'Blocked: "$filePath" ($reason)';
 }
+
+/// Thrown when a filesystem I/O error occurs during an apply operation (e.g.
+/// permission denied, disk full). Distinct from [ProjectMissingException] which
+/// indicates the root project directory is gone.
+class ApplyDiskException extends ApplyException {
+  ApplyDiskException(this.message);
+  final String message;
+  @override
+  String toString() => 'Disk I/O error: $message';
+}

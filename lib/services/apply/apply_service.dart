@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -34,7 +33,8 @@ class ApplyService {
 
   /// Applies [newContent] to [filePath], snapshots the original for revert,
   /// and returns the recorded [AppliedChange]. Throws [PathEscapeException],
-  /// [ProjectMissingException], or [ApplyTooLargeException] on guard failures.
+  /// [ProjectMissingException], [ApplyTooLargeException], or [ApplyDiskException]
+  /// on guard or I/O failures.
   Future<AppliedChange> applyChange({
     required String filePath,
     required String projectPath,
@@ -49,14 +49,8 @@ class ApplyService {
       throw ApplyTooLargeException(newByteLen);
     }
 
-    String? originalContent;
-    try {
-      originalContent = await _repo.readFile(filePath);
-    } on PathNotFoundException {
-      originalContent = null;
-    } on FileSystemException {
-      rethrow;
-    }
+    // null = file does not exist yet (new-file apply)
+    final originalContent = await _repo.readFile(filePath);
 
     if (originalContent != null) {
       final originalByteLen = utf8.encode(originalContent).length;
@@ -104,9 +98,7 @@ class ApplyService {
     ApplyRepository.assertWithinProject(filePath, projectPath);
     try {
       return await _repo.readFile(filePath);
-    } on PathNotFoundException {
-      return null;
-    } on FileSystemException catch (e) {
+    } on ApplyDiskException catch (e) {
       dLog('[ApplyService] readFileContent failed: $e');
       return null;
     }
@@ -114,14 +106,13 @@ class ApplyService {
 
   /// Returns current on-disk content of [absolutePath] for diff rendering.
   /// Returns `null` when the file does not exist yet (new-file apply).
+  /// Throws [ApplyDiskException] on other I/O failures.
   Future<String?> readOriginalForDiff(String absolutePath, String projectPath) async {
     ApplyRepository.assertWithinProject(absolutePath, projectPath);
     try {
       return await _repo.readFile(absolutePath);
-    } on PathNotFoundException {
-      return null;
-    } on FileSystemException catch (e) {
-      dLog('[ApplyService] readOriginalForDiff failed: ${e.message}');
+    } on ApplyDiskException catch (e) {
+      dLog('[ApplyService] readOriginalForDiff failed: $e');
       rethrow;
     }
   }
@@ -131,10 +122,9 @@ class ApplyService {
   Future<bool> isExternallyModified(String filePath, String storedChecksum) async {
     try {
       final current = await _repo.readFile(filePath);
+      if (current == null) return true;
       return ApplyRepository.sha256OfString(current) != storedChecksum;
-    } on PathNotFoundException {
-      return true;
-    } on FileSystemException catch (e) {
+    } on ApplyDiskException catch (e) {
       dLog('[ApplyService] isExternallyModified read failed: ${e.runtimeType}');
       return true;
     }

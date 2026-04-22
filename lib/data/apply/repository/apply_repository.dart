@@ -10,7 +10,9 @@ import '../apply_exceptions.dart';
 /// Raw I/O facade for file apply operations.
 /// Business logic (policy, validation, UUID) lives in ApplyService.
 abstract interface class ApplyRepository {
-  Future<String> readFile(String path);
+  /// Returns the file content, or `null` if the file does not exist.
+  /// Throws [ApplyDiskException] on other I/O failures.
+  Future<String?> readFile(String path);
   Future<void> writeFile(String path, String content);
   Future<void> deleteFile(String path);
   Future<void> gitCheckout(String filePath, String workingDirectory);
@@ -35,6 +37,12 @@ abstract interface class ApplyRepository {
     }
     final rootReal = rootDir.resolveSymbolicLinksSync();
 
+    // Resolve symlinks on the nearest existing ancestor, not on lexFile itself
+    // (lexFile may not exist yet for new-file writes). Known gap: a symlink
+    // FILE inside the project pointing outside will pass this check because its
+    // parent directory resolves within the root. This is intentional — the OS
+    // will follow the symlink at open time, but detecting that without the file
+    // existing would require a pre-create probe that introduces a TOCTOU race.
     var probe = Directory(p.dirname(lexFile));
     while (!probe.existsSync()) {
       final parent = probe.parent;

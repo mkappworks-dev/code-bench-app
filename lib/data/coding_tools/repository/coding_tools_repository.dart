@@ -1,4 +1,6 @@
-import 'dart:io';
+import '../models/directory_entry.dart';
+
+export '../coding_tools_exceptions.dart';
 
 /// Domain API for coding-tool filesystem reads/listings. Writes go through
 /// [ApplyService.applyChange] instead (see `write_file` / `str_replace`
@@ -8,5 +10,5 @@ abstract interface class CodingToolsRepository {
   Future<int> fileSizeBytes(String path);
   Future<bool> fileExists(String path);
   Future<bool> directoryExists(String path);
-  Future<List<FileSystemEntity>> listDirectory(String path, {required bool recursive});
+  Future<List<DirectoryEntry>> listDirectory(String path, {required bool recursive});
 }

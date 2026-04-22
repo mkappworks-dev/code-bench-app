@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../datasource/coding_tools_datasource_io.dart';
+import '../models/directory_entry.dart';
 import 'coding_tools_repository.dart';
 
 part 'coding_tools_repository_impl.g.dart';
@@ -20,7 +20,11 @@ class CodingToolsRepositoryImpl implements CodingToolsRepository {
   @override
   Future<String> readTextFile(String path) async {
     final bytes = await _ds.readFileBytes(path);
-    return utf8.decode(bytes);
+    try {
+      return utf8.decode(bytes, allowMalformed: false);
+    } on FormatException {
+      throw CodingToolNotTextEncodedException(path);
+    }
   }
 
   @override
@@ -33,6 +37,6 @@ class CodingToolsRepositoryImpl implements CodingToolsRepository {
   Future<bool> directoryExists(String path) => _ds.directoryExists(path);
 
   @override
-  Future<List<FileSystemEntity>> listDirectory(String path, {required bool recursive}) =>
+  Future<List<DirectoryEntry>> listDirectory(String path, {required bool recursive}) =>
       _ds.listDirectoryEntries(path, recursive: recursive);
 }

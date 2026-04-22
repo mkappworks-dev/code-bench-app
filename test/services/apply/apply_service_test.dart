@@ -12,27 +12,21 @@ class FakeApplyRepository implements ApplyRepository {
   String? _writtenContent;
   bool _deleted = false;
   bool _gitCheckedOut = false;
-  bool _shouldThrowNonPathError = false;
-  bool _shouldThrowFsOnRead = false;
+  bool _shouldThrowDiskError = false;
 
   void setReadContent(String content) => _readContent = content;
-  void setReadThrowsNonPathError() => _shouldThrowNonPathError = true;
 
-  /// Makes [readFile] throw [FileSystemException] (simulates disk error).
-  void setReadThrowsFileSystemException() => _shouldThrowFsOnRead = true;
+  /// Makes [readFile] throw [ApplyDiskException] (simulates a disk I/O error).
+  void setReadThrowsApplyDiskException() => _shouldThrowDiskError = true;
 
   String? get writtenContent => _writtenContent;
   bool get deleted => _deleted;
   bool get gitCheckedOut => _gitCheckedOut;
 
   @override
-  Future<String> readFile(String path) async {
-    if (_shouldThrowFsOnRead) throw FileSystemException('Disk read error', path);
-    if (_shouldThrowNonPathError) throw FileSystemException('Disk read error', path);
-    if (_readContent == null) {
-      throw PathNotFoundException(path, const OSError('Not found', 2));
-    }
-    return _readContent!;
+  Future<String?> readFile(String path) async {
+    if (_shouldThrowDiskError) throw ApplyDiskException('Disk read error');
+    return _readContent; // null = file not found
   }
 
   @override
@@ -127,8 +121,8 @@ void main() {
       );
     });
 
-    test('sets originalContent=null for new file (PathNotFoundException)', () async {
-      final repo = FakeApplyRepository(); // no content set → throws PathNotFoundException
+    test('sets originalContent=null for new file', () async {
+      final repo = FakeApplyRepository(); // no content set → readFile returns null
       final service = makeService(repo: repo);
 
       const tmpProject = '/tmp';
@@ -145,9 +139,9 @@ void main() {
       expect(change.originalContent, isNull);
     });
 
-    test('throws FileSystemException for non-path-not-found disk error', () async {
+    test('throws ApplyDiskException for disk I/O error', () async {
       final repo = FakeApplyRepository();
-      repo.setReadThrowsNonPathError();
+      repo.setReadThrowsApplyDiskException();
       final service = makeService(repo: repo);
 
       const tmpProject = '/tmp';
@@ -161,7 +155,7 @@ void main() {
           sessionId: 's',
           messageId: 'm',
         ),
-        throwsA(isA<FileSystemException>()),
+        throwsA(isA<ApplyDiskException>()),
       );
     });
   });
@@ -279,7 +273,7 @@ void main() {
     });
 
     test('returns true when file missing', () async {
-      final repo = FakeApplyRepository(); // no content → PathNotFoundException
+      final repo = FakeApplyRepository(); // no content → readFile returns null
       final service = makeService(repo: repo);
 
       final result = await service.isExternallyModified('/tmp/missing.dart', 'any-checksum');
@@ -343,7 +337,7 @@ void main() {
     });
 
     test('returns null when file not found', () async {
-      final repo = FakeApplyRepository(); // throws PathNotFoundException
+      final repo = FakeApplyRepository(); // readFile returns null
       final service = makeService(repo: repo);
 
       final result = await service.readFileContent('/tmp/missing.dart', '/tmp');
@@ -361,22 +355,22 @@ void main() {
       expect(result, 'original');
     });
 
-    test('returns null for new file (PathNotFoundException)', () async {
-      final repo = FakeApplyRepository();
+    test('returns null for new file', () async {
+      final repo = FakeApplyRepository(); // readFile returns null
       final service = makeService(repo: repo);
 
       final result = await service.readOriginalForDiff('/tmp/new_file.dart', '/tmp');
       expect(result, isNull);
     });
 
-    test('rethrows FileSystemException (unlike readFileContent which swallows it)', () async {
+    test('rethrows ApplyDiskException (unlike readFileContent which swallows it)', () async {
       final repo = FakeApplyRepository();
-      repo.setReadThrowsFileSystemException();
+      repo.setReadThrowsApplyDiskException();
       final service = makeService(repo: repo);
 
       await expectLater(
         () => service.readOriginalForDiff('/tmp/file.dart', '/tmp'),
-        throwsA(isA<FileSystemException>()),
+        throwsA(isA<ApplyDiskException>()),
       );
     });
   });

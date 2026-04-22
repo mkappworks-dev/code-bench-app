@@ -1,7 +1,3 @@
-// lib/services/coding_tools/tools/read_file_tool.dart
-
-import 'dart:io';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
@@ -54,13 +50,13 @@ class ReadFileTool extends Tool {
         );
       }
       return CodingToolResult.success(await repo.readTextFile(abs));
-    } on PathNotFoundException {
+    } on CodingToolsNotFoundException {
       return CodingToolResult.error('File "$displayRaw" does not exist.');
-    } on FormatException {
+    } on CodingToolNotTextEncodedException {
       return CodingToolResult.error('File "$displayRaw" is not text-encoded.');
-    } on FileSystemException catch (e) {
-      dLog('[ReadFileTool] FileSystemException: ${e.osError?.message ?? e.message}');
-      return CodingToolResult.error('Cannot read "$displayRaw": ${e.osError?.message ?? 'I/O error'}.');
+    } on CodingToolsDiskException catch (e) {
+      dLog('[ReadFileTool] disk error: ${e.message}');
+      return CodingToolResult.error('Cannot read "$displayRaw": ${e.message}.');
     }
   }
 }

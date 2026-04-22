@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -32,7 +30,7 @@ Future<DiffResult?> codeDiff(
     return DiffResult(originalContent: original, diffs: diffs);
   } on PathEscapeException {
     return null;
-  } on IOException {
+  } on ApplyDiskException {
     return null;
   } catch (e, st) {
     dLog('[codeDiff] unexpected error for $absolutePath: $e\n$st');

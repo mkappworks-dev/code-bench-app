@@ -1,7 +1,3 @@
-// lib/services/coding_tools/tools/str_replace_tool.dart
-
-import 'dart:io';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
@@ -81,17 +77,20 @@ class StrReplaceTool extends Tool {
         messageId: ctx.messageId,
       );
       return CodingToolResult.success('Replaced 1 match in $displayRaw.');
-    } on PathNotFoundException {
+    } on CodingToolsNotFoundException {
       return CodingToolResult.error('File "$displayRaw" does not exist.');
-    } on FormatException {
+    } on CodingToolNotTextEncodedException {
       return CodingToolResult.error('File "$displayRaw" is not text-encoded.');
     } on ProjectMissingException {
       return CodingToolResult.error('Project folder is missing.');
     } on ApplyTooLargeException catch (e) {
       return CodingToolResult.error('File too large (${e.bytes} bytes).');
-    } on FileSystemException catch (e) {
-      dLog('[StrReplaceTool] FileSystemException: ${e.osError?.message ?? e.message}');
-      return CodingToolResult.error('Cannot edit "$displayRaw": ${e.osError?.message ?? 'I/O error'}.');
+    } on CodingToolsDiskException catch (e) {
+      dLog('[StrReplaceTool] disk error reading: ${e.message}');
+      return CodingToolResult.error('Cannot edit "$displayRaw": ${e.message}.');
+    } on ApplyDiskException catch (e) {
+      dLog('[StrReplaceTool] disk error writing: ${e.message}');
+      return CodingToolResult.error('Cannot edit "$displayRaw": ${e.message}.');
     }
   }
 }

@@ -1,7 +1,4 @@
-// lib/services/coding_tools/tools/write_file_tool.dart
-
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -63,9 +60,9 @@ class WriteFileTool extends Tool {
       return CodingToolResult.error('Project folder is missing.');
     } on ApplyTooLargeException catch (e) {
       return CodingToolResult.error('File too large (${e.bytes} bytes).');
-    } on FileSystemException catch (e) {
-      dLog('[WriteFileTool] FileSystemException: ${e.osError?.message ?? e.message}');
-      return CodingToolResult.error('Cannot write "$displayRaw": ${e.osError?.message ?? 'I/O error'}.');
+    } on ApplyDiskException catch (e) {
+      dLog('[WriteFileTool] disk error: ${e.message}');
+      return CodingToolResult.error('Cannot write "$displayRaw": ${e.message}.');
     }
   }
 }

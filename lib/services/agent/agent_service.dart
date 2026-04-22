@@ -42,7 +42,7 @@ const int _kMaxIterations = 10;
 @Riverpod(keepAlive: true)
 Future<AgentService> agentService(Ref ref) async {
   final ai = await ref.watch(aiRepositoryProvider.future);
-  final registry = ref.read(toolRegistryProvider);
+  final registry = ref.watch(toolRegistryProvider);
   return AgentService(
     ai: ai,
     registry: registry,

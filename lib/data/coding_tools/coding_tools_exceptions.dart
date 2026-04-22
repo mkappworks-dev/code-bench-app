@@ -15,6 +15,23 @@ class CodingToolsDuplicateEntryException implements Exception {
   String toString() => 'CodingToolsDuplicateEntryException()';
 }
 
+/// Raised when a file or directory path does not exist.
+class CodingToolsNotFoundException implements Exception {
+  CodingToolsNotFoundException(this.path);
+  final String path;
+  @override
+  String toString() => 'Not found: $path';
+}
+
+/// Raised when a filesystem I/O error occurs (permission denied, disk full,
+/// etc.). Distinct from [CodingToolsNotFoundException].
+class CodingToolsDiskException implements Exception {
+  CodingToolsDiskException(this.message);
+  final String message;
+  @override
+  String toString() => 'Disk I/O error: $message';
+}
+
 /// Raised when `read_file` is asked for a file larger than [maxBytes].
 class CodingToolFileTooLargeException implements Exception {
   const CodingToolFileTooLargeException(this.actualBytes, this.maxBytes);

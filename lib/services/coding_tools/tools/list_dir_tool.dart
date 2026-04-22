@@ -1,7 +1,3 @@
-// lib/services/coding_tools/tools/list_dir_tool.dart
-
-import 'dart:io';
-
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -14,7 +10,7 @@ import '../../../data/coding_tools/models/tool_capability.dart';
 import '../../../data/coding_tools/models/tool_context.dart';
 import '../../../data/coding_tools/repository/coding_tools_repository.dart';
 import '../../../data/coding_tools/repository/coding_tools_repository_impl.dart';
-import '../../../services/apply/apply_service.dart';
+import '../../../data/apply/apply_exceptions.dart';
 
 part 'list_dir_tool.g.dart';
 
@@ -61,8 +57,12 @@ class ListDirTool extends Tool {
         // Non-root: run full safePath check (boundary + denylist).
         final pr = ctx.safePath('path', verb: 'List', noun: 'directory');
         if (pr is PathErr) return pr.result;
-      } else if (!await repo.directoryExists(normalRoot)) {
-        throw ProjectMissingException(ctx.projectPath);
+      } else {
+        // Root path is trusted (set by the user at project-add time); only
+        // verify it still exists rather than running the full safePath ritual.
+        if (!await repo.directoryExists(normalRoot)) {
+          throw ProjectMissingException(ctx.projectPath);
+        }
       }
       if (!await repo.directoryExists(abs)) {
         return CodingToolResult.error('"$displayRaw" is not a directory or does not exist.');
@@ -76,14 +76,7 @@ class ListDirTool extends Tool {
         final depth = rel.split(p.separator).length;
         if (recursive && depth > _kMaxListDepth) continue;
         if (_isDeniedRel(p.relative(entry.path, from: ctx.projectPath), ctx.denylist)) continue;
-        final String typeStr;
-        try {
-          typeStr = entry.statSync().type.toString().split('.').last;
-        } on FileSystemException catch (e) {
-          dLog('[ListDirTool] stat failed for "${entry.path}": ${e.osError?.message ?? e.message}');
-          continue;
-        }
-        buffer.writeln('- $rel ($typeStr)');
+        buffer.writeln('- $rel (${entry.entityType})');
         count++;
         if (count >= _kMaxListEntries) {
           buffer.writeln('(truncated, $_kMaxListEntries+ entries)');
@@ -93,9 +86,9 @@ class ListDirTool extends Tool {
       return CodingToolResult.success(buffer.toString().trimRight());
     } on ProjectMissingException {
       return CodingToolResult.error('Project folder is missing.');
-    } on FileSystemException catch (e) {
-      dLog('[ListDirTool] FileSystemException: ${e.osError?.message ?? e.message}');
-      return CodingToolResult.error('Cannot list "$displayRaw": ${e.osError?.message ?? 'I/O error'}.');
+    } catch (e) {
+      dLog('[ListDirTool] listDirectory failed: $e');
+      return CodingToolResult.error('Cannot list "$displayRaw": I/O error.');
     }
   }
 

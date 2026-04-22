@@ -27,8 +27,9 @@ void main() {
       expect(content, 'hello world');
     });
 
-    test('throws PathNotFoundException for missing file', () async {
-      await expectLater(() => repo.readFile('${tmpDir.path}/nonexistent.dart'), throwsA(isA<PathNotFoundException>()));
+    test('returns null for missing file', () async {
+      final result = await repo.readFile('${tmpDir.path}/nonexistent.dart');
+      expect(result, isNull);
     });
   });
 
