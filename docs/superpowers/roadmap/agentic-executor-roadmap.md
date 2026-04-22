@@ -9,18 +9,18 @@ This document is the source of truth for the agentic executor build-out. Read th
 
 ## Status Overview
 
-| Phase | Description                         | Status                             |
-| ----- | ----------------------------------- | ---------------------------------- |
-| 1     | Tool Registry Refactor              | ✅ Done — PR #27, commit `1188b55` |
-| 2     | Grep + Glob + Parallel execution    | ✅ Done — PR #28, commit `f7acbc8` |
-| 3     | Tool-output truncation              | ✅ Done — commit `5b257c8`         |
+| Phase | Description                         | Status                                 |
+| ----- | ----------------------------------- | -------------------------------------- |
+| 1     | Tool Registry Refactor              | ✅ Done — PR #27, commit `1188b55`     |
+| 2     | Grep + Glob + Parallel execution    | ✅ Done — PR #28, commit `f7acbc8`     |
+| 3     | Tool-output truncation              | ✅ Done — commit `5b257c8`             |
 | 4     | Bash tool (permission-gated)        | ✅ Done — commits `a51871d`, `d435681` |
-| 5     | MCP client (stdio + HTTP/SSE)       | ⬜ Not started                     |
-| 6     | WebFetch                            | ⬜ Not started                     |
-| 7     | CLI Provider Detection & Delegation | ⬜ Not started                     |
-| —     | Anthropic provider adapter          | 🚫 Deferred / YAGNI                |
-| —     | Subagent delegation                 | 🚫 Deferred / YAGNI                |
-| —     | WebSearch                           | 🚫 Deferred                        |
+| 5     | MCP client (stdio + HTTP/SSE)       | 🔄 In progress — plan written          |
+| 6     | WebFetch                            | ⬜ Not started                         |
+| 7     | CLI Provider Detection & Delegation | ⬜ Not started                         |
+| —     | Anthropic provider adapter          | 🚫 Deferred / YAGNI                    |
+| —     | Subagent delegation                 | 🚫 Deferred / YAGNI                    |
+| —     | WebSearch                           | 🚫 Deferred                            |
 
 ---
 
@@ -108,22 +108,33 @@ Key decisions locked in:
 
 ## Phase 5 — MCP Client (stdio + HTTP/SSE)
 
-**Status:** Not started. No spec or plan yet.
+**Status:** In progress.
+**Spec:** `docs/superpowers/specs/2026-04-22-mcp-client-design.md`
+**Plan:** `docs/superpowers/plans/2026-04-22-mcp-client.md`
 
 ### Settled decisions
 
-**Protocol scope:** Local stdio servers (JSON-RPC over stdin/stdout) + HTTP/SSE servers. This matches the two transport modes Claude Code supports and covers most published MCP servers.
+**Protocol scope:** Local stdio servers (JSON-RPC over stdin/stdout) + HTTP/SSE servers. Matches Claude Code's two transport modes; covers most published MCP servers.
 
-**Out of scope for this phase:** Auth flows, resource subscriptions, sampling. These are the full-spec extras that add significant surface area for marginal gain.
+**Out of scope:** Auth flows, resource subscriptions, sampling, WebSearch.
 
-**Integration point:** `ToolRegistry.register()` — the seam was intentionally added in Phase 1 for this. MCP tools register at runtime exactly like built-in tools from the model's perspective.
+**Integration point:** `ToolRegistry.register()` — added in Phase 1 for this exact purpose. MCP tools register at runtime and are indistinguishable from built-ins from the model's perspective.
 
-**Timing:** After Phase 4 (Bash). The registry and adapter abstractions need to be proven stable before adding the biggest protocol surface.
+**Lifecycle:** Session-scoped on-demand (Approach A). `McpService.startSession()` runs at the top of each `runAgenticTurn`; teardown runs in `finally`. No app-startup startup; no cross-session caching complexity.
+
+**Configuration UX:** New "MCP Servers" tab in Settings. Form ↔ JSON dual editor in an add/edit dialog. Env vars stored in SQLite (not secure storage) for v1.
+
+**Permission gating:** Always prompt (`ToolCapability.shell`) — MCP is third-party code.
+
+**Tool naming:** `server-name/tool-name` (slash separator) in the registry. UI converts to `server › tool_name` for display.
+
+**Error handling:** Server startup failures are non-fatal — `McpService` logs via `sLog`/`dLog`, marks the server `error` in `McpServerStatusNotifier`, and the session continues without that server's tools.
+
+**Timeouts:** 30 s initialization, 120 s per tool call.
 
 ### Open questions
 
-- Configuration UX: how does the user configure MCP server connections? (stdio command, HTTP URL, env vars) — needs brainstorming session.
-- Lifecycle: who starts/stops stdio server processes? (app startup vs on-demand)
+None — all design questions resolved in the 2026-04-22 design session.
 
 ---
 
