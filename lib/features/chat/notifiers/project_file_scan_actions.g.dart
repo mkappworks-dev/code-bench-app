@@ -47,7 +47,7 @@ final class ProjectFileScanActionsProvider extends $AsyncNotifierProvider<Projec
   ProjectFileScanActions create() => ProjectFileScanActions();
 }
 
-String _$projectFileScanActionsHash() => r'1cdec77e27ce3eb96369accc9fdf9b8cf7dee1e0';
+String _$projectFileScanActionsHash() => r'9a35b04182fb77270f1a6904107be89721aadccf';
 
 /// Command notifier for the file picker's project scan.
 ///

@@ -43,4 +43,4 @@ final class ToolRegistryProvider extends $FunctionalProvider<ToolRegistry, ToolR
   }
 }
 
-String _$toolRegistryHash() => r'e24dec77d85282a13031ad1f586b39fe2b75f181';
+String _$toolRegistryHash() => r'fe7f3498d1d4a9c6ea6d4186f397a8f597677da5';
