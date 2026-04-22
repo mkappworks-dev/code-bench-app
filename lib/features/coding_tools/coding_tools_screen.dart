@@ -11,6 +11,7 @@ import '../settings/widgets/section_label.dart';
 import 'notifiers/coding_tools_denylist_actions.dart';
 import 'notifiers/coding_tools_denylist_notifier.dart';
 import 'widgets/denylist_category_group.dart';
+import 'widgets/ripgrep_availability_banner.dart';
 
 class CodingToolsScreen extends ConsumerStatefulWidget {
   const CodingToolsScreen({super.key});
@@ -129,6 +130,7 @@ class _CodingToolsScreenState extends ConsumerState<CodingToolsScreen> {
                 style: TextStyle(color: c.textSecondary, fontSize: 12),
               ),
               const SizedBox(height: 16),
+              const RipgrepAvailabilityBanner(),
               for (final cat in _categories) ...[
                 DenylistCategoryGroup(
                   title: cat.title,

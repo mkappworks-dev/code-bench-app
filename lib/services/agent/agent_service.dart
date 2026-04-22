@@ -9,6 +9,7 @@ import '../../data/ai/models/stream_event.dart';
 import '../../data/ai/repository/ai_repository.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
 import '../../data/coding_tools/models/coding_tool_result.dart';
+import '../../data/coding_tools/models/tool_capability.dart';
 import '../../data/session/models/permission_request.dart';
 import '../../data/session/models/session_settings.dart';
 import '../../data/session/models/tool_event.dart';
@@ -198,9 +199,30 @@ class AgentService {
         return;
       }
 
-      for (final call in roundCalls) {
+      // Phase 1: run read-only non-prompted calls in parallel (max 4 at a time).
+      final parallelizable = roundCalls.where((c) => _isParallelizable(c, permission)).toList();
+      final serial = roundCalls.where((c) => !parallelizable.contains(c)).toList();
+
+      for (var i = 0; i < parallelizable.length; i += 4) {
         if (_cancelFlag()) break;
-        if (call.decodeFailed) continue; // event already in error state
+        final chunk = parallelizable.skip(i).take(4).toList();
+        await Future.wait(
+          chunk.map(
+            (c) => _executeCall(
+              c,
+              projectPath: projectPath,
+              sessionId: sessionId,
+              assistantId: assistantId,
+              events: events,
+            ),
+          ),
+        );
+        yield snapshot(streaming: true);
+      }
+
+      for (final call in serial) {
+        if (_cancelFlag()) break;
+        if (call.decodeFailed) continue;
 
         final tool = _registry.byName(call.name);
         if (tool != null && _registry.requiresPrompt(tool, permission)) {
@@ -208,7 +230,7 @@ class AgentService {
           final req = PermissionRequest(toolEventId: call.id, toolName: call.name, summary: summary, input: call.args);
           yield snapshot(streaming: true).copyWith(pendingPermissionRequest: req);
           final approved = await _requestPermission(req);
-          yield snapshot(streaming: true); // clear pendingPermissionRequest
+          yield snapshot(streaming: true);
           if (!approved) {
             final idx = events.indexWhere((e) => e.id == call.id);
             if (idx >= 0) {
@@ -219,14 +241,13 @@ class AgentService {
           }
         }
 
-        final result = await _registry.execute(
-          name: call.name,
-          args: call.args,
+        await _executeCall(
+          call,
           projectPath: projectPath,
           sessionId: sessionId,
-          messageId: assistantId,
+          assistantId: assistantId,
+          events: events,
         );
-        _recordResult(events, call.id, result);
         yield snapshot(streaming: true);
       }
     }
@@ -344,6 +365,32 @@ class AgentService {
 
   static bool _isTerminal(ToolStatus s) =>
       s == ToolStatus.success || s == ToolStatus.error || s == ToolStatus.cancelled;
+
+  bool _isParallelizable(_PendingCall call, ChatPermission permission) {
+    if (call.decodeFailed) return false;
+    final tool = _registry.byName(call.name);
+    if (tool == null) return false;
+    if (tool.capability != ToolCapability.readOnly) return false;
+    if (_registry.requiresPrompt(tool, permission)) return false;
+    return true;
+  }
+
+  Future<void> _executeCall(
+    _PendingCall call, {
+    required String projectPath,
+    required String sessionId,
+    required String assistantId,
+    required List<ToolEvent> events,
+  }) async {
+    final result = await _registry.execute(
+      name: call.name,
+      args: call.args,
+      projectPath: projectPath,
+      sessionId: sessionId,
+      messageId: assistantId,
+    );
+    _recordResult(events, call.id, result);
+  }
 }
 
 class _PendingCall {

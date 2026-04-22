@@ -59,7 +59,7 @@ final class CodeApplyActionsProvider extends $AsyncNotifierProvider<CodeApplyAct
   CodeApplyActions create() => CodeApplyActions();
 }
 
-String _$codeApplyActionsHash() => r'd5328573933844b04846d73b124f246035254e98';
+String _$codeApplyActionsHash() => r'3519b422ac0e4f5eb3e6a5a0f6174eb8584f32ad';
 
 /// Command notifier for code-apply and revert operations.
 ///
