@@ -345,6 +345,60 @@ void main() {
     });
   });
 
+  group('applyChange — checksum guard', () {
+    test('throws ApplyContentChangedException when expectedChecksum does not match on-disk content', () async {
+      final repo = FakeApplyRepository();
+      repo.setReadContent('original');
+      final service = makeService(repo: repo);
+
+      await expectLater(
+        () => service.applyChange(
+          filePath: '/tmp/guarded.txt',
+          projectPath: '/tmp',
+          newContent: 'updated',
+          sessionId: 's',
+          messageId: 'm',
+          expectedChecksum: ApplyRepository.sha256OfString('different content'),
+        ),
+        throwsA(isA<ApplyContentChangedException>()),
+      );
+      // file not written
+      expect(repo.writtenContent, isNull);
+    });
+
+    test('succeeds when expectedChecksum matches on-disk content', () async {
+      final repo = FakeApplyRepository();
+      repo.setReadContent('original');
+      final service = makeService(repo: repo);
+
+      final change = await service.applyChange(
+        filePath: '/tmp/guarded2.txt',
+        projectPath: '/tmp',
+        newContent: 'updated',
+        sessionId: 's',
+        messageId: 'm',
+        expectedChecksum: ApplyRepository.sha256OfString('original'),
+      );
+      expect(repo.writtenContent, 'updated');
+      expect(change.originalContent, 'original');
+    });
+
+    test('succeeds when expectedChecksum is null (no guard)', () async {
+      final repo = FakeApplyRepository();
+      repo.setReadContent('original');
+      final service = makeService(repo: repo);
+
+      await service.applyChange(
+        filePath: '/tmp/guarded3.txt',
+        projectPath: '/tmp',
+        newContent: 'updated',
+        sessionId: 's',
+        messageId: 'm',
+      );
+      expect(repo.writtenContent, 'updated');
+    });
+  });
+
   group('ApplyService.readOriginalForDiff', () {
     test('returns content when file exists', () async {
       final repo = FakeApplyRepository();

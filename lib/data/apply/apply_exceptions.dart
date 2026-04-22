@@ -1,6 +1,8 @@
 const int kMaxApplyContentBytes = 1024 * 1024; // 1 MB
 
-sealed class ApplyException implements Exception {}
+sealed class ApplyException implements Exception {
+  const ApplyException();
+}
 
 class ProjectMissingException extends ApplyException {
   ProjectMissingException(this.projectPath);
@@ -43,4 +45,13 @@ class ApplyDiskException extends ApplyException {
   final String message;
   @override
   String toString() => 'Disk I/O error: $message';
+}
+
+/// Thrown when [ApplyService.applyChange] is called with [expectedChecksum]
+/// and the on-disk content no longer matches that checksum. Indicates the
+/// file was modified externally between the caller's read and this write.
+class ApplyContentChangedException extends ApplyException {
+  const ApplyContentChangedException();
+  @override
+  String toString() => 'File was modified externally between read and write';
 }

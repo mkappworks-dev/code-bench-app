@@ -26,6 +26,7 @@ class _FakeApplyService extends Fake implements ApplyService {
     required String newContent,
     required String sessionId,
     required String messageId,
+    String? expectedChecksum,
   }) async {
     if (_applyError != null) throw _applyError!;
     return AppliedChange(

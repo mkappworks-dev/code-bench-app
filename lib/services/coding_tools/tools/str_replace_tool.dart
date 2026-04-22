@@ -57,6 +57,7 @@ class StrReplaceTool extends Tool {
 
     try {
       final original = await repo.readTextFile(abs);
+      final checksum = applyService.checksumOf(original);
       final matchCount = _countOccurrences(original, oldStr);
       if (matchCount == 0) {
         return CodingToolResult.error(
@@ -75,6 +76,7 @@ class StrReplaceTool extends Tool {
         newContent: updated,
         sessionId: ctx.sessionId,
         messageId: ctx.messageId,
+        expectedChecksum: checksum,
       );
       return CodingToolResult.success('Replaced 1 match in $displayRaw.');
     } on CodingToolsNotFoundException {
@@ -83,6 +85,8 @@ class StrReplaceTool extends Tool {
       return CodingToolResult.error('File "$displayRaw" is not text-encoded.');
     } on ProjectMissingException {
       return CodingToolResult.error('Project folder is missing.');
+    } on ApplyContentChangedException {
+      return CodingToolResult.error('File "$displayRaw" was modified externally. Please retry str_replace.');
     } on ApplyTooLargeException catch (e) {
       return CodingToolResult.error('File too large (${e.bytes} bytes).');
     } on CodingToolsDiskException catch (e) {

@@ -33,14 +33,20 @@ class ApplyService {
 
   /// Applies [newContent] to [filePath], snapshots the original for revert,
   /// and returns the recorded [AppliedChange]. Throws [PathEscapeException],
-  /// [ProjectMissingException], [ApplyTooLargeException], or [ApplyDiskException]
-  /// on guard or I/O failures.
+  /// [ProjectMissingException], [ApplyTooLargeException], [ApplyDiskException],
+  /// or [ApplyContentChangedException] on guard or I/O failures.
+  ///
+  /// When [expectedChecksum] is non-null and the file exists, the on-disk
+  /// content is verified against the checksum before writing. If they differ
+  /// (indicating an external modification since the caller last read the file),
+  /// [ApplyContentChangedException] is thrown and the file is left unchanged.
   Future<AppliedChange> applyChange({
     required String filePath,
     required String projectPath,
     required String newContent,
     required String sessionId,
     required String messageId,
+    String? expectedChecksum,
   }) async {
     ApplyRepository.assertWithinProject(filePath, projectPath);
 
@@ -56,6 +62,9 @@ class ApplyService {
       final originalByteLen = utf8.encode(originalContent).length;
       if (originalByteLen > kMaxApplyContentBytes) {
         throw ApplyTooLargeException(originalByteLen);
+      }
+      if (expectedChecksum != null && ApplyRepository.sha256OfString(originalContent) != expectedChecksum) {
+        throw const ApplyContentChangedException();
       }
     }
 
@@ -129,6 +138,10 @@ class ApplyService {
       return true;
     }
   }
+
+  /// Returns the SHA-256 hex digest of [content].
+  /// Exposed so tools can compute a pre-read checksum to pass to [applyChange].
+  String checksumOf(String content) => ApplyRepository.sha256OfString(content);
 
   static (int additions, int deletions) _computeLineCounts(String? original, String newContent) {
     final a = original ?? '';
