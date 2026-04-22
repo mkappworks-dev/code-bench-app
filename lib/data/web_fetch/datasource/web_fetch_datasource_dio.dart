@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as html_parser;
 
+import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import 'web_fetch_datasource.dart';
@@ -42,7 +43,13 @@ class WebFetchDatasourceDio implements WebFetchDatasource {
       throw ArgumentError('Fetching private or internal network addresses is not allowed.');
     }
 
-    final response = await _dio.get<String>(url, options: Options(responseType: ResponseType.plain));
+    final Response<String> response;
+    try {
+      response = await _dio.get<String>(url, options: Options(responseType: ResponseType.plain));
+    } on DioException catch (e) {
+      dLog('[WebFetchDatasourceDio] fetch failed: ${e.type} ${e.response?.statusCode} $url');
+      throw NetworkException('Failed to fetch URL', statusCode: e.response?.statusCode, originalError: e);
+    }
 
     final body = response.data ?? '';
     final contentType = (response.headers.value('content-type') ?? '').toLowerCase();
@@ -79,6 +86,7 @@ class WebFetchDatasourceDio implements WebFetchDatasource {
     if (a == 0) return true;
     if (a == 10) return true;
     if (a == 192 && b == 168) return true;
+    if (a == 169 && b == 254) return true;
     if (a == 172 && b >= 16 && b <= 31) return true;
 
     return false;

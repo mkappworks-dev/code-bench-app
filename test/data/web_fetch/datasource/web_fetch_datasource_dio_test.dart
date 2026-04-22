@@ -50,6 +50,10 @@ void main() {
     test('blocks 0.0.0.0', () {
       expect(WebFetchDatasourceDio.isPrivateHost('0.0.0.0'), isTrue);
     });
+
+    test('blocks 169.254.169.254 (IMDS)', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('169.254.169.254'), isTrue);
+    });
   });
 
   group('WebFetchDatasourceDio.htmlToText', () {
