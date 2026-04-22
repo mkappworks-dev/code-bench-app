@@ -58,8 +58,11 @@ class ListDirTool extends Tool {
         final pr = ctx.safePath('path', verb: 'List', noun: 'directory');
         if (pr is PathErr) return pr.result;
       } else {
-        // Root path is trusted (set by the user at project-add time); only
-        // verify it still exists rather than running the full safePath ritual.
+        // The root path is the project boundary itself and cannot be validated
+        // by assertWithinProject (which requires the file to be strictly *inside*
+        // the root). It is trusted because the user chose it at project-add time.
+        // All entries returned from the root are still denylist-filtered in the
+        // output loop via _isDeniedRel.
         if (!await repo.directoryExists(normalRoot)) {
           throw ProjectMissingException(ctx.projectPath);
         }
@@ -86,8 +89,8 @@ class ListDirTool extends Tool {
       return CodingToolResult.success(buffer.toString().trimRight());
     } on ProjectMissingException {
       return CodingToolResult.error('Project folder is missing.');
-    } catch (e) {
-      dLog('[ListDirTool] listDirectory failed: $e');
+    } catch (e, st) {
+      dLog('[ListDirTool] listDirectory failed: ${e.runtimeType} $e\n$st');
       return CodingToolResult.error('Cannot list "$displayRaw": I/O error.');
     }
   }
