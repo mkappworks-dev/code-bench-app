@@ -12,9 +12,9 @@ import '../coding_tools/coding_tools_screen.dart';
 import '../coding_tools/notifiers/coding_tools_denylist_actions.dart';
 import '../integrations/integrations_screen.dart';
 import '../providers/providers_screen.dart';
-import 'general_screen.dart';
-import 'mcp_servers_screen.dart';
-import 'notifiers/general_prefs_notifier.dart';
+import '../general/general_screen.dart';
+import '../mcp_servers/mcp_servers_screen.dart';
+import '../general/notifiers/general_prefs_notifier.dart';
 
 enum _SettingsNav { general, providers, integrations, codingTools, mcpServers, archive }
 

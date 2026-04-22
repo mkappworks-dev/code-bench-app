@@ -13,7 +13,7 @@ import '../../../data/session/models/chat_session.dart';
 import '../../../services/agent/agent_exceptions.dart';
 import '../../../services/session/session_service.dart';
 import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
-import '../../settings/notifiers/mcp_server_status_notifier.dart';
+import '../../mcp_servers/notifiers/mcp_server_status_notifier.dart';
 import 'agent_cancel_notifier.dart';
 import 'agent_failure.dart';
 import 'agent_permission_request_notifier.dart';
