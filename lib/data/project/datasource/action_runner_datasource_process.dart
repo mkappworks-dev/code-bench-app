@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import '../../../core/utils/debug_logger.dart';
 import '../action_runner_exceptions.dart';
 import '../models/action_run.dart';
 
@@ -42,7 +43,8 @@ class ActionRunnerDatasource {
             onDone: () {
               if (--pending == 0) ctrl.close();
             },
-            onError: (_) {
+            onError: (Object e, StackTrace st) {
+              dLog('[ActionRunnerDatasource] stdout/stderr decode error: $e\n$st');
               if (--pending == 0) ctrl.close();
             },
             cancelOnError: false,
