@@ -389,13 +389,16 @@ class _FormView extends StatelessWidget {
 
           _FieldLabel(text: 'Transport'),
           const SizedBox(height: 6),
-          _TabToggle<McpTransport>(
-            options: McpTransport.values,
-            labels: const ['stdio', 'HTTP/SSE'],
-            selected: transport,
-            onChanged: (t) {
-              s.update(() => s._draft = s._draft.copyWith(transport: t));
-            },
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _TabToggle<McpTransport>(
+              options: McpTransport.values,
+              labels: const ['stdio', 'HTTP/SSE'],
+              selected: transport,
+              onChanged: (t) {
+                s.update(() => s._draft = s._draft.copyWith(transport: t));
+              },
+            ),
           ),
           const SizedBox(height: 16),
 
