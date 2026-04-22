@@ -60,6 +60,8 @@ abstract interface class ApplyRepository {
       sLog('[assertWithinProject] symlink resolve failed: "$filePath"');
       throw PathEscapeException(filePath, projectPath);
     }
+    // resolveSymbolicLinksSync returns OS-canonical casing on macOS, so the
+    // real paths will share the same casing — no additional toLowerCase needed.
     final rootRealWithSep = rootReal + p.separator;
     if (probeReal != rootReal && !probeReal.startsWith(rootRealWithSep)) {
       sLog('[assertWithinProject] symlink escape: "$filePath" → "$probeReal" outside "$rootReal"');
