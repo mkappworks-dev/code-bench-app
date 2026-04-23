@@ -110,6 +110,25 @@ class _PermissionRequestCardState extends ConsumerState<PermissionRequestCard> {
             const SizedBox(height: 4),
             Text('Denylist rules do not restrict bash commands.', style: TextStyle(color: c.textMuted, fontSize: 10)),
           ],
+          // web_fetch: always-visible URL block
+          if (widget.request.toolName == 'web_fetch') ...[
+            const SizedBox(height: 6),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: c.codeBlockBg,
+                border: Border.all(color: c.subtleBorder),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: SelectableText(
+                widget.request.summary,
+                style: TextStyle(color: c.textPrimary, fontSize: 11, fontFamily: 'monospace'),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text('External network requests are always gated.', style: TextStyle(color: c.textMuted, fontSize: 10)),
+          ],
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,

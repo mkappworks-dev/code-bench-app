@@ -330,6 +330,11 @@ class AgentService {
       }
       return raw.length > 80 ? '${raw.substring(0, 80)}…' : raw;
     }
+    if (call.name == 'web_fetch') {
+      final raw = call.args['url'];
+      if (raw is! String) return '<invalid URL>';
+      return raw.length > 100 ? '${raw.substring(0, 100)}…' : raw;
+    }
     return call.args['path']?.toString() ?? '';
   }
 
