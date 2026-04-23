@@ -1,0 +1,8 @@
+{"type":"system","subtype":"init","session_id":"fixture-tool-use"}
+{"type":"stream_event","event":{"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_01","name":"Read","input":{}}},"session_id":"fixture-tool-use","uuid":"evt-1"}
+{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"{\"file_path\":\"/etc/hosts\""}},"session_id":"fixture-tool-use","uuid":"evt-2"}
+{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":",\"limit\":2}"}},"session_id":"fixture-tool-use","uuid":"evt-3"}
+{"type":"stream_event","event":{"type":"content_block_stop","index":0},"session_id":"fixture-tool-use","uuid":"evt-4"}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_01","content":"1\t##\n2\t# Host Database","is_error":false}]},"session_id":"fixture-tool-use","uuid":"evt-5"}
+{"type":"assistant","message":{"id":"msg_2","role":"assistant","content":[{"type":"text","text":"The first two lines are ##, # Host Database."}]},"session_id":"fixture-tool-use","uuid":"evt-6"}
+{"type":"stream_event","event":{"type":"message_stop"},"session_id":"fixture-tool-use","uuid":"evt-7"}
