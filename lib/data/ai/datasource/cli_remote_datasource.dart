@@ -1,4 +1,6 @@
+import '../../shared/chat_message.dart';
 import '../models/cli_detection.dart';
+import '../models/stream_event.dart';
 import 'ai_remote_datasource.dart';
 
 /// Shared base for CLI-backed inference datasources.
@@ -15,4 +17,16 @@ abstract class CliRemoteDatasource implements AIRemoteDatasource {
 
   /// Auth status probe. Only meaningful when [detectInstalled] returned installed.
   Future<CliAuthStatus> checkAuthStatus();
+
+  /// Richer stream used when CLI transport is active. Yields structured
+  /// [StreamEvent]s (text, tool_use, tool_result, thinking) parsed from the
+  /// CLI's native wire format. The chat layer consumes this and bypasses
+  /// Code Bench's agent loop.
+  Stream<StreamEvent> streamEvents({
+    required List<ChatMessage> history,
+    required String prompt,
+    required String workingDirectory,
+    required String sessionId,
+    required bool isFirstTurn,
+  });
 }
