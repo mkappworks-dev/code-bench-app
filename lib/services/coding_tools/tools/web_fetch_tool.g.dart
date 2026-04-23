@@ -12,8 +12,7 @@ part of 'web_fetch_tool.dart';
 @ProviderFor(webFetchTool)
 final webFetchToolProvider = WebFetchToolProvider._();
 
-final class WebFetchToolProvider
-    extends $FunctionalProvider<WebFetchTool, WebFetchTool, WebFetchTool>
+final class WebFetchToolProvider extends $FunctionalProvider<WebFetchTool, WebFetchTool, WebFetchTool>
     with $Provider<WebFetchTool> {
   WebFetchToolProvider._()
     : super(
@@ -31,8 +30,7 @@ final class WebFetchToolProvider
 
   @$internal
   @override
-  $ProviderElement<WebFetchTool> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<WebFetchTool> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   WebFetchTool create(Ref ref) {
@@ -41,10 +39,7 @@ final class WebFetchToolProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(WebFetchTool value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<WebFetchTool>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<WebFetchTool>(value));
   }
 }
 

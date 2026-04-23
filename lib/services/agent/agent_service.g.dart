@@ -8,20 +8,13 @@ part of 'agent_service.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Provides an [AgentService] wired to the cancel flag and permission-request
-/// notifier from the chat feature layer.
 
 @ProviderFor(agentService)
 final agentServiceProvider = AgentServiceProvider._();
 
-/// Provides an [AgentService] wired to the cancel flag and permission-request
-/// notifier from the chat feature layer.
-
 final class AgentServiceProvider
     extends $FunctionalProvider<AsyncValue<AgentService>, AgentService, FutureOr<AgentService>>
     with $FutureModifier<AgentService>, $FutureProvider<AgentService> {
-  /// Provides an [AgentService] wired to the cancel flag and permission-request
-  /// notifier from the chat feature layer.
   AgentServiceProvider._()
     : super(
         from: null,
@@ -46,4 +39,4 @@ final class AgentServiceProvider
   }
 }
 
-String _$agentServiceHash() => r'7f61a20f73cac4e7c77521e12253b93c8111e54a';
+String _$agentServiceHash() => r'6cc804aa1107f91465673efce8b7e0c041ec429f';

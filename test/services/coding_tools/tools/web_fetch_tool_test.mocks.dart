@@ -5,8 +5,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i3;
 
-import 'package:code_bench_app/data/web_fetch/datasource/web_fetch_datasource.dart'
-    as _i2;
+import 'package:code_bench_app/data/web_fetch/datasource/web_fetch_datasource.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i4;
 
@@ -28,8 +27,7 @@ import 'package:mockito/src/dummies.dart' as _i4;
 /// A class which mocks [WebFetchDatasource].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockWebFetchDatasource extends _i1.Mock
-    implements _i2.WebFetchDatasource {
+class MockWebFetchDatasource extends _i1.Mock implements _i2.WebFetchDatasource {
   MockWebFetchDatasource() {
     _i1.throwOnMissingStub(this);
   }
@@ -39,10 +37,7 @@ class MockWebFetchDatasource extends _i1.Mock
       (super.noSuchMethod(
             Invocation.method(#fetch, [], {#url: url}),
             returnValue: _i3.Future<String>.value(
-              _i4.dummyValue<String>(
-                this,
-                Invocation.method(#fetch, [], {#url: url}),
-              ),
+              _i4.dummyValue<String>(this, Invocation.method(#fetch, [], {#url: url})),
             ),
           )
           as _i3.Future<String>);

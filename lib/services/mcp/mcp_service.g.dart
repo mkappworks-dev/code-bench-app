@@ -8,34 +8,12 @@ part of 'mcp_service.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Provides a [McpService] wired to [McpServerStatusNotifier] from the
-/// settings feature.
-///
-/// Documented exception: this provider (the composition root / wiring layer)
-/// imports [McpServerStatusNotifier] from `lib/features/` to wire the status
-/// callback. The [McpService] class itself has no direct knowledge of
-/// `lib/features/`. Pattern mirrors [agentServiceProvider].
 
 @ProviderFor(mcpService)
 final mcpServiceProvider = McpServiceProvider._();
 
-/// Provides a [McpService] wired to [McpServerStatusNotifier] from the
-/// settings feature.
-///
-/// Documented exception: this provider (the composition root / wiring layer)
-/// imports [McpServerStatusNotifier] from `lib/features/` to wire the status
-/// callback. The [McpService] class itself has no direct knowledge of
-/// `lib/features/`. Pattern mirrors [agentServiceProvider].
-
 final class McpServiceProvider extends $FunctionalProvider<McpService, McpService, McpService>
     with $Provider<McpService> {
-  /// Provides a [McpService] wired to [McpServerStatusNotifier] from the
-  /// settings feature.
-  ///
-  /// Documented exception: this provider (the composition root / wiring layer)
-  /// imports [McpServerStatusNotifier] from `lib/features/` to wire the status
-  /// callback. The [McpService] class itself has no direct knowledge of
-  /// `lib/features/`. Pattern mirrors [agentServiceProvider].
   McpServiceProvider._()
     : super(
         from: null,
@@ -65,4 +43,4 @@ final class McpServiceProvider extends $FunctionalProvider<McpService, McpServic
   }
 }
 
-String _$mcpServiceHash() => r'c53864a04124b9cd6da339157e23601ad6beb261';
+String _$mcpServiceHash() => r'011b24136fe0a3db624ff52aa3b9cc03acc2af36';
