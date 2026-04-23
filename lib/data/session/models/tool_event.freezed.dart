@@ -24,7 +24,7 @@ mixin _$ToolEvent {
 /// [ToolStatus.error]. Must not contain secrets — emitters should log
 /// `runtimeType` via `dLog` and pass a scrubbed message here (see the
 /// "no PAT header logging" rule in `macos/Runner/README.md`).
- String? get error;
+ String? get error; ToolEventSource get source;
 /// Create a copy of ToolEvent
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -37,16 +37,16 @@ $ToolEventCopyWith<ToolEvent> get copyWith => _$ToolEventCopyWithImpl<ToolEvent>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ToolEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.toolName, toolName) || other.toolName == toolName)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.input, input)&&(identical(other.output, output) || other.output == output)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs)&&(identical(other.tokensIn, tokensIn) || other.tokensIn == tokensIn)&&(identical(other.tokensOut, tokensOut) || other.tokensOut == tokensOut)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ToolEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.toolName, toolName) || other.toolName == toolName)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.input, input)&&(identical(other.output, output) || other.output == output)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs)&&(identical(other.tokensIn, tokensIn) || other.tokensIn == tokensIn)&&(identical(other.tokensOut, tokensOut) || other.tokensOut == tokensOut)&&(identical(other.error, error) || other.error == error)&&(identical(other.source, source) || other.source == source));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,type,toolName,status,const DeepCollectionEquality().hash(input),output,filePath,durationMs,tokensIn,tokensOut,error);
+int get hashCode => Object.hash(runtimeType,id,type,toolName,status,const DeepCollectionEquality().hash(input),output,filePath,durationMs,tokensIn,tokensOut,error,source);
 
 @override
 String toString() {
-  return 'ToolEvent(id: $id, type: $type, toolName: $toolName, status: $status, input: $input, output: $output, filePath: $filePath, durationMs: $durationMs, tokensIn: $tokensIn, tokensOut: $tokensOut, error: $error)';
+  return 'ToolEvent(id: $id, type: $type, toolName: $toolName, status: $status, input: $input, output: $output, filePath: $filePath, durationMs: $durationMs, tokensIn: $tokensIn, tokensOut: $tokensOut, error: $error, source: $source)';
 }
 
 
@@ -57,7 +57,7 @@ abstract mixin class $ToolEventCopyWith<$Res>  {
   factory $ToolEventCopyWith(ToolEvent value, $Res Function(ToolEvent) _then) = _$ToolEventCopyWithImpl;
 @useResult
 $Res call({
- String id, String type, String toolName, ToolStatus status, Map<String, dynamic> input, String? output, String? filePath, int? durationMs, int? tokensIn, int? tokensOut, String? error
+ String id, String type, String toolName, ToolStatus status, Map<String, dynamic> input, String? output, String? filePath, int? durationMs, int? tokensIn, int? tokensOut, String? error, ToolEventSource source
 });
 
 
@@ -74,7 +74,7 @@ class _$ToolEventCopyWithImpl<$Res>
 
 /// Create a copy of ToolEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? toolName = null,Object? status = null,Object? input = null,Object? output = freezed,Object? filePath = freezed,Object? durationMs = freezed,Object? tokensIn = freezed,Object? tokensOut = freezed,Object? error = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? toolName = null,Object? status = null,Object? input = null,Object? output = freezed,Object? filePath = freezed,Object? durationMs = freezed,Object? tokensIn = freezed,Object? tokensOut = freezed,Object? error = freezed,Object? source = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -87,7 +87,8 @@ as String?,durationMs: freezed == durationMs ? _self.durationMs : durationMs // 
 as int?,tokensIn: freezed == tokensIn ? _self.tokensIn : tokensIn // ignore: cast_nullable_to_non_nullable
 as int?,tokensOut: freezed == tokensOut ? _self.tokensOut : tokensOut // ignore: cast_nullable_to_non_nullable
 as int?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,source: null == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as ToolEventSource,
   ));
 }
 
@@ -172,10 +173,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String type,  String toolName,  ToolStatus status,  Map<String, dynamic> input,  String? output,  String? filePath,  int? durationMs,  int? tokensIn,  int? tokensOut,  String? error)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String type,  String toolName,  ToolStatus status,  Map<String, dynamic> input,  String? output,  String? filePath,  int? durationMs,  int? tokensIn,  int? tokensOut,  String? error,  ToolEventSource source)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ToolEvent() when $default != null:
-return $default(_that.id,_that.type,_that.toolName,_that.status,_that.input,_that.output,_that.filePath,_that.durationMs,_that.tokensIn,_that.tokensOut,_that.error);case _:
+return $default(_that.id,_that.type,_that.toolName,_that.status,_that.input,_that.output,_that.filePath,_that.durationMs,_that.tokensIn,_that.tokensOut,_that.error,_that.source);case _:
   return orElse();
 
 }
@@ -193,10 +194,10 @@ return $default(_that.id,_that.type,_that.toolName,_that.status,_that.input,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String type,  String toolName,  ToolStatus status,  Map<String, dynamic> input,  String? output,  String? filePath,  int? durationMs,  int? tokensIn,  int? tokensOut,  String? error)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String type,  String toolName,  ToolStatus status,  Map<String, dynamic> input,  String? output,  String? filePath,  int? durationMs,  int? tokensIn,  int? tokensOut,  String? error,  ToolEventSource source)  $default,) {final _that = this;
 switch (_that) {
 case _ToolEvent():
-return $default(_that.id,_that.type,_that.toolName,_that.status,_that.input,_that.output,_that.filePath,_that.durationMs,_that.tokensIn,_that.tokensOut,_that.error);case _:
+return $default(_that.id,_that.type,_that.toolName,_that.status,_that.input,_that.output,_that.filePath,_that.durationMs,_that.tokensIn,_that.tokensOut,_that.error,_that.source);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -213,10 +214,10 @@ return $default(_that.id,_that.type,_that.toolName,_that.status,_that.input,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String type,  String toolName,  ToolStatus status,  Map<String, dynamic> input,  String? output,  String? filePath,  int? durationMs,  int? tokensIn,  int? tokensOut,  String? error)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String type,  String toolName,  ToolStatus status,  Map<String, dynamic> input,  String? output,  String? filePath,  int? durationMs,  int? tokensIn,  int? tokensOut,  String? error,  ToolEventSource source)?  $default,) {final _that = this;
 switch (_that) {
 case _ToolEvent() when $default != null:
-return $default(_that.id,_that.type,_that.toolName,_that.status,_that.input,_that.output,_that.filePath,_that.durationMs,_that.tokensIn,_that.tokensOut,_that.error);case _:
+return $default(_that.id,_that.type,_that.toolName,_that.status,_that.input,_that.output,_that.filePath,_that.durationMs,_that.tokensIn,_that.tokensOut,_that.error,_that.source);case _:
   return null;
 
 }
@@ -228,7 +229,7 @@ return $default(_that.id,_that.type,_that.toolName,_that.status,_that.input,_tha
 @JsonSerializable()
 
 class _ToolEvent implements ToolEvent {
-  const _ToolEvent({required this.id, required this.type, required this.toolName, this.status = ToolStatus.running, final  Map<String, dynamic> input = const {}, this.output, this.filePath, this.durationMs, this.tokensIn, this.tokensOut, this.error}): _input = input;
+  const _ToolEvent({required this.id, required this.type, required this.toolName, this.status = ToolStatus.running, final  Map<String, dynamic> input = const {}, this.output, this.filePath, this.durationMs, this.tokensIn, this.tokensOut, this.error, this.source = ToolEventSource.agentLoop}): _input = input;
   factory _ToolEvent.fromJson(Map<String, dynamic> json) => _$ToolEventFromJson(json);
 
 /// Stable identity for the emission. Prefer the provider's tool-use
@@ -257,6 +258,7 @@ class _ToolEvent implements ToolEvent {
 /// `runtimeType` via `dLog` and pass a scrubbed message here (see the
 /// "no PAT header logging" rule in `macos/Runner/README.md`).
 @override final  String? error;
+@override@JsonKey() final  ToolEventSource source;
 
 /// Create a copy of ToolEvent
 /// with the given fields replaced by the non-null parameter values.
@@ -271,16 +273,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ToolEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.toolName, toolName) || other.toolName == toolName)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._input, _input)&&(identical(other.output, output) || other.output == output)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs)&&(identical(other.tokensIn, tokensIn) || other.tokensIn == tokensIn)&&(identical(other.tokensOut, tokensOut) || other.tokensOut == tokensOut)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ToolEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.toolName, toolName) || other.toolName == toolName)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._input, _input)&&(identical(other.output, output) || other.output == output)&&(identical(other.filePath, filePath) || other.filePath == filePath)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs)&&(identical(other.tokensIn, tokensIn) || other.tokensIn == tokensIn)&&(identical(other.tokensOut, tokensOut) || other.tokensOut == tokensOut)&&(identical(other.error, error) || other.error == error)&&(identical(other.source, source) || other.source == source));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,type,toolName,status,const DeepCollectionEquality().hash(_input),output,filePath,durationMs,tokensIn,tokensOut,error);
+int get hashCode => Object.hash(runtimeType,id,type,toolName,status,const DeepCollectionEquality().hash(_input),output,filePath,durationMs,tokensIn,tokensOut,error,source);
 
 @override
 String toString() {
-  return 'ToolEvent(id: $id, type: $type, toolName: $toolName, status: $status, input: $input, output: $output, filePath: $filePath, durationMs: $durationMs, tokensIn: $tokensIn, tokensOut: $tokensOut, error: $error)';
+  return 'ToolEvent(id: $id, type: $type, toolName: $toolName, status: $status, input: $input, output: $output, filePath: $filePath, durationMs: $durationMs, tokensIn: $tokensIn, tokensOut: $tokensOut, error: $error, source: $source)';
 }
 
 
@@ -291,7 +293,7 @@ abstract mixin class _$ToolEventCopyWith<$Res> implements $ToolEventCopyWith<$Re
   factory _$ToolEventCopyWith(_ToolEvent value, $Res Function(_ToolEvent) _then) = __$ToolEventCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String type, String toolName, ToolStatus status, Map<String, dynamic> input, String? output, String? filePath, int? durationMs, int? tokensIn, int? tokensOut, String? error
+ String id, String type, String toolName, ToolStatus status, Map<String, dynamic> input, String? output, String? filePath, int? durationMs, int? tokensIn, int? tokensOut, String? error, ToolEventSource source
 });
 
 
@@ -308,7 +310,7 @@ class __$ToolEventCopyWithImpl<$Res>
 
 /// Create a copy of ToolEvent
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? type = null,Object? toolName = null,Object? status = null,Object? input = null,Object? output = freezed,Object? filePath = freezed,Object? durationMs = freezed,Object? tokensIn = freezed,Object? tokensOut = freezed,Object? error = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? type = null,Object? toolName = null,Object? status = null,Object? input = null,Object? output = freezed,Object? filePath = freezed,Object? durationMs = freezed,Object? tokensIn = freezed,Object? tokensOut = freezed,Object? error = freezed,Object? source = null,}) {
   return _then(_ToolEvent(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
@@ -321,7 +323,8 @@ as String?,durationMs: freezed == durationMs ? _self.durationMs : durationMs // 
 as int?,tokensIn: freezed == tokensIn ? _self.tokensIn : tokensIn // ignore: cast_nullable_to_non_nullable
 as int?,tokensOut: freezed == tokensOut ? _self.tokensOut : tokensOut // ignore: cast_nullable_to_non_nullable
 as int?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,source: null == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as ToolEventSource,
   ));
 }
 
