@@ -19,6 +19,7 @@ import 'tools/grep_tool.dart';
 import 'tools/list_dir_tool.dart';
 import 'tools/read_file_tool.dart';
 import 'tools/str_replace_tool.dart';
+import 'tools/web_fetch_tool.dart';
 import 'tools/write_file_tool.dart';
 
 part 'tool_registry.g.dart';
@@ -33,6 +34,7 @@ ToolRegistry toolRegistry(Ref ref) => ToolRegistry(
     ref.watch(grepToolProvider),
     ref.watch(globToolProvider),
     ref.watch(bashToolProvider),
+    ref.watch(webFetchToolProvider),
   ],
   denylistRepo: ref.watch(codingToolsDenylistRepositoryProvider),
 );
@@ -68,6 +70,7 @@ class ToolRegistry {
   /// Shell-capability tools always require a prompt — no auto-approve path.
   bool requiresPrompt(Tool t, ChatPermission p) {
     if (t.capability == ToolCapability.shell) return true;
+    if (t.capability == ToolCapability.network) return true;
     return p == ChatPermission.askBefore && t.capability != ToolCapability.readOnly;
   }
 
