@@ -52,27 +52,53 @@ This is the only architecturally viable option. The brainstorm ruled out three a
 
 ### 4.1 Providers screen (Anthropic row)
 
+Each provider card uses a **symmetric three-part layout** so the CLI and API-key transports are peers, not baseline-plus-override:
+
 ```
-┌─ Anthropic ─────────────────────────────────────────────┐
-│  Transport:  ● API Key   ○ Claude Code CLI              │
-│                                                          │
-│  API Key:     sk-ant-•••••••  [saved] [test connection]  │
-│                                                          │
-│  Claude Code CLI:                                        │
-│    [✓ detected • v2.1.104 • authenticated]               │
-│    Not active — select above to use it.                  │
-│    [↻ Re-check]                                          │
-└──────────────────────────────────────────────────────────┘
+┌─ Anthropic ───────────────── ● Active: <Transport> ──┐
+│                                                       │
+│  [Active transport's full panel]                      │
+│                                                       │
+│ ──────────────────────────────────────────────────────│
+│  Route through Claude Code CLI                  ○─●   │
+│  [Inactive transport's one-line summary]              │
+└───────────────────────────────────────────────────────┘
 ```
 
-- The two-option card replaces today's single `ApiKeyCard` for the Anthropic row. OpenAI and Gemini rows get the same shape in v1 but with their CLI options disabled ("Coming soon — Phase 8" / "Coming soon — Phase 9").
-- Detection runs on Providers screen open and on `[↻ Re-check]`, cached for 2 minutes.
-- Detection display is **always visible**, regardless of the active transport, so the subscription-reuse path is discoverable to users who haven't opted in.
-- Three detection states:
-  - `detected + authenticated` → CLI radio enabled, shows version + auth checkmark.
-  - `detected + unauthenticated` → CLI radio disabled. Shows "Run `claude auth login` in a terminal" with a copy-to-clipboard button.
-  - `not installed` → CLI radio disabled. Shows install-instructions doc link.
-- Switching the radio persists immediately. Active chat sessions keep their current transport until the next message (no mid-stream switch).
+The active transport's full panel and the inactive transport's summary swap places when the switch flips. OFF and ON are mirror images; there is no structural "primary" transport in the layout.
+
+**Switch states (Anthropic row):**
+
+| State | Active panel shown | Inactive summary alongside switch |
+|---|---|---|
+| OFF | Full API-key input with `[Test]` and `● saved` badge | `Route through Claude Code CLI` + `● detected · v2.1.104 · authenticated` + "Use your Claude subscription instead of the API key." |
+| ON  | CLI status card — version, auth status, binary path, "Inference routed through `/opt/homebrew/bin/claude`" | `Route through Claude Code CLI` + `API key: sk-ant-••••abcd · saved · inactive · Edit` |
+
+**Header indicator.** `● Active: API Key` or `● Active: Claude Code CLI` is always shown in the card header — glanceable status without reading the switch. A secondary hint at the right of the header describes the other transport's state: `Claude Code CLI detected`, `API key saved as fallback`, or `Codex CLI coming in Phase 8` (OpenAI row) / `Gemini CLI coming in Phase 9` (Gemini row).
+
+**Smart switch default (per provider, driven by what's configured):**
+
+| API key saved? | CLI detected + authed? | Switch default | Rationale |
+|---|---|---|---|
+| Yes | No  | OFF | Only option that works. |
+| No  | Yes | ON  | Only option that works. |
+| Yes | Yes (first time) | OFF | Preserve existing behavior — no surprise auto-switch for existing users. |
+| Yes | Yes (returning) | last choice | Sticky — whatever was persisted in the prior session. |
+| No  | No  | OFF (disabled) | Neither transport configured; user must add an API key or install the CLI. |
+
+**Detection.** Runs on Providers screen open and on the `↻ Re-check` link in the CLI panel. Cached for 2 minutes via `CliDetectionService`.
+
+**Detection states and switch enablement:**
+
+- `detected + authenticated` → switch enabled.
+- `detected + unauthenticated` → switch disabled. Inactive summary shows "Run `claude auth login` in a terminal" with a copy-to-clipboard button.
+- `not installed` → switch disabled. Inactive summary shows an install-instructions doc link.
+
+**OpenAI and Gemini rows (v1).** Same three-part layout, switch permanently disabled. Secondary header hint reads "Codex CLI coming in Phase 8" / "Gemini CLI coming in Phase 9". This keeps the Providers screen visually consistent across all three provider rows and prepares the widget surface for Phases 8 and 9 to drop in their adapters.
+
+**Persistence.** Flipping the switch writes to secure storage immediately. An active chat session keeps its current transport until the next message — no mid-stream switch.
+
+**Design constraint acknowledged.** The switch model supports exactly 2 transports per provider. If a future phase ever introduces a 3rd transport for a provider (unlikely on the current roadmap), the card migrates from switch to radios or tabs.
 
 ### 4.2 Chat flow on CLI transport
 
@@ -108,7 +134,7 @@ AIProvider.anthropic: settings.anthropicTransport == 'cli'
     : AnthropicRemoteDatasourceDio(await storage.readApiKey('anthropic') ?? ''),
 ```
 
-The `aiRepository` `@Riverpod(keepAlive: true)` provider reads the transport setting from secure storage alongside API keys. When the user flips the transport radio, the provider is invalidated so the swap takes effect on the next message.
+The `aiRepository` `@Riverpod(keepAlive: true)` provider reads the transport setting from secure storage alongside API keys. When the user flips the transport switch, the provider is invalidated so the swap takes effect on the next message.
 
 ### 5.2 New types
 
@@ -297,6 +323,7 @@ None — all resolved in the 2026-04-23 brainstorm.
 - **Permission model** → A.1 (single card per delegation, `bypassPermissions` under the hood, tool cards as receipts).
 - **v1 scope** → Claude only. Codex and Gemini deferred to Phases 8 and 9. `CliRemoteDatasource` abstract base built now so those phases are plumbing.
 - **Transport persistence** → global per provider (one setting, applies everywhere).
+- **Selector style (switch vs tabs vs radio)** → switch, with symmetric three-part card layout (active panel + toggle + inactive summary), active-transport indicator in the card header, and smart-default routing driven by what's configured. Resolves "API key as baseline" asymmetry.
 - **Behavior on missing / unauthenticated CLI at send time** → typed failure + snackbar, no silent fallback.
 - **Detection visibility** → always shown, even on API-key transport, so the subscription-reuse path is discoverable.
 - **Hook events** → dropped from the stream.
