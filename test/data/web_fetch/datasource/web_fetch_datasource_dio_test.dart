@@ -82,6 +82,35 @@ void main() {
     test('allows public IPv6 2001:4860:4860::8888', () {
       expect(WebFetchDatasourceDio.isPrivateHost('2001:4860:4860::8888'), isFalse);
     });
+
+    test('blocks CGNAT 100.64.0.1', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('100.64.0.1'), isTrue);
+    });
+
+    test('blocks CGNAT upper bound 100.127.255.255', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('100.127.255.255'), isTrue);
+    });
+
+    test('allows 100.63.0.1 (below CGNAT range)', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('100.63.0.1'), isFalse);
+    });
+
+    test('allows 100.128.0.1 (above CGNAT range)', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('100.128.0.1'), isFalse);
+    });
+
+    test('blocks broadcast 255.255.255.255', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('255.255.255.255'), isTrue);
+    });
+
+    test('does not classify numeric-encoded IPs as private at literal layer', () {
+      // These strings are not valid IP literals so isPrivateHost returns
+      // false. They are rejected by the DNS-resolution layer instead — the
+      // OS resolver normalises them to a real IP that is re-checked.
+      expect(WebFetchDatasourceDio.isPrivateHost('2130706433'), isFalse);
+      expect(WebFetchDatasourceDio.isPrivateHost('0x7f000001'), isFalse);
+      expect(WebFetchDatasourceDio.isPrivateHost('127.1'), isFalse);
+    });
   });
 
   group('WebFetchDatasourceDio.htmlToText', () {

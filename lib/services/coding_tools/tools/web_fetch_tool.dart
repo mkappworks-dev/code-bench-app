@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/coding_tools/models/coding_tool_result.dart';
 import '../../../data/coding_tools/models/tool.dart';
@@ -52,9 +53,12 @@ class WebFetchTool extends Tool {
       return CodingToolResult.success(content);
     } on ArgumentError catch (e) {
       return CodingToolResult.error(e.message.toString());
+    } on NetworkException catch (e) {
+      final detail = e.statusCode != null ? ' (HTTP ${e.statusCode})' : '';
+      return CodingToolResult.error('Failed to fetch "$trimmedUrl"$detail: ${e.message}');
     } catch (e) {
       dLog('[WebFetchTool] unexpected error fetching "$trimmedUrl": $e');
-      return CodingToolResult.error('Failed to fetch "$trimmedUrl": $e');
+      return CodingToolResult.error('Failed to fetch "$trimmedUrl": unexpected error.');
     }
   }
 }
