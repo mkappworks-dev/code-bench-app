@@ -132,24 +132,12 @@ class ClaudeCliRemoteDatasourceProcess extends CliRemoteDatasource {
   }
 
   // ── AIRemoteDatasource methods ────────────────────────────────────────
-
-  @override
-  Stream<String> streamMessage({
-    required List<ChatMessage> history,
-    required String prompt,
-    required AIModel model,
-    String? systemPrompt,
-  }) {
-    // CLI transport is routed at the SessionService layer via streamEvents.
-    // Reaching this adapter means the routing was bypassed — fail loudly
-    // rather than silently spawning Claude Code with bypassPermissions in
-    // the app's current working directory.
-    throw UnsupportedError(
-      'ClaudeCliRemoteDatasourceProcess.streamMessage is not a valid entry '
-      'point. Route Anthropic+CLI turns through SessionService so they reach '
-      'streamEvents with an explicit workingDirectory and sessionId.',
-    );
-  }
+  //
+  // Note: CLI transport does not implement [TextStreamingDatasource]. Raw
+  // text token streaming is not a capability this datasource can provide —
+  // it delivers structured events through [streamEvents] instead, consumed
+  // by SessionService's CLI branch. AIRepositoryImpl.streamMessage guards
+  // with a type check before invocation.
 
   @override
   Future<bool> testConnection(AIModel model, String apiKey) async {

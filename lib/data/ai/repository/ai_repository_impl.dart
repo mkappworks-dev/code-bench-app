@@ -58,9 +58,24 @@ class AIRepositoryImpl implements AIRepository {
     required AIModel model,
     String? systemPrompt,
   }) {
-    return _source(
-      model.provider,
-    ).streamMessage(history: history, prompt: prompt, model: model, systemPrompt: systemPrompt);
+    final src = _source(model.provider);
+    final streaming = src is TextStreamingDatasource ? src as TextStreamingDatasource : null;
+    if (streaming == null) {
+      // CLI-backed transports emit structured events via streamEvents and
+      // must be routed at the SessionService layer. Reaching here means the
+      // caller bypassed that routing.
+      throw StateError(
+        'Datasource for ${model.provider} does not support text streaming '
+        '(runtimeType: ${src.runtimeType}). Route through SessionService so '
+        'CLI transports reach their streamEvents path.',
+      );
+    }
+    return streaming.streamMessage(
+      history: history,
+      prompt: prompt,
+      model: model,
+      systemPrompt: systemPrompt,
+    );
   }
 
   @override

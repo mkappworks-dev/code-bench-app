@@ -11,7 +11,7 @@ import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import 'ai_remote_datasource.dart';
 
-class GeminiRemoteDatasourceDio implements AIRemoteDatasource {
+class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
   GeminiRemoteDatasourceDio(String apiKey)
     : _apiKey = apiKey,
       _dio = DioFactory.create(baseUrl: ApiConstants.geminiBaseUrl);

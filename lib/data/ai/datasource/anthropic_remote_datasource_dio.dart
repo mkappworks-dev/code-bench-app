@@ -11,7 +11,7 @@ import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import 'ai_remote_datasource.dart';
 
-class AnthropicRemoteDatasourceDio implements AIRemoteDatasource {
+class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
   AnthropicRemoteDatasourceDio(String apiKey)
     : _dio = DioFactory.create(
         baseUrl: ApiConstants.anthropicBaseUrl,

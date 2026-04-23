@@ -13,7 +13,7 @@ import '../../coding_tools/models/tool.dart';
 import 'ai_remote_datasource.dart';
 
 /// OpenAI-compatible AI datasource for custom endpoints (e.g. LM Studio, LocalAI).
-class CustomRemoteDatasourceDio implements AIRemoteDatasource {
+class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
   CustomRemoteDatasourceDio({required String endpoint, required String apiKey})
     : _dio = DioFactory.create(
         baseUrl: endpoint,

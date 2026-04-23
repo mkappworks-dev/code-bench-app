@@ -11,7 +11,7 @@ import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import 'ai_remote_datasource.dart';
 
-class OllamaRemoteDatasourceDio implements AIRemoteDatasource {
+class OllamaRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
   OllamaRemoteDatasourceDio(String baseUrl)
     : _dio = DioFactory.create(
         baseUrl: baseUrl,
