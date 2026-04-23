@@ -83,6 +83,18 @@ class _ToolCallRowState extends State<ToolCallRow> {
                     fontFamily: 'monospace',
                   ),
                 ),
+                if (widget.event.source == ToolEventSource.cliTransport) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: c.accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(3),
+                      border: Border.all(color: c.accent.withValues(alpha: 0.3), width: 0.5),
+                    ),
+                    child: Text('via Claude Code', style: TextStyle(fontSize: 10, color: c.accent, letterSpacing: 0.3)),
+                  ),
+                ],
                 if (arg.isNotEmpty) ...[
                   const SizedBox(width: 6),
                   Expanded(
