@@ -1,6 +1,6 @@
 # Agentic Executor Roadmap
 
-**Last updated:** 2026-04-22
+**Last updated:** 2026-04-23
 **Owner:** Code Bench — agentic coding assistant
 
 This document is the source of truth for the agentic executor build-out. Read this before brainstorming or planning any new phase. It captures the sequencing rationale, key decisions, and Q&A from design sessions so future sessions do not re-litigate settled questions.
@@ -9,18 +9,19 @@ This document is the source of truth for the agentic executor build-out. Read th
 
 ## Status Overview
 
-| Phase | Description                         | Status                                 |
-| ----- | ----------------------------------- | -------------------------------------- |
-| 1     | Tool Registry Refactor              | ✅ Done — PR #27, commit `1188b55`     |
-| 2     | Grep + Glob + Parallel execution    | ✅ Done — PR #28, commit `f7acbc8`     |
-| 3     | Tool-output truncation              | ✅ Done — commit `5b257c8`             |
-| 4     | Bash tool (permission-gated)        | ✅ Done — commits `a51871d`, `d435681` |
-| 5     | MCP client (stdio + HTTP/SSE)       | ✅ Done — PR #31, commit `7d9fb1a`     |
-| 6     | WebFetch                            | 🔄 In progress — plan written          |
-| 7     | CLI Provider Detection & Delegation | ⬜ Not started                         |
-| —     | Anthropic provider adapter          | 🚫 Deferred / YAGNI                    |
-| —     | Subagent delegation                 | 🚫 Deferred / YAGNI                    |
-| —     | WebSearch                           | 🚫 Deferred                            |
+| Phase | Description                                  | Status                                 |
+| ----- | -------------------------------------------- | -------------------------------------- |
+| 1     | Tool Registry Refactor                       | ✅ Done — PR #27, commit `1188b55`     |
+| 2     | Grep + Glob + Parallel execution             | ✅ Done — PR #28, commit `f7acbc8`     |
+| 3     | Tool-output truncation                       | ✅ Done — commit `5b257c8`             |
+| 4     | Bash tool (permission-gated)                 | ✅ Done — commits `a51871d`, `d435681` |
+| 5     | MCP client (stdio + HTTP/SSE)                | ✅ Done — PR #31, commit `7d9fb1a`     |
+| 6     | WebFetch                                     | ✅ Done — PR #33, commit `651fff4`     |
+| 7     | Anthropic inference via Claude Code CLI      | 🔄 In progress — spec pending          |
+| 8     | OpenAI inference via Codex CLI               | ⬜ Not started — blocked on Phase 7    |
+| 9     | Gemini inference via Gemini CLI              | ⬜ Not started — blocked on Phase 7    |
+| —     | Subagent delegation                          | 🚫 Deferred / YAGNI                    |
+| —     | WebSearch                                    | 🚫 Deferred                            |
 
 ---
 
@@ -138,104 +139,148 @@ None — all design questions resolved in the 2026-04-22 design session.
 
 ---
 
-## Phase 6 — WebFetch
+## Phase 6 — WebFetch ✅
 
-**Status:** In progress.
+**Done.** See PR #33 (`651fff4`).
 **Plan:** `docs/superpowers/plans/2026-04-22-web-fetch.md`
 
-### Settled decisions
+Key decisions locked in:
 
-**Scope:** HTTP fetch only — strip HTML to markdown, return content. No WebSearch (separate decision, deferred — see below).
-
-**Permission gate:** Same pattern as Bash tool — user approves each fetch request. No auto-approve.
-
-**URL blocklist:** Block localhost, 127.0.0.1, 10.x, 172.16-31.x, 192.168.x (private ranges) to prevent SSRF. This is the "network-policy UX" the original roadmap flagged — it is simpler than it sounded.
-
-**No external API key required.** Pure HTTP — zero dependency on Brave/Bing/Google.
-
-**Primary use case:** "Fetch the docs for this package," "read this GitHub issue," "check this API reference." The AI receives a URL and fetches it.
-
-### Open questions
-
-- Content size cap (probably same 50 KB as tool-output truncation, or a separate web-specific cap)
-- Whether to support authenticated requests (e.g., private GitHub repos) — likely YAGNI
+- HTTP fetch only — strip HTML to markdown, return content. No WebSearch.
+- Permission gate per fetch request (same pattern as Bash tool).
+- SSRF guard blocks localhost, 127.0.0.1, 10.x, 172.16-31.x, 192.168.x. Hardened with `dart:io InternetAddress` IPv6 coverage in `fba0f46`.
+- No external API key — pure HTTP.
+- Primary use case: "fetch the docs for this package," "read this GitHub issue," "check this API reference."
+- Authenticated requests deferred as YAGNI.
 
 ---
 
-## Phase 7 — CLI Provider Detection & Delegation
+## Phase 7 — Anthropic inference via Claude Code CLI
 
-**Status:** Not started. No spec or plan yet.
+**Status:** In progress. Spec pending.
 
 ### What this is
 
-A multi-provider CLI detection and task delegation system. Code Bench learns which AI CLI tools are installed on the host machine (e.g. `claude`, `codex`, custom CLIs), validates their authentication status, and can delegate tasks to them — streaming their responses back to the UI in real time.
+A new `AIRemoteDatasource` backed by the local `claude` CLI instead of the Anthropic HTTP API. Users with a Claude Pro/Max subscription route Anthropic inference through their installed Claude Code binary — reusing their subscription instead of paying for a second API key.
 
-Layered provider architecture:
+Because Claude Code CLI is itself an agent (not a pure inference endpoint), a session routed through the CLI is driven by Claude Code's own agent loop, tools, and MCP. Code Bench's Phase 1–6 tool registry is bypassed on that path. Code Bench becomes the UI, transcript persistence, and project-management shell around the CLI's session — same UI chrome, different agent under the hood.
+
+### Settled decisions (from 2026-04-23 brainstorming)
+
+**Framing — inference transport replacement, not session-level agent routing.** Integration point is [ai_repository_impl.dart:22-32](lib/data/ai/repository/ai_repository_impl.dart#L22-L32) — the `Map<AIProvider, AIRemoteDatasource>` map. A new concrete `ClaudeCliRemoteDatasourceProcess` is swapped in when the user selects "Claude Code CLI" transport for the Anthropic provider in the Providers screen. The chat, session, and tool-use layers above the repository don't change.
+
+**CLI-as-agent accepted (Option A.1).** `claude -p` cannot be reduced to a pure inference endpoint. `--tools ""` disables all tools but also kills agentic behavior; `--mcp-config` can expose Code Bench's tools to the CLI but that's Claude Code orchestrating a remote toolset, not Code Bench driving. The cleaner path — and the one that matches the user's actual goal (reuse subscription) — is to let Claude Code drive the loop and render its transcript in Code Bench's UI.
+
+**Permission model (A.1) — single gate per delegation.** One Code Bench permission card per user turn on the CLI transport. The card summary: *"Delegate to Claude Code? This will autonomously read, edit, and run shell commands in `<project path>`."* On approval, spawn with `--permission-mode bypassPermissions`. Claude Code's built-in per-tool permission prompts are OFF; Code Bench's existing permission infrastructure (`AgentPermissionRequestNotifier`, `PermissionRequestCard`) is the single gate. This matches the Bash / WebFetch pattern (one card, one action).
+
+**Tool cards render as receipts, not approvals.** `tool_use` and `tool_result` events stream via `--output-format stream-json` and render in Code Bench's existing tool-card UI. These are informational — already executed by Claude Code — and the user does NOT approve individual tool calls mid-stream. This is structurally different from Code Bench's built-in agent where each tool_use is gated; here, the gate is at delegation time.
+
+**Stream format — verified.** Claude Code CLI emits Anthropic API–format stream-json, wrapped in `type: "assistant"` / `type: "user"` envelopes with session metadata. Parser maps to Code Bench's existing `StreamEvent` model ([lib/data/ai/models/stream_event.dart](lib/data/ai/models/stream_event.dart)). Event types observed in a live run: `tool_use`, `tool_result`, `thinking`, `text`, `content_block_delta`, `input_json_delta`, `message_start/stop`, `rate_limit_event`, `hook_started/response`, `system:init`.
+
+**Session resume.** Pass `--session-id <uuid>` on first turn (Code Bench generates and persists per chat session), then `--resume <uuid>` on subsequent turns. Maps Code Bench session ↔ Claude Code session 1:1. If Claude Code forgets the session (rare), surface a typed failure and start fresh.
+
+**Working directory.** `Process.start(..., workingDirectory: ctx.projectPath)`. Same pattern as [bash_datasource_process.dart](lib/data/bash/datasource/bash_datasource_process.dart).
+
+**Authentication.** `claude auth status` reports authenticated / unauthenticated / unknown. Unauthenticated state shows a "Run `claude auth login` in a terminal" CTA in the Providers screen — the app does not spawn an interactive login itself.
+
+**Providers screen UX.** The Anthropic row in [providers_screen.dart](lib/features/providers/providers_screen.dart) gains a transport picker (segmented control: "API Key" | "Claude Code CLI"). Only one active per provider at a time. Detection + auth status shown under the CLI option. OpenAI and Gemini rows show their CLI options as disabled "Coming soon" (Phases 8 / 9).
+
+**Scope exclusions.**
+- MCP servers configured in Code Bench (Phase 5) do NOT apply when CLI transport is active — Claude Code has its own MCP config. v1 documents this in the Providers screen; cross-mounting Code Bench's MCP into the CLI via `--mcp-config` is out of scope.
+- System prompt: Code Bench does not inject a system prompt on the CLI transport. Claude Code's built-in prompt (~20K tokens per the `cache_creation_input_tokens` field on a probe) applies. `--append-system-prompt` is not used in v1.
+- No concrete Codex or Gemini adapters — those are Phases 8 and 9.
+
+### Architecture sketch
 
 ```
-UI Layer (provider status, streamed results)
-        ↓
-Orchestration (Riverpod — task routing, state transitions)
-        ↓
-Provider Registry / Adapters (ClaudeAdapter, CodexAdapter, …)
-        ↓
-CLI / Process layer (Process.start, stdout streaming)
+AIRepositoryImpl._sources[AIProvider.anthropic]
+   = user setting "anthropic.transport" == "api-key"
+       ? AnthropicRemoteDatasourceDio(apiKey)
+       : ClaudeCliRemoteDatasourceProcess(detectionService)
+
+abstract class CliRemoteDatasource implements AIRemoteDatasource {
+   Future<CliDetection> detectInstalled();
+   Future<CliAuthStatus> checkAuthStatus();
+   // streamMessage(...) from AIRemoteDatasource
+}
+
+class ClaudeCliRemoteDatasourceProcess extends CliRemoteDatasource { ... }
+// Phase 8: CodexCliRemoteDatasourceProcess
+// Phase 9: GeminiCliRemoteDatasourceProcess
+
+class CliDetectionService (lib/services/cli/)
+   - cached per binary with TTL
+   - runs <cli> --version and <cli> auth status
+   - exposes AsyncValue<Map<CliId, CliDetection>> via @riverpod
 ```
 
-### Core capabilities
+### Open questions (pre-spec)
 
-1. **CLI Detection Service** — runs `<cli> --version` to detect installation; parses version; checks auth status via `<cli> auth status` (or equivalent). Results are cached with a TTL to avoid re-running on every build.
-2. **Provider Registry** — aggregates status from all adapters; exposes `AsyncValue<List<CliProvider>>` via Riverpod; supports force-refresh per provider.
-3. **Adapter pattern** — each CLI implements a common `CliAdapter` interface (`startSession`, `streamTaskResponse`, `sendInput`, `stopSession`, `supports`). New CLIs can be added without touching existing adapters.
-4. **Task Delegation Repository** — routes a `TaskRequest` to the correct adapter by provider name; manages session lifecycle; exposes response `Stream<TaskResponse>` to the Riverpod layer.
-5. **Streaming UI** — `StreamProvider` accumulates `TaskResponse` chunks line-by-line; `ProviderSelectorWidget` shows detection status; `TaskResponseDisplayWidget` updates in real time without UI freezes.
-
-### Key data models
-
-```dart
-class CliProvider { name, binaryPath, isInstalled, version, authStatus, checkedAt, message }
-enum CliAuthStatus { authenticated, unauthenticated, unknown }
-class TaskRequest { taskDescription, workspaceContext, metadata }
-class TaskResponse { content, status, createdAt }
-enum TaskStatus { running, completed, failed, interrupted }
-```
-
-### Architecture constraints (from CLAUDE.md)
-
-- `Process.start` / `dart:io` is only allowed inside `lib/data/**/datasource/` and `lib/services/`. Detection and CLI-spawning code lives in `*_process.dart` datasource files.
-- Adapter classes are services (suffix `Service` or named `*Adapter` — document the deviation if `Adapter` suffix is used).
-- Riverpod providers for detection results follow the `FutureProvider` / `AsyncValue` exhaustive-switch pattern.
-- No `try/catch` in widgets — errors surface via typed `*Failure` freezed unions and `ref.listen`.
-
-### Settled decisions
-
-**Distinct from "Anthropic provider adapter" (Deferred):** That deferred item was about exposing the Anthropic HTTP API as a selectable provider. This phase is about CLI-level providers — processes on the user's machine. No API key routing, no HTTP client changes.
-
-**Distinct from "Subagent delegation" (Deferred):** Subagent delegation meant spawning parallel Code Bench agent sessions. This phase is sequential task routing to a single external CLI per request — far simpler.
-
-**Session tracking:** Each delegated task gets a UUID session ID. Active sessions are tracked in a `StateProvider<TaskSession?>`. The UI drives loading/error state from `ref.watch(fooActionsProvider).isLoading` per CLAUDE.md Rule 2.
-
-**Auth check strategy:** Run `<cli> auth status` (Claude) or `<cli> login status` (Codex) after installation is confirmed. Parse stdout for known unauthenticated strings. Auth status is `unknown` on any error — not a hard failure.
-
-**Process exit code handling:** A non-zero exit emits `TaskStatus.failed`; the UI shows a typed failure, not a raw exception.
-
-### Open questions
-
-- **Which CLIs to ship in v1?** Likely `claude` and `codex` as the two highest-value targets — confirm with user before speccing.
-- **Provider selector UX:** Does this live in the Settings screen (provider configuration), in the session start flow (per-task selection), or both?
-- **Default provider fallback:** If the preferred provider is unavailable, does the app auto-fall-back to another installed CLI or block with an error?
-- **Working directory propagation:** Each delegated task should receive the active project path as context — confirm the exact flags each CLI accepts.
-- **Streaming parse format:** Claude CLI and Codex CLI may emit JSON events rather than plain text. Parser strategy needs to be per-adapter.
+- `--include-hook-events`: render in UI, or drop? Decision: **drop in v1** — hook events (SessionStart/Stop/PreToolUse) would clutter the transcript.
+- `--include-partial-messages`: enable? Decision: **yes** — matches token-by-token streaming on the API-key path.
+- Cancellation mid-stream: `SIGTERM` → timeout → `SIGKILL`, mirroring [bash_datasource_process.dart](lib/data/bash/datasource/bash_datasource_process.dart).
+- Typed failure surface: `CliNotInstalled`, `CliUnauthenticated`, `CliCrashed`, `CliTimedOut`, `StreamParseFailure` — exhaustive switch per CLAUDE.md Rule 3.
 
 ### Timing
 
-After Phase 6 (WebFetch). MCP (Phase 5) and WebFetch (Phase 6) prove the tool registry and permission-gate patterns at scale. CLI adapters can reuse those patterns cleanly once they are stable in production.
+Blocks Phases 8 and 9. The `CliRemoteDatasource` abstract base, `CliDetectionService`, permission-card plumbing, and stream-parser framing are all shared infrastructure established here.
 
 ---
 
-### Anthropic provider adapter
+## Phase 8 — OpenAI inference via Codex CLI
 
-No concrete use case identified. The user does not see a need for Anthropic as a custom-endpoint provider option. Revisit if a specific workflow demands native Anthropic API features (extended thinking, prompt caching).
+**Status:** Not started. Blocked on Phase 7 establishing `CliRemoteDatasource`.
+
+Second concrete `CliRemoteDatasource` implementation, targeting the `codex` CLI (OpenAI / ChatGPT subscription). Same A.1 permission model as Phase 7. Parser is Codex-specific.
+
+### Scope
+
+- `CodexCliRemoteDatasourceProcess` concrete implementation.
+- Codex event → `StreamEvent` parser.
+- Codex-specific detection (`codex --version`, equivalent of `codex login status`).
+- Providers screen: enable the "Codex CLI" transport option on the OpenAI row.
+
+### Pre-spec spike required
+
+Install Codex CLI, run it in non-interactive mode with a tool-using prompt, capture the stream-json shape. Document:
+
+- Non-interactive flag (equivalent of `claude -p` / `--print`).
+- Stream output flag (equivalent of `--output-format stream-json`).
+- Permission-mode equivalent for `bypassPermissions`.
+- Working-directory mechanism (flag, env var, or implicit pwd).
+- Auth status command.
+- Session-resume mechanism (if any).
+
+Phase 7's abstraction should make this spike the only source of uncertainty — the adapter integration should be plumbing.
+
+### Timing
+
+After Phase 7 ships and the abstraction settles in production.
+
+---
+
+## Phase 9 — Gemini inference via Gemini CLI
+
+**Status:** Not started. Blocked on Phase 7.
+
+Third concrete `CliRemoteDatasource` implementation, targeting the `gemini` CLI (Google). Same A.1 permission model. Parser is Gemini-specific.
+
+### Scope
+
+- `GeminiCliRemoteDatasourceProcess` concrete implementation.
+- Gemini event → `StreamEvent` parser.
+- Gemini-specific detection and auth probe.
+- Providers screen: enable the "Gemini CLI" transport option on the Gemini row.
+
+### Pre-spec spike required
+
+Same shape as Phase 8 — capture actual stream format, flag names, auth commands from an installed Gemini CLI.
+
+### Timing
+
+After Phase 8. If Phase 8 forced any `CliRemoteDatasource` refactoring, Phase 9 benefits. If Phase 8 was pure plumbing, Phase 9 likewise.
+
+---
 
 ### Subagent delegation
 
