@@ -39,4 +39,4 @@ final class AiRepositoryProvider
   }
 }
 
-String _$aiRepositoryHash() => r'1aa08b1b5ab241f05e1e0602fd91696beec0537e';
+String _$aiRepositoryHash() => r'35af23d624b5e12a2ab8938a9f764f32c1f7ba11';

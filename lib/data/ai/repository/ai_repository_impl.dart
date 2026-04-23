@@ -6,6 +6,7 @@ import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import '../datasource/ai_remote_datasource.dart';
 import '../datasource/anthropic_remote_datasource_dio.dart';
+import '../datasource/claude_cli_remote_datasource_process.dart';
 import '../datasource/custom_remote_datasource_dio.dart';
 import '../datasource/gemini_remote_datasource_dio.dart';
 import '../datasource/ollama_remote_datasource_dio.dart';
@@ -18,9 +19,13 @@ part 'ai_repository_impl.g.dart';
 @Riverpod(keepAlive: true)
 Future<AIRepository> aiRepository(Ref ref) async {
   final storage = ref.watch(secureStorageProvider);
+  final transport = await storage.readAnthropicTransport() ?? 'api-key';
+  final AIRemoteDatasource anthropicDs = transport == 'cli'
+      ? ClaudeCliRemoteDatasourceProcess()
+      : AnthropicRemoteDatasourceDio(await storage.readApiKey('anthropic') ?? '');
   return AIRepositoryImpl(
     sources: {
-      AIProvider.anthropic: AnthropicRemoteDatasourceDio(await storage.readApiKey('anthropic') ?? ''),
+      AIProvider.anthropic: anthropicDs,
       AIProvider.openai: OpenAIRemoteDatasourceDio(await storage.readApiKey('openai') ?? ''),
       AIProvider.gemini: GeminiRemoteDatasourceDio(await storage.readApiKey('gemini') ?? ''),
       AIProvider.ollama: OllamaRemoteDatasourceDio(await storage.readOllamaUrl() ?? 'http://localhost:11434'),
@@ -41,6 +46,10 @@ class AIRepositoryImpl implements AIRepository {
     if (src == null) throw StateError('No datasource registered for $provider');
     return src;
   }
+
+  /// Returns the raw datasource for [provider]. Used by SessionService to
+  /// reach CLI-specific methods (streamEvents, cancel) on CLI transports.
+  AIRemoteDatasource rawDatasource(AIProvider provider) => _source(provider);
 
   @override
   Stream<String> streamMessage({
