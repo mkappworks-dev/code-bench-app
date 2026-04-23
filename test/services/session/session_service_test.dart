@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/ai/models/stream_event.dart';
-import 'package:code_bench_app/data/ai/repository/ai_repository.dart';
+import 'package:code_bench_app/data/ai/repository/text_streaming_repository.dart';
+import 'package:code_bench_app/data/ai/repository/tool_streaming_repository.dart';
 import 'package:code_bench_app/data/coding_tools/datasource/coding_tools_datasource_io.dart';
 import 'package:code_bench_app/data/coding_tools/models/coding_tools_denylist_state.dart';
 import 'package:code_bench_app/data/coding_tools/models/denylist_category.dart';
@@ -52,7 +53,7 @@ class _FakeSessionRepo extends Fake implements SessionRepository {
   Future<void> updateSessionTitle(String sessionId, String title) async {}
 }
 
-class _FakeAIRepo extends Fake implements AIRepository {
+class _FakeAIRepo extends Fake implements TextStreamingRepository, ToolStreamingRepository {
   @override
   Stream<String> streamMessage({
     required List<ChatMessage> history,
@@ -65,7 +66,7 @@ class _FakeAIRepo extends Fake implements AIRepository {
   }
 }
 
-class _ScriptedAI implements AIRepository {
+class _ScriptedAI implements TextStreamingRepository, ToolStreamingRepository {
   _ScriptedAI(this.rounds);
   final List<List<StreamEvent>> rounds;
   int _r = 0;
@@ -90,15 +91,9 @@ class _ScriptedAI implements AIRepository {
   }) async* {
     yield 'plain-text-path';
   }
-
-  @override
-  Future<bool> testConnection(AIModel model, String apiKey) async => true;
-
-  @override
-  Future<List<AIModel>> fetchAvailableModels(AIProvider provider, String apiKey) async => [];
 }
 
-AgentService _buildAgent({required AIRepository ai}) {
+AgentService _buildAgent({required ToolStreamingRepository ai}) {
   final repo = CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo());
   final applyRepo = ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()));
   final applySvc = ApplyService(repo: applyRepo);

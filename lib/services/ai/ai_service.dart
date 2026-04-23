@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/errors/app_exception.dart';
 import '../../data/ai/repository/ai_repository.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
+import '../../data/ai/repository/text_streaming_repository.dart';
 import '../../data/shared/ai_model.dart';
 import '../../data/shared/chat_message.dart';
 
@@ -15,20 +16,25 @@ part 'ai_service.g.dart';
 @Riverpod(keepAlive: true)
 Future<AIService> aiService(Ref ref) async {
   final repo = await ref.watch(aiRepositoryProvider.future);
-  return AIService(repo: repo);
+  // The same [AIRepositoryImpl] instance satisfies both narrow interfaces.
+  return AIService(repo: repo, streaming: repo);
 }
 
 /// Owns stream-buffering logic for AI message generation.
 ///
-/// [AIRepository] retains [streamMessage], [testConnection], and
-/// [fetchAvailableModels] as primitives. [sendMessage] — the buffering
-/// composition — lives here.
+/// Depends on two narrow capabilities instead of one fat repository: the
+/// provider-selection primitives come from [AIRepository], text streaming
+/// comes from [TextStreamingRepository]. Both are satisfied by the same
+/// concrete instance in production, but the split keeps each dependency
+/// precise and mockable.
 class AIService {
-  AIService({required AIRepository repo, String Function()? uuidGen})
+  AIService({required AIRepository repo, required TextStreamingRepository streaming, String Function()? uuidGen})
     : _repo = repo,
+      _streaming = streaming,
       _uuidGen = uuidGen ?? (() => const Uuid().v4());
 
   final AIRepository _repo;
+  final TextStreamingRepository _streaming;
   final String Function() _uuidGen;
 
   Stream<String> streamMessage({
@@ -38,7 +44,7 @@ class AIService {
     String? systemPrompt,
   }) async* {
     try {
-      yield* _repo.streamMessage(history: history, prompt: prompt, model: model, systemPrompt: systemPrompt);
+      yield* _streaming.streamMessage(history: history, prompt: prompt, model: model, systemPrompt: systemPrompt);
     } on NetworkException catch (e, st) {
       Error.throwWithStackTrace(
         NetworkException(
@@ -69,7 +75,7 @@ class AIService {
     String? systemPrompt,
   }) async {
     final buffer = StringBuffer();
-    await for (final chunk in _repo.streamMessage(
+    await for (final chunk in _streaming.streamMessage(
       history: history,
       prompt: prompt,
       model: model,

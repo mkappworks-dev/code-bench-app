@@ -40,7 +40,7 @@ final class CliDetectionServiceProvider extends $NotifierProvider<CliDetectionSe
   }
 }
 
-String _$cliDetectionServiceHash() => r'2598d64841584ea5951151c1d1731a497b8a3776';
+String _$cliDetectionServiceHash() => r'1dafa498129beb5c8dca1b3275d0f906b9940c5b';
 
 /// Detects local CLI binaries and caches results per-binary with a TTL.
 

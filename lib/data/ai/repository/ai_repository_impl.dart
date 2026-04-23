@@ -5,20 +5,28 @@ import '../../../data/coding_tools/models/tool.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import '../datasource/ai_remote_datasource.dart';
-import '../datasource/text_streaming_datasource.dart';
 import '../datasource/anthropic_remote_datasource_dio.dart';
 import '../datasource/claude_cli_remote_datasource_process.dart';
 import '../datasource/custom_remote_datasource_dio.dart';
 import '../datasource/gemini_remote_datasource_dio.dart';
 import '../datasource/ollama_remote_datasource_dio.dart';
 import '../datasource/openai_remote_datasource_dio.dart';
+import '../datasource/text_streaming_datasource.dart';
 import '../models/stream_event.dart';
 import 'ai_repository.dart';
+import 'text_streaming_repository.dart';
+import 'tool_streaming_repository.dart';
 
 part 'ai_repository_impl.g.dart';
 
+/// Returns the concrete [AIRepositoryImpl] (typed as the class, not as
+/// `AIRepository`) so downstream service providers can pass the same
+/// instance into multiple narrow-interface fields — e.g. one service
+/// takes [AIRepository] for testConnection/fetchAvailableModels AND
+/// [TextStreamingRepository] for streamMessage, both satisfied by the
+/// same object.
 @Riverpod(keepAlive: true)
-Future<AIRepository> aiRepository(Ref ref) async {
+Future<AIRepositoryImpl> aiRepository(Ref ref) async {
   final storage = ref.watch(secureStorageProvider);
   final transport = await storage.readAnthropicTransport() ?? 'api-key';
   final AIRemoteDatasource anthropicDs = transport == 'cli'
@@ -38,7 +46,7 @@ Future<AIRepository> aiRepository(Ref ref) async {
   );
 }
 
-class AIRepositoryImpl implements AIRepository {
+class AIRepositoryImpl implements AIRepository, TextStreamingRepository, ToolStreamingRepository {
   AIRepositoryImpl({required Map<AIProvider, AIRemoteDatasource> sources}) : _sources = sources;
 
   final Map<AIProvider, AIRemoteDatasource> _sources;

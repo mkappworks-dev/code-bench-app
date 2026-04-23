@@ -5,8 +5,8 @@ import 'package:uuid/uuid.dart';
 
 import '../../data/ai/datasource/claude_cli_remote_datasource_process.dart';
 import '../../data/ai/models/stream_event.dart';
-import '../../data/ai/repository/ai_repository.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
+import '../../data/ai/repository/text_streaming_repository.dart';
 import '../../data/session/models/permission_request.dart';
 import '../../data/session/models/session_settings.dart';
 import '../../data/session/models/tool_event.dart';
@@ -29,13 +29,13 @@ Future<SessionService> sessionService(Ref ref) async {
 }
 
 class SessionService {
-  SessionService({required SessionRepository session, required AIRepository ai, required AgentService agent})
+  SessionService({required SessionRepository session, required TextStreamingRepository ai, required AgentService agent})
     : _session = session,
       _ai = ai,
       _agent = agent;
 
   final SessionRepository _session;
-  final AIRepository _ai;
+  final TextStreamingRepository _ai;
   final AgentService _agent;
   static const _uuid = Uuid();
 

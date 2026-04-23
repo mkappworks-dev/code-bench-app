@@ -8,13 +8,32 @@ part of 'ai_repository_impl.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Returns the concrete [AIRepositoryImpl] (typed as the class, not as
+/// `AIRepository`) so downstream service providers can pass the same
+/// instance into multiple narrow-interface fields — e.g. one service
+/// takes [AIRepository] for testConnection/fetchAvailableModels AND
+/// [TextStreamingRepository] for streamMessage, both satisfied by the
+/// same object.
 
 @ProviderFor(aiRepository)
 final aiRepositoryProvider = AiRepositoryProvider._();
 
+/// Returns the concrete [AIRepositoryImpl] (typed as the class, not as
+/// `AIRepository`) so downstream service providers can pass the same
+/// instance into multiple narrow-interface fields — e.g. one service
+/// takes [AIRepository] for testConnection/fetchAvailableModels AND
+/// [TextStreamingRepository] for streamMessage, both satisfied by the
+/// same object.
+
 final class AiRepositoryProvider
-    extends $FunctionalProvider<AsyncValue<AIRepository>, AIRepository, FutureOr<AIRepository>>
-    with $FutureModifier<AIRepository>, $FutureProvider<AIRepository> {
+    extends $FunctionalProvider<AsyncValue<AIRepositoryImpl>, AIRepositoryImpl, FutureOr<AIRepositoryImpl>>
+    with $FutureModifier<AIRepositoryImpl>, $FutureProvider<AIRepositoryImpl> {
+  /// Returns the concrete [AIRepositoryImpl] (typed as the class, not as
+  /// `AIRepository`) so downstream service providers can pass the same
+  /// instance into multiple narrow-interface fields — e.g. one service
+  /// takes [AIRepository] for testConnection/fetchAvailableModels AND
+  /// [TextStreamingRepository] for streamMessage, both satisfied by the
+  /// same object.
   AiRepositoryProvider._()
     : super(
         from: null,
@@ -31,12 +50,12 @@ final class AiRepositoryProvider
 
   @$internal
   @override
-  $FutureProviderElement<AIRepository> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+  $FutureProviderElement<AIRepositoryImpl> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<AIRepository> create(Ref ref) {
+  FutureOr<AIRepositoryImpl> create(Ref ref) {
     return aiRepository(ref);
   }
 }
 
-String _$aiRepositoryHash() => r'35af23d624b5e12a2ab8938a9f764f32c1f7ba11';
+String _$aiRepositoryHash() => r'fe81ae4d5ee92cddda71c501b772624f4294e1e1';

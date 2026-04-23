@@ -38,4 +38,4 @@ final class AiServiceProvider extends $FunctionalProvider<AsyncValue<AIService>,
   }
 }
 
-String _$aiServiceHash() => r'7654b59f215ac310ed348b091c8871f2504da6a2';
+String _$aiServiceHash() => r'4210d63d0225c8822da7b6f6ea270a645c72c2d3';
