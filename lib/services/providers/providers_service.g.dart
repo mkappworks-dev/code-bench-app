@@ -43,4 +43,4 @@ final class ProvidersServiceProvider extends $FunctionalProvider<ProvidersServic
   }
 }
 
-String _$providersServiceHash() => r'79291fcd47b4616b173f2061f659ac3c844cc6a6';
+String _$providersServiceHash() => r'345785e192aa2dbc2f00eb0823196727121b38f2';
