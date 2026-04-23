@@ -59,20 +59,13 @@ class CliDetectionService extends _$CliDetectionService {
   }
 
   Future<CliAuthStatus> _probeAuth(String binary) async {
-    if (binary.endsWith('claude')) {
-      try {
-        final result = await Process.run(binary, ['auth', 'status']).timeout(const Duration(seconds: 5));
-        if (result.exitCode == 0) return CliAuthStatus.authenticated;
-        final stdout = result.stdout.toString().toLowerCase();
-        if (stdout.contains('not logged in') || stdout.contains('unauthenticated')) {
-          return CliAuthStatus.unauthenticated;
-        }
-        return CliAuthStatus.unauthenticated;
-      } catch (_) {
-        return CliAuthStatus.unknown;
-      }
+    if (!binary.endsWith('claude')) return CliAuthStatus.unknown;
+    try {
+      final result = await Process.run(binary, ['auth', 'status']).timeout(const Duration(seconds: 5));
+      return result.exitCode == 0 ? CliAuthStatus.authenticated : CliAuthStatus.unauthenticated;
+    } catch (_) {
+      return CliAuthStatus.unknown;
     }
-    return CliAuthStatus.unknown;
   }
 
   String _extractVersion(String output) {

@@ -89,8 +89,14 @@ class ClaudeCliRemoteDatasourceProcess extends CliRemoteDatasource {
     }
 
     _currentProcess = process;
+    // Cap stderr capture so a chatty crash can't balloon memory.
+    const stderrCap = 64 * 1024;
     final stderrBuffer = StringBuffer();
-    final stderrSub = process.stderr.transform(utf8.decoder).listen(stderrBuffer.write);
+    final stderrSub = process.stderr.transform(utf8.decoder).listen((chunk) {
+      if (stderrBuffer.length >= stderrCap) return;
+      final remaining = stderrCap - stderrBuffer.length;
+      stderrBuffer.write(chunk.length <= remaining ? chunk : chunk.substring(0, remaining));
+    });
 
     try {
       await for (final line in process.stdout.transform(utf8.decoder).transform(const LineSplitter())) {
@@ -101,9 +107,9 @@ class ClaudeCliRemoteDatasourceProcess extends CliRemoteDatasource {
       final exitCode = await process.exitCode;
       if (exitCode != 0) {
         yield StreamEvent.cliStreamError(ClaudeCliFailure.crashed(exitCode: exitCode, stderr: stderrBuffer.toString()));
-      } else {
-        yield const StreamEvent.cliStreamDone();
       }
+      // Terminal StreamDone is emitted by the parser on `message_stop`;
+      // no need to re-emit here on clean exit.
     } finally {
       await stderrSub.cancel();
       _currentProcess = null;
@@ -133,16 +139,16 @@ class ClaudeCliRemoteDatasourceProcess extends CliRemoteDatasource {
     required String prompt,
     required AIModel model,
     String? systemPrompt,
-  }) async* {
-    // SessionService routes CLI transport to streamEvents. This adapter exists
-    // so AIRepositoryImpl can still satisfy the AIRemoteDatasource contract.
-    yield* streamEvents(
-      history: history,
-      prompt: prompt,
-      workingDirectory: Directory.current.path,
-      sessionId: DateTime.now().millisecondsSinceEpoch.toString(),
-      isFirstTurn: true,
-    ).where((e) => e is TextDelta).cast<TextDelta>().map((e) => e.text);
+  }) {
+    // CLI transport is routed at the SessionService layer via streamEvents.
+    // Reaching this adapter means the routing was bypassed — fail loudly
+    // rather than silently spawning Claude Code with bypassPermissions in
+    // the app's current working directory.
+    throw UnsupportedError(
+      'ClaudeCliRemoteDatasourceProcess.streamMessage is not a valid entry '
+      'point. Route Anthropic+CLI turns through SessionService so they reach '
+      'streamEvents with an explicit workingDirectory and sessionId.',
+    );
   }
 
   @override
