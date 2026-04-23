@@ -19,6 +19,17 @@ void main() {
             StreamToolCallArgsDelta() => 'args',
             StreamToolCallEnd() => 'end',
             StreamFinish() => 'finish',
+            // Claude Code CLI variants — not under test here but required for
+            // exhaustiveness after the union was widened in Phase 7.
+            TextDelta() ||
+            ToolUseStart() ||
+            ToolUseInputDelta() ||
+            ToolUseComplete() ||
+            ToolResult() ||
+            ThinkingDelta() ||
+            StreamDone() ||
+            StreamParseFailure() ||
+            StreamError() => 'cli',
           },
         )
         .toList();

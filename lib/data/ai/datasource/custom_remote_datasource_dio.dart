@@ -210,6 +210,18 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
           // never returned by parseOpenAiToolSseLine — kept for exhaustiveness.
           case StreamToolCallEnd():
             yield event;
+          // Claude Code CLI variants are emitted by a different parser and
+          // never reach this OpenAI SSE path — kept for exhaustiveness.
+          case TextDelta():
+          case ToolUseStart():
+          case ToolUseInputDelta():
+          case ToolUseComplete():
+          case ToolResult():
+          case ThinkingDelta():
+          case StreamDone():
+          case StreamParseFailure():
+          case StreamError():
+            break;
         }
       }
     } on DioException catch (e) {

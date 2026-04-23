@@ -170,6 +170,18 @@ class AgentService {
                 }
               case StreamFinish(:final reason):
                 finishReason = reason;
+              // Claude Code CLI variants are emitted by a different parser and
+              // never reach this OpenAI agent path — kept for exhaustiveness.
+              case TextDelta():
+              case ToolUseStart():
+              case ToolUseInputDelta():
+              case ToolUseComplete():
+              case ToolResult():
+              case ThinkingDelta():
+              case StreamDone():
+              case StreamParseFailure():
+              case StreamError():
+                break;
             }
           }
         } catch (e, st) {
