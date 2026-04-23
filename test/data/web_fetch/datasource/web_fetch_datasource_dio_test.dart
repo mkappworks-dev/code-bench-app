@@ -54,6 +54,34 @@ void main() {
     test('blocks 169.254.169.254 (IMDS)', () {
       expect(WebFetchDatasourceDio.isPrivateHost('169.254.169.254'), isTrue);
     });
+
+    test('blocks IPv6 link-local fe80::1', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('fe80::1'), isTrue);
+    });
+
+    test('blocks IPv4-mapped-IPv6 loopback ::ffff:127.0.0.1', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('::ffff:127.0.0.1'), isTrue);
+    });
+
+    test('blocks IPv4-mapped-IPv6 IMDS ::ffff:169.254.169.254', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('::ffff:169.254.169.254'), isTrue);
+    });
+
+    test('allows IPv4-mapped-IPv6 public ::ffff:8.8.8.8', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('::ffff:8.8.8.8'), isFalse);
+    });
+
+    test('blocks IPv4 multicast 224.0.0.1', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('224.0.0.1'), isTrue);
+    });
+
+    test('blocks IPv6 unspecified ::', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('::'), isTrue);
+    });
+
+    test('allows public IPv6 2001:4860:4860::8888', () {
+      expect(WebFetchDatasourceDio.isPrivateHost('2001:4860:4860::8888'), isFalse);
+    });
   });
 
   group('WebFetchDatasourceDio.htmlToText', () {
