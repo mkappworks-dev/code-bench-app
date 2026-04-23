@@ -20,6 +20,9 @@ class ProvidersService {
   Future<String?> readOllamaUrl() => _providers.readOllamaUrl();
   Future<void> writeOllamaUrl(String url) => _providers.writeOllamaUrl(url);
   Future<void> deleteOllamaUrl() => _providers.deleteOllamaUrl();
+  Future<String?> readAnthropicTransport() => _providers.readAnthropicTransport();
+  Future<void> writeAnthropicTransport(String value) => _providers.writeAnthropicTransport(value);
+  Future<void> deleteAnthropicTransport() => _providers.deleteAnthropicTransport();
   Future<String?> readCustomEndpoint() => _providers.readCustomEndpoint();
   Future<void> writeCustomEndpoint(String url) => _providers.writeCustomEndpoint(url);
   Future<void> deleteCustomEndpoint() => _providers.deleteCustomEndpoint();

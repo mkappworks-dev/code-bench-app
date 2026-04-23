@@ -26,6 +26,7 @@ class SecureStorage {
   static const String _githubTokenKey = 'github_token';
   static const String _githubAccountKey = 'github_account';
   static const String _ollamaUrlKey = 'ollama_base_url';
+  static const String _anthropicTransportKey = 'anthropic_transport';
 
   // API Keys
   Future<void> writeApiKey(String provider, String apiKey) async {
@@ -139,6 +140,34 @@ class SecureStorage {
     } catch (e) {
       dLog('[SecureStorage] deleteOllamaUrl failed: $e');
       throw StorageException('Failed to delete Ollama URL', originalError: e);
+    }
+  }
+
+  // Anthropic transport ('api-key' | 'cli')
+  Future<void> writeAnthropicTransport(String value) async {
+    try {
+      await _storage.write(key: _anthropicTransportKey, value: value);
+    } catch (e) {
+      dLog('[SecureStorage] writeAnthropicTransport failed: $e');
+      throw StorageException('Failed to store Anthropic transport', originalError: e);
+    }
+  }
+
+  Future<String?> readAnthropicTransport() async {
+    try {
+      return await _storage.read(key: _anthropicTransportKey);
+    } catch (e) {
+      dLog('[SecureStorage] readAnthropicTransport failed: $e');
+      throw StorageException('Failed to read Anthropic transport', originalError: e);
+    }
+  }
+
+  Future<void> deleteAnthropicTransport() async {
+    try {
+      await _storage.delete(key: _anthropicTransportKey);
+    } catch (e) {
+      dLog('[SecureStorage] deleteAnthropicTransport failed: $e');
+      throw StorageException('Failed to delete Anthropic transport', originalError: e);
     }
   }
 

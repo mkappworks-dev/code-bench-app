@@ -34,6 +34,15 @@ class ProvidersRepositoryImpl implements ProvidersRepository {
   Future<void> deleteOllamaUrl() => _storage.deleteOllamaUrl();
 
   @override
+  Future<String?> readAnthropicTransport() => _storage.readAnthropicTransport();
+
+  @override
+  Future<void> writeAnthropicTransport(String value) => _storage.writeAnthropicTransport(value);
+
+  @override
+  Future<void> deleteAnthropicTransport() => _storage.deleteAnthropicTransport();
+
+  @override
   Future<String?> readCustomEndpoint() => _storage.readCustomEndpoint();
 
   @override

@@ -5,6 +5,9 @@ abstract interface class ProvidersRepository {
   Future<String?> readOllamaUrl();
   Future<void> writeOllamaUrl(String url);
   Future<void> deleteOllamaUrl();
+  Future<String?> readAnthropicTransport();
+  Future<void> writeAnthropicTransport(String value);
+  Future<void> deleteAnthropicTransport();
   Future<String?> readCustomEndpoint();
   Future<void> writeCustomEndpoint(String url);
   Future<void> deleteCustomEndpoint();
