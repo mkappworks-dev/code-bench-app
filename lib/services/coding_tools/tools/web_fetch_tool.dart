@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/coding_tools/models/coding_tool_result.dart';
 import '../../../data/coding_tools/models/tool.dart';
 import '../../../data/coding_tools/models/tool_capability.dart';
@@ -45,13 +46,15 @@ class WebFetchTool extends Tool {
     if (url is! String || url.trim().isEmpty) {
       return const CodingToolResult.error('web_fetch requires a non-empty "url" argument.');
     }
+    final trimmedUrl = url.trim();
     try {
-      final content = await datasource.fetch(url: url.trim());
+      final content = await datasource.fetch(url: trimmedUrl);
       return CodingToolResult.success(content);
     } on ArgumentError catch (e) {
       return CodingToolResult.error(e.message.toString());
     } catch (e) {
-      return CodingToolResult.error('Failed to fetch "$url": $e');
+      dLog('[WebFetchTool] unexpected error fetching "$trimmedUrl": $e');
+      return CodingToolResult.error('Failed to fetch "$trimmedUrl": $e');
     }
   }
 }

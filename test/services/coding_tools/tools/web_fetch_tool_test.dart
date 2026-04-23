@@ -10,6 +10,10 @@ import 'package:code_bench_app/services/coding_tools/tools/web_fetch_tool.dart';
 
 import 'web_fetch_tool_test.mocks.dart';
 
+// Note: The generated MockWebFetchDatasource has `fetch({required String? url})`
+// even though the interface declares `{required String url}`. This is a known
+// Mockito quirk where mock parameters become nullable. The test still works
+// because we pass non-null values and Mockito coerces the types at runtime.
 @GenerateMocks([WebFetchDatasource])
 void main() {
   late MockWebFetchDatasource mockDatasource;
