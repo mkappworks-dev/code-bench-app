@@ -32,7 +32,7 @@ final class McpServersActionsProvider extends $AsyncNotifierProvider<McpServersA
   McpServersActions create() => McpServersActions();
 }
 
-String _$mcpServersActionsHash() => r'a5a938e14999e17c42b54937cbd7e947e572ff74';
+String _$mcpServersActionsHash() => r'14a56b8e98a6086603235385349c92999fd3dbbc';
 
 abstract class _$McpServersActions extends $AsyncNotifier<void> {
   FutureOr<void> build();

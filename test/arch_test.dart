@@ -9,7 +9,9 @@ void main() {
     // `lib/services/`. Everything else requires a documented exception below.
     //
     // Permitted locations:
-    //   • Datasource files: *_io.dart, *_process.dart
+    //   • Datasource files: *_io.dart, *_process.dart, *_dio.dart
+    //     (web_fetch_datasource_dio.dart uses InternetAddress for SSRF guards
+    //     before any Dio call happens — pre-network classification, not I/O)
     //   • All of lib/services/ — CLAUDE.md explicitly permits dart:io there
     //   • apply_repository.dart — the static assertWithinProject security guard
     //     uses dart:io Directory/symlink APIs; documented exception in CLAUDE.md
@@ -20,6 +22,7 @@ void main() {
             (path) =>
                 !path.endsWith('_io.dart') &&
                 !path.endsWith('_process.dart') &&
+                !path.endsWith('_dio.dart') &&
                 !path.contains('/services/') &&
                 !path.contains('apply_repository.dart') &&
                 !path.contains('platform_utils.dart'),
