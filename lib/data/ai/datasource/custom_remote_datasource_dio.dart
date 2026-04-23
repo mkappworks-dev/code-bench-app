@@ -11,6 +11,7 @@ import '../../../data/shared/chat_message.dart';
 import '../models/stream_event.dart';
 import '../../coding_tools/models/tool.dart';
 import 'ai_remote_datasource.dart';
+import 'text_streaming_datasource.dart';
 
 /// OpenAI-compatible AI datasource for custom endpoints (e.g. LM Studio, LocalAI).
 class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {

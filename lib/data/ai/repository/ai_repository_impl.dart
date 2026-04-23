@@ -5,6 +5,7 @@ import '../../../data/coding_tools/models/tool.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import '../datasource/ai_remote_datasource.dart';
+import '../datasource/text_streaming_datasource.dart';
 import '../datasource/anthropic_remote_datasource_dio.dart';
 import '../datasource/claude_cli_remote_datasource_process.dart';
 import '../datasource/custom_remote_datasource_dio.dart';
@@ -70,12 +71,7 @@ class AIRepositoryImpl implements AIRepository {
         'CLI transports reach their streamEvents path.',
       );
     }
-    return streaming.streamMessage(
-      history: history,
-      prompt: prompt,
-      model: model,
-      systemPrompt: systemPrompt,
-    );
+    return streaming.streamMessage(history: history, prompt: prompt, model: model, systemPrompt: systemPrompt);
   }
 
   @override
