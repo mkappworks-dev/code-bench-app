@@ -32,7 +32,7 @@ final class ApiKeysNotifierProvider extends $AsyncNotifierProvider<ApiKeysNotifi
   ApiKeysNotifier create() => ApiKeysNotifier();
 }
 
-String _$apiKeysNotifierHash() => r'8c2f68e7558a8fc5aa0d82a45315cf4e6c984ca5';
+String _$apiKeysNotifierHash() => r'2fe9936fe6ec6ef6866a767db40600342cbe93b5';
 
 abstract class _$ApiKeysNotifier extends $AsyncNotifier<ApiKeysNotifierState> {
   FutureOr<ApiKeysNotifierState> build();
