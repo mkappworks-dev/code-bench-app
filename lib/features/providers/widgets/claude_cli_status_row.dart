@@ -48,13 +48,15 @@ class ClaudeCliStatusRow extends ConsumerWidget {
           color: c.warning,
           statusLabel: 'detected · v$version · not authenticated',
           detail: 'Run this in a terminal to sign in:',
-          cta: _copyCta(context, 'claude auth login'),
+          // `claude` starts the interactive CLI (including the /login flow).
+          // There is no `claude auth login` subcommand.
+          cta: _copyCta(context, 'claude'),
         ),
         CliAuthStatus.unknown => _row(
           context,
           color: c.mutedFg,
-          statusLabel: 'detected · v$version · auth unknown',
-          detail: '',
+          statusLabel: 'detected · v$version',
+          detail: 'Sending a message will confirm your sign-in status.',
           onRecheck: () => ref.read(claudeCliDetectionProvider.notifier).recheck(),
         ),
       },

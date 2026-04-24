@@ -9,6 +9,7 @@ import '../../../services/ai/ai_service.dart';
 import '../../../services/api_key_test/api_key_test_service.dart';
 import '../../../services/providers/providers_service.dart';
 import 'providers_failure.dart';
+import 'providers_notifier.dart';
 
 part 'providers_actions.g.dart';
 
@@ -29,7 +30,7 @@ class ProvidersActions extends _$ProvidersActions {
     try {
       return await ref.read(apiKeyTestServiceProvider).testApiKey(provider, key);
     } catch (e, st) {
-      dLog('[ProvidersActions] testApiKey failed: $e\n$st');
+      dLog('[ProvidersActions] testApiKey failed: ${redactSecrets('$e')}\n${redactSecrets('$st')}');
       return false;
     }
   }
@@ -39,7 +40,7 @@ class ProvidersActions extends _$ProvidersActions {
     try {
       return await ref.read(apiKeyTestServiceProvider).testCustomEndpoint(url, apiKey);
     } catch (e, st) {
-      dLog('[ProvidersActions] testCustomEndpoint failed: $e\n$st');
+      dLog('[ProvidersActions] testCustomEndpoint failed: ${redactSecrets('$e')}\n${redactSecrets('$st')}');
       return false;
     }
   }
@@ -49,7 +50,7 @@ class ProvidersActions extends _$ProvidersActions {
     try {
       return await ref.read(apiKeyTestServiceProvider).testOllamaUrl(url);
     } catch (e, st) {
-      dLog('[ProvidersActions] testOllamaUrl failed: $e\n$st');
+      dLog('[ProvidersActions] testOllamaUrl failed: ${redactSecrets('$e')}\n${redactSecrets('$st')}');
       return false;
     }
   }
@@ -171,6 +172,30 @@ class ProvidersActions extends _$ProvidersActions {
       } catch (e, st) {
         dLog('[ProvidersActions] clearCustomApiKey failed: $e');
         Error.throwWithStackTrace(_asFailure(e, 'customApiKey'), st);
+      }
+    });
+  }
+
+  /// Persists the Anthropic inference transport (`'api-key'` or `'cli'`)
+  /// and reloads the AI repository so the new datasource wiring is picked up.
+  ///
+  /// Lives here (not on `ApiKeysNotifier`) so a storage failure surfaces
+  /// via the standard `ProvidersFailure` typed-union path the other
+  /// provider mutations use — widgets already watch this Actions slot for
+  /// loading/error state.
+  Future<void> saveAnthropicTransport(String value) async {
+    assert(value == 'api-key' || value == 'cli', 'invalid transport: $value');
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await ref.read(providersServiceProvider).writeAnthropicTransport(value);
+        ref.invalidate(aiRepositoryProvider);
+        // Ask ApiKeysNotifier to re-read secure storage so `anthropicTransport`
+        // reflects the new value without a widget-level optimistic update.
+        ref.invalidate(apiKeysProvider);
+      } catch (e, st) {
+        dLog('[ProvidersActions] saveAnthropicTransport failed: $e');
+        Error.throwWithStackTrace(_asFailure(e, 'anthropicTransport'), st);
       }
     });
   }

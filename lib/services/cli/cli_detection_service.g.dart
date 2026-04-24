@@ -9,13 +9,31 @@ part of 'cli_detection_service.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Detects local CLI binaries and caches results per-binary with a TTL.
+///
+/// Authentication status is intentionally NOT probed: Claude Code has no
+/// stable `auth status` subcommand, and probing via a real request would
+/// burn credits. Installed → [CliAuthStatus.unknown] always; the user
+/// discovers auth state when they send a message and either succeeds or
+/// gets a typed failure.
 
 @ProviderFor(CliDetectionService)
 final cliDetectionServiceProvider = CliDetectionServiceProvider._();
 
 /// Detects local CLI binaries and caches results per-binary with a TTL.
+///
+/// Authentication status is intentionally NOT probed: Claude Code has no
+/// stable `auth status` subcommand, and probing via a real request would
+/// burn credits. Installed → [CliAuthStatus.unknown] always; the user
+/// discovers auth state when they send a message and either succeeds or
+/// gets a typed failure.
 final class CliDetectionServiceProvider extends $NotifierProvider<CliDetectionService, Map<String, CliDetection>> {
   /// Detects local CLI binaries and caches results per-binary with a TTL.
+  ///
+  /// Authentication status is intentionally NOT probed: Claude Code has no
+  /// stable `auth status` subcommand, and probing via a real request would
+  /// burn credits. Installed → [CliAuthStatus.unknown] always; the user
+  /// discovers auth state when they send a message and either succeeds or
+  /// gets a typed failure.
   CliDetectionServiceProvider._()
     : super(
         from: null,
@@ -40,9 +58,15 @@ final class CliDetectionServiceProvider extends $NotifierProvider<CliDetectionSe
   }
 }
 
-String _$cliDetectionServiceHash() => r'1dafa498129beb5c8dca1b3275d0f906b9940c5b';
+String _$cliDetectionServiceHash() => r'222162b9f97d996ddbae5aa02d33d5e705b23406';
 
 /// Detects local CLI binaries and caches results per-binary with a TTL.
+///
+/// Authentication status is intentionally NOT probed: Claude Code has no
+/// stable `auth status` subcommand, and probing via a real request would
+/// burn credits. Installed → [CliAuthStatus.unknown] always; the user
+/// discovers auth state when they send a message and either succeeds or
+/// gets a typed failure.
 
 abstract class _$CliDetectionService extends $Notifier<Map<String, CliDetection>> {
   Map<String, CliDetection> build();

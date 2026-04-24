@@ -1,6 +1,13 @@
 import 'dart:convert';
 
+import '../../../core/utils/debug_logger.dart';
 import '../models/stream_event.dart';
+
+/// Upper bound for a single tool_use's accumulated `partial_json` stream.
+/// A pathological CLI could otherwise balloon memory by streaming deltas
+/// indefinitely. 1 MiB is roughly 10× the largest tool input we've seen
+/// in practice.
+const int _toolInputBufferCap = 1024 * 1024;
 
 /// Parses Claude Code CLI `--output-format stream-json` lines into Code Bench's
 /// [StreamEvent] shape. Stateful across tool_use input_json_delta frames.
@@ -35,6 +42,7 @@ class ClaudeCliStreamParser {
       case 'user':
         return _parseUserMessage(json['message'] as Map<String, dynamic>?, line: trimmed);
       default:
+        dLog('[ClaudeCliStreamParser] unknown top-level type: $type');
         return null;
     }
   }
@@ -59,7 +67,8 @@ class ClaudeCliStreamParser {
         final index = event['index'] as int?;
         final delta = event['delta'] as Map<String, dynamic>?;
         if (index == null || delta == null) return null;
-        switch (delta['type'] as String?) {
+        final deltaType = delta['type'] as String?;
+        switch (deltaType) {
           case 'text_delta':
             return StreamEvent.cliTextDelta(delta['text'] as String? ?? '');
           case 'thinking_delta':
@@ -68,9 +77,20 @@ class ClaudeCliStreamParser {
             final partial = delta['partial_json'] as String? ?? '';
             final pending = _pendingToolUses[index];
             if (pending == null) return null;
+            if (pending.inputBuffer.length >= _toolInputBufferCap) {
+              // Already capped; silently drop further deltas but keep
+              // the tool_use entry so the terminal content_block_stop
+              // still lands (with whatever we buffered).
+              if (!pending.bufferCapExceeded) {
+                pending.bufferCapExceeded = true;
+                dLog('[ClaudeCliStreamParser] tool_use input exceeded $_toolInputBufferCap bytes; truncating');
+              }
+              return null;
+            }
             pending.inputBuffer.write(partial);
             return StreamEvent.cliToolUseInputDelta(id: pending.id, partialJson: partial);
           default:
+            dLog('[ClaudeCliStreamParser] unknown content_block_delta type: $deltaType');
             return null;
         }
       case 'content_block_stop':
@@ -78,17 +98,26 @@ class ClaudeCliStreamParser {
         if (index == null) return null;
         final pending = _pendingToolUses.remove(index);
         if (pending == null) return null;
+        final rawInput = pending.inputBuffer.toString();
         Map<String, dynamic> input;
         try {
-          final decoded = jsonDecode(pending.inputBuffer.toString());
+          final decoded = jsonDecode(rawInput);
           input = decoded is Map<String, dynamic> ? decoded : <String, dynamic>{};
         } catch (e) {
-          return StreamEvent.cliStreamParseFailure(line: line, error: e);
+          // Carry enough of the accumulated tool-input buffer to
+          // diagnose. `line` (the content_block_stop line) isn't the
+          // culprit — the preceding input_json_deltas are.
+          final preview = rawInput.length > 256 ? '${rawInput.substring(0, 256)}…' : rawInput;
+          return StreamEvent.cliStreamParseFailure(
+            line: line,
+            error: 'malformed tool_use input: $e (buffer="$preview")',
+          );
         }
         return StreamEvent.cliToolUseComplete(id: pending.id, input: input);
       case 'message_stop':
         return const StreamEvent.cliStreamDone();
       default:
+        dLog('[ClaudeCliStreamParser] unknown stream_event type: $eventType');
         return null;
     }
   }
@@ -117,4 +146,5 @@ class _PendingToolUse {
   final String id;
   final String name;
   final StringBuffer inputBuffer;
+  bool bufferCapExceeded = false;
 }

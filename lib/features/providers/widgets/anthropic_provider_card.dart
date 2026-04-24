@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 import '../../../data/shared/ai_model.dart';
+import '../notifiers/providers_actions.dart';
 import '../notifiers/providers_notifier.dart';
 import 'api_key_card.dart';
 import 'claude_cli_status_row.dart';
@@ -18,13 +20,25 @@ class AnthropicProviderCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = AppColors.of(context);
     final state = ref.watch(apiKeysProvider);
     return switch (state) {
       AsyncLoading() => const SizedBox(height: 180, child: Center(child: CircularProgressIndicator())),
-      AsyncError(:final error) => Text('Failed to load: $error', style: TextStyle(color: c.error)),
+      AsyncError() => _errorShell(context),
       AsyncData(:final value) => _buildCard(context, ref, value),
     };
+  }
+
+  Widget _errorShell(BuildContext context) {
+    final c = AppColors.of(context);
+    return SizedBox(
+      height: 180,
+      child: Center(
+        child: Text(
+          'Could not load provider settings — please restart the app.',
+          style: TextStyle(color: c.error, fontSize: 12),
+        ),
+      ),
+    );
   }
 
   Widget _buildCard(BuildContext context, WidgetRef ref, ApiKeysNotifierState s) {
@@ -77,6 +91,7 @@ class AnthropicProviderCard extends ConsumerWidget {
 
   Widget _toggleRow(BuildContext context, WidgetRef ref, ApiKeysNotifierState s, bool isCli) {
     final c = AppColors.of(context);
+    final saving = ref.watch(providersActionsProvider).isLoading;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -100,13 +115,18 @@ class AnthropicProviderCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 14),
-          Switch(
-            value: isCli,
-            onChanged: (v) => ref.read(apiKeysProvider.notifier).setAnthropicTransport(v ? 'cli' : 'api-key'),
-          ),
+          Switch(value: isCli, onChanged: saving ? null : (v) => _onTransportChanged(context, ref, v)),
         ],
       ),
     );
+  }
+
+  Future<void> _onTransportChanged(BuildContext context, WidgetRef ref, bool toCli) async {
+    await ref.read(providersActionsProvider.notifier).saveAnthropicTransport(toCli ? 'cli' : 'api-key');
+    if (!context.mounted) return;
+    if (ref.read(providersActionsProvider).hasError) {
+      AppSnackBar.show(context, 'Could not save transport — please retry', type: AppSnackBarType.error);
+    }
   }
 
   Widget _inactiveApiKeySummary(BuildContext context, ApiKeysNotifierState s) {

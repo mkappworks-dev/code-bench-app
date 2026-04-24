@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/utils/debug_logger.dart';
 import '../../data/ai/datasource/claude_cli_remote_datasource_process.dart';
 import '../../data/ai/models/stream_event.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
@@ -268,6 +269,7 @@ class SessionService {
       toolEvents: List.unmodifiable(toolEvents),
     );
 
+    var interrupted = false;
     await for (final event in ds.streamEvents(
       history: history,
       prompt: prompt,
@@ -277,6 +279,7 @@ class SessionService {
     )) {
       if (cancelFlag()) {
         await ds.cancel();
+        interrupted = true;
         break;
       }
 
@@ -315,14 +318,41 @@ class SessionService {
           yield snapshot();
         }
       } else if (event is StreamError) {
-        final errMsg = '[Claude Code error] ${event.failure}';
-        contentBuffer.write(contentBuffer.isEmpty ? errMsg : '\n$errMsg');
-        yield snapshot();
+        // Persist whatever partial content we have so the user retains
+        // visible context, then surface the typed failure so the caller's
+        // AsyncValue.guard fires a snackbar instead of baking stderr
+        // (paths, usernames) into the assistant's message content. The
+        // datasource always wraps the underlying cause in a
+        // ClaudeCliFailure; we rethrow it opaquely so this service does
+        // not need to import feature-layer types.
+        if (contentBuffer.isNotEmpty || toolEvents.isNotEmpty) {
+          await _session.persistMessage(sessionId, snapshot(streaming: false));
+        }
+        Error.throwWithStackTrace(event.failure, StackTrace.current);
+      } else if (event is StreamParseFailure) {
+        // Log once at the service boundary — the parser itself is
+        // side-effect-free.
+        dLog('[ClaudeCli] parse failure: ${event.error}');
       }
       // ToolUseInputDelta: no-op; parser accumulates the buffer and emits
       // ToolUseComplete.
       // StreamDone: handled by the loop ending naturally.
-      // StreamParseFailure: logged inside the datasource; ignore here.
+    }
+
+    if (interrupted) {
+      // User cancelled — mark the partial content with an explicit interrupted
+      // role so it is excluded from the next prompt's history window.
+      final interruptedMsg = ChatMessage(
+        id: assistantId,
+        sessionId: sessionId,
+        role: MessageRole.interrupted,
+        content: contentBuffer.isEmpty ? '[interrupted]' : '${contentBuffer.toString()}\n[interrupted]',
+        timestamp: DateTime.now(),
+        toolEvents: List.unmodifiable(toolEvents),
+      );
+      await _session.persistMessage(sessionId, interruptedMsg);
+      yield interruptedMsg;
+      return;
     }
 
     // Final non-streaming message.

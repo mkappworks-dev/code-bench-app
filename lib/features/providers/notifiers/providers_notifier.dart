@@ -2,7 +2,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
-import '../../../data/ai/repository/ai_repository_impl.dart';
 import '../../../services/providers/providers_service.dart';
 
 part 'providers_notifier.g.dart';
@@ -67,16 +66,5 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
       dLog('[ApiKeysNotifier] build failed: $e\n$st');
       rethrow;
     }
-  }
-
-  /// Persists the Anthropic inference transport choice and invalidates the
-  /// AI repository so the new datasource wiring is picked up.
-  Future<void> setAnthropicTransport(String value) async {
-    assert(value == 'api-key' || value == 'cli', 'invalid transport: $value');
-    final svc = ref.read(providersServiceProvider);
-    await svc.writeAnthropicTransport(value);
-    final current = await future;
-    state = AsyncData(current.copyWith(anthropicTransport: value));
-    ref.invalidate(aiRepositoryProvider);
   }
 }
