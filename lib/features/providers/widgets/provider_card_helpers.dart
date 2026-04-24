@@ -198,6 +198,27 @@ class InlineErrorRow extends StatelessWidget {
   }
 }
 
+class ActivePill extends StatelessWidget {
+  const ActivePill({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      decoration: BoxDecoration(
+        color: c.accent.withValues(alpha: 0.18),
+        border: Border.all(color: c.accent.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        'Active',
+        style: TextStyle(color: c.accent, fontSize: ThemeConstants.uiFontSizeLabel, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+}
+
 class InlineClearButton extends StatefulWidget {
   const InlineClearButton({super.key, required this.onPressed, this.label});
 
@@ -242,5 +263,160 @@ class _InlineClearButtonState extends State<InlineClearButton> {
         ),
       ),
     );
+  }
+}
+
+/// Two-option radio selector used in [AnthropicProviderCard] to choose between
+/// API Key and Claude Code CLI transports.
+class TransportRadio extends StatelessWidget {
+  const TransportRadio({
+    super.key,
+    required this.leftLabel,
+    required this.rightLabel,
+    required this.selectedIndex,
+    this.onChanged,
+    this.rightDisabled = false,
+    this.rightDisabledTooltip,
+    this.loading = false,
+  });
+
+  final String leftLabel;
+  final String rightLabel;
+
+  /// 0 = left option selected, 1 = right option selected.
+  final int selectedIndex;
+
+  /// Null disables both options (e.g. while saving).
+  final ValueChanged<int>? onChanged;
+
+  /// Disables only the right option (e.g. CLI not installed).
+  final bool rightDisabled;
+
+  /// Tooltip shown on the right option when [rightDisabled] is true.
+  final String? rightDisabledTooltip;
+
+  /// When true, shows a small spinner on the currently selected option (e.g.
+  /// while the transport switch is being persisted).
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _RadioOption(
+          label: leftLabel,
+          selected: selectedIndex == 0,
+          loading: loading && selectedIndex == 0,
+          disabled: onChanged == null,
+          onTap: onChanged == null ? null : () => onChanged!(0),
+        ),
+        const SizedBox(width: 14),
+        _MaybeTooltip(
+          message: rightDisabled ? rightDisabledTooltip : null,
+          child: _RadioOption(
+            label: rightLabel,
+            selected: selectedIndex == 1,
+            loading: loading && selectedIndex == 1,
+            disabled: onChanged == null || rightDisabled,
+            onTap: (onChanged == null || rightDisabled) ? null : () => onChanged!(1),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RadioOption extends StatefulWidget {
+  const _RadioOption({
+    required this.label,
+    required this.selected,
+    required this.disabled,
+    required this.loading,
+    this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final bool disabled;
+  final bool loading;
+  final VoidCallback? onTap;
+
+  @override
+  State<_RadioOption> createState() => _RadioOptionState();
+}
+
+class _RadioOptionState extends State<_RadioOption> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final dotColor = widget.selected ? c.accent : (widget.disabled ? c.mutedFg : c.textSecondary);
+    final labelColor = widget.selected ? c.textPrimary : (widget.disabled ? c.mutedFg : c.textSecondary);
+
+    final Widget dot;
+    if (widget.loading) {
+      dot = SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5, color: c.accent));
+    } else {
+      dot = Container(
+        width: 12,
+        height: 12,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: dotColor, width: 1.5),
+        ),
+        child: widget.selected
+            ? Center(
+                child: Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: c.accent),
+                ),
+              )
+            : null,
+      );
+    }
+
+    return MouseRegion(
+      cursor: widget.onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
+      onEnter: (_) {
+        if (widget.onTap != null) setState(() => _hovered = true);
+      },
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Opacity(
+          opacity: widget.disabled ? 0.45 : 1.0,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              dot,
+              const SizedBox(width: 6),
+              Text(
+                widget.label,
+                style: TextStyle(
+                  color: (_hovered && widget.onTap != null) ? c.textPrimary : labelColor,
+                  fontSize: ThemeConstants.uiFontSizeSmall,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MaybeTooltip extends StatelessWidget {
+  const _MaybeTooltip({required this.child, this.message});
+
+  final Widget child;
+  final String? message;
+
+  @override
+  Widget build(BuildContext context) {
+    if (message == null) return child;
+    return Tooltip(message: message!, child: child);
   }
 }

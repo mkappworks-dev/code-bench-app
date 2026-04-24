@@ -12,11 +12,18 @@ import '../notifiers/providers_actions.dart';
 import 'provider_card_helpers.dart';
 
 class ApiKeyCard extends ConsumerStatefulWidget {
-  const ApiKeyCard({super.key, required this.provider, required this.controller, required this.initialValue});
+  const ApiKeyCard({
+    super.key,
+    required this.provider,
+    required this.controller,
+    required this.initialValue,
+    this.showActivePill = false,
+  });
 
   final AIProvider provider;
   final TextEditingController controller;
   final String initialValue;
+  final bool showActivePill;
 
   @override
   ConsumerState<ApiKeyCard> createState() => _ApiKeyCardState();
@@ -192,6 +199,7 @@ class _ApiKeyCardState extends ConsumerState<ApiKeyCard> {
                     _statusLabel(),
                     style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
                   ),
+                  if (widget.showActivePill) ...[const SizedBox(width: 8), const ActivePill()],
                   const Spacer(),
                   Icon(_expanded ? AppIcons.chevronUp : AppIcons.chevronDown, size: 14, color: c.mutedFg),
                 ],
