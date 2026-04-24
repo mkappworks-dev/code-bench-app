@@ -8,32 +8,29 @@ part of 'ai_repository_impl.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Returns the concrete [AIRepositoryImpl] (typed as the class, not as
-/// `AIRepository`) so downstream service providers can pass the same
-/// instance into multiple narrow-interface fields — e.g. one service
-/// takes [AIRepository] for testConnection/fetchAvailableModels AND
-/// [TextStreamingRepository] for streamMessage, both satisfied by the
-/// same object.
+/// Assembles [AIRepositoryImpl] with the per-transport datasource map.
+///
+/// The CLI detection handoff is inverted via [claudeCliDetectorProvider]
+/// so this file never imports from `lib/services/` — the production
+/// implementation is overridden at the app root (see `lib/main.dart`).
 
 @ProviderFor(aiRepository)
 final aiRepositoryProvider = AiRepositoryProvider._();
 
-/// Returns the concrete [AIRepositoryImpl] (typed as the class, not as
-/// `AIRepository`) so downstream service providers can pass the same
-/// instance into multiple narrow-interface fields — e.g. one service
-/// takes [AIRepository] for testConnection/fetchAvailableModels AND
-/// [TextStreamingRepository] for streamMessage, both satisfied by the
-/// same object.
+/// Assembles [AIRepositoryImpl] with the per-transport datasource map.
+///
+/// The CLI detection handoff is inverted via [claudeCliDetectorProvider]
+/// so this file never imports from `lib/services/` — the production
+/// implementation is overridden at the app root (see `lib/main.dart`).
 
 final class AiRepositoryProvider
     extends $FunctionalProvider<AsyncValue<AIRepositoryImpl>, AIRepositoryImpl, FutureOr<AIRepositoryImpl>>
     with $FutureModifier<AIRepositoryImpl>, $FutureProvider<AIRepositoryImpl> {
-  /// Returns the concrete [AIRepositoryImpl] (typed as the class, not as
-  /// `AIRepository`) so downstream service providers can pass the same
-  /// instance into multiple narrow-interface fields — e.g. one service
-  /// takes [AIRepository] for testConnection/fetchAvailableModels AND
-  /// [TextStreamingRepository] for streamMessage, both satisfied by the
-  /// same object.
+  /// Assembles [AIRepositoryImpl] with the per-transport datasource map.
+  ///
+  /// The CLI detection handoff is inverted via [claudeCliDetectorProvider]
+  /// so this file never imports from `lib/services/` — the production
+  /// implementation is overridden at the app root (see `lib/main.dart`).
   AiRepositoryProvider._()
     : super(
         from: null,
@@ -58,4 +55,4 @@ final class AiRepositoryProvider
   }
 }
 
-String _$aiRepositoryHash() => r'fe81ae4d5ee92cddda71c501b772624f4294e1e1';
+String _$aiRepositoryHash() => r'412c83d7472f121af96904b669d649ace7930f1f';

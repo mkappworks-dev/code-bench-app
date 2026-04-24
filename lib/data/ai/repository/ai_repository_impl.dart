@@ -4,6 +4,7 @@ import '../../../data/_core/secure_storage.dart';
 import '../../../data/coding_tools/models/tool.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
+import '../claude_cli_detector.dart';
 import '../datasource/ai_remote_datasource.dart';
 import '../datasource/anthropic_remote_datasource_dio.dart';
 import '../datasource/claude_cli_remote_datasource_process.dart';
@@ -19,18 +20,17 @@ import 'tool_streaming_repository.dart';
 
 part 'ai_repository_impl.g.dart';
 
-/// Returns the concrete [AIRepositoryImpl] (typed as the class, not as
-/// `AIRepository`) so downstream service providers can pass the same
-/// instance into multiple narrow-interface fields — e.g. one service
-/// takes [AIRepository] for testConnection/fetchAvailableModels AND
-/// [TextStreamingRepository] for streamMessage, both satisfied by the
-/// same object.
+/// Assembles [AIRepositoryImpl] with the per-transport datasource map.
+///
+/// The CLI detection handoff is inverted via [claudeCliDetectorProvider]
+/// so this file never imports from `lib/services/` — the production
+/// implementation is overridden at the app root (see `lib/main.dart`).
 @Riverpod(keepAlive: true)
 Future<AIRepositoryImpl> aiRepository(Ref ref) async {
   final storage = ref.watch(secureStorageProvider);
   final transport = await storage.readAnthropicTransport() ?? 'api-key';
   final AIRemoteDatasource anthropicDs = transport == 'cli'
-      ? ClaudeCliRemoteDatasourceProcess()
+      ? ClaudeCliRemoteDatasourceProcess(detector: ref.watch(claudeCliDetectorProvider))
       : AnthropicRemoteDatasourceDio(await storage.readApiKey('anthropic') ?? '');
   return AIRepositoryImpl(
     sources: {
@@ -46,6 +46,9 @@ Future<AIRepositoryImpl> aiRepository(Ref ref) async {
   );
 }
 
+/// The concrete [AIRepositoryImpl] satisfies three narrow interfaces
+/// ([AIRepository], [TextStreamingRepository], [ToolStreamingRepository])
+/// so a single instance can back multiple service-level dependencies.
 class AIRepositoryImpl implements AIRepository, TextStreamingRepository, ToolStreamingRepository {
   AIRepositoryImpl({required Map<AIProvider, AIRemoteDatasource> sources}) : _sources = sources;
 

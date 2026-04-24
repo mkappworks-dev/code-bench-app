@@ -8,6 +8,8 @@ import 'core/utils/debug_logger.dart';
 import 'core/constants/app_constants.dart';
 import 'core/utils/platform_utils.dart';
 import 'data/_core/app_database.dart';
+import 'data/ai/claude_cli_detector.dart';
+import 'services/cli/cli_detection_service.dart';
 
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -48,6 +50,15 @@ void main() async {
           ref.onDispose(db.close);
           return db;
         }),
+        // Dependency-inversion wiring: the data layer declares a
+        // ClaudeCliDetector contract (stub default); the production
+        // implementation is CliDetectionService in the services layer.
+        // Overriding at the composition root keeps data/ from importing
+        // services/ while still using the real TTL-cached probe.
+        claudeCliDetectorProvider.overrideWith(
+          (ref) =>
+              () => ref.read(cliDetectionServiceProvider.notifier).probe('claude'),
+        ),
       ],
       child: const CodeBenchApp(),
     ),
