@@ -20,7 +20,7 @@ class _UpdateChipState extends ConsumerState<UpdateChip> {
 
   @override
   Widget build(BuildContext context) {
-    final updateState = ref.watch(updateNotifierProvider);
+    final updateState = ref.watch(updateProvider);
     final info = switch (updateState) {
       UpdateStateAvailable(:final info) => info,
       _ => null,
