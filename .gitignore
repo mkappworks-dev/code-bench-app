@@ -1,13 +1,3 @@
-# Superpowers brainstorm sessions
-.superpowers/
-
-# Git worktrees (per CLAUDE.md convention)
-feat/
-fix/
-tech/
-doc/
-.worktrees/
-
 # Miscellaneous
 *.class
 *.log
@@ -62,3 +52,7 @@ android/local.properties
 
 # Git worktrees
 .worktrees/
+
+# Superpowers brainstorm sessions
+.superpowers/
+
