@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
+import '../../features/update/notifiers/update_notifier.dart';
 
 /// Wraps its child and invalidates [gitLiveStateProvider] for every tracked
 /// project whenever the app window regains focus. Works on macOS, Windows,
@@ -21,6 +22,9 @@ class _AppLifecycleObserverState extends ConsumerState<AppLifecycleObserver> wit
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(updateProvider.notifier).checkForUpdates();
+    });
   }
 
   @override

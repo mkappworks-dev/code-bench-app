@@ -15,6 +15,7 @@ import '../../core/widgets/app_text_field.dart';
 import 'widgets/app_dropdown.dart';
 import '../settings/widgets/section_label.dart';
 import 'widgets/settings_group.dart';
+import '../update/widgets/update_section.dart';
 
 class GeneralScreen extends ConsumerStatefulWidget {
   const GeneralScreen({super.key});
@@ -237,6 +238,8 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
               ),
             ],
           ),
+          Divider(height: 36, thickness: 1, color: c.borderColor),
+          const UpdateSection(),
           if (kDebugMode) ...[
             Divider(height: 36, thickness: 1, color: c.borderColor),
             SectionLabel('Debug'),
