@@ -177,7 +177,9 @@ Release artifact: a `.zip` containing `Code Bench.app`, uploaded as a GitHub rel
 
 ```
 1. Dio downloads .zip to /tmp/cb-update-{version}.zip  (onReceiveProgress → UpdateState.downloading)
-2. Process.run('unzip', ['-o', zipPath, '-d', extractDir])
+2. Process.run('ditto', ['-x', '-k', zipPath, extractDir])
+     — ditto is macOS-native: preserves xattrs, resource forks, and codesign metadata
+     — available on every macOS install; preferred over unzip for .app bundles
 3. Resolve current .app path:
      Platform.resolvedExecutable
      → /Applications/Code Bench.app/Contents/MacOS/code_bench_app
@@ -185,13 +187,24 @@ Release artifact: a `.zip` containing `Code Bench.app`, uploaded as a GitHub rel
 4. Write relaunch script to /tmp/cb_relaunch.sh:
      #!/bin/bash
      sleep 1
-     rm -rf "$CURRENT_APP"
-     mv "$NEW_APP" "$CURRENT_APP"
-     open "$CURRENT_APP"
+     mv "$CURRENT_APP" "${CURRENT_APP}.old"        # backup — don't delete first
+     ditto "$NEW_APP" "$CURRENT_APP"
+     if [ $? -eq 0 ]; then
+       rm -rf "${CURRENT_APP}.old"                  # clean up backup only on success
+       open "$CURRENT_APP"
+     else
+       mv "${CURRENT_APP}.old" "$CURRENT_APP"       # restore on failure
+     fi
 5. chmod +x /tmp/cb_relaunch.sh
 6. Process.start('/bin/bash', ['/tmp/cb_relaunch.sh'])  — detached, no await
 7. exit(0)  — current process quits; script runs 1 s later
 ```
+
+**Why backup-first matters:** `rm -rf` before `mv` risks leaving no app if `mv` fails. The backup-first pattern (`mv old → .old`, copy new, clean up .old on success, restore on failure) matches what Sparkle does and is safe against partial failures.
+
+**Why `ditto`:** Unlike `unzip` + `mv`, `ditto` preserves macOS extended attributes and codesigning xattrs on the `.app` bundle, preventing Gatekeeper from blocking the relaunched app.
+
+**Permissions:** `/Applications` is writable by admin-group users without `sudo` — the same reason drag-to-install works. No elevation is needed for a standard macOS install.
 
 **Error handling:** `ProcessException` caught in `UpdateService`, logged with `dLog`, rethrown as `UpdateFailure.installFailed`. The dialog surfaces this with an error message and a "Download manually" link that calls `launchUrl` to open the GitHub releases page.
 
