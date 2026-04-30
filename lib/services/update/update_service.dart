@@ -40,6 +40,10 @@ class UpdateService {
   Future<void> installUpdate(String zipPath) async {
     final extractDir = '${Directory.systemTemp.path}/cb-update-extracted';
 
+    // Clear any stale extraction from a previous (possibly failed) attempt
+    final extractDirObj = Directory(extractDir);
+    if (extractDirObj.existsSync()) extractDirObj.deleteSync(recursive: true);
+
     // Extract .zip — ditto preserves macOS xattrs and codesign metadata
     final extractResult = await Process.run('ditto', ['-x', '-k', zipPath, extractDir]);
     if (extractResult.exitCode != 0) {

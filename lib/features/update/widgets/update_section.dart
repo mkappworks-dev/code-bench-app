@@ -4,9 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/update/models/update_state.dart';
@@ -14,46 +12,29 @@ import '../../general/widgets/settings_group.dart';
 import '../../settings/widgets/section_label.dart';
 import '../notifiers/update_notifier.dart';
 
-class UpdateSection extends ConsumerStatefulWidget {
+class UpdateSection extends ConsumerWidget {
   const UpdateSection({super.key});
 
   @override
-  ConsumerState<UpdateSection> createState() => _UpdateSectionState();
-}
-
-class _UpdateSectionState extends ConsumerState<UpdateSection> {
-  String _lastChecked = '';
-
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_loadLastChecked());
-  }
-
-  Future<void> _loadLastChecked() async {
-    final prefs = await SharedPreferences.getInstance();
-    final iso = prefs.getString(AppConstants.prefUpdateLastChecked);
-    if (!mounted || iso == null) return;
-    final dt = DateTime.tryParse(iso);
-    if (dt == null) return;
-    final now = DateTime.now();
-    final label = DateUtils.isSameDay(dt, now)
-        ? 'Today at ${DateFormat.jm().format(dt)}'
-        : DateFormat.MMMd().format(dt);
-    setState(() => _lastChecked = label);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Reload last-checked label whenever a check completes
-    ref.listen(updateProvider, (prev, next) {
-      if (prev is UpdateStateChecking && next is! UpdateStateChecking) {
-        unawaited(_loadLastChecked());
-      }
-    });
-
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lastCheckedAsync = ref.watch(updateLastCheckedProvider);
     final updateState = ref.watch(updateProvider);
     final isChecking = updateState is UpdateStateChecking;
+
+    final description = lastCheckedAsync.when(
+      data: (iso) {
+        if (iso == null) return 'Never checked';
+        final dt = DateTime.tryParse(iso);
+        if (dt == null) return 'Never checked';
+        final now = DateTime.now();
+        final label = DateUtils.isSameDay(dt, now)
+            ? 'Today at ${DateFormat.jm().format(dt)}'
+            : DateFormat.MMMd().format(dt);
+        return 'Last checked $label';
+      },
+      loading: () => 'Never checked',
+      error: (_, _) => 'Never checked',
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,7 +45,7 @@ class _UpdateSectionState extends ConsumerState<UpdateSection> {
           rows: [
             SettingsRow(
               label: 'Check for updates',
-              description: _lastChecked.isEmpty ? 'Never checked' : 'Last checked $_lastChecked',
+              description: description,
               trailing: _CheckButton(
                 isChecking: isChecking,
                 onTap: () => unawaited(ref.read(updateProvider.notifier).checkForUpdates()),

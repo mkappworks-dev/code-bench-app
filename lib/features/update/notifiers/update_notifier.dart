@@ -15,27 +15,27 @@ import 'update_failure.dart';
 part 'update_notifier.g.dart';
 
 @Riverpod(keepAlive: true)
+Future<String?> updateLastChecked(Ref ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString(AppConstants.prefUpdateLastChecked);
+}
+
+@Riverpod(keepAlive: true)
 class UpdateNotifier extends _$UpdateNotifier {
   @override
   UpdateState build() => const UpdateState.idle();
 
   Future<void> checkForUpdates() async {
     // Guard: do not interrupt an in-progress download or install
-    if (state is UpdateStateChecking ||
-        state is UpdateStateDownloading ||
-        state is UpdateStateInstalling) return;
+    if (state is UpdateStateChecking || state is UpdateStateDownloading || state is UpdateStateInstalling) return;
 
     state = const UpdateState.checking();
     try {
       final info = await ref.read(updateServiceProvider).checkForUpdate();
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        AppConstants.prefUpdateLastChecked,
-        DateTime.now().toIso8601String(),
-      );
-      state = info != null
-          ? UpdateState.available(info)
-          : const UpdateState.upToDate();
+      await prefs.setString(AppConstants.prefUpdateLastChecked, DateTime.now().toIso8601String());
+      ref.invalidate(updateLastCheckedProvider);
+      state = info != null ? UpdateState.available(info) : const UpdateState.upToDate();
     } on UpdateNetworkException catch (e, st) {
       dLog('[UpdateNotifier] checkForUpdates network error: $e\n$st');
       state = UpdateState.error(UpdateFailure.networkError(e.message));
@@ -48,10 +48,9 @@ class UpdateNotifier extends _$UpdateNotifier {
   Future<void> downloadAndInstall(UpdateInfo info) async {
     state = const UpdateState.downloading(0);
     try {
-      final zipPath = await ref.read(updateServiceProvider).downloadUpdate(
-        info: info,
-        onProgress: (progress) => state = UpdateState.downloading(progress),
-      );
+      final zipPath = await ref
+          .read(updateServiceProvider)
+          .downloadUpdate(info: info, onProgress: (progress) => state = UpdateState.downloading(progress));
       state = const UpdateState.installing();
       await ref.read(updateServiceProvider).installUpdate(zipPath);
       // exit(0) is called inside installUpdate — code below is unreachable on success
