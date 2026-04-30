@@ -58,4 +58,7 @@ abstract final class AppIcons {
   static const IconData settings = LucideIcons.settings;
   static const IconData warning = LucideIcons.triangleAlert;
   static const IconData clock = LucideIcons.clock;
+
+  // Updates
+  static const IconData update = LucideIcons.arrowDownToLine;
 }

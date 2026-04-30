@@ -22,4 +22,5 @@ class AppConstants {
   static const String prefWindowY = 'window_y';
   static const String prefWindowWidth = 'window_width';
   static const String prefWindowHeight = 'window_height';
+  static const String prefUpdateLastChecked = 'update_last_checked';
 }
