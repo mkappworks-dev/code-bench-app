@@ -21,9 +21,11 @@ class _UpdateChipState extends ConsumerState<UpdateChip> {
   @override
   Widget build(BuildContext context) {
     final updateState = ref.watch(updateProvider);
-    final info = switch (updateState) {
-      UpdateStateAvailable(:final info) => info,
-      _ => null,
+    final (info, label, showChevron) = switch (updateState) {
+      UpdateStateAvailable(:final info) => (info, 'v${info.version} available', true),
+      UpdateStateDownloading(:final info, :final progress) => (info, 'Downloading ${(progress * 100).round()}%', false),
+      UpdateStateInstalling(:final info) => (info, 'Installing…', false),
+      _ => (null, null, false),
     };
     if (info == null) return const SizedBox.shrink();
 
@@ -50,12 +52,12 @@ class _UpdateChipState extends ConsumerState<UpdateChip> {
                 const SizedBox(width: 7),
                 Expanded(
                   child: Text(
-                    'v${info.version} available',
+                    label!,
                     style: TextStyle(color: c.accentLight, fontSize: 10.5, fontWeight: FontWeight.w500),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Icon(AppIcons.chevronRight, size: 10, color: c.textMuted),
+                if (showChevron) Icon(AppIcons.chevronRight, size: 10, color: c.textMuted),
               ],
             ),
           ),

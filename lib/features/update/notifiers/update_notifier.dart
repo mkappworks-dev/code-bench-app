@@ -53,12 +53,12 @@ class UpdateNotifier extends _$UpdateNotifier {
   }
 
   Future<void> downloadAndInstall(UpdateInfo info) async {
-    state = const UpdateState.downloading(0);
+    state = UpdateState.downloading(info, 0);
     try {
       final zipPath = await ref
           .read(updateServiceProvider)
-          .downloadUpdate(info: info, onProgress: (progress) => state = UpdateState.downloading(progress));
-      state = const UpdateState.installing();
+          .downloadUpdate(info: info, onProgress: (progress) => state = UpdateState.downloading(info, progress));
+      state = UpdateState.installing(info);
       await ref.read(updateServiceProvider).installUpdate(zipPath);
       // exit(0) is called inside installUpdate — code below is unreachable on success
     } on UpdateDownloadException catch (e, st) {

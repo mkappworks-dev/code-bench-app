@@ -134,14 +134,14 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function()?  checking,TResult Function( UpdateInfo info)?  available,TResult Function( double progress)?  downloading,TResult Function()?  installing,TResult Function()?  upToDate,TResult Function( UpdateFailure failure)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function()?  checking,TResult Function( UpdateInfo info)?  available,TResult Function( UpdateInfo info,  double progress)?  downloading,TResult Function( UpdateInfo info)?  installing,TResult Function()?  upToDate,TResult Function( UpdateFailure failure)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case UpdateStateIdle() when idle != null:
 return idle();case UpdateStateChecking() when checking != null:
 return checking();case UpdateStateAvailable() when available != null:
 return available(_that.info);case UpdateStateDownloading() when downloading != null:
-return downloading(_that.progress);case UpdateStateInstalling() when installing != null:
-return installing();case UpdateStateUpToDate() when upToDate != null:
+return downloading(_that.info,_that.progress);case UpdateStateInstalling() when installing != null:
+return installing(_that.info);case UpdateStateUpToDate() when upToDate != null:
 return upToDate();case UpdateStateError() when error != null:
 return error(_that.failure);case _:
   return orElse();
@@ -161,14 +161,14 @@ return error(_that.failure);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function()  checking,required TResult Function( UpdateInfo info)  available,required TResult Function( double progress)  downloading,required TResult Function()  installing,required TResult Function()  upToDate,required TResult Function( UpdateFailure failure)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function()  checking,required TResult Function( UpdateInfo info)  available,required TResult Function( UpdateInfo info,  double progress)  downloading,required TResult Function( UpdateInfo info)  installing,required TResult Function()  upToDate,required TResult Function( UpdateFailure failure)  error,}) {final _that = this;
 switch (_that) {
 case UpdateStateIdle():
 return idle();case UpdateStateChecking():
 return checking();case UpdateStateAvailable():
 return available(_that.info);case UpdateStateDownloading():
-return downloading(_that.progress);case UpdateStateInstalling():
-return installing();case UpdateStateUpToDate():
+return downloading(_that.info,_that.progress);case UpdateStateInstalling():
+return installing(_that.info);case UpdateStateUpToDate():
 return upToDate();case UpdateStateError():
 return error(_that.failure);}
 }
@@ -184,14 +184,14 @@ return error(_that.failure);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function()?  checking,TResult? Function( UpdateInfo info)?  available,TResult? Function( double progress)?  downloading,TResult? Function()?  installing,TResult? Function()?  upToDate,TResult? Function( UpdateFailure failure)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function()?  checking,TResult? Function( UpdateInfo info)?  available,TResult? Function( UpdateInfo info,  double progress)?  downloading,TResult? Function( UpdateInfo info)?  installing,TResult? Function()?  upToDate,TResult? Function( UpdateFailure failure)?  error,}) {final _that = this;
 switch (_that) {
 case UpdateStateIdle() when idle != null:
 return idle();case UpdateStateChecking() when checking != null:
 return checking();case UpdateStateAvailable() when available != null:
 return available(_that.info);case UpdateStateDownloading() when downloading != null:
-return downloading(_that.progress);case UpdateStateInstalling() when installing != null:
-return installing();case UpdateStateUpToDate() when upToDate != null:
+return downloading(_that.info,_that.progress);case UpdateStateInstalling() when installing != null:
+return installing(_that.info);case UpdateStateUpToDate() when upToDate != null:
 return upToDate();case UpdateStateError() when error != null:
 return error(_that.failure);case _:
   return null;
@@ -344,9 +344,10 @@ $UpdateInfoCopyWith<$Res> get info {
 
 
 class UpdateStateDownloading implements UpdateState {
-  const UpdateStateDownloading(this.progress);
+  const UpdateStateDownloading(this.info, this.progress);
   
 
+ final  UpdateInfo info;
  final  double progress;
 
 /// Create a copy of UpdateState
@@ -359,16 +360,16 @@ $UpdateStateDownloadingCopyWith<UpdateStateDownloading> get copyWith => _$Update
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateStateDownloading&&(identical(other.progress, progress) || other.progress == progress));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateStateDownloading&&(identical(other.info, info) || other.info == info)&&(identical(other.progress, progress) || other.progress == progress));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,progress);
+int get hashCode => Object.hash(runtimeType,info,progress);
 
 @override
 String toString() {
-  return 'UpdateState.downloading(progress: $progress)';
+  return 'UpdateState.downloading(info: $info, progress: $progress)';
 }
 
 
@@ -379,11 +380,11 @@ abstract mixin class $UpdateStateDownloadingCopyWith<$Res> implements $UpdateSta
   factory $UpdateStateDownloadingCopyWith(UpdateStateDownloading value, $Res Function(UpdateStateDownloading) _then) = _$UpdateStateDownloadingCopyWithImpl;
 @useResult
 $Res call({
- double progress
+ UpdateInfo info, double progress
 });
 
 
-
+$UpdateInfoCopyWith<$Res> get info;
 
 }
 /// @nodoc
@@ -396,47 +397,100 @@ class _$UpdateStateDownloadingCopyWithImpl<$Res>
 
 /// Create a copy of UpdateState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? progress = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? info = null,Object? progress = null,}) {
   return _then(UpdateStateDownloading(
-null == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
+null == info ? _self.info : info // ignore: cast_nullable_to_non_nullable
+as UpdateInfo,null == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
 as double,
   ));
 }
 
-
+/// Create a copy of UpdateState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$UpdateInfoCopyWith<$Res> get info {
+  
+  return $UpdateInfoCopyWith<$Res>(_self.info, (value) {
+    return _then(_self.copyWith(info: value));
+  });
+}
 }
 
 /// @nodoc
 
 
 class UpdateStateInstalling implements UpdateState {
-  const UpdateStateInstalling();
+  const UpdateStateInstalling(this.info);
   
 
+ final  UpdateInfo info;
 
-
+/// Create a copy of UpdateState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$UpdateStateInstallingCopyWith<UpdateStateInstalling> get copyWith => _$UpdateStateInstallingCopyWithImpl<UpdateStateInstalling>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateStateInstalling);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateStateInstalling&&(identical(other.info, info) || other.info == info));
 }
 
 
 @override
-int get hashCode => runtimeType.hashCode;
+int get hashCode => Object.hash(runtimeType,info);
 
 @override
 String toString() {
-  return 'UpdateState.installing()';
+  return 'UpdateState.installing(info: $info)';
 }
 
 
 }
 
+/// @nodoc
+abstract mixin class $UpdateStateInstallingCopyWith<$Res> implements $UpdateStateCopyWith<$Res> {
+  factory $UpdateStateInstallingCopyWith(UpdateStateInstalling value, $Res Function(UpdateStateInstalling) _then) = _$UpdateStateInstallingCopyWithImpl;
+@useResult
+$Res call({
+ UpdateInfo info
+});
 
 
+$UpdateInfoCopyWith<$Res> get info;
+
+}
+/// @nodoc
+class _$UpdateStateInstallingCopyWithImpl<$Res>
+    implements $UpdateStateInstallingCopyWith<$Res> {
+  _$UpdateStateInstallingCopyWithImpl(this._self, this._then);
+
+  final UpdateStateInstalling _self;
+  final $Res Function(UpdateStateInstalling) _then;
+
+/// Create a copy of UpdateState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? info = null,}) {
+  return _then(UpdateStateInstalling(
+null == info ? _self.info : info // ignore: cast_nullable_to_non_nullable
+as UpdateInfo,
+  ));
+}
+
+/// Create a copy of UpdateState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$UpdateInfoCopyWith<$Res> get info {
+  
+  return $UpdateInfoCopyWith<$Res>(_self.info, (value) {
+    return _then(_self.copyWith(info: value));
+  });
+}
+}
 
 /// @nodoc
 

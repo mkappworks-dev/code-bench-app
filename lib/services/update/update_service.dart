@@ -72,14 +72,17 @@ mv "\$1" "\$1.old"
 ditto "\$2" "\$1"
 if [ \$? -eq 0 ]; then
   rm -rf "\$1.old"
+  rm -rf "\$3"
+  rm -f "\$4"
   open "\$1"
 else
   mv "\$1.old" "\$1"
+  rm -rf "\$3"
 fi
 ''';
     await File(scriptPath).writeAsString(script);
     await Process.run('chmod', ['+x', scriptPath]);
-    await Process.start('/bin/bash', [scriptPath, appPath, extracted.path]);
+    await Process.start('/bin/bash', [scriptPath, appPath, extracted.path, extractDir, zipPath]);
 
     exit(0);
   }

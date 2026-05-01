@@ -22,6 +22,7 @@ class UpdateDialog extends ConsumerStatefulWidget {
 
   static Future<void> show(BuildContext context, UpdateInfo info) => showDialog<void>(
     context: context,
+    barrierDismissible: false,
     builder: (_) => UpdateDialog(info: info),
   );
 
@@ -71,8 +72,10 @@ class _UpdateDialogState extends ConsumerState<UpdateDialog> {
       content: _DialogContent(info: widget.info, updateState: updateState, currentVersion: _currentVersion),
       actions: [
         AppDialogAction.cancel(
+          label: busy ? 'Hide' : 'Cancel',
           onPressed: busy
-              ? () {} // disabled during download/install — no-op keeps the button visible
+              ? Navigator.of(context)
+                    .pop // hides dialog; download continues in background
               : () {
                   ref.read(updateProvider.notifier).dismiss();
                   Navigator.of(context).pop();
