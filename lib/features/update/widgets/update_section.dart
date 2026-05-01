@@ -45,7 +45,7 @@ class UpdateSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionLabel('Updates'),
+        const SectionLabel('About'),
         const SizedBox(height: 8),
         SettingsGroup(
           rows: [
