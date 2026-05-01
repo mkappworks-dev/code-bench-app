@@ -136,6 +136,12 @@ jobs:
             **macOS download:** grab `CodeBench-macos.dmg`, open it, and drag Code Bench to Applications.
 
             Once installed, the app will check for updates automatically and prompt you when a new version is available.
+
+            ### First launch on macOS
+            The app is not yet notarized, so Gatekeeper will block it on first open.
+            1. Go to **System Settings → Privacy & Security** and scroll to the bottom.
+            2. Click **Open Anyway**, then **Open** on the next prompt.
+            3. If macOS asks for access to your Documents folder, click **Allow** — Code Bench reads project files from disk.
           files: |
             artifacts/CodeBench-macos.dmg
             artifacts/CodeBench-macos.zip
