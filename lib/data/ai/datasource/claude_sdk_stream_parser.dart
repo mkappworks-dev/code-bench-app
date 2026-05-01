@@ -42,7 +42,9 @@ class ClaudeSdkStreamParser {
       case 'user':
         return _parseUserMessage(json['message'] as Map<String, dynamic>?, line: trimmed);
       default:
-        dLog('[ClaudeSdkStreamParser] unknown top-level type: $type');
+        // sLog so post-release telemetry catches new top-level types the
+        // parser hasn't been updated for.
+        sLog('[ClaudeSdkStreamParser] unknown top-level type: $type');
         return null;
     }
   }
@@ -90,7 +92,7 @@ class ClaudeSdkStreamParser {
             pending.inputBuffer.write(partial);
             return StreamEvent.cliToolUseInputDelta(id: pending.id, partialJson: partial);
           default:
-            dLog('[ClaudeSdkStreamParser] unknown content_block_delta type: $deltaType');
+            sLog('[ClaudeSdkStreamParser] unknown content_block_delta type: $deltaType');
             return null;
         }
       case 'content_block_stop':
@@ -117,7 +119,7 @@ class ClaudeSdkStreamParser {
       case 'message_stop':
         return const StreamEvent.cliStreamDone();
       default:
-        dLog('[ClaudeSdkStreamParser] unknown stream_event type: $eventType');
+        sLog('[ClaudeSdkStreamParser] unknown stream_event type: $eventType');
         return null;
     }
   }

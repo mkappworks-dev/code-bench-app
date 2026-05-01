@@ -21,6 +21,10 @@ AIProviderDatasource claudeSdkDatasourceProcess(Ref ref) {
 /// value like `--dangerously-skip-perms` can never slip into flag position.
 final _uuidV4 = RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
 
+/// Abort after N consecutive parse failures — a healthy stream produces
+/// occasional unknown frames but never a sustained run of malformed lines.
+const int _consecutiveParseFailureLimit = 5;
+
 /// Spawns the locally-installed `claude` CLI binary and streams its
 /// `--output-format stream-json` output, normalized to [ProviderRuntimeEvent].
 ///
@@ -35,7 +39,6 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
   final String binaryPath;
 
   Process? _process;
-  StreamController<ProviderRuntimeEvent>? _controller;
   final Set<String> _knownSessions = {};
 
   @override
@@ -45,22 +48,35 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
   String get displayName => 'Claude Code SDK';
 
   @override
-  Future<bool> isAvailable() async {
+  Future<DetectionResult> detect() async {
+    // Step 1: PATH lookup.
+    final ProcessResult whichResult;
     try {
-      final result = await Process.run('which', [binaryPath]).timeout(const Duration(seconds: 2));
-      return result.exitCode == 0;
-    } catch (_) {
-      return false;
+      whichResult = await Process.run('which', [binaryPath]).timeout(const Duration(seconds: 2));
+    } catch (e) {
+      sLog('[ClaudeSdk] which probe failed: $e');
+      return DetectionResult.unhealthy('Detection failed: ${e.runtimeType}');
     }
-  }
+    if (whichResult.exitCode != 0) {
+      return const DetectionResult.missing();
+    }
 
-  @override
-  Future<String?> getVersion() async {
+    // Step 2: --version probe. A stale or broken binary still resolves on
+    // PATH but fails here. Surfacing this as `unhealthy` (rather than
+    // `missing`) lets the UI tell users to reinstall vs install.
+    final ProcessResult versionResult;
     try {
-      final result = await Process.run(binaryPath, ['--version']).timeout(const Duration(seconds: 5));
-      if (result.exitCode == 0) return (result.stdout as String).trim();
-    } catch (_) {}
-    return null;
+      versionResult = await Process.run(binaryPath, ['--version']).timeout(const Duration(seconds: 5));
+    } catch (e) {
+      sLog('[ClaudeSdk] --version probe failed: $e');
+      return DetectionResult.unhealthy('--version failed: ${e.runtimeType}');
+    }
+    if (versionResult.exitCode != 0) {
+      sLog('[ClaudeSdk] --version exited ${versionResult.exitCode}');
+      return DetectionResult.unhealthy('--version exited ${versionResult.exitCode}');
+    }
+    final version = (versionResult.stdout as String).trim();
+    return DetectionResult.installed(version.isEmpty ? 'unknown' : version);
   }
 
   @override
@@ -69,40 +85,38 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
     required String sessionId,
     required String workingDirectory,
   }) {
-    _controller = StreamController<ProviderRuntimeEvent>.broadcast();
-    _stream(prompt: prompt, sessionId: sessionId, workingDirectory: workingDirectory);
-    return _controller!.stream;
+    final controller = StreamController<ProviderRuntimeEvent>.broadcast();
+    _stream(controller, prompt: prompt, sessionId: sessionId, workingDirectory: workingDirectory);
+    return controller.stream;
   }
 
-  Future<void> _stream({required String prompt, required String sessionId, required String workingDirectory}) async {
+  Future<void> _stream(
+    StreamController<ProviderRuntimeEvent> controller, {
+    required String prompt,
+    required String sessionId,
+    required String workingDirectory,
+  }) async {
+    Process? spawned;
     try {
-      _controller?.add(ProviderInit(provider: id));
+      controller.add(ProviderInit(provider: id));
 
       // sessionId guard — we only ever generate v4 UUIDs, but a future
       // import/restore path could leak an attacker-shaped value into argv.
       if (!_uuidV4.hasMatch(sessionId)) {
         sLog('[ClaudeSdk] rejected non-UUID sessionId at argv boundary');
-        _controller?.add(const ProviderStreamFailure(error: 'invalid sessionId shape'));
-        await _controller?.close();
+        controller.add(const ProviderStreamFailure(error: 'invalid sessionId shape'));
         return;
       }
 
-      // workingDirectory guard — must be an existing absolute path. The CLI
-      // runs with bypassPermissions so a stale or attacker-influenced path
-      // (e.g. `~`, `/`) would give it full home-directory tool access.
+      // workingDirectory guard — must be an existing absolute path that is
+      // not the filesystem root. The CLI runs with bypassPermissions so a
+      // stale or attacker-influenced path (e.g. `~`, `/`) would give it
+      // full home-directory tool access.
       final wdDir = Directory(workingDirectory);
-      if (!workingDirectory.startsWith('/') || !wdDir.existsSync()) {
+      if (!workingDirectory.startsWith('/') || workingDirectory == '/' || !wdDir.existsSync()) {
         sLog('[ClaudeSdk] rejected workingDirectory: $workingDirectory');
-        _controller?.add(const ProviderStreamFailure(error: 'invalid workingDirectory'));
-        await _controller?.close();
+        controller.add(const ProviderStreamFailure(error: 'invalid workingDirectory'));
         return;
-      }
-
-      // Flag-shaped prompts slip past argv into the CLI's own option parser.
-      // `--` ends Claude Code's option parsing; the prompt after it is
-      // always treated positionally.
-      if (prompt.startsWith('-')) {
-        sLog('[ClaudeSdk] prompt begins with "-"; neutralising with -- separator');
       }
 
       final isFirstTurn = !_knownSessions.contains(sessionId);
@@ -115,6 +129,9 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
         'bypassPermissions',
         '--verbose',
         if (isFirstTurn) ...['--session-id', sessionId] else ...['--resume', sessionId],
+        // `--` ends Claude Code's option parsing; the prompt after it is
+        // always treated positionally, so a `-`-prefixed prompt cannot
+        // become a flag.
         '--',
         prompt,
       ];
@@ -132,9 +149,8 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
         if (parentEnv['SHELL'] != null) 'SHELL': parentEnv['SHELL']!,
       };
 
-      final Process process;
       try {
-        process = await Process.start(
+        spawned = await Process.start(
           binaryPath,
           args,
           workingDirectory: workingDirectory,
@@ -143,18 +159,17 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
           environment: minimalEnv,
         );
       } on ProcessException catch (e) {
-        dLog('[ClaudeSdk] start failed: $e');
-        _controller?.add(const ProviderStreamFailure(error: 'Claude Code CLI is not installed or not on PATH'));
-        await _controller?.close();
+        dLog('[ClaudeSdk] start failed: ${redactSecrets('$e')}');
+        controller.add(const ProviderStreamFailure(error: 'Claude Code CLI is not installed or not on PATH'));
         return;
       }
 
-      _process = process;
+      _process = spawned;
 
       // Cap stderr so a chatty crash can't balloon memory.
       const stderrCap = 64 * 1024;
       final stderrBuffer = StringBuffer();
-      final stderrSub = process.stderr.transform(utf8.decoder).listen((chunk) {
+      final stderrSub = spawned.stderr.transform(const Utf8Decoder(allowMalformed: true)).listen((chunk) {
         if (stderrBuffer.length >= stderrCap) return;
         final remaining = stderrCap - stderrBuffer.length;
         stderrBuffer.write(chunk.length <= remaining ? chunk : chunk.substring(0, remaining));
@@ -162,37 +177,66 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
 
       final parser = ClaudeSdkStreamParser();
       var sawDone = false;
+      var consecutiveParseFailures = 0;
+      var aborted = false;
 
       try {
-        await for (final line in process.stdout.transform(utf8.decoder).transform(const LineSplitter())) {
+        await for (final line
+            in spawned.stdout.transform(const Utf8Decoder(allowMalformed: true)).transform(const LineSplitter())) {
           final event = parser.parseLine(line);
-          if (event == null) continue;
+          if (event == null) {
+            consecutiveParseFailures = 0;
+            continue;
+          }
           final mapped = _toProviderEvent(event);
+          if (event is StreamParseFailure) {
+            consecutiveParseFailures++;
+            final preview = line.length > 256 ? '${line.substring(0, 256)}…' : line;
+            dLog(
+              '[ClaudeSdk] parse failure ($consecutiveParseFailures/$_consecutiveParseFailureLimit): ${event.error} — line="${redactSecrets(preview)}"',
+            );
+            if (consecutiveParseFailures >= _consecutiveParseFailureLimit) {
+              controller.add(
+                ProviderStreamFailure(error: 'Claude CLI output unparseable', details: 'last error: ${event.error}'),
+              );
+              aborted = true;
+              spawned.kill(ProcessSignal.sigterm);
+              break;
+            }
+            continue;
+          }
+          consecutiveParseFailures = 0;
           if (mapped == null) continue;
           if (mapped is ProviderStreamDone) sawDone = true;
-          _controller?.add(mapped);
+          controller.add(mapped);
         }
 
-        final exitCode = await process.exitCode;
-        if (exitCode != 0) {
-          dLog('[ClaudeSdk] process exited $exitCode\nstderr=${stderrBuffer.toString()}');
-          _controller?.add(ProviderStreamFailure(error: 'claude exited $exitCode', details: stderrBuffer.toString()));
+        final exitCode = await spawned.exitCode;
+        if (aborted) {
+          // Already emitted ProviderStreamFailure; nothing more to do.
+        } else if (exitCode != 0) {
+          dLog('[ClaudeSdk] process exited $exitCode\nstderr=${redactSecrets(stderrBuffer.toString())}');
+          controller.add(
+            ProviderStreamFailure(error: 'claude exited $exitCode', details: redactSecrets(stderrBuffer.toString())),
+          );
         } else if (!sawDone) {
           dLog('[ClaudeSdk] stdout closed without message_stop (exit=0)');
-          _controller?.add(const ProviderStreamFailure(error: 'stream closed without message_stop'));
+          controller.add(const ProviderStreamFailure(error: 'stream closed without message_stop'));
         } else {
           // Mark this session as known so subsequent turns use --resume.
           _knownSessions.add(sessionId);
         }
       } finally {
         await stderrSub.cancel();
-        _process = null;
       }
     } catch (e, st) {
-      dLog('[ClaudeSdk] send failed: $e\n$st');
-      _controller?.add(ProviderStreamFailure(error: e));
+      dLog('[ClaudeSdk] send failed: ${redactSecrets('$e')}\n$st');
+      controller.add(ProviderStreamFailure(error: e));
     } finally {
-      await _controller?.close();
+      // Only clear _process if it still points to ours — a later sendAndStream
+      // call may have already overwritten it.
+      if (identical(_process, spawned)) _process = null;
+      await controller.close();
     }
   }
 
@@ -209,6 +253,7 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
       ToolResult() => null,
       StreamDone() => const ProviderStreamDone(),
       StreamError(:final failure) => ProviderStreamFailure(error: failure),
+      // StreamParseFailure handled by the caller (counted, dLog'd, aborts after threshold).
       StreamParseFailure() => null,
       // OpenAI-format variants — never emitted by the Claude CLI parser.
       StreamTextDelta() ||
@@ -221,9 +266,10 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
 
   @override
   void cancel() {
-    final p = _process;
-    if (p != null) p.kill(ProcessSignal.sigterm);
-    _controller?.close();
+    _process?.kill(ProcessSignal.sigterm);
+    // The controller closes via the `finally` in [_stream] when the process
+    // exits — no need to close it here, and doing so would race with a
+    // freshly-spawned turn.
   }
 
   @override

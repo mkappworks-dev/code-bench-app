@@ -33,6 +33,10 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
 
   final String binaryPath;
 
+  /// Cap for the in-memory stderr buffer per turn — a chatty crash should
+  /// not balloon Flutter-process memory.
+  static const int _stderrCap = 64 * 1024;
+
   Process? _process;
   String? _workingDirectory;
   int _nextId = 1;
@@ -47,6 +51,8 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
 
   StreamController<ProviderRuntimeEvent>? _streamController;
   StreamSubscription<String>? _stdoutSubscription;
+  StreamSubscription<String>? _stderrSubscription;
+  final StringBuffer _stderrBuffer = StringBuffer();
 
   String? _providerThreadId;
   String? _version;
@@ -58,20 +64,36 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
   String get displayName => 'Codex';
 
   @override
-  Future<bool> isAvailable() async {
+  Future<DetectionResult> detect() async {
+    final ProcessResult whichResult;
     try {
-      final result = await Process.run('which', [binaryPath]).timeout(const Duration(seconds: 2));
-      return result.exitCode == 0;
-    } catch (_) {
-      return false;
+      whichResult = await Process.run('which', [binaryPath]).timeout(const Duration(seconds: 2));
+    } catch (e) {
+      sLog('[CodexSdk] which probe failed: $e');
+      return DetectionResult.unhealthy('Detection failed: ${e.runtimeType}');
     }
-  }
+    if (whichResult.exitCode != 0) {
+      return const DetectionResult.missing();
+    }
 
-  @override
-  Future<String?> getVersion() async {
-    // Version is extracted from the `initialize` response during first
-    // connection. Return cached value if already connected.
-    return _version;
+    // Codex doesn't expose `--version` cheaply; the canonical version comes
+    // from the `initialize` JSON-RPC response. If we already have it, use it.
+    if (_version != null) return DetectionResult.installed(_version!);
+
+    // Probe `--version` defensively. A binary on PATH that hangs/errors
+    // here is `unhealthy`, not `missing`.
+    try {
+      final result = await Process.run(binaryPath, ['--version']).timeout(const Duration(seconds: 5));
+      if (result.exitCode != 0) {
+        sLog('[CodexSdk] --version exited ${result.exitCode}');
+        return DetectionResult.unhealthy('--version exited ${result.exitCode}');
+      }
+      final out = (result.stdout as String).trim();
+      return DetectionResult.installed(out.isEmpty ? 'unknown' : out);
+    } catch (e) {
+      sLog('[CodexSdk] --version probe failed: $e');
+      return DetectionResult.unhealthy('--version failed: ${e.runtimeType}');
+    }
   }
 
   @override
@@ -80,6 +102,9 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
     required String sessionId,
     required String workingDirectory,
   }) {
+    // Defensive close: a prior turn may have leaked an open controller (e.g.
+    // racing cancel + completion). Closing is idempotent.
+    _streamController?.close();
     _streamController = StreamController<ProviderRuntimeEvent>.broadcast();
     _send(prompt, sessionId, workingDirectory);
     return _streamController!.stream;
@@ -107,9 +132,12 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
       // Events stream back via notifications; [_handleNotification] drives
       // the StreamController. We wait here until turn/completed or an error.
     } catch (e, st) {
-      dLog('[CodexSdk] send failed: $e\n$st');
+      dLog('[CodexSdk] send failed: ${redactSecrets('$e')}\n$st');
       _streamController?.add(ProviderStreamFailure(error: e));
-      await _streamController?.close();
+      // Per-turn cleanup — keep the long-lived app-server process alive so
+      // a retry can reuse it. If the process itself died, the stdout
+      // onDone / exitCode handlers will _resetProcess().
+      _resetTurn();
     }
   }
 
@@ -122,50 +150,86 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
     if (_process != null) {
       _process!.kill();
       await _process!.exitCode;
-      _process = null;
-      _version = null;
-      _providerThreadId = null;
+      _resetProcess();
     }
 
     dLog('[CodexSdk] spawning codex app-server in $workingDirectory');
+
+    // Minimal env — the app-server inherits this and so do the commands
+    // it executes. A developer's parent env routinely contains
+    // ANTHROPIC_API_KEY / OPENAI_API_KEY / GITHUB_TOKEN / AWS_*; do not
+    // leak those into transitively-spawned commands.
+    final parentEnv = Platform.environment;
+    final minimalEnv = <String, String>{
+      if (parentEnv['HOME'] != null) 'HOME': parentEnv['HOME']!,
+      if (parentEnv['PATH'] != null) 'PATH': parentEnv['PATH']!,
+      if (parentEnv['USER'] != null) 'USER': parentEnv['USER']!,
+      if (parentEnv['LANG'] != null) 'LANG': parentEnv['LANG']!,
+      if (parentEnv['TMPDIR'] != null) 'TMPDIR': parentEnv['TMPDIR']!,
+      if (parentEnv['SHELL'] != null) 'SHELL': parentEnv['SHELL']!,
+      // Codex-specific: forward only what its OAuth flow needs.
+      if (parentEnv['CODEX_HOME'] != null) 'CODEX_HOME': parentEnv['CODEX_HOME']!,
+    };
+
     _process = await Process.start(
       binaryPath,
       ['app-server'],
       workingDirectory: workingDirectory,
-      // Do NOT use runInShell — we construct args explicitly
+      runInShell: false,
+      includeParentEnvironment: false,
+      environment: minimalEnv,
     );
     _workingDirectory = workingDirectory;
 
-    // Wire stdout → JSON-RPC message handler
+    // Wire stdout → JSON-RPC message handler. Use allowMalformed so a
+    // multi-byte char split across reads doesn't take the whole stream
+    // down with a UTF-8 decode error.
     _stdoutSubscription = _process!.stdout
-        .transform(const Utf8Decoder())
+        .transform(const Utf8Decoder(allowMalformed: true))
         .transform(const LineSplitter())
         .listen(
           _handleLine,
-          onError: (Object e) => dLog('[CodexSdk] stdout error: $e'),
+          onError: (Object e) {
+            dLog('[CodexSdk] stdout error: ${redactSecrets('$e')}');
+            _streamController?.add(ProviderStreamFailure(error: 'Codex stdout error: ${e.runtimeType}'));
+            _resetProcess();
+          },
           onDone: () {
             dLog('[CodexSdk] app-server stdout closed');
             _streamController?.add(const ProviderStreamFailure(error: 'Codex process exited'));
-            _streamController?.close();
-            _reset();
+            _resetProcess();
           },
         );
 
-    // Log stderr for debugging; don't close the stream on stderr
-    _process!.stderr
-        .transform(const Utf8Decoder())
+    // Buffer stderr for diagnostics; cap so it can't grow without bound.
+    _stderrSubscription = _process!.stderr
+        .transform(const Utf8Decoder(allowMalformed: true))
         .transform(const LineSplitter())
-        .listen((line) => dLog('[CodexProvider.stderr] $line'));
+        .listen((line) {
+          // dLog goes through redactSecrets so an inadvertent token echo
+          // doesn't end up in Console.app during development.
+          dLog('[CodexProvider.stderr] ${redactSecrets(line)}');
+          if (_stderrBuffer.length >= _stderrCap) return;
+          final remaining = _stderrCap - _stderrBuffer.length;
+          final out = line.length <= remaining ? line : line.substring(0, remaining);
+          _stderrBuffer.writeln(out);
+        });
 
-    // If the process exits unexpectedly, clean up
-    _process!.exitCode.then((code) {
-      if (code != 0) {
-        dLog('[CodexSdk] app-server exited with code $code');
-        _streamController?.add(ProviderStreamFailure(error: 'Codex exited with code $code'));
-        _streamController?.close();
-      }
-      _reset();
-    });
+    // If the process exits unexpectedly, surface and clean up.
+    unawaited(
+      _process!.exitCode.then((code) {
+        if (code != 0) {
+          dLog('[CodexSdk] app-server exited with code $code\nstderr=${redactSecrets(_stderrBuffer.toString())}');
+          _streamController?.add(
+            ProviderStreamFailure(
+              error: 'Codex exited with code $code',
+              details: redactSecrets(_stderrBuffer.toString()),
+            ),
+          );
+        }
+        _resetProcess();
+      }),
+    );
   }
 
   // ─── JSON-RPC protocol ──────────────────────────────────────────────────
@@ -178,7 +242,7 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
 
     final message = jsonEncode({'jsonrpc': '2.0', 'id': id, 'method': method, 'params': params});
     dLog('[CodexSdk] → $method ($id)');
-    _process?.stdin.writeln(message);
+    _writeStdin(message);
 
     return completer.future.timeout(
       const Duration(seconds: 30),
@@ -193,14 +257,32 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
   void _notify(String method, [Map<String, dynamic>? params]) {
     final message = jsonEncode({'jsonrpc': '2.0', 'method': method, 'params': params});
     dLog('[CodexSdk] → $method (notification)');
-    _process?.stdin.writeln(message);
+    _writeStdin(message);
   }
 
   /// Respond to a server→client request (approval, user-input, etc.).
   void _respond(dynamic id, Map<String, dynamic> result) {
     final message = jsonEncode({'jsonrpc': '2.0', 'id': id, 'result': result});
     dLog('[CodexSdk] → response to server request $id');
-    _process?.stdin.writeln(message);
+    _writeStdin(message);
+  }
+
+  /// Centralised stdin write so we can fail fast if the pipe is dead.
+  /// `IOSink.writeln` swallows errors as zone-async; surfacing them here
+  /// avoids losing approval responses to a silent broken pipe.
+  void _writeStdin(String message) {
+    final stdin = _process?.stdin;
+    if (stdin == null) {
+      dLog('[CodexSdk] write skipped — process is gone');
+      return;
+    }
+    try {
+      stdin.writeln(message);
+    } catch (e) {
+      dLog('[CodexSdk] stdin write failed: ${redactSecrets('$e')}');
+      _streamController?.add(ProviderStreamFailure(error: 'Codex stdin write failed: ${e.runtimeType}'));
+      _resetProcess();
+    }
   }
 
   // ─── Incoming message routing ────────────────────────────────────────────
@@ -211,7 +293,8 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
     try {
       json = jsonDecode(line) as Map<String, dynamic>;
     } catch (e) {
-      dLog('[CodexSdk] JSON parse error: $e on: $line');
+      final preview = line.length > 256 ? '${line.substring(0, 256)}…' : line;
+      dLog('[CodexSdk] JSON parse error: $e on: ${redactSecrets(preview)}');
       return;
     }
 
@@ -271,12 +354,22 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
         _emitPermissionRequest(id, method, params);
 
       case 'account/chatgptAuthTokens/refresh':
-        // Auth token refresh — auto-approve for now
+        // Auth token refresh — auto-approved here. The token never crosses
+        // the host process: codex holds and refreshes it internally; this
+        // response is a protocol-level "yes, proceed". sLog so the event
+        // is grep-able in release builds.
+        sLog('[CodexSdk] auto-approving account/chatgptAuthTokens/refresh (id=$id)');
         _respond(id, {'ok': true});
 
       default:
-        dLog('[CodexSdk] Unknown server request: $method — auto-denying');
+        // Unknown approval-shaped method. sLog (survives release) and
+        // surface as a stream failure so the user sees "your codex version
+        // sent a method we don't recognise" rather than a silent denial.
+        sLog('[CodexSdk] unknown server request: $method — denying and aborting turn');
         _respond(id, {'decision': 'denied'});
+        _streamController?.add(
+          ProviderStreamFailure(error: 'Unsupported codex approval method: $method — please update Code Bench'),
+        );
     }
   }
 
@@ -291,11 +384,17 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
       ProviderPermissionRequest(requestId: requestId, toolName: _methodToToolName(method), toolInput: params ?? {}),
     );
 
-    // When the UI resolves the approval, send the response back to Codex
+    // When the UI resolves the approval, send the response back to Codex.
+    // Guard the response on a still-live process — a dead pipe would throw
+    // asynchronously and the error would be unhandled.
     completer.future.then(
-      (result) => _respond(id, result),
+      (result) {
+        if (_process == null) return;
+        _respond(id, result);
+      },
       onError: (Object e) {
-        dLog('[CodexSdk] Approval error: $e — denying');
+        dLog('[CodexSdk] Approval error: ${redactSecrets('$e')} — denying');
+        if (_process == null) return;
         _respond(id, {'decision': 'denied'});
       },
     );
@@ -326,13 +425,13 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
       case 'turn/completed':
         dLog('[CodexSdk] Turn completed');
         _streamController?.add(const ProviderStreamDone());
-        _streamController?.close();
+        _resetTurn();
 
       case 'turn/aborted':
         final reason = params?['reason'] as String? ?? 'Turn aborted';
         dLog('[CodexSdk] Turn aborted: $reason');
         _streamController?.add(ProviderStreamFailure(error: reason));
-        _streamController?.close();
+        _resetTurn();
 
       // ── Session lifecycle ──────────────────────────────────────────────
       case 'session/connecting':
@@ -344,7 +443,7 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
       case 'session/exited':
       case 'session/closed':
         dLog('[CodexSdk] Session exited/closed');
-        _reset();
+        _resetProcess();
 
       // ── Item lifecycle (tool calls) ────────────────────────────────────
       case 'item/started':
@@ -379,17 +478,19 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
         final willRetry = params?['willRetry'] == true;
         if (!willRetry) {
           _streamController?.add(ProviderStreamFailure(error: message));
-          _streamController?.close();
+          _resetTurn();
         } else {
-          dLog('[CodexSdk] Recoverable error (will retry): $message');
+          dLog('[CodexSdk] Recoverable error (will retry): ${redactSecrets(message)}');
         }
 
       case 'process/stderr':
         final message = params?['message'] as String? ?? '';
-        dLog('[CodexProvider.internal-stderr] $message');
+        dLog('[CodexProvider.internal-stderr] ${redactSecrets(message)}');
 
       default:
-        dLog('[CodexSdk] Ignoring notification: $method');
+        // Unknown notification — sLog so post-release telemetry catches
+        // codex protocol additions we haven't wired up.
+        sLog('[CodexSdk] ignoring unknown notification: $method');
     }
   }
 
@@ -457,22 +558,45 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
   @override
   void cancel() {
     dLog('[CodexSdk] Cancelling in-flight turn');
-    // Interrupt the current turn if one is running
-    if (_providerThreadId != null) {
+    // Interrupt the current turn if one is running. The app-server stays
+    // alive; only the turn ends.
+    if (_providerThreadId != null && _process != null) {
       _notify('turn/interrupt', {'threadId': _providerThreadId});
     }
-    _streamController?.close();
+    _resetTurn();
   }
 
-  void _reset() {
+  /// Per-turn cleanup. Closes the active stream controller and clears
+  /// pending approvals/requests so the next turn doesn't see stale
+  /// completers. Does NOT kill the long-lived `app-server` process.
+  void _resetTurn() {
+    if (_streamController?.isClosed == false) {
+      _streamController?.close();
+    }
+    _streamController = null;
+    for (final c in _pendingApprovals.values) {
+      if (!c.isCompleted) c.completeError(StateError('codex turn ended'));
+    }
+    _pendingApprovals.clear();
+    for (final c in _pendingRequests.values) {
+      if (!c.isCompleted) c.completeError(StateError('codex turn ended'));
+    }
+    _pendingRequests.clear();
+  }
+
+  /// Process-level cleanup — the `app-server` process is gone (exit, crash,
+  /// stdout closed, working-directory change). Tear everything down.
+  void _resetProcess() {
+    _resetTurn();
     _process = null;
     _workingDirectory = null;
     _version = null;
     _providerThreadId = null;
-    _pendingRequests.clear();
-    _pendingApprovals.clear();
     _stdoutSubscription?.cancel();
     _stdoutSubscription = null;
+    _stderrSubscription?.cancel();
+    _stderrSubscription = null;
+    _stderrBuffer.clear();
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────

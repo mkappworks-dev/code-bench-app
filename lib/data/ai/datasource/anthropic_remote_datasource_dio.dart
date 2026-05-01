@@ -68,7 +68,11 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
                   yield delta;
                 }
               }
-            } on FormatException catch (_) {}
+            } on FormatException catch (e) {
+              // SSE keepalives (`: ping`) and partial frames are expected
+              // — but a real malformed JSON frame is worth a breadcrumb.
+              dLog('[AnthropicDatasource] dropped malformed SSE frame: $e');
+            }
           }
         }
       }
@@ -81,9 +85,14 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
             (acc, chunk) => [...acc, ...chunk],
           );
           errorBody = utf8.decode(bytes);
-        } catch (_) {}
+        } catch (decodeError) {
+          dLog('[AnthropicDatasource] failed to decode error body: $decodeError');
+        }
       }
-      dLog('[AnthropicDatasource] request failed: status=${e.response?.statusCode} type=${e.type} body=$errorBody');
+      dLog(
+        '[AnthropicDatasource] request failed: status=${e.response?.statusCode} '
+        'type=${e.type} body=${redactSecrets(errorBody ?? 'null')}',
+      );
       throw NetworkException('Anthropic request failed', statusCode: e.response?.statusCode, originalError: e);
     }
   }

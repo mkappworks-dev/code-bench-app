@@ -33,21 +33,40 @@ class AIProviderService extends _$AIProviderService {
   List<String> listProviderIds() => state.keys.toList();
 
   /// Detailed availability status for a single provider.
+  ///
+  /// Distinguishes three underlying detection states from the datasource
+  /// (`installed` / `unhealthy` / `missing`) and surfaces them via
+  /// [ProviderStatus]. The UI uses [ProviderUnavailable.reasonKind] to
+  /// pick the right copy ("install" vs "reinstall" vs "broken").
   Future<ProviderStatus> getStatus(String id) async {
     final provider = state[id];
     if (provider == null) {
-      return const ProviderStatus.unavailable(reason: 'Provider not registered');
+      return const ProviderStatus.unavailable(
+        reason: 'Provider not registered',
+        reasonKind: ProviderUnavailableReason.notRegistered,
+      );
     }
+    final DetectionResult result;
     try {
-      final available = await provider.isAvailable();
-      if (!available) {
-        return const ProviderStatus.unavailable(reason: 'Not installed or configured');
-      }
-      final version = await provider.getVersion();
-      return ProviderStatus.available(version: version ?? 'unknown', checkedAt: DateTime.now());
-    } catch (e) {
-      return ProviderStatus.unavailable(reason: 'Error: $e');
+      result = await provider.detect();
+    } on Exception catch (e) {
+      dLog('[AIProviderService] detect($id) threw: $e');
+      return ProviderStatus.unavailable(
+        reason: 'Detection failed: ${e.runtimeType}',
+        reasonKind: ProviderUnavailableReason.detectionFailed,
+      );
     }
+    return switch (result) {
+      DetectionInstalled(:final version) => ProviderStatus.available(version: version, checkedAt: DateTime.now()),
+      DetectionUnhealthy(:final reason) => ProviderStatus.unavailable(
+        reason: reason,
+        reasonKind: ProviderUnavailableReason.unhealthy,
+      ),
+      DetectionMissing() => const ProviderStatus.unavailable(
+        reason: 'Not installed or configured',
+        reasonKind: ProviderUnavailableReason.missing,
+      ),
+    };
   }
 
   /// Status for all registered providers — consumed by per-provider cards
@@ -63,18 +82,24 @@ class AIProviderService extends _$AIProviderService {
   }
 }
 
+/// Why a provider is unavailable. Drives UI copy: "install" vs "reinstall"
+/// vs "Code Bench needs an update" vs "couldn't probe — retry".
+enum ProviderUnavailableReason { missing, unhealthy, detectionFailed, notRegistered }
+
 /// Availability status of a single AI provider.
 sealed class ProviderStatus {
   const ProviderStatus();
 
-  const factory ProviderStatus.unavailable({required String reason}) = ProviderUnavailable;
+  const factory ProviderStatus.unavailable({required String reason, required ProviderUnavailableReason reasonKind}) =
+      ProviderUnavailable;
 
   const factory ProviderStatus.available({required String version, required DateTime checkedAt}) = ProviderAvailable;
 }
 
 class ProviderUnavailable extends ProviderStatus {
-  const ProviderUnavailable({required this.reason});
+  const ProviderUnavailable({required this.reason, required this.reasonKind});
   final String reason;
+  final ProviderUnavailableReason reasonKind;
 }
 
 class ProviderAvailable extends ProviderStatus {

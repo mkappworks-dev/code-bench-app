@@ -1,5 +1,7 @@
+import '../models/detection_result.dart';
 import '../models/provider_runtime_event.dart';
 
+export '../models/detection_result.dart';
 export '../models/provider_runtime_event.dart';
 
 /// Contract for pluggable AI provider datasources (Claude SDK, Codex, etc.).
@@ -17,13 +19,10 @@ abstract interface class AIProviderDatasource {
   /// Display name for UI dropdowns (e.g. "Claude (API Key)", "Codex").
   String get displayName;
 
-  /// Whether this provider is installed and configured.
-  /// For SDK providers: API key is present.
-  /// For binary providers: binary is on PATH.
-  Future<bool> isAvailable();
-
-  /// Human-readable version string, or null if not yet known.
-  Future<String?> getVersion();
+  /// Probe the provider for availability. Distinguishes `installed`,
+  /// `unhealthy` (broken install / hung version probe), and `missing`
+  /// (not on PATH) so the UI can render the right recovery affordance.
+  Future<DetectionResult> detect();
 
   /// Send a message and stream normalized [ProviderRuntimeEvent]s.
   Stream<ProviderRuntimeEvent> sendAndStream({
