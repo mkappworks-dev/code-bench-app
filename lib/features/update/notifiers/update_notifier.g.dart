@@ -40,6 +40,37 @@ final class UpdateLastCheckedProvider extends $FunctionalProvider<AsyncValue<Str
 
 String _$updateLastCheckedHash() => r'b3b84b6d5ba97bcc8980d7be6bf95d75569e2acb';
 
+@ProviderFor(packageVersion)
+final packageVersionProvider = PackageVersionProvider._();
+
+final class PackageVersionProvider extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
+    with $FutureModifier<String>, $FutureProvider<String> {
+  PackageVersionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'packageVersionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$packageVersionHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<String> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String> create(Ref ref) {
+    return packageVersion(ref);
+  }
+}
+
+String _$packageVersionHash() => r'4d98f96bd5204c1669f8be48831091660117f005';
+
 @ProviderFor(UpdateNotifier)
 final updateProvider = UpdateNotifierProvider._();
 

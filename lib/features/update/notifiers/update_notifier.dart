@@ -1,6 +1,7 @@
 // lib/features/update/notifiers/update_notifier.dart
 import 'dart:async';
 
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,6 +19,12 @@ part 'update_notifier.g.dart';
 Future<String?> updateLastChecked(Ref ref) async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getString(AppConstants.prefUpdateLastChecked);
+}
+
+@Riverpod(keepAlive: true)
+Future<String> packageVersion(Ref ref) async {
+  final info = await PackageInfo.fromPlatform();
+  return info.version;
 }
 
 @Riverpod(keepAlive: true)

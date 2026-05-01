@@ -18,6 +18,7 @@ class UpdateSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lastCheckedAsync = ref.watch(updateLastCheckedProvider);
+    final versionAsync = ref.watch(packageVersionProvider);
     final updateState = ref.watch(updateProvider);
     final isChecking = updateState is UpdateStateChecking;
 
@@ -36,6 +37,11 @@ class UpdateSection extends ConsumerWidget {
       error: (_, _) => 'Never checked',
     );
 
+    final version = switch (versionAsync) {
+      AsyncData(:final value) => value,
+      _ => null,
+    };
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -44,17 +50,45 @@ class UpdateSection extends ConsumerWidget {
         SettingsGroup(
           rows: [
             SettingsRow(
-              label: 'Check for updates',
+              label: 'Code Bench',
               description: description,
-              trailing: _CheckButton(
-                isChecking: isChecking,
-                onTap: () => unawaited(ref.read(updateProvider.notifier).checkForUpdates()),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (version != null) ...[_VersionChip(version: version), const SizedBox(width: 6)],
+                  _CheckButton(
+                    isChecking: isChecking,
+                    onTap: () => unawaited(ref.read(updateProvider.notifier).checkForUpdates()),
+                  ),
+                ],
               ),
               isLast: true,
             ),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _VersionChip extends StatelessWidget {
+  const _VersionChip({required this.version});
+  final String version;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: c.accentTintMid,
+        border: Border.all(color: c.accentBorderTeal),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        'v$version',
+        style: TextStyle(color: c.accentLight, fontSize: 10, fontWeight: FontWeight.w600),
+      ),
     );
   }
 }
