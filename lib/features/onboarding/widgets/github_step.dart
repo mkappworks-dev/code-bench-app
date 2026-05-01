@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/constants/feature_flags.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/debug_logger.dart';
@@ -96,10 +97,12 @@ class _GithubStepState extends ConsumerState<GithubStep> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GitHubGlassButton(onPressed: _connectOAuth, isLoading: isLoading),
-        const SizedBox(height: 20),
-        const OrDivider(),
-        const SizedBox(height: 12),
+        if (FeatureFlags.githubOAuthEnabled) ...[
+          GitHubGlassButton(onPressed: _connectOAuth, isLoading: isLoading),
+          const SizedBox(height: 20),
+          const OrDivider(),
+          const SizedBox(height: 12),
+        ],
         ValueListenableBuilder<TextEditingValue>(
           valueListenable: _patController,
           builder: (context, value, _) {
