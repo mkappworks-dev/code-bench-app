@@ -48,6 +48,7 @@ class UpdateDatasourceDio implements UpdateDatasource {
         publishedAt: DateTime.parse(data['published_at'] as String),
       );
     } on DioException catch (e, st) {
+      if (e.response?.statusCode == 404) return null;
       dLog('[UpdateDatasource] fetchLatestRelease failed: $e\n$st');
       throw UpdateNetworkException(e.message);
     }
