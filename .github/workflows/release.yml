@@ -69,6 +69,13 @@ jobs:
         if: matrix.target != 'macos'
         run: flutter build ${{ matrix.target }} --release
 
+      - name: Ad-hoc sign (macOS)
+        if: matrix.target == 'macos'
+        run: |
+          codesign --force --deep --sign - \
+            --entitlements macos/Runner/AdhocRelease.entitlements \
+            "build/macos/Build/Products/Release/Code Bench.app"
+
       - name: Install create-dmg
         if: matrix.target == 'macos'
         run: brew install create-dmg
