@@ -60,6 +60,10 @@ class ProvidersService {
   Future<void> writeAnthropicTransport(String value) => _prefs.writeAnthropicTransport(value);
   Future<void> deleteAnthropicTransport() => _prefs.deleteAnthropicTransport();
 
+  Future<String?> readOpenaiTransport() => _prefs.readOpenaiTransport();
+  Future<void> writeOpenaiTransport(String value) => _prefs.writeOpenaiTransport(value);
+  Future<void> deleteOpenaiTransport() => _prefs.deleteOpenaiTransport();
+
   // ── Cross-cutting wipe ───────────────────────────────────────────────
 
   /// Wipes every provider-owned secure storage entry. Called by

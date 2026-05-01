@@ -15,6 +15,7 @@ class ApiKeysNotifierState {
     required this.customEndpoint,
     required this.customApiKey,
     required this.anthropicTransport,
+    required this.openaiTransport,
   });
 
   final String openai;
@@ -24,9 +25,13 @@ class ApiKeysNotifierState {
   final String customEndpoint;
   final String customApiKey;
 
-  /// Anthropic inference transport: `'api-key'` (Dio HTTP) or `'cli'`
-  /// (Claude Code CLI via Process.start). Defaults to `'api-key'`.
+  /// Anthropic inference transport: `'api-key'` (Dio HTTP) or `'sdk'`
+  /// (Claude Code SDK via Process.start). Defaults to `'api-key'`.
   final String anthropicTransport;
+
+  /// OpenAI inference transport: `'api-key'` (Dio HTTP) or `'sdk'`
+  /// (Codex SDK via Process.start). Defaults to `'api-key'`.
+  final String openaiTransport;
 
   ApiKeysNotifierState copyWith({
     String? openai,
@@ -36,6 +41,7 @@ class ApiKeysNotifierState {
     String? customEndpoint,
     String? customApiKey,
     String? anthropicTransport,
+    String? openaiTransport,
   }) => ApiKeysNotifierState(
     openai: openai ?? this.openai,
     anthropic: anthropic ?? this.anthropic,
@@ -44,6 +50,7 @@ class ApiKeysNotifierState {
     customEndpoint: customEndpoint ?? this.customEndpoint,
     customApiKey: customApiKey ?? this.customApiKey,
     anthropicTransport: anthropicTransport ?? this.anthropicTransport,
+    openaiTransport: openaiTransport ?? this.openaiTransport,
   );
 }
 
@@ -61,6 +68,7 @@ class ApiKeysNotifier extends _$ApiKeysNotifier {
         customEndpoint: await svc.readCustomEndpoint() ?? '',
         customApiKey: await svc.readCustomApiKey() ?? '',
         anthropicTransport: await svc.readAnthropicTransport() ?? 'api-key',
+        openaiTransport: await svc.readOpenaiTransport() ?? 'api-key',
       );
     } catch (e, st) {
       dLog('[ApiKeysNotifier] build failed: $e\n$st');

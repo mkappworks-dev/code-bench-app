@@ -1,14 +1,14 @@
 import 'dart:io';
 
-import 'package:code_bench_app/data/ai/datasource/claude_cli_stream_parser.dart';
+import 'package:code_bench_app/data/ai/datasource/claude_sdk_stream_parser.dart';
 import 'package:code_bench_app/data/ai/models/stream_event.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  late ClaudeCliStreamParser parser;
+  late ClaudeSdkStreamParser parser;
 
   setUp(() {
-    parser = ClaudeCliStreamParser();
+    parser = ClaudeSdkStreamParser();
   });
 
   Stream<String> fixtureLines(String name) async* {

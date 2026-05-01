@@ -41,4 +41,13 @@ class ProviderPrefsRepositoryImpl implements ProviderPrefsRepository {
 
   @override
   Future<void> deleteAnthropicTransport() => _storage.deleteAnthropicTransport();
+
+  @override
+  Future<String?> readOpenaiTransport() => _storage.readOpenaiTransport();
+
+  @override
+  Future<void> writeOpenaiTransport(String value) => _storage.writeOpenaiTransport(value);
+
+  @override
+  Future<void> deleteOpenaiTransport() => _storage.deleteOpenaiTransport();
 }

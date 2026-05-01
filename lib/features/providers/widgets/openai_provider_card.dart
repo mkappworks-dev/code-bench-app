@@ -14,24 +14,24 @@ import 'install_command.dart';
 import 'provider_card_helpers.dart';
 import 'selectable_transport_card.dart';
 
-/// Anthropic provider entry — two selectable transport options stacked:
-/// the existing API-Key path (Dio HTTP) and the locally-installed Claude
-/// Code SDK (subprocess). Selection persists via `anthropicTransport` in
-/// `ProviderPrefsRepository`.
-class AnthropicProviderCard extends ConsumerStatefulWidget {
-  const AnthropicProviderCard({super.key, required this.controller, required this.initialApiKey});
+/// OpenAI provider entry — API Key (Dio HTTP) or Codex SDK (subprocess).
+/// Mirrors [AnthropicProviderCard]'s shape; differences are the binary
+/// name, install command, registered datasource id, and the persistence
+/// flag (`openaiTransport`).
+class OpenAIProviderCard extends ConsumerStatefulWidget {
+  const OpenAIProviderCard({super.key, required this.controller, required this.initialApiKey});
 
   final TextEditingController controller;
   final String initialApiKey;
 
   @override
-  ConsumerState<AnthropicProviderCard> createState() => _AnthropicProviderCardState();
+  ConsumerState<OpenAIProviderCard> createState() => _OpenAIProviderCardState();
 }
 
-class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
-  static const _providerId = 'claude-sdk';
-  static const _binaryName = 'claude';
-  static const _installCommand = 'npm i -g @anthropic-ai/claude-code';
+class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
+  static const _providerId = 'codex';
+  static const _binaryName = 'codex';
+  static const _installCommand = 'brew install codex';
 
   bool _obscure = true;
   bool _saveLoading = false;
@@ -55,7 +55,7 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
   }
 
   @override
-  void didUpdateWidget(AnthropicProviderCard oldWidget) {
+  void didUpdateWidget(OpenAIProviderCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialApiKey != widget.initialApiKey) {
       setState(() {
@@ -82,7 +82,7 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
       _saveLoading = true;
       _testPassed = false;
     });
-    final ok = await ref.read(providersActionsProvider.notifier).testApiKey(AIProvider.anthropic, key);
+    final ok = await ref.read(providersActionsProvider.notifier).testApiKey(AIProvider.openai, key);
     if (!mounted) return;
     setState(() => _saveLoading = false);
     if (ok) {
@@ -98,13 +98,13 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
     if (key.isEmpty || _saveTriggered) return;
     _saveTriggered = true;
     setState(() => _saveLoading = true);
-    final ok = await ref.read(providersActionsProvider.notifier).testApiKey(AIProvider.anthropic, key);
+    final ok = await ref.read(providersActionsProvider.notifier).testApiKey(AIProvider.openai, key);
     if (!mounted) {
       _saveTriggered = false;
       return;
     }
     if (ok) {
-      await ref.read(providersActionsProvider.notifier).saveKey(AIProvider.anthropic, key);
+      await ref.read(providersActionsProvider.notifier).saveKey(AIProvider.openai, key);
       if (!mounted) {
         _saveTriggered = false;
         return;
@@ -129,7 +129,7 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
   }
 
   Future<void> _clear() async {
-    await ref.read(providersActionsProvider.notifier).deleteKey(AIProvider.anthropic);
+    await ref.read(providersActionsProvider.notifier).deleteKey(AIProvider.openai);
     if (!mounted) return;
     if (!ref.read(providersActionsProvider).hasError) {
       widget.controller.clear();
@@ -146,7 +146,7 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
 
   Future<void> _setTransport(String value) async {
     if (_saveLoading) return;
-    await ref.read(providersActionsProvider.notifier).saveAnthropicTransport(value);
+    await ref.read(providersActionsProvider.notifier).saveOpenaiTransport(value);
     if (!mounted) return;
     if (ref.read(providersActionsProvider).hasError) {
       AppSnackBar.show(context, 'Could not save transport — please retry', type: AppSnackBarType.error);
@@ -159,7 +159,7 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
       if (!mounted) return;
       final entry = entries.where((e) => e.id == _providerId).firstOrNull;
       if (entry?.isAvailable ?? false) {
-        AppSnackBar.show(context, 'Claude Code SDK detected', type: AppSnackBarType.success);
+        AppSnackBar.show(context, 'Codex SDK detected', type: AppSnackBarType.success);
       } else {
         AppSnackBar.show(context, '$_binaryName not found on PATH', type: AppSnackBarType.error);
       }
@@ -179,8 +179,6 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
     ),
   };
 
-  /// Looks up `'claude-sdk'` in [aiProviderStatusProvider]. Returns the entry
-  /// if found, or null while the probe is in flight or has errored.
   ProviderEntry? _sdkEntry() => switch (ref.watch(aiProviderStatusProvider)) {
     AsyncData(:final value) => value.where((e) => e.id == _providerId).firstOrNull,
     _ => null,
@@ -190,8 +188,7 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
     final entry = _sdkEntry();
     final loading = ref.watch(aiProviderStatusProvider) is AsyncLoading;
     if (loading) return const CardStatusBadge(label: 'Checking…', tone: TransportBadgeTone.muted);
-    final status = entry?.status;
-    return switch (status) {
+    return switch (entry?.status) {
       ProviderAvailable(:final version) => CardStatusBadge(
         label: 'Installed · $version',
         tone: TransportBadgeTone.success,
@@ -219,7 +216,7 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
 
   Widget _buildGroup(BuildContext context, ApiKeysNotifierState s) {
     final c = AppColors.of(context);
-    final isSdk = s.anthropicTransport == 'sdk';
+    final isSdk = s.openaiTransport == 'sdk';
     final sdkEntry = _sdkEntry();
     final sdkAvailable = sdkEntry?.isAvailable ?? false;
     final brokenSdkActive = isSdk && sdkEntry != null && !sdkAvailable;
@@ -228,19 +225,17 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Anthropic',
+          'OpenAI',
           style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         SelectableTransportCard(
           title: 'API Key',
           selected: !isSdk,
-          // Open the editor by default if no key is saved yet OR the user is
-          // currently typing — otherwise stay collapsed.
           initiallyExpanded: _dotStatus != DotStatus.savedVerified && _dotStatus != DotStatus.savedUnverified,
           badge: _apiKeyBadge(),
           onTap: isSdk ? () => _setTransport('api-key') : null,
-          body: _ApiKeyBody(
+          body: _OpenAIApiKeyBody(
             controller: widget.controller,
             obscure: _obscure,
             onToggleObscure: () => setState(() => _obscure = !_obscure),
@@ -253,18 +248,14 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
         ),
         const SizedBox(height: 6),
         SelectableTransportCard(
-          title: 'Claude Code SDK',
+          title: 'Codex SDK',
           selected: isSdk,
-          // Don't disable when broken-active: we still want user to be able
-          // to read the error and click "Switch to API Key".
           disabled: !sdkAvailable && !brokenSdkActive,
           errorState: brokenSdkActive,
-          // Force-expand when the binary was uninstalled while selected so
-          // the recovery actions are visible without a click.
           initiallyExpanded: brokenSdkActive,
           badge: _sdkBadge(selected: isSdk),
           onTap: !isSdk && sdkAvailable ? () => _setTransport('sdk') : null,
-          body: _ClaudeSdkBody(
+          body: _CodexSdkBody(
             sdkEntry: sdkEntry,
             broken: brokenSdkActive,
             onRecheck: _recheckSdk,
@@ -278,9 +269,8 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
   }
 }
 
-/// Body for the API Key transport card: input field + Test/Save/Clear.
-class _ApiKeyBody extends StatelessWidget {
-  const _ApiKeyBody({
+class _OpenAIApiKeyBody extends StatelessWidget {
+  const _OpenAIApiKeyBody({
     required this.controller,
     required this.obscure,
     required this.onToggleObscure,
@@ -328,17 +318,8 @@ class _ApiKeyBody extends StatelessWidget {
   }
 }
 
-/// Body for the Claude Code SDK transport card.
-///
-/// Three rendering modes:
-/// 1. Installed: status text on the left ("Local `claude` binary · no API
-///    key"), Recheck button on the right.
-/// 2. Not installed (without "broken-active"): copyable install command
-///    pill, Recheck button.
-/// 3. Broken-active (SDK was selected, then user uninstalled): error status
-///    text on the left, "Switch to API Key" + "Recheck" buttons on the right.
-class _ClaudeSdkBody extends StatelessWidget {
-  const _ClaudeSdkBody({
+class _CodexSdkBody extends StatelessWidget {
+  const _CodexSdkBody({
     required this.sdkEntry,
     required this.broken,
     required this.onRecheck,
@@ -374,8 +355,7 @@ class _ClaudeSdkBody extends StatelessWidget {
         ],
       );
     }
-    final available = sdkEntry?.isAvailable ?? false;
-    if (!available) {
+    if (!(sdkEntry?.isAvailable ?? false)) {
       return Row(
         children: [
           Expanded(child: InstallCommand(command: installCommand)),
@@ -388,7 +368,7 @@ class _ClaudeSdkBody extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            'Local $binaryName binary · no API key needed',
+            'Local $binaryName binary · OAuth via $binaryName login',
             style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
             overflow: TextOverflow.ellipsis,
           ),
@@ -400,8 +380,6 @@ class _ClaudeSdkBody extends StatelessWidget {
   }
 }
 
-/// Compact accent-tinted button matching `InlineTestButton` / `InlineSaveButton`
-/// visual weight. Used for SDK card actions (Recheck, Switch to API Key).
 class _CardButton extends StatefulWidget {
   const _CardButton({required this.label, required this.onPressed});
 

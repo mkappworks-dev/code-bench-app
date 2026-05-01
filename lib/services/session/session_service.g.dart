@@ -39,4 +39,4 @@ final class SessionServiceProvider
   }
 }
 
-String _$sessionServiceHash() => r'5198b57ba2c74cc3ea32defd9cc49a12440bc307';
+String _$sessionServiceHash() => r'5e2c733e139e06c959c3a40b9b41f722cef57876';

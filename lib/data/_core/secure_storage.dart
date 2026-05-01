@@ -27,6 +27,7 @@ class SecureStorage {
   static const String _githubAccountKey = 'github_account';
   static const String _ollamaUrlKey = 'ollama_base_url';
   static const String _anthropicTransportKey = 'anthropic_transport';
+  static const String _openaiTransportKey = 'openai_transport';
 
   // API Keys
   Future<void> writeApiKey(String provider, String apiKey) async {
@@ -143,7 +144,7 @@ class SecureStorage {
     }
   }
 
-  // Anthropic transport ('api-key' | 'cli')
+  // Anthropic transport ('api-key' | 'sdk')
   Future<void> writeAnthropicTransport(String value) async {
     try {
       await _storage.write(key: _anthropicTransportKey, value: value);
@@ -168,6 +169,34 @@ class SecureStorage {
     } catch (e) {
       dLog('[SecureStorage] deleteAnthropicTransport failed: $e');
       throw StorageException('Failed to delete Anthropic transport', originalError: e);
+    }
+  }
+
+  // OpenAI transport ('api-key' | 'sdk')
+  Future<void> writeOpenaiTransport(String value) async {
+    try {
+      await _storage.write(key: _openaiTransportKey, value: value);
+    } catch (e) {
+      dLog('[SecureStorage] writeOpenaiTransport failed: $e');
+      throw StorageException('Failed to store OpenAI transport', originalError: e);
+    }
+  }
+
+  Future<String?> readOpenaiTransport() async {
+    try {
+      return await _storage.read(key: _openaiTransportKey);
+    } catch (e) {
+      dLog('[SecureStorage] readOpenaiTransport failed: $e');
+      throw StorageException('Failed to read OpenAI transport', originalError: e);
+    }
+  }
+
+  Future<void> deleteOpenaiTransport() async {
+    try {
+      await _storage.delete(key: _openaiTransportKey);
+    } catch (e) {
+      dLog('[SecureStorage] deleteOpenaiTransport failed: $e');
+      throw StorageException('Failed to delete OpenAI transport', originalError: e);
     }
   }
 

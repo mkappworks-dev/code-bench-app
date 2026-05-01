@@ -8,9 +8,10 @@ import '../../data/shared/ai_model.dart';
 import '../settings/widgets/section_label.dart';
 import 'notifiers/providers_notifier.dart';
 import 'widgets/anthropic_provider_card.dart';
-import 'widgets/coming_soon_provider_card.dart';
 import 'widgets/custom_endpoint_card.dart';
+import 'widgets/gemini_provider_card.dart';
 import 'widgets/ollama_card.dart';
+import 'widgets/openai_provider_card.dart';
 
 class ProvidersScreen extends ConsumerStatefulWidget {
   const ProvidersScreen({super.key});
@@ -87,28 +88,11 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
         children: [
           SectionLabel('API Keys'),
           const SizedBox(height: 8),
-          ComingSoonProviderCard(
-            provider: AIProvider.openai,
-            providerName: 'OpenAI',
-            cliName: 'Codex CLI',
-            comingInPhase: 'Phase 8',
-            apiKeyController: _controllers[AIProvider.openai]!,
-            initialApiKey: _initialOpenAi,
-          ),
-          const SizedBox(height: 6),
-          AnthropicProviderCard(
-            apiKeyController: _controllers[AIProvider.anthropic]!,
-            initialApiKey: _initialAnthropic,
-          ),
-          const SizedBox(height: 6),
-          ComingSoonProviderCard(
-            provider: AIProvider.gemini,
-            providerName: 'Gemini',
-            cliName: 'Gemini CLI',
-            comingInPhase: 'Phase 9',
-            apiKeyController: _controllers[AIProvider.gemini]!,
-            initialApiKey: _initialGemini,
-          ),
+          OpenAIProviderCard(controller: _controllers[AIProvider.openai]!, initialApiKey: _initialOpenAi),
+          const SizedBox(height: 16),
+          AnthropicProviderCard(controller: _controllers[AIProvider.anthropic]!, initialApiKey: _initialAnthropic),
+          const SizedBox(height: 16),
+          GeminiProviderCard(controller: _controllers[AIProvider.gemini]!, initialApiKey: _initialGemini),
           Divider(height: 36, thickness: 1, color: c.borderColor),
           SectionLabel('Ollama (Local)'),
           const SizedBox(height: 8),

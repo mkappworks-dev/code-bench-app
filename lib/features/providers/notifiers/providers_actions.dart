@@ -176,26 +176,38 @@ class ProvidersActions extends _$ProvidersActions {
     });
   }
 
-  /// Persists the Anthropic inference transport (`'api-key'` or `'cli'`)
-  /// and reloads the AI repository so the new datasource wiring is picked up.
-  ///
-  /// Lives here (not on `ApiKeysNotifier`) so a storage failure surfaces
-  /// via the standard `ProvidersFailure` typed-union path the other
-  /// provider mutations use — widgets already watch this Actions slot for
-  /// loading/error state.
+  /// Persists the Anthropic inference transport (`'api-key'` or `'sdk'`).
+  /// Reloads the AI repository and `ApiKeysNotifier` so dependent widgets
+  /// pick up the new value without a manual refresh.
   Future<void> saveAnthropicTransport(String value) async {
-    assert(value == 'api-key' || value == 'cli', 'invalid transport: $value');
+    assert(value == 'api-key' || value == 'sdk', 'invalid transport: $value');
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
         await ref.read(providersServiceProvider).writeAnthropicTransport(value);
         ref.invalidate(aiRepositoryProvider);
-        // Ask ApiKeysNotifier to re-read secure storage so `anthropicTransport`
-        // reflects the new value without a widget-level optimistic update.
         ref.invalidate(apiKeysProvider);
       } catch (e, st) {
         dLog('[ProvidersActions] saveAnthropicTransport failed: $e');
         Error.throwWithStackTrace(_asFailure(e, 'anthropicTransport'), st);
+      }
+    });
+  }
+
+  /// Persists the OpenAI inference transport (`'api-key'` or `'sdk'`).
+  /// Mirrors [saveAnthropicTransport] — see that method for the rationale
+  /// behind invalidating both `aiRepositoryProvider` and `apiKeysProvider`.
+  Future<void> saveOpenaiTransport(String value) async {
+    assert(value == 'api-key' || value == 'sdk', 'invalid transport: $value');
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        await ref.read(providersServiceProvider).writeOpenaiTransport(value);
+        ref.invalidate(aiRepositoryProvider);
+        ref.invalidate(apiKeysProvider);
+      } catch (e, st) {
+        dLog('[ProvidersActions] saveOpenaiTransport failed: $e');
+        Error.throwWithStackTrace(_asFailure(e, 'openaiTransport'), st);
       }
     });
   }

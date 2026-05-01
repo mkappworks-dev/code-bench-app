@@ -4,8 +4,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/utils/debug_logger.dart';
-import '../../data/ai/datasource/claude_cli_remote_datasource_process.dart';
-import '../../data/ai/models/stream_event.dart';
+import '../../data/ai/datasource/ai_provider_datasource.dart';
+import '../ai_provider/ai_provider_service.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
 import '../../data/ai/repository/text_streaming_repository.dart';
 import '../../data/session/models/permission_request.dart';
@@ -26,18 +26,25 @@ Future<SessionService> sessionService(Ref ref) async {
   final session = ref.watch(sessionRepositoryProvider);
   final ai = await ref.watch(aiRepositoryProvider.future);
   final agent = await ref.watch(agentServiceProvider.future);
-  return SessionService(session: session, ai: ai, agent: agent);
+  final providerService = ref.watch(aIProviderServiceProvider.notifier);
+  return SessionService(session: session, ai: ai, agent: agent, providerService: providerService);
 }
 
 class SessionService {
-  SessionService({required SessionRepository session, required TextStreamingRepository ai, required AgentService agent})
-    : _session = session,
-      _ai = ai,
-      _agent = agent;
+  SessionService({
+    required SessionRepository session,
+    required TextStreamingRepository ai,
+    required AgentService agent,
+    AIProviderService? providerService,
+  }) : _session = session,
+       _ai = ai,
+       _agent = agent,
+       _providerService = providerService;
 
   final SessionRepository _session;
   final TextStreamingRepository _ai;
   final AgentService _agent;
+  final AIProviderService? _providerService;
   static const _uuid = Uuid();
 
   // ── CRUD delegation ────────────────────────────────────────────────────────
@@ -86,6 +93,7 @@ class SessionService {
     ChatMode mode = ChatMode.chat,
     ChatPermission permission = ChatPermission.fullAccess,
     String? projectPath,
+    String? providerId,
     bool Function() cancelFlag = _neverCancel,
     Future<bool> Function(PermissionRequest req)? requestPermission,
     McpStatusCallback? onMcpStatusChanged,
@@ -114,25 +122,19 @@ class SessionService {
         .where((m) => m.id != persistedUserMsgId && m.role != MessageRole.interrupted)
         .toList();
 
-    // CLI transport: if the Anthropic datasource is the CLI-backed one AND the
-    // target model is Anthropic, bypass the agent loop / plain text path and
-    // stream Claude Code's own tool-use events as receipts. Guarded by an
-    // `is` check so test fakes that don't extend AIRepositoryImpl remain
-    // compatible.
-    final ai = _ai;
-    if (ai is AIRepositoryImpl && model.provider == AIProvider.anthropic) {
-      final anthropicDs = ai.rawDatasource(AIProvider.anthropic);
-      if (anthropicDs is ClaudeCliRemoteDatasourceProcess) {
-        yield* _streamClaudeCli(
-          ds: anthropicDs,
+    // Provider transport: route through AIProviderDatasource when the user has
+    // selected a named provider (claude-sdk, codex, etc.).
+    if (providerId != null) {
+      final ds = _providerService?.getProvider(providerId);
+      if (ds != null) {
+        yield* _streamProvider(
+          ds: ds,
           sessionId: sessionId,
           prompt: userInput,
-          history: historyExcludingCurrent,
           projectPath: projectPath,
           requestPermission: requestPermission,
           cancelFlag: cancelFlag,
         );
-        // Title-from-first-message on cold session.
         if (historyExcludingCurrent.isEmpty && userInput.isNotEmpty) {
           final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
           await _session.updateSessionTitle(sessionId, shortTitle);
@@ -207,56 +209,16 @@ class SessionService {
     }
   }
 
-  Stream<ChatMessage> _streamClaudeCli({
-    required ClaudeCliRemoteDatasourceProcess ds,
+  Stream<ChatMessage> _streamProvider({
+    required AIProviderDatasource ds,
     required String sessionId,
     required String prompt,
-    required List<ChatMessage> history,
     required String? projectPath,
-    required Future<bool> Function(PermissionRequest)? requestPermission,
+    required Future<bool> Function(PermissionRequest req)? requestPermission,
     required bool Function() cancelFlag,
   }) async* {
     final assistantId = _uuid.v4();
-
-    // Permission gate: a single Code Bench card per CLI delegation. Claude
-    // Code itself runs with bypassPermissions, so we warn the user here.
-    if (requestPermission != null) {
-      final req = PermissionRequest(
-        toolEventId: assistantId,
-        toolName: 'claude-cli',
-        summary: 'Delegate to Claude Code CLI',
-        input: {
-          'prompt': prompt.length > 200 ? '${prompt.substring(0, 200)}…' : prompt,
-          'workingDirectory': projectPath ?? Directory.current.path,
-          'sessionId': sessionId,
-          'warning':
-              'Claude Code will autonomously read, edit, and run shell '
-              'commands in this directory using its built-in tools. Code '
-              "Bench's permission rules do not apply to its actions.",
-        },
-      );
-      final approved = await requestPermission(req);
-      if (!approved) {
-        // User denied — emit an interrupted marker and stop.
-        final cancelled = ChatMessage(
-          id: assistantId,
-          sessionId: sessionId,
-          role: MessageRole.assistant,
-          content: '[Delegation cancelled by user]',
-          timestamp: DateTime.now(),
-        );
-        await _session.persistMessage(sessionId, cancelled);
-        yield cancelled;
-        return;
-      }
-    }
-
-    // Determine isFirstTurn from persisted history.
-    final isFirstTurn = history.isEmpty;
-
-    // Accumulators for the streaming assistant message.
     final contentBuffer = StringBuffer();
-    final thinkingBuffer = StringBuffer();
     final toolEvents = <ToolEvent>[];
 
     ChatMessage snapshot({bool streaming = true}) => ChatMessage(
@@ -270,78 +232,67 @@ class SessionService {
     );
 
     var interrupted = false;
-    await for (final event in ds.streamEvents(
-      history: history,
+    await for (final event in ds.sendAndStream(
       prompt: prompt,
-      workingDirectory: projectPath ?? Directory.current.path,
       sessionId: sessionId,
-      isFirstTurn: isFirstTurn,
+      workingDirectory: projectPath ?? Directory.current.path,
     )) {
       if (cancelFlag()) {
-        await ds.cancel();
+        ds.cancel();
         interrupted = true;
         break;
       }
 
-      if (event is TextDelta) {
-        contentBuffer.write(event.text);
-        yield snapshot();
-      } else if (event is ThinkingDelta) {
-        // Accumulate internally — we don't surface thinking in the chat
-        // bubble for MVP, but it stays available for future diagnostics.
-        thinkingBuffer.write(event.text);
-      } else if (event is ToolUseStart) {
-        toolEvents.add(
-          ToolEvent(
-            id: event.id,
-            type: 'claude_cli_tool',
-            toolName: event.name,
-            status: ToolStatus.running,
-            source: ToolEventSource.cliTransport,
-          ),
-        );
-        yield snapshot();
-      } else if (event is ToolUseComplete) {
-        final idx = toolEvents.indexWhere((t) => t.id == event.id);
-        if (idx >= 0) {
-          toolEvents[idx] = toolEvents[idx].copyWith(input: event.input);
+      switch (event) {
+        case ProviderInit(:final provider):
+          dLog('[SessionService] provider $provider started');
+
+        case ProviderTextDelta(:final text):
+          contentBuffer.write(text);
           yield snapshot();
-        }
-      } else if (event is ToolResult) {
-        final idx = toolEvents.indexWhere((t) => t.id == event.toolUseId);
-        if (idx >= 0) {
-          toolEvents[idx] = toolEvents[idx].copyWith(
-            output: event.content,
-            status: event.isError ? ToolStatus.error : ToolStatus.success,
-            error: event.isError ? event.content : null,
+
+        case ProviderThinkingDelta():
+          break; // Not surfaced in the chat bubble for MVP.
+
+        case ProviderToolUseStart(:final toolId, :final toolName):
+          toolEvents.add(
+            ToolEvent(id: toolId, type: 'provider_tool', toolName: toolName, source: ToolEventSource.cliTransport),
           );
           yield snapshot();
-        }
-      } else if (event is StreamError) {
-        // Persist whatever partial content we have so the user retains
-        // visible context, then surface the typed failure so the caller's
-        // AsyncValue.guard fires a snackbar instead of baking stderr
-        // (paths, usernames) into the assistant's message content. The
-        // datasource always wraps the underlying cause in a
-        // ClaudeCliFailure; we rethrow it opaquely so this service does
-        // not need to import feature-layer types.
-        if (contentBuffer.isNotEmpty || toolEvents.isNotEmpty) {
-          await _session.persistMessage(sessionId, snapshot(streaming: false));
-        }
-        Error.throwWithStackTrace(event.failure, StackTrace.current);
-      } else if (event is StreamParseFailure) {
-        // Log once at the service boundary — the parser itself is
-        // side-effect-free.
-        dLog('[ClaudeCli] parse failure: ${event.error}');
+
+        case ProviderToolInputDelta():
+          break; // Accumulated by the datasource; no incremental UI update.
+
+        case ProviderToolUseComplete(:final toolId, :final input):
+          final idx = toolEvents.indexWhere((t) => t.id == toolId);
+          if (idx >= 0) {
+            toolEvents[idx] = toolEvents[idx].copyWith(
+              input: input.isEmpty ? toolEvents[idx].input : input,
+              status: ToolStatus.success,
+            );
+            yield snapshot();
+          }
+
+        case ProviderPermissionRequest(:final requestId, :final toolName, :final toolInput):
+          final approved = requestPermission != null
+              ? await requestPermission(
+                  PermissionRequest(toolEventId: requestId, toolName: toolName, summary: toolName, input: toolInput),
+                )
+              : true;
+          ds.respondToPermissionRequest(requestId, approved: approved);
+
+        case ProviderStreamDone():
+          break; // Loop ends naturally.
+
+        case ProviderStreamFailure(:final error):
+          if (contentBuffer.isNotEmpty || toolEvents.isNotEmpty) {
+            await _session.persistMessage(sessionId, snapshot(streaming: false));
+          }
+          Error.throwWithStackTrace(StreamAbortedUnexpectedlyException(error.toString()), StackTrace.current);
       }
-      // ToolUseInputDelta: no-op; parser accumulates the buffer and emits
-      // ToolUseComplete.
-      // StreamDone: handled by the loop ending naturally.
     }
 
     if (interrupted) {
-      // User cancelled — mark the partial content with an explicit interrupted
-      // role so it is excluded from the next prompt's history window.
       final interruptedMsg = ChatMessage(
         id: assistantId,
         sessionId: sessionId,
@@ -355,7 +306,6 @@ class SessionService {
       return;
     }
 
-    // Final non-streaming message.
     final finalMsg = snapshot(streaming: false);
     await _session.persistMessage(sessionId, finalMsg);
     yield finalMsg;

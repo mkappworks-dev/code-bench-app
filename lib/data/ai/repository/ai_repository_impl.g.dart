@@ -8,29 +8,23 @@ part of 'ai_repository_impl.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Assembles [AIRepositoryImpl] with the per-transport datasource map.
-///
-/// The CLI detection handoff is inverted via [claudeCliDetectorProvider]
-/// so this file never imports from `lib/services/` — the production
-/// implementation is overridden at the app root (see `lib/main.dart`).
+/// Assembles [AIRepositoryImpl] with the per-provider HTTP datasource map.
+/// CLI/SDK transports are not registered here — they live in
+/// `AIProviderService` and are dispatched at the SessionService layer.
 
 @ProviderFor(aiRepository)
 final aiRepositoryProvider = AiRepositoryProvider._();
 
-/// Assembles [AIRepositoryImpl] with the per-transport datasource map.
-///
-/// The CLI detection handoff is inverted via [claudeCliDetectorProvider]
-/// so this file never imports from `lib/services/` — the production
-/// implementation is overridden at the app root (see `lib/main.dart`).
+/// Assembles [AIRepositoryImpl] with the per-provider HTTP datasource map.
+/// CLI/SDK transports are not registered here — they live in
+/// `AIProviderService` and are dispatched at the SessionService layer.
 
 final class AiRepositoryProvider
     extends $FunctionalProvider<AsyncValue<AIRepositoryImpl>, AIRepositoryImpl, FutureOr<AIRepositoryImpl>>
     with $FutureModifier<AIRepositoryImpl>, $FutureProvider<AIRepositoryImpl> {
-  /// Assembles [AIRepositoryImpl] with the per-transport datasource map.
-  ///
-  /// The CLI detection handoff is inverted via [claudeCliDetectorProvider]
-  /// so this file never imports from `lib/services/` — the production
-  /// implementation is overridden at the app root (see `lib/main.dart`).
+  /// Assembles [AIRepositoryImpl] with the per-provider HTTP datasource map.
+  /// CLI/SDK transports are not registered here — they live in
+  /// `AIProviderService` and are dispatched at the SessionService layer.
   AiRepositoryProvider._()
     : super(
         from: null,
@@ -55,4 +49,4 @@ final class AiRepositoryProvider
   }
 }
 
-String _$aiRepositoryHash() => r'412c83d7472f121af96904b669d649ace7930f1f';
+String _$aiRepositoryHash() => r'b48e2381278f1b6684585e93822f8f7fc608fb56';

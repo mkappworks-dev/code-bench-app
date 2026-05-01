@@ -20,6 +20,8 @@ class _FakeProvidersService extends Fake implements ProvidersService {
   Future<String?> readCustomApiKey() async => customApiKey;
   @override
   Future<String?> readAnthropicTransport() async => null;
+  @override
+  Future<String?> readOpenaiTransport() async => null;
 }
 
 class _ThrowingProvidersService extends Fake implements ProvidersService {
@@ -33,6 +35,8 @@ class _ThrowingProvidersService extends Fake implements ProvidersService {
   Future<String?> readCustomApiKey() => Future.error(Exception('keychain unavailable'));
   @override
   Future<String?> readAnthropicTransport() => Future.error(Exception('keychain unavailable'));
+  @override
+  Future<String?> readOpenaiTransport() => Future.error(Exception('keychain unavailable'));
 }
 
 void main() {
