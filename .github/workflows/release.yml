@@ -109,20 +109,29 @@ jobs:
 
           ditto -c -k --keepParent "$APP" "$NOTARIZE_ZIP"
 
-          if ! xcrun notarytool submit "$NOTARIZE_ZIP" \
+          # Capture both the JSON output and exit code separately. notarytool
+          # returns 0 on Invalid verdicts (only the *submission* succeeded),
+          # so we must parse the status field instead of relying on $?.
+          SUBMIT_OUTPUT=$(xcrun notarytool submit "$NOTARIZE_ZIP" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_ID_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" \
-            --wait; then
-            SUBMISSION_ID=$(xcrun notarytool history \
-              --apple-id "$APPLE_ID" \
-              --password "$APPLE_ID_PASSWORD" \
-              --team-id "$APPLE_TEAM_ID" \
-              --output-format json | jq -r '.history[0].id')
+            --output-format json \
+            --wait)
+
+          echo "$SUBMIT_OUTPUT"
+
+          SUBMISSION_ID=$(echo "$SUBMIT_OUTPUT" | jq -r '.id')
+          STATUS=$(echo "$SUBMIT_OUTPUT" | jq -r '.status')
+
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "::error::Notarization failed with status: $STATUS"
+            echo "::group::notarytool log for $SUBMISSION_ID"
             xcrun notarytool log "$SUBMISSION_ID" \
               --apple-id "$APPLE_ID" \
               --password "$APPLE_ID_PASSWORD" \
               --team-id "$APPLE_TEAM_ID"
+            echo "::endgroup::"
             exit 1
           fi
 
