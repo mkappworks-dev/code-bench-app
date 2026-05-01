@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../data/update/models/update_state.dart';
 import '../notifiers/update_notifier.dart';
+import '../notifiers/update_state.dart';
 import 'update_dialog.dart';
 
 class UpdateChip extends ConsumerStatefulWidget {

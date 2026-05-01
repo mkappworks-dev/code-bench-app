@@ -7,10 +7,10 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../data/update/models/update_state.dart';
 import '../../general/widgets/settings_group.dart';
 import '../../settings/widgets/section_label.dart';
 import '../notifiers/update_notifier.dart';
+import '../notifiers/update_state.dart';
 
 class UpdateSection extends ConsumerWidget {
   const UpdateSection({super.key});

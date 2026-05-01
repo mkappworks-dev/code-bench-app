@@ -1,12 +1,14 @@
 // lib/services/update/update_service.dart
-import 'dart:io';
-
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/utils/debug_logger.dart';
+import '../../data/update/datasource/update_install_datasource.dart';
+import '../../data/update/datasource/update_install_datasource_process.dart';
+import '../../data/update/datasource/update_install_status_datasource.dart';
+import '../../data/update/datasource/update_install_status_datasource_io.dart';
 import '../../data/update/models/update_info.dart';
+import '../../data/update/models/update_install_status.dart';
 import '../../data/update/update_exception.dart';
 import '../../data/update/update_repository.dart';
 import '../../data/update/update_repository_impl.dart';
@@ -14,12 +16,27 @@ import '../../data/update/update_repository_impl.dart';
 part 'update_service.g.dart';
 
 @Riverpod(keepAlive: true)
-UpdateService updateService(Ref ref) => UpdateService(repository: ref.watch(updateRepositoryProvider));
+UpdateService updateService(Ref ref) => UpdateService(
+  repository: ref.watch(updateRepositoryProvider),
+  installDs: ref.watch(updateInstallDatasourceProvider),
+  statusDs: ref.watch(updateInstallStatusDatasourceProvider),
+);
 
+/// Orchestrates the update lifecycle. Owns policy decisions (signature
+/// enforcement, Team-ID matching, version comparison) and composes datasources
+/// for all I/O — does not perform Process or filesystem operations directly.
 class UpdateService {
-  UpdateService({required UpdateRepository repository}) : _repo = repository;
+  UpdateService({
+    required UpdateRepository repository,
+    required UpdateInstallDatasource installDs,
+    required UpdateInstallStatusDatasource statusDs,
+  }) : _repo = repository,
+       _installDs = installDs,
+       _statusDs = statusDs;
 
   final UpdateRepository _repo;
+  final UpdateInstallDatasource _installDs;
+  final UpdateInstallStatusDatasource _statusDs;
 
   Future<UpdateInfo?> checkForUpdate() async {
     final info = await _repo.fetchLatestRelease();
@@ -37,60 +54,72 @@ class UpdateService {
         },
       );
 
+  /// Verifies the downloaded bundle's authenticity and swaps it in for the
+  /// running install. Never returns normally on success — the spawned
+  /// relaunch script outlives this process.
   Future<void> installUpdate(String zipPath) async {
-    final extractDir = '${Directory.systemTemp.path}/cb-update-extracted';
+    final extractDir = await _installDs.createExtractDir();
+    try {
+      await _installDs.extractZip(zipPath: zipPath, destDir: extractDir);
+      final extractedAppPath = await _installDs.resolveExtractedAppPath(extractDir);
+      final appPath = _installDs.currentAppPath();
 
-    // Clear any stale extraction from a previous (possibly failed) attempt
-    final extractDirObj = Directory(extractDir);
-    if (extractDirObj.existsSync()) extractDirObj.deleteSync(recursive: true);
+      // Authenticity gate: refuse anything not signed by the same Team ID as
+      // the running bundle. When the running bundle is unsigned (dev build),
+      // require the downloaded bundle to be unsigned too — refuses any
+      // signed↔unsigned crossover.
+      final currentTeamId = await _installDs.readTeamId(appPath);
+      final downloadedTeamId = await _installDs.readTeamId(extractedAppPath);
+      if (currentTeamId != downloadedTeamId) {
+        sLog('[UpdateService] Team ID mismatch: current=$currentTeamId downloaded=$downloadedTeamId');
+        throw const UpdateInstallException('Downloaded bundle Team ID does not match current install.');
+      }
+      final enforceSignature = currentTeamId != null;
 
-    // Extract .zip — ditto preserves macOS xattrs and codesign metadata
-    final extractResult = await Process.run('ditto', ['-x', '-k', zipPath, extractDir]);
-    if (extractResult.exitCode != 0) {
-      dLog('[UpdateService] ditto extract failed: ${extractResult.stderr}');
-      throw UpdateInstallException('ditto extract failed: ${extractResult.stderr}');
+      if (enforceSignature) {
+        await _installDs.verifyCodesign(extractedAppPath);
+        await _installDs.assessGatekeeper(extractedAppPath);
+      } else {
+        dLog('[UpdateService] Current bundle is unsigned — skipping codesign/spctl checks.');
+      }
+
+      sLog(
+        '[UpdateService] swapping bundle: $appPath ← $extractedAppPath '
+        '(team=${currentTeamId ?? "unsigned"})',
+      );
+
+      final statusPath = await _statusDs.sentinelPath();
+      await _installDs.swapAndRelaunch(
+        currentAppPath: appPath,
+        newAppPath: extractedAppPath,
+        extractDir: extractDir,
+        zipPath: zipPath,
+        statusSentinelPath: statusPath,
+        enforceSignature: enforceSignature,
+      );
+    } catch (e, st) {
+      _installDs.cleanupExtractDir(extractDir);
+      // Preserve typed UpdateException; wrap anything else (raw I/O, etc.) so
+      // higher layers never see implementation-leak exceptions.
+      if (e is UpdateException) rethrow;
+      dLog('[UpdateService] installUpdate unexpected error: $e\n$st');
+      throw UpdateInstallException('Install failed: $e');
     }
-
-    // Resolve current .app path from executable: walk up 3 levels
-    // e.g. /Applications/Code Bench.app/Contents/MacOS/code_bench_app → .app
-    final appPath = p.dirname(p.dirname(p.dirname(Platform.resolvedExecutable)));
-
-    // Find extracted .app directory
-    final extracted = Directory(extractDir).listSync().whereType<Directory>().firstWhere(
-      (d) => d.path.endsWith('.app'),
-      orElse: () {
-        throw const UpdateInstallException('No .app found in extracted zip');
-      },
-    );
-
-    // Write backup-first relaunch script:
-    // mv current → .old, ditto new → current, open on success, restore on failure
-    final scriptPath = '${Directory.systemTemp.path}/cb_relaunch.sh';
-    final script = '''#!/bin/bash
-sleep 1
-mv "\$1" "\$1.old"
-ditto "\$2" "\$1"
-if [ \$? -eq 0 ]; then
-  rm -rf "\$1.old"
-  rm -rf "\$3"
-  rm -f "\$4"
-  open "\$1"
-else
-  mv "\$1.old" "\$1"
-  rm -rf "\$3"
-fi
-''';
-    await File(scriptPath).writeAsString(script);
-    await Process.run('chmod', ['+x', scriptPath]);
-    await Process.start('/bin/bash', [scriptPath, appPath, extracted.path, extractDir, zipPath]);
-
-    exit(0);
   }
+
+  /// Reads the previous-attempt sentinel left behind by the relaunch script.
+  Future<UpdateInstallStatus?> readLastInstallStatus() => _statusDs.readStatus();
+
+  /// Clears the sentinel after the notifier has surfaced its contents.
+  Future<void> clearLastInstallStatus() => _statusDs.clearStatus();
 
   static bool isNewer(String latest, String current) {
     final l = latest.split('.').map(int.tryParse).whereType<int>().toList();
     final c = current.split('.').map(int.tryParse).whereType<int>().toList();
-    if (l.length < 3 || c.length < 3) return false;
+    if (l.length < 3 || c.length < 3) {
+      dLog('[UpdateService] isNewer: unparseable version latest="$latest" current="$current"');
+      return false;
+    }
     for (var i = 0; i < 3; i++) {
       if (l[i] > c[i]) return true;
       if (l[i] < c[i]) return false;

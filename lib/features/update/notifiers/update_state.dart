@@ -1,8 +1,8 @@
-// lib/data/update/models/update_state.dart
+// lib/features/update/notifiers/update_state.dart
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../features/update/notifiers/update_failure.dart';
-import 'update_info.dart';
+import '../../../data/update/models/update_info.dart';
+import 'update_failure.dart';
 
 part 'update_state.freezed.dart';
 

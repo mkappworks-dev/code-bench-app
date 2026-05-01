@@ -43,4 +43,4 @@ final class UpdateServiceProvider extends $FunctionalProvider<UpdateService, Upd
   }
 }
 
-String _$updateServiceHash() => r'430049d3765f9dc5563e13504153b3c78e78720b';
+String _$updateServiceHash() => r'0cbbcfd524002dacdfa3b7a8caef9b377337eaa9';

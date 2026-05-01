@@ -9,11 +9,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/update_constants.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/debug_logger.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../data/update/models/update_info.dart';
-import '../../../data/update/models/update_state.dart';
 import '../notifiers/update_failure.dart';
 import '../notifiers/update_notifier.dart';
+import '../notifiers/update_state.dart';
 
 class UpdateDialog extends ConsumerStatefulWidget {
   const UpdateDialog({super.key, required this.info});
@@ -120,12 +121,15 @@ class _DialogContent extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        // State-specific content
+        // State-specific content (exhaustive switch on UpdateState)
         switch (updateState) {
           UpdateStateDownloading(:final progress) => _ProgressBar(progress: progress),
           UpdateStateInstalling() => const _InstallingRow(),
           UpdateStateError(:final failure) => _ErrorRow(failure: failure, info: info),
-          _ => _ReleaseNotes(notes: info.releaseNotes),
+          UpdateStateIdle() ||
+          UpdateStateChecking() ||
+          UpdateStateAvailable() ||
+          UpdateStateUpToDate() => _ReleaseNotes(notes: info.releaseNotes),
         },
       ],
     );
@@ -228,6 +232,16 @@ class _InstallingRow extends StatelessWidget {
   }
 }
 
+Future<void> _openManualDownloadPage() async {
+  final uri = Uri.parse('https://github.com/$kGithubOwner/$kGithubRepo/releases/latest');
+  try {
+    final ok = await launchUrl(uri);
+    if (!ok) dLog('[UpdateDialog] launchUrl returned false for $uri');
+  } catch (e, st) {
+    dLog('[UpdateDialog] launchUrl threw: $e\n$st');
+  }
+}
+
 class _ErrorRow extends StatelessWidget {
   const _ErrorRow({required this.failure, required this.info});
   final UpdateFailure failure;
@@ -248,11 +262,7 @@ class _ErrorRow extends StatelessWidget {
         Text(message, style: TextStyle(color: c.error, fontSize: 11)),
         const SizedBox(height: 8),
         GestureDetector(
-          onTap: () {
-            try {
-              launchUrl(Uri.parse('https://github.com/$kGithubOwner/$kGithubRepo/releases/latest'));
-            } catch (_) {}
-          },
+          onTap: () => unawaited(_openManualDownloadPage()),
           child: Text(
             'Download manually →',
             style: TextStyle(

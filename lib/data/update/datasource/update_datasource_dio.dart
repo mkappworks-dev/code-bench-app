@@ -13,6 +13,16 @@ import 'update_datasource.dart';
 
 part 'update_datasource_dio.g.dart';
 
+/// Hosts the update path is allowed to fetch from. Validated against both the
+/// release-API endpoint and the asset download URL (which is release-author
+/// controlled and could otherwise point anywhere).
+const _kAllowedDownloadHosts = {
+  'github.com',
+  'objects.githubusercontent.com',
+  'github-releases.githubusercontent.com',
+  'release-assets.githubusercontent.com',
+};
+
 @Riverpod(keepAlive: true)
 UpdateDatasource updateDatasource(Ref ref) => UpdateDatasourceDio();
 
@@ -33,21 +43,50 @@ class UpdateDatasourceDio implements UpdateDatasource {
       final response = await _dio.get<Map<String, dynamic>>(
         'https://api.github.com/repos/$kGithubOwner/$kGithubRepo/releases/latest',
       );
-      final data = response.data!;
-      final tagName = (data['tag_name'] as String? ?? '');
-      final version = tagName.startsWith('v') ? tagName.substring(1) : tagName;
-      if (version.isEmpty) return null;
-      final assets = (data['assets'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
-      final asset = assets.firstWhere((a) => a['name'] == kUpdateAssetName, orElse: () => {});
-      final downloadUrl = asset['browser_download_url'] as String?;
-      if (downloadUrl == null) return null;
-      return UpdateInfo(
-        version: version,
-        releaseNotes: data['body'] as String? ?? '',
-        downloadUrl: downloadUrl,
-        publishedAt: DateTime.parse(data['published_at'] as String),
-      );
+      final data = response.data;
+      if (data == null) {
+        sLog('[UpdateDatasource] fetchLatestRelease: empty response body');
+        throw const UpdateNetworkException('Empty response from GitHub releases API.');
+      }
+
+      try {
+        final tagName = (data['tag_name'] as String?) ?? '';
+        final version = tagName.startsWith('v') ? tagName.substring(1) : tagName;
+        if (version.isEmpty) return null;
+
+        final assets = (data['assets'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+        final asset = assets.cast<Map<String, dynamic>?>().firstWhere(
+          (a) => a != null && a['name'] == kUpdateAssetName,
+          orElse: () => null,
+        );
+        if (asset == null) {
+          // Treat a tagged release that ships no matching asset as a real
+          // error — silently returning "no update" hides a config bug.
+          throw UpdateNetworkException('Release $tagName has no asset named "$kUpdateAssetName".');
+        }
+        final downloadUrl = asset['browser_download_url'] as String?;
+        if (downloadUrl == null || downloadUrl.isEmpty) {
+          throw UpdateNetworkException('Release $tagName asset has no browser_download_url.');
+        }
+        _assertAllowedHost(downloadUrl);
+
+        final publishedAtRaw = data['published_at'] as String?;
+        final publishedAt = publishedAtRaw == null ? DateTime.now() : DateTime.parse(publishedAtRaw);
+
+        return UpdateInfo(
+          version: version,
+          releaseNotes: data['body'] as String? ?? '',
+          downloadUrl: downloadUrl,
+          publishedAt: publishedAt,
+        );
+      } on UpdateException {
+        rethrow;
+      } catch (e, st) {
+        dLog('[UpdateDatasource] malformed release payload: $e\n$st');
+        throw const UpdateNetworkException('Malformed release payload from GitHub.');
+      }
     } on DioException catch (e, st) {
+      // 404 = no published release yet; not an error condition for the caller.
       if (e.response?.statusCode == 404) return null;
       dLog('[UpdateDatasource] fetchLatestRelease failed: $e\n$st');
       throw UpdateNetworkException(e.message);
@@ -60,6 +99,7 @@ class UpdateDatasourceDio implements UpdateDatasource {
     required String version,
     required void Function(int received, int total) onProgress,
   }) async {
+    _assertAllowedHost(url);
     final savePath = '${Directory.systemTemp.path}/cb-update-$version.zip';
     try {
       await _dio.download(
@@ -72,6 +112,14 @@ class UpdateDatasourceDio implements UpdateDatasource {
     } on DioException catch (e, st) {
       dLog('[UpdateDatasource] downloadRelease failed: $e\n$st');
       throw UpdateDownloadException(e.message);
+    }
+  }
+
+  void _assertAllowedHost(String rawUrl) {
+    final uri = Uri.tryParse(rawUrl);
+    if (uri == null || uri.scheme != 'https' || !_kAllowedDownloadHosts.contains(uri.host)) {
+      sLog('[UpdateDatasource] Refusing non-allowlisted update URL: $rawUrl');
+      throw UpdateNetworkException('Update URL is not from an allowlisted host: ${uri?.host ?? "(unparseable)"}');
     }
   }
 }
