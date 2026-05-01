@@ -8,30 +8,28 @@ part of 'ai_provider_status_notifier.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Async snapshot of all registered AI providers with their availability status.
-/// Rebuilt whenever [aIProviderServiceProvider] state changes.
-///
-/// Used by provider cards (e.g. Anthropic) to enable/disable the SDK transport
-/// option based on whether the local binary is installed.
+/// Async snapshot of all registered AI providers with their availability
+/// status. The `recheck` method is the widget-facing entry point — widgets
+/// must never call `ref.refresh(aiProviderStatusProvider)` directly (that
+/// violates the architecture rule that widgets only reach notifiers, not
+/// providers).
 
-@ProviderFor(aiProviderStatus)
-final aiProviderStatusProvider = AiProviderStatusProvider._();
+@ProviderFor(AiProviderStatusNotifier)
+final aiProviderStatusProvider = AiProviderStatusNotifierProvider._();
 
-/// Async snapshot of all registered AI providers with their availability status.
-/// Rebuilt whenever [aIProviderServiceProvider] state changes.
-///
-/// Used by provider cards (e.g. Anthropic) to enable/disable the SDK transport
-/// option based on whether the local binary is installed.
-
-final class AiProviderStatusProvider
-    extends $FunctionalProvider<AsyncValue<List<ProviderEntry>>, List<ProviderEntry>, FutureOr<List<ProviderEntry>>>
-    with $FutureModifier<List<ProviderEntry>>, $FutureProvider<List<ProviderEntry>> {
-  /// Async snapshot of all registered AI providers with their availability status.
-  /// Rebuilt whenever [aIProviderServiceProvider] state changes.
-  ///
-  /// Used by provider cards (e.g. Anthropic) to enable/disable the SDK transport
-  /// option based on whether the local binary is installed.
-  AiProviderStatusProvider._()
+/// Async snapshot of all registered AI providers with their availability
+/// status. The `recheck` method is the widget-facing entry point — widgets
+/// must never call `ref.refresh(aiProviderStatusProvider)` directly (that
+/// violates the architecture rule that widgets only reach notifiers, not
+/// providers).
+final class AiProviderStatusNotifierProvider
+    extends $AsyncNotifierProvider<AiProviderStatusNotifier, List<ProviderEntry>> {
+  /// Async snapshot of all registered AI providers with their availability
+  /// status. The `recheck` method is the widget-facing entry point — widgets
+  /// must never call `ref.refresh(aiProviderStatusProvider)` directly (that
+  /// violates the architecture rule that widgets only reach notifiers, not
+  /// providers).
+  AiProviderStatusNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -43,17 +41,35 @@ final class AiProviderStatusProvider
       );
 
   @override
-  String debugGetCreateSourceHash() => _$aiProviderStatusHash();
+  String debugGetCreateSourceHash() => _$aiProviderStatusNotifierHash();
 
   @$internal
   @override
-  $FutureProviderElement<List<ProviderEntry>> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<ProviderEntry>> create(Ref ref) {
-    return aiProviderStatus(ref);
-  }
+  AiProviderStatusNotifier create() => AiProviderStatusNotifier();
 }
 
-String _$aiProviderStatusHash() => r'3d0ee7fa8eb847ade6a0627b0d3c051c0f489948';
+String _$aiProviderStatusNotifierHash() => r'91b5b5d50ac082b7b3d30776dfc40cb8613152b0';
+
+/// Async snapshot of all registered AI providers with their availability
+/// status. The `recheck` method is the widget-facing entry point — widgets
+/// must never call `ref.refresh(aiProviderStatusProvider)` directly (that
+/// violates the architecture rule that widgets only reach notifiers, not
+/// providers).
+
+abstract class _$AiProviderStatusNotifier extends $AsyncNotifier<List<ProviderEntry>> {
+  FutureOr<List<ProviderEntry>> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<List<ProviderEntry>>, List<ProviderEntry>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<ProviderEntry>>, List<ProviderEntry>>,
+              AsyncValue<List<ProviderEntry>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

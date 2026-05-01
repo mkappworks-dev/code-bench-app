@@ -154,19 +154,32 @@ class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
   }
 
   Future<void> _recheckSdk() async {
-    try {
-      final entries = await ref.refresh(aiProviderStatusProvider.future);
-      if (!mounted) return;
-      final entry = entries.where((e) => e.id == _providerId).firstOrNull;
-      if (entry?.isAvailable ?? false) {
-        AppSnackBar.show(context, 'Codex SDK detected', type: AppSnackBarType.success);
-      } else {
-        AppSnackBar.show(context, '$_binaryName not found on PATH', type: AppSnackBarType.error);
-      }
-    } catch (e) {
-      if (!mounted) return;
-      AppSnackBar.show(context, 'Recheck failed', type: AppSnackBarType.error);
+    await ref.read(aiProviderStatusProvider.notifier).recheck();
+    if (!mounted) return;
+    final state = ref.read(aiProviderStatusProvider);
+    if (state.hasError) {
+      AppSnackBar.show(context, 'Recheck failed — please retry', type: AppSnackBarType.error);
+      return;
     }
+    final entries = switch (state) {
+      AsyncData(:final value) => value,
+      _ => const <ProviderEntry>[],
+    };
+    final entry = entries.where((e) => e.id == _providerId).firstOrNull;
+    if (entry?.isAvailable ?? false) {
+      AppSnackBar.show(context, 'Codex SDK detected', type: AppSnackBarType.success);
+      return;
+    }
+    final reason = entry?.status is ProviderUnavailable
+        ? (entry!.status as ProviderUnavailable).reasonKind
+        : ProviderUnavailableReason.missing;
+    final message = switch (reason) {
+      ProviderUnavailableReason.unhealthy => '$_binaryName is installed but not responding — try reinstalling',
+      ProviderUnavailableReason.detectionFailed => 'Could not probe $_binaryName — please retry',
+      ProviderUnavailableReason.notRegistered => '$_binaryName provider is not registered',
+      ProviderUnavailableReason.missing => '$_binaryName not found on PATH',
+    };
+    AppSnackBar.show(context, message, type: AppSnackBarType.error);
   }
 
   CardStatusBadge _apiKeyBadge() => switch (_dotStatus) {
