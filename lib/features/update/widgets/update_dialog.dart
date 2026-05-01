@@ -81,9 +81,8 @@ class _UpdateDialogState extends ConsumerState<UpdateDialog> {
         AppDialogAction.primary(
           label: 'Download & Install',
           onPressed: switch (updateState) {
-            UpdateStateAvailable() || UpdateStateError() => () => unawaited(
-              ref.read(updateProvider.notifier).downloadAndInstall(widget.info),
-            ),
+            UpdateStateAvailable() ||
+            UpdateStateError() => () => unawaited(ref.read(updateProvider.notifier).downloadAndInstall(widget.info)),
             _ => null,
           },
         ),
