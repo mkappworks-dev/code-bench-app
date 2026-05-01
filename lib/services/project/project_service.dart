@@ -32,7 +32,16 @@ class ProjectService {
     if (existing.any((p) => p.path == directoryPath)) {
       throw DuplicateProjectPathException(directoryPath);
     }
-    return _repo.addExistingFolder(directoryPath);
+    try {
+      return await _repo.addExistingFolder(directoryPath);
+    } on FileSystemException catch (e) {
+      final code = e.osError?.errorCode;
+      if (code == 1 || code == 13) {
+        dLog('[ProjectService] TCC denied addExistingFolder("$directoryPath") (errno $code)');
+        throw ProjectPermissionDeniedException(directoryPath);
+      }
+      rethrow;
+    }
   }
 
   Future<Project> createNewFolder(String parentPath, String folderName) async {
@@ -64,15 +73,30 @@ class ProjectService {
   Future<void> deleteAllProjects() => _repo.deleteAllProjects();
 
   /// Returns `true` when the folder at [path] currently exists on disk.
-  bool projectExistsOnDisk(String path) => Directory(path).existsSync();
+  /// Returns `false` (rather than throwing) when macOS TCC denies the read,
+  /// since this is used by widgets for fast best-effort availability checks.
+  bool projectExistsOnDisk(String path) {
+    try {
+      return Directory(path).existsSync();
+    } on FileSystemException {
+      return false;
+    }
+  }
 
-  /// Resolves [path] to its canonical real path. Throws [ArgumentError] if
-  /// the path can't be read or is not a directory.
+  /// Resolves [path] to its canonical real path. Throws
+  /// [ProjectPermissionDeniedException] when macOS TCC blocks the read, or
+  /// [ArgumentError] for other I/O failures and non-directories.
   String resolveDroppedDirectory(String path) {
     final String resolved;
     try {
       resolved = Directory(path).resolveSymbolicLinksSync();
-    } catch (e) {
+    } on FileSystemException catch (e) {
+      // macOS TCC denial reports EPERM (1) or EACCES (13) via OSError.
+      final code = e.osError?.errorCode;
+      if (code == 1 || code == 13) {
+        dLog('[ProjectService] TCC denied access to "$path" (errno $code)');
+        throw ProjectPermissionDeniedException(path);
+      }
       dLog('[ProjectService] resolveDroppedDirectory failed for "$path": $e');
       throw ArgumentError('That path could not be opened');
     }

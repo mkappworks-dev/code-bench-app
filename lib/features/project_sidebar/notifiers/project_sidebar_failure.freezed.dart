@@ -55,12 +55,13 @@ extension ProjectSidebarFailurePatterns on ProjectSidebarFailure {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ProjectSidebarDuplicatePath value)?  duplicatePath,TResult Function( ProjectSidebarInvalidPath value)?  invalidPath,TResult Function( ProjectSidebarStorageError value)?  storageError,TResult Function( ProjectSidebarUnknownError value)?  unknown,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ProjectSidebarDuplicatePath value)?  duplicatePath,TResult Function( ProjectSidebarInvalidPath value)?  invalidPath,TResult Function( ProjectSidebarPermissionDenied value)?  permissionDenied,TResult Function( ProjectSidebarStorageError value)?  storageError,TResult Function( ProjectSidebarUnknownError value)?  unknown,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ProjectSidebarDuplicatePath() when duplicatePath != null:
 return duplicatePath(_that);case ProjectSidebarInvalidPath() when invalidPath != null:
-return invalidPath(_that);case ProjectSidebarStorageError() when storageError != null:
+return invalidPath(_that);case ProjectSidebarPermissionDenied() when permissionDenied != null:
+return permissionDenied(_that);case ProjectSidebarStorageError() when storageError != null:
 return storageError(_that);case ProjectSidebarUnknownError() when unknown != null:
 return unknown(_that);case _:
   return orElse();
@@ -80,12 +81,13 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ProjectSidebarDuplicatePath value)  duplicatePath,required TResult Function( ProjectSidebarInvalidPath value)  invalidPath,required TResult Function( ProjectSidebarStorageError value)  storageError,required TResult Function( ProjectSidebarUnknownError value)  unknown,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ProjectSidebarDuplicatePath value)  duplicatePath,required TResult Function( ProjectSidebarInvalidPath value)  invalidPath,required TResult Function( ProjectSidebarPermissionDenied value)  permissionDenied,required TResult Function( ProjectSidebarStorageError value)  storageError,required TResult Function( ProjectSidebarUnknownError value)  unknown,}){
 final _that = this;
 switch (_that) {
 case ProjectSidebarDuplicatePath():
 return duplicatePath(_that);case ProjectSidebarInvalidPath():
-return invalidPath(_that);case ProjectSidebarStorageError():
+return invalidPath(_that);case ProjectSidebarPermissionDenied():
+return permissionDenied(_that);case ProjectSidebarStorageError():
 return storageError(_that);case ProjectSidebarUnknownError():
 return unknown(_that);}
 }
@@ -101,12 +103,13 @@ return unknown(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ProjectSidebarDuplicatePath value)?  duplicatePath,TResult? Function( ProjectSidebarInvalidPath value)?  invalidPath,TResult? Function( ProjectSidebarStorageError value)?  storageError,TResult? Function( ProjectSidebarUnknownError value)?  unknown,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ProjectSidebarDuplicatePath value)?  duplicatePath,TResult? Function( ProjectSidebarInvalidPath value)?  invalidPath,TResult? Function( ProjectSidebarPermissionDenied value)?  permissionDenied,TResult? Function( ProjectSidebarStorageError value)?  storageError,TResult? Function( ProjectSidebarUnknownError value)?  unknown,}){
 final _that = this;
 switch (_that) {
 case ProjectSidebarDuplicatePath() when duplicatePath != null:
 return duplicatePath(_that);case ProjectSidebarInvalidPath() when invalidPath != null:
-return invalidPath(_that);case ProjectSidebarStorageError() when storageError != null:
+return invalidPath(_that);case ProjectSidebarPermissionDenied() when permissionDenied != null:
+return permissionDenied(_that);case ProjectSidebarStorageError() when storageError != null:
 return storageError(_that);case ProjectSidebarUnknownError() when unknown != null:
 return unknown(_that);case _:
   return null;
@@ -125,11 +128,12 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String path)?  duplicatePath,TResult Function( String reason)?  invalidPath,TResult Function( String message)?  storageError,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String path)?  duplicatePath,TResult Function( String reason)?  invalidPath,TResult Function( String path)?  permissionDenied,TResult Function( String message)?  storageError,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ProjectSidebarDuplicatePath() when duplicatePath != null:
 return duplicatePath(_that.path);case ProjectSidebarInvalidPath() when invalidPath != null:
-return invalidPath(_that.reason);case ProjectSidebarStorageError() when storageError != null:
+return invalidPath(_that.reason);case ProjectSidebarPermissionDenied() when permissionDenied != null:
+return permissionDenied(_that.path);case ProjectSidebarStorageError() when storageError != null:
 return storageError(_that.message);case ProjectSidebarUnknownError() when unknown != null:
 return unknown(_that.error);case _:
   return orElse();
@@ -149,11 +153,12 @@ return unknown(_that.error);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String path)  duplicatePath,required TResult Function( String reason)  invalidPath,required TResult Function( String message)  storageError,required TResult Function( Object error)  unknown,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String path)  duplicatePath,required TResult Function( String reason)  invalidPath,required TResult Function( String path)  permissionDenied,required TResult Function( String message)  storageError,required TResult Function( Object error)  unknown,}) {final _that = this;
 switch (_that) {
 case ProjectSidebarDuplicatePath():
 return duplicatePath(_that.path);case ProjectSidebarInvalidPath():
-return invalidPath(_that.reason);case ProjectSidebarStorageError():
+return invalidPath(_that.reason);case ProjectSidebarPermissionDenied():
+return permissionDenied(_that.path);case ProjectSidebarStorageError():
 return storageError(_that.message);case ProjectSidebarUnknownError():
 return unknown(_that.error);}
 }
@@ -169,11 +174,12 @@ return unknown(_that.error);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String path)?  duplicatePath,TResult? Function( String reason)?  invalidPath,TResult? Function( String message)?  storageError,TResult? Function( Object error)?  unknown,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String path)?  duplicatePath,TResult? Function( String reason)?  invalidPath,TResult? Function( String path)?  permissionDenied,TResult? Function( String message)?  storageError,TResult? Function( Object error)?  unknown,}) {final _that = this;
 switch (_that) {
 case ProjectSidebarDuplicatePath() when duplicatePath != null:
 return duplicatePath(_that.path);case ProjectSidebarInvalidPath() when invalidPath != null:
-return invalidPath(_that.reason);case ProjectSidebarStorageError() when storageError != null:
+return invalidPath(_that.reason);case ProjectSidebarPermissionDenied() when permissionDenied != null:
+return permissionDenied(_that.path);case ProjectSidebarStorageError() when storageError != null:
 return storageError(_that.message);case ProjectSidebarUnknownError() when unknown != null:
 return unknown(_that.error);case _:
   return null;
@@ -308,6 +314,72 @@ class _$ProjectSidebarInvalidPathCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? reason = null,}) {
   return _then(ProjectSidebarInvalidPath(
 null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ProjectSidebarPermissionDenied implements ProjectSidebarFailure {
+  const ProjectSidebarPermissionDenied(this.path);
+  
+
+ final  String path;
+
+/// Create a copy of ProjectSidebarFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ProjectSidebarPermissionDeniedCopyWith<ProjectSidebarPermissionDenied> get copyWith => _$ProjectSidebarPermissionDeniedCopyWithImpl<ProjectSidebarPermissionDenied>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProjectSidebarPermissionDenied&&(identical(other.path, path) || other.path == path));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,path);
+
+@override
+String toString() {
+  return 'ProjectSidebarFailure.permissionDenied(path: $path)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ProjectSidebarPermissionDeniedCopyWith<$Res> implements $ProjectSidebarFailureCopyWith<$Res> {
+  factory $ProjectSidebarPermissionDeniedCopyWith(ProjectSidebarPermissionDenied value, $Res Function(ProjectSidebarPermissionDenied) _then) = _$ProjectSidebarPermissionDeniedCopyWithImpl;
+@useResult
+$Res call({
+ String path
+});
+
+
+
+
+}
+/// @nodoc
+class _$ProjectSidebarPermissionDeniedCopyWithImpl<$Res>
+    implements $ProjectSidebarPermissionDeniedCopyWith<$Res> {
+  _$ProjectSidebarPermissionDeniedCopyWithImpl(this._self, this._then);
+
+  final ProjectSidebarPermissionDenied _self;
+  final $Res Function(ProjectSidebarPermissionDenied) _then;
+
+/// Create a copy of ProjectSidebarFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? path = null,}) {
+  return _then(ProjectSidebarPermissionDenied(
+null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

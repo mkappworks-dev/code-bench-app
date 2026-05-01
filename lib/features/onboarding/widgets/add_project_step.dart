@@ -81,6 +81,8 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
       final message = switch (failure) {
         ProjectSidebarDuplicatePath() => 'This project is already added.',
         ProjectSidebarInvalidPath(:final reason) => reason,
+        ProjectSidebarPermissionDenied() =>
+          'macOS blocked access to that folder. Click Allow on the system permission dialog, then try again.',
         ProjectSidebarStorageError() => 'Failed to save project — please try again.',
         ProjectSidebarUnknownError() => 'Failed to add project — please try again.',
         _ => 'Failed to add project — please try again.',
