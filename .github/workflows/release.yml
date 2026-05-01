@@ -69,11 +69,27 @@ jobs:
         if: matrix.target != 'macos'
         run: flutter build ${{ matrix.target }} --release
 
+      - name: Install create-dmg
+        if: matrix.target == 'macos'
+        run: brew install create-dmg
+
       - name: Package (macOS)
         if: matrix.target == 'macos'
         run: |
+          APP="build/macos/Build/Products/Release/Code Bench.app"
           cd build/macos/Build/Products/Release
           zip -r "$GITHUB_WORKSPACE/CodeBench-macos.zip" "Code Bench.app"
+          cd "$GITHUB_WORKSPACE"
+          create-dmg \
+            --volname "Code Bench" \
+            --window-pos 200 120 \
+            --window-size 660 400 \
+            --icon-size 128 \
+            --icon "Code Bench.app" 180 170 \
+            --hide-extension "Code Bench.app" \
+            --app-drop-link 480 170 \
+            "CodeBench-macos.dmg" \
+            "$APP"
 
       - name: Package (Windows)
         if: matrix.target == 'windows'
@@ -89,6 +105,13 @@ jobs:
         with:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}
+
+      - name: Upload DMG artifact
+        if: matrix.target == 'macos'
+        uses: actions/upload-artifact@v4
+        with:
+          name: CodeBench-macos.dmg
+          path: CodeBench-macos.dmg
 
   release:
     name: Create Release
@@ -107,7 +130,14 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          body: |
+            ## Code Bench ${{ github.ref_name }}
+
+            **macOS download:** grab `CodeBench-macos.dmg`, open it, and drag Code Bench to Applications.
+
+            Once installed, the app will check for updates automatically and prompt you when a new version is available.
           files: |
+            artifacts/CodeBench-macos.dmg
             artifacts/CodeBench-macos.zip
             # artifacts/CodeBench-windows.zip
             # artifacts/CodeBench-linux.tar.gz
