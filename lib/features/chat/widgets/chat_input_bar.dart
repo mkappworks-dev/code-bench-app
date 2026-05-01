@@ -500,9 +500,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                 minLines: 1,
                 style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
                 decoration: InputDecoration(
-                  hintText: isMissing
-                      ? 'Project folder is missing — Relocate or Remove to continue'
-                      : 'Ask anything, @tag files/folders, or use /command',
+                  hintText: isMissing ? 'Project folder is missing — Relocate or Remove to continue' : 'Ask anything',
                   hintStyle: TextStyle(color: c.faintFg, fontSize: ThemeConstants.uiFontSize),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
