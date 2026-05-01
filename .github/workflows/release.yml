@@ -61,20 +61,14 @@ jobs:
         if: matrix.target == 'macos'
         run: flutter build macos --release
         env:
-          FLUTTER_XCODE_CODE_SIGN_IDENTITY: ""
-          FLUTTER_XCODE_CODE_SIGNING_REQUIRED: NO
-          FLUTTER_XCODE_CODE_SIGNING_ALLOWED: NO
+          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "-"
+          FLUTTER_XCODE_CODE_SIGN_ENTITLEMENTS: macos/Runner/AdhocRelease.entitlements
+          FLUTTER_XCODE_CODE_SIGNING_REQUIRED: "YES"
+          FLUTTER_XCODE_CODE_SIGNING_ALLOWED: "YES"
 
       - name: Build
         if: matrix.target != 'macos'
         run: flutter build ${{ matrix.target }} --release
-
-      - name: Ad-hoc sign (macOS)
-        if: matrix.target == 'macos'
-        run: |
-          codesign --force --deep --sign - \
-            --entitlements macos/Runner/AdhocRelease.entitlements \
-            "build/macos/Build/Products/Release/Code Bench.app"
 
       - name: Install create-dmg
         if: matrix.target == 'macos'
