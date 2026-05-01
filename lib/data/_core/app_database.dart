@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_database.g.dart';
@@ -207,29 +208,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
-
-  @override
-  MigrationStrategy get migration => MigrationStrategy(
-    onUpgrade: (m, from, to) async {
-      if (from < 6) {
-        await m.addColumn(chatSessions, chatSessions.systemPrompt);
-        await m.addColumn(chatSessions, chatSessions.mode);
-        await m.addColumn(chatSessions, chatSessions.effort);
-        await m.addColumn(chatSessions, chatSessions.permission);
-      }
-      if (from < 7) {
-        await m.addColumn(chatMessages, chatMessages.toolEventsJson);
-      }
-      if (from < 8) {
-        await m.createTable(mcpServers);
-      }
-    },
-  );
+  int get schemaVersion => 1;
 }
 
 QueryExecutor _openConnection() {
-  return driftDatabase(name: 'code_bench');
+  // The DB lives in ~/Library/Application Support/<bundle-id>/, not ~/Documents.
+  // Non-sandboxed macOS resolves getApplicationDocumentsDirectory() to the
+  // user-visible Documents folder, which is TCC-gated and kills the process
+  // when NSDocumentsFolderUsageDescription is absent.
+  return driftDatabase(
+    name: 'code_bench',
+    native: DriftNativeOptions(databaseDirectory: getApplicationSupportDirectory),
+  );
 }
 
 // ── Provider ──────────────────────────────────────────────────────────────────
