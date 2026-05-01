@@ -8,8 +8,8 @@ enum AppDialogIconType { teal, destructive }
 class AppDialogAction {
   const AppDialogAction._({required this.label, required this.onPressed, required _ActionStyle style}) : _style = style;
 
-  factory AppDialogAction.cancel({required VoidCallback onPressed}) =>
-      AppDialogAction._(label: 'Cancel', onPressed: onPressed, style: _ActionStyle.ghost);
+  factory AppDialogAction.cancel({required VoidCallback onPressed, String label = 'Cancel'}) =>
+      AppDialogAction._(label: label, onPressed: onPressed, style: _ActionStyle.ghost);
 
   factory AppDialogAction.primary({required String label, required VoidCallback? onPressed}) =>
       AppDialogAction._(label: label, onPressed: onPressed, style: _ActionStyle.primary);

@@ -21,6 +21,7 @@ import 'widgets/relocate_project_dialog.dart';
 import 'widgets/remove_project_dialog.dart';
 import 'widgets/sidebar_empty_state.dart';
 import 'widgets/sidebar_footer.dart';
+import '../update/widgets/update_chip.dart';
 import 'widgets/sidebar_header.dart';
 
 class ProjectSidebar extends ConsumerStatefulWidget {
@@ -233,6 +234,7 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
               },
             ),
           ),
+          const UpdateChip(),
           const SidebarFooter(),
         ],
       ),
