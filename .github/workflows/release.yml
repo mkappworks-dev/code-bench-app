@@ -18,12 +18,12 @@ jobs:
           - os: macos-latest
             target: macos
             artifact: CodeBench-macos.zip
-          - os: windows-latest
-            target: windows
-            artifact: CodeBench-windows.zip
-          - os: ubuntu-latest
-            target: linux
-            artifact: CodeBench-linux.tar.gz
+          # - os: windows-latest
+          #   target: windows
+          #   artifact: CodeBench-windows.zip
+          # - os: ubuntu-latest
+          #   target: linux
+          #   artifact: CodeBench-linux.tar.gz
 
     runs-on: ${{ matrix.os }}
 
@@ -73,7 +73,7 @@ jobs:
         if: matrix.target == 'macos'
         run: |
           cd build/macos/Build/Products/Release
-          zip -r "$GITHUB_WORKSPACE/CodeBench-macos.zip" code_bench.app
+          zip -r "$GITHUB_WORKSPACE/CodeBench-macos.zip" "Code Bench.app"
 
       - name: Package (Windows)
         if: matrix.target == 'windows'
@@ -109,6 +109,6 @@ jobs:
         with:
           files: |
             artifacts/CodeBench-macos.zip
-            artifacts/CodeBench-windows.zip
-            artifacts/CodeBench-linux.tar.gz
+            # artifacts/CodeBench-windows.zip
+            # artifacts/CodeBench-linux.tar.gz
           generate_release_notes: true
