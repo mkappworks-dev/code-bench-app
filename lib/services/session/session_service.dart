@@ -127,6 +127,17 @@ class SessionService {
     if (providerId != null) {
       final ds = _providerService?.getProvider(providerId);
       if (ds != null) {
+        // CLI providers run with their own permission model
+        // (`bypassPermissions` for Claude, codex's own approval flow). The
+        // user's act/permission picks in the chat UI don't apply on this
+        // path — log so the override is visible in dev builds. The chat
+        // permission card warns the user before a CLI turn begins.
+        if (mode == ChatMode.act || permission != ChatPermission.fullAccess) {
+          dLog(
+            '[SessionService] CLI provider $providerId — '
+            'mode=$mode and permission=$permission ignored; CLI manages its own permissions',
+          );
+        }
         yield* _streamProvider(
           ds: ds,
           sessionId: sessionId,

@@ -2,12 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/core/errors/app_exception.dart';
-import 'package:code_bench_app/data/shared/ai_model.dart';
-import 'package:code_bench_app/services/providers/providers_service.dart';
-import 'package:code_bench_app/features/providers/notifiers/providers_failure.dart';
-import 'package:code_bench_app/features/providers/notifiers/providers_actions.dart';
 import 'package:code_bench_app/data/ai/repository/api_key_test_repository.dart';
 import 'package:code_bench_app/data/ai/repository/api_key_test_repository_impl.dart';
+import 'package:code_bench_app/data/shared/ai_model.dart';
+import 'package:code_bench_app/features/providers/notifiers/providers_actions.dart';
+import 'package:code_bench_app/features/providers/notifiers/providers_failure.dart';
+import 'package:code_bench_app/services/providers/providers_service.dart';
 
 // ── Fake ApiKeyTestRepository ─────────────────────────────────────────────────
 

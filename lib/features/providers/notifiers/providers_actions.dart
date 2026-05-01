@@ -56,6 +56,12 @@ class ProvidersActions extends _$ProvidersActions {
   }
 
   // ── Mutations (emit ProvidersFailure on error) ────────────────────────────
+  //
+  // Each save/delete invalidates `aiRepositoryProvider` so consumers (chat
+  // view, model picker, etc.) pick up the new state. Rebuild failures
+  // surface naturally via `AsyncError` on `aiRepositoryProvider` to those
+  // consumers — we don't await the rebuild here because the architecture
+  // rule forbids notifiers from reading repository providers directly.
 
   /// Persists [key] for [provider] (string name). Emits [ProvidersFailure] on error.
   Future<void> saveApiKey(String provider, String key) async {
