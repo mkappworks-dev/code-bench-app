@@ -62,7 +62,7 @@ jobs:
         run: flutter build macos --release
         env:
           FLUTTER_XCODE_CODE_SIGN_IDENTITY: "-"
-          FLUTTER_XCODE_CODE_SIGN_ENTITLEMENTS: macos/Runner/AdhocRelease.entitlements
+          FLUTTER_XCODE_CODE_SIGN_ENTITLEMENTS: ${{ github.workspace }}/macos/Runner/AdhocRelease.entitlements
           FLUTTER_XCODE_CODE_SIGNING_REQUIRED: "YES"
           FLUTTER_XCODE_CODE_SIGNING_ALLOWED: "YES"
 
