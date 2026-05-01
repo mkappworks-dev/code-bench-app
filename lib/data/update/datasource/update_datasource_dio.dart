@@ -15,7 +15,8 @@ part 'update_datasource_dio.g.dart';
 
 /// Hosts the update path is allowed to fetch from. Validated against both the
 /// release-API endpoint and the asset download URL (which is release-author
-/// controlled and could otherwise point anywhere).
+/// controlled and could otherwise point anywhere). Also re-asserted against
+/// `Response.realUri` after redirects to catch a CDN-redirect off-allowlist.
 const _kAllowedDownloadHosts = {
   'github.com',
   'objects.githubusercontent.com',
@@ -43,6 +44,9 @@ class UpdateDatasourceDio implements UpdateDatasource {
       final response = await _dio.get<Map<String, dynamic>>(
         'https://api.github.com/repos/$kGithubOwner/$kGithubRepo/releases/latest',
       );
+      // Re-assert allowlist on the *final* URL after any redirects.
+      _assertAllowedHost(response.realUri.toString());
+
       final data = response.data;
       if (data == null) {
         sLog('[UpdateDatasource] fetchLatestRelease: empty response body');
@@ -82,8 +86,8 @@ class UpdateDatasourceDio implements UpdateDatasource {
       } on UpdateException {
         rethrow;
       } catch (e, st) {
-        dLog('[UpdateDatasource] malformed release payload: $e\n$st');
-        throw const UpdateNetworkException('Malformed release payload from GitHub.');
+        dLog('[UpdateDatasource] malformed release payload: ${e.runtimeType}: $e\n$st');
+        throw UpdateNetworkException('Malformed release payload from GitHub (${e.runtimeType}).');
       }
     } on DioException catch (e, st) {
       // 404 = no published release yet; not an error condition for the caller.
@@ -100,14 +104,29 @@ class UpdateDatasourceDio implements UpdateDatasource {
     required void Function(int received, int total) onProgress,
   }) async {
     _assertAllowedHost(url);
-    final savePath = '${Directory.systemTemp.path}/cb-update-$version.zip';
+    // Randomised tempdir per attempt — defeats predictable-path symlink
+    // pre-planting on the zip download path.
+    final tempDir = await Directory.systemTemp.createTemp('cb-update-zip-');
+    final savePath = '${tempDir.path}/cb-update-$version.zip';
     try {
-      await _dio.download(
+      final response = await _dio.download(
         url,
         savePath,
         onReceiveProgress: onProgress,
         options: Options(receiveTimeout: const Duration(minutes: 10)),
       );
+      // Re-assert allowlist on the *final* URL after any redirects. If the
+      // CDN ever redirects off-allowlist, refuse the bytes we just wrote.
+      try {
+        _assertAllowedHost(response.realUri.toString());
+      } on UpdateException {
+        try {
+          await File(savePath).delete();
+        } catch (e) {
+          dLog('[UpdateDatasource] cleanup of $savePath after redirect rejection failed: $e');
+        }
+        rethrow;
+      }
       return savePath;
     } on DioException catch (e, st) {
       dLog('[UpdateDatasource] downloadRelease failed: $e\n$st');

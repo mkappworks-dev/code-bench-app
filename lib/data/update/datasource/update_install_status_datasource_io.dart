@@ -37,18 +37,32 @@ class UpdateInstallStatusDatasourceIo implements UpdateInstallStatusDatasource {
         timestamp: json['timestamp'] as String? ?? '',
       );
     } catch (e, st) {
-      dLog('[UpdateInstallStatusDatasource] readStatus failed: $e\n$st');
-      return null;
+      // Distinguish "missing" (handled above with existsSync) from
+      // "present-but-unreadable": surface a corrupted-sentinel marker so the
+      // notifier can show the user something instead of pretending nothing
+      // happened.
+      dLog('[UpdateInstallStatusDatasource] readStatus failed: ${e.runtimeType}: $e\n$st');
+      return (status: 'unknown', detail: 'corrupted-sentinel', timestamp: '');
     }
   }
 
   @override
   Future<void> clearStatus() async {
+    final path = await sentinelPath();
     try {
-      final file = File(await sentinelPath());
+      final file = File(path);
       if (file.existsSync()) await file.delete();
+      return;
     } catch (e) {
-      dLog('[UpdateInstallStatusDatasource] clearStatus failed: $e');
+      dLog('[UpdateInstallStatusDatasource] clearStatus delete failed, falling back to overwrite: $e');
+    }
+    // Fallback: if delete failed (read-only volume, perm change, locked), at
+    // least overwrite the file with an "ok" payload so the notifier doesn't
+    // re-fire the same install-failed error on every cold start forever.
+    try {
+      await File(path).writeAsString('{"status":"ok","detail":"","timestamp":""}\n');
+    } catch (e, st) {
+      dLog('[UpdateInstallStatusDatasource] clearStatus overwrite fallback failed: $e\n$st');
     }
   }
 }

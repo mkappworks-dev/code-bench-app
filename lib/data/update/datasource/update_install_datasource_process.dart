@@ -17,7 +17,12 @@ class UpdateInstallDatasourceProcess implements UpdateInstallDatasource {
   @override
   String currentAppPath() {
     // /Applications/Code Bench.app/Contents/MacOS/code_bench_app → walk up 3
-    return p.dirname(p.dirname(p.dirname(Platform.resolvedExecutable)));
+    final path = p.dirname(p.dirname(p.dirname(Platform.resolvedExecutable)));
+    if (!path.endsWith('.app')) {
+      sLog('[UpdateInstallDatasource] currentAppPath did not resolve to a .app: $path');
+      throw UpdateInstallException('Could not resolve running app bundle path: $path');
+    }
+    return path;
   }
 
   @override
@@ -38,19 +43,21 @@ class UpdateInstallDatasourceProcess implements UpdateInstallDatasource {
   @override
   Future<String> resolveExtractedAppPath(String extractDir) async {
     final dir = Directory(extractDir);
-    final entries = dir.listSync(followLinks: false);
+    final topLevel = dir.listSync(followLinks: false);
 
-    // Refuse symlinks at the top level — defeats zip-slip-via-symlink
-    for (final e in entries) {
-      final type = FileSystemEntity.typeSync(e.path, followLinks: false);
-      if (type == FileSystemEntityType.link) {
+    // Refuse any symlink anywhere in the extract — defeats zip-slip-via-symlink
+    // both at the top level and buried inside the .app bundle.
+    final allEntries = dir.listSync(recursive: true, followLinks: false);
+    for (final e in allEntries) {
+      if (FileSystemEntity.typeSync(e.path, followLinks: false) == FileSystemEntityType.link) {
         sLog('[UpdateInstallDatasource] Rejecting symlink in extract: ${e.path}');
         throw const UpdateInstallException('Update archive contains symlinks; refusing to install.');
       }
     }
 
-    // Require exactly one .app — refuses zips with multiple bundles or none
-    final apps = entries.whereType<Directory>().where((d) => d.path.endsWith('.app')).toList();
+    // Require exactly one .app at the top level — refuses zips with multiple
+    // bundles or none.
+    final apps = topLevel.whereType<Directory>().where((d) => d.path.endsWith('.app')).toList();
     if (apps.isEmpty) {
       throw const UpdateInstallException('No .app found in extracted zip.');
     }
@@ -64,6 +71,9 @@ class UpdateInstallDatasourceProcess implements UpdateInstallDatasource {
   Future<String?> readTeamId(String appPath) async {
     // codesign -dv writes its detail output to stderr by default
     final r = await Process.run('codesign', ['-dv', '--verbose=4', appPath]);
+    // For unsigned bundles codesign exits non-zero; treat as "no team id" rather
+    // than risking a regex match on garbage output.
+    if (r.exitCode != 0) return null;
     final output = '${r.stdout}${r.stderr}';
     final match = RegExp(r'TeamIdentifier=(\S+)').firstMatch(output);
     final teamId = match?.group(1);

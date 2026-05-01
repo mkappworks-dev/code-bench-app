@@ -100,10 +100,11 @@ class UpdateService {
     } catch (e, st) {
       _installDs.cleanupExtractDir(extractDir);
       // Preserve typed UpdateException; wrap anything else (raw I/O, etc.) so
-      // higher layers never see implementation-leak exceptions.
+      // higher layers never see implementation-leak exceptions. Preserve the
+      // original stack trace so Flutter's error reporter sees the real cause.
       if (e is UpdateException) rethrow;
-      dLog('[UpdateService] installUpdate unexpected error: $e\n$st');
-      throw UpdateInstallException('Install failed: $e');
+      dLog('[UpdateService] installUpdate unexpected error: ${e.runtimeType}: $e\n$st');
+      Error.throwWithStackTrace(UpdateInstallException('Install failed: ${e.runtimeType}: $e'), st);
     }
   }
 

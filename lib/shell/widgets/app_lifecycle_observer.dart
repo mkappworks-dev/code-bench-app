@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,7 +25,7 @@ class _AppLifecycleObserverState extends ConsumerState<AppLifecycleObserver> wit
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(updateProvider.notifier).checkForUpdates();
+      unawaited(ref.read(updateProvider.notifier).checkForUpdates());
     });
   }
 
