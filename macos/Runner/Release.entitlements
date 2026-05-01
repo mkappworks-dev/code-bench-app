@@ -12,5 +12,13 @@
 	<false/>
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<!--
+	  Explicitly disable get-task-allow so Apple notarization accepts
+	  the bundle. Xcode auto-injects this entitlement during signing in
+	  some configurations, and any value other than false is a hard
+	  notarization rejection (statusCode 4000).
+	-->
+	<key>com.apple.security.get-task-allow</key>
+	<false/>
 </dict>
 </plist>
