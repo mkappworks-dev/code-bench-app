@@ -13,11 +13,9 @@ AI-powered desktop code assistant that combines a code editor, multi-provider AI
 
 1. Download `CodeBench-macos.dmg` from the [latest release](https://github.com/mkappworks-dev/code-bench-app/releases/latest).
 2. Open the DMG and drag **Code Bench** into **Applications**.
-3. Launch the app. macOS will block it the first time because the app is not yet notarized.
-4. Open **System Settings → Privacy & Security**, scroll to the bottom, and click **Open Anyway**.
-5. On the next prompt, click **Open**.
+3. Launch the app from Applications.
 
-> macOS may also ask *"Code Bench would like to access files in your Documents folder."* — click **Allow**. Code Bench reads project files from wherever you store them on disk, so it needs access to user folders outside its own container.
+> When you point Code Bench at a project under Documents, Downloads, or Desktop, macOS will ask *"Code Bench would like to access files in your … folder."* Click **Allow**. Code Bench reads project files from wherever you store them on disk, so it needs access to those user folders.
 
 ## Features
 
