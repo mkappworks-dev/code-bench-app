@@ -15,6 +15,7 @@ import '../providers/providers_screen.dart';
 import '../general/general_screen.dart';
 import '../mcp_servers/mcp_servers_screen.dart';
 import '../general/notifiers/general_prefs_notifier.dart';
+import '../update/widgets/update_chip.dart';
 
 enum _SettingsNav { general, providers, integrations, codingTools, mcpServers, archive }
 
@@ -235,6 +236,11 @@ class _SettingsLeftNavState extends State<_SettingsLeftNav> {
             onTap: () => widget.onSelect(_SettingsNav.archive),
           ),
           const Spacer(),
+          // Bottom-anchored alongside Restore/Back. The chip self-hides when
+          // no update is available, so it's safe to render unconditionally
+          // and on every settings tab — visibility is driven by
+          // `updateProvider`, not by `showRestore`.
+          const UpdateChip(),
           if (showRestore)
             MouseRegion(
               cursor: SystemMouseCursors.click,
