@@ -101,7 +101,12 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        timeout-minutes: 30
+        # Apple's notary queue typically returns in 2-10 min but has been
+        # observed to spike past 30 min during peak hours / incidents
+        # (see submission 1534dd17 and 08fa45b9). 60 min is the new ceiling
+        # — generous for queue tail latencies, still bounded so a stuck
+        # runner can't burn an hour of credits silently.
+        timeout-minutes: 60
         run: |
           set -euo pipefail
           APP="build/macos/Build/Products/Release/Code Bench.app"
