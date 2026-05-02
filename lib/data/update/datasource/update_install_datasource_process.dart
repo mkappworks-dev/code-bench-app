@@ -45,13 +45,19 @@ class UpdateInstallDatasourceProcess implements UpdateInstallDatasource {
     final dir = Directory(extractDir);
     final topLevel = dir.listSync(followLinks: false);
 
-    // Refuse any symlink anywhere in the extract — defeats zip-slip-via-symlink
-    // both at the top level and buried inside the .app bundle.
+    // Zip-slip-via-symlink defence: reject any symlink whose resolved target
+    // escapes the extraction root. Relative in-bundle symlinks (e.g.
+    // FlutterMacOS.framework/Versions/Current → A) are legitimate macOS
+    // framework layout and must be allowed; only reject links pointing outside
+    // extractDir.
     final allEntries = dir.listSync(recursive: true, followLinks: false);
     for (final e in allEntries) {
-      if (FileSystemEntity.typeSync(e.path, followLinks: false) == FileSystemEntityType.link) {
-        sLog('[UpdateInstallDatasource] Rejecting symlink in extract: ${e.path}');
-        throw const UpdateInstallException('Update archive contains symlinks; refusing to install.');
+      if (FileSystemEntity.typeSync(e.path, followLinks: false) != FileSystemEntityType.link) continue;
+      final target = Link(e.path).targetSync();
+      final resolved = p.normalize(p.isAbsolute(target) ? target : p.join(p.dirname(e.path), target));
+      if (!p.isWithin(extractDir, resolved) && resolved != extractDir) {
+        sLog('[UpdateInstallDatasource] Rejecting escaping symlink in extract: ${e.path} → $target');
+        throw UpdateInstallException('Update archive contains a symlink that escapes the bundle: $target');
       }
     }
 
