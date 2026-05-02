@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../core/utils/debug_logger.dart';
 import 'ai_provider_datasource.dart';
@@ -55,6 +54,11 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   StreamSubscription<String>? _stdoutSubscription;
   StreamSubscription<String>? _stderrSubscription;
   final StringBuffer _stderrBuffer = StringBuffer();
+
+  /// Abort after N consecutive JSON parse failures — a healthy stream
+  /// produces occasional unknown frames but never a sustained malformed run.
+  static const int _consecutiveParseFailureLimit = 5;
+  int _consecutiveJsonParseFailures = 0;
 
   String? _providerThreadId;
   String? _version;
@@ -236,17 +240,34 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
         environment: minimalEnv,
       );
     } on ProcessException catch (e) {
+      // Cached path may be stale (brew upgrade, uninstall). Invalidate and
+      // retry once. Rebuild minimalEnv so the retry uses the freshly-resolved
+      // _shellPath rather than the stale one captured above.
       sLog('[CodexCli] start failed at $exePath: $e — invalidating cache and retrying');
       _resolvedPath = null;
       exePath = await _resolveExePath();
-      _process = await Process.start(
-        exePath,
-        ['app-server'],
-        workingDirectory: workingDirectory,
-        runInShell: false,
-        includeParentEnvironment: false,
-        environment: minimalEnv,
-      );
+      final retryEnv = <String, String>{
+        if (parentEnv['HOME'] != null) 'HOME': parentEnv['HOME']!,
+        'PATH': _shellPath ?? parentEnv['PATH'] ?? '/usr/bin:/bin:/usr/sbin:/sbin',
+        if (parentEnv['USER'] != null) 'USER': parentEnv['USER']!,
+        if (parentEnv['LANG'] != null) 'LANG': parentEnv['LANG']!,
+        if (parentEnv['TMPDIR'] != null) 'TMPDIR': parentEnv['TMPDIR']!,
+        if (parentEnv['SHELL'] != null) 'SHELL': parentEnv['SHELL']!,
+        if (parentEnv['CODEX_HOME'] != null) 'CODEX_HOME': parentEnv['CODEX_HOME']!,
+      };
+      try {
+        _process = await Process.start(
+          exePath,
+          ['app-server'],
+          workingDirectory: workingDirectory,
+          runInShell: false,
+          includeParentEnvironment: false,
+          environment: retryEnv,
+        );
+      } on ProcessException catch (e2) {
+        sLog('[CodexCli] retry start also failed at $exePath: $e2');
+        throw Exception('Codex CLI is not installed or not executable');
+      }
     }
     _workingDirectory = workingDirectory;
 
@@ -286,18 +307,28 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
 
     // If the process exits unexpectedly, surface and clean up.
     unawaited(
-      _process!.exitCode.then((code) {
-        if (code != 0) {
-          dLog('[CodexCli] app-server exited with code $code\nstderr=${redactSecrets(_stderrBuffer.toString())}');
-          _streamController?.add(
-            ProviderStreamFailure(
-              error: 'Codex exited with code $code',
-              details: redactSecrets(_stderrBuffer.toString()),
-            ),
-          );
-        }
-        _resetProcess();
-      }),
+      _process!.exitCode
+          .then((code) {
+            if (code != 0) {
+              dLog('[CodexCli] app-server exited with code $code\nstderr=${redactSecrets(_stderrBuffer.toString())}');
+              _streamController?.add(
+                ProviderStreamFailure(
+                  error: 'Codex exited with code $code',
+                  details: redactSecrets(_stderrBuffer.toString()),
+                ),
+              );
+            } else if (_providerThreadId != null) {
+              // Process exited cleanly mid-turn — surface so the caller
+              // doesn't hang waiting for turn/completed.
+              dLog('[CodexCli] app-server exited 0 unexpectedly mid-turn');
+              _streamController?.add(const ProviderStreamFailure(error: 'Codex process exited unexpectedly'));
+            }
+            _resetProcess();
+          })
+          .catchError((Object e) {
+            dLog('[CodexCli] exitCode handler threw: ${redactSecrets('$e')}');
+            _resetProcess();
+          }),
     );
   }
 
@@ -361,9 +392,19 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     Map<String, dynamic> json;
     try {
       json = jsonDecode(line) as Map<String, dynamic>;
+      _consecutiveJsonParseFailures = 0;
     } catch (e) {
+      _consecutiveJsonParseFailures++;
       final preview = line.length > 256 ? '${line.substring(0, 256)}…' : line;
-      dLog('[CodexCli] JSON parse error: $e on: ${redactSecrets(preview)}');
+      dLog(
+        '[CodexCli] JSON parse error ($_consecutiveJsonParseFailures/$_consecutiveParseFailureLimit): '
+        '$e on: ${redactSecrets(preview)}',
+      );
+      if (_consecutiveJsonParseFailures >= _consecutiveParseFailureLimit) {
+        _streamController?.add(const ProviderStreamFailure(error: 'Codex output unparseable'));
+        _process?.kill(ProcessSignal.sigterm);
+        _resetTurn();
+      }
       return;
     }
 
@@ -598,7 +639,11 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
       // Use sessionId as a resume cursor if available
       if (sessionId.isNotEmpty) 'resumeThreadId': sessionId,
     });
-    final threadId = result['thread']?['id'] as String? ?? const Uuid().v4();
+    final threadId = result['thread']?['id'] as String?;
+    if (threadId == null) {
+      dLog('[CodexCli] thread/start response missing thread.id: $result');
+      throw Exception('Codex thread/start returned no thread ID');
+    }
     dLog('[CodexCli] Thread started: $threadId');
     return threadId;
   }
@@ -643,6 +688,7 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
       _streamController?.close();
     }
     _streamController = null;
+    _consecutiveJsonParseFailures = 0;
     for (final c in _pendingApprovals.values) {
       if (!c.isCompleted) c.completeError(StateError('codex turn ended'));
     }

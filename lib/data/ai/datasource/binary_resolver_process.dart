@@ -22,10 +22,10 @@ import '../../../core/utils/debug_logger.dart';
 /// hardcoded constant (`claude`, `codex`), but provider TODOs plan to read
 /// this from user settings — guard the shell-quote boundary now.
 ///
-/// Leading `-` is rejected so that a value like `-version` cannot be
-/// parsed as a flag by `command` (mirrors the flag-shaped-argument guard
-/// in `provider_input_guards.dart`).
-final RegExp _safeBinaryNameRegex = RegExp(r'^[a-zA-Z0-9_./][a-zA-Z0-9_./-]*$');
+/// Leading `-` is rejected (flag-shaped-argument guard). `/` is rejected so
+/// only bare binary names are accepted; absolute-path overrides must be
+/// validated explicitly by the call site.
+final RegExp _safeBinaryNameRegex = RegExp(r'^[a-zA-Z0-9_][a-zA-Z0-9_.-]*$');
 
 /// Subset accepted for `$SHELL`. The login system sets this from
 /// `/etc/passwd`, but a stray value would be a shell-invocation vector.
@@ -61,44 +61,52 @@ class BinaryProbeFailed extends BinaryResolution {
 
 /// Resolves [binaryName] via the user's login shell. Tries `-l` first
 /// (fast, clean — sources `.zprofile` only). If that returns NotFound,
-/// retries with `-l -i` (sources `.zshrc` too, which is where nvm / asdf
-/// / mise / many npm-global setups inject their PATH). The interactive
-/// pass uses a permissive parser (last `/`-prefixed line) because chatty
-/// `.zshrc`s routinely print to stdout before `command -v` runs.
+/// retries with `-i -l` (sources `.zshrc` too, which is where nvm / asdf
+/// / mise / many npm-global setups inject their PATH).
 Future<BinaryResolution> resolveBinary(String binaryName) async {
   if (!_safeBinaryNameRegex.hasMatch(binaryName)) {
     sLog('[binaryResolver] rejected unsafe binary name: $binaryName');
     return BinaryProbeFailed('unsafe binary name: $binaryName');
   }
 
-  final shell = Platform.environment['SHELL'] ?? '/bin/zsh';
+  final shellEnv = Platform.environment['SHELL'];
+  if (shellEnv == null) {
+    sLog('[binaryResolver] SHELL env var not set, falling back to /bin/zsh');
+  }
+  final shell = shellEnv ?? '/bin/zsh';
   if (!_safeShellPathRegex.hasMatch(shell)) {
     sLog('[binaryResolver] rejected unsafe SHELL: $shell');
     return BinaryProbeFailed('unsafe SHELL: $shell');
   }
 
-  // Pass 1 — login-only. Fast and the stdout is reliably just the
-  // resolved path, so the strict parser applies.
+  // Pass 1 — login-only. Sources `.zprofile` / `.bash_profile`.
   final loginResult = await _probe(shell, binaryName, interactive: false);
   if (loginResult is! BinaryNotFound) return loginResult;
 
-  // Pass 2 — login + interactive. Catches nvm / asdf / mise / npm-global
-  // setups that source from `.zshrc`. Use the permissive parser because
-  // a chatty `.zshrc` is the norm here.
-  sLog('[binaryResolver] $binaryName not found via $shell -l; retrying with -l -i');
+  // Pass 2 — login + interactive. Sources `.zshrc` too, which is where
+  // nvm / asdf / mise / npm-global PATH augmentations live.
+  sLog('[binaryResolver] $binaryName not found via $shell -l; retrying with -i -l');
   return _probe(shell, binaryName, interactive: true);
 }
 
-/// Probe command appends `:::$PATH` so we can capture the shell's
-/// expanded PATH alongside the binary path in a single invocation.
-/// The `:::` sentinel cannot appear in a valid absolute path.
+/// Sentinel prefix for the PATH capture line. Cannot appear in a valid path.
 const _pathSentinel = ':::';
 
+/// Output markers bracketing `command -v` result. Prevents chatty `.zshrc`
+/// lines from being mistaken for the resolved binary path.
+const _outputStart = '__bench_br_s__';
+const _outputEnd = '__bench_br_e__';
+
 Future<BinaryResolution> _probe(String shell, String binaryName, {required bool interactive}) async {
-  final flags = interactive ? '-l -i' : '-l';
+  final flags = interactive ? '-i -l' : '-l';
   final ProcessResult result;
   try {
-    final args = [if (interactive) '-i', '-l', '-c', 'command -v $binaryName && echo "$_pathSentinel\$PATH"'];
+    // binaryName is passed as positional arg $1 — not interpolated into the
+    // script — so the regex is defence-in-depth, not the sole injection guard.
+    // Sentinels bracket command -v output so chatty .zshrc lines before/after
+    // cannot be mistaken for the resolved path.
+    final script = "echo '$_outputStart' && command -v \"\$1\" && echo '$_outputEnd' && echo \"$_pathSentinel\$PATH\"";
+    final args = [if (interactive) '-i', '-l', '-c', script, shell, binaryName];
     result = await Process.run(shell, args).timeout(const Duration(seconds: 8));
   } catch (e) {
     sLog('[binaryResolver] $shell $flags probe failed for $binaryName: $e');
@@ -107,49 +115,83 @@ Future<BinaryResolution> _probe(String shell, String binaryName, {required bool 
 
   if (result.exitCode != 0) {
     final stderr = (result.stderr as String).trim();
-    sLog('[binaryResolver] $binaryName not found via $shell $flags (exit ${result.exitCode}, stderr=$stderr)');
-    return const BinaryNotFound();
+    if (result.exitCode == 1 && stderr.isEmpty) {
+      // Standard "command -v found nothing" — clean not-found.
+      sLog('[binaryResolver] $binaryName not found via $shell $flags (exit 1)');
+      return const BinaryNotFound();
+    }
+    // Non-standard exit or stderr present → shell/profile failure, not a
+    // clean binary miss. Return BinaryProbeFailed so the UI shows retry
+    // rather than an install prompt.
+    sLog(
+      '[binaryResolver] $shell $flags exited ${result.exitCode} probing $binaryName; '
+      'stderr=${redactSecrets(stderr)}',
+    );
+    return BinaryProbeFailed('$shell $flags exited ${result.exitCode}');
   }
 
   final stdout = result.stdout as String;
   final lines = stdout.split('\n');
 
-  // Extract the shell PATH from the sentinel line (if present).
-  final shellPath = lines
+  // Extract the shell PATH from the sentinel line (if present). Sanitise
+  // entries before use: drop empty, `.`, `..`, and non-absolute components
+  // so a `.` in the user's PATH cannot become a cwd-based lookup when
+  // child processes are spawned inside a user project directory.
+  final rawShellPath = lines
       .where((l) => l.trimLeft().startsWith(_pathSentinel))
       .map((l) => l.trimLeft().substring(_pathSentinel.length).trim())
       .where((p) => p.isNotEmpty)
       .firstOrNull;
+  final shellPath = rawShellPath != null ? _sanitizeShellPath(rawShellPath) : null;
 
-  // Extract the binary path — either strict (single absolute line) or
-  // permissive (last non-sentinel absolute-path-shaped line).
-  final String? resolved;
-  if (interactive) {
-    // Permissive: chatty .zshrc may print before command -v runs.
-    resolved = lines.reversed
-        .where((l) {
-          final t = l.trim();
-          return t.startsWith('/') && !t.contains(' ') && !t.startsWith(_pathSentinel);
-        })
+  // Extract the binary path from between the bracketed sentinels. Any
+  // output printed by .zshrc before __bench_br_s__ is ignored.
+  final startIdx = lines.indexWhere((l) => l.trim() == _outputStart);
+  final endIdx = lines.indexWhere((l) => l.trim() == _outputEnd);
+
+  String? resolved;
+  if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
+    resolved = lines
+        .sublist(startIdx + 1, endIdx)
         .map((l) => l.trim())
+        .where((t) => t.startsWith('/') && !t.contains(' '))
         .firstOrNull;
   } else {
-    // Strict: login-only stdout should be just the binary path (+ sentinel).
-    final candidate = lines
-        .where((l) {
-          final t = l.trim();
-          return t.startsWith('/') && !t.contains('\n') && !t.startsWith(_pathSentinel);
-        })
+    // Sentinels absent (shouldn't happen with our script). Fall back to
+    // last absolute-path-shaped line, same as the original permissive parser.
+    resolved = lines.reversed
         .map((l) => l.trim())
+        .where((t) => t.startsWith('/') && !t.contains(' ') && !t.startsWith(_pathSentinel))
         .firstOrNull;
-    // Reject multi-segment output (alias text, banner lines).
-    resolved = (candidate != null && !candidate.contains(' ')) ? candidate : null;
+    if (resolved != null) {
+      sLog('[binaryResolver] sentinels absent for $binaryName via $shell $flags — used fallback parser');
+    }
   }
 
   if (resolved == null) {
     final preview = stdout.length > 256 ? '${stdout.substring(0, 256)}…' : stdout;
-    sLog('[binaryResolver] $binaryName: $shell $flags returned no absolute-path line; stdout=$preview');
+    sLog(
+      '[binaryResolver] $binaryName: $shell $flags returned no path; '
+      'stdout=${redactSecrets(preview)}',
+    );
     return const BinaryNotFound();
   }
+
+  // Validate the path points to an actual file. The permissive fallback
+  // parser could otherwise return a directory path (e.g. /opt/homebrew/opt/node@18)
+  // from chatty shell output, causing a misleading BinaryFound result.
+  if (!File(resolved).existsSync()) {
+    sLog('[binaryResolver] resolved path does not exist: $resolved');
+    return BinaryProbeFailed('resolved path does not exist: $resolved');
+  }
+
   return BinaryFound(resolved, shellPath: shellPath);
+}
+
+/// Sanitises a raw login-shell PATH string. Drops empty, `.`, `..`, and
+/// non-absolute entries. A `.` entry in PATH resolves to cwd at tool lookup,
+/// which is a PATH-hijack vector when processes run inside user project dirs.
+String _sanitizeShellPath(String raw) {
+  final clean = raw.split(':').where((e) => e.isNotEmpty && e != '.' && e != '..' && e.startsWith('/')).join(':');
+  return clean.isEmpty ? raw : clean;
 }
