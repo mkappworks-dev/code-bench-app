@@ -34,11 +34,19 @@
 	  kSecUseDataProtectionKeychain = true by default. macOS 15 Sequoia
 	  removed the legacy file-based keychain, so apps without this
 	  entitlement receive -34018 (errSecMissingEntitlement) on any
-	  Keychain write and fall back silently. Matches DebugProfile.entitlements.
+	  Keychain write and fall back silently.
+
+	  Uses $(TeamIdentifierPrefix) rather than $(AppIdentifierPrefix)
+	  because Developer ID Manual signing in CI does not use a
+	  provisioning profile, so $(AppIdentifierPrefix) — supplied by the
+	  profile — would be undefined and Xcode pre-build would reject the
+	  entitlement with a misleading "requires a provisioning profile"
+	  error. $(TeamIdentifierPrefix) comes from the signing certificate
+	  itself and resolves to the same team ID prefix in all configurations.
 	-->
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)$(CFBundleIdentifier)</string>
+		<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
 	</array>
 </dict>
 </plist>
