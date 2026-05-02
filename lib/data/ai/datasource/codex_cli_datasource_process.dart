@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/utils/debug_logger.dart';
 import 'ai_provider_datasource.dart';
+import 'binary_resolver_process.dart';
 import 'provider_input_guards.dart';
 
 part 'codex_cli_datasource_process.g.dart';
@@ -58,6 +59,12 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   String? _providerThreadId;
   String? _version;
 
+  /// Absolute path to the `codex` binary, resolved via the user's login
+  /// shell during [detect]. macOS GUI launches inherit a stripped PATH that
+  /// excludes Homebrew / npm-global / nvm / asdf, so a bare `binaryPath`
+  /// would only resolve under `flutter run`. See [resolveBinaryViaLoginShell].
+  String? _resolvedPath;
+
   @override
   String get id => 'codex';
 
@@ -66,25 +73,21 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
 
   @override
   Future<DetectionResult> detect() async {
-    final ProcessResult whichResult;
-    try {
-      whichResult = await Process.run('which', [binaryPath]).timeout(const Duration(seconds: 2));
-    } catch (e) {
-      sLog('[CodexCli] which probe failed: $e');
-      return DetectionResult.unhealthy('Detection failed: ${e.runtimeType}');
-    }
-    if (whichResult.exitCode != 0) {
-      return const DetectionResult.missing();
-    }
+    // Resolve through a login shell so `.zprofile` / `.bash_profile` PATH
+    // augmentations are honoured. A bare `which` would inherit the stripped
+    // GUI PATH and miss Homebrew / npm-global / nvm installs.
+    final resolved = await resolveBinaryViaLoginShell(binaryPath);
+    if (resolved == null) return const DetectionResult.missing();
+    _resolvedPath = resolved;
 
     // Codex doesn't expose `--version` cheaply; the canonical version comes
     // from the `initialize` JSON-RPC response. If we already have it, use it.
     if (_version != null) return DetectionResult.installed(_version!);
 
-    // Probe `--version` defensively. A binary on PATH that hangs/errors
+    // Probe `--version` defensively. A binary that resolves but hangs/errors
     // here is `unhealthy`, not `missing`.
     try {
-      final result = await Process.run(binaryPath, ['--version']).timeout(const Duration(seconds: 5));
+      final result = await Process.run(resolved, ['--version']).timeout(const Duration(seconds: 5));
       if (result.exitCode != 0) {
         sLog('[CodexCli] --version exited ${result.exitCode}');
         return DetectionResult.unhealthy('--version exited ${result.exitCode}');
@@ -193,8 +196,13 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
       if (parentEnv['CODEX_HOME'] != null) 'CODEX_HOME': parentEnv['CODEX_HOME']!,
     };
 
+    // Use the absolute path resolved by [detect]. Resolve on-demand if a
+    // caller skipped detection (e.g. settings UI bypassed) so the spawn
+    // works in release builds where the inherited PATH doesn't see
+    // Homebrew / npm-global.
+    final exePath = _resolvedPath ?? await resolveBinaryViaLoginShell(binaryPath) ?? binaryPath;
     _process = await Process.start(
-      binaryPath,
+      exePath,
       ['app-server'],
       workingDirectory: workingDirectory,
       runInShell: false,
