@@ -14,6 +14,7 @@ class DioFactory {
     Duration? connectTimeout,
     Duration? receiveTimeout,
     bool followRedirects = true,
+    int maxRedirects = 5,
   }) {
     return Dio(
       BaseOptions(
@@ -22,6 +23,10 @@ class DioFactory {
         connectTimeout: connectTimeout ?? ApiConstants.connectTimeout,
         receiveTimeout: receiveTimeout ?? ApiConstants.receiveTimeout,
         followRedirects: followRedirects,
+        // Pinned explicitly. Dio's default is also 5, but a future change to
+        // the package or this factory could open an unbounded chain — and the
+        // update-allowlist check trusts that the chain it walks is bounded.
+        maxRedirects: maxRedirects,
       ),
     );
   }

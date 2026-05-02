@@ -1,4 +1,5 @@
 // lib/services/update/update_service.dart
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -58,11 +59,12 @@ class UpdateService {
   /// running install. Never returns normally on success — the spawned
   /// relaunch script outlives this process.
   Future<void> installUpdate(String zipPath) async {
+    final appPath = _installDs.currentAppPath();
+    _assertNotDevBuild(appPath);
     final extractDir = await _installDs.createExtractDir();
     try {
       await _installDs.extractZip(zipPath: zipPath, destDir: extractDir);
       final extractedAppPath = await _installDs.resolveExtractedAppPath(extractDir);
-      final appPath = _installDs.currentAppPath();
 
       // Authenticity gate: refuse anything not signed by the same Team ID as
       // the running bundle. When the running bundle is unsigned (dev build),
@@ -106,6 +108,25 @@ class UpdateService {
       dLog('[UpdateService] installUpdate unexpected error: ${e.runtimeType}: $e\n$st');
       Error.throwWithStackTrace(UpdateInstallException('Install failed: ${e.runtimeType}: $e'), st);
     }
+  }
+
+  /// Refuses install if the running bundle is a Flutter dev build. The swap
+  /// step does `mv "$APP" "$APP.old"` then `ditto $SRC $APP`, which would
+  /// clobber the dev build dir if `$APP` resolves to
+  /// `<repo>/build/macos/Build/Products/Debug/code_bench_app.app`. Both
+  /// `kDebugMode` and a path-prefix check are used so a release binary
+  /// accidentally launched from a build dir is also caught. The path check
+  /// uses Flutter's literal layout (`/build/macos/Build/Products/`) rather
+  /// than a loose `/build/macos/` substring to keep the false-positive risk
+  /// near zero for installs that happen to live under a path containing
+  /// "build/macos" by coincidence.
+  void _assertNotDevBuild(String appPath) {
+    if (!kDebugMode && !appPath.contains('/build/macos/Build/Products/')) return;
+    sLog('[UpdateService] Refusing install in dev build: $appPath (kDebugMode=$kDebugMode)');
+    throw UpdateInstallException(
+      'Update install is disabled in development builds — running from $appPath. '
+      'Build and launch a release bundle to exercise the install path.',
+    );
   }
 
   /// Reads the previous-attempt sentinel left behind by the relaunch script.

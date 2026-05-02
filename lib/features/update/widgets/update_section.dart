@@ -23,15 +23,14 @@ class UpdateSection extends ConsumerWidget {
     final isChecking = updateState is UpdateStateChecking;
 
     final description = lastCheckedAsync.when(
-      data: (iso) {
-        if (iso == null) return 'Never checked';
-        final dt = DateTime.tryParse(iso);
-        if (dt == null) return 'Never checked';
+      data: (info) {
+        if (info == null) return 'Never checked';
         final now = DateTime.now();
-        final label = DateUtils.isSameDay(dt, now)
-            ? 'Today at ${DateFormat.jm().format(dt)}'
-            : DateFormat.MMMd().format(dt);
-        return 'Last checked $label';
+        final label = DateUtils.isSameDay(info.at, now)
+            ? 'Today at ${DateFormat.jm().format(info.at)}'
+            : DateFormat.MMMd().format(info.at);
+        final suffix = info.failed ? ' (failed)' : '';
+        return 'Last checked $label$suffix';
       },
       loading: () => 'Never checked',
       error: (_, _) => 'Never checked',

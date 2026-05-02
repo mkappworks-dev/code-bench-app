@@ -12,8 +12,9 @@ part of 'update_notifier.dart';
 @ProviderFor(updateLastChecked)
 final updateLastCheckedProvider = UpdateLastCheckedProvider._();
 
-final class UpdateLastCheckedProvider extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
-    with $FutureModifier<String?>, $FutureProvider<String?> {
+final class UpdateLastCheckedProvider
+    extends $FunctionalProvider<AsyncValue<UpdateLastChecked?>, UpdateLastChecked?, FutureOr<UpdateLastChecked?>>
+    with $FutureModifier<UpdateLastChecked?>, $FutureProvider<UpdateLastChecked?> {
   UpdateLastCheckedProvider._()
     : super(
         from: null,
@@ -30,15 +31,16 @@ final class UpdateLastCheckedProvider extends $FunctionalProvider<AsyncValue<Str
 
   @$internal
   @override
-  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+  $FutureProviderElement<UpdateLastChecked?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  FutureOr<String?> create(Ref ref) {
+  FutureOr<UpdateLastChecked?> create(Ref ref) {
     return updateLastChecked(ref);
   }
 }
 
-String _$updateLastCheckedHash() => r'b3b84b6d5ba97bcc8980d7be6bf95d75569e2acb';
+String _$updateLastCheckedHash() => r'353b71215db1bb27e216c734360f2efc1b008ce1';
 
 @ProviderFor(packageVersion)
 final packageVersionProvider = PackageVersionProvider._();
@@ -99,7 +101,7 @@ final class UpdateNotifierProvider extends $NotifierProvider<UpdateNotifier, Upd
   }
 }
 
-String _$updateNotifierHash() => r'5eb5dbb26e3dc625a35c3278c23c14f3b8c7048c';
+String _$updateNotifierHash() => r'bdf334d9dd5f1becda0823520f59d10367bc0617';
 
 abstract class _$UpdateNotifier extends $Notifier<UpdateState> {
   UpdateState build();

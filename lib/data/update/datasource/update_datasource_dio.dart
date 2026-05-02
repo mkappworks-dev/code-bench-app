@@ -13,16 +13,29 @@ import 'update_datasource.dart';
 
 part 'update_datasource_dio.g.dart';
 
-/// Hosts the update path is allowed to fetch from. Validated against both the
-/// release-API endpoint and the asset download URL (which is release-author
-/// controlled and could otherwise point anywhere). Also re-asserted against
-/// `Response.realUri` after redirects to catch a CDN-redirect off-allowlist.
+/// Hosts allowed to serve the GitHub releases *metadata* API. Re-asserted
+/// against every redirect hop and the final URL.
+const _kAllowedApiHosts = {'api.github.com'};
+
+/// Hosts allowed to serve the *asset zip* download. The asset URL comes from
+/// release metadata (release-author controlled), so the allowlist is the
+/// integrity boundary. Re-asserted against every redirect hop and the final
+/// URL — an off-allowlist intermediate could otherwise proxy attacker bytes
+/// through a final-allowed CDN.
 const _kAllowedDownloadHosts = {
   'github.com',
   'objects.githubusercontent.com',
   'github-releases.githubusercontent.com',
   'release-assets.githubusercontent.com',
 };
+
+/// Path prefix the `github.com` host is pinned to. `browser_download_url` is
+/// release-author controlled, so without this pin a compromised publisher
+/// could point downloads at any github.com path (other repos, gists, etc.).
+/// Lowercased for case-insensitive comparison — GitHub serves owner/repo
+/// case-insensitively, so a release author who fat-fingers casing in the
+/// asset URL must not brick updates.
+final _kGithubReleasePathPrefix = '/$kGithubOwner/$kGithubRepo/releases/download/'.toLowerCase();
 
 @Riverpod(keepAlive: true)
 UpdateDatasource updateDatasource(Ref ref) => UpdateDatasourceDio();
@@ -34,7 +47,12 @@ class UpdateDatasourceDio implements UpdateDatasource {
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 30),
         headers: const {'Accept': 'application/vnd.github+json'},
-      );
+      ) {
+    // Shape guard for the github.com path-pin: a future config edit that
+    // empties or slashes these constants would silently weaken the pin.
+    assert(kGithubOwner.isNotEmpty && !kGithubOwner.contains('/') && !kGithubOwner.contains('..'));
+    assert(kGithubRepo.isNotEmpty && !kGithubRepo.contains('/') && !kGithubRepo.contains('..'));
+  }
 
   final Dio _dio;
 
@@ -44,8 +62,7 @@ class UpdateDatasourceDio implements UpdateDatasource {
       final response = await _dio.get<Map<String, dynamic>>(
         'https://api.github.com/repos/$kGithubOwner/$kGithubRepo/releases/latest',
       );
-      // Re-assert allowlist on the *final* URL after any redirects.
-      _assertAllowedHost(response.realUri.toString());
+      _assertAllowedRedirectChain(response, allowed: _kAllowedApiHosts);
 
       final data = response.data;
       if (data == null) {
@@ -72,10 +89,12 @@ class UpdateDatasourceDio implements UpdateDatasource {
         if (downloadUrl == null || downloadUrl.isEmpty) {
           throw UpdateNetworkException('Release $tagName asset has no browser_download_url.');
         }
-        _assertAllowedHost(downloadUrl);
+        _assertAllowedHost(downloadUrl, allowed: _kAllowedDownloadHosts);
 
         final publishedAtRaw = data['published_at'] as String?;
-        final publishedAt = publishedAtRaw == null ? DateTime.now() : DateTime.parse(publishedAtRaw);
+        // Tolerate malformed/missing published_at — release usability shouldn't
+        // hinge on a timestamp the UI only renders informationally.
+        final publishedAt = (publishedAtRaw == null ? null : DateTime.tryParse(publishedAtRaw)) ?? DateTime.now();
 
         return UpdateInfo(
           version: version,
@@ -103,7 +122,7 @@ class UpdateDatasourceDio implements UpdateDatasource {
     required String version,
     required void Function(int received, int total) onProgress,
   }) async {
-    _assertAllowedHost(url);
+    _assertAllowedHost(url, allowed: _kAllowedDownloadHosts);
     // Randomised tempdir per attempt — defeats predictable-path symlink
     // pre-planting on the zip download path.
     final tempDir = await Directory.systemTemp.createTemp('cb-update-zip-');
@@ -115,15 +134,19 @@ class UpdateDatasourceDio implements UpdateDatasource {
         onReceiveProgress: onProgress,
         options: Options(receiveTimeout: const Duration(minutes: 10)),
       );
-      // Re-assert allowlist on the *final* URL after any redirects. If the
-      // CDN ever redirects off-allowlist, refuse the bytes we just wrote.
+      // Re-assert allowlist on every redirect hop and the final URL. If any
+      // intermediate or the destination is off-allowlist, refuse the bytes we
+      // just wrote — bouncing through an attacker host before landing at a
+      // real GitHub asset URL would otherwise pass a final-only check.
       try {
-        _assertAllowedHost(response.realUri.toString());
+        _assertAllowedRedirectChain(response, allowed: _kAllowedDownloadHosts);
       } on UpdateException {
+        // Wipe the entire per-attempt tempdir so the rejected zip *and* the
+        // dir that contains it are gone.
         try {
-          await File(savePath).delete();
-        } catch (e) {
-          dLog('[UpdateDatasource] cleanup of $savePath after redirect rejection failed: $e');
+          await tempDir.delete(recursive: true);
+        } on FileSystemException catch (e) {
+          dLog('[UpdateDatasource] cleanup of ${tempDir.path} after redirect rejection failed: $e');
         }
         rethrow;
       }
@@ -134,9 +157,37 @@ class UpdateDatasourceDio implements UpdateDatasource {
     }
   }
 
-  void _assertAllowedHost(String rawUrl) {
+  /// Validates the originating request URL, every redirect hop, and the final
+  /// URL against [allowed]. Dio's default `followRedirects: true` only exposes
+  /// the final URL via `realUri`; without per-hop checks an attacker-controlled
+  /// intermediate could proxy bytes before bouncing to a real allowlisted host.
+  /// The originating URL is also checked so a future caller that forgets to
+  /// pre-validate doesn't silently bypass.
+  void _assertAllowedRedirectChain(Response<dynamic> response, {required Set<String> allowed}) {
+    _assertAllowedHost(response.requestOptions.uri.toString(), allowed: allowed);
+    for (final redirect in response.redirects) {
+      _assertAllowedHost(redirect.location.toString(), allowed: allowed);
+    }
+    _assertAllowedHost(response.realUri.toString(), allowed: allowed);
+  }
+
+  void _assertAllowedHost(String rawUrl, {required Set<String> allowed}) {
     final uri = Uri.tryParse(rawUrl);
-    if (uri == null || uri.scheme != 'https' || !_kAllowedDownloadHosts.contains(uri.host)) {
+    final basicallyOk =
+        uri != null &&
+        uri.scheme == 'https' &&
+        // Defense-in-depth against authority-confusion parses
+        // (`https://allowed@evil.com/`, `https://allowed#@evil.com/`).
+        uri.userInfo.isEmpty &&
+        !uri.hasFragment &&
+        allowed.contains(uri.host);
+    // `browser_download_url` is release-author controlled, so on github.com
+    // (the one host that serves arbitrary user content) pin owner/repo path.
+    // Case-insensitive — GitHub serves owner/repo case-insensitively, and a
+    // fat-fingered casing must not brick updates.
+    final pathOk =
+        !basicallyOk || uri.host != 'github.com' || uri.path.toLowerCase().startsWith(_kGithubReleasePathPrefix);
+    if (!basicallyOk || !pathOk) {
       sLog('[UpdateDatasource] Refusing non-allowlisted update URL: $rawUrl');
       throw UpdateNetworkException('Update URL is not from an allowlisted host: ${uri?.host ?? "(unparseable)"}');
     }
