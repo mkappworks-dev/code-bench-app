@@ -16,7 +16,7 @@ import 'selectable_transport_card.dart';
 
 /// Anthropic provider entry — two selectable transport options stacked:
 /// the existing API-Key path (Dio HTTP) and the locally-installed Claude
-/// Code SDK (subprocess). Selection persists via `anthropicTransport` in
+/// Code CLI (subprocess). Selection persists via `anthropicTransport` in
 /// `ProviderPrefsRepository`.
 class AnthropicProviderCard extends ConsumerStatefulWidget {
   const AnthropicProviderCard({super.key, required this.controller, required this.initialApiKey});
@@ -29,7 +29,7 @@ class AnthropicProviderCard extends ConsumerStatefulWidget {
 }
 
 class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
-  static const _providerId = 'claude-sdk';
+  static const _providerId = 'claude-cli';
   static const _binaryName = 'claude';
   static const _installCommand = 'npm i -g @anthropic-ai/claude-code';
 
@@ -153,7 +153,7 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
     }
   }
 
-  Future<void> _recheckSdk() async {
+  Future<void> _recheckCli() async {
     await ref.read(aiProviderStatusProvider.notifier).recheck();
     if (!mounted) return;
     final state = ref.read(aiProviderStatusProvider);
@@ -167,7 +167,7 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
     };
     final entry = entries.where((e) => e.id == _providerId).firstOrNull;
     if (entry?.isAvailable ?? false) {
-      AppSnackBar.show(context, 'Claude Code SDK detected', type: AppSnackBarType.success);
+      AppSnackBar.show(context, 'Claude Code CLI detected', type: AppSnackBarType.success);
       return;
     }
     final reason = entry?.status is ProviderUnavailable
@@ -192,15 +192,15 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
     ),
   };
 
-  /// Looks up `'claude-sdk'` in [aiProviderStatusProvider]. Returns the entry
+  /// Looks up `'claude-cli'` in [aiProviderStatusProvider]. Returns the entry
   /// if found, or null while the probe is in flight or has errored.
-  ProviderEntry? _sdkEntry() => switch (ref.watch(aiProviderStatusProvider)) {
+  ProviderEntry? _cliEntry() => switch (ref.watch(aiProviderStatusProvider)) {
     AsyncData(:final value) => value.where((e) => e.id == _providerId).firstOrNull,
     _ => null,
   };
 
-  CardStatusBadge _sdkBadge({required bool selected}) {
-    final entry = _sdkEntry();
+  CardStatusBadge _cliBadge({required bool selected}) {
+    final entry = _cliEntry();
     final loading = ref.watch(aiProviderStatusProvider) is AsyncLoading;
     if (loading) return const CardStatusBadge(label: 'Checking…', tone: TransportBadgeTone.muted);
     final status = entry?.status;
@@ -232,10 +232,10 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
 
   Widget _buildGroup(BuildContext context, ApiKeysNotifierState s) {
     final c = AppColors.of(context);
-    final isSdk = s.anthropicTransport == 'sdk';
-    final sdkEntry = _sdkEntry();
-    final sdkAvailable = sdkEntry?.isAvailable ?? false;
-    final brokenSdkActive = isSdk && sdkEntry != null && !sdkAvailable;
+    final isCli = s.anthropicTransport == 'cli';
+    final cliEntry = _cliEntry();
+    final cliAvailable = cliEntry?.isAvailable ?? false;
+    final brokenCliActive = isCli && cliEntry != null && !cliAvailable;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,12 +247,12 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
         const SizedBox(height: 8),
         SelectableTransportCard(
           title: 'API Key',
-          selected: !isSdk,
+          selected: !isCli,
           // Open the editor by default if no key is saved yet OR the user is
           // currently typing — otherwise stay collapsed.
           initiallyExpanded: _dotStatus != DotStatus.savedVerified && _dotStatus != DotStatus.savedUnverified,
           badge: _apiKeyBadge(),
-          onTap: isSdk ? () => _setTransport('api-key') : null,
+          onTap: isCli ? () => _setTransport('api-key') : null,
           body: _ApiKeyBody(
             controller: widget.controller,
             obscure: _obscure,
@@ -266,21 +266,21 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
         ),
         const SizedBox(height: 6),
         SelectableTransportCard(
-          title: 'Claude Code SDK',
-          selected: isSdk,
+          title: 'Claude Code CLI',
+          selected: isCli,
           // Don't disable when broken-active: we still want user to be able
           // to read the error and click "Switch to API Key".
-          disabled: !sdkAvailable && !brokenSdkActive,
-          errorState: brokenSdkActive,
+          disabled: !cliAvailable && !brokenCliActive,
+          errorState: brokenCliActive,
           // Force-expand when the binary was uninstalled while selected so
           // the recovery actions are visible without a click.
-          initiallyExpanded: brokenSdkActive,
-          badge: _sdkBadge(selected: isSdk),
-          onTap: !isSdk && sdkAvailable ? () => _setTransport('sdk') : null,
-          body: _ClaudeSdkBody(
-            sdkEntry: sdkEntry,
-            broken: brokenSdkActive,
-            onRecheck: _recheckSdk,
+          initiallyExpanded: brokenCliActive,
+          badge: _cliBadge(selected: isCli),
+          onTap: !isCli && cliAvailable ? () => _setTransport('cli') : null,
+          body: _ClaudeCliBody(
+            cliEntry: cliEntry,
+            broken: brokenCliActive,
+            onRecheck: _recheckCli,
             onSwitchToApiKey: () => _setTransport('api-key'),
             installCommand: _installCommand,
             binaryName: _binaryName,
@@ -341,18 +341,18 @@ class _ApiKeyBody extends StatelessWidget {
   }
 }
 
-/// Body for the Claude Code SDK transport card.
+/// Body for the Claude Code CLI transport card.
 ///
 /// Three rendering modes:
 /// 1. Installed: status text on the left ("Local `claude` binary · no API
 ///    key"), Recheck button on the right.
 /// 2. Not installed (without "broken-active"): copyable install command
 ///    pill, Recheck button.
-/// 3. Broken-active (SDK was selected, then user uninstalled): error status
+/// 3. Broken-active (CLI was selected, then user uninstalled): error status
 ///    text on the left, "Switch to API Key" + "Recheck" buttons on the right.
-class _ClaudeSdkBody extends StatelessWidget {
-  const _ClaudeSdkBody({
-    required this.sdkEntry,
+class _ClaudeCliBody extends StatelessWidget {
+  const _ClaudeCliBody({
+    required this.cliEntry,
     required this.broken,
     required this.onRecheck,
     required this.onSwitchToApiKey,
@@ -360,7 +360,7 @@ class _ClaudeSdkBody extends StatelessWidget {
     required this.binaryName,
   });
 
-  final ProviderEntry? sdkEntry;
+  final ProviderEntry? cliEntry;
   final bool broken;
   final VoidCallback onRecheck;
   final VoidCallback onSwitchToApiKey;
@@ -387,7 +387,7 @@ class _ClaudeSdkBody extends StatelessWidget {
         ],
       );
     }
-    final available = sdkEntry?.isAvailable ?? false;
+    final available = cliEntry?.isAvailable ?? false;
     if (!available) {
       return Row(
         children: [
@@ -414,7 +414,7 @@ class _ClaudeSdkBody extends StatelessWidget {
 }
 
 /// Compact accent-tinted button matching `InlineTestButton` / `InlineSaveButton`
-/// visual weight. Used for SDK card actions (Recheck, Switch to API Key).
+/// visual weight. Used for CLI card actions (Recheck, Switch to API Key).
 class _CardButton extends StatefulWidget {
   const _CardButton({required this.label, required this.onPressed});
 

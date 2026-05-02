@@ -49,7 +49,7 @@ class CardStatusBadge extends StatelessWidget {
   }
 }
 
-/// Visual shell for one transport option (e.g. "API Key" or "Claude Code SDK").
+/// Visual shell for one transport option (e.g. "API Key" or "Claude Code CLI").
 ///
 /// Renders a bordered banner with a leading radio dot, a title, a right-aligned
 /// status badge, and a chevron. Tapping the banner selects this transport;
@@ -79,18 +79,18 @@ class SelectableTransportCard extends StatefulWidget {
 
   /// Whether the body is visible on first build. Defaults to `false` — the
   /// banner-only state is the compact default. Pass `true` for cards that
-  /// need attention out of the gate (e.g. broken-active SDK error state, or
+  /// need attention out of the gate (e.g. broken-active CLI error state, or
   /// "Not configured" API key).
   final bool initiallyExpanded;
 
-  /// Mutes the card and prevents [onTap] from firing. Used for SDK options
+  /// Mutes the card and prevents [onTap] from firing. Used for CLI options
   /// when the binary is not on PATH, or for not-yet-implemented transports.
   /// Note: child widgets inside [body] (e.g. a "Recheck" button) remain
   /// interactive — only the card-level tap is suppressed.
   final bool disabled;
 
   /// Paints the border + radio dot in the error colour. Used for the
-  /// "selected SDK transport but binary went missing" recovery state, where
+  /// "selected CLI transport but binary went missing" recovery state, where
   /// the card stays selected (so the next message doesn't silently fall back)
   /// but visibly broken.
   final bool errorState;
@@ -110,7 +110,7 @@ class _SelectableTransportCardState extends State<SelectableTransportCard> {
   @override
   void didUpdateWidget(SelectableTransportCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Re-respect parent-driven attention on transitions: e.g. the SDK card
+    // Re-respect parent-driven attention on transitions: e.g. the CLI card
     // entering the error state should pop open even if the user had it
     // collapsed before.
     if (widget.initiallyExpanded && !oldWidget.initiallyExpanded) {

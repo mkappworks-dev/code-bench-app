@@ -11,10 +11,10 @@ import '../notifiers/providers_actions.dart';
 import 'provider_card_helpers.dart';
 import 'selectable_transport_card.dart';
 
-/// Gemini provider entry — API Key only for now. The Gemini SDK option is
+/// Gemini provider entry — API Key only for now. The Gemini CLI option is
 /// rendered as a permanently-disabled selectable card with a "Coming in
 /// Phase 9" badge so the surface looks consistent with [AnthropicProviderCard]
-/// / [OpenAIProviderCard]; once a `GeminiSdkDatasourceProcess` lands and gets
+/// / [OpenAIProviderCard]; once a `GeminiCliDatasourceProcess` lands and gets
 /// registered in `AIProviderService`, this card can adopt the same broken /
 /// not-installed / installed branches the others use.
 class GeminiProviderCard extends ConsumerStatefulWidget {
@@ -179,7 +179,7 @@ class _GeminiProviderCardState extends ConsumerState<GeminiProviderCard> {
         ),
         const SizedBox(height: 6),
         SelectableTransportCard(
-          title: 'Gemini SDK',
+          title: 'Gemini CLI',
           selected: false,
           disabled: true,
           badge: const CardStatusBadge(label: 'Coming in Phase 9', tone: TransportBadgeTone.muted),

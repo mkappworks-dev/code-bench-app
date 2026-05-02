@@ -123,7 +123,7 @@ class SessionService {
         .toList();
 
     // Provider transport: route through AIProviderDatasource when the user has
-    // selected a named provider (claude-sdk, codex, etc.).
+    // selected a named provider (claude-cli, codex, etc.).
     if (providerId != null) {
       final ds = _providerService?.getProvider(providerId);
       if (ds != null) {

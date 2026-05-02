@@ -1,5 +1,5 @@
 /// Non-secret provider preferences: Ollama base URL, custom-endpoint URL,
-/// Anthropic transport choice (`'api-key'` vs `'sdk'`).
+/// Anthropic transport choice (`'api-key'` vs `'cli'`).
 ///
 /// Split from the earlier unified `ProvidersRepository` so preference flags
 /// have a distinct evolution path from secrets (see [CredentialsRepository]).

@@ -2,7 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'detection_result.freezed.dart';
 
-/// Result of a CLI/SDK provider detection probe.
+/// Result of a CLI/CLI provider detection probe.
 ///
 /// `installed` — binary on PATH and `--version` succeeded.
 /// `unhealthy` — binary on PATH but the version probe failed (broken

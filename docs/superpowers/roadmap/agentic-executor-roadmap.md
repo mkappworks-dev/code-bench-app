@@ -17,9 +17,9 @@ This document is the source of truth for the agentic executor build-out. Read th
 | 4     | Bash tool (permission-gated)                 | ✅ Done — commits `a51871d`, `d435681` |
 | 5     | MCP client (stdio + HTTP/SSE)                | ✅ Done — PR #31, commit `7d9fb1a`     |
 | 6     | WebFetch                                     | ✅ Done — PR #33, commit `651fff4`     |
-| 7     | Anthropic inference via Claude Code SDK      | ✅ Done — branch `feat/2026-04-23-claude-cli-inference-transport` |
-| 8     | OpenAI inference via Codex SDK               | ✅ Done — branch `feat/2026-04-23-claude-cli-inference-transport` |
-| 9     | Gemini inference via Gemini SDK              | ⬜ Not started — abstraction now landed (Phases 7/8) |
+| 7     | Anthropic inference via Claude Code CLI      | ✅ Done — branch `feat/2026-04-23-claude-cli-inference-transport` |
+| 8     | OpenAI inference via Codex CLI               | ✅ Done — branch `feat/2026-04-23-claude-cli-inference-transport` |
+| 9     | Gemini inference via Gemini CLI              | ⬜ Not started — abstraction now landed (Phases 7/8) |
 | —     | Subagent delegation                          | 🚫 Deferred / YAGNI                    |
 | —     | WebSearch                                    | 🚫 Deferred                            |
 
@@ -155,9 +155,9 @@ Key decisions locked in:
 
 ---
 
-## Phase 7 — Anthropic inference via Claude Code SDK ✅
+## Phase 7 — Anthropic inference via Claude Code CLI ✅
 
-**Done.** Shipped on branch `feat/2026-04-23-claude-cli-inference-transport`. The transport switch (API Key | Claude SDK) is exposed on the Anthropic provider card; selecting "Claude SDK" routes inference through the locally-installed `claude` binary via `ClaudeSdkDatasourceProcess`. Tool events from the CLI's own agent loop render as receipts; a single permission card gates the whole delegation.
+**Done.** Shipped on branch `feat/2026-04-23-claude-cli-inference-transport`. The transport switch (API Key | Claude CLI) is exposed on the Anthropic provider card; selecting "Claude CLI" routes inference through the locally-installed `claude` binary via `ClaudeCliDatasourceProcess`. Tool events from the CLI's own agent loop render as receipts; a single permission card gates the whole delegation.
 
 ### What this is
 
@@ -227,9 +227,9 @@ Blocks Phases 8 and 9. The `CliRemoteDatasource` abstract base, `CliDetectionSer
 
 ---
 
-## Phase 8 — OpenAI inference via Codex SDK ✅
+## Phase 8 — OpenAI inference via Codex CLI ✅
 
-**Done.** Shipped on branch `feat/2026-04-23-claude-cli-inference-transport` alongside Phase 7. The OpenAI provider card gains the same transport switch (API Key | Codex SDK); selecting "Codex SDK" routes inference through `codex app-server` over JSON-RPC 2.0 via `CodexSdkDatasourceProcess`.
+**Done.** Shipped on branch `feat/2026-04-23-claude-cli-inference-transport` alongside Phase 7. The OpenAI provider card gains the same transport switch (API Key | Codex CLI); selecting "Codex CLI" routes inference through `codex app-server` over JSON-RPC 2.0 via `CodexCliDatasourceProcess`.
 
 ### What shipped (vs. original Phase 8 plan)
 
@@ -237,7 +237,7 @@ The original Phase 8 plan assumed Codex would mirror Claude Code's `--output-for
 
 Implementation in this PR:
 
-- **`CodexSdkDatasourceProcess`** — long-lived process per working directory, full JSON-RPC 2.0 client (request/response correlation, server request handling, approval forwarding).
+- **`CodexCliDatasourceProcess`** — long-lived process per working directory, full JSON-RPC 2.0 client (request/response correlation, server request handling, approval forwarding).
 - **Auto-approved auth refresh** — `account/chatgptAuthTokens/refresh` is auto-acked; the token never crosses our process boundary, codex holds and refreshes it internally.
 - **Permission-card mapping** — `item/commandExecution/requestApproval`, `item/fileRead/requestApproval`, `item/fileChange/requestApproval`, `applyPatchApproval`, `execCommandApproval` all route to Code Bench's existing permission card.
 - **Detection** — `which codex` + version probe with TTL cache, sharing `CliDetectionService` with Claude.
@@ -247,13 +247,13 @@ Implementation in this PR:
 
 Tracked under [Cross-cutting follow-ups](#cross-cutting-follow-ups) — `item/tool/requestUserInput` mapping needs a dedicated user-input event type (Codex-specific), and `binaryPath` should become settings-driven (spans Phases 7/8/9).
 
-### Naming note
+### "CLI" terminology
 
-The PR uses "Codex SDK" rather than "Codex CLI" in user-facing copy because `codex app-server` is a long-lived RPC server, not a one-shot CLI invocation. The user-facing transport label `'sdk'` reflects this. The original phase title (CLI) is preserved here for continuity but the overview table reads "Codex SDK".
+Both transports are user-facing-named "CLI" because the user installs and invokes them as command-line tools (`brew install codex`, `npm install -g @anthropic-ai/claude-code`). Internally Claude is driven as a one-shot CLI per turn (`claude -p ... --resume <id>`) and Codex is driven via its `app-server` subcommand over JSON-RPC. From the user's mental model both are "the CLI I installed"; the protocol shape is an implementation detail.
 
 ---
 
-## Phase 9 — Gemini inference via Gemini SDK
+## Phase 9 — Gemini inference via Gemini CLI
 
 **Status:** Not started. Abstraction landed in Phases 7/8 — no longer blocked, just unscheduled.
 
@@ -261,10 +261,10 @@ Third concrete provider transport, targeting the `gemini` CLI (Google). Should f
 
 ### Scope
 
-- `GeminiSdkDatasourceProcess` (or equivalent) concrete implementation.
+- `GeminiCliDatasourceProcess` (or equivalent) concrete implementation.
 - Gemini event → `ProviderRuntimeEvent` parser.
 - Gemini-specific detection and auth probe (extending `CliDetectionService`).
-- Providers screen: enable the "Gemini SDK" transport option on the Gemini row (currently a `ComingSoonProviderCard` placeholder).
+- Providers screen: enable the "Gemini CLI" transport option on the Gemini row (currently a `ComingSoonProviderCard` placeholder).
 
 ### Pre-spec spike required
 
@@ -284,9 +284,9 @@ Each item names: which phases it spans, and the concrete trigger to act. The tri
 
 ### Settings-driven `binaryPath` for provider transports
 
-**Spans:** Phases 7 (Claude SDK), 8 (Codex SDK), and any future Phase 9 (Gemini SDK).
+**Spans:** Phases 7 (Claude CLI), 8 (Codex CLI), and any future Phase 9 (Gemini CLI).
 
-**Today:** Both `ClaudeSdkDatasourceProcess` and `CodexSdkDatasourceProcess` hardcode the binary name (`'claude'` / `'codex'`) inside their provider functions, with a TODO marker. Whatever binary wins the user's `$PATH` race wins. This works for the 90% case (official installer puts the binary on PATH) but breaks for power users with multiple installs side-by-side, non-PATH installs, or version pinning.
+**Today:** Both `ClaudeCliDatasourceProcess` and `CodexCliDatasourceProcess` hardcode the binary name (`'claude'` / `'codex'`) inside their provider functions, with a TODO marker. Whatever binary wins the user's `$PATH` race wins. This works for the 90% case (official installer puts the binary on PATH) but breaks for power users with multiple installs side-by-side, non-PATH installs, or version pinning.
 
 **Work involved:**
 - New per-provider field on the settings model (Drift migration).

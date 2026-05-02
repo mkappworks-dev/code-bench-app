@@ -19,7 +19,7 @@ import 'tool_streaming_repository.dart';
 part 'ai_repository_impl.g.dart';
 
 /// Assembles [AIRepositoryImpl] with the per-provider HTTP datasource map.
-/// CLI/SDK transports are not registered here — they live in
+/// CLI/CLI transports are not registered here — they live in
 /// `AIProviderService` and are dispatched at the SessionService layer.
 @Riverpod(keepAlive: true)
 Future<AIRepositoryImpl> aiRepository(Ref ref) async {

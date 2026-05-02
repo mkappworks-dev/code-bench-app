@@ -7,15 +7,15 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../models/stream_event.dart';
 import 'ai_provider_datasource.dart';
-import 'claude_sdk_stream_parser.dart';
+import 'claude_cli_stream_parser.dart';
 import 'provider_input_guards.dart';
 
-part 'claude_sdk_datasource_process.g.dart';
+part 'claude_cli_datasource_process.g.dart';
 
 @riverpod
-AIProviderDatasource claudeSdkDatasourceProcess(Ref ref) {
+AIProviderDatasource claudeCliDatasourceProcess(Ref ref) {
   // TODO: read binaryPath from settings once settings model is updated
-  return ClaudeSdkDatasourceProcess(binaryPath: 'claude');
+  return ClaudeCliDatasourceProcess(binaryPath: 'claude');
 }
 
 /// Abort after N consecutive parse failures — a healthy stream produces
@@ -30,8 +30,8 @@ const int _consecutiveParseFailureLimit = 5;
 /// `--permission-mode bypassPermissions` so Code Bench's permission rules do
 /// not gate its tool use — the user is warned via the chat permission card
 /// before delegation begins.
-class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
-  ClaudeSdkDatasourceProcess({required this.binaryPath});
+class ClaudeCliDatasourceProcess implements AIProviderDatasource {
+  ClaudeCliDatasourceProcess({required this.binaryPath});
 
   final String binaryPath;
 
@@ -39,10 +39,10 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
   final Set<String> _knownSessions = {};
 
   @override
-  String get id => 'claude-sdk';
+  String get id => 'claude-cli';
 
   @override
-  String get displayName => 'Claude Code SDK';
+  String get displayName => 'Claude Code CLI';
 
   @override
   Future<DetectionResult> detect() async {
@@ -51,7 +51,7 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
     try {
       whichResult = await Process.run('which', [binaryPath]).timeout(const Duration(seconds: 2));
     } catch (e) {
-      sLog('[ClaudeSdk] which probe failed: $e');
+      sLog('[ClaudeCli] which probe failed: $e');
       return DetectionResult.unhealthy('Detection failed: ${e.runtimeType}');
     }
     if (whichResult.exitCode != 0) {
@@ -65,11 +65,11 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
     try {
       versionResult = await Process.run(binaryPath, ['--version']).timeout(const Duration(seconds: 5));
     } catch (e) {
-      sLog('[ClaudeSdk] --version probe failed: $e');
+      sLog('[ClaudeCli] --version probe failed: $e');
       return DetectionResult.unhealthy('--version failed: ${e.runtimeType}');
     }
     if (versionResult.exitCode != 0) {
-      sLog('[ClaudeSdk] --version exited ${versionResult.exitCode}');
+      sLog('[ClaudeCli] --version exited ${versionResult.exitCode}');
       return DetectionResult.unhealthy('--version exited ${versionResult.exitCode}');
     }
     final version = (versionResult.stdout as String).trim();
@@ -100,7 +100,7 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
       // sessionId guard — we only ever generate v4 UUIDs, but a future
       // import/restore path could leak an attacker-shaped value into argv.
       if (!uuidV4Regex.hasMatch(sessionId)) {
-        sLog('[ClaudeSdk] rejected non-UUID sessionId at argv boundary');
+        sLog('[ClaudeCli] rejected non-UUID sessionId at argv boundary');
         controller.add(const ProviderStreamFailure(error: 'invalid sessionId shape'));
         return;
       }
@@ -111,7 +111,7 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
       // full home-directory tool access.
       final wdDir = Directory(workingDirectory);
       if (!workingDirectory.startsWith('/') || workingDirectory == '/' || !wdDir.existsSync()) {
-        sLog('[ClaudeSdk] rejected workingDirectory: $workingDirectory');
+        sLog('[ClaudeCli] rejected workingDirectory: $workingDirectory');
         controller.add(const ProviderStreamFailure(error: 'invalid workingDirectory'));
         return;
       }
@@ -156,7 +156,7 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
           environment: minimalEnv,
         );
       } on ProcessException catch (e) {
-        dLog('[ClaudeSdk] start failed: ${redactSecrets('$e')}');
+        dLog('[ClaudeCli] start failed: ${redactSecrets('$e')}');
         controller.add(const ProviderStreamFailure(error: 'Claude Code CLI is not installed or not on PATH'));
         return;
       }
@@ -172,7 +172,7 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
         stderrBuffer.write(chunk.length <= remaining ? chunk : chunk.substring(0, remaining));
       });
 
-      final parser = ClaudeSdkStreamParser();
+      final parser = ClaudeCliStreamParser();
       var sawDone = false;
       var consecutiveParseFailures = 0;
       var aborted = false;
@@ -190,7 +190,7 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
             consecutiveParseFailures++;
             final preview = line.length > 256 ? '${line.substring(0, 256)}…' : line;
             dLog(
-              '[ClaudeSdk] parse failure ($consecutiveParseFailures/$_consecutiveParseFailureLimit): ${event.error} — line="${redactSecrets(preview)}"',
+              '[ClaudeCli] parse failure ($consecutiveParseFailures/$_consecutiveParseFailureLimit): ${event.error} — line="${redactSecrets(preview)}"',
             );
             if (consecutiveParseFailures >= _consecutiveParseFailureLimit) {
               controller.add(
@@ -212,12 +212,12 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
         if (aborted) {
           // Already emitted ProviderStreamFailure; nothing more to do.
         } else if (exitCode != 0) {
-          dLog('[ClaudeSdk] process exited $exitCode\nstderr=${redactSecrets(stderrBuffer.toString())}');
+          dLog('[ClaudeCli] process exited $exitCode\nstderr=${redactSecrets(stderrBuffer.toString())}');
           controller.add(
             ProviderStreamFailure(error: 'claude exited $exitCode', details: redactSecrets(stderrBuffer.toString())),
           );
         } else if (!sawDone) {
-          dLog('[ClaudeSdk] stdout closed without message_stop (exit=0)');
+          dLog('[ClaudeCli] stdout closed without message_stop (exit=0)');
           controller.add(const ProviderStreamFailure(error: 'stream closed without message_stop'));
         } else {
           // Mark this session as known so subsequent turns use --resume.
@@ -227,7 +227,7 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
         await stderrSub.cancel();
       }
     } catch (e, st) {
-      dLog('[ClaudeSdk] send failed: ${redactSecrets('$e')}\n$st');
+      dLog('[ClaudeCli] send failed: ${redactSecrets('$e')}\n$st');
       controller.add(ProviderStreamFailure(error: e));
     } finally {
       // Only clear _process if it still points to ours — a later sendAndStream

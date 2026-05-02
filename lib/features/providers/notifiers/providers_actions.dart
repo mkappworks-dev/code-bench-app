@@ -182,13 +182,13 @@ class ProvidersActions extends _$ProvidersActions {
     });
   }
 
-  /// Persists the Anthropic inference transport (`'api-key'` or `'sdk'`).
+  /// Persists the Anthropic inference transport (`'api-key'` or `'cli'`).
   /// Reloads the AI repository and `ApiKeysNotifier` so dependent widgets
   /// pick up the new value without a manual refresh.
   Future<void> saveAnthropicTransport(String value) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      if (value != 'api-key' && value != 'sdk') {
+      if (value != 'api-key' && value != 'cli') {
         sLog('[ProvidersActions] rejected invalid anthropicTransport: $value');
         throw ArgumentError.value(value, 'value', 'invalid transport');
       }
@@ -203,13 +203,13 @@ class ProvidersActions extends _$ProvidersActions {
     });
   }
 
-  /// Persists the OpenAI inference transport (`'api-key'` or `'sdk'`).
+  /// Persists the OpenAI inference transport (`'api-key'` or `'cli'`).
   /// Mirrors [saveAnthropicTransport] — see that method for the rationale
   /// behind invalidating both `aiRepositoryProvider` and `apiKeysProvider`.
   Future<void> saveOpenaiTransport(String value) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      if (value != 'api-key' && value != 'sdk') {
+      if (value != 'api-key' && value != 'cli') {
         sLog('[ProvidersActions] rejected invalid openaiTransport: $value');
         throw ArgumentError.value(value, 'value', 'invalid transport');
       }

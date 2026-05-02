@@ -8,7 +8,7 @@ import '../../../core/utils/debug_logger.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 
 /// Inline shell-command pill with a leading `$` prompt and a copy button.
-/// Used in SDK transport cards when the binary is not detected, so the user
+/// Used in CLI transport cards when the binary is not detected, so the user
 /// can copy the install command in one click without reaching for the
 /// terminal.
 class InstallCommand extends StatelessWidget {

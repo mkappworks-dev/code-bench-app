@@ -25,12 +25,12 @@ class ApiKeysNotifierState {
   final String customEndpoint;
   final String customApiKey;
 
-  /// Anthropic inference transport: `'api-key'` (Dio HTTP) or `'sdk'`
-  /// (Claude Code SDK via Process.start). Defaults to `'api-key'`.
+  /// Anthropic inference transport: `'api-key'` (Dio HTTP) or `'cli'`
+  /// (Claude Code CLI via Process.start). Defaults to `'api-key'`.
   final String anthropicTransport;
 
-  /// OpenAI inference transport: `'api-key'` (Dio HTTP) or `'sdk'`
-  /// (Codex SDK via Process.start). Defaults to `'api-key'`.
+  /// OpenAI inference transport: `'api-key'` (Dio HTTP) or `'cli'`
+  /// (Codex CLI via Process.start). Defaults to `'api-key'`.
   final String openaiTransport;
 
   ApiKeysNotifierState copyWith({

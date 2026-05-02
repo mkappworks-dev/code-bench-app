@@ -9,21 +9,21 @@ part of 'ai_repository_impl.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Assembles [AIRepositoryImpl] with the per-provider HTTP datasource map.
-/// CLI/SDK transports are not registered here — they live in
+/// CLI/CLI transports are not registered here — they live in
 /// `AIProviderService` and are dispatched at the SessionService layer.
 
 @ProviderFor(aiRepository)
 final aiRepositoryProvider = AiRepositoryProvider._();
 
 /// Assembles [AIRepositoryImpl] with the per-provider HTTP datasource map.
-/// CLI/SDK transports are not registered here — they live in
+/// CLI/CLI transports are not registered here — they live in
 /// `AIProviderService` and are dispatched at the SessionService layer.
 
 final class AiRepositoryProvider
     extends $FunctionalProvider<AsyncValue<AIRepositoryImpl>, AIRepositoryImpl, FutureOr<AIRepositoryImpl>>
     with $FutureModifier<AIRepositoryImpl>, $FutureProvider<AIRepositoryImpl> {
   /// Assembles [AIRepositoryImpl] with the per-provider HTTP datasource map.
-  /// CLI/SDK transports are not registered here — they live in
+  /// CLI/CLI transports are not registered here — they live in
   /// `AIProviderService` and are dispatched at the SessionService layer.
   AiRepositoryProvider._()
     : super(

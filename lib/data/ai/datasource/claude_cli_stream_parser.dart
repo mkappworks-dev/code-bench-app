@@ -11,7 +11,7 @@ const int _toolInputBufferCap = 1024 * 1024;
 
 /// Parses Claude Code CLI `--output-format stream-json` lines into Code Bench's
 /// [StreamEvent] shape. Stateful across tool_use input_json_delta frames.
-class ClaudeSdkStreamParser {
+class ClaudeCliStreamParser {
   final Map<int, _PendingToolUse> _pendingToolUses = {};
 
   StreamEvent? parseLine(String line) {
@@ -44,7 +44,7 @@ class ClaudeSdkStreamParser {
       default:
         // sLog so post-release telemetry catches new top-level types the
         // parser hasn't been updated for.
-        sLog('[ClaudeSdkStreamParser] unknown top-level type: $type');
+        sLog('[ClaudeCliStreamParser] unknown top-level type: $type');
         return null;
     }
   }
@@ -85,14 +85,14 @@ class ClaudeSdkStreamParser {
               // still lands (with whatever we buffered).
               if (!pending.bufferCapExceeded) {
                 pending.bufferCapExceeded = true;
-                dLog('[ClaudeSdkStreamParser] tool_use input exceeded $_toolInputBufferCap bytes; truncating');
+                dLog('[ClaudeCliStreamParser] tool_use input exceeded $_toolInputBufferCap bytes; truncating');
               }
               return null;
             }
             pending.inputBuffer.write(partial);
             return StreamEvent.cliToolUseInputDelta(id: pending.id, partialJson: partial);
           default:
-            sLog('[ClaudeSdkStreamParser] unknown content_block_delta type: $deltaType');
+            sLog('[ClaudeCliStreamParser] unknown content_block_delta type: $deltaType');
             return null;
         }
       case 'content_block_stop':
@@ -119,7 +119,7 @@ class ClaudeSdkStreamParser {
       case 'message_stop':
         return const StreamEvent.cliStreamDone();
       default:
-        sLog('[ClaudeSdkStreamParser] unknown stream_event type: $eventType');
+        sLog('[ClaudeCliStreamParser] unknown stream_event type: $eventType');
         return null;
     }
   }

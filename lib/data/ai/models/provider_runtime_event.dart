@@ -8,7 +8,7 @@ sealed class ProviderRuntimeEvent {
 /// Provider initialized; sending message to remote service.
 class ProviderInit extends ProviderRuntimeEvent {
   const ProviderInit({required this.provider});
-  final String provider; // e.g. "claude-sdk", "codex"
+  final String provider; // e.g. "claude-cli", "codex"
 }
 
 /// Assistant text chunk (token-by-token streaming).

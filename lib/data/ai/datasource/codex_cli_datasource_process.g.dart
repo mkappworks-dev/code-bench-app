@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'codex_sdk_datasource_process.dart';
+part of 'codex_cli_datasource_process.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,25 +9,25 @@ part of 'codex_sdk_datasource_process.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(codexSdkDatasourceProcess)
-final codexSdkDatasourceProcessProvider = CodexSdkDatasourceProcessProvider._();
+@ProviderFor(codexCliDatasourceProcess)
+final codexCliDatasourceProcessProvider = CodexCliDatasourceProcessProvider._();
 
-final class CodexSdkDatasourceProcessProvider
+final class CodexCliDatasourceProcessProvider
     extends $FunctionalProvider<AIProviderDatasource, AIProviderDatasource, AIProviderDatasource>
     with $Provider<AIProviderDatasource> {
-  CodexSdkDatasourceProcessProvider._()
+  CodexCliDatasourceProcessProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'codexSdkDatasourceProcessProvider',
+        name: r'codexCliDatasourceProcessProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$codexSdkDatasourceProcessHash();
+  String debugGetCreateSourceHash() => _$codexCliDatasourceProcessHash();
 
   @$internal
   @override
@@ -35,7 +35,7 @@ final class CodexSdkDatasourceProcessProvider
 
   @override
   AIProviderDatasource create(Ref ref) {
-    return codexSdkDatasourceProcess(ref);
+    return codexCliDatasourceProcess(ref);
   }
 
   /// {@macro riverpod.override_with_value}
@@ -44,4 +44,4 @@ final class CodexSdkDatasourceProcessProvider
   }
 }
 
-String _$codexSdkDatasourceProcessHash() => r'fc5e18c26495ad2eb61591bcfc24c82ca6bdcb16';
+String _$codexCliDatasourceProcessHash() => r'41a7501a03b5ff4f370ec29058a37d181966fc5a';

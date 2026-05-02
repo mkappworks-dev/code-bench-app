@@ -14,7 +14,7 @@ import 'install_command.dart';
 import 'provider_card_helpers.dart';
 import 'selectable_transport_card.dart';
 
-/// OpenAI provider entry — API Key (Dio HTTP) or Codex SDK (subprocess).
+/// OpenAI provider entry — API Key (Dio HTTP) or Codex CLI (subprocess).
 /// Mirrors [AnthropicProviderCard]'s shape; differences are the binary
 /// name, install command, registered datasource id, and the persistence
 /// flag (`openaiTransport`).
@@ -153,7 +153,7 @@ class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
     }
   }
 
-  Future<void> _recheckSdk() async {
+  Future<void> _recheckCli() async {
     await ref.read(aiProviderStatusProvider.notifier).recheck();
     if (!mounted) return;
     final state = ref.read(aiProviderStatusProvider);
@@ -167,7 +167,7 @@ class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
     };
     final entry = entries.where((e) => e.id == _providerId).firstOrNull;
     if (entry?.isAvailable ?? false) {
-      AppSnackBar.show(context, 'Codex SDK detected', type: AppSnackBarType.success);
+      AppSnackBar.show(context, 'Codex CLI detected', type: AppSnackBarType.success);
       return;
     }
     final reason = entry?.status is ProviderUnavailable
@@ -192,13 +192,13 @@ class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
     ),
   };
 
-  ProviderEntry? _sdkEntry() => switch (ref.watch(aiProviderStatusProvider)) {
+  ProviderEntry? _cliEntry() => switch (ref.watch(aiProviderStatusProvider)) {
     AsyncData(:final value) => value.where((e) => e.id == _providerId).firstOrNull,
     _ => null,
   };
 
-  CardStatusBadge _sdkBadge({required bool selected}) {
-    final entry = _sdkEntry();
+  CardStatusBadge _cliBadge({required bool selected}) {
+    final entry = _cliEntry();
     final loading = ref.watch(aiProviderStatusProvider) is AsyncLoading;
     if (loading) return const CardStatusBadge(label: 'Checking…', tone: TransportBadgeTone.muted);
     return switch (entry?.status) {
@@ -229,10 +229,10 @@ class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
 
   Widget _buildGroup(BuildContext context, ApiKeysNotifierState s) {
     final c = AppColors.of(context);
-    final isSdk = s.openaiTransport == 'sdk';
-    final sdkEntry = _sdkEntry();
-    final sdkAvailable = sdkEntry?.isAvailable ?? false;
-    final brokenSdkActive = isSdk && sdkEntry != null && !sdkAvailable;
+    final isCli = s.openaiTransport == 'cli';
+    final cliEntry = _cliEntry();
+    final cliAvailable = cliEntry?.isAvailable ?? false;
+    final brokenCliActive = isCli && cliEntry != null && !cliAvailable;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,10 +244,10 @@ class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
         const SizedBox(height: 8),
         SelectableTransportCard(
           title: 'API Key',
-          selected: !isSdk,
+          selected: !isCli,
           initiallyExpanded: _dotStatus != DotStatus.savedVerified && _dotStatus != DotStatus.savedUnverified,
           badge: _apiKeyBadge(),
-          onTap: isSdk ? () => _setTransport('api-key') : null,
+          onTap: isCli ? () => _setTransport('api-key') : null,
           body: _OpenAIApiKeyBody(
             controller: widget.controller,
             obscure: _obscure,
@@ -261,17 +261,17 @@ class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
         ),
         const SizedBox(height: 6),
         SelectableTransportCard(
-          title: 'Codex SDK',
-          selected: isSdk,
-          disabled: !sdkAvailable && !brokenSdkActive,
-          errorState: brokenSdkActive,
-          initiallyExpanded: brokenSdkActive,
-          badge: _sdkBadge(selected: isSdk),
-          onTap: !isSdk && sdkAvailable ? () => _setTransport('sdk') : null,
-          body: _CodexSdkBody(
-            sdkEntry: sdkEntry,
-            broken: brokenSdkActive,
-            onRecheck: _recheckSdk,
+          title: 'Codex CLI',
+          selected: isCli,
+          disabled: !cliAvailable && !brokenCliActive,
+          errorState: brokenCliActive,
+          initiallyExpanded: brokenCliActive,
+          badge: _cliBadge(selected: isCli),
+          onTap: !isCli && cliAvailable ? () => _setTransport('cli') : null,
+          body: _CodexCliBody(
+            cliEntry: cliEntry,
+            broken: brokenCliActive,
+            onRecheck: _recheckCli,
             onSwitchToApiKey: () => _setTransport('api-key'),
             installCommand: _installCommand,
             binaryName: _binaryName,
@@ -331,9 +331,9 @@ class _OpenAIApiKeyBody extends StatelessWidget {
   }
 }
 
-class _CodexSdkBody extends StatelessWidget {
-  const _CodexSdkBody({
-    required this.sdkEntry,
+class _CodexCliBody extends StatelessWidget {
+  const _CodexCliBody({
+    required this.cliEntry,
     required this.broken,
     required this.onRecheck,
     required this.onSwitchToApiKey,
@@ -341,7 +341,7 @@ class _CodexSdkBody extends StatelessWidget {
     required this.binaryName,
   });
 
-  final ProviderEntry? sdkEntry;
+  final ProviderEntry? cliEntry;
   final bool broken;
   final VoidCallback onRecheck;
   final VoidCallback onSwitchToApiKey;
@@ -368,7 +368,7 @@ class _CodexSdkBody extends StatelessWidget {
         ],
       );
     }
-    if (!(sdkEntry?.isAvailable ?? false)) {
+    if (!(cliEntry?.isAvailable ?? false)) {
       return Row(
         children: [
           Expanded(child: InstallCommand(command: installCommand)),

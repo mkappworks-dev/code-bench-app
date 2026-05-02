@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'claude_sdk_datasource_process.dart';
+part of 'claude_cli_datasource_process.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,25 +9,25 @@ part of 'claude_sdk_datasource_process.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(claudeSdkDatasourceProcess)
-final claudeSdkDatasourceProcessProvider = ClaudeSdkDatasourceProcessProvider._();
+@ProviderFor(claudeCliDatasourceProcess)
+final claudeCliDatasourceProcessProvider = ClaudeCliDatasourceProcessProvider._();
 
-final class ClaudeSdkDatasourceProcessProvider
+final class ClaudeCliDatasourceProcessProvider
     extends $FunctionalProvider<AIProviderDatasource, AIProviderDatasource, AIProviderDatasource>
     with $Provider<AIProviderDatasource> {
-  ClaudeSdkDatasourceProcessProvider._()
+  ClaudeCliDatasourceProcessProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'claudeSdkDatasourceProcessProvider',
+        name: r'claudeCliDatasourceProcessProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$claudeSdkDatasourceProcessHash();
+  String debugGetCreateSourceHash() => _$claudeCliDatasourceProcessHash();
 
   @$internal
   @override
@@ -35,7 +35,7 @@ final class ClaudeSdkDatasourceProcessProvider
 
   @override
   AIProviderDatasource create(Ref ref) {
-    return claudeSdkDatasourceProcess(ref);
+    return claudeCliDatasourceProcess(ref);
   }
 
   /// {@macro riverpod.override_with_value}
@@ -44,4 +44,4 @@ final class ClaudeSdkDatasourceProcessProvider
   }
 }
 
-String _$claudeSdkDatasourceProcessHash() => r'ebd4d5775d09b3ef858400176f7635160cdd732c';
+String _$claudeCliDatasourceProcessHash() => r'a5cd39b9127a0cb79dba148a733c5d7847ccfb0f';

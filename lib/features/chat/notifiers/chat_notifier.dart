@@ -94,8 +94,8 @@ AgentFailure _asAgentFailure(Object e) => switch (e) {
 String? _resolveProviderId(AIModel model, ApiKeysNotifierState? prefs) {
   if (prefs == null) return null;
   return switch ((model.provider, prefs)) {
-    (AIProvider.anthropic, ApiKeysNotifierState(anthropicTransport: 'sdk')) => 'claude-sdk',
-    (AIProvider.openai, ApiKeysNotifierState(openaiTransport: 'sdk')) => 'codex',
+    (AIProvider.anthropic, ApiKeysNotifierState(anthropicTransport: 'cli')) => 'claude-cli',
+    (AIProvider.openai, ApiKeysNotifierState(openaiTransport: 'cli')) => 'codex',
     _ => null,
   };
 }
@@ -147,7 +147,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     // Await prefs explicitly: `apiKeysProvider` is autoDispose, so when the
     // chat tab opens fresh (without the Providers screen being mounted) the
     // first `.value` is null and we'd silently fall through to the legacy
-    // HTTP path even when SDK transport is selected. Always wait for storage.
+    // HTTP path even when CLI transport is selected. Always wait for storage.
     final prefs = await ref.read(apiKeysProvider.future);
     final providerId = _resolveProviderId(model, prefs);
 

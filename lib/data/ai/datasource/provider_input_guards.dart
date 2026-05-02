@@ -1,7 +1,7 @@
 /// Shared input-validation guards used by AI provider datasources before
 /// values cross the process / RPC boundary.
 ///
-/// Centralized so every transport (Claude CLI, Codex app-server, future SDK
+/// Centralized so every transport (Claude CLI, Codex app-server, future CLI
 /// processes) validates `sessionId` against the same shape. Lives in the
 /// datasource directory so it is colocated with its consumers.
 library;

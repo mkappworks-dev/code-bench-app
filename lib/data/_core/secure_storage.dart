@@ -144,7 +144,7 @@ class SecureStorage {
     }
   }
 
-  // Anthropic transport ('api-key' | 'sdk')
+  // Anthropic transport ('api-key' | 'cli')
   Future<void> writeAnthropicTransport(String value) async {
     try {
       await _storage.write(key: _anthropicTransportKey, value: value);
@@ -172,7 +172,7 @@ class SecureStorage {
     }
   }
 
-  // OpenAI transport ('api-key' | 'sdk')
+  // OpenAI transport ('api-key' | 'cli')
   Future<void> writeOpenaiTransport(String value) async {
     try {
       await _storage.write(key: _openaiTransportKey, value: value);

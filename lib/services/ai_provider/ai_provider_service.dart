@@ -2,8 +2,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/utils/debug_logger.dart';
 import '../../data/ai/datasource/ai_provider_datasource.dart';
-import '../../data/ai/datasource/claude_sdk_datasource_process.dart';
-import '../../data/ai/datasource/codex_sdk_datasource_process.dart';
+import '../../data/ai/datasource/claude_cli_datasource_process.dart';
+import '../../data/ai/datasource/codex_cli_datasource_process.dart';
 
 part 'ai_provider_service.g.dart';
 
@@ -17,8 +17,8 @@ class AIProviderService extends _$AIProviderService {
   Map<String, AIProviderDatasource> build() {
     dLog('[AIProviderService] Initializing providers');
     return {
-      'claude-sdk': ref.watch(claudeSdkDatasourceProcessProvider),
-      'codex': ref.watch(codexSdkDatasourceProcessProvider),
+      'claude-cli': ref.watch(claudeCliDatasourceProcessProvider),
+      'codex': ref.watch(codexCliDatasourceProcessProvider),
     };
   }
 
@@ -70,7 +70,7 @@ class AIProviderService extends _$AIProviderService {
   }
 
   /// Status for all registered providers — consumed by per-provider cards
-  /// (e.g. [AnthropicProviderCard]) to enable/disable the SDK transport
+  /// (e.g. [AnthropicProviderCard]) to enable/disable the CLI transport
   /// option based on whether the local binary is installed.
   Future<List<ProviderEntry>> listWithStatus() async {
     final entries = <ProviderEntry>[];
@@ -109,7 +109,7 @@ class ProviderAvailable extends ProviderStatus {
 }
 
 /// Entry in the provider list — surfaced by [listWithStatus] to provider
-/// cards so they can render the right state for their SDK transport option.
+/// cards so they can render the right state for their CLI transport option.
 class ProviderEntry {
   const ProviderEntry({required this.id, required this.displayName, required this.status});
 
