@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.2.1...v0.3.0) (2026-05-02)
+
+
+### Features
+
+* **provider:** add multi-provider SDK inference transport with unified provider UI ([#34](https://github.com/mkappworks-dev/code-bench-app/issues/34)) ([73ed491](https://github.com/mkappworks-dev/code-bench-app/commit/73ed491681f2f5813f4286280ec4c17b07b4cc20))
+
+
+### Bug Fixes
+
+* **2026-05-02:** bump feat as minor in 0.x release-please runs ([#47](https://github.com/mkappworks-dev/code-bench-app/issues/47)) ([4612abd](https://github.com/mkappworks-dev/code-bench-app/commit/4612abd8c35903287d3e8ad7c7b49a63ad2f1e31))
+
 ## [0.2.1](https://github.com/mkappworks-dev/code-bench-app/compare/v0.2.0...v0.2.1) (2026-05-02)
 
 
