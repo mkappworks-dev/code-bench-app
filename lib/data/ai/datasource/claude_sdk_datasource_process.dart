@@ -14,7 +14,8 @@ part 'claude_sdk_datasource_process.g.dart';
 
 @riverpod
 AIProviderDatasource claudeSdkDatasourceProcess(Ref ref) {
-  return ClaudeSdkDatasourceProcess();
+  // TODO: read binaryPath from settings once settings model is updated
+  return ClaudeSdkDatasourceProcess(binaryPath: 'claude');
 }
 
 /// Abort after N consecutive parse failures — a healthy stream produces
@@ -30,7 +31,7 @@ const int _consecutiveParseFailureLimit = 5;
 /// not gate its tool use — the user is warned via the chat permission card
 /// before delegation begins.
 class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
-  ClaudeSdkDatasourceProcess({this.binaryPath = 'claude'});
+  ClaudeSdkDatasourceProcess({required this.binaryPath});
 
   final String binaryPath;
 
