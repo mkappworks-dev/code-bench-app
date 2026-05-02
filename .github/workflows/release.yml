@@ -92,6 +92,38 @@ jobs:
 
           security find-identity -p codesigning -v "$KEYCHAIN_PATH"
 
+      - name: Install Developer ID provisioning profile
+        if: matrix.target == 'macos'
+        env:
+          MACOS_PROVISIONING_PROFILE: ${{ secrets.MACOS_PROVISIONING_PROFILE }}
+        # Required by Xcode 14+ when entitlements include keychain-access-groups
+        # (which flutter_secure_storage v10+ needs on macOS 15). Without an
+        # installed profile, Xcode pre-build aborts with the misleading
+        # "requires a provisioning profile" error even for Developer ID
+        # direct distribution. The profile is decoded from a secret and
+        # placed in the Xcode-managed directory before the build step.
+        run: |
+          set -euo pipefail
+          PP_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PP_DIR"
+          PP_PATH="$PP_DIR/CodeBench.provisionprofile"
+          echo "$MACOS_PROVISIONING_PROFILE" | base64 --decode > "$PP_PATH"
+
+          # Verify the profile parses, then print non-sensitive identifying
+          # fields to make CI failures self-diagnosing.
+          DECODED=$(mktemp)
+          security cms -D -i "$PP_PATH" -o "$DECODED"
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" "$DECODED")
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" "$DECODED")
+          PROFILE_TEAM=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" "$DECODED")
+          rm -f "$DECODED"
+
+          echo "Installed profile: $PROFILE_NAME ($PROFILE_UUID, team $PROFILE_TEAM)"
+          if [ "$PROFILE_NAME" != "Code Bench Developer ID" ]; then
+            echo "::error::Profile name mismatch — expected 'Code Bench Developer ID', got '$PROFILE_NAME'"
+            exit 1
+          fi
+
       - name: Build (macOS)
         if: matrix.target == 'macos'
         run: flutter build macos --release
@@ -102,6 +134,7 @@ jobs:
           FLUTTER_XCODE_CODE_SIGN_ENTITLEMENTS: ${{ github.workspace }}/macos/Runner/Release.entitlements
           FLUTTER_XCODE_ENABLE_HARDENED_RUNTIME: "YES"
           FLUTTER_XCODE_OTHER_CODE_SIGN_FLAGS: "--timestamp"
+          FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: "Code Bench Developer ID"
 
       - name: Notarize and staple
         if: matrix.target == 'macos'
