@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.3.0...v0.4.0) (2026-05-02)
+
+
+### Features
+
+* **update:** show UpdateChip in settings sidebar ([#49](https://github.com/mkappworks-dev/code-bench-app/issues/49)) ([877b7b1](https://github.com/mkappworks-dev/code-bench-app/commit/877b7b1b8b52a3fead5beb24af6e90768475a39a))
+
+
+### Bug Fixes
+
+* **update:** package macOS release zip with ditto, not plain zip ([#48](https://github.com/mkappworks-dev/code-bench-app/issues/48)) ([e4864b4](https://github.com/mkappworks-dev/code-bench-app/commit/e4864b40055c3bd2fb761d9e5b163b7301147ad1))
+
 ## [0.3.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.2.1...v0.3.0) (2026-05-02)
 
 
