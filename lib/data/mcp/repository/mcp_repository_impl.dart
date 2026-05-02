@@ -31,6 +31,9 @@ class McpRepositoryImpl implements McpRepository {
   @override
   Future<void> delete(String id) => _ds.deleteById(id);
 
+  @override
+  Future<void> deleteAllServers() => _ds.deleteAllServers();
+
   McpServerConfig _toDomain(McpServerRow row) {
     List<String> args = const [];
     Map<String, String> env = const {};

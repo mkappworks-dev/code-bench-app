@@ -205,21 +205,11 @@ jobs:
           path: artifacts/
           merge-multiple: true
 
-      - name: Create GitHub release
+      - name: Upload release artifacts
         uses: softprops/action-gh-release@v2
         with:
-          body: |
-            ## Code Bench ${{ github.ref_name }}
-
-            **macOS download:** grab `CodeBench-macos.dmg`, open it, and drag Code Bench to Applications.
-
-            Once installed, the app will check for updates automatically and prompt you when a new version is available.
-
-            ### First launch on macOS
-            When you open a project under Documents, Downloads, or Desktop, macOS will ask for permission to read that folder. Click **Allow** when prompted; if the app reports the access was blocked, click Allow on the system dialog and try adding the project again.
           files: |
             artifacts/CodeBench-macos.dmg
             artifacts/CodeBench-macos.zip
             # artifacts/CodeBench-windows.zip
             # artifacts/CodeBench-linux.tar.gz
-          generate_release_notes: true

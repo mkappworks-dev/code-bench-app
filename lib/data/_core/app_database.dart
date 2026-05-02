@@ -195,6 +195,8 @@ class McpDao extends DatabaseAccessor<AppDatabase> with _$McpDaoMixin {
   Future<void> upsert(McpServersCompanion companion) => into(mcpServers).insertOnConflictUpdate(companion);
 
   Future<void> deleteById(String id) => (delete(mcpServers)..where((t) => t.id.equals(id))).go();
+
+  Future<void> deleteAll() => delete(mcpServers).go();
 }
 
 // ── Database ─────────────────────────────────────────────────────────────────

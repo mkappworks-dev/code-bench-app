@@ -6,4 +6,5 @@ abstract interface class McpRepository {
   Future<List<McpServerConfig>> getEnabled();
   Future<void> upsert(McpServerConfig config);
   Future<void> delete(String id);
+  Future<void> deleteAllServers();
 }

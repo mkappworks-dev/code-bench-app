@@ -77,7 +77,8 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
               '  • All API keys\n'
               '  • GitHub sign-in\n'
               '  • All chat sessions and messages\n'
-              '  • All projects\n\n'
+              '  • All projects\n'
+              '  • All MCP servers\n\n'
               'You will see the onboarding wizard on next launch. This cannot be undone.',
               style: TextStyle(color: c.textSecondary, fontSize: 12),
             );
@@ -215,6 +216,20 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
           ),
           Divider(height: 36, thickness: 1, color: c.borderColor),
           const UpdateSection(),
+          Divider(height: 36, thickness: 1, color: c.borderColor),
+          SectionLabel('Reset'),
+          const SizedBox(height: 8),
+          SettingsGroup(
+            rows: [
+              SettingsRow(
+                label: 'Wipe all data',
+                description:
+                    'Delete API keys, GitHub sign-in, chat history, projects, and MCP servers. Cannot be undone.',
+                trailing: _DebugChipButton(label: 'Wipe', onPressed: _confirmWipeAllData, isDestructive: true),
+                isLast: true,
+              ),
+            ],
+          ),
           if (kDebugMode) ...[
             Divider(height: 36, thickness: 1, color: c.borderColor),
             SectionLabel('Debug'),
@@ -242,11 +257,6 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                       },
                     ),
                   ),
-                ),
-                SettingsRow(
-                  label: 'Wipe all data',
-                  description: 'Delete API keys, GitHub sign-in, chat history, and projects. Cannot be undone.',
-                  trailing: _DebugChipButton(label: 'Wipe', onPressed: _confirmWipeAllData, isDestructive: true),
                   isLast: true,
                 ),
               ],
