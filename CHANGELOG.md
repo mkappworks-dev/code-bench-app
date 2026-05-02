@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.1](https://github.com/mkappworks-dev/code-bench-app/compare/v0.4.0...v0.4.1) (2026-05-02)
+
+
+### Bug Fixes
+
+* **2026-05-02:** install Developer ID provisioning profile in CI ([#55](https://github.com/mkappworks-dev/code-bench-app/issues/55)) ([6a18ef8](https://github.com/mkappworks-dev/code-bench-app/commit/6a18ef844bc2c8376c50bfa3b97404edc6f01449))
+* **2026-05-02:** resolve claude/codex CLI via login shell for release ([#51](https://github.com/mkappworks-dev/code-bench-app/issues/51)) ([f782d6d](https://github.com/mkappworks-dev/code-bench-app/commit/f782d6dab04980882410598dc003acc4a3171ac7))
+* **2026-05-02:** use TeamIdentifierPrefix in Release keychain-access-groups ([#53](https://github.com/mkappworks-dev/code-bench-app/issues/53)) ([5925842](https://github.com/mkappworks-dev/code-bench-app/commit/5925842df00f66eb0405d69b21839a4ac89ccd4b))
+* **2026-05-03:** strip pod code signing and revert version to 0.4.0 ([#57](https://github.com/mkappworks-dev/code-bench-app/issues/57)) ([b42c191](https://github.com/mkappworks-dev/code-bench-app/commit/b42c191962e162090dc1ebebbbef63c6d71eb2e4))
+
 ## [0.4.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.3.0...v0.4.0) (2026-05-02)
 
 
