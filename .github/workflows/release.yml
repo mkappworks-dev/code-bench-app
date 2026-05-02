@@ -162,9 +162,29 @@ jobs:
       - name: Package (macOS)
         if: matrix.target == 'macos'
         run: |
+          set -euo pipefail
           APP="build/macos/Build/Products/Release/Code Bench.app"
+          ZIP="$GITHUB_WORKSPACE/CodeBench-macos.zip"
           cd build/macos/Build/Products/Release
-          zip -r "$GITHUB_WORKSPACE/CodeBench-macos.zip" "Code Bench.app"
+          # ditto (not zip) so the bundle's symlinks and xattrs survive — plain
+          # `zip -r` strips both, which corrupts the codesign seal and bricks
+          # the in-app auto-updater (it re-verifies codesign after extracting).
+          # Mirrors the `ditto -c -k --keepParent` already used for the
+          # notarization-upload zip earlier in this job.
+          ditto -c -k --keepParent "Code Bench.app" "$ZIP"
+
+          # Round-trip integrity check: extract the just-built zip into a
+          # throwaway dir and re-run the same verifications the in-app updater
+          # runs on the user's machine. If `zip` ever sneaks back in (or any
+          # future packaging change strips xattrs / mangles symlinks), this
+          # fails the release here instead of silently shipping a broken zip
+          # that bricks every auto-update.
+          VERIFY_DIR=$(mktemp -d)
+          ditto -x -k "$ZIP" "$VERIFY_DIR"
+          codesign --verify --deep --strict "$VERIFY_DIR/Code Bench.app"
+          spctl --assess --type execute --verbose=4 "$VERIFY_DIR/Code Bench.app"
+          rm -rf "$VERIFY_DIR"
+
           cd "$GITHUB_WORKSPACE"
           create-dmg \
             --volname "Code Bench" \
