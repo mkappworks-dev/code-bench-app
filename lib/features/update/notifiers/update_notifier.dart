@@ -1,7 +1,6 @@
 // lib/features/update/notifiers/update_notifier.dart
 import 'dart:async';
 
-import 'package:flutter/services.dart' show PlatformException;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,9 +30,15 @@ Future<UpdateLastChecked?> updateLastChecked(Ref ref) async {
     // Pref store has a value that no longer parses as ISO-8601 — log a
     // breadcrumb (a silent collapse to "Never checked" hides this from any
     // future debugging) and clear both keys so we don't keep tripping on it.
+    // The clear itself can fail on a wedged pref store; surface that as a
+    // separate `sLog` so the corruption signal isn't doubly silent.
     dLog('[UpdateLastChecked] discarding malformed ISO of length ${iso.length}');
-    await prefs.remove(AppConstants.prefUpdateLastChecked);
-    await prefs.remove(AppConstants.prefUpdateLastCheckedFailed);
+    try {
+      await prefs.remove(AppConstants.prefUpdateLastChecked);
+      await prefs.remove(AppConstants.prefUpdateLastCheckedFailed);
+    } on Exception catch (e, st) {
+      sLog('[UpdateLastChecked] failed to clear malformed pref: ${e.runtimeType}: $e\n$st');
+    }
     return null;
   }
   final failed = prefs.getBool(AppConstants.prefUpdateLastCheckedFailed) ?? false;
@@ -85,20 +90,23 @@ class UpdateNotifier extends _$UpdateNotifier {
   /// Persist the most recent check attempt — both the timestamp and whether
   /// it failed. A SharedPreferences hiccup must not poison the in-memory state
   /// transition that was already made by the caller, but the swallow is
-  /// narrowed to platform-channel errors so programming bugs (TypeError,
-  /// ArgumentError) still surface during development. The user-visible
-  /// signal that persistence failed is that "Last checked" stays put — by
-  /// design, since `state` already carries any operation error.
+  /// narrowed to `Exception` (not `Object`) so programming `Error` types
+  /// (TypeError, ArgumentError) still surface during development.
+  /// `Exception` rather than `PlatformException` covers `MissingPluginException`
+  /// too — they're sibling classes, and missing-plugin races during hot-restart
+  /// would otherwise crash the notifier. The user-visible signal that
+  /// persistence failed is that "Last checked" stays put — by design, since
+  /// `state` already carries any operation error.
   Future<void> _persistLastChecked({required bool failed}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(AppConstants.prefUpdateLastChecked, DateTime.now().toIso8601String());
       await prefs.setBool(AppConstants.prefUpdateLastCheckedFailed, failed);
       ref.invalidate(updateLastCheckedProvider);
-    } on PlatformException catch (e, st) {
+    } on Exception catch (e, st) {
       // `sLog` (not `dLog`) — this only ever shows up in production and has
       // no user-visible signal; we need it in release-build logs.
-      sLog('[UpdateNotifier] persisting lastChecked failed: ${e.code}: ${e.message}\n$st');
+      sLog('[UpdateNotifier] persisting lastChecked failed: ${e.runtimeType}: $e\n$st');
     }
   }
 
@@ -139,7 +147,10 @@ class UpdateNotifier extends _$UpdateNotifier {
       }
       await svc.clearLastInstallStatus();
     } catch (e, st) {
-      dLog('[UpdateNotifier] _surfacePreviousInstallStatus failed: $e\n$st');
+      // `sLog` (not `dLog`) — this fires once per session and has no other
+      // user-visible signal. If the install-status sentinel is unreadable in
+      // production, we need a release-build breadcrumb.
+      sLog('[UpdateNotifier] _surfacePreviousInstallStatus failed: $e\n$st');
     }
   }
 

@@ -148,6 +148,13 @@ class UpdateInstallDatasourceProcess implements UpdateInstallDatasource {
   static const _relaunchScript = r'''#!/bin/bash
 # Args: $1=appPath $2=srcAppPath $3=extractDir $4=zipPath
 #       $5=statusPath $6=scriptDir $7=enforceSignature(0|1)
+#
+# Why -u alone, not -eu: every fallible step is explicitly checked with
+# `if ! <cmd>; then ... fi` and the failure-path branches restore $APP.old
+# with un-`||true`'d `rm -rf "$APP"` and bare `mv` calls. Adding `-e` would
+# exit before those restores can run, leaving the user with a corrupt $APP
+# and the trap unable to recover. Future contributors: keep the `if !`
+# discipline; do not add `-e`.
 set -u
 APP="$1"; SRC="$2"; EXTRACT_DIR="$3"; ZIP="$4"
 STATUS="$5"; SCRIPT_DIR="$6"; VERIFY="$7"

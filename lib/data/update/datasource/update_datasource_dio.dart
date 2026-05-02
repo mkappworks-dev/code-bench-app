@@ -32,7 +32,10 @@ const _kAllowedDownloadHosts = {
 /// Path prefix the `github.com` host is pinned to. `browser_download_url` is
 /// release-author controlled, so without this pin a compromised publisher
 /// could point downloads at any github.com path (other repos, gists, etc.).
-final _kGithubReleasePathPrefix = '/$kGithubOwner/$kGithubRepo/releases/download/';
+/// Lowercased for case-insensitive comparison — GitHub serves owner/repo
+/// case-insensitively, so a release author who fat-fingers casing in the
+/// asset URL must not brick updates.
+final _kGithubReleasePathPrefix = '/$kGithubOwner/$kGithubRepo/releases/download/'.toLowerCase();
 
 @Riverpod(keepAlive: true)
 UpdateDatasource updateDatasource(Ref ref) => UpdateDatasourceDio();
@@ -44,7 +47,12 @@ class UpdateDatasourceDio implements UpdateDatasource {
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 30),
         headers: const {'Accept': 'application/vnd.github+json'},
-      );
+      ) {
+    // Shape guard for the github.com path-pin: a future config edit that
+    // empties or slashes these constants would silently weaken the pin.
+    assert(kGithubOwner.isNotEmpty && !kGithubOwner.contains('/') && !kGithubOwner.contains('..'));
+    assert(kGithubRepo.isNotEmpty && !kGithubRepo.contains('/') && !kGithubRepo.contains('..'));
+  }
 
   final Dio _dio;
 
@@ -133,10 +141,12 @@ class UpdateDatasourceDio implements UpdateDatasource {
       try {
         _assertAllowedRedirectChain(response, allowed: _kAllowedDownloadHosts);
       } on UpdateException {
+        // Wipe the entire per-attempt tempdir so the rejected zip *and* the
+        // dir that contains it are gone.
         try {
-          await File(savePath).delete();
-        } catch (e) {
-          dLog('[UpdateDatasource] cleanup of $savePath after redirect rejection failed: $e');
+          await tempDir.delete(recursive: true);
+        } on FileSystemException catch (e) {
+          dLog('[UpdateDatasource] cleanup of ${tempDir.path} after redirect rejection failed: $e');
         }
         rethrow;
       }
@@ -147,11 +157,14 @@ class UpdateDatasourceDio implements UpdateDatasource {
     }
   }
 
-  /// Validates every redirect hop and the final URL against [allowed].
-  /// Dio's default `followRedirects: true` only exposes the final URL via
-  /// `realUri`; without per-hop checks an attacker-controlled intermediate
-  /// could proxy bytes before bouncing to a real allowlisted host.
+  /// Validates the originating request URL, every redirect hop, and the final
+  /// URL against [allowed]. Dio's default `followRedirects: true` only exposes
+  /// the final URL via `realUri`; without per-hop checks an attacker-controlled
+  /// intermediate could proxy bytes before bouncing to a real allowlisted host.
+  /// The originating URL is also checked so a future caller that forgets to
+  /// pre-validate doesn't silently bypass.
   void _assertAllowedRedirectChain(Response<dynamic> response, {required Set<String> allowed}) {
+    _assertAllowedHost(response.requestOptions.uri.toString(), allowed: allowed);
     for (final redirect in response.redirects) {
       _assertAllowedHost(redirect.location.toString(), allowed: allowed);
     }
@@ -170,7 +183,10 @@ class UpdateDatasourceDio implements UpdateDatasource {
         allowed.contains(uri.host);
     // `browser_download_url` is release-author controlled, so on github.com
     // (the one host that serves arbitrary user content) pin owner/repo path.
-    final pathOk = !basicallyOk || uri.host != 'github.com' || uri.path.startsWith(_kGithubReleasePathPrefix);
+    // Case-insensitive — GitHub serves owner/repo case-insensitively, and a
+    // fat-fingered casing must not brick updates.
+    final pathOk =
+        !basicallyOk || uri.host != 'github.com' || uri.path.toLowerCase().startsWith(_kGithubReleasePathPrefix);
     if (!basicallyOk || !pathOk) {
       sLog('[UpdateDatasource] Refusing non-allowlisted update URL: $rawUrl');
       throw UpdateNetworkException('Update URL is not from an allowlisted host: ${uri?.host ?? "(unparseable)"}');
