@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v0.2.0). Must already exist."
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -17,18 +23,20 @@ jobs:
         include:
           - os: macos-latest
             target: macos
-            artifact: codebench-macos.zip
-          - os: windows-latest
-            target: windows
-            artifact: codebench-windows.zip
-          - os: ubuntu-latest
-            target: linux
-            artifact: codebench-linux.tar.gz
+            artifact: CodeBench-macos.zip
+          # - os: windows-latest
+          #   target: windows
+          #   artifact: CodeBench-windows.zip
+          # - os: ubuntu-latest
+          #   target: linux
+          #   artifact: CodeBench-linux.tar.gz
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: subosito/flutter-action@v2.23.0
         with:
@@ -55,40 +63,141 @@ jobs:
 
       - name: Check formatting (hand-written files only)
         run: |
-          dart format --set-exit-if-changed $(find lib test -name "*.dart" ! -name "*.g.dart" ! -name "*.freezed.dart")
+          dart format --set-exit-if-changed $(find lib test -name "*.dart" ! -name "*.g.dart" ! -name "*.freezed.dart" ! -name "*.mocks.dart")
+
+      - name: Import Developer ID certificate
+        if: matrix.target == 'macos'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          CERT_PATH="$RUNNER_TEMP/cert.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 24)
+
+          echo "$MACOS_CERTIFICATE" | base64 --decode > "$CERT_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          security import "$CERT_PATH" -P "$MACOS_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" >/dev/null
+
+          security list-keychain -d user -s "$KEYCHAIN_PATH" \
+            $(security list-keychains -d user | tr -d '"')
+
+          security find-identity -p codesigning -v "$KEYCHAIN_PATH"
 
       - name: Build (macOS)
         if: matrix.target == 'macos'
         run: flutter build macos --release
         env:
-          FLUTTER_XCODE_CODE_SIGN_IDENTITY: ""
-          FLUTTER_XCODE_CODE_SIGNING_REQUIRED: NO
-          FLUTTER_XCODE_CODE_SIGNING_ALLOWED: NO
+          FLUTTER_XCODE_CODE_SIGN_STYLE: Manual
+          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "Developer ID Application"
+          FLUTTER_XCODE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_TEAM_ID }}
+          FLUTTER_XCODE_CODE_SIGN_ENTITLEMENTS: ${{ github.workspace }}/macos/Runner/Release.entitlements
+          FLUTTER_XCODE_ENABLE_HARDENED_RUNTIME: "YES"
+          FLUTTER_XCODE_OTHER_CODE_SIGN_FLAGS: "--timestamp"
+
+      - name: Notarize and staple
+        if: matrix.target == 'macos'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        # Apple's notary queue typically returns in 2-10 min but has been
+        # observed to spike past 30 min during peak hours / incidents
+        # (see submission 1534dd17 and 08fa45b9). 60 min is the new ceiling
+        # — generous for queue tail latencies, still bounded so a stuck
+        # runner can't burn an hour of credits silently.
+        timeout-minutes: 60
+        run: |
+          set -euo pipefail
+          APP="build/macos/Build/Products/Release/Code Bench.app"
+          NOTARIZE_ZIP="$RUNNER_TEMP/notarize.zip"
+
+          ditto -c -k --keepParent "$APP" "$NOTARIZE_ZIP"
+
+          # Capture both the JSON output and exit code separately. notarytool
+          # returns 0 on Invalid verdicts (only the *submission* succeeded),
+          # so we must parse the status field instead of relying on $?.
+          SUBMIT_OUTPUT=$(xcrun notarytool submit "$NOTARIZE_ZIP" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_ID_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --output-format json \
+            --wait)
+
+          echo "$SUBMIT_OUTPUT"
+
+          SUBMISSION_ID=$(echo "$SUBMIT_OUTPUT" | jq -r '.id')
+          STATUS=$(echo "$SUBMIT_OUTPUT" | jq -r '.status')
+
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "::error::Notarization failed with status: $STATUS"
+            echo "::group::notarytool log for $SUBMISSION_ID"
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_ID_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID"
+            echo "::endgroup::"
+            exit 1
+          fi
+
+          xcrun stapler staple "$APP"
+          spctl --assess --type exec --verbose=4 "$APP"
 
       - name: Build
         if: matrix.target != 'macos'
         run: flutter build ${{ matrix.target }} --release
 
+      - name: Install create-dmg
+        if: matrix.target == 'macos'
+        run: brew install create-dmg
+
       - name: Package (macOS)
         if: matrix.target == 'macos'
         run: |
+          APP="build/macos/Build/Products/Release/Code Bench.app"
           cd build/macos/Build/Products/Release
-          zip -r "$GITHUB_WORKSPACE/codebench-macos.zip" code_bench.app
+          zip -r "$GITHUB_WORKSPACE/CodeBench-macos.zip" "Code Bench.app"
+          cd "$GITHUB_WORKSPACE"
+          create-dmg \
+            --volname "Code Bench" \
+            --window-pos 200 120 \
+            --window-size 660 400 \
+            --icon-size 128 \
+            --icon "Code Bench.app" 180 170 \
+            --hide-extension "Code Bench.app" \
+            --app-drop-link 480 170 \
+            "CodeBench-macos.dmg" \
+            "$APP"
 
       - name: Package (Windows)
         if: matrix.target == 'windows'
         shell: pwsh
-        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath codebench-windows.zip
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath CodeBench-windows.zip
 
       - name: Package (Linux)
         if: matrix.target == 'linux'
-        run: tar -czf codebench-linux.tar.gz -C build/linux/x64/release bundle
+        run: tar -czf CodeBench-linux.tar.gz -C build/linux/x64/release bundle
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}
+
+      - name: Upload DMG artifact
+        if: matrix.target == 'macos'
+        uses: actions/upload-artifact@v4
+        with:
+          name: CodeBench-macos.dmg
+          path: CodeBench-macos.dmg
 
   release:
     name: Create Release
@@ -97,6 +206,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -104,11 +215,12 @@ jobs:
           path: artifacts/
           merge-multiple: true
 
-      - name: Create GitHub release
+      - name: Upload release artifacts
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
           files: |
-            artifacts/codebench-macos.zip
-            artifacts/codebench-windows.zip
-            artifacts/codebench-linux.tar.gz
-          generate_release_notes: true
+            artifacts/CodeBench-macos.dmg
+            artifacts/CodeBench-macos.zip
+            # artifacts/CodeBench-windows.zip
+            # artifacts/CodeBench-linux.tar.gz

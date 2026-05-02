@@ -2,7 +2,7 @@
 
 ## Project Status
 
-Code Bench is currently in **alpha**. Security reports can be filed as public GitHub issues.
+Code Bench is currently in **pre-release** (public beta). The app has not yet reached a stable 1.0 release; APIs and data formats may change between versions.
 
 ---
 
@@ -19,7 +19,7 @@ Only the latest release receives security fixes. Patch releases are issued for c
 
 ## How to Report a Vulnerability
 
-Open a [GitHub issue](https://github.com/mkappworks-dev/code-bench-app/issues/new) with the label `security`.
+**Please use [GitHub Security Advisories](https://github.com/mkappworks-dev/code-bench-app/security/advisories/new) to report vulnerabilities privately.** Do not file public issues for security reports — this gives maintainers time to assess and patch before disclosure.
 
 Include in your report:
 
@@ -50,7 +50,7 @@ If a timeline cannot be met we will notify you and agree on a revised date.
 
 We follow a coordinated disclosure model:
 
-1. Reporter submits the vulnerability.
+1. Reporter submits the vulnerability via GitHub Security Advisory.
 2. Maintainers reproduce and assess severity.
 3. A fix is developed and released.
 4. A public advisory is published (GitHub Security Advisory) after the fix is available.
@@ -69,12 +69,13 @@ The following vulnerability classes are in scope for the Code Bench desktop appl
 | Class                                   | Example                                                                                          |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | API key / credential exposure           | Keys stored via `flutter_secure_storage` written to disk in plaintext, logged, or leaked via IPC |
-| Keychain bypass                         | Circumventing platform-native secure storage (Keychain / DPAPI / libsecret)                      |
+| Keychain bypass                         | Circumventing platform-native secure storage (macOS Keychain / Windows DPAPI)                    |
 | GitHub OAuth token leakage              | Access tokens exposed in logs, temp files, or transmitted insecurely                             |
-| Insecure local file access              | Path traversal when reading or writing files via the file explorer or editor                     |
+| Insecure local file access              | Path traversal when reading or writing files via agent filesystem tools or the changes panel     |
 | Sensitive data in crash reports or logs | API keys, OAuth tokens, or chat content written to unprotected log files                         |
-| Local privilege escalation              | App executing code or accessing files beyond its sandbox entitlements                            |
+| Local privilege escalation              | App executing code or accessing files beyond its intended permissions                            |
 | Insecure outbound TLS                   | Failure to validate certificates when communicating with AI providers or the GitHub API          |
+| Agent-loop escape                       | Chat-driven tool calls that read or write files outside the user's selected project root         |
 
 ### Out of Scope
 
@@ -83,7 +84,7 @@ The following are **not** in scope:
 - Denial-of-service attacks (the app is a single-user local tool)
 - Social engineering of maintainers or users
 - Vulnerabilities in third-party dependencies (Flutter SDK, Drift, Dio, etc.) — report those to the respective upstream projects
-- Vulnerabilities in third-party AI provider APIs (OpenAI, Anthropic, Gemini) or the GitHub API — report those upstream
+- Vulnerabilities in third-party AI provider APIs (Anthropic, OpenAI, Google Gemini, Ollama) or the GitHub API — report those upstream
 - Issues that require physical access to an already-compromised machine
 
 ---
@@ -94,10 +95,13 @@ Code Bench is designed to run fully locally. Key security properties:
 
 - **No telemetry.** The app does not phone home or transmit usage data.
 - **Local-only storage.** All chat history and session data are stored in a local SQLite database on disk.
-- **Encrypted credentials.** AI API keys and OAuth tokens are stored in the platform's native credential store (macOS Keychain, Windows DPAPI, Linux libsecret) — never in the SQLite file.
+- **Encrypted credentials.** AI API keys and OAuth tokens are stored in the platform's native credential store (macOS Keychain, Windows DPAPI) — never in the SQLite file.
 - **User-supplied AI keys.** The app makes no AI API calls on its own behalf; all requests use keys the user explicitly configures.
+- **BYOM (Bring Your Own Model).** The app supports Anthropic, OpenAI, Google Gemini, Ollama, and custom OpenAI-compatible endpoints. No provider is hard-wired.
+- **Project-scoped file access.** Agent filesystem tools (read, write, apply diff) enforce a path-traversal guard that rejects any operation targeting a path outside the active project root.
 
 ## Known Limitations
 
 - Session metadata (conversation titles, timestamps) is stored in plaintext in the local SQLite database.
 - The app does not yet support certificate pinning for connections to AI provider APIs.
+- macOS is the only platform with active CI and release builds; Windows and Linux support is experimental.

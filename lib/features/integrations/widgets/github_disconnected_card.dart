@@ -1,6 +1,7 @@
 // lib/features/integrations/widgets/github_disconnected_card.dart
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/feature_flags.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/github_glass_button.dart';
@@ -43,10 +44,12 @@ class _GithubDisconnectedCardState extends State<GithubDisconnectedCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          GitHubGlassButton(onPressed: widget.onConnectOAuth, isLoading: widget.isLoading),
-          const SizedBox(height: 14),
-          const OrDivider(),
-          const SizedBox(height: 10),
+          if (FeatureFlags.githubOAuthEnabled) ...[
+            GitHubGlassButton(onPressed: widget.onConnectOAuth, isLoading: widget.isLoading),
+            const SizedBox(height: 14),
+            const OrDivider(),
+            const SizedBox(height: 10),
+          ],
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: widget.patController,
             builder: (context, value, _) {

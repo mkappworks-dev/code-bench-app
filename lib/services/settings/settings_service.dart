@@ -3,6 +3,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/errors/app_exception.dart';
 import '../../core/utils/debug_logger.dart';
+import '../../data/mcp/repository/mcp_repository.dart';
+import '../../data/mcp/repository/mcp_repository_impl.dart';
 import '../../data/project/repository/project_repository.dart';
 import '../../data/project/repository/project_repository_impl.dart';
 import '../../data/session/repository/session_repository.dart';
@@ -11,6 +13,7 @@ import '../../data/settings/models/app_theme_preference.dart';
 import '../../data/settings/repository/settings_repository.dart';
 import '../../data/settings/repository/settings_repository_impl.dart';
 import '../../services/providers/providers_service.dart';
+import '../../services/update/update_service.dart';
 
 part 'settings_service.g.dart';
 
@@ -21,6 +24,8 @@ SettingsService settingsService(Ref ref) {
     providers: ref.watch(providersServiceProvider),
     session: ref.watch(sessionRepositoryProvider),
     project: ref.watch(projectRepositoryProvider),
+    mcp: ref.watch(mcpRepositoryProvider),
+    update: ref.watch(updateServiceProvider),
   );
 }
 
@@ -30,15 +35,21 @@ class SettingsService {
     required ProvidersService providers,
     required SessionRepository session,
     required ProjectRepository project,
+    required McpRepository mcp,
+    required UpdateService update,
   }) : _settings = settings,
        _providers = providers,
        _session = session,
-       _project = project;
+       _project = project,
+       _mcp = mcp,
+       _update = update;
 
   final SettingsRepository _settings;
   final ProvidersService _providers;
   final SessionRepository _session;
   final ProjectRepository _project;
+  final McpRepository _mcp;
+  final UpdateService _update;
 
   Future<bool> getAutoCommit() => _settings.getAutoCommit();
   Future<void> setAutoCommit(bool value) => _settings.setAutoCommit(value);
@@ -80,10 +91,24 @@ class SettingsService {
     }
 
     try {
+      await _mcp.deleteAllServers();
+    } catch (e, st) {
+      _logWipeFailure('MCP servers', e, st);
+      failures.add('MCP servers');
+    }
+
+    try {
       await _settings.resetOnboarding();
     } catch (e, st) {
       _logWipeFailure('onboarding flag', e, st);
       failures.add('onboarding flag');
+    }
+
+    try {
+      await _update.clearLastInstallStatus();
+    } catch (e, st) {
+      _logWipeFailure('previous-update record', e, st);
+      failures.add('previous-update record');
     }
 
     return failures;

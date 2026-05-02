@@ -12,11 +12,22 @@
 	<false/>
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<!--
+	  Explicitly disable get-task-allow so Apple notarization accepts
+	  the bundle. Xcode auto-injects this entitlement during signing in
+	  some configurations, and any value other than false is a hard
+	  notarization rejection (statusCode 4000).
+	-->
+	<key>com.apple.security.get-task-allow</key>
+	<false/>
+	<!--
+	  Documented as sandbox-only, but hardened-runtime apps using
+	  NSOpenPanel (file_picker plugin) can fail to surface the panel
+	  without it. The panel is rendered by a sandboxed XPC service that
+	  expects this entitlement to round-trip the chosen URL back to the
+	  host process. Harmless when not strictly required.
+	-->
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
-	<key>keychain-access-groups</key>
-	<array>
-		<string>$(AppIdentifierPrefix)$(CFBundleIdentifier)</string>
-	</array>
 </dict>
 </plist>

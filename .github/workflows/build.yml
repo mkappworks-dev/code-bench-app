@@ -53,7 +53,7 @@ jobs:
       - name: Check formatting (hand-written files only)
         run: |
           dart format --set-exit-if-changed \
-            $(find lib test -name "*.dart" ! -name "*.g.dart" ! -name "*.freezed.dart")
+            $(find lib test -name "*.dart" ! -name "*.g.dart" ! -name "*.freezed.dart" ! -name "*.mocks.dart")
 
       - name: Build (macOS)
         if: matrix.target == 'macos'

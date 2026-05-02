@@ -22,6 +22,7 @@ class McpConfigDatasourceDrift {
   Future<List<McpServerRow>> getEnabled() => _db.mcpDao.getEnabled();
   Future<void> upsert(McpServersCompanion companion) => _db.mcpDao.upsert(companion);
   Future<void> deleteById(String id) => _db.mcpDao.deleteById(id);
+  Future<void> deleteAllServers() => _db.mcpDao.deleteAll();
 
   /// Convenience method: builds the companion from a domain [McpServerConfig]
   /// and persists it. Keeps all Drift [Value] usage inside this datasource.

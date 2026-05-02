@@ -14,7 +14,7 @@ Thank you for your interest in contributing. This document covers how to report 
   - [Suggesting Features](#suggesting-features)
   - [Development Setup](#development-setup)
   - [Making Changes](#making-changes)
-    - [Branch naming](#branch-naming)
+    - [Branch and PR title naming](#branch-and-pr-title-naming)
     - [Where to add things](#where-to-add-things)
     - [After modifying Drift tables, Freezed models, or Riverpod providers](#after-modifying-drift-tables-freezed-models-or-riverpod-providers)
   - [Commit Message Conventions](#commit-message-conventions)
@@ -51,7 +51,7 @@ Before filing a bug, check if it has already been reported. When opening an issu
 Open a [Feature Request](https://github.com/mkappworks-dev/code-bench-app/issues/new) issue. Include:
 
 - The problem you are trying to solve (not just the desired solution)
-- Which part of the app it relates to (chat, editor, file explorer, GitHub integration, settings)
+- Which part of the app it relates to (chat, agent tools, changes panel, GitHub integration, settings)
 - Any prior art from similar tools
 
 ---
@@ -86,25 +86,46 @@ dart run build_runner watch --delete-conflicting-outputs
 
 ## Making Changes
 
-### Branch naming
+### Branch and PR title naming
+
+Every branch and PR title includes today's date in `YYYY-MM-DD` format. The descriptive part is identical between the two; only the prefix format differs.
+
+**Branch name** — slash-separated, used in git:
 
 ```
-feat/<short-description>     # new feature
-fix/<short-description>      # bug fix
-refactor/<short-description> # internal cleanup
-docs/<short-description>     # documentation only
+feat/<YYYY-MM-DD>-<short-description>  # new feature
+fix/<YYYY-MM-DD>-<short-description>   # bug fix
+tech/<YYYY-MM-DD>-<short-description>  # refactors, tooling, dependency updates
+doc/<YYYY-MM-DD>-<short-description>   # documentation only
 ```
+
+**PR title** — conventional-commit format with the date in the scope. The CI lint enforces this:
+
+```
+feat(<YYYY-MM-DD>): <short-description>
+fix(<YYYY-MM-DD>): <short-description>
+tech(<YYYY-MM-DD>): <short-description>
+doc(<YYYY-MM-DD>): <short-description>
+```
+
+Examples — note the descriptive part matches:
+
+| Branch                                   | PR title                                   |
+| ---------------------------------------- | ------------------------------------------ |
+| `feat/2026-05-02-mcp-sse-transport`      | `feat(2026-05-02): mcp sse transport`      |
+| `fix/2026-05-02-keychain-null-on-launch` | `fix(2026-05-02): keychain null on launch` |
+| `tech/2026-05-02-bump-flutter-to-3.41`   | `tech(2026-05-02): bump flutter to 3.41`   |
 
 ### Where to add things
 
-| Change                 | Location                                                                                                       |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
-| New AI provider        | `lib/services/ai/` + register in the provider selection logic                                                  |
-| New feature screen     | `lib/features/<name>/` + route in `lib/router/app_router.dart` + destination in `lib/shell/desktop_shell.dart` |
-| New Drift table        | `lib/data/datasources/local/` → re-run `build_runner`                                                          |
-| New Freezed model      | `lib/data/models/` → re-run `build_runner`                                                                     |
-| New Riverpod provider  | Add `@riverpod` annotation → re-run `build_runner`                                                             |
-| New secure storage key | `lib/data/datasources/local/` — route through `SecureStorage`, never hardcode                                  |
+| Change                 | Location                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| New AI provider        | `lib/services/ai/` + register in `lib/data/providers/` and the provider selection UI                   |
+| New feature screen     | `lib/features/<name>/` + route in `lib/router/app_router.dart` + link from `lib/shell/chat_shell.dart` |
+| New Drift table        | `lib/data/_core/app_database.dart` → add table + DAO → re-run `build_runner`                           |
+| New Freezed model      | `lib/data/<domain>/models/` → re-run `build_runner`                                                    |
+| New Riverpod provider  | Add `@riverpod` annotation → re-run `build_runner`                                                     |
+| New secure storage key | `lib/data/providers/datasource/` — route through the providers datasource, never hardcode              |
 
 ### After modifying Drift tables, Freezed models, or Riverpod providers
 
@@ -112,7 +133,7 @@ docs/<short-description>     # documentation only
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-Generated `.g.dart` and `.freezed.dart` files are gitignored — do not commit them.
+Generated `.g.dart` and `.freezed.dart` files **must be committed** alongside their source files. Run `dart format lib/ test/` before staging them.
 
 ---
 
@@ -120,22 +141,33 @@ Generated `.g.dart` and `.freezed.dart` files are gitignored — do not commit t
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
-| Type       | When to use                                |
-| ---------- | ------------------------------------------ |
-| `feat`     | A new feature visible to users             |
-| `fix`      | A bug fix                                  |
-| `docs`     | Documentation changes only                 |
-| `refactor` | Code restructuring with no behavior change |
-| `test`     | Adding or updating tests                   |
-| `chore`    | Build scripts, dependency updates, tooling |
+| Type       | When to use                                | Version bump (release-please) |
+| ---------- | ------------------------------------------ | ----------------------------- |
+| `feat`     | A new feature visible to users             | minor (`0.1.0 → 0.2.0`)       |
+| `fix`      | A bug fix                                  | patch (`0.1.0 → 0.1.1`)       |
+| `docs`     | Documentation changes only                 | none                          |
+| `refactor` | Code restructuring with no behavior change | none                          |
+| `test`     | Adding or updating tests                   | none                          |
+| `chore`    | Build scripts, dependency updates, tooling | none                          |
+
+Add `!` after the type (`feat!:`) or a `BREAKING CHANGE:` footer to trigger a major bump (`0.1.0 → 1.0.0`). Do not manually bump `pubspec.yaml` or push version tags — release-please handles both when you merge the release PR it opens.
 
 Format: `<type>(<optional scope>): <short imperative summary>`
 
-Examples:
+**Scope convention — depends on whether it's a branch commit or a PR title:**
+
+| Where                                  | Scope rule                 | Example                                                 |
+| -------------------------------------- | -------------------------- | ------------------------------------------------------- |
+| Branch commit (squashed away on merge) | Semantic scope or no scope | `feat(chat): add streaming response cancellation`       |
+| PR title (becomes the commit on main)  | Date scope, `YYYY-MM-DD`   | `feat(2026-05-02): add streaming response cancellation` |
+
+Branch commits are scratch — keep them granular and use semantic scopes that help review (`chat`, `keychain`, `auth`, etc.). The PR title is what release-please reads after squash merge, so it carries the date scope to match the dated branch convention above.
+
+Examples of branch commits:
 
 ```
 feat(chat): add streaming response cancellation
-fix(keychain): handle null return from flutter_secure_storage on Linux
+fix(keychain): handle null return from flutter_secure_storage on macOS
 chore: bump flutter to 3.22.0
 ```
 
@@ -145,11 +177,13 @@ Breaking changes: add `!` after the type (`feat!:`) and include a `BREAKING CHAN
 
 ## Pull Request Guidelines
 
+GitHub auto-populates [`.github/pull_request_template.md`](.github/pull_request_template.md) when you open a PR — fill in every section before requesting review.
+
 1. **Keep PRs focused** — one feature or fix per PR.
 2. **Run checks locally** before pushing:
    ```bash
    flutter analyze
-   dart format lib/
+   dart format lib/ test/
    flutter test
    ```
 3. **Write a clear PR title** using the same conventional commit format (`feat: …`, `fix: …`).

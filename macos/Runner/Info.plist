@@ -28,6 +28,14 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Code Bench reads and edits code files, and runs git, inside projects you open from your Documents folder.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>Code Bench reads and edits code files, and runs git, inside projects you open from your Downloads folder.</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>Code Bench reads and edits code files, and runs git, inside projects you open from your Desktop.</string>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>Code Bench reads and edits code files, and runs git, inside projects you open from external or removable drives.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

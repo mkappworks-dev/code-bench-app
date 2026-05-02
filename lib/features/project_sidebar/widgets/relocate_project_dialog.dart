@@ -68,6 +68,8 @@ class _RelocateProjectDialogState extends ConsumerState<RelocateProjectDialog> {
         () => _error = switch (failure) {
           ProjectSidebarInvalidPath() => 'The selected folder does not exist. Please choose a valid folder.',
           ProjectSidebarDuplicatePath() => 'A project at that path is already added.',
+          ProjectSidebarPermissionDenied() =>
+            'macOS blocked access to that folder. Click Allow on the system permission dialog, then try again.',
           ProjectSidebarStorageError() => 'Could not relocate project. Please try again.',
           ProjectSidebarUnknownError() => 'Could not relocate project. Please try again.',
         },

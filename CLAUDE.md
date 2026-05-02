@@ -58,21 +58,7 @@ All implementation work happens inside that worktree.
 
 ## Architecture — Dependency Rule
 
-The dependency graph is strictly one-directional:
-
-```
-Widgets / Screens
-      ↓  (ref.watch / ref.read notifier)
-  Notifiers          ← the only layer widgets may reach
-      ↓  (ref.read service)
-  Services           ← business logic, composition, typed exceptions
-      ↓  (constructor injection)
-  Repositories       ← domain interfaces; no I/O
-      ↓
-  Datasources        ← Dio, DB, Process.run, filesystem live here
-      ↓
- External (API / SQLite / OS)
-```
+Strictly one-directional: **Widgets → Notifiers → Services → Repositories → Datasources → External (API/SQLite/OS)**. Widgets may only reach Notifiers. All I/O (`Process.run`, `dart:io`, Dio) lives in Datasources or Services.
 
 **Hard rules — enforced in code review:**
 
@@ -130,62 +116,20 @@ Enforcement: code review greps for `try\s*\{` in widget files. Any match must wr
 
 ### Rule 2 — Actions notifier shape
 
-Every command notifier (`*Actions` suffix) extends `AsyncNotifier<void>`. Template:
+Every command notifier (`*Actions` suffix) extends `AsyncNotifier<void>` with `keepAlive: true`, a `void build()`, and imperative methods. Inside each method:
 
-```dart
-@Riverpod(keepAlive: true)
-class FooActions extends _$FooActions {
-  @override
-  FutureOr<void> build() {}
+1. Set `state = const AsyncLoading()`
+2. Wrap body in `AsyncValue.guard(() async { try { ... } catch (e, st) { dLog(...); Error.throwWithStackTrace(_asFailure(e), st); } })`
+3. Provide `_asFailure(Object e)` that returns a typed `{Name}Failure` via `switch`
 
-  FooFailure _asFailure(Object e) => switch (e) {
-    SpecificException() => const FooFailure.specificError(),
-    _ => FooFailure.unknown(e),
-  };
+Widgets drive loading via `ref.watch(fooActionsProvider).isLoading`. Errors surface via `ref.listen(fooActionsProvider, ...)` with an exhaustive switch on the failure type.
 
-  Future<void> doThing(String arg) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      try {
-        await ref.read(someServiceProvider).doThing(arg);
-      } catch (e, st) {
-        dLog('[FooActions] doThing failed: $e');
-        Error.throwWithStackTrace(_asFailure(e), st);
-      }
-    });
-  }
-}
-```
+**Exception — shared provider across multiple widget instances:** `ref.listen` fires once per widget, producing N snackbars for one operation. For self-initiated ops in that case, check `ref.read(fooActionsProvider).hasError` inline after the `await` instead. Keep the `ref.listen` for externally-triggered errors.
 
-Widgets drive loading via `ref.watch(fooActionsProvider).isLoading` and errors via `ref.listen`:
+Canonical examples:
 
-```dart
-ref.listen(fooActionsProvider, (prev, next) {
-  if (next is! AsyncError) return;
-  final failure = next.error;
-  if (failure is! FooFailure) return;
-  switch (failure) {
-    case FooSpecificError(): showErrorSnackBar(context, 'Specific error message'); break;
-    case FooUnknownError(): showErrorSnackBar(context, 'Unexpected error'); break;
-  }
-});
-```
-
-**Exception — multiple widget instances sharing the same provider:** When several instances of a widget are on screen at once and all watch the same `Actions` provider (e.g., a list of provider cards each listening to `providersActionsProvider`), `ref.listen` fires once per widget — producing N snackbars for a single operation. In this case, check `ref.read(fooActionsProvider).hasError` inline immediately after the `await` in the widget's own async method instead of relying on the listener for that operation:
-
-```dart
-Future<void> _save() async {
-  await ref.read(fooActionsProvider.notifier).doThing();
-  if (!mounted) return;
-  if (ref.read(fooActionsProvider).hasError) {
-    AppSnackBar.show(context, 'Failed — please retry', type: AppSnackBarType.error);
-    return;
-  }
-  // success path
-}
-```
-
-The `ref.listen` in `build()` is still needed to catch errors triggered from outside the widget (e.g., a sibling widget mutating the same provider). The inline check is only for operations the widget itself initiates.
+- Actions shape: [`lib/features/chat/notifiers/code_apply_actions.dart`](lib/features/chat/notifiers/code_apply_actions.dart)
+- Widget `ref.listen` pattern: [`lib/features/chat/widgets/message_bubble.dart`](lib/features/chat/widgets/message_bubble.dart)
 
 ### Rule 3 — Typed failure unions
 
@@ -207,11 +151,6 @@ Widgets never `import '../../services/...'` for exception types — they only `s
 
 Default to a single `AsyncValue<void>` slot per Actions notifier. Only escalate to a `family` provider when a **named, concrete** concurrency scenario exists (documented in the notifier's doc comment). Unapproved family usage is rejected in code review.
 
-See canonical examples:
-
-- Actions: `lib/features/chat/notifiers/code_apply_actions.dart`
-- Widget: `lib/features/chat/widgets/message_bubble.dart` (`ref.listen` pattern)
-
 ## Logging
 
 Two helpers live in [lib/core/utils/debug_logger.dart](lib/core/utils/debug_logger.dart):
@@ -231,13 +170,11 @@ Two helpers live in [lib/core/utils/debug_logger.dart](lib/core/utils/debug_logg
 
 Log **once**, at the layer that holds the useful context. If a service already `dLog`s a `ProcessException`, the notifier rethrowing it should not log again — it should only log if it's doing additional recovery worth tracing.
 
-Never `dLog` raw HTTP headers, tokens, or response bodies — see [github_api_service.dart](lib/services/github/github_api_service.dart) for the GitHub PAT redaction pattern.
+Never `dLog` raw HTTP headers, tokens, or response bodies — see [github_service.dart](lib/services/github/github_service.dart) for the GitHub PAT redaction pattern.
 
 ## macOS notes
 
-App Sandbox is **intentionally disabled** on macOS because `ActionRunnerService`, `GitService`, and `IdeLaunchService` all shell out to external binaries. See [macos/Runner/README.md](macos/Runner/README.md) for the rationale, contributor rules (no `runInShell: true`, no PAT header logging), and distribution implications. Any change to `macos/Runner/*.entitlements` or to the process-execution services must be weighed against that threat model.
-
-`bash_datasource_process.dart` is a documented exception to the `runInShell: true` ban. It spawns `/bin/sh -c <command>` (with `runInShell: false` on `Process.start`) where the command is AI-generated and user-approved before execution — the injection risk the ban targets does not apply. The ban continues to apply to all other services that construct commands from external or user-supplied data.
+App Sandbox is intentionally **disabled** — services shell out to external binaries. Before changing `macos/Runner/*.entitlements` or any process-execution service, read [macos/Runner/README.md](macos/Runner/README.md) for the threat model and contributor rules (no `runInShell: true` except the documented `bash_datasource_process.dart` case; no PAT header logging).
 
 ## Brainstorming Options
 
@@ -247,34 +184,6 @@ When presenting multiple-choice options (A/B/C etc.) during brainstorming:
 - Always mark the recommended option with a ★ symbol
 - If the options involve UI (layouts, components, interactions), always show a visual mockup in the browser companion without waiting to be asked
 
-## Pull Request Template
+## Pull Requests
 
-Use this format both when creating a PR (`gh pr create`) and when asked for a PR summary. When giving a summary (not creating), wrap the output in a markdown code block so it is copyable:
-
-```markdown
-## Summary
-
-Brief description of what this PR does and why.
-
-Closes #<!-- issue number -->
-
-## Changes
-
--
--
-
-## Type of change
-
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Refactor / internal improvement
-- [ ] Documentation
-
-## Checklist
-
-- [ ] `flutter analyze` passes with no issues
-- [ ] `dart format lib/` applied
-- [ ] `flutter test` passes
-- [ ] If Drift tables or Riverpod providers were changed, `build_runner` was re-run and generated files are not committed
-- [ ] PR is focused on a single concern
-```
+`gh pr create` auto-uses [`.github/pull_request_template.md`](.github/pull_request_template.md). When asked for a PR summary (not creating), output the same template wrapped in a markdown code block so it's copyable.

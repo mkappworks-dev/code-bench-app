@@ -29,6 +29,7 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
 
   ProjectSidebarFailure _asFailure(Object e) => switch (e) {
     DuplicateProjectPathException(:final path) => ProjectSidebarFailure.duplicatePath(path),
+    ProjectPermissionDeniedException(:final path) => ProjectSidebarFailure.permissionDenied(path),
     ArgumentError(:final message) => ProjectSidebarFailure.invalidPath(message?.toString() ?? ''),
     StorageException(:final message) => ProjectSidebarFailure.storageError(message),
     _ => ProjectSidebarFailure.unknown(e),

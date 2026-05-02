@@ -3,32 +3,47 @@
 </p>
 <h1 align="center">Code Bench</h1>
 
-AI-powered desktop code assistant that combines a code editor, multi-provider AI chat, and GitHub integration — runs fully offline with Ollama.
+Desktop AI coding assistant for local repositories. Bring your own model — Anthropic, OpenAI, Gemini, and Ollama work out of the box, or point it at any OpenAI-compatible custom endpoint. Chat over your repo, run your tools, edit files in place, and watch git state update inline.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform: macOS](https://img.shields.io/badge/macOS-stable-brightgreen)](https://github.com)
-[![Platform: Windows/Linux](https://img.shields.io/badge/Windows%20%7C%20Linux-in%20development-yellow)](https://github.com)
+[![Platform: macOS](https://img.shields.io/badge/macOS-stable-brightgreen)](https://github.com/mkappworks-dev/code-bench-app/releases/latest)
+[![Platform: Windows/Linux](https://img.shields.io/badge/Windows%20%7C%20Linux-unsupported-lightgrey)](https://github.com/mkappworks-dev/code-bench-app#platforms)
+
+## Installation (macOS)
+
+1. Download `CodeBench-macos.dmg` from the [latest release](https://github.com/mkappworks-dev/code-bench-app/releases/latest).
+2. Open the DMG and drag **Code Bench** into **Applications**.
+3. Launch the app from Applications.
+
+> When you point Code Bench at a project under Documents, Downloads, or Desktop, macOS will ask _"Code Bench would like to access files in your … folder."_ Click **Allow**. Code Bench reads project files from wherever you store them on disk, so it needs access to those user folders.
 
 ## Features
 
-| Tab           | Capabilities                                                                                                                             |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **Dashboard** | Quick-start actions · recent conversation list (last 10) · delete sessions                                                               |
-| **Chat**      | Stream responses from OpenAI · Anthropic · Gemini · Ollama · custom endpoint · per-session system prompt · model selector · compare mode |
-| **Editor**    | Multi-tab code editor · syntax highlighting · file save (⌘S) · close tab (⌘W) · dirty-state tracking · read-only GitHub files            |
-| **GitHub**    | OAuth login · list/search repos · branch selector · file tree · open files in editor · commit dialog · PR list                           |
-| **Settings**  | Store/delete API keys per provider · Ollama base URL · custom OpenAI-compatible endpoint                                                 |
-| **Compare**   | Side-by-side dual-pane chat — send one prompt to two different models simultaneously                                                     |
+The app is chat-centric: a single conversation surface with a project sidebar on the left, an inline changes panel that surfaces the agent's edits as they happen, and a top action bar for the active project's branch and PR state. Settings (`⌘,`) hosts the configuration sub-areas.
+
+| Surface              | Capabilities                                                                                                                                                   |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Chat**             | Streaming responses · per-session system prompt · model selector · agent loop with tool use · interactive permission prompts · "ask the user a question" cards |
+| **Project sidebar**  | Add/relocate local projects · session list per project · session archive · live git state (branch, ahead/behind, dirty-tree) · branch picker                   |
+| **Changes panel**    | Inline diff per edited file · per-change accept/reject · conflict-merge view when on-disk drifts from agent edits · commit dialog · create-PR dialog           |
+| **Coding tools**     | Built-in tool registry (filesystem read/write, ripgrep, bash, web fetch) · per-tool denylist · ripgrep auto-detect · ready for MCP-server tool sources         |
+| **MCP servers**      | Configure stdio and HTTP/SSE MCP servers · enable/disable per server · tool inventory surfaces in chat                                                         |
+| **Integrations**     | GitHub OAuth or PAT sign-in · repository browser feeding the project sidebar                                                                                   |
+| **Providers**        | Multi-provider key storage (OpenAI · Anthropic · Gemini · Ollama · custom OpenAI-compatible endpoint) · per-provider connectivity test · keys in OS keychain   |
+| **Settings → Reset** | "Wipe all data" — clears API keys, GitHub sign-in, chat history, projects, and MCP servers in one step                                                         |
+| **Auto-update**      | Checks the GitHub Releases endpoint on launch and from Settings · verifies Team-ID match and `codesign`/`spctl` on macOS · self-installs and relaunches        |
 
 ## Platforms
 
-| Platform | Status                                             |
-| -------- | -------------------------------------------------- |
-| macOS    | ✅ Stable — built and tested in CI                 |
-| Windows  | 🚧 In development — build target exists, not in CI |
-| Linux    | 🚧 In development — build target exists, not in CI |
+| Platform | Status                                                                                                                                                                                                                |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| macOS    | ✅ Supported — built, signed, notarized, and released in CI on every tag                                                                                                                                              |
+| Windows  | ⚠️ Unsupported — Flutter build target exists, but no CI, no signing, no released binaries. Use at your own risk and expect to fix things.                                                                             |
+| Linux    | ⚠️ Unsupported — same caveats as Windows. Both matrix entries are commented out in [`.github/workflows/build.yml`](.github/workflows/build.yml) and [`.github/workflows/release.yml`](.github/workflows/release.yml). |
 
 iOS, Android, and Web are out of scope.
+
+> If you want Windows or Linux to be a supported platform, the path is: re-enable the matrix entries in [`build.yml`](.github/workflows/build.yml) and [`release.yml`](.github/workflows/release.yml), add platform-appropriate code-signing, fix anything that breaks, and update this section. Until that happens, treat the desktop builds for those targets as a developer-only escape hatch.
 
 ## Requirements
 
@@ -84,7 +99,7 @@ flutter run -d linux
 
 On first launch, the onboarding screen gates access until at least one AI provider API key is saved.
 
-> **GitHub OAuth** — replace `YOUR_GITHUB_CLIENT_ID` in [lib/services/github/github_auth_service.dart](lib/services/github/github_auth_service.dart) with a real GitHub OAuth App client ID. Create one at **Settings → Developer settings → OAuth Apps** with callback URL `codebench://oauth/callback`.
+> **GitHub OAuth** — replace `YOUR_GITHUB_CLIENT_ID` in [lib/data/github/datasource/github_auth_datasource_web_dio.dart](lib/data/github/datasource/github_auth_datasource_web_dio.dart) with a real GitHub OAuth App client ID. Create one at **Settings → Developer settings → OAuth Apps** with the callback URL configured in `AppConstants.oauthCallbackUrl`. (PAT sign-in is also supported and does not require an OAuth app.)
 
 ## Project Structure
 
@@ -93,47 +108,58 @@ lib/
 ├── main.dart                    # Entry point — ProviderScope, window_manager init
 ├── app.dart                     # MaterialApp.router wired to GoRouter
 ├── router/
-│   └── app_router.dart          # GoRouter: onboarding guard + ShellRoute
+│   └── app_router.dart          # GoRouter: onboarding guard + chat ShellRoute + settings route
 ├── shell/
-│   ├── desktop_shell.dart       # 3-pane layout (explorer | main | chat) + keyboard shortcuts
-│   └── widgets/
-│       ├── side_nav_rail.dart   # 48 px icon nav rail
-│       └── app_title_bar.dart   # Custom title bar
-├── core/
-│   ├── constants/               # App, API, and theme constants
-│   ├── errors/                  # AppException hierarchy
-│   ├── theme/                   # AppTheme
-│   └── utils/                   # PlatformUtils
+│   ├── chat_shell.dart          # Sidebar + chat column + optional changes panel; ⌘N / ⌘, shortcuts
+│   ├── notifiers/               # Top-action-bar and status-bar state
+│   └── widgets/                 # AppLifecycleObserver, TopActionBar, StatusBar, ActionOutputPanel
+├── core/                        # Constants, AppException hierarchy, theme/colors, utils, shared widgets
 ├── data/
-│   ├── shared/                  # Cross-cutting models: AIModel, ChatMessage (used by both AI and session domains)
+│   ├── _core/                   # Drift AppDatabase, DioFactory, SecureStorage, preferences
+│   ├── shared/                  # Cross-cutting models: AIModel, ChatMessage
 │   ├── ai/                      # AI datasources (Dio), repository, models/
 │   ├── session/                 # Session datasource (Drift), repository, models/ (ChatSession, ToolEvent, …)
 │   ├── project/                 # Project datasource (Drift), repository, models/ (Project, WorkspaceProject, …)
-│   ├── github/                  # GitHub datasources (Dio), repository, models/ (Repository, GitHubAccount, …)
-│   ├── git/                     # Git datasource (Process), repository, models/ (GitLiveState), exceptions
-│   ├── apply/                   # Apply datasource (filesystem), repository, models/ (AppliedChange)
-│   ├── settings/                # Settings datasource (SecureStorage), repository
+│   ├── git/                     # Git datasource (Process), live-state datasource, repository, models/, exceptions
+│   ├── github/                  # GitHub datasources (Dio + OAuth), repository, models/
+│   ├── apply/                   # Apply datasource (filesystem), repository, security guard
 │   ├── filesystem/              # Filesystem datasource (dart:io)
-│   └── _core/                   # Drift AppDatabase, DioFactory, SecureStorageSource
+│   ├── bash/                    # Bash datasource (Process) — the one documented `runInShell` exception
+│   ├── coding_tools/            # Tool inputs/outputs, denylist, registry-facing types
+│   ├── mcp/                     # MCP config datasource (Drift), transport datasources (stdio + HTTP/SSE), repository, models/
+│   ├── web_fetch/               # Web-fetch datasource (Dio)
+│   ├── providers/               # Provider catalog + ProvidersService backing
+│   ├── settings/                # Settings datasource (Drift + SharedPreferences), repository, models/
+│   ├── update/                  # Update datasources (Dio for releases, Process for install, IO for sentinel), models/
+│   └── integrations/            # Integration metadata (GitHub OAuth/PAT)
 ├── services/
-│   ├── ai/                      # AIService — stream buffering, model selection
-│   ├── github/                  # GitHubService — OAuth + REST composition
+│   ├── ai/                      # AIService — stream buffering, model resolution
+│   ├── agent/                   # Agent loop — tool dispatch, permission prompts, iteration cap
+│   ├── coding_tools/            # ToolRegistry, denylist service, ripgrep availability probe, individual tools/
+│   ├── mcp/                     # MCP service — server lifecycle, tool inventory
 │   ├── git/                     # GitService — composite git operations
-│   ├── session/                 # SessionService — send-and-stream, history
-│   ├── project/                 # ProjectService — add/relocate policy
+│   ├── github/                  # GitHubService — OAuth + REST composition
+│   ├── session/                 # SessionService — send-and-stream, history, archive
+│   ├── project/                 # ProjectService — add/relocate, scan
 │   ├── apply/                   # ApplyService — patch orchestration + security guard
-│   ├── settings/                # SettingsService — wipe cascade, onboarding
+│   ├── providers/               # ProvidersService — keychain-backed key storage
+│   ├── api_key_test/            # ApiKeyTestService — provider connectivity checks
 │   ├── ide/                     # IdeService — editor/terminal launch
-│   └── api_key_test/            # ApiKeyTestService — provider connectivity checks
+│   ├── settings/                # SettingsService — wipe cascade, onboarding
+│   └── update/                  # UpdateService — version comparison, codesign/spctl gates, swap-and-relaunch
 └── features/
-    ├── onboarding/              # First-run API key entry
-    ├── dashboard/               # Home screen with session list
-    ├── chat/                    # Chat UI, chat_notifier, message streaming
-    ├── editor/                  # editor_notifier (tab state) + CodeEditorWidget (re_editor)
-    ├── file_explorer/           # Directory tree panel
-    ├── github/                  # Repo browser, file tree, commit/PR dialogs
-    ├── compare/                 # Side-by-side model comparison
-    └── settings/                # API key management UI
+    ├── onboarding/              # First-run wizard (API keys, GitHub sign-in)
+    ├── chat/                    # Chat UI, message streaming, agent permission prompts, code-apply actions
+    ├── project_sidebar/         # Project list, session list, archive, branch picker triggers
+    ├── branch_picker/           # Branch picker dialog + notifier
+    ├── archive/                 # Archived sessions screen
+    ├── general/                 # Settings → General (preferences, update section, reset section)
+    ├── providers/               # Settings → Providers (per-provider keys + test)
+    ├── integrations/            # Settings → Integrations (GitHub sign-in)
+    ├── coding_tools/            # Settings → Coding Tools (denylist, ripgrep status)
+    ├── mcp_servers/             # Settings → MCP Servers (configure, enable/disable)
+    ├── update/                  # Update notifier, state, failure types, "Check now" UI
+    └── settings/                # Settings shell + sub-area router
 ```
 
 ## Architecture
@@ -191,25 +217,26 @@ The full rules — naming conventions, error-handling patterns, logging matrix, 
 
 ### State management
 
-| Pattern                                     | Used for                                                                                          |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `@Riverpod(keepAlive: true)` class Notifier | Long-lived app state: active session ID, selected model, editor tabs, system prompts, DB, storage |
-| `@riverpod` class AsyncNotifier             | Chat messages (loads history, streams new messages)                                               |
-| `@riverpod` function (StreamProvider)       | Session list — wraps `watchAllSessions()` Drift stream                                            |
-| `@riverpod` function (FutureProvider)       | AI service factory, available model list                                                          |
-| `StateProvider.family`                      | Compare-screen per-pane model and message state                                                   |
+| Pattern                                     | Used for                                                                                                                                                                     |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@Riverpod(keepAlive: true)` class Notifier | Long-lived app state: active session ID, active project ID, selected model, system prompts, DB, storage                                                                      |
+| `@Riverpod(keepAlive: true)` class Actions  | Imperative commands: `*Actions` notifiers expose `Future<void>` methods that mediate widget → service calls (e.g. `CodeApplyActions`, `ProjectSidebarActions`, `GitActions`) |
+| `@riverpod` class AsyncNotifier             | Chat messages (loads history, streams new messages)                                                                                                                          |
+| `@riverpod` function (StreamProvider)       | Session list, live git state, MCP server list — wraps Drift / Process stream sources                                                                                         |
+| `@riverpod` function (FutureProvider)       | One-shot reads: available model list, package version, last update-check timestamp                                                                                           |
 
 ### Local persistence
 
 All data is stored in a local SQLite database managed by Drift (`code_bench.db`).
 
-| Table               | Stores                                                                                   |
-| ------------------- | ---------------------------------------------------------------------------------------- |
-| `ChatSessions`      | Session ID · title · model/provider · created/updated timestamps · pin flag              |
-| `ChatMessages`      | Message ID · session FK · role · content · extracted code blocks (JSON) · timestamp      |
-| `WorkspaceProjects` | Project ID · name · local path · linked repo ID · active branch · associated session IDs |
+| Table               | Stores                                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------------------------- |
+| `ChatSessions`      | Session ID · title · model/provider · created/updated timestamps · pin flag · archive flag               |
+| `ChatMessages`      | Message ID · session FK · role · content · extracted code blocks (JSON) · tool events (JSON) · timestamp |
+| `WorkspaceProjects` | Project ID · name · local path · linked repo ID · active branch · associated session IDs                 |
+| `McpServers`        | Server ID · name · transport (stdio / HTTP-SSE) · command + args · env (JSON) · URL · enabled flag       |
 
-DAOs: `SessionDao` (sessions + messages CRUD, stream watch) · `ProjectDao` (projects CRUD).
+DAOs: `SessionDao` (sessions + messages CRUD, stream watch) · `ProjectDao` (projects CRUD) · `McpDao` (servers CRUD, including `deleteAll` for the wipe cascade).
 
 ### Secret storage
 
@@ -246,14 +273,50 @@ flutter build macos --release   # → build/macos/Build/Products/Release/
 for windows:
 
 ```bash
-flutter build windows --release # → build/windows/x64/runner/Release/ (in development)
+flutter build windows --release # → build/windows/x64/runner/Release/ (unsupported)
 ```
 
 for linux:
 
 ```bash
-flutter build linux --release   # → build/linux/x64/release/bundle/ (in development)
+flutter build linux --release   # → build/linux/x64/release/bundle/ (unsupported)
 ```
+
+## Releasing (macOS)
+
+Releases are managed by [release-please](https://github.com/googleapis/release-please). Every merge to `main` updates an open release PR that bumps `pubspec.yaml`, writes `CHANGELOG.md`, and proposes the next semver version based on conventional commit types (`feat:` → minor, `fix:` → patch, `feat!:` / `BREAKING CHANGE:` → major). Merging that PR creates a `v*` tag, which triggers [`.github/workflows/release.yml`](.github/workflows/release.yml) to build the macOS app, sign with a Developer ID, notarize through Apple's notary service, staple the ticket, and upload `CodeBench-macos.dmg` and `CodeBench-macos.zip` to the release. The in-app auto-updater consumes those artifacts on next launch of older clients.
+
+### Required GitHub Actions secrets
+
+Add these under **Settings → Secrets and variables → Actions** before the first release:
+
+| Secret                       | Holds                                                        | How to get it                                                                                                                                |
+| ---------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MACOS_CERTIFICATE`          | Base64-encoded Developer ID Application certificate (`.p12`) | Export from Keychain Access (right-click identity → Export → `.p12`), then `base64 -i cert.p12 \| pbcopy` and paste                          |
+| `MACOS_CERTIFICATE_PASSWORD` | Password set when exporting the `.p12`                       | The password you typed at export time                                                                                                        |
+| `APPLE_ID`                   | Apple ID email of the notarizing account                     | The email tied to your Apple Developer membership                                                                                            |
+| `APPLE_ID_PASSWORD`          | App-specific password — **not** your Apple ID password       | [appleid.apple.com](https://account.apple.com) → Sign-In and Security → App-Specific Passwords → Generate (label e.g. `code-bench-notarize`) |
+| `APPLE_TEAM_ID`              | 10-character Team ID (also used as Xcode `DEVELOPMENT_TEAM`) | [developer.apple.com/account](https://developer.apple.com/account) → Membership Details                                                      |
+| `RELEASE_PLEASE_TOKEN`       | Personal access token (classic) with `repo` scope            | [github.com/settings/tokens](https://github.com/settings/tokens) → Generate new token (classic) → check `repo` → no expiry                   |
+
+> **Why a PAT for release-please?** PRs created by the default `GITHUB_TOKEN` are blocked from triggering other workflows (GitHub's anti-loop protection). Without a PAT, the release PR's required status checks (`Analyze & Test`, `Build (macos)`) get stuck on "Expected — Waiting for status to be reported" and never run. A PAT makes the PR appear as user-created so CI fires normally.
+
+### Cutting a release
+
+1. Merge feature/fix PRs to `main` as normal — use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, etc.).
+2. release-please keeps a release PR open that accumulates all pending commits.
+3. When you're ready to ship, merge the release PR.
+4. CI tags, builds, notarizes, and publishes automatically — no manual steps needed.
+
+> **Never manually bump `pubspec.yaml` or push `v*` tags.** release-please owns both. Manual bumps or tags will confuse the manifest and produce duplicate or mis-versioned releases.
+
+### Recovering a stuck release
+
+If a tag exists on GitHub but `release.yml` never ran (the release page is missing the `CodeBench-macos.dmg` and `CodeBench-macos.zip`, only GitHub's auto-generated source archives are present), the tag was likely created by `GITHUB_TOKEN` and didn't trigger workflows. Re-run the build manually:
+
+**Actions tab → Release → Run workflow → enter the tag (e.g. `v0.2.0`) → Run.**
+
+This builds and signs from the tag, then uploads the artifacts into the existing release without overwriting the changelog.
 
 ## Testing & Linting
 
@@ -268,44 +331,40 @@ dart format --set-exit-if-changed lib/ test/   # CI format check
 
 ### Adding an AI provider
 
-1. Add a value to `AIProvider` enum in [lib/data/models/ai_model.dart](lib/data/models/ai_model.dart).
-2. Implement `AIService` (streaming `sendMessage` method) in `lib/services/ai/`.
-3. Add a `case` to the `switch` in [lib/services/ai/ai_service_factory.dart](lib/services/ai/ai_service_factory.dart) that reads the key from `SecureStorageSource`.
-4. Add a storage method to [lib/data/datasources/local/secure_storage_source.dart](lib/data/datasources/local/secure_storage_source.dart) if the provider needs a non-key credential.
-5. Add a settings field in [lib/features/settings/settings_screen.dart](lib/features/settings/settings_screen.dart).
-
-### Adding a navigation tab
-
-1. Add a `_NavItem` entry in [lib/shell/widgets/side_nav_rail.dart](lib/shell/widgets/side_nav_rail.dart).
-2. Add a `GoRoute` inside the `ShellRoute` in [lib/router/app_router.dart](lib/router/app_router.dart).
-3. Create the screen widget under `lib/features/<name>/`.
-4. If the tab needs the file-explorer and chat side panels, add the route prefix to `showEditorPanes` in [lib/shell/desktop_shell.dart](lib/shell/desktop_shell.dart).
+1. Add a value to the `AIProvider` enum in [lib/data/shared/ai_model.dart](lib/data/shared/ai_model.dart).
+2. Implement the streaming `sendMessage` path under `lib/data/ai/datasource/` (Dio for HTTP, `*_dio.dart` suffix) and surface it through `AIRepository` / `AIService` in [lib/services/ai/ai_service.dart](lib/services/ai/ai_service.dart).
+3. Add the per-provider key plumbing in [lib/data/\_core/secure_storage.dart](lib/data/_core/secure_storage.dart) and the corresponding entry in `ProvidersService` ([lib/services/providers/providers_service.dart](lib/services/providers/providers_service.dart)).
+4. Wire the connectivity test in [lib/services/api_key_test/](lib/services/api_key_test/).
+5. Add the row to the Settings → Providers UI under [lib/features/providers/](lib/features/providers/).
 
 ### Adding a Drift table
 
-1. Define the table class in [lib/data/datasources/local/app_database.dart](lib/data/datasources/local/app_database.dart).
-2. Create a `@DriftAccessor` DAO class in the same file.
-3. Add both to the `@DriftDatabase` annotation and `daos` list.
+1. Define the table class in [lib/data/\_core/app_database.dart](lib/data/_core/app_database.dart).
+2. Create a `@DriftAccessor` DAO class in the same file (include a `deleteAll` method so the table participates in `SettingsService.wipeAllData`).
+3. Add both to the `@DriftDatabase` annotation and the `daos` list.
 4. Increment `schemaVersion` and add a `migration` step.
 5. Run `dart run build_runner build --delete-conflicting-outputs`.
+6. If the table holds user data, add a wipe step to [lib/services/settings/settings_service.dart](lib/services/settings/settings_service.dart) so "Wipe all data" stays exhaustive.
 
 ## Tech Stack
 
-| Layer             | Technology                                                                  |
-| ----------------- | --------------------------------------------------------------------------- |
-| UI                | Flutter · Material Design · Google Fonts                                    |
-| State             | flutter_riverpod · riverpod_annotation                                      |
-| Navigation        | go_router (ShellRoute)                                                      |
-| Local DB          | Drift (SQLite via sqlite3_flutter_libs)                                     |
-| Secret storage    | flutter_secure_storage                                                      |
-| HTTP / streaming  | Dio (SSE via `ResponseType.stream`)                                         |
-| AI providers      | OpenAI · Anthropic · Gemini · Ollama · Custom                               |
-| Code editor       | re_editor · re_highlight                                                    |
-| Chat rendering    | flutter_markdown_plus · flutter_highlight                                   |
-| GitHub OAuth      | flutter_web_auth_2                                                          |
-| Window management | window_manager                                                              |
-| Serialization     | freezed · json_annotation                                                   |
-| Code generation   | build_runner · riverpod_generator · drift_dev · freezed · json_serializable |
+| Layer             | Technology                                                                              |
+| ----------------- | --------------------------------------------------------------------------------------- |
+| UI                | Flutter · Material Design · Google Fonts                                                |
+| State             | flutter_riverpod · riverpod_annotation                                                  |
+| Navigation        | go_router (ShellRoute)                                                                  |
+| Local DB          | Drift (SQLite via sqlite3_flutter_libs)                                                 |
+| Secret storage    | flutter_secure_storage                                                                  |
+| HTTP / streaming  | Dio (SSE via `ResponseType.stream`)                                                     |
+| AI providers      | OpenAI · Anthropic · Gemini · Ollama · Custom (OpenAI-compatible)                       |
+| Tool sources      | Built-in registry (filesystem, ripgrep, bash, web fetch) · MCP (stdio + HTTP/SSE)       |
+| Chat rendering    | flutter_markdown_plus · flutter_highlight                                               |
+| GitHub OAuth      | flutter_web_auth_2                                                                      |
+| Self-update       | GitHub Releases API · `codesign --verify` + `spctl --assess` · swap-and-relaunch helper |
+| Preferences       | shared_preferences (NSUserDefaults / equivalents)                                       |
+| Window management | window_manager                                                                          |
+| Serialization     | freezed · json_annotation                                                               |
+| Code generation   | build_runner · riverpod_generator · drift_dev · freezed · json_serializable             |
 
 ## Contributing
 
