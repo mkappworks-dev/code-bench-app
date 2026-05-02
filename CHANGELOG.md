@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/mkappworks-dev/code-bench-app/compare/v0.4.0...v0.4.1) (2026-05-02)
+
+
+### Bug Fixes
+
+* **2026-05-02:** resolve claude/codex CLI via login shell for release ([#51](https://github.com/mkappworks-dev/code-bench-app/issues/51)) ([f782d6d](https://github.com/mkappworks-dev/code-bench-app/commit/f782d6dab04980882410598dc003acc4a3171ac7))
+
 ## [0.4.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.3.0...v0.4.0) (2026-05-02)
 
 
