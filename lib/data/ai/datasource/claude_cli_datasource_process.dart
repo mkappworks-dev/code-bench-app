@@ -54,11 +54,21 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   @override
   Future<DetectionResult> detect() async {
     // Step 1: resolve through a login shell so `.zprofile` / `.bash_profile`
-    // PATH augmentations are honoured. A bare `which` would inherit the
-    // stripped GUI PATH and miss Homebrew / npm-global / nvm installs.
-    final resolved = await resolveBinaryViaLoginShell(binaryPath);
-    if (resolved == null) return const DetectionResult.missing();
-    _resolvedPath = resolved;
+    // / `.zshrc` PATH augmentations are honoured. A bare `which` would
+    // inherit the stripped GUI PATH and miss Homebrew / npm-global / nvm.
+    // The probe distinguishes "not installed" (→ missing) from "probe
+    // could not run" (→ unhealthy) so the UI can show the right copy.
+    final resolution = await resolveBinary(binaryPath);
+    final String resolved;
+    switch (resolution) {
+      case BinaryFound(:final path):
+        resolved = path;
+        _resolvedPath = path;
+      case BinaryNotFound():
+        return const DetectionResult.missing();
+      case BinaryProbeFailed(:final reason):
+        return DetectionResult.unhealthy('login-shell probe failed: $reason');
+    }
 
     // Step 2: --version probe. A stale or broken binary still resolves but
     // fails here. Surfacing this as `unhealthy` (rather than `missing`)
@@ -152,7 +162,9 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       // [sendAndStream] without a successful detection (e.g. settings UI
       // bypassed), resolve on-demand so the spawn works in release builds
       // where the inherited PATH doesn't see Homebrew / npm-global.
-      final exePath = _resolvedPath ?? await resolveBinaryViaLoginShell(binaryPath) ?? binaryPath;
+      var exePath = await _resolveExePath(controller);
+      if (exePath == null) return;
+
       try {
         spawned = await Process.start(
           exePath,
@@ -163,9 +175,26 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
           environment: minimalEnv,
         );
       } on ProcessException catch (e) {
-        dLog('[ClaudeCli] start failed: ${redactSecrets('$e')}');
-        controller.add(const ProviderStreamFailure(error: 'Claude Code CLI is not installed or not on PATH'));
-        return;
+        // Cached path may be stale (brew upgrade, uninstall, version bump
+        // moved the binary). Invalidate and retry once with a fresh probe.
+        sLog('[ClaudeCli] start failed at $exePath: $e — invalidating cache and retrying');
+        _resolvedPath = null;
+        exePath = await _resolveExePath(controller);
+        if (exePath == null) return;
+        try {
+          spawned = await Process.start(
+            exePath,
+            args,
+            workingDirectory: workingDirectory,
+            runInShell: false,
+            includeParentEnvironment: false,
+            environment: minimalEnv,
+          );
+        } on ProcessException catch (e2) {
+          dLog('[ClaudeCli] retry start failed: ${redactSecrets('$e2')}');
+          controller.add(const ProviderStreamFailure(error: 'Claude Code CLI is not installed or not on PATH'));
+          return;
+        }
       }
 
       _process = spawned;
@@ -280,5 +309,25 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   void respondToPermissionRequest(String requestId, {required bool approved}) {
     // Claude Code CLI runs with --permission-mode bypassPermissions, so it
     // never sends permission requests back to the host.
+  }
+
+  /// Returns the absolute exe path or null. On null, has already added a
+  /// [ProviderStreamFailure] to [controller] and logged the reason.
+  Future<String?> _resolveExePath(StreamController<ProviderRuntimeEvent> controller) async {
+    final cached = _resolvedPath;
+    if (cached != null) return cached;
+    final r = await resolveBinary(binaryPath);
+    switch (r) {
+      case BinaryFound(:final path):
+        _resolvedPath = path;
+        return path;
+      case BinaryNotFound():
+        controller.add(const ProviderStreamFailure(error: 'Claude Code CLI is not installed or not on PATH'));
+        return null;
+      case BinaryProbeFailed(:final reason):
+        sLog('[ClaudeCli] sendAndStream resolve failed: $reason');
+        controller.add(const ProviderStreamFailure(error: 'Could not probe Claude Code CLI — please retry'));
+        return null;
+    }
   }
 }

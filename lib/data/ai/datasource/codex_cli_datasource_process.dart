@@ -73,12 +73,21 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
 
   @override
   Future<DetectionResult> detect() async {
-    // Resolve through a login shell so `.zprofile` / `.bash_profile` PATH
-    // augmentations are honoured. A bare `which` would inherit the stripped
-    // GUI PATH and miss Homebrew / npm-global / nvm installs.
-    final resolved = await resolveBinaryViaLoginShell(binaryPath);
-    if (resolved == null) return const DetectionResult.missing();
-    _resolvedPath = resolved;
+    // Resolve through a login shell so `.zprofile` / `.bash_profile` /
+    // `.zshrc` PATH augmentations are honoured. The probe distinguishes
+    // "not installed" (→ missing) from "probe could not run" (→
+    // unhealthy) so the UI can show the right copy.
+    final resolution = await resolveBinary(binaryPath);
+    final String resolved;
+    switch (resolution) {
+      case BinaryFound(:final path):
+        resolved = path;
+        _resolvedPath = path;
+      case BinaryNotFound():
+        return const DetectionResult.missing();
+      case BinaryProbeFailed(:final reason):
+        return DetectionResult.unhealthy('login-shell probe failed: $reason');
+    }
 
     // Codex doesn't expose `--version` cheaply; the canonical version comes
     // from the `initialize` JSON-RPC response. If we already have it, use it.
@@ -199,16 +208,31 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     // Use the absolute path resolved by [detect]. Resolve on-demand if a
     // caller skipped detection (e.g. settings UI bypassed) so the spawn
     // works in release builds where the inherited PATH doesn't see
-    // Homebrew / npm-global.
-    final exePath = _resolvedPath ?? await resolveBinaryViaLoginShell(binaryPath) ?? binaryPath;
-    _process = await Process.start(
-      exePath,
-      ['app-server'],
-      workingDirectory: workingDirectory,
-      runInShell: false,
-      includeParentEnvironment: false,
-      environment: minimalEnv,
-    );
+    // Homebrew / npm-global. On a stale cache (binary moved/uninstalled
+    // since detect), invalidate and retry once with a fresh probe.
+    var exePath = await _resolveExePath();
+    try {
+      _process = await Process.start(
+        exePath,
+        ['app-server'],
+        workingDirectory: workingDirectory,
+        runInShell: false,
+        includeParentEnvironment: false,
+        environment: minimalEnv,
+      );
+    } on ProcessException catch (e) {
+      sLog('[CodexCli] start failed at $exePath: $e — invalidating cache and retrying');
+      _resolvedPath = null;
+      exePath = await _resolveExePath();
+      _process = await Process.start(
+        exePath,
+        ['app-server'],
+        workingDirectory: workingDirectory,
+        runInShell: false,
+        includeParentEnvironment: false,
+        environment: minimalEnv,
+      );
+    }
     _workingDirectory = workingDirectory;
 
     // Wire stdout → JSON-RPC message handler. Use allowMalformed so a
@@ -627,6 +651,25 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     _stderrSubscription?.cancel();
     _stderrSubscription = null;
     _stderrBuffer.clear();
+  }
+
+  /// Returns the absolute exe path or throws with a user-facing message.
+  /// The caller's `catch` in [_send] surfaces the message via
+  /// [ProviderStreamFailure].
+  Future<String> _resolveExePath() async {
+    final cached = _resolvedPath;
+    if (cached != null) return cached;
+    final r = await resolveBinary(binaryPath);
+    switch (r) {
+      case BinaryFound(:final path):
+        _resolvedPath = path;
+        return path;
+      case BinaryNotFound():
+        throw Exception('Codex CLI is not installed or not on PATH');
+      case BinaryProbeFailed(:final reason):
+        sLog('[CodexCli] _ensureProcess resolve failed: $reason');
+        throw Exception('Could not probe Codex CLI: $reason');
+    }
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
