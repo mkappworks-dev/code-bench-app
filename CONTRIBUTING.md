@@ -154,7 +154,16 @@ Add `!` after the type (`feat!:`) or a `BREAKING CHANGE:` footer to trigger a ma
 
 Format: `<type>(<optional scope>): <short imperative summary>`
 
-Examples:
+**Scope convention — depends on whether it's a branch commit or a PR title:**
+
+| Where                                  | Scope rule                 | Example                                                 |
+| -------------------------------------- | -------------------------- | ------------------------------------------------------- |
+| Branch commit (squashed away on merge) | Semantic scope or no scope | `feat(chat): add streaming response cancellation`       |
+| PR title (becomes the commit on main)  | Date scope, `YYYY-MM-DD`   | `feat(2026-05-02): add streaming response cancellation` |
+
+Branch commits are scratch — keep them granular and use semantic scopes that help review (`chat`, `keychain`, `auth`, etc.). The PR title is what release-please reads after squash merge, so it carries the date scope to match the dated branch convention above.
+
+Examples of branch commits:
 
 ```
 feat(chat): add streaming response cancellation
