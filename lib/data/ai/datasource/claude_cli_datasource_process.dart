@@ -191,10 +191,20 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       } on ProcessException catch (e) {
         // Cached path may be stale (brew upgrade, uninstall, version bump
         // moved the binary). Invalidate and retry once with a fresh probe.
+        // Rebuild minimalEnv so the retry uses the freshly-resolved
+        // _shellPath rather than the stale one captured above.
         sLog('[ClaudeCli] start failed at $exePath: $e — invalidating cache and retrying');
         _resolvedPath = null;
         exePath = await _resolveExePath(controller);
         if (exePath == null) return;
+        final retryEnv = <String, String>{
+          if (parentEnv['HOME'] != null) 'HOME': parentEnv['HOME']!,
+          'PATH': _shellPath ?? parentEnv['PATH'] ?? '/usr/bin:/bin:/usr/sbin:/sbin',
+          if (parentEnv['USER'] != null) 'USER': parentEnv['USER']!,
+          if (parentEnv['LANG'] != null) 'LANG': parentEnv['LANG']!,
+          if (parentEnv['TMPDIR'] != null) 'TMPDIR': parentEnv['TMPDIR']!,
+          if (parentEnv['SHELL'] != null) 'SHELL': parentEnv['SHELL']!,
+        };
         try {
           spawned = await Process.start(
             exePath,
@@ -202,7 +212,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
             workingDirectory: workingDirectory,
             runInShell: false,
             includeParentEnvironment: false,
-            environment: minimalEnv,
+            environment: retryEnv,
           );
         } on ProcessException catch (e2) {
           dLog('[ClaudeCli] retry start failed: ${redactSecrets('$e2')}');
