@@ -31,7 +31,7 @@ class OpenAIProviderCard extends ConsumerStatefulWidget {
 class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
   static const _providerId = 'codex';
   static const _binaryName = 'codex';
-  static const _installCommand = 'brew install codex';
+  static const _installCommand = 'npm i -g @openai/codex';
 
   bool _obscure = true;
   bool _saveLoading = false;

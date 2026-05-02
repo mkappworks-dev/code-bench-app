@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../core/utils/debug_logger.dart';
 import 'ai_provider_datasource.dart';
+import 'binary_resolver_process.dart';
 import 'provider_input_guards.dart';
 
 part 'codex_cli_datasource_process.g.dart';
@@ -55,8 +55,24 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   StreamSubscription<String>? _stderrSubscription;
   final StringBuffer _stderrBuffer = StringBuffer();
 
+  /// Abort after N consecutive JSON parse failures — a healthy stream
+  /// produces occasional unknown frames but never a sustained malformed run.
+  static const int _consecutiveParseFailureLimit = 5;
+  int _consecutiveJsonParseFailures = 0;
+
   String? _providerThreadId;
   String? _version;
+
+  /// Absolute path to the `codex` binary, resolved via the user's login
+  /// shell during [detect]. macOS GUI launches inherit a stripped PATH that
+  /// excludes Homebrew / npm-global / nvm / asdf, so a bare `binaryPath`
+  /// would only resolve under `flutter run`. See [resolveBinary].
+  String? _resolvedPath;
+
+  /// Full PATH string as reported by the login shell when [_resolvedPath]
+  /// was resolved. Passed to child processes so shebang interpreters (e.g.
+  /// `node` for `#!/usr/bin/env node`) are reachable in release builds.
+  String? _shellPath;
 
   @override
   String get id => 'codex';
@@ -66,25 +82,38 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
 
   @override
   Future<DetectionResult> detect() async {
-    final ProcessResult whichResult;
-    try {
-      whichResult = await Process.run('which', [binaryPath]).timeout(const Duration(seconds: 2));
-    } catch (e) {
-      sLog('[CodexCli] which probe failed: $e');
-      return DetectionResult.unhealthy('Detection failed: ${e.runtimeType}');
-    }
-    if (whichResult.exitCode != 0) {
-      return const DetectionResult.missing();
+    // Resolve through a login shell so `.zprofile` / `.bash_profile` /
+    // `.zshrc` PATH augmentations are honoured. The probe distinguishes
+    // "not installed" (→ missing) from "probe could not run" (→
+    // unhealthy) so the UI can show the right copy.
+    final resolution = await resolveBinary(binaryPath);
+    final String resolved;
+    switch (resolution) {
+      case BinaryFound(:final path, :final shellPath):
+        resolved = path;
+        _resolvedPath = path;
+        _shellPath = shellPath;
+      case BinaryNotFound():
+        return const DetectionResult.missing();
+      case BinaryProbeFailed(:final reason):
+        return DetectionResult.unhealthy('login-shell probe failed: $reason');
     }
 
     // Codex doesn't expose `--version` cheaply; the canonical version comes
     // from the `initialize` JSON-RPC response. If we already have it, use it.
     if (_version != null) return DetectionResult.installed(_version!);
 
-    // Probe `--version` defensively. A binary on PATH that hangs/errors
-    // here is `unhealthy`, not `missing`.
+    // Probe `--version` defensively. Pass the shell's expanded PATH so that
+    // Node-backed binaries (`#!/usr/bin/env node`) can find their runtime
+    // even in a release .app with a stripped inherited PATH.
+    final probeEnv = _shellPath != null ? {'PATH': _shellPath!} : null;
     try {
-      final result = await Process.run(binaryPath, ['--version']).timeout(const Duration(seconds: 5));
+      final result = await Process.run(
+        resolved,
+        ['--version'],
+        environment: probeEnv,
+        includeParentEnvironment: probeEnv == null,
+      ).timeout(const Duration(seconds: 5));
       if (result.exitCode != 0) {
         sLog('[CodexCli] --version exited ${result.exitCode}');
         return DetectionResult.unhealthy('--version exited ${result.exitCode}');
@@ -184,7 +213,9 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     final parentEnv = Platform.environment;
     final minimalEnv = <String, String>{
       if (parentEnv['HOME'] != null) 'HOME': parentEnv['HOME']!,
-      if (parentEnv['PATH'] != null) 'PATH': parentEnv['PATH']!,
+      // Use the login-shell PATH captured during detect so that
+      // Node-backed binaries resolve correctly in release builds.
+      'PATH': _shellPath ?? parentEnv['PATH'] ?? '/usr/bin:/bin:/usr/sbin:/sbin',
       if (parentEnv['USER'] != null) 'USER': parentEnv['USER']!,
       if (parentEnv['LANG'] != null) 'LANG': parentEnv['LANG']!,
       if (parentEnv['TMPDIR'] != null) 'TMPDIR': parentEnv['TMPDIR']!,
@@ -193,14 +224,51 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
       if (parentEnv['CODEX_HOME'] != null) 'CODEX_HOME': parentEnv['CODEX_HOME']!,
     };
 
-    _process = await Process.start(
-      binaryPath,
-      ['app-server'],
-      workingDirectory: workingDirectory,
-      runInShell: false,
-      includeParentEnvironment: false,
-      environment: minimalEnv,
-    );
+    // Use the absolute path resolved by [detect]. Resolve on-demand if a
+    // caller skipped detection (e.g. settings UI bypassed) so the spawn
+    // works in release builds where the inherited PATH doesn't see
+    // Homebrew / npm-global. On a stale cache (binary moved/uninstalled
+    // since detect), invalidate and retry once with a fresh probe.
+    var exePath = await _resolveExePath();
+    try {
+      _process = await Process.start(
+        exePath,
+        ['app-server'],
+        workingDirectory: workingDirectory,
+        runInShell: false,
+        includeParentEnvironment: false,
+        environment: minimalEnv,
+      );
+    } on ProcessException catch (e) {
+      // Cached path may be stale (brew upgrade, uninstall). Invalidate and
+      // retry once. Rebuild minimalEnv so the retry uses the freshly-resolved
+      // _shellPath rather than the stale one captured above.
+      sLog('[CodexCli] start failed at $exePath: $e — invalidating cache and retrying');
+      _resolvedPath = null;
+      exePath = await _resolveExePath();
+      final retryEnv = <String, String>{
+        if (parentEnv['HOME'] != null) 'HOME': parentEnv['HOME']!,
+        'PATH': _shellPath ?? parentEnv['PATH'] ?? '/usr/bin:/bin:/usr/sbin:/sbin',
+        if (parentEnv['USER'] != null) 'USER': parentEnv['USER']!,
+        if (parentEnv['LANG'] != null) 'LANG': parentEnv['LANG']!,
+        if (parentEnv['TMPDIR'] != null) 'TMPDIR': parentEnv['TMPDIR']!,
+        if (parentEnv['SHELL'] != null) 'SHELL': parentEnv['SHELL']!,
+        if (parentEnv['CODEX_HOME'] != null) 'CODEX_HOME': parentEnv['CODEX_HOME']!,
+      };
+      try {
+        _process = await Process.start(
+          exePath,
+          ['app-server'],
+          workingDirectory: workingDirectory,
+          runInShell: false,
+          includeParentEnvironment: false,
+          environment: retryEnv,
+        );
+      } on ProcessException catch (e2) {
+        sLog('[CodexCli] retry start also failed at $exePath: $e2');
+        throw Exception('Codex CLI is not installed or not executable');
+      }
+    }
     _workingDirectory = workingDirectory;
 
     // Wire stdout → JSON-RPC message handler. Use allowMalformed so a
@@ -239,18 +307,28 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
 
     // If the process exits unexpectedly, surface and clean up.
     unawaited(
-      _process!.exitCode.then((code) {
-        if (code != 0) {
-          dLog('[CodexCli] app-server exited with code $code\nstderr=${redactSecrets(_stderrBuffer.toString())}');
-          _streamController?.add(
-            ProviderStreamFailure(
-              error: 'Codex exited with code $code',
-              details: redactSecrets(_stderrBuffer.toString()),
-            ),
-          );
-        }
-        _resetProcess();
-      }),
+      _process!.exitCode
+          .then((code) {
+            if (code != 0) {
+              dLog('[CodexCli] app-server exited with code $code\nstderr=${redactSecrets(_stderrBuffer.toString())}');
+              _streamController?.add(
+                ProviderStreamFailure(
+                  error: 'Codex exited with code $code',
+                  details: redactSecrets(_stderrBuffer.toString()),
+                ),
+              );
+            } else if (_providerThreadId != null) {
+              // Process exited cleanly mid-turn — surface so the caller
+              // doesn't hang waiting for turn/completed.
+              dLog('[CodexCli] app-server exited 0 unexpectedly mid-turn');
+              _streamController?.add(const ProviderStreamFailure(error: 'Codex process exited unexpectedly'));
+            }
+            _resetProcess();
+          })
+          .catchError((Object e) {
+            dLog('[CodexCli] exitCode handler threw: ${redactSecrets('$e')}');
+            _resetProcess();
+          }),
     );
   }
 
@@ -314,9 +392,19 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     Map<String, dynamic> json;
     try {
       json = jsonDecode(line) as Map<String, dynamic>;
+      _consecutiveJsonParseFailures = 0;
     } catch (e) {
+      _consecutiveJsonParseFailures++;
       final preview = line.length > 256 ? '${line.substring(0, 256)}…' : line;
-      dLog('[CodexCli] JSON parse error: $e on: ${redactSecrets(preview)}');
+      dLog(
+        '[CodexCli] JSON parse error ($_consecutiveJsonParseFailures/$_consecutiveParseFailureLimit): '
+        '$e on: ${redactSecrets(preview)}',
+      );
+      if (_consecutiveJsonParseFailures >= _consecutiveParseFailureLimit) {
+        _streamController?.add(const ProviderStreamFailure(error: 'Codex output unparseable'));
+        _process?.kill(ProcessSignal.sigterm);
+        _resetTurn();
+      }
       return;
     }
 
@@ -551,7 +639,11 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
       // Use sessionId as a resume cursor if available
       if (sessionId.isNotEmpty) 'resumeThreadId': sessionId,
     });
-    final threadId = result['thread']?['id'] as String? ?? const Uuid().v4();
+    final threadId = result['thread']?['id'] as String?;
+    if (threadId == null) {
+      dLog('[CodexCli] thread/start response missing thread.id: $result');
+      throw Exception('Codex thread/start returned no thread ID');
+    }
     dLog('[CodexCli] Thread started: $threadId');
     return threadId;
   }
@@ -596,6 +688,7 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
       _streamController?.close();
     }
     _streamController = null;
+    _consecutiveJsonParseFailures = 0;
     for (final c in _pendingApprovals.values) {
       if (!c.isCompleted) c.completeError(StateError('codex turn ended'));
     }
@@ -619,6 +712,26 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     _stderrSubscription?.cancel();
     _stderrSubscription = null;
     _stderrBuffer.clear();
+  }
+
+  /// Returns the absolute exe path or throws with a user-facing message.
+  /// The caller's `catch` in [_send] surfaces the message via
+  /// [ProviderStreamFailure].
+  Future<String> _resolveExePath() async {
+    final cached = _resolvedPath;
+    if (cached != null) return cached;
+    final r = await resolveBinary(binaryPath);
+    switch (r) {
+      case BinaryFound(:final path, :final shellPath):
+        _resolvedPath = path;
+        _shellPath = shellPath;
+        return path;
+      case BinaryNotFound():
+        throw Exception('Codex CLI is not installed or not on PATH');
+      case BinaryProbeFailed(:final reason):
+        sLog('[CodexCli] _ensureProcess resolve failed: $reason');
+        throw Exception('Could not probe Codex CLI: $reason');
+    }
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────

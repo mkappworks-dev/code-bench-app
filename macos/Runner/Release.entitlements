@@ -29,5 +29,16 @@
 	-->
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
+	<!--
+	  Required by flutter_secure_storage v10+ which sets
+	  kSecUseDataProtectionKeychain = true by default. macOS 15 Sequoia
+	  removed the legacy file-based keychain, so apps without this
+	  entitlement receive -34018 (errSecMissingEntitlement) on any
+	  Keychain write and fall back silently. Matches DebugProfile.entitlements.
+	-->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)$(CFBundleIdentifier)</string>
+	</array>
 </dict>
 </plist>

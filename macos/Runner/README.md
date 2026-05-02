@@ -47,3 +47,22 @@ external input parsing must be reviewed with that threat model in mind.
 - **Direct distribution:** OK, but requires Developer ID signing,
   hardened runtime, and notarization. Verify these are configured in
   `Runner.xcodeproj` / the release workflow before publishing a build.
+
+## Local vs distribution signing
+
+`Runner.xcodeproj` defaults the Release target to `Apple Development` +
+Automatic signing so that `flutter build macos` works on developer machines
+without a Developer ID certificate. This produces a build that **cannot be
+notarized or distributed**.
+
+For any distributable or CI release build, the following env vars must be set
+(the release workflow sets these automatically):
+
+```
+FLUTTER_XCODE_CODE_SIGN_STYLE=Manual
+FLUTTER_XCODE_CODE_SIGN_IDENTITY=Developer ID Application
+```
+
+Running `flutter build macos --release` locally without these vars yields an
+`Apple Development`-signed artifact — fine for on-device testing, not for
+distribution.
