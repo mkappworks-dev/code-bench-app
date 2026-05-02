@@ -297,6 +297,9 @@ Add these under **Settings → Secrets and variables → Actions** before the fi
 | `APPLE_ID`                   | Apple ID email of the notarizing account                     | The email tied to your Apple Developer membership                                                                                            |
 | `APPLE_ID_PASSWORD`          | App-specific password — **not** your Apple ID password       | [appleid.apple.com](https://account.apple.com) → Sign-In and Security → App-Specific Passwords → Generate (label e.g. `code-bench-notarize`) |
 | `APPLE_TEAM_ID`              | 10-character Team ID (also used as Xcode `DEVELOPMENT_TEAM`) | [developer.apple.com/account](https://developer.apple.com/account) → Membership Details                                                      |
+| `RELEASE_PLEASE_TOKEN`       | Personal access token (classic) with `repo` scope            | [github.com/settings/tokens](https://github.com/settings/tokens) → Generate new token (classic) → check `repo` → no expiry                   |
+
+> **Why a PAT for release-please?** PRs created by the default `GITHUB_TOKEN` are blocked from triggering other workflows (GitHub's anti-loop protection). Without a PAT, the release PR's required status checks (`Analyze & Test`, `Build (macos)`) get stuck on "Expected — Waiting for status to be reported" and never run. A PAT makes the PR appear as user-created so CI fires normally.
 
 ### Cutting a release
 
