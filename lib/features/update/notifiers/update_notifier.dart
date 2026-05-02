@@ -1,6 +1,7 @@
 // lib/features/update/notifiers/update_notifier.dart
 import 'dart:async';
 
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,7 +27,15 @@ Future<UpdateLastChecked?> updateLastChecked(Ref ref) async {
   final iso = prefs.getString(AppConstants.prefUpdateLastChecked);
   if (iso == null) return null;
   final at = DateTime.tryParse(iso);
-  if (at == null) return null;
+  if (at == null) {
+    // Pref store has a value that no longer parses as ISO-8601 — log a
+    // breadcrumb (a silent collapse to "Never checked" hides this from any
+    // future debugging) and clear both keys so we don't keep tripping on it.
+    dLog('[UpdateLastChecked] discarding malformed ISO of length ${iso.length}');
+    await prefs.remove(AppConstants.prefUpdateLastChecked);
+    await prefs.remove(AppConstants.prefUpdateLastCheckedFailed);
+    return null;
+  }
   final failed = prefs.getBool(AppConstants.prefUpdateLastCheckedFailed) ?? false;
   return (at: at, failed: failed);
 }
@@ -75,15 +84,21 @@ class UpdateNotifier extends _$UpdateNotifier {
 
   /// Persist the most recent check attempt — both the timestamp and whether
   /// it failed. A SharedPreferences hiccup must not poison the in-memory state
-  /// transition that was already made by the caller.
+  /// transition that was already made by the caller, but the swallow is
+  /// narrowed to platform-channel errors so programming bugs (TypeError,
+  /// ArgumentError) still surface during development. The user-visible
+  /// signal that persistence failed is that "Last checked" stays put — by
+  /// design, since `state` already carries any operation error.
   Future<void> _persistLastChecked({required bool failed}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(AppConstants.prefUpdateLastChecked, DateTime.now().toIso8601String());
       await prefs.setBool(AppConstants.prefUpdateLastCheckedFailed, failed);
       ref.invalidate(updateLastCheckedProvider);
-    } catch (e, st) {
-      dLog('[UpdateNotifier] persisting lastChecked failed: $e\n$st');
+    } on PlatformException catch (e, st) {
+      // `sLog` (not `dLog`) — this only ever shows up in production and has
+      // no user-visible signal; we need it in release-build logs.
+      sLog('[UpdateNotifier] persisting lastChecked failed: ${e.code}: ${e.message}\n$st');
     }
   }
 
