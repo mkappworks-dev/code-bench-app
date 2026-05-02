@@ -19,7 +19,7 @@ Closes #<!-- issue number -->
 ## Checklist
 
 - [ ] `flutter analyze` passes with no issues
-- [ ] `dart format lib/` applied
+- [ ] `dart format lib/ test/` applied
 - [ ] `flutter test` passes
-- [ ] If Drift tables or Riverpod providers were changed, `build_runner` was re-run and generated files are not committed
+- [ ] If Drift tables or Riverpod providers were changed, `build_runner` was re-run and generated files (`*.g.dart`, `*.freezed.dart`) are committed alongside their source files
 - [ ] PR is focused on a single concern

@@ -147,6 +147,8 @@ Breaking changes: add `!` after the type (`feat!:`) and include a `BREAKING CHAN
 
 ## Pull Request Guidelines
 
+GitHub auto-populates [`.github/pull_request_template.md`](.github/pull_request_template.md) when you open a PR — fill in every section before requesting review.
+
 1. **Keep PRs focused** — one feature or fix per PR.
 2. **Run checks locally** before pushing:
    ```bash
