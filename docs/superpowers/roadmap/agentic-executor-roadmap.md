@@ -1,6 +1,6 @@
 # Agentic Executor Roadmap
 
-**Last updated:** 2026-04-23
+**Last updated:** 2026-05-02
 **Owner:** Code Bench — agentic coding assistant
 
 This document is the source of truth for the agentic executor build-out. Read this before brainstorming or planning any new phase. It captures the sequencing rationale, key decisions, and Q&A from design sessions so future sessions do not re-litigate settled questions.
@@ -17,9 +17,9 @@ This document is the source of truth for the agentic executor build-out. Read th
 | 4     | Bash tool (permission-gated)                 | ✅ Done — commits `a51871d`, `d435681` |
 | 5     | MCP client (stdio + HTTP/SSE)                | ✅ Done — PR #31, commit `7d9fb1a`     |
 | 6     | WebFetch                                     | ✅ Done — PR #33, commit `651fff4`     |
-| 7     | Anthropic inference via Claude Code CLI      | 🔄 In progress — spec pending          |
-| 8     | OpenAI inference via Codex CLI               | ⬜ Not started — blocked on Phase 7    |
-| 9     | Gemini inference via Gemini CLI              | ⬜ Not started — blocked on Phase 7    |
+| 7     | Anthropic inference via Claude Code SDK      | ✅ Done — branch `feat/2026-04-23-claude-cli-inference-transport` |
+| 8     | OpenAI inference via Codex SDK               | ✅ Done — branch `feat/2026-04-23-claude-cli-inference-transport` |
+| 9     | Gemini inference via Gemini SDK              | ⬜ Not started — abstraction now landed (Phases 7/8) |
 | —     | Subagent delegation                          | 🚫 Deferred / YAGNI                    |
 | —     | WebSearch                                    | 🚫 Deferred                            |
 
@@ -155,9 +155,9 @@ Key decisions locked in:
 
 ---
 
-## Phase 7 — Anthropic inference via Claude Code CLI
+## Phase 7 — Anthropic inference via Claude Code SDK ✅
 
-**Status:** In progress. Spec pending.
+**Done.** Shipped on branch `feat/2026-04-23-claude-cli-inference-transport`. The transport switch (API Key | Claude SDK) is exposed on the Anthropic provider card; selecting "Claude SDK" routes inference through the locally-installed `claude` binary via `ClaudeSdkDatasourceProcess`. Tool events from the CLI's own agent loop render as receipts; a single permission card gates the whole delegation.
 
 ### What this is
 
@@ -227,58 +227,86 @@ Blocks Phases 8 and 9. The `CliRemoteDatasource` abstract base, `CliDetectionSer
 
 ---
 
-## Phase 8 — OpenAI inference via Codex CLI
+## Phase 8 — OpenAI inference via Codex SDK ✅
 
-**Status:** Not started. Blocked on Phase 7 establishing `CliRemoteDatasource`.
+**Done.** Shipped on branch `feat/2026-04-23-claude-cli-inference-transport` alongside Phase 7. The OpenAI provider card gains the same transport switch (API Key | Codex SDK); selecting "Codex SDK" routes inference through `codex app-server` over JSON-RPC 2.0 via `CodexSdkDatasourceProcess`.
 
-Second concrete `CliRemoteDatasource` implementation, targeting the `codex` CLI (OpenAI / ChatGPT subscription). Same A.1 permission model as Phase 7. Parser is Codex-specific.
+### What shipped (vs. original Phase 8 plan)
 
-### Scope
+The original Phase 8 plan assumed Codex would mirror Claude Code's `--output-format stream-json` model (a plain CLI emitting newline-delimited JSON). The pre-spec spike found Codex actually exposes a long-lived `app-server` subcommand speaking JSON-RPC 2.0 over stdin/stdout, with a richer protocol: `initialize` → `account/read` → `thread/start` → `turn/start` → streaming notifications + server-to-client approval requests.
 
-- `CodexCliRemoteDatasourceProcess` concrete implementation.
-- Codex event → `StreamEvent` parser.
-- Codex-specific detection (`codex --version`, equivalent of `codex login status`).
-- Providers screen: enable the "Codex CLI" transport option on the OpenAI row.
+Implementation in this PR:
 
-### Pre-spec spike required
+- **`CodexSdkDatasourceProcess`** — long-lived process per working directory, full JSON-RPC 2.0 client (request/response correlation, server request handling, approval forwarding).
+- **Auto-approved auth refresh** — `account/chatgptAuthTokens/refresh` is auto-acked; the token never crosses our process boundary, codex holds and refreshes it internally.
+- **Permission-card mapping** — `item/commandExecution/requestApproval`, `item/fileRead/requestApproval`, `item/fileChange/requestApproval`, `applyPatchApproval`, `execCommandApproval` all route to Code Bench's existing permission card.
+- **Detection** — `which codex` + version probe with TTL cache, sharing `CliDetectionService` with Claude.
+- **Security guards** — workingDirectory and sessionId validated at the RPC boundary via `provider_input_guards.dart`; minimal env (no parent ANTHROPIC/OPENAI/GITHUB tokens leak through to subprocesses).
 
-Install Codex CLI, run it in non-interactive mode with a tool-using prompt, capture the stream-json shape. Document:
+### Known gaps
 
-- Non-interactive flag (equivalent of `claude -p` / `--print`).
-- Stream output flag (equivalent of `--output-format stream-json`).
-- Permission-mode equivalent for `bypassPermissions`.
-- Working-directory mechanism (flag, env var, or implicit pwd).
-- Auth status command.
-- Session-resume mechanism (if any).
+Tracked under [Cross-cutting follow-ups](#cross-cutting-follow-ups) — `item/tool/requestUserInput` mapping needs a dedicated user-input event type (Codex-specific), and `binaryPath` should become settings-driven (spans Phases 7/8/9).
 
-Phase 7's abstraction should make this spike the only source of uncertainty — the adapter integration should be plumbing.
+### Naming note
 
-### Timing
-
-After Phase 7 ships and the abstraction settles in production.
+The PR uses "Codex SDK" rather than "Codex CLI" in user-facing copy because `codex app-server` is a long-lived RPC server, not a one-shot CLI invocation. The user-facing transport label `'sdk'` reflects this. The original phase title (CLI) is preserved here for continuity but the overview table reads "Codex SDK".
 
 ---
 
-## Phase 9 — Gemini inference via Gemini CLI
+## Phase 9 — Gemini inference via Gemini SDK
 
-**Status:** Not started. Blocked on Phase 7.
+**Status:** Not started. Abstraction landed in Phases 7/8 — no longer blocked, just unscheduled.
 
-Third concrete `CliRemoteDatasource` implementation, targeting the `gemini` CLI (Google). Same A.1 permission model. Parser is Gemini-specific.
+Third concrete provider transport, targeting the `gemini` CLI (Google). Should follow the `AIProviderDatasource` shape established in Phases 7/8 and the `provider_input_guards.dart` validation contract. Permission-card mapping lifts from Codex's approval-request handler.
 
 ### Scope
 
-- `GeminiCliRemoteDatasourceProcess` concrete implementation.
-- Gemini event → `StreamEvent` parser.
-- Gemini-specific detection and auth probe.
-- Providers screen: enable the "Gemini CLI" transport option on the Gemini row.
+- `GeminiSdkDatasourceProcess` (or equivalent) concrete implementation.
+- Gemini event → `ProviderRuntimeEvent` parser.
+- Gemini-specific detection and auth probe (extending `CliDetectionService`).
+- Providers screen: enable the "Gemini SDK" transport option on the Gemini row (currently a `ComingSoonProviderCard` placeholder).
 
 ### Pre-spec spike required
 
-Same shape as Phase 8 — capture actual stream format, flag names, auth commands from an installed Gemini CLI.
+Install Gemini CLI, capture: invocation shape (one-shot vs. long-lived), stream output format, working-directory mechanism, auth status command, session-resume model. Phase 8's experience suggests the shape may not match Claude — keep an open mind about whether Gemini fits the same JSON-RPC `app-server` model, the streaming-CLI model, or a third one.
 
 ### Timing
 
-After Phase 8. If Phase 8 forced any `CliRemoteDatasource` refactoring, Phase 9 benefits. If Phase 8 was pure plumbing, Phase 9 likewise.
+After someone identifies a concrete user pulling for Gemini integration. The abstraction is ready; demand is the gating factor.
+
+---
+
+## Cross-cutting follow-ups
+
+These are gaps that span multiple shipped phases. They are not new capabilities — they polish existing ones. Tracked here (not as new phases) so the roadmap's phase numbers stay reserved for genuinely new executor capability.
+
+Each item names: which phases it spans, and the concrete trigger to act. The trigger matters — without it, follow-ups drift into perpetual "later".
+
+### Settings-driven `binaryPath` for provider transports
+
+**Spans:** Phases 7 (Claude SDK), 8 (Codex SDK), and any future Phase 9 (Gemini SDK).
+
+**Today:** Both `ClaudeSdkDatasourceProcess` and `CodexSdkDatasourceProcess` hardcode the binary name (`'claude'` / `'codex'`) inside their provider functions, with a TODO marker. Whatever binary wins the user's `$PATH` race wins. This works for the 90% case (official installer puts the binary on PATH) but breaks for power users with multiple installs side-by-side, non-PATH installs, or version pinning.
+
+**Work involved:**
+- New per-provider field on the settings model (Drift migration).
+- Settings UI surface — "Custom binary path" row under each provider's transport card, with validation feedback.
+- Security guard at the `Process.start` boundary — must be either a bare name (resolved via `which`) or an absolute path that exists, must not contain shell metacharacters. User-supplied paths cannot be trusted.
+
+**Trigger:** First user report of a non-PATH install or dual-install ambiguity. OR when the settings model is touched for an unrelated reason (e.g., a new settings field for some other feature) — adding a sibling field then is cheap.
+
+### Dedicated user-input event type for Codex
+
+**Spans:** Phase 8 (Codex). Phase 7 (Claude) does not need this — Claude Code's stream-json doesn't expose a user-input request as a distinct RPC; questions surface as plain assistant messages handled by the CLI's own loop. Phase 9 (Gemini) status is unknown until the spike.
+
+**Today:** [`codex_sdk_datasource_process.dart:373-376`](lib/data/ai/datasource/codex_sdk_datasource_process.dart#L373-L376) routes `item/tool/requestUserInput` to `_emitPermissionRequest`, which renders an approve/deny card. That mapping is wrong — the user can't actually answer the question. Approve sends `{decision: 'approved'}` back to Codex, which can't parse it as the answer it asked for; the tool either proceeds with no input or errors.
+
+**Work involved:**
+- New `ProviderUserInputRequest` variant on `ProviderRuntimeEvent` (prompt, choices, defaultValue).
+- Question-card widget in chat — distinct from the permission card.
+- Update `_handleServerRequest` in the Codex datasource to emit the new variant.
+
+**Trigger:** When the question-UI work in the UI improvement queue (Phase 6 of that queue) lands. Backend half is ~15 lines; frontend half is the actual cost. Pair them in a single PR so the variant doesn't ship dead.
 
 ---
 
