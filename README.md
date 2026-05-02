@@ -310,6 +310,14 @@ Add these under **Settings → Secrets and variables → Actions** before the fi
 
 > **Never manually bump `pubspec.yaml` or push `v*` tags.** release-please owns both. Manual bumps or tags will confuse the manifest and produce duplicate or mis-versioned releases.
 
+### Recovering a stuck release
+
+If a tag exists on GitHub but `release.yml` never ran (the release page is missing the `CodeBench-macos.dmg` and `CodeBench-macos.zip`, only GitHub's auto-generated source archives are present), the tag was likely created by `GITHUB_TOKEN` and didn't trigger workflows. Re-run the build manually:
+
+**Actions tab → Release → Run workflow → enter the tag (e.g. `v0.2.0`) → Run.**
+
+This builds and signs from the tag, then uploads the artifacts into the existing release without overwriting the changelog.
+
 ## Testing & Linting
 
 ```bash
