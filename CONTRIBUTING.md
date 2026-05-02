@@ -14,7 +14,7 @@ Thank you for your interest in contributing. This document covers how to report 
   - [Suggesting Features](#suggesting-features)
   - [Development Setup](#development-setup)
   - [Making Changes](#making-changes)
-    - [Branch naming](#branch-naming)
+    - [Branch and PR title naming](#branch-and-pr-title-naming)
     - [Where to add things](#where-to-add-things)
     - [After modifying Drift tables, Freezed models, or Riverpod providers](#after-modifying-drift-tables-freezed-models-or-riverpod-providers)
   - [Commit Message Conventions](#commit-message-conventions)
@@ -86,14 +86,35 @@ dart run build_runner watch --delete-conflicting-outputs
 
 ## Making Changes
 
-### Branch naming
+### Branch and PR title naming
+
+Every branch and PR title includes today's date in `YYYY-MM-DD` format. The descriptive part is identical between the two; only the prefix format differs.
+
+**Branch name** — slash-separated, used in git:
 
 ```
-feat/<short-description>  # new feature
-fix/<short-description>   # bug fix
-tech/<short-description>  # refactors, tooling, dependency updates
-doc/<short-description>   # documentation only
+feat/<YYYY-MM-DD>-<short-description>  # new feature
+fix/<YYYY-MM-DD>-<short-description>   # bug fix
+tech/<YYYY-MM-DD>-<short-description>  # refactors, tooling, dependency updates
+doc/<YYYY-MM-DD>-<short-description>   # documentation only
 ```
+
+**PR title** — conventional-commit format with the date in the scope. The CI lint enforces this:
+
+```
+feat(<YYYY-MM-DD>): <short-description>
+fix(<YYYY-MM-DD>): <short-description>
+tech(<YYYY-MM-DD>): <short-description>
+doc(<YYYY-MM-DD>): <short-description>
+```
+
+Examples — note the descriptive part matches:
+
+| Branch                                   | PR title                                   |
+| ---------------------------------------- | ------------------------------------------ |
+| `feat/2026-05-02-mcp-sse-transport`      | `feat(2026-05-02): mcp sse transport`      |
+| `fix/2026-05-02-keychain-null-on-launch` | `fix(2026-05-02): keychain null on launch` |
+| `tech/2026-05-02-bump-flutter-to-3.41`   | `tech(2026-05-02): bump flutter to 3.41`   |
 
 ### Where to add things
 
@@ -120,20 +141,29 @@ Generated `.g.dart` and `.freezed.dart` files **must be committed** alongside th
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
-| Type       | When to use                                | Version bump (release-please)  |
-| ---------- | ------------------------------------------ | ------------------------------ |
+| Type       | When to use                                | Version bump (release-please) |
+| ---------- | ------------------------------------------ | ----------------------------- |
 | `feat`     | A new feature visible to users             | minor (`0.1.0 → 0.2.0`)       |
 | `fix`      | A bug fix                                  | patch (`0.1.0 → 0.1.1`)       |
-| `docs`     | Documentation changes only                 | none                           |
-| `refactor` | Code restructuring with no behavior change | none                           |
-| `test`     | Adding or updating tests                   | none                           |
-| `chore`    | Build scripts, dependency updates, tooling | none                           |
+| `docs`     | Documentation changes only                 | none                          |
+| `refactor` | Code restructuring with no behavior change | none                          |
+| `test`     | Adding or updating tests                   | none                          |
+| `chore`    | Build scripts, dependency updates, tooling | none                          |
 
 Add `!` after the type (`feat!:`) or a `BREAKING CHANGE:` footer to trigger a major bump (`0.1.0 → 1.0.0`). Do not manually bump `pubspec.yaml` or push version tags — release-please handles both when you merge the release PR it opens.
 
 Format: `<type>(<optional scope>): <short imperative summary>`
 
-Examples:
+**Scope convention — depends on whether it's a branch commit or a PR title:**
+
+| Where                                  | Scope rule                 | Example                                                 |
+| -------------------------------------- | -------------------------- | ------------------------------------------------------- |
+| Branch commit (squashed away on merge) | Semantic scope or no scope | `feat(chat): add streaming response cancellation`       |
+| PR title (becomes the commit on main)  | Date scope, `YYYY-MM-DD`   | `feat(2026-05-02): add streaming response cancellation` |
+
+Branch commits are scratch — keep them granular and use semantic scopes that help review (`chat`, `keychain`, `auth`, etc.). The PR title is what release-please reads after squash merge, so it carries the date scope to match the dated branch convention above.
+
+Examples of branch commits:
 
 ```
 feat(chat): add streaming response cancellation
