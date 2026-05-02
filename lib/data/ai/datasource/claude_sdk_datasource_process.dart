@@ -8,6 +8,7 @@ import '../../../core/utils/debug_logger.dart';
 import '../models/stream_event.dart';
 import 'ai_provider_datasource.dart';
 import 'claude_sdk_stream_parser.dart';
+import 'provider_input_guards.dart';
 
 part 'claude_sdk_datasource_process.g.dart';
 
@@ -15,11 +16,6 @@ part 'claude_sdk_datasource_process.g.dart';
 AIProviderDatasource claudeSdkDatasourceProcess(Ref ref) {
   return ClaudeSdkDatasourceProcess();
 }
-
-/// Accepts RFC-4122 lowercased UUIDs (the format our `Uuid.v4()` produces).
-/// Anything else at the argv boundary is rejected defensively so a stray
-/// value like `--dangerously-skip-perms` can never slip into flag position.
-final _uuidV4 = RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
 
 /// Abort after N consecutive parse failures — a healthy stream produces
 /// occasional unknown frames but never a sustained run of malformed lines.
@@ -102,7 +98,7 @@ class ClaudeSdkDatasourceProcess implements AIProviderDatasource {
 
       // sessionId guard — we only ever generate v4 UUIDs, but a future
       // import/restore path could leak an attacker-shaped value into argv.
-      if (!_uuidV4.hasMatch(sessionId)) {
+      if (!uuidV4Regex.hasMatch(sessionId)) {
         sLog('[ClaudeSdk] rejected non-UUID sessionId at argv boundary');
         controller.add(const ProviderStreamFailure(error: 'invalid sessionId shape'));
         return;

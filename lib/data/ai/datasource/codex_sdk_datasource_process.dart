@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/utils/debug_logger.dart';
 import 'ai_provider_datasource.dart';
+import 'provider_input_guards.dart';
 
 part 'codex_sdk_datasource_process.g.dart';
 
@@ -113,6 +114,27 @@ class CodexSdkDatasourceProcess implements AIProviderDatasource {
   Future<void> _send(String prompt, String sessionId, String workingDirectory) async {
     try {
       _streamController?.add(ProviderInit(provider: id));
+
+      // sessionId guard — Codex uses this value as `resumeThreadId` over
+      // JSON-RPC. A non-UUID value could resume a foreign thread or trip
+      // unexpected app-server behavior. We only ever generate v4 UUIDs,
+      // but a future import/restore path could leak an attacker-shaped
+      // value here.
+      if (!uuidV4Regex.hasMatch(sessionId)) {
+        sLog('[CodexSdk] rejected non-UUID sessionId at RPC boundary');
+        _streamController?.add(const ProviderStreamFailure(error: 'invalid sessionId shape'));
+        return;
+      }
+
+      // workingDirectory guard — must be an existing absolute path that is
+      // not the filesystem root. Codex roots all tool use at `cwd`, so a
+      // stale or attacker-influenced path (e.g. `~`, `/`) would give it
+      // read/write/execute access well outside the user's project.
+      if (!workingDirectory.startsWith('/') || workingDirectory == '/' || !Directory(workingDirectory).existsSync()) {
+        sLog('[CodexSdk] rejected workingDirectory: $workingDirectory');
+        _streamController?.add(const ProviderStreamFailure(error: 'invalid workingDirectory'));
+        return;
+      }
 
       // Spawn or reuse the app-server process
       await _ensureProcess(workingDirectory);
