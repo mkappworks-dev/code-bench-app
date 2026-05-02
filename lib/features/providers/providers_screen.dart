@@ -7,9 +7,11 @@ import '../../core/widgets/app_snack_bar.dart';
 import '../../data/shared/ai_model.dart';
 import '../settings/widgets/section_label.dart';
 import 'notifiers/providers_notifier.dart';
-import 'widgets/api_key_card.dart';
+import 'widgets/anthropic_provider_card.dart';
 import 'widgets/custom_endpoint_card.dart';
+import 'widgets/gemini_provider_card.dart';
 import 'widgets/ollama_card.dart';
+import 'widgets/openai_provider_card.dart';
 
 class ProvidersScreen extends ConsumerStatefulWidget {
   const ProvidersScreen({super.key});
@@ -86,23 +88,11 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
         children: [
           SectionLabel('API Keys'),
           const SizedBox(height: 8),
-          ApiKeyCard(
-            provider: AIProvider.openai,
-            controller: _controllers[AIProvider.openai]!,
-            initialValue: _initialOpenAi,
-          ),
-          const SizedBox(height: 6),
-          ApiKeyCard(
-            provider: AIProvider.anthropic,
-            controller: _controllers[AIProvider.anthropic]!,
-            initialValue: _initialAnthropic,
-          ),
-          const SizedBox(height: 6),
-          ApiKeyCard(
-            provider: AIProvider.gemini,
-            controller: _controllers[AIProvider.gemini]!,
-            initialValue: _initialGemini,
-          ),
+          OpenAIProviderCard(controller: _controllers[AIProvider.openai]!, initialApiKey: _initialOpenAi),
+          const SizedBox(height: 16),
+          AnthropicProviderCard(controller: _controllers[AIProvider.anthropic]!, initialApiKey: _initialAnthropic),
+          const SizedBox(height: 16),
+          GeminiProviderCard(controller: _controllers[AIProvider.gemini]!, initialApiKey: _initialGemini),
           Divider(height: 36, thickness: 1, color: c.borderColor),
           SectionLabel('Ollama (Local)'),
           const SizedBox(height: 8),

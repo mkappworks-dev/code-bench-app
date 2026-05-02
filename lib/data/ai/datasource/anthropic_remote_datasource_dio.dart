@@ -10,8 +10,9 @@ import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import 'ai_remote_datasource.dart';
+import 'text_streaming_datasource.dart';
 
-class AnthropicRemoteDatasourceDio implements AIRemoteDatasource {
+class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
   AnthropicRemoteDatasourceDio(String apiKey)
     : _dio = DioFactory.create(
         baseUrl: ApiConstants.anthropicBaseUrl,
@@ -67,7 +68,11 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource {
                   yield delta;
                 }
               }
-            } on FormatException catch (_) {}
+            } on FormatException catch (e) {
+              // SSE keepalives (`: ping`) and partial frames are expected
+              // — but a real malformed JSON frame is worth a breadcrumb.
+              dLog('[AnthropicDatasource] dropped malformed SSE frame: $e');
+            }
           }
         }
       }
@@ -80,9 +85,14 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource {
             (acc, chunk) => [...acc, ...chunk],
           );
           errorBody = utf8.decode(bytes);
-        } catch (_) {}
+        } catch (decodeError) {
+          dLog('[AnthropicDatasource] failed to decode error body: $decodeError');
+        }
       }
-      dLog('[AnthropicDatasource] request failed: status=${e.response?.statusCode} type=${e.type} body=$errorBody');
+      dLog(
+        '[AnthropicDatasource] request failed: status=${e.response?.statusCode} '
+        'type=${e.type} body=${redactSecrets(errorBody ?? 'null')}',
+      );
       throw NetworkException('Anthropic request failed', statusCode: e.response?.statusCode, originalError: e);
     }
   }

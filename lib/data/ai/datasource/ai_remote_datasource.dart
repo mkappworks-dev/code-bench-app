@@ -1,17 +1,15 @@
 import '../../shared/ai_model.dart';
-import '../../shared/chat_message.dart';
 
-/// Single-provider I/O boundary. Speaks wire protocol only — no persistence,
-/// no retries, no provider-selection logic.
+/// Single-provider I/O boundary. Every concrete transport implements this.
+/// Speaks wire protocol only — no persistence, no retries, no
+/// provider-selection logic.
+///
+/// Text-token streaming is a separate, orthogonal capability declared by
+/// `TextStreamingDatasource` in `text_streaming_datasource.dart`. Callers
+/// that need raw text streaming must check `ds is TextStreamingDatasource`
+/// before invoking `streamMessage`.
 abstract interface class AIRemoteDatasource {
   AIProvider get provider;
-
-  Stream<String> streamMessage({
-    required List<ChatMessage> history,
-    required String prompt,
-    required AIModel model,
-    String? systemPrompt,
-  });
 
   Future<bool> testConnection(AIModel model, String apiKey);
 

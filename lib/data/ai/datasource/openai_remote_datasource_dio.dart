@@ -10,8 +10,9 @@ import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import 'ai_remote_datasource.dart';
+import 'text_streaming_datasource.dart';
 
-class OpenAIRemoteDatasourceDio implements AIRemoteDatasource {
+class OpenAIRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
   OpenAIRemoteDatasourceDio(String apiKey)
     : _dio = DioFactory.create(
         baseUrl: ApiConstants.openAiBaseUrl,

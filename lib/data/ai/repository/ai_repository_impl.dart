@@ -10,13 +10,19 @@ import '../datasource/custom_remote_datasource_dio.dart';
 import '../datasource/gemini_remote_datasource_dio.dart';
 import '../datasource/ollama_remote_datasource_dio.dart';
 import '../datasource/openai_remote_datasource_dio.dart';
+import '../datasource/text_streaming_datasource.dart';
 import '../models/stream_event.dart';
 import 'ai_repository.dart';
+import 'text_streaming_repository.dart';
+import 'tool_streaming_repository.dart';
 
 part 'ai_repository_impl.g.dart';
 
+/// Assembles [AIRepositoryImpl] with the per-provider HTTP datasource map.
+/// CLI/CLI transports are not registered here — they live in
+/// `AIProviderService` and are dispatched at the SessionService layer.
 @Riverpod(keepAlive: true)
-Future<AIRepository> aiRepository(Ref ref) async {
+Future<AIRepositoryImpl> aiRepository(Ref ref) async {
   final storage = ref.watch(secureStorageProvider);
   return AIRepositoryImpl(
     sources: {
@@ -32,7 +38,10 @@ Future<AIRepository> aiRepository(Ref ref) async {
   );
 }
 
-class AIRepositoryImpl implements AIRepository {
+/// The concrete [AIRepositoryImpl] satisfies three narrow interfaces
+/// ([AIRepository], [TextStreamingRepository], [ToolStreamingRepository])
+/// so a single instance can back multiple service-level dependencies.
+class AIRepositoryImpl implements AIRepository, TextStreamingRepository, ToolStreamingRepository {
   AIRepositoryImpl({required Map<AIProvider, AIRemoteDatasource> sources}) : _sources = sources;
 
   final Map<AIProvider, AIRemoteDatasource> _sources;
@@ -49,9 +58,19 @@ class AIRepositoryImpl implements AIRepository {
     required AIModel model,
     String? systemPrompt,
   }) {
-    return _source(
-      model.provider,
-    ).streamMessage(history: history, prompt: prompt, model: model, systemPrompt: systemPrompt);
+    final src = _source(model.provider);
+    final streaming = src is TextStreamingDatasource ? src as TextStreamingDatasource : null;
+    if (streaming == null) {
+      // CLI-backed transports emit structured events via streamEvents and
+      // must be routed at the SessionService layer. Reaching here means the
+      // caller bypassed that routing.
+      throw StateError(
+        'Datasource for ${model.provider} does not support text streaming '
+        '(runtimeType: ${src.runtimeType}). Route through SessionService so '
+        'CLI transports reach their streamEvents path.',
+      );
+    }
+    return streaming.streamMessage(history: history, prompt: prompt, model: model, systemPrompt: systemPrompt);
   }
 
   @override

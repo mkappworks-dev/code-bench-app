@@ -7,8 +7,8 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/utils/debug_logger.dart';
 import '../../data/ai/models/stream_event.dart';
-import '../../data/ai/repository/ai_repository.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
+import '../../data/ai/repository/tool_streaming_repository.dart';
 import '../../data/coding_tools/models/coding_tool_result.dart';
 import '../../data/coding_tools/models/tool_capability.dart';
 import '../../data/session/models/permission_request.dart';
@@ -51,7 +51,7 @@ Future<AgentService> agentService(Ref ref) async {
 /// cap, or the user cancels.
 class AgentService {
   AgentService({
-    required AIRepository ai,
+    required ToolStreamingRepository ai,
     required ToolRegistry registry,
     McpService? mcpService,
     String Function()? idGen,
@@ -60,7 +60,7 @@ class AgentService {
        _mcpService = mcpService,
        _idGen = idGen ?? (() => const Uuid().v4());
 
-  final AIRepository _ai;
+  final ToolStreamingRepository _ai;
   final ToolRegistry _registry;
   final McpService? _mcpService;
   final String Function() _idGen;
@@ -170,6 +170,18 @@ class AgentService {
                 }
               case StreamFinish(:final reason):
                 finishReason = reason;
+              // Claude Code CLI variants are emitted by a different parser and
+              // never reach this OpenAI agent path — kept for exhaustiveness.
+              case TextDelta():
+              case ToolUseStart():
+              case ToolUseInputDelta():
+              case ToolUseComplete():
+              case ToolResult():
+              case ThinkingDelta():
+              case StreamDone():
+              case StreamParseFailure():
+              case StreamError():
+                break;
             }
           }
         } catch (e, st) {

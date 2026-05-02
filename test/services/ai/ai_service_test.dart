@@ -1,10 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/ai/repository/ai_repository.dart';
+import 'package:code_bench_app/data/ai/repository/text_streaming_repository.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/services/ai/ai_service.dart';
 
-class _FakeAIRepo extends Fake implements AIRepository {
+class _FakeAIRepo extends Fake implements AIRepository, TextStreamingRepository {
   @override
   Stream<String> streamMessage({
     required List<ChatMessage> history,
@@ -26,7 +27,10 @@ class _FakeAIRepo extends Fake implements AIRepository {
 void main() {
   late AIService svc;
 
-  setUp(() => svc = AIService(repo: _FakeAIRepo(), uuidGen: () => 'test-id'));
+  setUp(() {
+    final fake = _FakeAIRepo();
+    svc = AIService(repo: fake, streaming: fake, uuidGen: () => 'test-id');
+  });
 
   test('sendMessage buffers stream into a single ChatMessage', () async {
     final model = AIModel(id: 'claude-3', modelId: 'claude-3', provider: AIProvider.anthropic, name: 'Claude');

@@ -40,7 +40,7 @@ final class UpdateLastCheckedProvider
   }
 }
 
-String _$updateLastCheckedHash() => r'353b71215db1bb27e216c734360f2efc1b008ce1';
+String _$updateLastCheckedHash() => r'd0d3cc407a5ce8af8f19bba6c26927794008b8df';
 
 @ProviderFor(packageVersion)
 final packageVersionProvider = PackageVersionProvider._();
@@ -101,7 +101,7 @@ final class UpdateNotifierProvider extends $NotifierProvider<UpdateNotifier, Upd
   }
 }
 
-String _$updateNotifierHash() => r'bdf334d9dd5f1becda0823520f59d10367bc0617';
+String _$updateNotifierHash() => r'1a8bf6ad967315def7e12fd646851a6cd805b84d';
 
 abstract class _$UpdateNotifier extends $Notifier<UpdateState> {
   UpdateState build();

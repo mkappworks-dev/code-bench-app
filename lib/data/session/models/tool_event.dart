@@ -9,6 +9,13 @@ part 'tool_event.g.dart';
 /// a spinner in the UI.
 enum ToolStatus { running, success, error, cancelled }
 
+/// Origin of a tool event. [agentLoop] is the default (events emitted by
+/// Code Bench's own agent loop for custom providers). [cliTransport] is
+/// set when the event comes from a CLI-transport datasource (e.g. Claude
+/// Code CLI), where Code Bench is rendering receipts of another agent's
+/// tool-use rather than driving tools directly.
+enum ToolEventSource { agentLoop, cliTransport }
+
 @freezed
 abstract class ToolEvent with _$ToolEvent {
   const factory ToolEvent({
@@ -33,6 +40,7 @@ abstract class ToolEvent with _$ToolEvent {
     /// `runtimeType` via `dLog` and pass a scrubbed message here (see the
     /// "no PAT header logging" rule in `macos/Runner/README.md`).
     String? error,
+    @Default(ToolEventSource.agentLoop) ToolEventSource source,
   }) = _ToolEvent;
 
   factory ToolEvent.fromJson(Map<String, dynamic> json) => _$ToolEventFromJson(json);

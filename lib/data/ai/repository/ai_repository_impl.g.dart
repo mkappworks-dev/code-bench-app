@@ -8,13 +8,23 @@ part of 'ai_repository_impl.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Assembles [AIRepositoryImpl] with the per-provider HTTP datasource map.
+/// CLI/CLI transports are not registered here — they live in
+/// `AIProviderService` and are dispatched at the SessionService layer.
 
 @ProviderFor(aiRepository)
 final aiRepositoryProvider = AiRepositoryProvider._();
 
+/// Assembles [AIRepositoryImpl] with the per-provider HTTP datasource map.
+/// CLI/CLI transports are not registered here — they live in
+/// `AIProviderService` and are dispatched at the SessionService layer.
+
 final class AiRepositoryProvider
-    extends $FunctionalProvider<AsyncValue<AIRepository>, AIRepository, FutureOr<AIRepository>>
-    with $FutureModifier<AIRepository>, $FutureProvider<AIRepository> {
+    extends $FunctionalProvider<AsyncValue<AIRepositoryImpl>, AIRepositoryImpl, FutureOr<AIRepositoryImpl>>
+    with $FutureModifier<AIRepositoryImpl>, $FutureProvider<AIRepositoryImpl> {
+  /// Assembles [AIRepositoryImpl] with the per-provider HTTP datasource map.
+  /// CLI/CLI transports are not registered here — they live in
+  /// `AIProviderService` and are dispatched at the SessionService layer.
   AiRepositoryProvider._()
     : super(
         from: null,
@@ -31,12 +41,12 @@ final class AiRepositoryProvider
 
   @$internal
   @override
-  $FutureProviderElement<AIRepository> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+  $FutureProviderElement<AIRepositoryImpl> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<AIRepository> create(Ref ref) {
+  FutureOr<AIRepositoryImpl> create(Ref ref) {
     return aiRepository(ref);
   }
 }
 
-String _$aiRepositoryHash() => r'1aa08b1b5ab241f05e1e0602fd91696beec0537e';
+String _$aiRepositoryHash() => r'b48e2381278f1b6684585e93822f8f7fc608fb56';

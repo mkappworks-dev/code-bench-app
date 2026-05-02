@@ -11,8 +11,23 @@ import 'package:code_bench_app/features/chat/notifiers/chat_messages_actions.dar
 import 'package:code_bench_app/features/chat/notifiers/chat_messages_failure.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
+import 'package:code_bench_app/features/providers/notifiers/providers_notifier.dart';
 import 'package:code_bench_app/services/mcp/mcp_service.dart' show McpRemoveCallback, McpStatusCallback;
 import 'package:code_bench_app/services/session/session_service.dart';
+
+class _FakeApiKeysNotifier extends ApiKeysNotifier {
+  @override
+  Future<ApiKeysNotifierState> build() async => const ApiKeysNotifierState(
+    openai: '',
+    anthropic: '',
+    gemini: '',
+    ollamaUrl: '',
+    customEndpoint: '',
+    customApiKey: '',
+    anthropicTransport: 'api-key',
+    openaiTransport: 'api-key',
+  );
+}
 
 bool _neverCancel() => false;
 
@@ -35,6 +50,7 @@ class _FakeSessionService extends Fake implements SessionService {
     ChatMode mode = ChatMode.chat,
     ChatPermission permission = ChatPermission.fullAccess,
     String? projectPath,
+    String? providerId,
     bool Function() cancelFlag = _neverCancel,
     Future<bool> Function(PermissionRequest req)? requestPermission,
     McpStatusCallback? onMcpStatusChanged,
@@ -68,6 +84,7 @@ ProviderContainer _makeContainer(_FakeSessionService svc) {
       activeSessionIdProvider.overrideWithValue('session-1'),
       selectedModelProvider.overrideWithValue(AIModels.claude35Sonnet),
       activeProjectProvider.overrideWithValue(null),
+      apiKeysProvider.overrideWith(_FakeApiKeysNotifier.new),
     ],
   );
 }

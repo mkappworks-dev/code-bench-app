@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/ai/models/stream_event.dart';
-import 'package:code_bench_app/data/ai/repository/ai_repository.dart';
+import 'package:code_bench_app/data/ai/repository/tool_streaming_repository.dart';
 import 'package:code_bench_app/data/coding_tools/datasource/coding_tools_datasource_io.dart';
 import 'package:code_bench_app/data/coding_tools/models/coding_tools_denylist_state.dart';
 import 'package:code_bench_app/data/coding_tools/models/denylist_category.dart';
@@ -40,7 +40,7 @@ class _FakeDenylistRepository implements CodingToolsDenylistRepository {
   Future<void> restoreAllDefaults() async {}
 }
 
-class _FakeAIRepo implements AIRepository {
+class _FakeAIRepo implements ToolStreamingRepository {
   _FakeAIRepo(this.scripts);
   final List<List<StreamEvent>> scripts;
   int _round = 0;
@@ -56,20 +56,6 @@ class _FakeAIRepo implements AIRepository {
       yield e;
     }
   }
-
-  @override
-  Stream<String> streamMessage({
-    required List<ChatMessage> history,
-    required String prompt,
-    required AIModel model,
-    String? systemPrompt,
-  }) => const Stream.empty();
-
-  @override
-  Future<bool> testConnection(AIModel model, String apiKey) async => true;
-
-  @override
-  Future<List<AIModel>> fetchAvailableModels(AIProvider provider, String apiKey) async => [];
 }
 
 void main() {

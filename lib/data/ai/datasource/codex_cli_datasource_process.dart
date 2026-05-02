@@ -1,0 +1,645 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:uuid/uuid.dart';
+
+import '../../../core/utils/debug_logger.dart';
+import 'ai_provider_datasource.dart';
+import 'provider_input_guards.dart';
+
+part 'codex_cli_datasource_process.g.dart';
+
+@riverpod
+AIProviderDatasource codexCliDatasourceProcess(Ref ref) {
+  // TODO: read binaryPath from settings once settings model is updated
+  return CodexCliDatasourceProcess(binaryPath: 'codex');
+}
+
+/// AI provider that connects to Codex via the `codex app-server` JSON-RPC 2.0
+/// interface.
+///
+/// Protocol lifecycle per session:
+///   1. Spawn `codex app-server` (once per working directory)
+///   2. Send `initialize` request → receive userAgent (version)
+///   3. Send `initialized` notification
+///   4. Send `account/read` to check auth
+///   5. Send `thread/start` to create a session
+///   6. Send `turn/start` for each user message
+///   7. Receive streaming notifications (text, reasoning, tool events)
+///   8. Server may send approval requests — respond via [respondToRequest]
+class CodexCliDatasourceProcess implements AIProviderDatasource {
+  CodexCliDatasourceProcess({required this.binaryPath});
+
+  final String binaryPath;
+
+  /// Cap for the in-memory stderr buffer per turn — a chatty crash should
+  /// not balloon Flutter-process memory.
+  static const int _stderrCap = 64 * 1024;
+
+  Process? _process;
+  String? _workingDirectory;
+  int _nextId = 1;
+
+  /// Pending client→server requests, keyed by request ID.
+  final Map<int, Completer<Map<String, dynamic>>> _pendingRequests = {};
+
+  /// Pending server→client approval requests, keyed by request ID.
+  /// The server sends these and we forward them to the UI; the UI resolves
+  /// the completer when the user approves or denies.
+  final Map<dynamic, Completer<Map<String, dynamic>>> _pendingApprovals = {};
+
+  StreamController<ProviderRuntimeEvent>? _streamController;
+  StreamSubscription<String>? _stdoutSubscription;
+  StreamSubscription<String>? _stderrSubscription;
+  final StringBuffer _stderrBuffer = StringBuffer();
+
+  String? _providerThreadId;
+  String? _version;
+
+  @override
+  String get id => 'codex';
+
+  @override
+  String get displayName => 'Codex';
+
+  @override
+  Future<DetectionResult> detect() async {
+    final ProcessResult whichResult;
+    try {
+      whichResult = await Process.run('which', [binaryPath]).timeout(const Duration(seconds: 2));
+    } catch (e) {
+      sLog('[CodexCli] which probe failed: $e');
+      return DetectionResult.unhealthy('Detection failed: ${e.runtimeType}');
+    }
+    if (whichResult.exitCode != 0) {
+      return const DetectionResult.missing();
+    }
+
+    // Codex doesn't expose `--version` cheaply; the canonical version comes
+    // from the `initialize` JSON-RPC response. If we already have it, use it.
+    if (_version != null) return DetectionResult.installed(_version!);
+
+    // Probe `--version` defensively. A binary on PATH that hangs/errors
+    // here is `unhealthy`, not `missing`.
+    try {
+      final result = await Process.run(binaryPath, ['--version']).timeout(const Duration(seconds: 5));
+      if (result.exitCode != 0) {
+        sLog('[CodexCli] --version exited ${result.exitCode}');
+        return DetectionResult.unhealthy('--version exited ${result.exitCode}');
+      }
+      final out = (result.stdout as String).trim();
+      return DetectionResult.installed(out.isEmpty ? 'unknown' : out);
+    } catch (e) {
+      sLog('[CodexCli] --version probe failed: $e');
+      return DetectionResult.unhealthy('--version failed: ${e.runtimeType}');
+    }
+  }
+
+  @override
+  Stream<ProviderRuntimeEvent> sendAndStream({
+    required String prompt,
+    required String sessionId,
+    required String workingDirectory,
+  }) {
+    // Defensive close: a prior turn may have leaked an open controller (e.g.
+    // racing cancel + completion). Closing is idempotent.
+    _streamController?.close();
+    _streamController = StreamController<ProviderRuntimeEvent>.broadcast();
+    _send(prompt, sessionId, workingDirectory);
+    return _streamController!.stream;
+  }
+
+  Future<void> _send(String prompt, String sessionId, String workingDirectory) async {
+    try {
+      _streamController?.add(ProviderInit(provider: id));
+
+      // sessionId guard — Codex uses this value as `resumeThreadId` over
+      // JSON-RPC. A non-UUID value could resume a foreign thread or trip
+      // unexpected app-server behavior. We only ever generate v4 UUIDs,
+      // but a future import/restore path could leak an attacker-shaped
+      // value here.
+      if (!uuidV4Regex.hasMatch(sessionId)) {
+        sLog('[CodexCli] rejected non-UUID sessionId at RPC boundary');
+        _streamController?.add(const ProviderStreamFailure(error: 'invalid sessionId shape'));
+        return;
+      }
+
+      // workingDirectory guard — must be an existing absolute path that is
+      // not the filesystem root. Codex roots all tool use at `cwd`, so a
+      // stale or attacker-influenced path (e.g. `~`, `/`) would give it
+      // read/write/execute access well outside the user's project.
+      if (!workingDirectory.startsWith('/') || workingDirectory == '/' || !Directory(workingDirectory).existsSync()) {
+        sLog('[CodexCli] rejected workingDirectory: $workingDirectory');
+        _streamController?.add(const ProviderStreamFailure(error: 'invalid workingDirectory'));
+        return;
+      }
+
+      // Spawn or reuse the app-server process
+      await _ensureProcess(workingDirectory);
+
+      // Initialize if this is a fresh process
+      if (_version == null) {
+        await _initialize();
+        await _checkAuth();
+      }
+
+      // Start or resume a Codex thread
+      _providerThreadId ??= await _startThread(sessionId, workingDirectory);
+
+      // Send the user's turn
+      await _sendTurn(prompt);
+
+      // Events stream back via notifications; [_handleNotification] drives
+      // the StreamController. We wait here until turn/completed or an error.
+    } catch (e, st) {
+      dLog('[CodexCli] send failed: ${redactSecrets('$e')}\n$st');
+      _streamController?.add(ProviderStreamFailure(error: e));
+      // Per-turn cleanup — keep the long-lived app-server process alive so
+      // a retry can reuse it. If the process itself died, the stdout
+      // onDone / exitCode handlers will _resetProcess().
+      _resetTurn();
+    }
+  }
+
+  // ─── Process management ─────────────────────────────────────────────────
+
+  Future<void> _ensureProcess(String workingDirectory) async {
+    if (_process != null && _workingDirectory == workingDirectory) return;
+
+    // Kill existing process if working directory changed
+    if (_process != null) {
+      _process!.kill();
+      await _process!.exitCode;
+      _resetProcess();
+    }
+
+    dLog('[CodexCli] spawning codex app-server in $workingDirectory');
+
+    // Minimal env — the app-server inherits this and so do the commands
+    // it executes. A developer's parent env routinely contains
+    // ANTHROPIC_API_KEY / OPENAI_API_KEY / GITHUB_TOKEN / AWS_*; do not
+    // leak those into transitively-spawned commands.
+    final parentEnv = Platform.environment;
+    final minimalEnv = <String, String>{
+      if (parentEnv['HOME'] != null) 'HOME': parentEnv['HOME']!,
+      if (parentEnv['PATH'] != null) 'PATH': parentEnv['PATH']!,
+      if (parentEnv['USER'] != null) 'USER': parentEnv['USER']!,
+      if (parentEnv['LANG'] != null) 'LANG': parentEnv['LANG']!,
+      if (parentEnv['TMPDIR'] != null) 'TMPDIR': parentEnv['TMPDIR']!,
+      if (parentEnv['SHELL'] != null) 'SHELL': parentEnv['SHELL']!,
+      // Codex-specific: forward only what its OAuth flow needs.
+      if (parentEnv['CODEX_HOME'] != null) 'CODEX_HOME': parentEnv['CODEX_HOME']!,
+    };
+
+    _process = await Process.start(
+      binaryPath,
+      ['app-server'],
+      workingDirectory: workingDirectory,
+      runInShell: false,
+      includeParentEnvironment: false,
+      environment: minimalEnv,
+    );
+    _workingDirectory = workingDirectory;
+
+    // Wire stdout → JSON-RPC message handler. Use allowMalformed so a
+    // multi-byte char split across reads doesn't take the whole stream
+    // down with a UTF-8 decode error.
+    _stdoutSubscription = _process!.stdout
+        .transform(const Utf8Decoder(allowMalformed: true))
+        .transform(const LineSplitter())
+        .listen(
+          _handleLine,
+          onError: (Object e) {
+            dLog('[CodexCli] stdout error: ${redactSecrets('$e')}');
+            _streamController?.add(ProviderStreamFailure(error: 'Codex stdout error: ${e.runtimeType}'));
+            _resetProcess();
+          },
+          onDone: () {
+            dLog('[CodexCli] app-server stdout closed');
+            _streamController?.add(const ProviderStreamFailure(error: 'Codex process exited'));
+            _resetProcess();
+          },
+        );
+
+    // Buffer stderr for diagnostics; cap so it can't grow without bound.
+    _stderrSubscription = _process!.stderr
+        .transform(const Utf8Decoder(allowMalformed: true))
+        .transform(const LineSplitter())
+        .listen((line) {
+          // dLog goes through redactSecrets so an inadvertent token echo
+          // doesn't end up in Console.app during development.
+          dLog('[CodexProvider.stderr] ${redactSecrets(line)}');
+          if (_stderrBuffer.length >= _stderrCap) return;
+          final remaining = _stderrCap - _stderrBuffer.length;
+          final out = line.length <= remaining ? line : line.substring(0, remaining);
+          _stderrBuffer.writeln(out);
+        });
+
+    // If the process exits unexpectedly, surface and clean up.
+    unawaited(
+      _process!.exitCode.then((code) {
+        if (code != 0) {
+          dLog('[CodexCli] app-server exited with code $code\nstderr=${redactSecrets(_stderrBuffer.toString())}');
+          _streamController?.add(
+            ProviderStreamFailure(
+              error: 'Codex exited with code $code',
+              details: redactSecrets(_stderrBuffer.toString()),
+            ),
+          );
+        }
+        _resetProcess();
+      }),
+    );
+  }
+
+  // ─── JSON-RPC protocol ──────────────────────────────────────────────────
+
+  /// Send a client→server request and await the response.
+  Future<Map<String, dynamic>> _request(String method, Map<String, dynamic> params) {
+    final id = _nextId++;
+    final completer = Completer<Map<String, dynamic>>();
+    _pendingRequests[id] = completer;
+
+    final message = jsonEncode({'jsonrpc': '2.0', 'id': id, 'method': method, 'params': params});
+    dLog('[CodexCli] → $method ($id)');
+    _writeStdin(message);
+
+    return completer.future.timeout(
+      const Duration(seconds: 30),
+      onTimeout: () {
+        _pendingRequests.remove(id);
+        throw TimeoutException('Codex request $method (id=$id) timed out');
+      },
+    );
+  }
+
+  /// Send a client→server notification (no response expected).
+  void _notify(String method, [Map<String, dynamic>? params]) {
+    final message = jsonEncode({'jsonrpc': '2.0', 'method': method, 'params': params});
+    dLog('[CodexCli] → $method (notification)');
+    _writeStdin(message);
+  }
+
+  /// Respond to a server→client request (approval, user-input, etc.).
+  void _respond(dynamic id, Map<String, dynamic> result) {
+    final message = jsonEncode({'jsonrpc': '2.0', 'id': id, 'result': result});
+    dLog('[CodexCli] → response to server request $id');
+    _writeStdin(message);
+  }
+
+  /// Centralised stdin write so we can fail fast if the pipe is dead.
+  /// `IOSink.writeln` swallows errors as zone-async; surfacing them here
+  /// avoids losing approval responses to a silent broken pipe.
+  void _writeStdin(String message) {
+    final stdin = _process?.stdin;
+    if (stdin == null) {
+      dLog('[CodexCli] write skipped — process is gone');
+      return;
+    }
+    try {
+      stdin.writeln(message);
+    } catch (e) {
+      dLog('[CodexCli] stdin write failed: ${redactSecrets('$e')}');
+      _streamController?.add(ProviderStreamFailure(error: 'Codex stdin write failed: ${e.runtimeType}'));
+      _resetProcess();
+    }
+  }
+
+  // ─── Incoming message routing ────────────────────────────────────────────
+
+  void _handleLine(String line) {
+    if (line.trim().isEmpty) return;
+    Map<String, dynamic> json;
+    try {
+      json = jsonDecode(line) as Map<String, dynamic>;
+    } catch (e) {
+      final preview = line.length > 256 ? '${line.substring(0, 256)}…' : line;
+      dLog('[CodexCli] JSON parse error: $e on: ${redactSecrets(preview)}');
+      return;
+    }
+
+    final id = json['id'];
+    final method = json['method'] as String?;
+    final result = json['result'];
+    final error = json['error'];
+
+    if (id != null && result != null) {
+      // Client→server response (our pending request resolved)
+      _handleResponse(id, result as Map<String, dynamic>);
+    } else if (id != null && error != null) {
+      // Error response to our request
+      _handleErrorResponse(id, error as Map<String, dynamic>);
+    } else if (id != null && method != null) {
+      // Server→client request (e.g. approval, user-input)
+      _handleServerRequest(id, method, json['params'] as Map<String, dynamic>?);
+    } else if (method != null) {
+      // Server→client notification (no id)
+      _handleNotification(method, json['params'] as Map<String, dynamic>?);
+    }
+  }
+
+  void _handleResponse(dynamic id, Map<String, dynamic> result) {
+    final completer = _pendingRequests.remove(id);
+    if (completer != null) {
+      completer.complete(result);
+    } else {
+      dLog('[CodexCli] No pending request for id $id');
+    }
+  }
+
+  void _handleErrorResponse(dynamic id, Map<String, dynamic> error) {
+    final completer = _pendingRequests.remove(id);
+    final message = error['message'] as String? ?? 'Unknown error';
+    if (completer != null) {
+      completer.completeError(Exception('Codex error: $message'));
+    }
+    _streamController?.add(ProviderStreamFailure(error: 'Codex error: $message'));
+  }
+
+  /// Handle a request that the Codex server sends TO US (approval, user-input).
+  void _handleServerRequest(dynamic id, String method, Map<String, dynamic>? params) {
+    dLog('[CodexCli] ← server request: $method (id=$id)');
+
+    switch (method) {
+      case 'item/commandExecution/requestApproval':
+      case 'item/fileRead/requestApproval':
+      case 'item/fileChange/requestApproval':
+      case 'applyPatchApproval':
+      case 'execCommandApproval':
+        _emitPermissionRequest(id, method, params);
+
+      case 'item/tool/requestUserInput':
+        // User-input questions — emit as permission request for now
+        // TODO: dedicated user-input event type
+        _emitPermissionRequest(id, method, params);
+
+      case 'account/chatgptAuthTokens/refresh':
+        // Auth token refresh — auto-approved here. The token never crosses
+        // the host process: codex holds and refreshes it internally; this
+        // response is a protocol-level "yes, proceed". sLog so the event
+        // is grep-able in release builds.
+        sLog('[CodexCli] auto-approving account/chatgptAuthTokens/refresh (id=$id)');
+        _respond(id, {'ok': true});
+
+      default:
+        // Unknown approval-shaped method. sLog (survives release) and
+        // surface as a stream failure so the user sees "your codex version
+        // sent a method we don't recognise" rather than a silent denial.
+        sLog('[CodexCli] unknown server request: $method — denying and aborting turn');
+        _respond(id, {'decision': 'denied'});
+        _streamController?.add(
+          ProviderStreamFailure(error: 'Unsupported codex approval method: $method — please update Code Bench'),
+        );
+    }
+  }
+
+  void _emitPermissionRequest(dynamic id, String method, Map<String, dynamic>? params) {
+    final requestId = id.toString();
+
+    // Store completer so [respondToRequest] can resolve it
+    final completer = Completer<Map<String, dynamic>>();
+    _pendingApprovals[requestId] = completer;
+
+    _streamController?.add(
+      ProviderPermissionRequest(requestId: requestId, toolName: _methodToToolName(method), toolInput: params ?? {}),
+    );
+
+    // When the UI resolves the approval, send the response back to Codex.
+    // Guard the response on a still-live process — a dead pipe would throw
+    // asynchronously and the error would be unhandled.
+    completer.future.then(
+      (result) {
+        if (_process == null) return;
+        _respond(id, result);
+      },
+      onError: (Object e) {
+        dLog('[CodexCli] Approval error: ${redactSecrets('$e')} — denying');
+        if (_process == null) return;
+        _respond(id, {'decision': 'denied'});
+      },
+    );
+  }
+
+  /// Handle a server→client notification (no response expected).
+  void _handleNotification(String method, Map<String, dynamic>? params) {
+    switch (method) {
+      // ── Text streaming ─────────────────────────────────────────────────
+      case 'item/agentMessage/delta':
+        final delta = params?['delta'] as String?;
+        if (delta != null && delta.isNotEmpty) {
+          _streamController?.add(ProviderTextDelta(text: delta));
+        }
+
+      // ── Reasoning / thinking ───────────────────────────────────────────
+      case 'item/reasoning/textDelta':
+      case 'item/reasoning/summaryTextDelta':
+        final delta = params?['delta'] as String?;
+        if (delta != null && delta.isNotEmpty) {
+          _streamController?.add(ProviderThinkingDelta(thinking: delta));
+        }
+
+      // ── Turn lifecycle ─────────────────────────────────────────────────
+      case 'turn/started':
+        dLog('[CodexCli] Turn started');
+
+      case 'turn/completed':
+        dLog('[CodexCli] Turn completed');
+        _streamController?.add(const ProviderStreamDone());
+        _resetTurn();
+
+      case 'turn/aborted':
+        final reason = params?['reason'] as String? ?? 'Turn aborted';
+        dLog('[CodexCli] Turn aborted: $reason');
+        _streamController?.add(ProviderStreamFailure(error: reason));
+        _resetTurn();
+
+      // ── Session lifecycle ──────────────────────────────────────────────
+      case 'session/connecting':
+        dLog('[CodexCli] Session connecting');
+      case 'session/ready':
+        dLog('[CodexCli] Session ready');
+      case 'session/started':
+        dLog('[CodexCli] Session started');
+      case 'session/exited':
+      case 'session/closed':
+        dLog('[CodexCli] Session exited/closed');
+        _resetProcess();
+
+      // ── Item lifecycle (tool calls) ────────────────────────────────────
+      case 'item/started':
+        final item = params?['item'] as Map<String, dynamic>?;
+        final itemType = item?['type'] as String?;
+        final itemId = item?['id'] as String?;
+        if (itemId != null && itemType != null) {
+          _streamController?.add(ProviderToolUseStart(toolId: itemId, toolName: _normalizeItemType(itemType)));
+        }
+
+      case 'item/completed':
+        final item = params?['item'] as Map<String, dynamic>?;
+        final itemId = item?['id'] as String?;
+        if (itemId != null) {
+          _streamController?.add(ProviderToolUseComplete(toolId: itemId, input: item ?? {}));
+        }
+
+      // ── Thread lifecycle ───────────────────────────────────────────────
+      case 'thread/started':
+        final thread = params?['thread'] as Map<String, dynamic>?;
+        _providerThreadId = thread?['id'] as String?;
+        dLog('[CodexCli] Thread started: $_providerThreadId');
+
+      case 'thread/tokenUsage/updated':
+        // Token usage — ignore for now
+        break;
+
+      // ── Errors / warnings ─────────────────────────────────────────────
+      case 'error':
+        final errorPayload = params?['error'] as Map<String, dynamic>?;
+        final message = errorPayload?['message'] as String? ?? params?['message'] as String? ?? 'Provider error';
+        final willRetry = params?['willRetry'] == true;
+        if (!willRetry) {
+          _streamController?.add(ProviderStreamFailure(error: message));
+          _resetTurn();
+        } else {
+          dLog('[CodexCli] Recoverable error (will retry): ${redactSecrets(message)}');
+        }
+
+      case 'process/stderr':
+        final message = params?['message'] as String? ?? '';
+        dLog('[CodexProvider.internal-stderr] ${redactSecrets(message)}');
+
+      default:
+        // Unknown notification — sLog so post-release telemetry catches
+        // codex protocol additions we haven't wired up.
+        sLog('[CodexCli] ignoring unknown notification: $method');
+    }
+  }
+
+  // ─── Protocol steps ──────────────────────────────────────────────────────
+
+  Future<void> _initialize() async {
+    final result = await _request('initialize', {
+      'clientInfo': {'name': 'code_bench', 'title': 'Code Bench', 'version': '1.0.0'},
+      'capabilities': {'experimentalApi': true},
+    });
+
+    // Extract version from userAgent: "codex/1.2.3 other-info"
+    final userAgent = result['userAgent'] as String?;
+    if (userAgent != null) {
+      final match = RegExp(r'/([^\s]+)').firstMatch(userAgent);
+      _version = match?.group(1);
+    }
+    dLog('[CodexCli] version: $_version');
+
+    // Required acknowledgement after initialize
+    _notify('initialized');
+  }
+
+  Future<void> _checkAuth() async {
+    final result = await _request('account/read', {});
+    final requiresAuth = result['requiresOpenaiAuth'] as bool? ?? false;
+    if (requiresAuth) {
+      throw Exception('Codex is not authenticated. Run `codex login` in your terminal.');
+    }
+    dLog('[CodexCli] Auth ok');
+  }
+
+  Future<String> _startThread(String sessionId, String workingDirectory) async {
+    final result = await _request('thread/start', {
+      'cwd': workingDirectory,
+      // Use sessionId as a resume cursor if available
+      if (sessionId.isNotEmpty) 'resumeThreadId': sessionId,
+    });
+    final threadId = result['thread']?['id'] as String? ?? const Uuid().v4();
+    dLog('[CodexCli] Thread started: $threadId');
+    return threadId;
+  }
+
+  Future<void> _sendTurn(String prompt) async {
+    await _request('turn/start', {'input': prompt});
+    dLog('[CodexCli] Turn started');
+  }
+
+  // ─── Public approval API ──────────────────────────────────────────────────
+
+  /// Called by the chat notifier when the user approves or denies a
+  /// permission request. [decision] is one of: "approved", "denied".
+  @override
+  void respondToPermissionRequest(String requestId, {required bool approved}) {
+    final completer = _pendingApprovals.remove(requestId);
+    if (completer == null) {
+      dLog('[CodexCli] No pending approval for requestId $requestId');
+      return;
+    }
+    completer.complete({'decision': approved ? 'approved' : 'denied'});
+  }
+
+  // ─── Cancel / cleanup ─────────────────────────────────────────────────────
+
+  @override
+  void cancel() {
+    dLog('[CodexCli] Cancelling in-flight turn');
+    // Interrupt the current turn if one is running. The app-server stays
+    // alive; only the turn ends.
+    if (_providerThreadId != null && _process != null) {
+      _notify('turn/interrupt', {'threadId': _providerThreadId});
+    }
+    _resetTurn();
+  }
+
+  /// Per-turn cleanup. Closes the active stream controller and clears
+  /// pending approvals/requests so the next turn doesn't see stale
+  /// completers. Does NOT kill the long-lived `app-server` process.
+  void _resetTurn() {
+    if (_streamController?.isClosed == false) {
+      _streamController?.close();
+    }
+    _streamController = null;
+    for (final c in _pendingApprovals.values) {
+      if (!c.isCompleted) c.completeError(StateError('codex turn ended'));
+    }
+    _pendingApprovals.clear();
+    for (final c in _pendingRequests.values) {
+      if (!c.isCompleted) c.completeError(StateError('codex turn ended'));
+    }
+    _pendingRequests.clear();
+  }
+
+  /// Process-level cleanup — the `app-server` process is gone (exit, crash,
+  /// stdout closed, working-directory change). Tear everything down.
+  void _resetProcess() {
+    _resetTurn();
+    _process = null;
+    _workingDirectory = null;
+    _version = null;
+    _providerThreadId = null;
+    _stdoutSubscription?.cancel();
+    _stdoutSubscription = null;
+    _stderrSubscription?.cancel();
+    _stderrSubscription = null;
+    _stderrBuffer.clear();
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────
+
+  String _methodToToolName(String method) {
+    return switch (method) {
+      'item/commandExecution/requestApproval' => 'command_execution',
+      'item/fileRead/requestApproval' => 'file_read',
+      'item/fileChange/requestApproval' => 'file_change',
+      'applyPatchApproval' => 'apply_patch',
+      'execCommandApproval' => 'exec_command',
+      'item/tool/requestUserInput' => 'tool_user_input',
+      _ => method,
+    };
+  }
+
+  String _normalizeItemType(String raw) {
+    return raw
+        .replaceAllMapped(RegExp(r'([a-z0-9])([A-Z])'), (m) => '${m[1]} ${m[2]}')
+        .replaceAll(RegExp(r'[._/-]'), ' ')
+        .trim()
+        .toLowerCase();
+  }
+}

@@ -11,9 +11,10 @@ import '../../../data/shared/chat_message.dart';
 import '../models/stream_event.dart';
 import '../../coding_tools/models/tool.dart';
 import 'ai_remote_datasource.dart';
+import 'text_streaming_datasource.dart';
 
 /// OpenAI-compatible AI datasource for custom endpoints (e.g. LM Studio, LocalAI).
-class CustomRemoteDatasourceDio implements AIRemoteDatasource {
+class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
   CustomRemoteDatasourceDio({required String endpoint, required String apiKey})
     : _dio = DioFactory.create(
         baseUrl: endpoint,
@@ -210,6 +211,18 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource {
           // never returned by parseOpenAiToolSseLine — kept for exhaustiveness.
           case StreamToolCallEnd():
             yield event;
+          // Claude Code CLI variants are emitted by a different parser and
+          // never reach this OpenAI SSE path — kept for exhaustiveness.
+          case TextDelta():
+          case ToolUseStart():
+          case ToolUseInputDelta():
+          case ToolUseComplete():
+          case ToolResult():
+          case ThinkingDelta():
+          case StreamDone():
+          case StreamParseFailure():
+          case StreamError():
+            break;
         }
       }
     } on DioException catch (e) {

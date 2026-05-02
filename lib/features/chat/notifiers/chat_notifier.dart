@@ -14,6 +14,7 @@ import '../../../services/agent/agent_exceptions.dart';
 import '../../../services/session/session_service.dart';
 import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../../mcp_servers/notifiers/mcp_server_status_notifier.dart';
+import '../../providers/notifiers/providers_notifier.dart';
 import 'agent_cancel_notifier.dart';
 import 'agent_failure.dart';
 import 'agent_permission_request_notifier.dart';
@@ -86,6 +87,19 @@ AgentFailure _asAgentFailure(Object e) => switch (e) {
   _ => AgentFailure.unknown(e),
 };
 
+/// Resolves which `AIProviderDatasource` ID (in `AIProviderService`) should
+/// handle this turn, based on the active model and the persisted per-provider
+/// transport choice. Returns null when the user has selected the API-key
+/// (HTTP) path, which routes through `streamMessage` inside `SessionService`.
+String? _resolveProviderId(AIModel model, ApiKeysNotifierState? prefs) {
+  if (prefs == null) return null;
+  return switch ((model.provider, prefs)) {
+    (AIProvider.anthropic, ApiKeysNotifierState(anthropicTransport: 'cli')) => 'claude-cli',
+    (AIProvider.openai, ApiKeysNotifierState(openaiTransport: 'cli')) => 'codex',
+    _ => null,
+  };
+}
+
 // Messages for the current session
 @riverpod
 class ChatMessagesNotifier extends _$ChatMessagesNotifier {
@@ -130,6 +144,12 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final mode = ref.read(sessionModeProvider);
     final permission = ref.read(sessionPermissionProvider);
     final projectPath = ref.read(activeProjectProvider)?.path;
+    // Await prefs explicitly: `apiKeysProvider` is autoDispose, so when the
+    // chat tab opens fresh (without the Providers screen being mounted) the
+    // first `.value` is null and we'd silently fall through to the legacy
+    // HTTP path even when CLI transport is selected. Always wait for storage.
+    final prefs = await ref.read(apiKeysProvider.future);
+    final providerId = _resolveProviderId(model, prefs);
 
     _activeSubscription = service
         .sendAndStream(
@@ -140,6 +160,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
           mode: mode,
           permission: permission,
           projectPath: projectPath,
+          providerId: providerId,
           cancelFlag: () => ref.read(agentCancelProvider),
           requestPermission: (req) => ref.read(agentPermissionRequestProvider.notifier).request(req),
           onMcpStatusChanged: ref.read(mcpServerStatusProvider.notifier).setStatus,

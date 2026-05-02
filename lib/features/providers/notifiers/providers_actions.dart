@@ -9,6 +9,7 @@ import '../../../services/ai/ai_service.dart';
 import '../../../services/api_key_test/api_key_test_service.dart';
 import '../../../services/providers/providers_service.dart';
 import 'providers_failure.dart';
+import 'providers_notifier.dart';
 
 part 'providers_actions.g.dart';
 
@@ -29,7 +30,7 @@ class ProvidersActions extends _$ProvidersActions {
     try {
       return await ref.read(apiKeyTestServiceProvider).testApiKey(provider, key);
     } catch (e, st) {
-      dLog('[ProvidersActions] testApiKey failed: $e\n$st');
+      dLog('[ProvidersActions] testApiKey failed: ${redactSecrets('$e')}\n${redactSecrets('$st')}');
       return false;
     }
   }
@@ -39,7 +40,7 @@ class ProvidersActions extends _$ProvidersActions {
     try {
       return await ref.read(apiKeyTestServiceProvider).testCustomEndpoint(url, apiKey);
     } catch (e, st) {
-      dLog('[ProvidersActions] testCustomEndpoint failed: $e\n$st');
+      dLog('[ProvidersActions] testCustomEndpoint failed: ${redactSecrets('$e')}\n${redactSecrets('$st')}');
       return false;
     }
   }
@@ -49,12 +50,18 @@ class ProvidersActions extends _$ProvidersActions {
     try {
       return await ref.read(apiKeyTestServiceProvider).testOllamaUrl(url);
     } catch (e, st) {
-      dLog('[ProvidersActions] testOllamaUrl failed: $e\n$st');
+      dLog('[ProvidersActions] testOllamaUrl failed: ${redactSecrets('$e')}\n${redactSecrets('$st')}');
       return false;
     }
   }
 
   // ── Mutations (emit ProvidersFailure on error) ────────────────────────────
+  //
+  // Each save/delete invalidates `aiRepositoryProvider` so consumers (chat
+  // view, model picker, etc.) pick up the new state. Rebuild failures
+  // surface naturally via `AsyncError` on `aiRepositoryProvider` to those
+  // consumers — we don't await the rebuild here because the architecture
+  // rule forbids notifiers from reading repository providers directly.
 
   /// Persists [key] for [provider] (string name). Emits [ProvidersFailure] on error.
   Future<void> saveApiKey(String provider, String key) async {
@@ -171,6 +178,48 @@ class ProvidersActions extends _$ProvidersActions {
       } catch (e, st) {
         dLog('[ProvidersActions] clearCustomApiKey failed: $e');
         Error.throwWithStackTrace(_asFailure(e, 'customApiKey'), st);
+      }
+    });
+  }
+
+  /// Persists the Anthropic inference transport (`'api-key'` or `'cli'`).
+  /// Reloads the AI repository and `ApiKeysNotifier` so dependent widgets
+  /// pick up the new value without a manual refresh.
+  Future<void> saveAnthropicTransport(String value) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      if (value != 'api-key' && value != 'cli') {
+        sLog('[ProvidersActions] rejected invalid anthropicTransport: $value');
+        throw ArgumentError.value(value, 'value', 'invalid transport');
+      }
+      try {
+        await ref.read(providersServiceProvider).writeAnthropicTransport(value);
+        ref.invalidate(aiRepositoryProvider);
+        ref.invalidate(apiKeysProvider);
+      } catch (e, st) {
+        dLog('[ProvidersActions] saveAnthropicTransport failed: $e');
+        Error.throwWithStackTrace(_asFailure(e, 'anthropicTransport'), st);
+      }
+    });
+  }
+
+  /// Persists the OpenAI inference transport (`'api-key'` or `'cli'`).
+  /// Mirrors [saveAnthropicTransport] — see that method for the rationale
+  /// behind invalidating both `aiRepositoryProvider` and `apiKeysProvider`.
+  Future<void> saveOpenaiTransport(String value) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      if (value != 'api-key' && value != 'cli') {
+        sLog('[ProvidersActions] rejected invalid openaiTransport: $value');
+        throw ArgumentError.value(value, 'value', 'invalid transport');
+      }
+      try {
+        await ref.read(providersServiceProvider).writeOpenaiTransport(value);
+        ref.invalidate(aiRepositoryProvider);
+        ref.invalidate(apiKeysProvider);
+      } catch (e, st) {
+        dLog('[ProvidersActions] saveOpenaiTransport failed: $e');
+        Error.throwWithStackTrace(_asFailure(e, 'openaiTransport'), st);
       }
     });
   }

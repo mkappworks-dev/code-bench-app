@@ -1,0 +1,3 @@
+{"type":"assistant","message":"incomplete json
+not json at all — just a raw line
+{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"ok"}},"session_id":"x","uuid":"y"}

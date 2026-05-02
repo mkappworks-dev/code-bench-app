@@ -18,6 +18,7 @@ _ToolEvent _$ToolEventFromJson(Map<String, dynamic> json) => _ToolEvent(
   tokensIn: (json['tokensIn'] as num?)?.toInt(),
   tokensOut: (json['tokensOut'] as num?)?.toInt(),
   error: json['error'] as String?,
+  source: $enumDecodeNullable(_$ToolEventSourceEnumMap, json['source']) ?? ToolEventSource.agentLoop,
 );
 
 Map<String, dynamic> _$ToolEventToJson(_ToolEvent instance) => <String, dynamic>{
@@ -32,6 +33,7 @@ Map<String, dynamic> _$ToolEventToJson(_ToolEvent instance) => <String, dynamic>
   'tokensIn': instance.tokensIn,
   'tokensOut': instance.tokensOut,
   'error': instance.error,
+  'source': _$ToolEventSourceEnumMap[instance.source]!,
 };
 
 const _$ToolStatusEnumMap = {
@@ -40,3 +42,5 @@ const _$ToolStatusEnumMap = {
   ToolStatus.error: 'error',
   ToolStatus.cancelled: 'cancelled',
 };
+
+const _$ToolEventSourceEnumMap = {ToolEventSource.agentLoop: 'agentLoop', ToolEventSource.cliTransport: 'cliTransport'};

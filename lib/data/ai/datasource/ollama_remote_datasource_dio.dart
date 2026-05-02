@@ -10,8 +10,9 @@ import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import 'ai_remote_datasource.dart';
+import 'text_streaming_datasource.dart';
 
-class OllamaRemoteDatasourceDio implements AIRemoteDatasource {
+class OllamaRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
   OllamaRemoteDatasourceDio(String baseUrl)
     : _dio = DioFactory.create(
         baseUrl: baseUrl,

@@ -1,0 +1,5 @@
+{"type":"system","subtype":"init","session_id":"fixture-text-only","model":"claude-opus-4-6"}
+{"type":"assistant","message":{"id":"msg_1","role":"assistant","content":[{"type":"text","text":"hello"}]},"session_id":"fixture-text-only","uuid":"evt-1"}
+{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hello"}},"session_id":"fixture-text-only","uuid":"evt-2"}
+{"type":"stream_event","event":{"type":"message_stop"},"session_id":"fixture-text-only","uuid":"evt-3"}
+{"type":"result","subtype":"success","is_error":false,"session_id":"fixture-text-only"}
