@@ -9,7 +9,9 @@
 /// `flutter run` (which inherits the launching terminal's full PATH).
 ///
 /// Resolving once via `<shell> -l -c "command -v <bin>"` and caching the
-/// absolute path lets every subsequent `Process.start` skip PATH lookup.
+/// absolute path — and the login shell's expanded PATH — lets every
+/// subsequent `Process.start` skip PATH lookup and run Node-backed
+/// binaries (e.g. `codex`, which uses `#!/usr/bin/env node`) reliably.
 library;
 
 import 'dart:io';
@@ -37,9 +39,15 @@ sealed class BinaryResolution {
   const BinaryResolution();
 }
 
+/// Binary was found. [path] is the absolute path to the executable.
+/// [shellPath] is the login shell's expanded PATH value — pass this as
+/// `PATH` in the environment of any process that invokes the binary, so
+/// that shebang interpreters (e.g. `node` for `#!/usr/bin/env node`)
+/// are reachable even in a release `.app` with a stripped inherited PATH.
 class BinaryFound extends BinaryResolution {
-  const BinaryFound(this.path);
+  const BinaryFound(this.path, {this.shellPath});
   final String path;
+  final String? shellPath;
 }
 
 class BinaryNotFound extends BinaryResolution {
@@ -71,26 +79,26 @@ Future<BinaryResolution> resolveBinary(String binaryName) async {
 
   // Pass 1 — login-only. Fast and the stdout is reliably just the
   // resolved path, so the strict parser applies.
-  final loginResult = await _probe(shell, binaryName, interactive: false, parser: _strictPathParser);
+  final loginResult = await _probe(shell, binaryName, interactive: false);
   if (loginResult is! BinaryNotFound) return loginResult;
 
   // Pass 2 — login + interactive. Catches nvm / asdf / mise / npm-global
   // setups that source from `.zshrc`. Use the permissive parser because
   // a chatty `.zshrc` is the norm here.
   sLog('[binaryResolver] $binaryName not found via $shell -l; retrying with -l -i');
-  return _probe(shell, binaryName, interactive: true, parser: _permissivePathParser);
+  return _probe(shell, binaryName, interactive: true);
 }
 
-Future<BinaryResolution> _probe(
-  String shell,
-  String binaryName, {
-  required bool interactive,
-  required String? Function(String) parser,
-}) async {
+/// Probe command appends `:::$PATH` so we can capture the shell's
+/// expanded PATH alongside the binary path in a single invocation.
+/// The `:::` sentinel cannot appear in a valid absolute path.
+const _pathSentinel = ':::';
+
+Future<BinaryResolution> _probe(String shell, String binaryName, {required bool interactive}) async {
   final flags = interactive ? '-l -i' : '-l';
   final ProcessResult result;
   try {
-    final args = [if (interactive) '-i', '-l', '-c', 'command -v $binaryName'];
+    final args = [if (interactive) '-i', '-l', '-c', 'command -v $binaryName && echo "$_pathSentinel\$PATH"'];
     result = await Process.run(shell, args).timeout(const Duration(seconds: 8));
   } catch (e) {
     sLog('[binaryResolver] $shell $flags probe failed for $binaryName: $e');
@@ -104,31 +112,44 @@ Future<BinaryResolution> _probe(
   }
 
   final stdout = result.stdout as String;
-  final resolved = parser(stdout);
+  final lines = stdout.split('\n');
+
+  // Extract the shell PATH from the sentinel line (if present).
+  final shellPath = lines
+      .where((l) => l.trimLeft().startsWith(_pathSentinel))
+      .map((l) => l.trimLeft().substring(_pathSentinel.length).trim())
+      .where((p) => p.isNotEmpty)
+      .firstOrNull;
+
+  // Extract the binary path — either strict (single absolute line) or
+  // permissive (last non-sentinel absolute-path-shaped line).
+  final String? resolved;
+  if (interactive) {
+    // Permissive: chatty .zshrc may print before command -v runs.
+    resolved = lines.reversed
+        .where((l) {
+          final t = l.trim();
+          return t.startsWith('/') && !t.contains(' ') && !t.startsWith(_pathSentinel);
+        })
+        .map((l) => l.trim())
+        .firstOrNull;
+  } else {
+    // Strict: login-only stdout should be just the binary path (+ sentinel).
+    final candidate = lines
+        .where((l) {
+          final t = l.trim();
+          return t.startsWith('/') && !t.contains('\n') && !t.startsWith(_pathSentinel);
+        })
+        .map((l) => l.trim())
+        .firstOrNull;
+    // Reject multi-segment output (alias text, banner lines).
+    resolved = (candidate != null && !candidate.contains(' ')) ? candidate : null;
+  }
+
   if (resolved == null) {
     final preview = stdout.length > 256 ? '${stdout.substring(0, 256)}…' : stdout;
     sLog('[binaryResolver] $binaryName: $shell $flags returned no absolute-path line; stdout=$preview');
     return const BinaryNotFound();
   }
-  return BinaryFound(resolved);
-}
-
-/// Strict parser for the login-only pass: stdout must trim to a single
-/// absolute path. Anything else (alias text, multi-line) → null.
-String? _strictPathParser(String stdout) {
-  final trimmed = stdout.trim();
-  if (trimmed.isEmpty || !trimmed.startsWith('/') || trimmed.contains('\n')) return null;
-  return trimmed;
-}
-
-/// Permissive parser for the interactive pass: a chatty `.zshrc` will
-/// print prompts/welcome lines before `command -v` runs, so take the
-/// last non-empty line that looks like an absolute path. Reject lines
-/// containing whitespace (rules out alias-style `claude: aliased to ...`).
-String? _permissivePathParser(String stdout) {
-  for (final line in stdout.split('\n').reversed) {
-    final trimmed = line.trim();
-    if (trimmed.startsWith('/') && !trimmed.contains(' ') && !trimmed.contains('\t')) return trimmed;
-  }
-  return null;
+  return BinaryFound(resolved, shellPath: shellPath);
 }

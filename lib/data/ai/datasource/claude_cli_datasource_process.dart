@@ -42,8 +42,13 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   /// Absolute path to the `claude` binary, resolved via the user's login
   /// shell during [detect]. macOS GUI launches inherit a stripped PATH that
   /// excludes Homebrew / npm-global / nvm / asdf, so a bare `binaryPath`
-  /// would only resolve under `flutter run`. See [resolveBinaryViaLoginShell].
+  /// would only resolve under `flutter run`. See [resolveBinary].
   String? _resolvedPath;
+
+  /// Full PATH string as reported by the login shell when [_resolvedPath]
+  /// was resolved. Passed to child processes so shebang interpreters (e.g.
+  /// `node` for `#!/usr/bin/env node`) are reachable in release builds.
+  String? _shellPath;
 
   @override
   String get id => 'claude-cli';
@@ -61,21 +66,28 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
     final resolution = await resolveBinary(binaryPath);
     final String resolved;
     switch (resolution) {
-      case BinaryFound(:final path):
+      case BinaryFound(:final path, :final shellPath):
         resolved = path;
         _resolvedPath = path;
+        _shellPath = shellPath;
       case BinaryNotFound():
         return const DetectionResult.missing();
       case BinaryProbeFailed(:final reason):
         return DetectionResult.unhealthy('login-shell probe failed: $reason');
     }
 
-    // Step 2: --version probe. A stale or broken binary still resolves but
-    // fails here. Surfacing this as `unhealthy` (rather than `missing`)
-    // lets the UI tell users to reinstall vs install.
+    // Step 2: --version probe. Pass the shell's expanded PATH so that
+    // Node-backed binaries (`#!/usr/bin/env node`) can find their runtime
+    // even in a release .app with a stripped inherited PATH.
+    final probeEnv = _shellPath != null ? {'PATH': _shellPath!} : null;
     final ProcessResult versionResult;
     try {
-      versionResult = await Process.run(resolved, ['--version']).timeout(const Duration(seconds: 5));
+      versionResult = await Process.run(
+        resolved,
+        ['--version'],
+        environment: probeEnv,
+        includeParentEnvironment: probeEnv == null,
+      ).timeout(const Duration(seconds: 5));
     } catch (e) {
       sLog('[ClaudeCli] --version probe failed: $e');
       return DetectionResult.unhealthy('--version failed: ${e.runtimeType}');
@@ -148,10 +160,12 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       // Minimal env — inheriting parent's full env would leak
       // ANTHROPIC_API_KEY / GITHUB_TOKEN / AWS_* into the CLI's child
       // processes (which run under bypassPermissions).
+      // Use the login-shell PATH (captured during detect) rather than the
+      // GUI app's stripped PATH so Node-backed binaries resolve correctly.
       final parentEnv = Platform.environment;
       final minimalEnv = <String, String>{
         if (parentEnv['HOME'] != null) 'HOME': parentEnv['HOME']!,
-        if (parentEnv['PATH'] != null) 'PATH': parentEnv['PATH']!,
+        'PATH': _shellPath ?? parentEnv['PATH'] ?? '/usr/bin:/bin:/usr/sbin:/sbin',
         if (parentEnv['USER'] != null) 'USER': parentEnv['USER']!,
         if (parentEnv['LANG'] != null) 'LANG': parentEnv['LANG']!,
         if (parentEnv['TMPDIR'] != null) 'TMPDIR': parentEnv['TMPDIR']!,
@@ -318,8 +332,9 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
     if (cached != null) return cached;
     final r = await resolveBinary(binaryPath);
     switch (r) {
-      case BinaryFound(:final path):
+      case BinaryFound(:final path, :final shellPath):
         _resolvedPath = path;
+        _shellPath = shellPath;
         return path;
       case BinaryNotFound():
         controller.add(const ProviderStreamFailure(error: 'Claude Code CLI is not installed or not on PATH'));

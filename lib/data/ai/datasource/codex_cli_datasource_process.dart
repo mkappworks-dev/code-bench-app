@@ -62,8 +62,13 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   /// Absolute path to the `codex` binary, resolved via the user's login
   /// shell during [detect]. macOS GUI launches inherit a stripped PATH that
   /// excludes Homebrew / npm-global / nvm / asdf, so a bare `binaryPath`
-  /// would only resolve under `flutter run`. See [resolveBinaryViaLoginShell].
+  /// would only resolve under `flutter run`. See [resolveBinary].
   String? _resolvedPath;
+
+  /// Full PATH string as reported by the login shell when [_resolvedPath]
+  /// was resolved. Passed to child processes so shebang interpreters (e.g.
+  /// `node` for `#!/usr/bin/env node`) are reachable in release builds.
+  String? _shellPath;
 
   @override
   String get id => 'codex';
@@ -80,9 +85,10 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     final resolution = await resolveBinary(binaryPath);
     final String resolved;
     switch (resolution) {
-      case BinaryFound(:final path):
+      case BinaryFound(:final path, :final shellPath):
         resolved = path;
         _resolvedPath = path;
+        _shellPath = shellPath;
       case BinaryNotFound():
         return const DetectionResult.missing();
       case BinaryProbeFailed(:final reason):
@@ -93,10 +99,17 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     // from the `initialize` JSON-RPC response. If we already have it, use it.
     if (_version != null) return DetectionResult.installed(_version!);
 
-    // Probe `--version` defensively. A binary that resolves but hangs/errors
-    // here is `unhealthy`, not `missing`.
+    // Probe `--version` defensively. Pass the shell's expanded PATH so that
+    // Node-backed binaries (`#!/usr/bin/env node`) can find their runtime
+    // even in a release .app with a stripped inherited PATH.
+    final probeEnv = _shellPath != null ? {'PATH': _shellPath!} : null;
     try {
-      final result = await Process.run(resolved, ['--version']).timeout(const Duration(seconds: 5));
+      final result = await Process.run(
+        resolved,
+        ['--version'],
+        environment: probeEnv,
+        includeParentEnvironment: probeEnv == null,
+      ).timeout(const Duration(seconds: 5));
       if (result.exitCode != 0) {
         sLog('[CodexCli] --version exited ${result.exitCode}');
         return DetectionResult.unhealthy('--version exited ${result.exitCode}');
@@ -196,7 +209,9 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     final parentEnv = Platform.environment;
     final minimalEnv = <String, String>{
       if (parentEnv['HOME'] != null) 'HOME': parentEnv['HOME']!,
-      if (parentEnv['PATH'] != null) 'PATH': parentEnv['PATH']!,
+      // Use the login-shell PATH captured during detect so that
+      // Node-backed binaries resolve correctly in release builds.
+      'PATH': _shellPath ?? parentEnv['PATH'] ?? '/usr/bin:/bin:/usr/sbin:/sbin',
       if (parentEnv['USER'] != null) 'USER': parentEnv['USER']!,
       if (parentEnv['LANG'] != null) 'LANG': parentEnv['LANG']!,
       if (parentEnv['TMPDIR'] != null) 'TMPDIR': parentEnv['TMPDIR']!,
@@ -661,8 +676,9 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     if (cached != null) return cached;
     final r = await resolveBinary(binaryPath);
     switch (r) {
-      case BinaryFound(:final path):
+      case BinaryFound(:final path, :final shellPath):
         _resolvedPath = path;
+        _shellPath = shellPath;
         return path;
       case BinaryNotFound():
         throw Exception('Codex CLI is not installed or not on PATH');
