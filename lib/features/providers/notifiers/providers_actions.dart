@@ -186,9 +186,12 @@ class ProvidersActions extends _$ProvidersActions {
   /// Reloads the AI repository and `ApiKeysNotifier` so dependent widgets
   /// pick up the new value without a manual refresh.
   Future<void> saveAnthropicTransport(String value) async {
-    assert(value == 'api-key' || value == 'sdk', 'invalid transport: $value');
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
+      if (value != 'api-key' && value != 'sdk') {
+        sLog('[ProvidersActions] rejected invalid anthropicTransport: $value');
+        throw ArgumentError.value(value, 'value', 'invalid transport');
+      }
       try {
         await ref.read(providersServiceProvider).writeAnthropicTransport(value);
         ref.invalidate(aiRepositoryProvider);
@@ -204,9 +207,12 @@ class ProvidersActions extends _$ProvidersActions {
   /// Mirrors [saveAnthropicTransport] — see that method for the rationale
   /// behind invalidating both `aiRepositoryProvider` and `apiKeysProvider`.
   Future<void> saveOpenaiTransport(String value) async {
-    assert(value == 'api-key' || value == 'sdk', 'invalid transport: $value');
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
+      if (value != 'api-key' && value != 'sdk') {
+        sLog('[ProvidersActions] rejected invalid openaiTransport: $value');
+        throw ArgumentError.value(value, 'value', 'invalid transport');
+      }
       try {
         await ref.read(providersServiceProvider).writeOpenaiTransport(value);
         ref.invalidate(aiRepositoryProvider);
