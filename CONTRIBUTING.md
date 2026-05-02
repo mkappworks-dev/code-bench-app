@@ -14,7 +14,7 @@ Thank you for your interest in contributing. This document covers how to report 
   - [Suggesting Features](#suggesting-features)
   - [Development Setup](#development-setup)
   - [Making Changes](#making-changes)
-    - [Branch naming](#branch-naming)
+    - [Branch and PR title naming](#branch-and-pr-title-naming)
     - [Where to add things](#where-to-add-things)
     - [After modifying Drift tables, Freezed models, or Riverpod providers](#after-modifying-drift-tables-freezed-models-or-riverpod-providers)
   - [Commit Message Conventions](#commit-message-conventions)
@@ -110,11 +110,11 @@ doc(<YYYY-MM-DD>): <short-description>
 
 Examples — note the descriptive part matches:
 
-| Branch                                     | PR title                                       |
-| ------------------------------------------ | ---------------------------------------------- |
-| `feat/2026-05-02-mcp-sse-transport`        | `feat(2026-05-02): mcp sse transport`          |
-| `fix/2026-05-02-keychain-null-on-launch`   | `fix(2026-05-02): keychain null on launch`     |
-| `tech/2026-05-02-bump-flutter-to-3.41`     | `tech(2026-05-02): bump flutter to 3.41`       |
+| Branch                                   | PR title                                   |
+| ---------------------------------------- | ------------------------------------------ |
+| `feat/2026-05-02-mcp-sse-transport`      | `feat(2026-05-02): mcp sse transport`      |
+| `fix/2026-05-02-keychain-null-on-launch` | `fix(2026-05-02): keychain null on launch` |
+| `tech/2026-05-02-bump-flutter-to-3.41`   | `tech(2026-05-02): bump flutter to 3.41`   |
 
 ### Where to add things
 
@@ -141,14 +141,14 @@ Generated `.g.dart` and `.freezed.dart` files **must be committed** alongside th
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
-| Type       | When to use                                | Version bump (release-please)  |
-| ---------- | ------------------------------------------ | ------------------------------ |
+| Type       | When to use                                | Version bump (release-please) |
+| ---------- | ------------------------------------------ | ----------------------------- |
 | `feat`     | A new feature visible to users             | minor (`0.1.0 → 0.2.0`)       |
 | `fix`      | A bug fix                                  | patch (`0.1.0 → 0.1.1`)       |
-| `docs`     | Documentation changes only                 | none                           |
-| `refactor` | Code restructuring with no behavior change | none                           |
-| `test`     | Adding or updating tests                   | none                           |
-| `chore`    | Build scripts, dependency updates, tooling | none                           |
+| `docs`     | Documentation changes only                 | none                          |
+| `refactor` | Code restructuring with no behavior change | none                          |
+| `test`     | Adding or updating tests                   | none                          |
+| `chore`    | Build scripts, dependency updates, tooling | none                          |
 
 Add `!` after the type (`feat!:`) or a `BREAKING CHANGE:` footer to trigger a major bump (`0.1.0 → 1.0.0`). Do not manually bump `pubspec.yaml` or push version tags — release-please handles both when you merge the release PR it opens.
 
