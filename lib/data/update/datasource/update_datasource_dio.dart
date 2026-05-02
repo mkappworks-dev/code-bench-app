@@ -13,10 +13,14 @@ import 'update_datasource.dart';
 
 part 'update_datasource_dio.g.dart';
 
-/// Hosts the update path is allowed to fetch from. Validated against both the
-/// release-API endpoint and the asset download URL (which is release-author
-/// controlled and could otherwise point anywhere). Also re-asserted against
-/// `Response.realUri` after redirects to catch a CDN-redirect off-allowlist.
+/// Hosts allowed to serve the GitHub releases *metadata* API. Re-asserted
+/// against `Response.realUri` after redirects.
+const _kAllowedApiHosts = {'api.github.com'};
+
+/// Hosts allowed to serve the *asset zip* download. The asset URL comes from
+/// release metadata (release-author controlled), so the allowlist is the
+/// integrity boundary. Re-asserted against `Response.realUri` after redirects
+/// to catch a CDN-redirect off-allowlist.
 const _kAllowedDownloadHosts = {
   'github.com',
   'objects.githubusercontent.com',
@@ -44,8 +48,8 @@ class UpdateDatasourceDio implements UpdateDatasource {
       final response = await _dio.get<Map<String, dynamic>>(
         'https://api.github.com/repos/$kGithubOwner/$kGithubRepo/releases/latest',
       );
-      // Re-assert allowlist on the *final* URL after any redirects.
-      _assertAllowedHost(response.realUri.toString());
+      // Re-assert against the *final* URL after any redirects.
+      _assertAllowedHost(response.realUri.toString(), allowed: _kAllowedApiHosts);
 
       final data = response.data;
       if (data == null) {
@@ -72,7 +76,7 @@ class UpdateDatasourceDio implements UpdateDatasource {
         if (downloadUrl == null || downloadUrl.isEmpty) {
           throw UpdateNetworkException('Release $tagName asset has no browser_download_url.');
         }
-        _assertAllowedHost(downloadUrl);
+        _assertAllowedHost(downloadUrl, allowed: _kAllowedDownloadHosts);
 
         final publishedAtRaw = data['published_at'] as String?;
         final publishedAt = publishedAtRaw == null ? DateTime.now() : DateTime.parse(publishedAtRaw);
@@ -103,7 +107,7 @@ class UpdateDatasourceDio implements UpdateDatasource {
     required String version,
     required void Function(int received, int total) onProgress,
   }) async {
-    _assertAllowedHost(url);
+    _assertAllowedHost(url, allowed: _kAllowedDownloadHosts);
     // Randomised tempdir per attempt — defeats predictable-path symlink
     // pre-planting on the zip download path.
     final tempDir = await Directory.systemTemp.createTemp('cb-update-zip-');
@@ -118,7 +122,7 @@ class UpdateDatasourceDio implements UpdateDatasource {
       // Re-assert allowlist on the *final* URL after any redirects. If the
       // CDN ever redirects off-allowlist, refuse the bytes we just wrote.
       try {
-        _assertAllowedHost(response.realUri.toString());
+        _assertAllowedHost(response.realUri.toString(), allowed: _kAllowedDownloadHosts);
       } on UpdateException {
         try {
           await File(savePath).delete();
@@ -134,9 +138,9 @@ class UpdateDatasourceDio implements UpdateDatasource {
     }
   }
 
-  void _assertAllowedHost(String rawUrl) {
+  void _assertAllowedHost(String rawUrl, {required Set<String> allowed}) {
     final uri = Uri.tryParse(rawUrl);
-    if (uri == null || uri.scheme != 'https' || !_kAllowedDownloadHosts.contains(uri.host)) {
+    if (uri == null || uri.scheme != 'https' || !allowed.contains(uri.host)) {
       sLog('[UpdateDatasource] Refusing non-allowlisted update URL: $rawUrl');
       throw UpdateNetworkException('Update URL is not from an allowlisted host: ${uri?.host ?? "(unparseable)"}');
     }

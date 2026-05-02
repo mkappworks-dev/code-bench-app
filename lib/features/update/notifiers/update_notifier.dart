@@ -15,10 +15,20 @@ import 'update_state.dart';
 
 part 'update_notifier.g.dart';
 
+/// Snapshot of the most recent check attempt — both the timestamp and whether
+/// it failed. Persisting on failure too means "Last checked" reflects the last
+/// time we actually tried, not just the last time we succeeded.
+typedef UpdateLastChecked = ({DateTime at, bool failed});
+
 @Riverpod(keepAlive: true)
-Future<String?> updateLastChecked(Ref ref) async {
+Future<UpdateLastChecked?> updateLastChecked(Ref ref) async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getString(AppConstants.prefUpdateLastChecked);
+  final iso = prefs.getString(AppConstants.prefUpdateLastChecked);
+  if (iso == null) return null;
+  final at = DateTime.tryParse(iso);
+  if (at == null) return null;
+  final failed = prefs.getBool(AppConstants.prefUpdateLastCheckedFailed) ?? false;
+  return (at: at, failed: failed);
 }
 
 @Riverpod(keepAlive: true)
@@ -50,20 +60,27 @@ class UpdateNotifier extends _$UpdateNotifier {
     } on UpdateNetworkException catch (e, st) {
       dLog('[UpdateNotifier] checkForUpdates network error: $e\n$st');
       state = UpdateState.error(UpdateFailure.networkError(e.message));
+      await _persistLastChecked(failed: true);
       return;
     } catch (e, st) {
       dLog('[UpdateNotifier] checkForUpdates failed: $e\n$st');
       state = UpdateState.error(_asFailure(e));
+      await _persistLastChecked(failed: true);
       return;
     }
 
     state = info != null ? UpdateState.available(info) : const UpdateState.upToDate();
+    await _persistLastChecked(failed: false);
+  }
 
-    // Persist last-checked separately — a SharedPreferences hiccup must not
-    // poison a successful check.
+  /// Persist the most recent check attempt — both the timestamp and whether
+  /// it failed. A SharedPreferences hiccup must not poison the in-memory state
+  /// transition that was already made by the caller.
+  Future<void> _persistLastChecked({required bool failed}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(AppConstants.prefUpdateLastChecked, DateTime.now().toIso8601String());
+      await prefs.setBool(AppConstants.prefUpdateLastCheckedFailed, failed);
       ref.invalidate(updateLastCheckedProvider);
     } catch (e, st) {
       dLog('[UpdateNotifier] persisting lastChecked failed: $e\n$st');
