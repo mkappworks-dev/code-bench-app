@@ -86,14 +86,35 @@ dart run build_runner watch --delete-conflicting-outputs
 
 ## Making Changes
 
-### Branch naming
+### Branch and PR title naming
+
+Every branch and PR title includes today's date in `YYYY-MM-DD` format. The descriptive part is identical between the two; only the prefix format differs.
+
+**Branch name** — slash-separated, used in git:
 
 ```
-feat/<short-description>  # new feature
-fix/<short-description>   # bug fix
-tech/<short-description>  # refactors, tooling, dependency updates
-doc/<short-description>   # documentation only
+feat/<YYYY-MM-DD>-<short-description>  # new feature
+fix/<YYYY-MM-DD>-<short-description>   # bug fix
+tech/<YYYY-MM-DD>-<short-description>  # refactors, tooling, dependency updates
+doc/<YYYY-MM-DD>-<short-description>   # documentation only
 ```
+
+**PR title** — conventional-commit format with the date in the scope. The CI lint enforces this:
+
+```
+feat(<YYYY-MM-DD>): <short-description>
+fix(<YYYY-MM-DD>): <short-description>
+tech(<YYYY-MM-DD>): <short-description>
+doc(<YYYY-MM-DD>): <short-description>
+```
+
+Examples — note the descriptive part matches:
+
+| Branch                                     | PR title                                       |
+| ------------------------------------------ | ---------------------------------------------- |
+| `feat/2026-05-02-mcp-sse-transport`        | `feat(2026-05-02): mcp sse transport`          |
+| `fix/2026-05-02-keychain-null-on-launch`   | `fix(2026-05-02): keychain null on launch`     |
+| `tech/2026-05-02-bump-flutter-to-3.41`     | `tech(2026-05-02): bump flutter to 3.41`       |
 
 ### Where to add things
 
