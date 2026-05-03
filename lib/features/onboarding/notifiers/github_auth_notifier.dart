@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/utils/debug_logger.dart';
+import '../../../data/github/models/device_code_response.dart';
 import '../../../services/github/github_service.dart';
 
 part 'github_auth_notifier.g.dart';
@@ -21,18 +23,33 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   }
 
   /// Requests a device code from GitHub and starts background polling.
-  /// Returns the device code immediately so the dialog can display it.
-  /// Notifier state transitions to AsyncData(GitHubAccount) when the user
-  /// authorizes, AsyncError on failure, or AsyncData(null) on cancel.
-  Future<DeviceCodeResponse> startDeviceFlow() async {
+  ///
+  /// Returns the device code immediately so the dialog can display it, or
+  /// `null` if the request itself failed (e.g. network down, GitHub
+  /// unreachable, bad client_id) — in that case the notifier transitions to
+  /// [AsyncError] so the dialog's `ref.listen` can render the error.
+  ///
+  /// Notifier state transitions:
+  /// - `AsyncLoading` → set immediately on call
+  /// - `AsyncError`   → request-device-code failure (returns `null`)
+  /// - `AsyncData(GitHubAccount)` → user authorizes (set by background poll)
+  /// - `AsyncError`   → polling failure (set by background poll)
+  /// - `AsyncData(null)` → user cancels via [cancelDeviceFlow]
+  Future<DeviceCodeResponse?> startDeviceFlow() async {
     state = const AsyncLoading();
-    final svc = await ref.read(githubServiceProvider.future);
-    final code = await svc.requestDeviceCode();
+    try {
+      final svc = await ref.read(githubServiceProvider.future);
+      final code = await svc.requestDeviceCode();
 
-    final cancelSignal = Completer<void>();
-    _cancelSignal = cancelSignal;
-    unawaited(_pollInBackground(svc, code, cancelSignal));
-    return code;
+      final cancelSignal = Completer<void>();
+      _cancelSignal = cancelSignal;
+      unawaited(_pollInBackground(svc, code, cancelSignal));
+      return code;
+    } catch (e, st) {
+      dLog('[GitHubAuthNotifier] startDeviceFlow request failed: ${e.runtimeType}');
+      state = AsyncError(e, st);
+      return null;
+    }
   }
 
   Future<void> _pollInBackground(GitHubService svc, DeviceCodeResponse code, Completer<void> cancelSignal) async {

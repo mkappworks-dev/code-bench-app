@@ -29,7 +29,7 @@ class GitHubDeviceFlowDialog extends ConsumerStatefulWidget {
 
 class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog> {
   DeviceCodeResponse? _code;
-  String? _initError;
+  String? _error;
 
   @override
   void initState() {
@@ -39,7 +39,7 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
 
   Future<void> _start() async {
     final code = await ref.read(gitHubAuthProvider.notifier).startDeviceFlow();
-    if (!mounted) return;
+    if (!mounted || code == null) return;
     setState(() => _code = code);
     try {
       await Clipboard.setData(ClipboardData(text: code.userCode));
@@ -60,38 +60,38 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
         if (account != null && mounted) Navigator.of(context).pop();
       });
       if (next.hasError && mounted) {
-        setState(() => _initError = next.error.toString());
+        setState(() => _error = next.error.toString());
       }
     });
 
     final code = _code;
-    final initError = _initError;
+    final error = _error;
 
     return AppDialog(
       icon: AppIcons.github,
       iconType: AppDialogIconType.teal,
       title: 'Sign in to GitHub',
       subtitle: code == null ? 'Requesting code…' : 'Enter this code at github.com/login/device',
-      content: _DeviceFlowContent(code: code, initError: initError),
+      content: _DeviceFlowContent(code: code, error: error),
       actions: [AppDialogAction.cancel(onPressed: _onCancel)],
     );
   }
 }
 
 class _DeviceFlowContent extends StatelessWidget {
-  const _DeviceFlowContent({required this.code, required this.initError});
+  const _DeviceFlowContent({required this.code, required this.error});
 
   final DeviceCodeResponse? code;
-  final String? initError;
+  final String? error;
 
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
 
-    if (initError != null) {
+    if (error != null) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Text(initError!, style: TextStyle(color: c.error)),
+        child: Text(error!, style: TextStyle(color: c.error)),
       );
     }
 

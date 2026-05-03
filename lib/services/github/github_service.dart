@@ -6,7 +6,6 @@ import '../../data/github/repository/github_repository_impl.dart';
 import '../../data/github/models/repository.dart';
 
 export '../../data/github/models/repository.dart' show GitHubAccount, GitTreeItem, Repository;
-export '../../data/github/models/device_code_response.dart' show DeviceCodeResponse;
 
 part 'github_service.g.dart';
 

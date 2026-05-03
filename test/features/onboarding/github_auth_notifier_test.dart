@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -12,6 +14,7 @@ import 'package:code_bench_app/features/onboarding/notifiers/github_auth_notifie
 class _FakeGitHubRepository extends Fake implements GitHubRepository {
   Object? _signOutError;
   Object? _pollError;
+  Object? _requestDeviceCodeError;
   GitHubAccount? _pollResult;
   GitHubAccount? _storedAccount;
   DeviceCodeResponse _deviceCode = const DeviceCodeResponse(
@@ -24,6 +27,7 @@ class _FakeGitHubRepository extends Fake implements GitHubRepository {
 
   void throwOnSignOut(Object error) => _signOutError = error;
   void throwOnPoll(Object error) => _pollError = error;
+  void throwOnRequestDeviceCode(Object error) => _requestDeviceCodeError = error;
   void setPollResult(GitHubAccount account) => _pollResult = account;
   void setStoredAccount(GitHubAccount? account) => _storedAccount = account;
   void setDeviceCode(DeviceCodeResponse code) => _deviceCode = code;
@@ -37,12 +41,29 @@ class _FakeGitHubRepository extends Fake implements GitHubRepository {
   }
 
   @override
-  Future<DeviceCodeResponse> requestDeviceCode() async => _deviceCode;
+  Future<DeviceCodeResponse> requestDeviceCode() async {
+    if (_requestDeviceCodeError != null) throw _requestDeviceCodeError!;
+    return _deviceCode;
+  }
 
   @override
   Future<GitHubAccount?> pollForUserToken(String deviceCode, int intervalSeconds, {Future<void>? cancelSignal}) async {
     if (_pollError != null) throw _pollError!;
-    return _pollResult;
+    if (cancelSignal == null) return _pollResult;
+
+    // Honor cancellation: whichever future completes first wins. If a poll
+    // result is configured we resolve it on a microtask so callers can race
+    // cancel against it.
+    final completer = Completer<GitHubAccount?>();
+    cancelSignal.then((_) {
+      if (!completer.isCompleted) completer.complete(null);
+    });
+    if (_pollResult != null) {
+      Future<void>.microtask(() {
+        if (!completer.isCompleted) completer.complete(_pollResult);
+      });
+    }
+    return completer.future;
   }
 
   @override
@@ -109,8 +130,27 @@ void main() {
       await c.read(gitHubAuthProvider.future);
 
       final code = await c.read(gitHubAuthProvider.notifier).startDeviceFlow();
+      // Cancel pending poll to avoid touching the provider after teardown.
+      c.read(gitHubAuthProvider.notifier).cancelDeviceFlow();
+      await Future<void>.delayed(Duration.zero);
 
-      expect(code.userCode, 'WDJB-MJHT');
+      expect(code, isNotNull);
+      expect(code!.userCode, 'WDJB-MJHT');
+    });
+
+    test('returns null and sets AsyncError when requestDeviceCode throws', () async {
+      fakeRepo.setStoredAccount(null);
+      fakeRepo.throwOnRequestDeviceCode(Exception('network down'));
+
+      final c = makeContainer();
+      await c.read(gitHubAuthProvider.future);
+
+      final code = await c.read(gitHubAuthProvider.notifier).startDeviceFlow();
+
+      expect(code, isNull);
+      final result = c.read(gitHubAuthProvider);
+      expect(result, isA<AsyncError<GitHubAccount?>>());
+      expect(result.error, isA<Exception>());
     });
 
     test('background polling sets AsyncData with account on success', () async {
@@ -144,15 +184,21 @@ void main() {
   });
 
   group('cancelDeviceFlow', () {
-    test('sets state to AsyncData(null)', () async {
+    test('sets state to AsyncData(null) and unblocks the poller', () async {
+      // Intentionally do NOT seed a poll result — the fake's pollForUserToken
+      // will only resolve when cancelSignal fires, so this test would hang
+      // forever if cancellation logic were removed from the notifier.
       fakeRepo.setStoredAccount(null);
-      fakeRepo.setPollResult(_fakeAccount());
 
       final c = makeContainer();
       await c.read(gitHubAuthProvider.future);
 
       await c.read(gitHubAuthProvider.notifier).startDeviceFlow();
       c.read(gitHubAuthProvider.notifier).cancelDeviceFlow();
+
+      // Yield so the awaiting poller can observe the cancel signal and
+      // return without overwriting the state set by cancelDeviceFlow.
+      await Future<void>.delayed(Duration.zero);
 
       final result = c.read(gitHubAuthProvider);
       expect(result, isA<AsyncData<GitHubAccount?>>());
