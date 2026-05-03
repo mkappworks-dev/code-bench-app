@@ -27,21 +27,34 @@ GitHubAuthDatasource githubAuthDatasource(Ref ref) => GitHubAuthDatasourceWeb(re
 class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
   GitHubAuthDatasourceWeb(this._storage)
     : _githubDio = DioFactory.create(baseUrl: 'https://github.com'),
-      _apiDio = DioFactory.create(baseUrl: ApiConstants.githubApiBaseUrl);
+      _apiDio = DioFactory.create(baseUrl: ApiConstants.githubApiBaseUrl),
+      _clientId = _envClientId;
 
   /// Test-only constructor — accepts pre-configured [Dio] instances so tests
   /// can inject a fake [HttpClientAdapter] without hitting real GitHub.
+  /// Optionally overrides the GitHub client ID so tests can exercise both
+  /// the fail-fast (empty) and the happy path without depending on a
+  /// `--dart-define=GITHUB_CLIENT_ID=…` flag at `flutter test` time.
   @visibleForTesting
-  GitHubAuthDatasourceWeb.withDios(this._storage, this._githubDio, this._apiDio);
+  GitHubAuthDatasourceWeb.withDios(this._storage, this._githubDio, this._apiDio, {String clientId = _envClientId})
+    : _clientId = clientId;
 
-  static const _clientId = String.fromEnvironment('GITHUB_CLIENT_ID');
+  static const _envClientId = String.fromEnvironment('GITHUB_CLIENT_ID');
 
   final SecureStorage _storage;
   final Dio _githubDio;
   final Dio _apiDio;
+  final String _clientId;
 
   @override
   Future<DeviceCodeResponse> requestDeviceCode() async {
+    if (_clientId.isEmpty) {
+      throw const AuthException(
+        'GitHub client ID is missing. Run with --dart-define-from-file=env.json '
+        'or pass --dart-define=GITHUB_CLIENT_ID=… at launch.',
+      );
+    }
+
     try {
       final response = await _githubDio.post(
         '/login/device/code',
@@ -50,8 +63,26 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
       );
       return DeviceCodeResponse.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
-      dLog('[GitHubAuthDatasource] requestDeviceCode failed (${e.type})');
-      throw AuthException('Failed to request device code', originalError: e);
+      final status = e.response?.statusCode;
+      final body = e.response?.data;
+      dLog(
+        '[GitHubAuthDatasource] requestDeviceCode failed '
+        '(${e.type}, status=$status, body=$body)',
+      );
+
+      // GitHub returns the error machine-readable when it can — surface that
+      // to the user so they can fix the misconfiguration (e.g. "device flow
+      // not enabled on this app", "bad client_id"). This endpoint never sees
+      // user secrets in either request or response, so quoting the body is
+      // safe.
+      var message = 'Failed to request device code';
+      if (body is Map) {
+        final desc = body['error_description'] ?? body['error'];
+        if (desc is String && desc.isNotEmpty) {
+          message = 'GitHub rejected device code request: $desc';
+        }
+      }
+      throw AuthException(message, originalError: e);
     }
   }
 

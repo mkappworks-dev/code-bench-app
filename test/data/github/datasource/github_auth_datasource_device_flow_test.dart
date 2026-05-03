@@ -51,12 +51,17 @@ class _InMemorySecureStorage extends Fake implements SecureStorage {
   Future<void> writeGitHubAccount(String json) async => account = json;
 }
 
-GitHubAuthDatasourceWeb _datasource(_FakeAdapter githubAdapter, _FakeAdapter apiAdapter, {SecureStorage? storage}) {
+GitHubAuthDatasourceWeb _datasource(
+  _FakeAdapter githubAdapter,
+  _FakeAdapter apiAdapter, {
+  SecureStorage? storage,
+  String clientId = 'Iv23li-test-client-id',
+}) {
   final githubDio = Dio(BaseOptions(baseUrl: 'https://github.com'));
   githubDio.httpClientAdapter = githubAdapter;
   final apiDio = Dio(BaseOptions(baseUrl: 'https://api.github.com'));
   apiDio.httpClientAdapter = apiAdapter;
-  return GitHubAuthDatasourceWeb.withDios(storage ?? _InMemorySecureStorage(), githubDio, apiDio);
+  return GitHubAuthDatasourceWeb.withDios(storage ?? _InMemorySecureStorage(), githubDio, apiDio, clientId: clientId);
 }
 
 void main() {
@@ -83,6 +88,36 @@ void main() {
       expect(code.deviceCode, 'dev-xyz');
       expect(code.interval, 5);
       expect(code.expiresIn, 900);
+    });
+
+    test('surfaces GitHub error_description in the AuthException', () async {
+      final githubAdapter = _FakeAdapter((opts) async {
+        return _json(403, {
+          'error': 'unauthorized_client',
+          'error_description': 'Device flow is not enabled for this app.',
+        });
+      });
+      final apiAdapter = _FakeAdapter((_) async => fail('api should not be called'));
+
+      final ds = _datasource(githubAdapter, apiAdapter);
+
+      await expectLater(
+        ds.requestDeviceCode(),
+        throwsA(isA<AuthException>().having((e) => e.message, 'message', contains('Device flow is not enabled'))),
+      );
+    });
+
+    test('fails fast when client ID is empty', () async {
+      final githubAdapter = _FakeAdapter((_) async => fail('github should not be called'));
+      final apiAdapter = _FakeAdapter((_) async => fail('api should not be called'));
+
+      final ds = _datasource(githubAdapter, apiAdapter, clientId: '');
+
+      await expectLater(
+        ds.requestDeviceCode(),
+        throwsA(isA<AuthException>().having((e) => e.message, 'message', contains('GitHub client ID is missing'))),
+      );
+      expect(githubAdapter.requests, isEmpty);
     });
   });
 
