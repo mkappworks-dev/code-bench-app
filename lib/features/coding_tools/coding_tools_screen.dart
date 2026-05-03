@@ -8,6 +8,7 @@ import '../../core/widgets/app_snack_bar.dart';
 import '../../data/coding_tools/models/denylist_category.dart';
 import '../../data/coding_tools/models/denylist_defaults.dart';
 import '../settings/widgets/section_label.dart';
+import '../settings/widgets/settings_chip_button.dart';
 import 'notifiers/coding_tools_denylist_actions.dart';
 import 'notifiers/coding_tools_denylist_notifier.dart';
 import 'widgets/denylist_category_group.dart';
@@ -47,6 +48,25 @@ class _CodingToolsScreenState extends ConsumerState<CodingToolsScreen> {
       hint: 'e.g. .env.',
     ),
   ];
+
+  Future<void> _restoreAllDefaults() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AppDialog(
+        icon: AppIcons.settings,
+        iconType: AppDialogIconType.teal,
+        title: 'Restore coding-tools denylist defaults?',
+        content: const Text('Your additions and any defaults you have opted out of will be cleared.'),
+        actions: [
+          AppDialogAction.cancel(onPressed: () => Navigator.pop(ctx, false)),
+          AppDialogAction.primary(label: 'Restore', onPressed: () => Navigator.pop(ctx, true)),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    if (!mounted) return;
+    await ref.read(codingToolsDenylistActionsProvider.notifier).restoreAll();
+  }
 
   Future<void> _confirmSuppressBaseline(DenylistCategory category, String value) async {
     final confirmed = await showDialog<bool>(
@@ -123,7 +143,14 @@ class _CodingToolsScreenState extends ConsumerState<CodingToolsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SectionLabel('Coding Tools'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionLabel('Coding Tools'),
+                  SettingsChipButton(label: '↺ Restore all defaults', onPressed: _restoreAllDefaults),
+                ],
+              ),
               const SizedBox(height: 4),
               Text(
                 'Files and folders the agent may not read, list, or modify.',

@@ -134,8 +134,11 @@ class GeneralPrefsNotifier extends _$GeneralPrefsNotifier {
         dLog('[GeneralPrefsNotifier] restoreDefaults failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
       }
-      ref.invalidateSelf();
-      return state.value ?? await build();
+      return (state.value ?? await build()).copyWith(
+        autoCommit: false,
+        terminalApp: 'Terminal',
+        deleteConfirmation: true,
+      );
     });
     if (ref.mounted) state = next;
   }

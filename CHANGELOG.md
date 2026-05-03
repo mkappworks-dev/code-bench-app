@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/mkappworks-dev/code-bench-app/compare/v0.4.1...v0.4.2) (2026-05-02)
+
+
+### Bug Fixes
+
+* **update:** allow in-bundle symlinks during update install ([#59](https://github.com/mkappworks-dev/code-bench-app/issues/59)) ([31feaca](https://github.com/mkappworks-dev/code-bench-app/commit/31feaca03df30a677997628954f99617b33d279d))
+
 ## [0.4.1](https://github.com/mkappworks-dev/code-bench-app/compare/v0.4.0...v0.4.1) (2026-05-02)
 
 

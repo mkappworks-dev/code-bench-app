@@ -14,6 +14,7 @@ import '../../core/widgets/app_text_field.dart';
 import 'widgets/app_dropdown.dart';
 import '../settings/widgets/section_label.dart';
 import 'widgets/settings_group.dart';
+import '../settings/widgets/settings_chip_button.dart';
 import '../update/widgets/update_section.dart';
 
 class GeneralScreen extends ConsumerStatefulWidget {
@@ -24,8 +25,8 @@ class GeneralScreen extends ConsumerStatefulWidget {
 }
 
 class _GeneralScreenState extends ConsumerState<GeneralScreen> {
-  bool _autoCommit = false;
-  bool _deleteConfirmation = true;
+  bool? _autoCommit;
+  bool? _deleteConfirmation;
   ThemeMode _themeMode = ThemeMode.system;
   final _terminalAppController = TextEditingController();
 
@@ -60,6 +61,39 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
   void dispose() {
     _terminalAppController.dispose();
     super.dispose();
+  }
+
+  Future<void> _restoreDefaults() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AppDialog(
+        icon: AppIcons.settings,
+        iconType: AppDialogIconType.teal,
+        title: 'Restore General defaults?',
+        content: Builder(
+          builder: (context) {
+            final c = AppColors.of(context);
+            return Text(
+              'Auto-commit, terminal app, and delete confirmation will be reset.\n\n'
+              'API keys, GitHub sign-in, chat history, and projects are not affected.',
+              style: TextStyle(color: c.textSecondary, fontSize: 12),
+            );
+          },
+        ),
+        actions: [
+          AppDialogAction.cancel(onPressed: () => Navigator.pop(ctx, false)),
+          AppDialogAction.primary(label: 'Restore', onPressed: () => Navigator.pop(ctx, true)),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await ref.read(generalPrefsProvider.notifier).restoreDefaults();
+    if (!mounted) return;
+    if (ref.read(generalPrefsProvider).hasError) {
+      AppSnackBar.show(context, 'Could not restore defaults — please try again.', type: AppSnackBarType.error);
+    } else {
+      await _load();
+    }
   }
 
   Future<void> _confirmWipeAllData() async {
@@ -154,54 +188,58 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
               SettingsRow(
                 label: 'Delete confirmation',
                 description: 'Ask before deleting a session',
-                trailing: Transform.scale(
-                  scale: 0.75,
-                  child: Switch(
-                    value: _deleteConfirmation,
-                    onChanged: (v) async {
-                      await ref.read(generalPrefsProvider.notifier).setDeleteConfirmation(v);
-                      setState(() => _deleteConfirmation = v);
-                    },
-                    thumbColor: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.selected)) return Colors.white;
-                      return c.sendDisabledIconColor;
-                    }),
-                    trackColor: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.selected)) return c.accent;
-                      return c.sendDisabledFill;
-                    }),
-                    trackOutlineColor: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.selected)) return Colors.transparent;
-                      return c.sendDisabledStroke;
-                    }),
-                  ),
-                ),
+                trailing: _deleteConfirmation == null
+                    ? const SizedBox()
+                    : Transform.scale(
+                        scale: 0.75,
+                        child: Switch(
+                          value: _deleteConfirmation!,
+                          onChanged: (v) async {
+                            await ref.read(generalPrefsProvider.notifier).setDeleteConfirmation(v);
+                            setState(() => _deleteConfirmation = v);
+                          },
+                          thumbColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) return Colors.white;
+                            return c.sendDisabledIconColor;
+                          }),
+                          trackColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) return c.accent;
+                            return c.sendDisabledFill;
+                          }),
+                          trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) return Colors.transparent;
+                            return c.sendDisabledStroke;
+                          }),
+                        ),
+                      ),
               ),
               SettingsRow(
                 label: 'Auto-commit',
                 description: 'Skip commit dialog; commit immediately with AI-generated message',
-                trailing: Transform.scale(
-                  scale: 0.75,
-                  child: Switch(
-                    value: _autoCommit,
-                    onChanged: (v) async {
-                      await ref.read(generalPrefsProvider.notifier).setAutoCommit(v);
-                      setState(() => _autoCommit = v);
-                    },
-                    thumbColor: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.selected)) return Colors.white;
-                      return c.sendDisabledIconColor;
-                    }),
-                    trackColor: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.selected)) return c.accent;
-                      return c.sendDisabledFill;
-                    }),
-                    trackOutlineColor: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.selected)) return Colors.transparent;
-                      return c.sendDisabledStroke;
-                    }),
-                  ),
-                ),
+                trailing: _autoCommit == null
+                    ? const SizedBox()
+                    : Transform.scale(
+                        scale: 0.75,
+                        child: Switch(
+                          value: _autoCommit!,
+                          onChanged: (v) async {
+                            await ref.read(generalPrefsProvider.notifier).setAutoCommit(v);
+                            setState(() => _autoCommit = v);
+                          },
+                          thumbColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) return Colors.white;
+                            return c.sendDisabledIconColor;
+                          }),
+                          trackColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) return c.accent;
+                            return c.sendDisabledFill;
+                          }),
+                          trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) return Colors.transparent;
+                            return c.sendDisabledStroke;
+                          }),
+                        ),
+                      ),
               ),
               SettingsRow(
                 label: 'Terminal app',
@@ -222,10 +260,15 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
           SettingsGroup(
             rows: [
               SettingsRow(
+                label: 'Restore defaults',
+                description: 'Reset auto-commit, terminal app, and delete confirmation to their defaults.',
+                trailing: SettingsChipButton(label: 'Restore', onPressed: _restoreDefaults),
+              ),
+              SettingsRow(
                 label: 'Wipe all data',
                 description:
                     'Delete API keys, GitHub sign-in, chat history, projects, and MCP servers. Cannot be undone.',
-                trailing: _DebugChipButton(label: 'Wipe', onPressed: _confirmWipeAllData, isDestructive: true),
+                trailing: SettingsChipButton(label: 'Wipe', onPressed: _confirmWipeAllData, isDestructive: true),
                 isLast: true,
               ),
             ],
@@ -241,7 +284,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                   description:
                       'Show the 3-step wizard on next launch. Does not clear API keys, GitHub sign-in, or projects.',
                   trailing: Builder(
-                    builder: (ctx) => _DebugChipButton(
+                    builder: (ctx) => SettingsChipButton(
                       label: 'Replay',
                       onPressed: () async {
                         await ref.read(settingsActionsProvider.notifier).replayOnboarding();
@@ -263,52 +306,6 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _DebugChipButton extends StatefulWidget {
-  const _DebugChipButton({required this.label, required this.onPressed, this.isDestructive = false});
-
-  final String label;
-  final VoidCallback onPressed;
-  final bool isDestructive;
-
-  @override
-  State<_DebugChipButton> createState() => _DebugChipButtonState();
-}
-
-class _DebugChipButtonState extends State<_DebugChipButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    final fg = widget.isDestructive ? c.error : c.textPrimary;
-    final borderColor = widget.isDestructive ? c.error.withValues(alpha: 0.5) : c.chipStroke;
-    final bgRest = widget.isDestructive ? c.errorTintBg : c.chipFill;
-    final bgHover = widget.isDestructive ? c.error.withValues(alpha: 0.2) : c.chipStroke;
-
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onPressed,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: _hovered ? bgHover : bgRest,
-            border: Border.all(color: borderColor),
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: Text(
-            widget.label,
-            style: TextStyle(color: fg, fontSize: ThemeConstants.uiFontSizeSmall),
-          ),
-        ),
       ),
     );
   }
