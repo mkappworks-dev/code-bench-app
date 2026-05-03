@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.4.2...v0.5.0) (2026-05-03)
+
+
+### Features
+
+* **github-auth:** replace GitHub auth with Device Flow on GitHub App ([#62](https://github.com/mkappworks-dev/code-bench-app/issues/62)) ([211126b](https://github.com/mkappworks-dev/code-bench-app/commit/211126befabccb413ed36bddb30e7e16036e0c75))
+
 ## [0.4.2](https://github.com/mkappworks-dev/code-bench-app/compare/v0.4.1...v0.4.2) (2026-05-02)
 
 
