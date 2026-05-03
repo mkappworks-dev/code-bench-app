@@ -25,7 +25,29 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   @override
   Future<GitHubAccount?> build() async {
     final svc = await ref.watch(githubServiceProvider.future);
-    return svc.getStoredAccount();
+    final account = await svc.getStoredAccount();
+    if (account != null) {
+      // Best-effort: ask GitHub whether the token is still good without
+      // blocking the UI. A 401 here means the token was revoked while
+      // the app was closed, in which case we transition to AsyncData(null).
+      // Network/5xx are silent — the next user-initiated call will
+      // surface the failure if the token really is bad.
+      unawaited(_validateInBackground(svc));
+    }
+    return account;
+  }
+
+  Future<void> _validateInBackground(GitHubService svc) async {
+    try {
+      final isValid = await svc.validateStoredToken();
+      if (!isValid) {
+        dLog('[GitHubAuthNotifier] stored token rejected by GitHub — signing out');
+        await svc.signOut();
+        state = const AsyncData(null);
+      }
+    } catch (e) {
+      dLog('[GitHubAuthNotifier] background token validation skipped: ${e.runtimeType}');
+    }
   }
 
   /// Requests a device code from GitHub and starts background polling.

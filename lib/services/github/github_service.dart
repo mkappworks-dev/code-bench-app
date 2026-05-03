@@ -30,6 +30,7 @@ class GitHubService {
   Future<GitHubAccount> signInWithPat(String token) => _repo.signInWithPat(token);
   Future<GitHubAccount?> getStoredAccount() => _repo.getStoredAccount();
   Future<bool> isAuthenticated() => _repo.isAuthenticated();
+  Future<bool> validateStoredToken() => _repo.validateStoredToken();
   Future<void> signOut() => _repo.signOut();
   Future<List<Repository>> listRepositories({int page = 1}) => _repo.listRepositories(page: page);
   Future<List<Repository>> searchRepositories(String query) => _repo.searchRepositories(query);

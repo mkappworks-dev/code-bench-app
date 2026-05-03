@@ -49,6 +49,9 @@ class _InMemorySecureStorage extends Fake implements SecureStorage {
 
   @override
   Future<void> writeGitHubAccount(String json) async => account = json;
+
+  @override
+  Future<String?> readGitHubToken() async => token;
 }
 
 GitHubAuthDatasourceWeb _datasource(_FakeAdapter githubAdapter, _FakeAdapter apiAdapter, {SecureStorage? storage}) {
@@ -162,6 +165,56 @@ void main() {
       final ds = _datasource(githubAdapter, apiAdapter);
 
       expect(() => ds.pollForUserToken('dev-xyz', 0), throwsA(isA<AuthException>()));
+    });
+
+    test('validateStoredToken returns true on 200', () async {
+      final storage = _InMemorySecureStorage()..token = 'gho_xxx';
+      final githubAdapter = _FakeAdapter((_) async => fail('github.com should not be called'));
+      final apiAdapter = _FakeAdapter((opts) async {
+        expect(opts.path, contains('/user'));
+        return _json(200, {'login': 'octocat'});
+      });
+
+      final ds = _datasource(githubAdapter, apiAdapter, storage: storage);
+      expect(await ds.validateStoredToken(), isTrue);
+    });
+
+    test('validateStoredToken returns false on 401', () async {
+      final storage = _InMemorySecureStorage()..token = 'gho_stale';
+      final githubAdapter = _FakeAdapter((_) async => fail('github.com should not be called'));
+      final apiAdapter = _FakeAdapter((_) async => _json(401, {'message': 'Bad credentials'}));
+
+      final ds = _datasource(githubAdapter, apiAdapter, storage: storage);
+      expect(await ds.validateStoredToken(), isFalse);
+    });
+
+    test('validateStoredToken rethrows on 500', () async {
+      final storage = _InMemorySecureStorage()..token = 'gho_xxx';
+      final githubAdapter = _FakeAdapter((_) async => fail('github.com should not be called'));
+      final apiAdapter = _FakeAdapter((_) async => _json(500, {'message': 'oops'}));
+
+      final ds = _datasource(githubAdapter, apiAdapter, storage: storage);
+      await expectLater(ds.validateStoredToken(), throwsA(isA<DioException>()));
+    });
+
+    test('validateStoredToken rethrows on network error', () async {
+      final storage = _InMemorySecureStorage()..token = 'gho_xxx';
+      final githubAdapter = _FakeAdapter((_) async => fail('github.com should not be called'));
+      final apiAdapter = _FakeAdapter((opts) async {
+        throw DioException(requestOptions: opts, type: DioExceptionType.connectionTimeout);
+      });
+
+      final ds = _datasource(githubAdapter, apiAdapter, storage: storage);
+      await expectLater(ds.validateStoredToken(), throwsA(isA<DioException>()));
+    });
+
+    test('validateStoredToken throws StateError when no token stored', () async {
+      final storage = _InMemorySecureStorage();
+      final githubAdapter = _FakeAdapter((_) async => fail('github.com should not be called'));
+      final apiAdapter = _FakeAdapter((_) async => fail('api should not be called'));
+
+      final ds = _datasource(githubAdapter, apiAdapter, storage: storage);
+      await expectLater(ds.validateStoredToken(), throwsA(isA<StateError>()));
     });
 
     test('returns null when cancelSignal completes', () async {

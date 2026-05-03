@@ -9,6 +9,7 @@ import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/_core/secure_storage.dart';
+import '../../../features/onboarding/notifiers/github_auth_notifier.dart';
 import '../models/repository.dart';
 import 'github_api_datasource.dart';
 
@@ -16,12 +17,32 @@ part 'github_api_datasource_dio.g.dart';
 
 /// Provides a [GitHubApiDatasource] initialised with the stored token,
 /// or `null` when no token is available.
+///
+/// Wires an `onUnauthorized` callback that fires when GitHub rejects the
+/// token on a real API call (not a deliberate `validateToken()` probe).
+/// The callback clears the stored credential and invalidates
+/// [gitHubAuthProvider] so the UI transitions to the disconnected state
+/// without waiting for the user to surface the error themselves.
+///
+/// Layering note: this provider intentionally imports a feature notifier
+/// (`gitHubAuthProvider`) — the alternative (a side-channel
+/// `unauthorizedHandlerProvider` in `lib/data/github/`) added a layer
+/// of indirection without giving us anything testable in return. The
+/// callback is only fired from within the datasource, so the seam stays
+/// at the provider boundary, not inside the class.
 @Riverpod(keepAlive: true)
 Future<GitHubApiDatasource?> githubApiDatasource(Ref ref) async {
   final storage = ref.watch(secureStorageProvider);
   final token = await storage.readGitHubToken();
   if (token == null) return null;
-  return GitHubApiDatasourceDio(token);
+  return GitHubApiDatasourceDio(
+    token,
+    onUnauthorized: () async {
+      await storage.deleteGitHubToken();
+      await storage.deleteGitHubAccount();
+      ref.invalidate(gitHubAuthProvider);
+    },
+  );
 }
 
 /// Dio-backed implementation of [GitHubApiDatasource].
@@ -30,19 +51,63 @@ Future<GitHubApiDatasource?> githubApiDatasource(Ref ref) async {
 /// logger that dumps request headers. The `Authorization` header contains
 /// the user's GitHub Personal Access Token, and anything that prints it
 /// to the console is one `debugPrint` away from a leak.
+///
+/// On any 401 response from a "real" API call (not a deliberate
+/// `validateToken()` probe — that path opts out via
+/// [_skipUnauthorizedHandlerKey]), the optional [onUnauthorized] callback
+/// fires exactly once per instance. Because a new instance is constructed
+/// on every provider rebuild after sign-out, the once-per-instance guard
+/// is sufficient for de-duping a 401-cluster without leaking across
+/// sessions.
 class GitHubApiDatasourceDio implements GitHubApiDatasource {
-  GitHubApiDatasourceDio(String token)
-    : _dio = DioFactory.create(
+  GitHubApiDatasourceDio(String token, {Future<void> Function()? onUnauthorized})
+    : _onUnauthorized = onUnauthorized,
+      _dio = DioFactory.create(
         baseUrl: ApiConstants.githubApiBaseUrl,
         headers: {'Authorization': 'Bearer $token', 'Accept': 'application/vnd.github.v3+json'},
-      );
+      ) {
+    _attachUnauthorizedInterceptor();
+  }
 
   /// Test-only constructor that accepts a pre-configured [Dio] instance so
   /// tests can inject a fake [HttpClientAdapter] without hitting real GitHub.
   @visibleForTesting
-  GitHubApiDatasourceDio.withDio(Dio dio) : _dio = dio;
+  GitHubApiDatasourceDio.withDio(Dio dio, {Future<void> Function()? onUnauthorized})
+    : _onUnauthorized = onUnauthorized,
+      _dio = dio {
+    _attachUnauthorizedInterceptor();
+  }
+
+  /// `Options.extra` key that opts a request out of the 401 → onUnauthorized
+  /// handler. Used by [validateToken] which has its own "401 means no" path
+  /// (returns `null`) — surfacing that 401 to the global handler would
+  /// trigger sign-out from a probe instead of from a user-facing failure.
+  static const String _skipUnauthorizedHandlerKey = 'skipUnauthorizedHandler';
 
   final Dio _dio;
+  final Future<void> Function()? _onUnauthorized;
+  bool _firedOnce = false;
+
+  void _attachUnauthorizedInterceptor() {
+    final cb = _onUnauthorized;
+    if (cb == null) return;
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (DioException e, handler) async {
+          final skip = e.requestOptions.extra[_skipUnauthorizedHandlerKey] == true;
+          if (e.response?.statusCode == 401 && !skip && !_firedOnce) {
+            _firedOnce = true;
+            try {
+              await cb();
+            } catch (cbErr) {
+              dLog('[GitHubApiDatasourceDio] onUnauthorized callback threw: ${cbErr.runtimeType}');
+            }
+          }
+          handler.next(e);
+        },
+      ),
+    );
+  }
 
   @override
   Future<List<Repository>> listRepositories({int page = 1}) async {
@@ -75,7 +140,14 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
   @override
   Future<String?> validateToken() async {
     try {
-      final response = await _dio.get('/user');
+      final response = await _dio.get(
+        '/user',
+        // Probe path — opt out of the 401 → onUnauthorized handler so a
+        // stale token detected here triggers sign-out via the deliberate
+        // path (the caller decides what to do with `null`), not as a side
+        // effect of the probe itself.
+        options: Options(extra: const {_skipUnauthorizedHandlerKey: true}),
+      );
       final data = response.data as Map<String, dynamic>;
       return data['login'] as String?;
     } on DioException catch (e) {

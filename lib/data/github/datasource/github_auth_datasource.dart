@@ -20,5 +20,17 @@ abstract interface class GitHubAuthDatasource {
 
   Future<bool> isAuthenticated();
 
+  /// Verifies the stored token against GitHub.
+  ///
+  /// - Returns `true` on a 2xx response (token still works).
+  /// - Returns `false` on a 401 (token rejected — user/owner revoked the
+  ///   app, or the token expired).
+  /// - Rethrows on transient failures (network down, 5xx, malformed body)
+  ///   so callers can leave UI state alone instead of falsely signing out
+  ///   a user whose token is fine but whose connection isn't.
+  /// - Throws [StateError] when no token is stored (call [getStoredAccount]
+  ///   or [isAuthenticated] first).
+  Future<bool> validateStoredToken();
+
   Future<void> signOut();
 }

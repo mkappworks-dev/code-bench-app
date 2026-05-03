@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/constants/api_constants.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../core/errors/app_exception.dart';
 import '../../core/theme/app_colors.dart';
@@ -48,7 +49,41 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
     await ref.read(gitHubAuthProvider.notifier).signOut();
     if (!mounted) return;
     if (!ref.read(gitHubAuthProvider).hasError) {
-      AppSnackBar.show(context, 'Disconnected from GitHub', type: AppSnackBarType.success);
+      // Local Disconnect only clears the keychain — Device Flow has no
+      // client_secret, so this client cannot revoke the grant on
+      // GitHub's side. Surface a "Revoke on GitHub" action so the user
+      // can close the loop themselves on the GitHub App connections page.
+      AppSnackBar.show(
+        context,
+        'Disconnected from GitHub',
+        message: 'Token cleared locally. To revoke on GitHub, open the app connections page.',
+        type: AppSnackBarType.success,
+        actionLabel: 'Revoke on GitHub',
+        onAction: _openRevocationPage,
+      );
+    }
+  }
+
+  Future<void> _openRevocationPage() async {
+    final uri = Uri.parse('https://github.com/settings/connections/applications/${ApiConstants.githubClientId}');
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && mounted) {
+        AppSnackBar.show(
+          context,
+          'Could not open browser — visit github.com/settings/applications',
+          type: AppSnackBarType.warning,
+        );
+      }
+    } catch (e, st) {
+      dLog('[IntegrationsScreen] launchUrl revoke failed: $e\n$st');
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          'Could not open browser — visit github.com/settings/applications',
+          type: AppSnackBarType.warning,
+        );
+      }
     }
   }
 

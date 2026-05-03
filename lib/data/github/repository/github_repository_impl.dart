@@ -51,6 +51,9 @@ class GitHubRepositoryImpl implements GitHubRepository {
   Future<bool> isAuthenticated() => _auth.isAuthenticated();
 
   @override
+  Future<bool> validateStoredToken() => _auth.validateStoredToken();
+
+  @override
   Future<void> signOut() => _auth.signOut();
 
   // API delegation

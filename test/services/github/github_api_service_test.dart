@@ -43,10 +43,10 @@ ResponseBody _json(int status, Object? body, {Map<String, List<String>>? headers
   );
 }
 
-GitHubApiDatasourceDio _datasourceWith(_FakeAdapter adapter) {
+GitHubApiDatasourceDio _datasourceWith(_FakeAdapter adapter, {Future<void> Function()? onUnauthorized}) {
   final dio = Dio(BaseOptions(baseUrl: 'https://api.github.com'));
   dio.httpClientAdapter = adapter;
-  return GitHubApiDatasourceDio.withDio(dio);
+  return GitHubApiDatasourceDio.withDio(dio, onUnauthorized: onUnauthorized);
 }
 
 void main() {
@@ -137,6 +137,78 @@ void main() {
         () => svc.createPullRequest(owner: 'octo', repo: 'hello', title: 't', body: 'b', head: 'feat', base: 'main'),
         throwsA(isA<NetworkException>().having((e) => e.statusCode, 'statusCode', 401)),
       );
+    });
+  });
+
+  group('onUnauthorized interceptor', () {
+    test('fires when listRepositories returns 401', () async {
+      var calls = 0;
+      final adapter = _FakeAdapter((_) async => _json(401, {'message': 'Bad credentials'}));
+      final svc = _datasourceWith(adapter, onUnauthorized: () async => calls++);
+
+      await expectLater(svc.listRepositories(), throwsA(isA<NetworkException>()));
+      // Allow the interceptor's async callback to settle.
+      await Future<void>.delayed(Duration.zero);
+
+      expect(calls, 1);
+    });
+
+    test('fires when searchRepositories returns 401', () async {
+      var calls = 0;
+      final adapter = _FakeAdapter((_) async => _json(401, {'message': 'Bad credentials'}));
+      final svc = _datasourceWith(adapter, onUnauthorized: () async => calls++);
+
+      await expectLater(svc.searchRepositories('flutter'), throwsA(isA<NetworkException>()));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(calls, 1);
+    });
+
+    test('does NOT fire from validateToken 401 (skip flag set)', () async {
+      var calls = 0;
+      final adapter = _FakeAdapter((_) async => _json(401, {'message': 'Bad credentials'}));
+      final svc = _datasourceWith(adapter, onUnauthorized: () async => calls++);
+
+      expect(await svc.validateToken(), isNull);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(calls, 0);
+    });
+
+    test('fires only once across multiple 401 responses', () async {
+      var calls = 0;
+      final adapter = _FakeAdapter((_) async => _json(401, {'message': 'Bad credentials'}));
+      final svc = _datasourceWith(adapter, onUnauthorized: () async => calls++);
+
+      // Three back-to-back failing calls — should still only sign out once.
+      await expectLater(svc.listRepositories(), throwsA(isA<NetworkException>()));
+      await expectLater(svc.listRepositories(), throwsA(isA<NetworkException>()));
+      await expectLater(svc.searchRepositories('foo'), throwsA(isA<NetworkException>()));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(calls, 1);
+    });
+
+    test('does not fire on 200', () async {
+      var calls = 0;
+      final adapter = _FakeAdapter((_) async => _json(200, <Map<String, dynamic>>[]));
+      final svc = _datasourceWith(adapter, onUnauthorized: () async => calls++);
+
+      await svc.listRepositories();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(calls, 0);
+    });
+
+    test('does not fire on non-401 errors (404, 5xx)', () async {
+      var calls = 0;
+      final adapter = _FakeAdapter((_) async => _json(404, {'message': 'Not Found'}));
+      final svc = _datasourceWith(adapter, onUnauthorized: () async => calls++);
+
+      await expectLater(svc.listRepositories(), throwsA(isA<NetworkException>()));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(calls, 0);
     });
   });
 

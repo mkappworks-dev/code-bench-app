@@ -17,6 +17,13 @@ class _FakeGitHubRepository extends Fake implements GitHubRepository {
   Object? _requestDeviceCodeError;
   GitHubAccount? _pollResult;
   GitHubAccount? _storedAccount;
+  // Background validateStoredToken behaviour: if [_validateError] is set
+  // it rethrows; otherwise returns [_validateResult]. Tracked separately
+  // so a transient validation failure doesn't change the cached account.
+  Object? _validateError;
+  bool _validateResult = true;
+  int signOutCalls = 0;
+  int validateCalls = 0;
   DeviceCodeResponse _deviceCode = const DeviceCodeResponse(
     userCode: 'WDJB-MJHT',
     verificationUri: 'https://github.com/login/device',
@@ -31,12 +38,22 @@ class _FakeGitHubRepository extends Fake implements GitHubRepository {
   void setPollResult(GitHubAccount account) => _pollResult = account;
   void setStoredAccount(GitHubAccount? account) => _storedAccount = account;
   void setDeviceCode(DeviceCodeResponse code) => _deviceCode = code;
+  void setValidateResult(bool result) => _validateResult = result;
+  void throwOnValidateStoredToken(Object error) => _validateError = error;
 
   @override
   Future<GitHubAccount?> getStoredAccount() async => _storedAccount;
 
   @override
+  Future<bool> validateStoredToken() async {
+    validateCalls++;
+    if (_validateError != null) throw _validateError!;
+    return _validateResult;
+  }
+
+  @override
   Future<void> signOut() async {
+    signOutCalls++;
     if (_signOutError != null) throw _signOutError!;
   }
 
@@ -180,6 +197,70 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(c.read(gitHubAuthProvider), isA<AsyncError<GitHubAccount?>>());
+    });
+  });
+
+  group('build — background token validation', () {
+    test('keeps cached account when validateStoredToken returns true', () async {
+      final existing = _fakeAccount();
+      fakeRepo.setStoredAccount(existing);
+      fakeRepo.setValidateResult(true);
+
+      final c = makeContainer();
+      final initial = await c.read(gitHubAuthProvider.future);
+      expect(initial, equals(existing));
+      // Yield so the background validation completes.
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fakeRepo.validateCalls, 1);
+      expect(fakeRepo.signOutCalls, 0);
+      final result = c.read(gitHubAuthProvider);
+      expect(result, isA<AsyncData<GitHubAccount?>>());
+      expect(result.value, equals(existing));
+    });
+
+    test('signs out when validateStoredToken returns false', () async {
+      fakeRepo.setStoredAccount(_fakeAccount());
+      fakeRepo.setValidateResult(false);
+
+      final c = makeContainer();
+      final initial = await c.read(gitHubAuthProvider.future);
+      expect(initial, isNotNull);
+      // Yield so background validation runs and signOut completes.
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fakeRepo.validateCalls, 1);
+      expect(fakeRepo.signOutCalls, 1);
+      final result = c.read(gitHubAuthProvider);
+      expect(result, isA<AsyncData<GitHubAccount?>>());
+      expect(result.value, isNull);
+    });
+
+    test('leaves cached account intact when validateStoredToken throws (transient)', () async {
+      final existing = _fakeAccount();
+      fakeRepo.setStoredAccount(existing);
+      fakeRepo.throwOnValidateStoredToken(Exception('network down'));
+
+      final c = makeContainer();
+      final initial = await c.read(gitHubAuthProvider.future);
+      expect(initial, equals(existing));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fakeRepo.validateCalls, 1);
+      expect(fakeRepo.signOutCalls, 0);
+      final result = c.read(gitHubAuthProvider);
+      expect(result, isA<AsyncData<GitHubAccount?>>());
+      expect(result.value, equals(existing));
+    });
+
+    test('does not validate when no stored account', () async {
+      fakeRepo.setStoredAccount(null);
+
+      final c = makeContainer();
+      await c.read(gitHubAuthProvider.future);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fakeRepo.validateCalls, 0);
     });
   });
 

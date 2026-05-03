@@ -193,7 +193,41 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
   }
 
   @override
+  Future<bool> validateStoredToken() async {
+    final token = await _storage.readGitHubToken();
+    if (token == null) {
+      throw StateError('No stored token to validate');
+    }
+    try {
+      await _apiDio.get(
+        '/user',
+        options: Options(headers: {'Authorization': 'Bearer $token', 'Accept': 'application/vnd.github.v3+json'}),
+      );
+      return true;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        // Logged at exception-type only — never log the response body
+        // since GitHub may echo headers in error responses.
+        dLog('[GitHubAuthDatasource] validateStoredToken: token rejected (401)');
+        return false;
+      }
+      // Transient (5xx, network) — let the caller decide. Don't sign the
+      // user out because the wifi blinked.
+      dLog('[GitHubAuthDatasource] validateStoredToken transient failure: ${e.type} ${e.response?.statusCode}');
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> signOut() async {
+    // NOTE: Local-only revocation. Device Flow (RFC 8628) issues no
+    // client_secret, so this client cannot authenticate a call to
+    // GitHub's POST /applications/{client_id}/token DELETE endpoint —
+    // the server-side grant remains live until the user revokes the
+    // app at github.com/settings/applications, the token is naturally
+    // expired by GitHub, or the app owner revokes it. The
+    // disconnected-card UI surfaces a "Revoke on GitHub" affordance to
+    // close that gap user-side.
     await _storage.deleteGitHubToken();
     await _storage.deleteGitHubAccount();
   }

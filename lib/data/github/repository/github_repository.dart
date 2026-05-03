@@ -13,6 +13,11 @@ abstract interface class GitHubRepository {
 
   Future<bool> isAuthenticated();
 
+  /// Verifies the stored token against GitHub. Returns `true` on 200,
+  /// `false` on 401, rethrows on transient failures. See
+  /// `GitHubAuthDatasource.validateStoredToken` for the full contract.
+  Future<bool> validateStoredToken();
+
   Future<void> signOut();
 
   // API methods
