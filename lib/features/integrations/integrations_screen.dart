@@ -34,7 +34,12 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
   Future<void> _connectOAuth() async {
     await GitHubDeviceFlowDialog.show(context);
     if (!mounted) return;
-    if (!ref.read(gitHubAuthProvider).hasError) {
+    // Only celebrate when an account actually landed — the dialog can also
+    // dismiss via Cancel (state stays AsyncData(null)) or via an error
+    // (state is AsyncError). Reading account != null distinguishes the
+    // genuine success case from those.
+    final account = ref.read(gitHubAuthProvider).value;
+    if (account != null) {
       AppSnackBar.show(context, 'Connected to GitHub', type: AppSnackBarType.success);
     }
   }

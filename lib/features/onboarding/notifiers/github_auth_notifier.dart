@@ -16,6 +16,12 @@ part 'github_auth_notifier.g.dart';
 class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   Completer<void>? _cancelSignal;
 
+  /// Snapshot of the account at the moment [startDeviceFlow] was called.
+  /// Used by [cancelDeviceFlow] to restore state if the user cancels a
+  /// re-authentication attempt — without this, `state = AsyncLoading()`
+  /// would have already wiped any prior `AsyncData` value.
+  GitHubAccount? _accountBeforeDeviceFlow;
+
   @override
   Future<GitHubAccount?> build() async {
     final svc = await ref.watch(githubServiceProvider.future);
@@ -36,6 +42,9 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   /// - `AsyncError`   → polling failure (set by background poll)
   /// - `AsyncData(null)` → user cancels via [cancelDeviceFlow]
   Future<DeviceCodeResponse?> startDeviceFlow() async {
+    // Snapshot the prior account before transitioning to AsyncLoading so a
+    // subsequent cancel can restore it (see [cancelDeviceFlow]).
+    _accountBeforeDeviceFlow = state.value;
     state = const AsyncLoading();
     try {
       final svc = await ref.read(githubServiceProvider.future);
@@ -53,19 +62,34 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   }
 
   Future<void> _pollInBackground(GitHubService svc, DeviceCodeResponse code, Completer<void> cancelSignal) async {
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard(() async {
       return svc.pollForUserToken(code.deviceCode, code.interval, cancelSignal: cancelSignal.future);
     });
+    // If the user cancelled, [cancelDeviceFlow] has already restored the
+    // pre-existing account state — don't clobber it with whatever the
+    // poller returned (typically null on cancel, but never meaningful).
+    if (cancelSignal.isCompleted) return;
+    state = result;
   }
 
-  /// Cancels in-flight polling. State returns to AsyncData(null).
+  /// Cancels in-flight polling.
+  ///
+  /// Cancellation only transitions state when the device flow is actually
+  /// in progress (`AsyncLoading`). In that case we restore the account
+  /// snapshot taken at [startDeviceFlow], so cancelling a re-auth attempt
+  /// does not clobber an existing signed-in account. If state is already
+  /// `AsyncData` or `AsyncError`, cancel is a no-op against state and only
+  /// releases the poll loop.
   void cancelDeviceFlow() {
     final signal = _cancelSignal;
     if (signal != null && !signal.isCompleted) {
       signal.complete();
     }
     _cancelSignal = null;
-    state = const AsyncData(null);
+    if (state is AsyncLoading) {
+      state = AsyncData(_accountBeforeDeviceFlow);
+    }
+    _accountBeforeDeviceFlow = null;
   }
 
   /// Deletes the stored token, then clears account state on success.

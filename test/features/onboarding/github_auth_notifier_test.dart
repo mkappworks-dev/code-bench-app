@@ -184,7 +184,7 @@ void main() {
   });
 
   group('cancelDeviceFlow', () {
-    test('sets state to AsyncData(null) and unblocks the poller', () async {
+    test('collapses AsyncLoading to AsyncData(null) and unblocks the poller', () async {
       // Intentionally do NOT seed a poll result — the fake's pollForUserToken
       // will only resolve when cancelSignal fires, so this test would hang
       // forever if cancellation logic were removed from the notifier.
@@ -203,6 +203,28 @@ void main() {
       final result = c.read(gitHubAuthProvider);
       expect(result, isA<AsyncData<GitHubAccount?>>());
       expect(result.value, isNull);
+    });
+
+    test('preserves a pre-existing signed-in account when cancelling re-auth', () async {
+      // User is already signed in (e.g. via PAT) and triggers a re-auth via
+      // device flow, then cancels. The cancel must NOT clobber the existing
+      // account — that would falsely sign the user out client-side.
+      final existingAccount = _fakeAccount();
+      fakeRepo.setStoredAccount(existingAccount);
+
+      final c = makeContainer();
+      // Wait for build() to load the stored account.
+      await c.read(gitHubAuthProvider.future);
+      expect(c.read(gitHubAuthProvider).value, equals(existingAccount));
+
+      await c.read(gitHubAuthProvider.notifier).startDeviceFlow();
+      // startDeviceFlow set state to AsyncLoading(value: existingAccount).
+      c.read(gitHubAuthProvider.notifier).cancelDeviceFlow();
+      await Future<void>.delayed(Duration.zero);
+
+      final result = c.read(gitHubAuthProvider);
+      expect(result, isA<AsyncData<GitHubAccount?>>());
+      expect(result.value, equals(existingAccount));
     });
   });
 }

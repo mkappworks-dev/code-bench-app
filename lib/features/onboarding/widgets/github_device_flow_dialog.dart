@@ -34,7 +34,14 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
   @override
   void initState() {
     super.initState();
-    unawaited(_start());
+    // Defer kicking off the device-flow request until after the first frame.
+    // startDeviceFlow() synchronously sets `state = AsyncLoading`, which
+    // Riverpod forbids while a widget is still mounting. The post-frame
+    // callback ensures the dialog is fully attached before we mutate the
+    // notifier.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_start());
+    });
   }
 
   Future<void> _start() async {
