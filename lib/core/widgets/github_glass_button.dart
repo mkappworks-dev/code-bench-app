@@ -61,7 +61,7 @@ class _GitHubGlassButtonState extends State<GitHubGlassButton> {
                       GitHubIcon(color: c.githubButtonForeground),
                     const SizedBox(width: 8),
                     Text(
-                      widget.isLoading ? 'Connecting…' : 'Continue with GitHub',
+                      widget.isLoading ? 'Connecting…' : 'Connect with GitHub',
                       style: TextStyle(
                         color: c.githubButtonForeground,
                         fontSize: ThemeConstants.uiFontSizeSmall,
