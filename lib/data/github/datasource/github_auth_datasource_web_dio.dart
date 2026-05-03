@@ -71,6 +71,7 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
     } on AuthException {
       rethrow;
     } catch (e) {
+      dLog('[GitHubAuthDatasource] authenticate failed (${e.runtimeType})');
       throw AuthException('GitHub authentication failed', originalError: e);
     }
   }
