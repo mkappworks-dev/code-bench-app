@@ -28,7 +28,7 @@ The app is chat-centric: a single conversation surface with a project sidebar on
 | **Changes panel**    | Inline diff per edited file · per-change accept/reject · conflict-merge view when on-disk drifts from agent edits · commit dialog · create-PR dialog           |
 | **Coding tools**     | Built-in tool registry (filesystem read/write, ripgrep, bash, web fetch) · per-tool denylist · ripgrep auto-detect · ready for MCP-server tool sources         |
 | **MCP servers**      | Configure stdio and HTTP/SSE MCP servers · enable/disable per server · tool inventory surfaces in chat                                                         |
-| **Integrations**     | GitHub OAuth or PAT sign-in · repository browser feeding the project sidebar                                                                                   |
+| **Integrations**     | GitHub sign-in (Device Flow) or PAT fallback · repository browser feeding the project sidebar                                                                  |
 | **Providers**        | Multi-provider key storage (OpenAI · Anthropic · Gemini · Ollama · custom OpenAI-compatible endpoint) · per-provider connectivity test · keys in OS keychain   |
 | **Settings → Reset** | "Wipe all data" — clears API keys, GitHub sign-in, chat history, projects, and MCP servers in one step                                                         |
 | **Auto-update**      | Checks the GitHub Releases endpoint on launch and from Settings · verifies Team-ID match and `codesign`/`spctl` on macOS · self-installs and relaunches        |
@@ -99,7 +99,9 @@ flutter run -d linux
 
 On first launch, the onboarding screen gates access until at least one AI provider API key is saved.
 
-> **GitHub OAuth** — replace `YOUR_GITHUB_CLIENT_ID` in [lib/data/github/datasource/github_auth_datasource_web_dio.dart](lib/data/github/datasource/github_auth_datasource_web_dio.dart) with a real GitHub OAuth App client ID. Create one at **Settings → Developer settings → OAuth Apps** with the callback URL configured in `AppConstants.oauthCallbackUrl`. (PAT sign-in is also supported and does not require an OAuth app.)
+> **GitHub sign-in** — Code Bench uses the OAuth 2.0 Device Authorization Grant ([RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628)) on the **Benchlabs Codebench** GitHub App. The app's `client_id` is checked into source at [`ApiConstants.githubClientId`](lib/core/constants/api_constants.dart) and shipped in the binary — that's intentional. Device Flow treats `client_id` as a non-secret (the same reason there is no `client_secret` to ship), so embedding it carries no credential-leak risk; see [docs/superpowers/specs/2026-05-03-github-app-device-flow-design.md](docs/superpowers/specs/2026-05-03-github-app-device-flow-design.md) for the full threat model. PAT sign-in is also supported as a fallback.
+>
+> **Forks must register their own GitHub App** and replace `ApiConstants.githubClientId`. To register: github.com → **Settings → Developer settings → GitHub Apps → New GitHub App**, tick **Enable Device Flow** at the bottom, and copy the resulting `Iv23li…` Client ID over the embedded value.
 
 ## Project Structure
 
@@ -360,7 +362,7 @@ dart format --set-exit-if-changed lib/ test/   # CI format check
 | AI providers      | OpenAI · Anthropic · Gemini · Ollama · Custom (OpenAI-compatible)                       |
 | Tool sources      | Built-in registry (filesystem, ripgrep, bash, web fetch) · MCP (stdio + HTTP/SSE)       |
 | Chat rendering    | flutter_markdown_plus · flutter_highlight                                               |
-| GitHub OAuth      | flutter_web_auth_2                                                                      |
+| GitHub auth       | OAuth 2.0 Device Flow (RFC 8628) on a GitHub App — public `client_id` only              |
 | Self-update       | GitHub Releases API · `codesign --verify` + `spctl --assess` · swap-and-relaunch helper |
 | Preferences       | shared_preferences (NSUserDefaults / equivalents)                                       |
 | Window management | window_manager                                                                          |

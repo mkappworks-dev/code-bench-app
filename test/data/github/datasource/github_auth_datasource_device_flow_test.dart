@@ -51,17 +51,12 @@ class _InMemorySecureStorage extends Fake implements SecureStorage {
   Future<void> writeGitHubAccount(String json) async => account = json;
 }
 
-GitHubAuthDatasourceWeb _datasource(
-  _FakeAdapter githubAdapter,
-  _FakeAdapter apiAdapter, {
-  SecureStorage? storage,
-  String clientId = 'Iv23li-test-client-id',
-}) {
+GitHubAuthDatasourceWeb _datasource(_FakeAdapter githubAdapter, _FakeAdapter apiAdapter, {SecureStorage? storage}) {
   final githubDio = Dio(BaseOptions(baseUrl: 'https://github.com'));
   githubDio.httpClientAdapter = githubAdapter;
   final apiDio = Dio(BaseOptions(baseUrl: 'https://api.github.com'));
   apiDio.httpClientAdapter = apiAdapter;
-  return GitHubAuthDatasourceWeb.withDios(storage ?? _InMemorySecureStorage(), githubDio, apiDio, clientId: clientId);
+  return GitHubAuthDatasourceWeb.withDios(storage ?? _InMemorySecureStorage(), githubDio, apiDio);
 }
 
 void main() {
@@ -105,19 +100,6 @@ void main() {
         ds.requestDeviceCode(),
         throwsA(isA<AuthException>().having((e) => e.message, 'message', contains('Device flow is not enabled'))),
       );
-    });
-
-    test('fails fast when client ID is empty', () async {
-      final githubAdapter = _FakeAdapter((_) async => fail('github should not be called'));
-      final apiAdapter = _FakeAdapter((_) async => fail('api should not be called'));
-
-      final ds = _datasource(githubAdapter, apiAdapter, clientId: '');
-
-      await expectLater(
-        ds.requestDeviceCode(),
-        throwsA(isA<AuthException>().having((e) => e.message, 'message', contains('GitHub client ID is missing'))),
-      );
-      expect(githubAdapter.requests, isEmpty);
     });
   });
 

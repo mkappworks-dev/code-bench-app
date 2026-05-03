@@ -4,8 +4,7 @@
     {
       "name": "Code Bench (macOS)",
       "request": "launch",
-      "type": "dart",
-      "toolArgs": ["--dart-define-from-file=env.json"]
+      "type": "dart"
     }
   ]
 }

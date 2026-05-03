@@ -27,38 +27,23 @@ GitHubAuthDatasource githubAuthDatasource(Ref ref) => GitHubAuthDatasourceWeb(re
 class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
   GitHubAuthDatasourceWeb(this._storage)
     : _githubDio = DioFactory.create(baseUrl: 'https://github.com'),
-      _apiDio = DioFactory.create(baseUrl: ApiConstants.githubApiBaseUrl),
-      _clientId = _envClientId;
+      _apiDio = DioFactory.create(baseUrl: ApiConstants.githubApiBaseUrl);
 
   /// Test-only constructor — accepts pre-configured [Dio] instances so tests
   /// can inject a fake [HttpClientAdapter] without hitting real GitHub.
-  /// Optionally overrides the GitHub client ID so tests can exercise both
-  /// the fail-fast (empty) and the happy path without depending on a
-  /// `--dart-define=GITHUB_CLIENT_ID=…` flag at `flutter test` time.
   @visibleForTesting
-  GitHubAuthDatasourceWeb.withDios(this._storage, this._githubDio, this._apiDio, {String clientId = _envClientId})
-    : _clientId = clientId;
-
-  static const _envClientId = String.fromEnvironment('GITHUB_CLIENT_ID');
+  GitHubAuthDatasourceWeb.withDios(this._storage, this._githubDio, this._apiDio);
 
   final SecureStorage _storage;
   final Dio _githubDio;
   final Dio _apiDio;
-  final String _clientId;
 
   @override
   Future<DeviceCodeResponse> requestDeviceCode() async {
-    if (_clientId.isEmpty) {
-      throw const AuthException(
-        'GitHub client ID is missing. Run with --dart-define-from-file=env.json '
-        'or pass --dart-define=GITHUB_CLIENT_ID=… at launch.',
-      );
-    }
-
     try {
       final response = await _githubDio.post(
         '/login/device/code',
-        data: {'client_id': _clientId},
+        data: {'client_id': ApiConstants.githubClientId},
         options: Options(headers: {'Accept': 'application/json'}),
       );
       return DeviceCodeResponse.fromJson(response.data as Map<String, dynamic>);
@@ -99,7 +84,7 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
         response = await _githubDio.post(
           '/login/oauth/access_token',
           data: {
-            'client_id': _clientId,
+            'client_id': ApiConstants.githubClientId,
             'device_code': deviceCode,
             'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
           },
