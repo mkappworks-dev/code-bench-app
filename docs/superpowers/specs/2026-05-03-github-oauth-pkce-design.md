@@ -16,7 +16,7 @@ Add PKCE (RFC 7636, S256 method) to the existing OAuth flow so the app can authe
 | Question | Decision |
 |---|---|
 | App type | GitHub **OAuth App** (classic scopes, long-lived tokens, simpler UX) |
-| `client_id` sourcing | Hardcoded constant in `GitHubAuthDatasourceWeb` |
+| `client_id` sourcing | `--dart-define=GITHUB_CLIENT_ID=...` at build/run time; no default in source so forks must register their own OAuth App |
 | PAT flow | Kept as-is — untouched fallback |
 | New dependencies | None — `crypto: 3.0.7` already in `pubspec.yaml` |
 
@@ -30,12 +30,28 @@ Add PKCE (RFC 7636, S256 method) to the existing OAuth flow so the app can authe
    - **Authorization callback URL:** `codebench://oauth/callback`
    - **Enable Device Flow:** unchecked
 3. **Register application**
-4. Copy the **Client ID** — paste it into `_clientId` in [github_auth_datasource_web_dio.dart](../../lib/data/github/datasource/github_auth_datasource_web_dio.dart)
+4. Copy the **Client ID** — supply it at build/run time via `--dart-define=GITHUB_CLIENT_ID=<your-id>`
 5. Do **not** store or use the generated Client Secret — PKCE replaces it
 
 ## Code changes
 
 **File:** `lib/data/github/datasource/github_auth_datasource_web_dio.dart`
+
+### `client_id` sourcing
+
+Replace the hardcoded placeholder with a compile-time constant:
+
+```dart
+static const _clientId = String.fromEnvironment('GITHUB_CLIENT_ID');
+```
+
+Supplied at build time:
+```bash
+flutter run -d macos --dart-define=GITHUB_CLIENT_ID=Ov23liXXXXXX
+flutter build macos --dart-define=GITHUB_CLIENT_ID=Ov23liXXXXXX
+```
+
+Forks must register their own OAuth App and supply their own ID. The source never contains the production value.
 
 ### New imports
 
@@ -129,5 +145,5 @@ No new error cases. Both PKCE failure modes (malformed challenge, verifier misma
 ## Security notes
 
 - `verifier` is ephemeral — lives only in the `authenticate()` stack frame, never written to `SecureStorage`
-- `client_id` is public information (visible on the GitHub OAuth App page); embedding it in the binary is safe
+- `client_id` is public information (visible on the GitHub OAuth App page); the `--dart-define` approach keeps it out of source so forks can't accidentally reuse the production app identity
 - `client_secret` is never present in the app; PKCE is the sole proof of origin
