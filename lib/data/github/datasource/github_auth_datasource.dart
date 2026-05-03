@@ -11,8 +11,15 @@ abstract interface class GitHubAuthDatasource {
   /// Returns `null` if the [cancelSignal] completes before authorization.
   ///
   /// `intervalSeconds` is the initial poll interval; `slow_down` responses
-  /// from GitHub increase it.
-  Future<GitHubAccount?> pollForUserToken(String deviceCode, int intervalSeconds, {Future<void>? cancelSignal});
+  /// from GitHub increase it. `expiresIn` bounds the total polling window —
+  /// the loop throws [AuthException] locally once the device code lifetime
+  /// is exhausted, regardless of whether GitHub has returned `expired_token`.
+  Future<GitHubAccount?> pollForUserToken(
+    String deviceCode,
+    int intervalSeconds,
+    int expiresIn, {
+    Future<void>? cancelSignal,
+  });
 
   Future<GitHubAccount?> getStoredAccount();
 

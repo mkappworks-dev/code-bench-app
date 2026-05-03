@@ -5,7 +5,12 @@ abstract interface class GitHubRepository {
   // Auth methods
   Future<DeviceCodeResponse> requestDeviceCode();
 
-  Future<GitHubAccount?> pollForUserToken(String deviceCode, int intervalSeconds, {Future<void>? cancelSignal});
+  Future<GitHubAccount?> pollForUserToken(
+    String deviceCode,
+    int intervalSeconds,
+    int expiresIn, {
+    Future<void>? cancelSignal,
+  });
 
   Future<GitHubAccount?> getStoredAccount();
 

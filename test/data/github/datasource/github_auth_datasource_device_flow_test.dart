@@ -124,7 +124,7 @@ void main() {
       });
 
       final ds = _datasource(githubAdapter, apiAdapter, storage: storage);
-      final account = await ds.pollForUserToken('dev-xyz', 0);
+      final account = await ds.pollForUserToken('dev-xyz', 0, 900);
 
       expect(account, isNotNull);
       expect(account!.username, 'octocat');
@@ -143,7 +143,7 @@ void main() {
       });
 
       final ds = _datasource(githubAdapter, apiAdapter);
-      final account = await ds.pollForUserToken('dev-xyz', 0);
+      final account = await ds.pollForUserToken('dev-xyz', 0, 900);
 
       expect(calls, 2);
       expect(account!.username, 'octocat');
@@ -155,7 +155,7 @@ void main() {
 
       final ds = _datasource(githubAdapter, apiAdapter);
 
-      expect(() => ds.pollForUserToken('dev-xyz', 0), throwsA(isA<AuthException>()));
+      expect(() => ds.pollForUserToken('dev-xyz', 0, 900), throwsA(isA<AuthException>()));
     });
 
     test('throws AuthException on access_denied', () async {
@@ -164,7 +164,40 @@ void main() {
 
       final ds = _datasource(githubAdapter, apiAdapter);
 
-      expect(() => ds.pollForUserToken('dev-xyz', 0), throwsA(isA<AuthException>()));
+      expect(() => ds.pollForUserToken('dev-xyz', 0, 900), throwsA(isA<AuthException>()));
+    });
+
+    test('slow_down increases interval then succeeds', () async {
+      var calls = 0;
+      final githubAdapter = _FakeAdapter((opts) async {
+        calls++;
+        if (calls == 1) return _json(200, {'error': 'slow_down'});
+        return _json(200, {'access_token': 'gho_xxx', 'token_type': 'bearer'});
+      });
+      final apiAdapter = _FakeAdapter((_) async {
+        return _json(200, {'login': 'octocat', 'avatar_url': 'a', 'name': 'O', 'email': null});
+      });
+
+      final ds = _datasource(githubAdapter, apiAdapter);
+      final account = await ds.pollForUserToken('dev-xyz', 0, 900);
+
+      expect(calls, 2);
+      expect(account!.username, 'octocat');
+    });
+
+    test('throws AuthException once local deadline is exceeded', () async {
+      // expiresIn = 0 means the deadline is already in the past before
+      // the first poll fires, so the loop should throw without hitting the
+      // adapter at all.
+      final githubAdapter = _FakeAdapter((_) async => fail('should not poll past deadline'));
+      final apiAdapter = _FakeAdapter((_) async => fail('api should not be called'));
+
+      final ds = _datasource(githubAdapter, apiAdapter);
+
+      await expectLater(
+        ds.pollForUserToken('dev-xyz', 0, 0),
+        throwsA(isA<AuthException>().having((e) => e.message, 'message', contains('expired'))),
+      );
     });
 
     test('validateStoredToken returns true on 200', () async {
@@ -225,7 +258,7 @@ void main() {
       final apiAdapter = _FakeAdapter((_) async => fail('api should not be called'));
 
       final ds = _datasource(githubAdapter, apiAdapter);
-      final future = ds.pollForUserToken('dev-xyz', 1, cancelSignal: cancel.future);
+      final future = ds.pollForUserToken('dev-xyz', 1, 900, cancelSignal: cancel.future);
 
       // Cancel after a brief moment to let one poll fire if any
       await Future.delayed(const Duration(milliseconds: 10));

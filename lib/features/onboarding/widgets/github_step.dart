@@ -5,6 +5,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/github_glass_button.dart';
 import '../../../data/github/models/repository.dart';
+import '../notifiers/github_auth_failure.dart';
 import '../notifiers/github_auth_notifier.dart';
 import 'github_device_flow_dialog.dart';
 
@@ -29,6 +30,15 @@ class _GithubStepState extends ConsumerState<GithubStep> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+
+    ref.listen(gitHubAuthProvider, (previous, next) {
+      if (next case AsyncError(:final error) when error is GitHubAuthTokenRevoked) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Signed out: your GitHub token was revoked. Please reconnect.')));
+      }
+    });
+
     final authAsync = ref.watch(gitHubAuthProvider);
     final (account, isLoading) = switch (authAsync) {
       AsyncLoading() => (null, true),

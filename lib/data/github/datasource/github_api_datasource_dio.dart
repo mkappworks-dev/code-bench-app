@@ -9,7 +9,6 @@ import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/_core/secure_storage.dart';
-import '../../../features/onboarding/notifiers/github_auth_notifier.dart';
 import '../models/repository.dart';
 import 'github_api_datasource.dart';
 
@@ -20,16 +19,12 @@ part 'github_api_datasource_dio.g.dart';
 ///
 /// Wires an `onUnauthorized` callback that fires when GitHub rejects the
 /// token on a real API call (not a deliberate `validateToken()` probe).
-/// The callback clears the stored credential and invalidates
-/// [gitHubAuthProvider] so the UI transitions to the disconnected state
-/// without waiting for the user to surface the error themselves.
-///
-/// Layering note: this provider intentionally imports a feature notifier
-/// (`gitHubAuthProvider`) — the alternative (a side-channel
-/// `unauthorizedHandlerProvider` in `lib/data/github/`) added a layer
-/// of indirection without giving us anything testable in return. The
-/// callback is only fired from within the datasource, so the seam stays
-/// at the provider boundary, not inside the class.
+/// The callback clears the stored credential and self-invalidates this
+/// provider. Because [githubRepositoryProvider] watches this provider,
+/// and [githubServiceProvider] watches the repo, and [gitHubAuthProvider]
+/// watches the service, the invalidation cascades up the reactive graph
+/// and the UI transitions to the disconnected state automatically — with
+/// no cross-layer import required.
 @Riverpod(keepAlive: true)
 Future<GitHubApiDatasource?> githubApiDatasource(Ref ref) async {
   final storage = ref.watch(secureStorageProvider);
@@ -40,7 +35,8 @@ Future<GitHubApiDatasource?> githubApiDatasource(Ref ref) async {
     onUnauthorized: () async {
       await storage.deleteGitHubToken();
       await storage.deleteGitHubAccount();
-      ref.invalidate(gitHubAuthProvider);
+      // Self-invalidate — cascades up through repo → service → auth notifier.
+      ref.invalidate(githubApiDatasourceProvider);
     },
   );
 }
@@ -100,7 +96,10 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
             try {
               await cb();
             } catch (cbErr) {
-              dLog('[GitHubApiDatasourceDio] onUnauthorized callback threw: ${cbErr.runtimeType}');
+              // Reset so a subsequent 401 can retry the cleanup (e.g. if
+              // the keychain was temporarily locked).
+              _firedOnce = false;
+              sLog('[GitHubApiDatasourceDio] onUnauthorized cleanup failed: ${cbErr.runtimeType}');
             }
           }
           handler.next(e);

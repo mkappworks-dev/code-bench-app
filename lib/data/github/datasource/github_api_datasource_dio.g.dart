@@ -13,16 +13,12 @@ part of 'github_api_datasource_dio.dart';
 ///
 /// Wires an `onUnauthorized` callback that fires when GitHub rejects the
 /// token on a real API call (not a deliberate `validateToken()` probe).
-/// The callback clears the stored credential and invalidates
-/// [gitHubAuthProvider] so the UI transitions to the disconnected state
-/// without waiting for the user to surface the error themselves.
-///
-/// Layering note: this provider intentionally imports a feature notifier
-/// (`gitHubAuthProvider`) — the alternative (a side-channel
-/// `unauthorizedHandlerProvider` in `lib/data/github/`) added a layer
-/// of indirection without giving us anything testable in return. The
-/// callback is only fired from within the datasource, so the seam stays
-/// at the provider boundary, not inside the class.
+/// The callback clears the stored credential and self-invalidates this
+/// provider. Because [githubRepositoryProvider] watches this provider,
+/// and [githubServiceProvider] watches the repo, and [gitHubAuthProvider]
+/// watches the service, the invalidation cascades up the reactive graph
+/// and the UI transitions to the disconnected state automatically — with
+/// no cross-layer import required.
 
 @ProviderFor(githubApiDatasource)
 final githubApiDatasourceProvider = GithubApiDatasourceProvider._();
@@ -32,16 +28,12 @@ final githubApiDatasourceProvider = GithubApiDatasourceProvider._();
 ///
 /// Wires an `onUnauthorized` callback that fires when GitHub rejects the
 /// token on a real API call (not a deliberate `validateToken()` probe).
-/// The callback clears the stored credential and invalidates
-/// [gitHubAuthProvider] so the UI transitions to the disconnected state
-/// without waiting for the user to surface the error themselves.
-///
-/// Layering note: this provider intentionally imports a feature notifier
-/// (`gitHubAuthProvider`) — the alternative (a side-channel
-/// `unauthorizedHandlerProvider` in `lib/data/github/`) added a layer
-/// of indirection without giving us anything testable in return. The
-/// callback is only fired from within the datasource, so the seam stays
-/// at the provider boundary, not inside the class.
+/// The callback clears the stored credential and self-invalidates this
+/// provider. Because [githubRepositoryProvider] watches this provider,
+/// and [githubServiceProvider] watches the repo, and [gitHubAuthProvider]
+/// watches the service, the invalidation cascades up the reactive graph
+/// and the UI transitions to the disconnected state automatically — with
+/// no cross-layer import required.
 
 final class GithubApiDatasourceProvider
     extends $FunctionalProvider<AsyncValue<GitHubApiDatasource?>, GitHubApiDatasource?, FutureOr<GitHubApiDatasource?>>
@@ -51,16 +43,12 @@ final class GithubApiDatasourceProvider
   ///
   /// Wires an `onUnauthorized` callback that fires when GitHub rejects the
   /// token on a real API call (not a deliberate `validateToken()` probe).
-  /// The callback clears the stored credential and invalidates
-  /// [gitHubAuthProvider] so the UI transitions to the disconnected state
-  /// without waiting for the user to surface the error themselves.
-  ///
-  /// Layering note: this provider intentionally imports a feature notifier
-  /// (`gitHubAuthProvider`) — the alternative (a side-channel
-  /// `unauthorizedHandlerProvider` in `lib/data/github/`) added a layer
-  /// of indirection without giving us anything testable in return. The
-  /// callback is only fired from within the datasource, so the seam stays
-  /// at the provider boundary, not inside the class.
+  /// The callback clears the stored credential and self-invalidates this
+  /// provider. Because [githubRepositoryProvider] watches this provider,
+  /// and [githubServiceProvider] watches the repo, and [gitHubAuthProvider]
+  /// watches the service, the invalidation cascades up the reactive graph
+  /// and the UI transitions to the disconnected state automatically — with
+  /// no cross-layer import required.
   GithubApiDatasourceProvider._()
     : super(
         from: null,
@@ -86,4 +74,4 @@ final class GithubApiDatasourceProvider
   }
 }
 
-String _$githubApiDatasourceHash() => r'e4f9b46c24164c379a4b70d70797d89840454d95';
+String _$githubApiDatasourceHash() => r'4f23c6d78b98ebe609b7e64861f4c0b8ff10da8d';

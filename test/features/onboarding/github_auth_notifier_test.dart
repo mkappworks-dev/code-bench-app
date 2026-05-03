@@ -7,6 +7,7 @@ import 'package:code_bench_app/data/github/models/device_code_response.dart';
 import 'package:code_bench_app/data/github/repository/github_repository.dart';
 import 'package:code_bench_app/data/github/repository/github_repository_impl.dart';
 import 'package:code_bench_app/data/github/models/repository.dart';
+import 'package:code_bench_app/features/onboarding/notifiers/github_auth_failure.dart';
 import 'package:code_bench_app/features/onboarding/notifiers/github_auth_notifier.dart';
 
 // ── Fake GitHubRepository ────────────────────────────────────────────────────
@@ -64,7 +65,12 @@ class _FakeGitHubRepository extends Fake implements GitHubRepository {
   }
 
   @override
-  Future<GitHubAccount?> pollForUserToken(String deviceCode, int intervalSeconds, {Future<void>? cancelSignal}) async {
+  Future<GitHubAccount?> pollForUserToken(
+    String deviceCode,
+    int intervalSeconds,
+    int expiresIn, {
+    Future<void>? cancelSignal,
+  }) async {
     if (_pollError != null) throw _pollError!;
     if (cancelSignal == null) return _pollResult;
 
@@ -162,7 +168,7 @@ void main() {
       expect(code, isNull);
       final result = c.read(gitHubAuthProvider);
       expect(result, isA<AsyncError<GitHubAccount?>>());
-      expect(result.error, isA<Exception>());
+      expect(result.error, isA<GitHubAuthRequestFailed>());
     });
 
     test('background polling sets AsyncData with account on success', () async {
@@ -227,8 +233,8 @@ void main() {
       expect(fakeRepo.validateCalls, 1);
       expect(fakeRepo.signOutCalls, 1);
       final result = c.read(gitHubAuthProvider);
-      expect(result, isA<AsyncData<GitHubAccount?>>());
-      expect(result.value, isNull);
+      expect(result, isA<AsyncError<GitHubAccount?>>());
+      expect(result.error, isA<GitHubAuthTokenRevoked>());
     });
 
     test('leaves cached account intact when validateStoredToken throws (transient)', () async {

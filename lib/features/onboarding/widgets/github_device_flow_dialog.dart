@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_icons.dart';
+import '../../../core/errors/app_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../data/github/models/device_code_response.dart';
@@ -37,6 +38,8 @@ class GitHubDeviceFlowDialog extends ConsumerStatefulWidget {
 class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog> {
   DeviceCodeResponse? _code;
   String? _error;
+  // Stashed verification URL shown as a fallback when browser launch fails.
+  String? _launchFailedUri;
 
   @override
   void initState() {
@@ -68,9 +71,13 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
   }
 
   Future<void> _onTryAgain() async {
+    // Cancel the in-flight poll before requesting a new device code, so the
+    // stale poller from the failed attempt doesn't race the new one.
+    ref.read(gitHubAuthProvider.notifier).cancelDeviceFlow();
     setState(() {
       _error = null;
       _code = null;
+      _launchFailedUri = null;
     });
     await _start();
   }
@@ -79,8 +86,9 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
     try {
       await launchUrl(Uri.parse(uri));
     } catch (_) {
-      // launchUrl is widget-permitted; failures are swallowed because the
-      // user can still copy the URL manually.
+      // launchUrl is widget-permitted. On failure, surface the URL inline so
+      // the user can open it manually — it is not displayed anywhere else.
+      if (mounted) setState(() => _launchFailedUri = uri);
     }
   }
 
@@ -99,7 +107,7 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
         if (account != null && mounted) Navigator.of(context).pop();
       });
       if (next.hasError && mounted) {
-        setState(() => _error = next.error.toString());
+        setState(() => _error = userMessage(next.error!));
       }
     });
 
@@ -140,7 +148,7 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
         iconType: AppDialogIconType.teal,
         title: 'Sign in to GitHub',
         subtitle: subtitle,
-        content: _DeviceFlowContent(code: code, error: error, onCopyCode: _copyCode),
+        content: _DeviceFlowContent(code: code, error: error, launchFailedUri: _launchFailedUri, onCopyCode: _copyCode),
         actions: actions,
       ),
     );
@@ -148,10 +156,11 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
 }
 
 class _DeviceFlowContent extends StatelessWidget {
-  const _DeviceFlowContent({required this.code, required this.error, required this.onCopyCode});
+  const _DeviceFlowContent({required this.code, required this.error, required this.onCopyCode, this.launchFailedUri});
 
   final DeviceCodeResponse? code;
   final String? error;
+  final String? launchFailedUri;
   final Future<void> Function(String userCode) onCopyCode;
 
   @override
@@ -250,7 +259,43 @@ class _DeviceFlowContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
+        if (launchFailedUri != null) ...[const SizedBox(height: 12), _LaunchFailedBanner(uri: launchFailedUri!)],
       ],
+    );
+  }
+}
+
+/// Shown when `launchUrl` fails so the user has a manual fallback.
+class _LaunchFailedBanner extends StatelessWidget {
+  const _LaunchFailedBanner({required this.uri});
+
+  final String uri;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: c.warning.withValues(alpha: 0.08),
+        border: Border.all(color: c.warning.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "Couldn't open browser — copy this URL instead:",
+            style: TextStyle(color: c.textSecondary, fontSize: 11),
+          ),
+          const SizedBox(height: 4),
+          SelectableText(
+            uri,
+            style: TextStyle(fontFamily: 'monospace', color: c.textPrimary, fontSize: 11),
+          ),
+        ],
+      ),
     );
   }
 }

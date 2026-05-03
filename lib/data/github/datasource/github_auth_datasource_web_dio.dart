@@ -72,10 +72,23 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
   }
 
   @override
-  Future<GitHubAccount?> pollForUserToken(String deviceCode, int intervalSeconds, {Future<void>? cancelSignal}) async {
+  Future<GitHubAccount?> pollForUserToken(
+    String deviceCode,
+    int intervalSeconds,
+    int expiresIn, {
+    Future<void>? cancelSignal,
+  }) async {
     var interval = Duration(seconds: intervalSeconds);
+    const maxInterval = Duration(seconds: 60);
+    final deadline = DateTime.now().add(Duration(seconds: expiresIn));
 
     while (true) {
+      // Local expiry guard — catches the case where slow_down bumps push us
+      // past the device code lifetime before GitHub returns expired_token.
+      if (DateTime.now().isAfter(deadline)) {
+        throw const AuthException('Device code expired — please try signing in again');
+      }
+
       final cancelled = await _waitOrCancel(interval, cancelSignal);
       if (cancelled) return null;
 
@@ -91,8 +104,11 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
           options: Options(headers: {'Accept': 'application/json'}),
         );
       } on DioException catch (e) {
-        dLog('[GitHubAuthDatasource] poll failed (${e.type})');
-        throw AuthException('Device flow polling failed', originalError: e);
+        // Network errors (timeout, connection refused, DNS failure) are
+        // transient — wait the current interval and retry rather than tearing
+        // down the session. The deadline guard above bounds the retry window.
+        dLog('[GitHubAuthDatasource] poll transient error (${e.type}) — retrying');
+        continue;
       }
 
       final data = response.data as Map<String, dynamic>;
@@ -110,13 +126,20 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
           continue;
         case 'slow_down':
           interval += const Duration(seconds: 5);
+          if (interval > maxInterval) interval = maxInterval;
           continue;
         case 'expired_token':
           throw const AuthException('Device code expired — please try signing in again');
         case 'access_denied':
           throw const AuthException('Authorization denied');
         default:
-          throw AuthException('Device flow failed: ${data['error_description'] ?? error}');
+          if (error != null) {
+            final desc = data['error_description'];
+            throw AuthException(desc is String && desc.isNotEmpty ? desc : 'Device flow failed: $error');
+          }
+          // Neither access_token nor error — unexpected response shape.
+          dLog('[GitHubAuthDatasource] poll: unexpected response (no token, no error field)');
+          throw const AuthException('Unexpected response from GitHub during sign-in. Please try again.');
       }
     }
   }
@@ -133,16 +156,32 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
   }
 
   Future<GitHubAccount> _fetchUserInfo(String token) async {
-    final response = await _apiDio.get(
-      '/user',
-      options: Options(headers: {'Authorization': 'Bearer $token', 'Accept': 'application/vnd.github.v3+json'}),
-    );
-    final data = response.data as Map<String, dynamic>;
+    final Response<dynamic> response;
+    try {
+      response = await _apiDio.get(
+        '/user',
+        options: Options(headers: {'Authorization': 'Bearer $token', 'Accept': 'application/vnd.github.v3+json'}),
+      );
+    } on DioException catch (e) {
+      dLog('[GitHubAuthDatasource] _fetchUserInfo failed: ${e.type} ${e.response?.statusCode}');
+      throw AuthException('Failed to fetch GitHub user info', originalError: e);
+    }
+    final raw = response.data;
+    if (raw is! Map<String, dynamic>) {
+      dLog('[GitHubAuthDatasource] _fetchUserInfo: unexpected response shape (${raw.runtimeType})');
+      throw const AuthException('GitHub returned an unexpected user-info shape');
+    }
+    final login = raw['login'];
+    final avatarUrl = raw['avatar_url'];
+    if (login is! String || avatarUrl is! String) {
+      dLog('[GitHubAuthDatasource] _fetchUserInfo: missing required fields');
+      throw const AuthException('GitHub returned an unexpected user-info shape');
+    }
     return GitHubAccount(
-      username: data['login'] as String,
-      avatarUrl: data['avatar_url'] as String,
-      email: data['email'] as String?,
-      name: data['name'] as String?,
+      username: login,
+      avatarUrl: avatarUrl,
+      email: raw['email'] as String?,
+      name: raw['name'] as String?,
     );
   }
 
@@ -158,12 +197,16 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
         dLog('[GitHubAuthDatasource] cached account parse failed, falling back to network: $e');
       }
     }
+    // Only swallow network/transient failures — identified by the wrapped
+    // DioException in originalError. Shape mismatches and storage errors are
+    // real bugs and should propagate rather than silently returning null.
     try {
       final account = await _fetchUserInfo(token);
       await _storage.writeGitHubAccount(jsonEncode(account.toJson()));
       return account;
-    } catch (e) {
-      dLog('[GitHubAuthDatasource] getStoredAccount network fallback failed (${e.runtimeType})');
+    } on AuthException catch (e) {
+      if (e.originalError is! DioException) rethrow;
+      dLog('[GitHubAuthDatasource] getStoredAccount network fallback failed: ${e.runtimeType}');
       return null;
     }
   }

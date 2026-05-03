@@ -25,8 +25,12 @@ class GitHubService {
   final GitHubRepository _repo;
 
   Future<DeviceCodeResponse> requestDeviceCode() => _repo.requestDeviceCode();
-  Future<GitHubAccount?> pollForUserToken(String deviceCode, int intervalSeconds, {Future<void>? cancelSignal}) =>
-      _repo.pollForUserToken(deviceCode, intervalSeconds, cancelSignal: cancelSignal);
+  Future<GitHubAccount?> pollForUserToken(
+    String deviceCode,
+    int intervalSeconds,
+    int expiresIn, {
+    Future<void>? cancelSignal,
+  }) => _repo.pollForUserToken(deviceCode, intervalSeconds, expiresIn, cancelSignal: cancelSignal);
   Future<GitHubAccount?> getStoredAccount() => _repo.getStoredAccount();
   Future<bool> isAuthenticated() => _repo.isAuthenticated();
   Future<bool> validateStoredToken() => _repo.validateStoredToken();

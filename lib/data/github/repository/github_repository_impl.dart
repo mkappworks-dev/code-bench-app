@@ -38,8 +38,12 @@ class GitHubRepositoryImpl implements GitHubRepository {
   Future<DeviceCodeResponse> requestDeviceCode() => _auth.requestDeviceCode();
 
   @override
-  Future<GitHubAccount?> pollForUserToken(String deviceCode, int intervalSeconds, {Future<void>? cancelSignal}) =>
-      _auth.pollForUserToken(deviceCode, intervalSeconds, cancelSignal: cancelSignal);
+  Future<GitHubAccount?> pollForUserToken(
+    String deviceCode,
+    int intervalSeconds,
+    int expiresIn, {
+    Future<void>? cancelSignal,
+  }) => _auth.pollForUserToken(deviceCode, intervalSeconds, expiresIn, cancelSignal: cancelSignal);
 
   @override
   Future<GitHubAccount?> getStoredAccount() => _auth.getStoredAccount();
