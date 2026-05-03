@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:math';
 
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -26,35 +29,42 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
 
   // NOTE: In production, store client credentials server-side.
   // For this desktop app they are embedded (common for desktop OAuth apps).
-  static const _clientId = 'YOUR_GITHUB_CLIENT_ID';
+  static const _clientId = String.fromEnvironment('GITHUB_CLIENT_ID');
+
+  @visibleForTesting
+  ({String verifier, String challenge}) generatePkce() {
+    final bytes = List<int>.generate(32, (_) => Random.secure().nextInt(256));
+    final verifier = base64UrlEncode(bytes).replaceAll('=', '');
+    final challenge = base64UrlEncode(sha256.convert(utf8.encode(verifier)).bytes).replaceAll('=', '');
+    return (verifier: verifier, challenge: challenge);
+  }
 
   @override
   Future<GitHubAccount> authenticate() async {
     try {
-      // Build authorization URL
+      final pkce = generatePkce();
+
       final authUrl = Uri.parse(ApiConstants.githubAuthUrl).replace(
         queryParameters: {
           'client_id': _clientId,
           'scope': ApiConstants.githubScopes,
           'redirect_uri': AppConstants.oauthCallbackUrl,
+          'code_challenge': pkce.challenge,
+          'code_challenge_method': 'S256',
         },
       );
 
-      // Launch browser and wait for callback
       final result = await FlutterWebAuth2.authenticate(
         url: authUrl.toString(),
         callbackUrlScheme: AppConstants.oauthScheme,
       );
 
-      // Extract code from callback
       final code = Uri.parse(result).queryParameters['code'];
       if (code == null) throw const AuthException('OAuth callback missing code');
 
-      // Exchange code for token
-      final token = await _exchangeCodeForToken(code);
+      final token = await _exchangeCodeForToken(code, pkce.verifier);
       await _storage.writeGitHubToken(token);
 
-      // Fetch user info and cache for offline startup
       final account = await _fetchUserInfo(token);
       await _storage.writeGitHubAccount(jsonEncode(account.toJson()));
       return account;
@@ -65,11 +75,16 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
     }
   }
 
-  Future<String> _exchangeCodeForToken(String code) async {
+  Future<String> _exchangeCodeForToken(String code, String codeVerifier) async {
     final dio = DioFactory.create(baseUrl: 'https://github.com');
     final response = await dio.post(
       '/login/oauth/access_token',
-      data: {'client_id': _clientId, 'code': code, 'redirect_uri': AppConstants.oauthCallbackUrl},
+      data: {
+        'client_id': _clientId,
+        'code': code,
+        'redirect_uri': AppConstants.oauthCallbackUrl,
+        'code_verifier': codeVerifier,
+      },
       options: Options(headers: {'Accept': 'application/json'}),
     );
     final data = response.data as Map<String, dynamic>;
