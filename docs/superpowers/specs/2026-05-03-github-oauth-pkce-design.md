@@ -16,7 +16,7 @@ Add PKCE (RFC 7636, S256 method) to the existing OAuth flow so the app can authe
 | Question | Decision |
 |---|---|
 | App type | GitHub **OAuth App** (classic scopes, long-lived tokens, simpler UX) |
-| `client_id` sourcing | `--dart-define=GITHUB_CLIENT_ID=...` at build/run time; no default in source so forks must register their own OAuth App |
+| `client_id` sourcing | `--dart-define-from-file=env.json` at build/run time; `env.json` is gitignored; `env.json.example` committed with placeholder |
 | PAT flow | Kept as-is — untouched fallback |
 | New dependencies | None — `crypto: 3.0.7` already in `pubspec.yaml` |
 
@@ -30,7 +30,7 @@ Add PKCE (RFC 7636, S256 method) to the existing OAuth flow so the app can authe
    - **Authorization callback URL:** `codebench://oauth/callback`
    - **Enable Device Flow:** unchecked
 3. **Register application**
-4. Copy the **Client ID** — supply it at build/run time via `--dart-define=GITHUB_CLIENT_ID=<your-id>`
+4. Copy the **Client ID** — add it to your local `env.json` (see Code changes section)
 5. Do **not** store or use the generated Client Secret — PKCE replaces it
 
 ## Code changes
@@ -45,13 +45,26 @@ Replace the hardcoded placeholder with a compile-time constant:
 static const _clientId = String.fromEnvironment('GITHUB_CLIENT_ID');
 ```
 
-Supplied at build time:
-```bash
-flutter run -d macos --dart-define=GITHUB_CLIENT_ID=Ov23liXXXXXX
-flutter build macos --dart-define=GITHUB_CLIENT_ID=Ov23liXXXXXX
+Values live in a gitignored `env.json` at the repo root:
+
+```json
+{
+  "GITHUB_CLIENT_ID": "Ov23liXXXXXX"
+}
 ```
 
-Forks must register their own OAuth App and supply their own ID. The source never contains the production value.
+Supplied at build time via `--dart-define-from-file`:
+```bash
+flutter run -d macos --dart-define-from-file=env.json
+flutter build macos --dart-define-from-file=env.json
+```
+
+Three new files:
+- `env.json` — gitignored, holds real values (never committed)
+- `env.json.example` — committed, placeholder values, documents required keys for contributors
+- `.vscode/launch.json` — committed safely (no secrets), passes `--dart-define-from-file=env.json` as a `toolArg`
+
+Forks must register their own OAuth App, copy `env.json.example` → `env.json`, and fill in their own client ID.
 
 ### New imports
 
@@ -145,5 +158,5 @@ No new error cases. Both PKCE failure modes (malformed challenge, verifier misma
 ## Security notes
 
 - `verifier` is ephemeral — lives only in the `authenticate()` stack frame, never written to `SecureStorage`
-- `client_id` is public information (visible on the GitHub OAuth App page); the `--dart-define` approach keeps it out of source so forks can't accidentally reuse the production app identity
+- `client_id` is public information (visible on the GitHub OAuth App page); `env.json` keeps it out of source so forks can't accidentally reuse the production app identity
 - `client_secret` is never present in the app; PKCE is the sole proof of origin
