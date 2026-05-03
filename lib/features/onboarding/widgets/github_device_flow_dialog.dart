@@ -13,7 +13,7 @@ import '../notifiers/github_auth_notifier.dart';
 
 /// Frosted-glass dialog implementing the GitHub Device Flow user-facing screen.
 ///
-/// Mounted by tapping "Sign in with GitHub". On mount it asks the notifier to
+/// Mounted by tapping "Connect with GitHub". On mount it asks the notifier to
 /// `startDeviceFlow()`, displays the resulting 8-character code (auto-copying
 /// it to clipboard), and listens for the auth provider to transition to a
 /// signed-in state — at which point the dialog dismisses itself.
@@ -67,6 +67,31 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
     Navigator.of(context).pop();
   }
 
+  Future<void> _onTryAgain() async {
+    setState(() {
+      _error = null;
+      _code = null;
+    });
+    await _start();
+  }
+
+  Future<void> _openBrowser(String uri) async {
+    try {
+      await launchUrl(Uri.parse(uri));
+    } catch (_) {
+      // launchUrl is widget-permitted; failures are swallowed because the
+      // user can still copy the URL manually.
+    }
+  }
+
+  Future<void> _copyCode(String userCode) async {
+    try {
+      await Clipboard.setData(ClipboardData(text: userCode));
+    } catch (_) {
+      // Clipboard is widget-permitted; nothing to do on failure.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(gitHubAuthProvider, (previous, next) {
@@ -81,6 +106,30 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
     final code = _code;
     final error = _error;
 
+    final String subtitle;
+    if (error != null) {
+      subtitle = "Couldn't request a device code";
+    } else if (code == null) {
+      subtitle = 'Requesting code…';
+    } else {
+      subtitle = 'Two steps to authorize Code Bench';
+    }
+
+    final List<AppDialogAction> actions;
+    if (error != null) {
+      actions = [
+        AppDialogAction.primary(label: 'Try again', onPressed: _onTryAgain),
+        AppDialogAction.cancel(onPressed: _onCancel),
+      ];
+    } else if (code != null) {
+      actions = [
+        AppDialogAction.primary(label: 'Open GitHub', onPressed: () => _openBrowser(code.verificationUri)),
+        AppDialogAction.cancel(onPressed: _onCancel),
+      ];
+    } else {
+      actions = [AppDialogAction.cancel(onPressed: _onCancel)];
+    }
+
     // PopScope blocks Escape / system-back from dismissing the route. The
     // only sanctioned exit is the Cancel action, which routes through
     // [_onCancel] so the notifier's cancel path runs.
@@ -90,19 +139,20 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
         icon: AppIcons.github,
         iconType: AppDialogIconType.teal,
         title: 'Sign in to GitHub',
-        subtitle: code == null ? 'Requesting code…' : 'Enter this code at github.com/login/device',
-        content: _DeviceFlowContent(code: code, error: error),
-        actions: [AppDialogAction.cancel(onPressed: _onCancel)],
+        subtitle: subtitle,
+        content: _DeviceFlowContent(code: code, error: error, onCopyCode: _copyCode),
+        actions: actions,
       ),
     );
   }
 }
 
 class _DeviceFlowContent extends StatelessWidget {
-  const _DeviceFlowContent({required this.code, required this.error});
+  const _DeviceFlowContent({required this.code, required this.error, required this.onCopyCode});
 
   final DeviceCodeResponse? code;
   final String? error;
+  final Future<void> Function(String userCode) onCopyCode;
 
   @override
   Widget build(BuildContext context) {
@@ -110,8 +160,27 @@ class _DeviceFlowContent extends StatelessWidget {
 
     if (error != null) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Text(error!, style: TextStyle(color: c.error)),
+        padding: const EdgeInsets.only(top: 4, bottom: 8),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          decoration: BoxDecoration(
+            color: c.error.withValues(alpha: 0.08),
+            border: Border.all(color: c.error.withValues(alpha: 0.25)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'GITHUB SAID',
+                style: TextStyle(color: c.error, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1),
+              ),
+              const SizedBox(height: 4),
+              Text(error!, style: TextStyle(color: c.textPrimary, fontSize: 12, height: 1.45)),
+            ],
+          ),
+        ),
       );
     }
 
@@ -122,57 +191,159 @@ class _DeviceFlowContent extends StatelessWidget {
       );
     }
 
+    final userCode = code!.userCode;
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          decoration: BoxDecoration(color: c.chipFill, borderRadius: BorderRadius.circular(8)),
-          child: SelectableText(
-            code!.userCode,
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 4,
-              color: c.textPrimary,
+        const SizedBox(height: 8),
+        // Hero code chip — tap to copy.
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => onCopyCode(userCode),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+              decoration: BoxDecoration(
+                color: c.chipFill,
+                border: Border.all(color: c.chipStroke),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: SelectableText(
+                  userCode,
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 32,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 6,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextButton.icon(
-              onPressed: () async {
-                try {
-                  await launchUrl(Uri.parse(code!.verificationUri));
-                } catch (_) {
-                  // launchUrl is widget-permitted; failures are swallowed
-                  // because the user can still copy the URL manually.
-                }
-              },
-              icon: const Icon(Icons.open_in_new, size: 16),
-              label: const Text('Open browser'),
-            ),
-            const SizedBox(width: 8),
-            TextButton.icon(
-              onPressed: () async {
-                try {
-                  await Clipboard.setData(ClipboardData(text: code!.userCode));
-                } catch (_) {
-                  // Clipboard is widget-permitted; nothing to do on failure.
-                }
-              },
-              icon: const Icon(Icons.copy, size: 16),
-              label: const Text('Copy code'),
-            ),
-          ],
+        const SizedBox(height: 6),
+        // Auto-clipboard hint — confirms the silent copy that fires on mount.
+        Center(
+          child: Text(
+            '✓  Copied to clipboard — tap code to copy again',
+            style: TextStyle(color: c.textMuted, fontSize: 11),
+          ),
         ),
         const SizedBox(height: 16),
-        Text('Waiting for authorization…', style: TextStyle(color: c.textMuted, fontSize: 13)),
+        // 2-step checklist.
+        _Step(number: 1, label: 'Code copied — ready to paste', done: true),
+        const SizedBox(height: 8),
+        _Step(number: 2, label: 'Open the verification URL and paste'),
+        const SizedBox(height: 16),
+        // Pulse + waiting indicator, sits just above the actions divider.
+        Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const _PulsingDot(),
+              const SizedBox(width: 8),
+              Text('Waiting for authorization', style: TextStyle(color: c.textMuted, fontSize: 12)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
       ],
+    );
+  }
+}
+
+class _Step extends StatelessWidget {
+  const _Step({required this.number, required this.label, this.done = false});
+
+  final int number;
+  final String label;
+  final bool done;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final accentBg = c.accent.withValues(alpha: 0.15);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: done ? c.accent : accentBg,
+            shape: BoxShape.circle,
+            border: done ? null : Border.all(color: c.accent.withValues(alpha: 0.4)),
+          ),
+          alignment: Alignment.center,
+          child: done
+              ? Icon(AppIcons.check, size: 12, color: c.onAccent)
+              : Text(
+                  '$number',
+                  style: TextStyle(color: c.accent, fontSize: 11, fontWeight: FontWeight.w700),
+                ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(label, style: TextStyle(color: c.textPrimary, fontSize: 12, height: 1.4)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Soft teal dot that pulses to indicate background polling. Not a spinner —
+/// the polling cadence is on the order of seconds, so a slow pulse reads as
+/// "alive" without becoming visual noise.
+class _PulsingDot extends StatefulWidget {
+  const _PulsingDot();
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(duration: const Duration(milliseconds: 1400), vsync: this)..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (_, _) {
+        final t = _controller.value;
+        // Two-stage opacity: ramp up 0→1 over first half, ease back 1→0.4
+        // over the second. Avoids the "blink off" feel of a sine wave.
+        final opacity = t < 0.5 ? 0.4 + (t * 2) * 0.6 : 1.0 - ((t - 0.5) * 2) * 0.6;
+        final glow = (1 - t) * 6;
+        return Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(
+            color: c.accent.withValues(alpha: opacity),
+            shape: BoxShape.circle,
+            boxShadow: [BoxShadow(color: c.accent.withValues(alpha: 0.4), blurRadius: glow, spreadRadius: 0)],
+          ),
+        );
+      },
     );
   }
 }
