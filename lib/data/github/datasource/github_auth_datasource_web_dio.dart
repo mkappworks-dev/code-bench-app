@@ -1,9 +1,6 @@
 import 'dart:convert';
-import 'dart:math';
 
-import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -30,14 +27,6 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
   // NOTE: In production, store client credentials server-side.
   // For this desktop app they are embedded (common for desktop OAuth apps).
   static const _clientId = String.fromEnvironment('GITHUB_CLIENT_ID');
-
-  @visibleForTesting
-  ({String verifier, String challenge}) generatePkce() {
-    final bytes = List<int>.generate(32, (_) => Random.secure().nextInt(256));
-    final verifier = base64UrlEncode(bytes).replaceAll('=', '');
-    final challenge = base64UrlEncode(sha256.convert(utf8.encode(verifier)).bytes).replaceAll('=', '');
-    return (verifier: verifier, challenge: challenge);
-  }
 
   @override
   Future<GitHubAccount> authenticate() async {
@@ -91,7 +80,6 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
     final data = response.data as Map<String, dynamic>;
     final token = data['access_token'] as String?;
     if (token == null) {
-      dLog('[GitHubAuthDatasource] token exchange full response: $data');
       throw AuthException('Failed to obtain access token: ${data['error_description'] ?? data['error']}');
     }
     return token;
