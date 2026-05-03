@@ -91,6 +91,7 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
     final data = response.data as Map<String, dynamic>;
     final token = data['access_token'] as String?;
     if (token == null) {
+      dLog('[GitHubAuthDatasource] token exchange full response: $data');
       throw AuthException('Failed to obtain access token: ${data['error_description'] ?? data['error']}');
     }
     return token;
