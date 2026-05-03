@@ -20,8 +20,15 @@ import '../notifiers/github_auth_notifier.dart';
 class GitHubDeviceFlowDialog extends ConsumerStatefulWidget {
   const GitHubDeviceFlowDialog({super.key});
 
-  static Future<void> show(BuildContext context) =>
-      showDialog<void>(context: context, builder: (_) => const GitHubDeviceFlowDialog());
+  static Future<void> show(BuildContext context) => showDialog<void>(
+    context: context,
+    // The dialog must only dismiss via Cancel (so the notifier's cancel path
+    // runs and the in-flight poll is released). Tap-outside / Escape would
+    // pop the route directly, leaving the background poller racing a stale
+    // notifier state.
+    barrierDismissible: false,
+    builder: (_) => const GitHubDeviceFlowDialog(),
+  );
 
   @override
   ConsumerState<GitHubDeviceFlowDialog> createState() => _GitHubDeviceFlowDialogState();
@@ -74,13 +81,19 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
     final code = _code;
     final error = _error;
 
-    return AppDialog(
-      icon: AppIcons.github,
-      iconType: AppDialogIconType.teal,
-      title: 'Sign in to GitHub',
-      subtitle: code == null ? 'Requesting code…' : 'Enter this code at github.com/login/device',
-      content: _DeviceFlowContent(code: code, error: error),
-      actions: [AppDialogAction.cancel(onPressed: _onCancel)],
+    // PopScope blocks Escape / system-back from dismissing the route. The
+    // only sanctioned exit is the Cancel action, which routes through
+    // [_onCancel] so the notifier's cancel path runs.
+    return PopScope(
+      canPop: false,
+      child: AppDialog(
+        icon: AppIcons.github,
+        iconType: AppDialogIconType.teal,
+        title: 'Sign in to GitHub',
+        subtitle: code == null ? 'Requesting code…' : 'Enter this code at github.com/login/device',
+        content: _DeviceFlowContent(code: code, error: error),
+        actions: [AppDialogAction.cancel(onPressed: _onCancel)],
+      ),
     );
   }
 }
