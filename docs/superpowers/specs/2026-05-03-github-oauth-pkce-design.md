@@ -33,6 +33,53 @@ Add PKCE (RFC 7636, S256 method) to the existing OAuth flow so the app can authe
 4. Copy the **Client ID** — add it to your local `env.json` (see Code changes section)
 5. Do **not** store or use the generated Client Secret — PKCE replaces it
 
+## Local development setup (one-time, per machine)
+
+After the GitHub OAuth App is registered and the code changes are in place, any developer (or fork) follows these steps once:
+
+### 1. Register a GitHub OAuth App (forks only — Benchlabs team uses the org app)
+
+Follow the [GitHub-side setup](#github-side-setup-one-time-manual) section above and copy the Client ID.
+
+### 2. Create `env.json` from the example
+
+```bash
+cp env.json.example env.json
+```
+
+Fill in your Client ID:
+
+```json
+{
+  "GITHUB_CLIENT_ID": "Ov23liXXXXXX"
+}
+```
+
+`env.json` is gitignored — it will never be committed.
+
+### 3. Run or build
+
+The `.vscode/launch.json` passes `--dart-define-from-file=env.json` automatically — just press Run in VS Code.
+
+From the terminal:
+```bash
+flutter run -d macos --dart-define-from-file=env.json
+flutter build macos --dart-define-from-file=env.json
+```
+
+### CI/CD
+
+In GitHub Actions, write `env.json` from a repository secret before the build step:
+
+```yaml
+- name: Write env.json
+  run: echo '${{ secrets.ENV_JSON }}' > env.json
+```
+
+Store the entire JSON blob as the `ENV_JSON` secret in the Benchlabs repo settings.
+
+---
+
 ## Code changes
 
 **File:** `lib/data/github/datasource/github_auth_datasource_web_dio.dart`
