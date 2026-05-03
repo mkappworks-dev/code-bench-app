@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../models/device_code_response.dart';
 import '../models/repository.dart';
 import '../datasource/github_api_datasource.dart';
 import '../datasource/github_api_datasource_dio.dart';
@@ -34,16 +35,24 @@ class GitHubRepositoryImpl implements GitHubRepository {
   // Auth delegation
 
   @override
-  Future<GitHubAccount> authenticate() => _auth.authenticate();
+  Future<DeviceCodeResponse> requestDeviceCode() => _auth.requestDeviceCode();
 
   @override
-  Future<GitHubAccount> signInWithPat(String token) => _auth.signInWithPat(token);
+  Future<GitHubAccount?> pollForUserToken(
+    String deviceCode,
+    int intervalSeconds,
+    int expiresIn, {
+    Future<void>? cancelSignal,
+  }) => _auth.pollForUserToken(deviceCode, intervalSeconds, expiresIn, cancelSignal: cancelSignal);
 
   @override
   Future<GitHubAccount?> getStoredAccount() => _auth.getStoredAccount();
 
   @override
   Future<bool> isAuthenticated() => _auth.isAuthenticated();
+
+  @override
+  Future<bool> validateStoredToken() => _auth.validateStoredToken();
 
   @override
   Future<void> signOut() => _auth.signOut();

@@ -1,14 +1,25 @@
+import '../models/device_code_response.dart';
 import '../models/repository.dart';
 
 abstract interface class GitHubRepository {
   // Auth methods
-  Future<GitHubAccount> authenticate();
+  Future<DeviceCodeResponse> requestDeviceCode();
 
-  Future<GitHubAccount> signInWithPat(String token);
+  Future<GitHubAccount?> pollForUserToken(
+    String deviceCode,
+    int intervalSeconds,
+    int expiresIn, {
+    Future<void>? cancelSignal,
+  });
 
   Future<GitHubAccount?> getStoredAccount();
 
   Future<bool> isAuthenticated();
+
+  /// Verifies the stored token against GitHub. Returns `true` on 200,
+  /// `false` on 401, rethrows on transient failures. See
+  /// `GitHubAuthDatasource.validateStoredToken` for the full contract.
+  Future<bool> validateStoredToken();
 
   Future<void> signOut();
 

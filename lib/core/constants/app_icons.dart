@@ -47,6 +47,12 @@ abstract final class AppIcons {
   static const IconData aiMode = LucideIcons.zap;
 
   // Git
+  // Note: lucide_icons_flutter does not ship a GitHub octocat glyph. For the
+  // app's GitHub-account avatar/button we use the custom GitHubIcon widget
+  // (lib/core/widgets/github_icon.dart). This IconData is reserved for
+  // surfaces that require an IconData (e.g. AppDialog) and reads as
+  // "external account / sign-in" rather than the octocat.
+  static const IconData github = LucideIcons.logIn;
   static const IconData gitMerge = LucideIcons.gitMerge;
   static const IconData gitCommit = LucideIcons.gitCommitHorizontal;
   static const IconData gitDiff = LucideIcons.gitCompare;
@@ -58,6 +64,8 @@ abstract final class AppIcons {
   static const IconData settings = LucideIcons.settings;
   static const IconData warning = LucideIcons.triangleAlert;
   static const IconData clock = LucideIcons.clock;
+  static const IconData externalLink = LucideIcons.externalLink;
+  static const IconData refresh = LucideIcons.refreshCw;
 
   // Updates
   static const IconData update = LucideIcons.arrowDownToLine;

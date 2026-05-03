@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../data/github/models/device_code_response.dart';
 import '../../data/github/repository/github_repository.dart';
 import '../../data/github/repository/github_repository_impl.dart';
 import '../../data/github/models/repository.dart';
@@ -23,10 +24,16 @@ class GitHubService {
 
   final GitHubRepository _repo;
 
-  Future<GitHubAccount> authenticate() => _repo.authenticate();
-  Future<GitHubAccount> signInWithPat(String token) => _repo.signInWithPat(token);
+  Future<DeviceCodeResponse> requestDeviceCode() => _repo.requestDeviceCode();
+  Future<GitHubAccount?> pollForUserToken(
+    String deviceCode,
+    int intervalSeconds,
+    int expiresIn, {
+    Future<void>? cancelSignal,
+  }) => _repo.pollForUserToken(deviceCode, intervalSeconds, expiresIn, cancelSignal: cancelSignal);
   Future<GitHubAccount?> getStoredAccount() => _repo.getStoredAccount();
   Future<bool> isAuthenticated() => _repo.isAuthenticated();
+  Future<bool> validateStoredToken() => _repo.validateStoredToken();
   Future<void> signOut() => _repo.signOut();
   Future<List<Repository>> listRepositories({int page = 1}) => _repo.listRepositories(page: page);
   Future<List<Repository>> searchRepositories(String query) => _repo.searchRepositories(query);

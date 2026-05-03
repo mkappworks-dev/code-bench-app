@@ -21,9 +21,11 @@ class ApiConstants {
 
   // GitHub
   static const String githubApiBaseUrl = 'https://api.github.com';
-  static const String githubAuthUrl = 'https://github.com/login/oauth/authorize';
-  static const String githubTokenUrl = 'https://github.com/login/oauth/access_token';
-  static const String githubScopes = 'repo,read:user,user:email';
+
+  // Public client identifier for the `Benchlabs Codebench` GitHub App. Embedded
+  // in the binary by design — Device Flow (RFC 8628) treats `client_id` as a
+  // non-secret. Forks must register their own GitHub App and replace this.
+  static const String githubClientId = 'Iv23liSxSoUtHVlXrNGx';
 
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);

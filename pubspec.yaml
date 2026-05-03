@@ -32,6 +32,7 @@ dependencies:
   # Code generation annotations
   freezed_annotation: 3.1.0
   json_annotation: 4.11.0
+  meta: ^1.15.0
 
   # Code editor
   re_editor: 0.8.0

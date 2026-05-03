@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/constants/api_constants.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../core/errors/app_exception.dart';
 import '../../core/theme/app_colors.dart';
@@ -10,6 +11,7 @@ import '../../core/utils/debug_logger.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import '../../data/github/models/repository.dart';
 import '../onboarding/notifiers/github_auth_notifier.dart';
+import '../onboarding/widgets/github_device_flow_dialog.dart';
 import '../settings/widgets/section_label.dart';
 import 'widgets/github_connected_card.dart';
 import 'widgets/github_disconnected_card.dart';
@@ -22,18 +24,15 @@ class IntegrationsScreen extends ConsumerStatefulWidget {
 }
 
 class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
-  final _patController = TextEditingController();
-
-  @override
-  void dispose() {
-    _patController.dispose();
-    super.dispose();
-  }
-
   Future<void> _connectOAuth() async {
-    await ref.read(gitHubAuthProvider.notifier).authenticate();
+    await GitHubDeviceFlowDialog.show(context);
     if (!mounted) return;
-    if (!ref.read(gitHubAuthProvider).hasError) {
+    // Only celebrate when an account actually landed — the dialog can also
+    // dismiss via Cancel (state stays AsyncData(null)) or via an error
+    // (state is AsyncError). Reading account != null distinguishes the
+    // genuine success case from those.
+    final account = ref.read(gitHubAuthProvider).value;
+    if (account != null) {
       AppSnackBar.show(context, 'Connected to GitHub', type: AppSnackBarType.success);
     }
   }
@@ -42,38 +41,38 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
     await ref.read(gitHubAuthProvider.notifier).signOut();
     if (!mounted) return;
     if (!ref.read(gitHubAuthProvider).hasError) {
-      AppSnackBar.show(context, 'Disconnected from GitHub', type: AppSnackBarType.success);
+      // Local Disconnect only clears the keychain — Device Flow has no
+      // client_secret, so this client cannot revoke the grant on
+      // GitHub's side. Surface a "Revoke on GitHub" action so the user
+      // can close the loop themselves on the GitHub App connections page.
+      AppSnackBar.show(
+        context,
+        'Disconnected from GitHub',
+        message: 'Token cleared locally. To revoke on GitHub, open the app connections page.',
+        type: AppSnackBarType.success,
+        actionLabel: 'Revoke on GitHub',
+        onAction: _openRevocationPage,
+      );
     }
   }
 
-  Future<void> _signInWithPat() async {
-    final token = _patController.text.trim();
-    if (token.isEmpty) return;
-    await ref.read(gitHubAuthProvider.notifier).signInWithPat(token);
-    if (!mounted) return;
-    if (!ref.read(gitHubAuthProvider).hasError) {
-      AppSnackBar.show(context, 'Connected to GitHub', type: AppSnackBarType.success);
-      _patController.clear();
-    }
-  }
-
-  Future<void> _openTokenCreationPage() async {
-    final uri = Uri.parse('https://github.com/settings/tokens/new');
+  Future<void> _openRevocationPage() async {
+    final uri = Uri.parse('https://github.com/settings/connections/applications/${ApiConstants.githubClientId}');
     try {
       final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!launched && mounted) {
         AppSnackBar.show(
           context,
-          'Could not open browser — visit github.com/settings/tokens/new',
+          'Could not open browser — visit github.com/settings/applications',
           type: AppSnackBarType.warning,
         );
       }
     } catch (e, st) {
-      dLog('[IntegrationsScreen] launchUrl failed: $e\n$st');
+      dLog('[IntegrationsScreen] launchUrl revoke failed: $e\n$st');
       if (mounted) {
         AppSnackBar.show(
           context,
-          'Could not open browser — visit github.com/settings/tokens/new',
+          'Could not open browser — visit github.com/settings/applications',
           type: AppSnackBarType.warning,
         );
       }
@@ -107,13 +106,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
           if (account != null)
             GithubConnectedCard(account: account, onDisconnect: _signOut)
           else
-            GithubDisconnectedCard(
-              isLoading: isLoading,
-              patController: _patController,
-              onConnectOAuth: _connectOAuth,
-              onSignInWithPat: _signInWithPat,
-              onOpenTokenPage: _openTokenCreationPage,
-            ),
+            GithubDisconnectedCard(isLoading: isLoading, onConnectOAuth: _connectOAuth),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(10),
