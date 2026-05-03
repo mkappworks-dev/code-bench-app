@@ -27,7 +27,6 @@ class GitHubService {
   Future<DeviceCodeResponse> requestDeviceCode() => _repo.requestDeviceCode();
   Future<GitHubAccount?> pollForUserToken(String deviceCode, int intervalSeconds, {Future<void>? cancelSignal}) =>
       _repo.pollForUserToken(deviceCode, intervalSeconds, cancelSignal: cancelSignal);
-  Future<GitHubAccount> signInWithPat(String token) => _repo.signInWithPat(token);
   Future<GitHubAccount?> getStoredAccount() => _repo.getStoredAccount();
   Future<bool> isAuthenticated() => _repo.isAuthenticated();
   Future<bool> validateStoredToken() => _repo.validateStoredToken();

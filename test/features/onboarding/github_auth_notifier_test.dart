@@ -82,11 +82,6 @@ class _FakeGitHubRepository extends Fake implements GitHubRepository {
     }
     return completer.future;
   }
-
-  @override
-  Future<GitHubAccount> signInWithPat(String token) async {
-    return _pollResult!;
-  }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -287,9 +282,9 @@ void main() {
     });
 
     test('preserves a pre-existing signed-in account when cancelling re-auth', () async {
-      // User is already signed in (e.g. via PAT) and triggers a re-auth via
-      // device flow, then cancels. The cancel must NOT clobber the existing
-      // account — that would falsely sign the user out client-side.
+      // User is already signed in and triggers a re-auth via device flow,
+      // then cancels. The cancel must NOT clobber the existing account —
+      // that would falsely sign the user out client-side.
       final existingAccount = _fakeAccount();
       fakeRepo.setStoredAccount(existingAccount);
 

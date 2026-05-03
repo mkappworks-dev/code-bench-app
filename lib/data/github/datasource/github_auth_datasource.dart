@@ -14,8 +14,6 @@ abstract interface class GitHubAuthDatasource {
   /// from GitHub increase it.
   Future<GitHubAccount?> pollForUserToken(String deviceCode, int intervalSeconds, {Future<void>? cancelSignal});
 
-  Future<GitHubAccount> signInWithPat(String token);
-
   Future<GitHubAccount?> getStoredAccount();
 
   Future<bool> isAuthenticated();

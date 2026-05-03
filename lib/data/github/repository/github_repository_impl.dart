@@ -42,9 +42,6 @@ class GitHubRepositoryImpl implements GitHubRepository {
       _auth.pollForUserToken(deviceCode, intervalSeconds, cancelSignal: cancelSignal);
 
   @override
-  Future<GitHubAccount> signInWithPat(String token) => _auth.signInWithPat(token);
-
-  @override
   Future<GitHubAccount?> getStoredAccount() => _auth.getStoredAccount();
 
   @override

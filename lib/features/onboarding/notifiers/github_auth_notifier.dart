@@ -129,14 +129,4 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
       return null;
     });
   }
-
-  /// Validates [token] against the GitHub API, persists it on success, and
-  /// updates state. The token never leaves the service layer.
-  Future<void> signInWithPat(String token) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final svc = await ref.read(githubServiceProvider.future);
-      return svc.signInWithPat(token);
-    });
-  }
 }

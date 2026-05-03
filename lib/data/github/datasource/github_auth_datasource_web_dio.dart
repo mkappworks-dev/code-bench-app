@@ -147,24 +147,6 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
   }
 
   @override
-  Future<GitHubAccount> signInWithPat(String token) async {
-    try {
-      final account = await _fetchUserInfo(token);
-      await _storage.writeGitHubToken(token);
-      await _storage.writeGitHubAccount(jsonEncode(account.toJson()));
-      return account;
-    } on AuthException {
-      rethrow;
-    } catch (e) {
-      // Deliberately do NOT interpolate `e` here — a Dio error's toString()
-      // can surface request headers (including the PAT). See
-      // macos/Runner/README.md threat model.
-      dLog('[GitHubAuthDatasource] signInWithPat failed (${e.runtimeType}) — original suppressed for PAT safety');
-      throw const AuthException('GitHub token rejected');
-    }
-  }
-
-  @override
   Future<GitHubAccount?> getStoredAccount() async {
     final token = await _storage.readGitHubToken();
     if (token == null) return null;

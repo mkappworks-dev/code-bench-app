@@ -24,14 +24,6 @@ class IntegrationsScreen extends ConsumerStatefulWidget {
 }
 
 class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
-  final _patController = TextEditingController();
-
-  @override
-  void dispose() {
-    _patController.dispose();
-    super.dispose();
-  }
-
   Future<void> _connectOAuth() async {
     await GitHubDeviceFlowDialog.show(context);
     if (!mounted) return;
@@ -87,40 +79,6 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
     }
   }
 
-  Future<void> _signInWithPat() async {
-    final token = _patController.text.trim();
-    if (token.isEmpty) return;
-    await ref.read(gitHubAuthProvider.notifier).signInWithPat(token);
-    if (!mounted) return;
-    if (!ref.read(gitHubAuthProvider).hasError) {
-      AppSnackBar.show(context, 'Connected to GitHub', type: AppSnackBarType.success);
-      _patController.clear();
-    }
-  }
-
-  Future<void> _openTokenCreationPage() async {
-    final uri = Uri.parse('https://github.com/settings/tokens/new');
-    try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!launched && mounted) {
-        AppSnackBar.show(
-          context,
-          'Could not open browser — visit github.com/settings/tokens/new',
-          type: AppSnackBarType.warning,
-        );
-      }
-    } catch (e, st) {
-      dLog('[IntegrationsScreen] launchUrl failed: $e\n$st');
-      if (mounted) {
-        AppSnackBar.show(
-          context,
-          'Could not open browser — visit github.com/settings/tokens/new',
-          type: AppSnackBarType.warning,
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
@@ -148,13 +106,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
           if (account != null)
             GithubConnectedCard(account: account, onDisconnect: _signOut)
           else
-            GithubDisconnectedCard(
-              isLoading: isLoading,
-              patController: _patController,
-              onConnectOAuth: _connectOAuth,
-              onSignInWithPat: _signInWithPat,
-              onOpenTokenPage: _openTokenCreationPage,
-            ),
+            GithubDisconnectedCard(isLoading: isLoading, onConnectOAuth: _connectOAuth),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(10),
