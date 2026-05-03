@@ -1,8 +1,11 @@
+import '../models/device_code_response.dart';
 import '../models/repository.dart';
 
 abstract interface class GitHubRepository {
   // Auth methods
-  Future<GitHubAccount> authenticate();
+  Future<DeviceCodeResponse> requestDeviceCode();
+
+  Future<GitHubAccount?> pollForUserToken(String deviceCode, int intervalSeconds, {Future<void>? cancelSignal});
 
   Future<GitHubAccount> signInWithPat(String token);
 

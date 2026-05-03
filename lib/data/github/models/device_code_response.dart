@@ -19,6 +19,5 @@ abstract class DeviceCodeResponse with _$DeviceCodeResponse {
     @JsonKey(name: 'expires_in') required int expiresIn,
   }) = _DeviceCodeResponse;
 
-  factory DeviceCodeResponse.fromJson(Map<String, dynamic> json) =>
-      _$DeviceCodeResponseFromJson(json);
+  factory DeviceCodeResponse.fromJson(Map<String, dynamic> json) => _$DeviceCodeResponseFromJson(json);
 }

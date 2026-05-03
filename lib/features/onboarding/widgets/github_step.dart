@@ -11,6 +11,7 @@ import '../../../core/widgets/pat_section.dart';
 import '../../../data/github/models/repository.dart';
 import '../../providers/widgets/provider_card_helpers.dart';
 import '../notifiers/github_auth_notifier.dart';
+import 'github_device_flow_dialog.dart';
 
 class GithubStep extends ConsumerStatefulWidget {
   const GithubStep({super.key, required this.onContinue, required this.onSkip});
@@ -32,7 +33,7 @@ class _GithubStepState extends ConsumerState<GithubStep> {
   }
 
   Future<void> _connectOAuth() async {
-    await ref.read(gitHubAuthProvider.notifier).authenticate();
+    await GitHubDeviceFlowDialog.show(context);
   }
 
   Future<void> _disconnect() async {

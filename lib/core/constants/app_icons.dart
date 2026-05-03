@@ -47,6 +47,7 @@ abstract final class AppIcons {
   static const IconData aiMode = LucideIcons.zap;
 
   // Git
+  static const IconData github = LucideIcons.gitBranch;
   static const IconData gitMerge = LucideIcons.gitMerge;
   static const IconData gitCommit = LucideIcons.gitCommitHorizontal;
   static const IconData gitDiff = LucideIcons.gitCompare;

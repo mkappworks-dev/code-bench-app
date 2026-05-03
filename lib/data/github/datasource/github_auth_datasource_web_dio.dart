@@ -1,15 +1,16 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/constants/api_constants.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../_core/http/dio_factory.dart';
 import '../../_core/secure_storage.dart';
+import '../models/device_code_response.dart';
 import '../models/repository.dart';
 import 'github_auth_datasource.dart';
 
@@ -18,76 +19,105 @@ part 'github_auth_datasource_web_dio.g.dart';
 @Riverpod(keepAlive: true)
 GitHubAuthDatasource githubAuthDatasource(Ref ref) => GitHubAuthDatasourceWeb(ref.watch(secureStorageProvider));
 
-/// Web/OAuth-backed implementation of [GitHubAuthDatasource].
+/// Device-Flow-backed implementation of [GitHubAuthDatasource].
+///
+/// Holds two pre-configured Dio instances: one for github.com (auth
+/// endpoints) and one for api.github.com (user lookup). Tests inject
+/// stub adapters via [GitHubAuthDatasourceWeb.withDios].
 class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
-  GitHubAuthDatasourceWeb(this._storage);
+  GitHubAuthDatasourceWeb(this._storage)
+    : _githubDio = DioFactory.create(baseUrl: 'https://github.com'),
+      _apiDio = DioFactory.create(baseUrl: ApiConstants.githubApiBaseUrl);
 
-  final SecureStorage _storage;
+  /// Test-only constructor — accepts pre-configured [Dio] instances so tests
+  /// can inject a fake [HttpClientAdapter] without hitting real GitHub.
+  @visibleForTesting
+  GitHubAuthDatasourceWeb.withDios(this._storage, this._githubDio, this._apiDio);
 
-  // NOTE: In production, store client credentials server-side.
-  // For this desktop app they are embedded (common for desktop OAuth apps).
   static const _clientId = String.fromEnvironment('GITHUB_CLIENT_ID');
 
+  final SecureStorage _storage;
+  final Dio _githubDio;
+  final Dio _apiDio;
+
   @override
-  Future<GitHubAccount> authenticate() async {
+  Future<DeviceCodeResponse> requestDeviceCode() async {
     try {
-      final pkce = generatePkce();
-
-      final authUrl = Uri.parse(ApiConstants.githubAuthUrl).replace(
-        queryParameters: {
-          'client_id': _clientId,
-          'scope': ApiConstants.githubScopes,
-          'redirect_uri': AppConstants.oauthCallbackUrl,
-          'code_challenge': pkce.challenge,
-          'code_challenge_method': 'S256',
-        },
+      final response = await _githubDio.post(
+        '/login/device/code',
+        data: {'client_id': _clientId},
+        options: Options(headers: {'Accept': 'application/json'}),
       );
-
-      final result = await FlutterWebAuth2.authenticate(
-        url: authUrl.toString(),
-        callbackUrlScheme: AppConstants.oauthScheme,
-      );
-
-      final code = Uri.parse(result).queryParameters['code'];
-      if (code == null) throw const AuthException('OAuth callback missing code');
-
-      final token = await _exchangeCodeForToken(code, pkce.verifier);
-      await _storage.writeGitHubToken(token);
-
-      final account = await _fetchUserInfo(token);
-      await _storage.writeGitHubAccount(jsonEncode(account.toJson()));
-      return account;
-    } on AuthException {
-      rethrow;
-    } catch (e) {
-      dLog('[GitHubAuthDatasource] authenticate failed (${e.runtimeType})');
-      throw AuthException('GitHub authentication failed', originalError: e);
+      return DeviceCodeResponse.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      dLog('[GitHubAuthDatasource] requestDeviceCode failed (${e.type})');
+      throw AuthException('Failed to request device code', originalError: e);
     }
   }
 
-  Future<String> _exchangeCodeForToken(String code, String codeVerifier) async {
-    final dio = DioFactory.create(baseUrl: 'https://github.com');
-    final response = await dio.post(
-      '/login/oauth/access_token',
-      data: {
-        'client_id': _clientId,
-        'code': code,
-        'redirect_uri': AppConstants.oauthCallbackUrl,
-        'code_verifier': codeVerifier,
-      },
-      options: Options(headers: {'Accept': 'application/json'}),
-    );
-    final data = response.data as Map<String, dynamic>;
-    final token = data['access_token'] as String?;
-    if (token == null) {
-      throw AuthException('Failed to obtain access token: ${data['error_description'] ?? data['error']}');
+  @override
+  Future<GitHubAccount?> pollForUserToken(String deviceCode, int intervalSeconds, {Future<void>? cancelSignal}) async {
+    var interval = Duration(seconds: intervalSeconds);
+
+    while (true) {
+      final cancelled = await _waitOrCancel(interval, cancelSignal);
+      if (cancelled) return null;
+
+      final Response<dynamic> response;
+      try {
+        response = await _githubDio.post(
+          '/login/oauth/access_token',
+          data: {
+            'client_id': _clientId,
+            'device_code': deviceCode,
+            'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
+          },
+          options: Options(headers: {'Accept': 'application/json'}),
+        );
+      } on DioException catch (e) {
+        dLog('[GitHubAuthDatasource] poll failed (${e.type})');
+        throw AuthException('Device flow polling failed', originalError: e);
+      }
+
+      final data = response.data as Map<String, dynamic>;
+      final token = data['access_token'] as String?;
+      if (token != null) {
+        await _storage.writeGitHubToken(token);
+        final account = await _fetchUserInfo(token);
+        await _storage.writeGitHubAccount(jsonEncode(account.toJson()));
+        return account;
+      }
+
+      final error = data['error'] as String?;
+      switch (error) {
+        case 'authorization_pending':
+          continue;
+        case 'slow_down':
+          interval += const Duration(seconds: 5);
+          continue;
+        case 'expired_token':
+          throw const AuthException('Device code expired — please try signing in again');
+        case 'access_denied':
+          throw const AuthException('Authorization denied');
+        default:
+          throw AuthException('Device flow failed: ${data['error_description'] ?? error}');
+      }
     }
-    return token;
+  }
+
+  /// Returns true if [cancelSignal] completed before [interval] elapsed.
+  Future<bool> _waitOrCancel(Duration interval, Future<void>? cancelSignal) async {
+    if (cancelSignal == null) {
+      await Future<void>.delayed(interval);
+      return false;
+    }
+    final delay = Future<void>.delayed(interval).then((_) => false);
+    final cancel = cancelSignal.then((_) => true);
+    return Future.any([delay, cancel]);
   }
 
   Future<GitHubAccount> _fetchUserInfo(String token) async {
-    final dio = DioFactory.create(baseUrl: ApiConstants.githubApiBaseUrl);
-    final response = await dio.get(
+    final response = await _apiDio.get(
       '/user',
       options: Options(headers: {'Authorization': 'Bearer $token', 'Accept': 'application/vnd.github.v3+json'}),
     );
@@ -100,12 +130,6 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
     );
   }
 
-  /// Signs in using a user-provided Personal Access Token.
-  ///
-  /// Validates the token by calling `/user`, persists it to secure storage
-  /// on success, and returns the populated account. Throws [AuthException]
-  /// if the token is rejected or the request fails — callers must handle
-  /// errors and must not persist the token themselves.
   @override
   Future<GitHubAccount> signInWithPat(String token) async {
     try {
@@ -136,7 +160,6 @@ class GitHubAuthDatasourceWeb implements GitHubAuthDatasource {
         dLog('[GitHubAuthDatasource] cached account parse failed, falling back to network: $e');
       }
     }
-    // Fallback for first launch after upgrade (no cached account yet)
     try {
       final account = await _fetchUserInfo(token);
       await _storage.writeGitHubAccount(jsonEncode(account.toJson()));

@@ -10,6 +10,7 @@ import '../../core/utils/debug_logger.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import '../../data/github/models/repository.dart';
 import '../onboarding/notifiers/github_auth_notifier.dart';
+import '../onboarding/widgets/github_device_flow_dialog.dart';
 import '../settings/widgets/section_label.dart';
 import 'widgets/github_connected_card.dart';
 import 'widgets/github_disconnected_card.dart';
@@ -31,7 +32,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
   }
 
   Future<void> _connectOAuth() async {
-    await ref.read(gitHubAuthProvider.notifier).authenticate();
+    await GitHubDeviceFlowDialog.show(context);
     if (!mounted) return;
     if (!ref.read(gitHubAuthProvider).hasError) {
       AppSnackBar.show(context, 'Connected to GitHub', type: AppSnackBarType.success);
