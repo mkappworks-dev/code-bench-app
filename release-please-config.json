@@ -5,6 +5,7 @@
   "pull-request-header": "Release ready for review",
   "pull-request-footer": "- Merging this PR tags the commit; `release.yml` then builds, signs, notarizes, and publishes the macOS DMG and ZIP automatically.\n- Do not edit `pubspec.yaml` or `CHANGELOG.md` manually — release-please owns both.\n- To skip a release, close this PR; release-please will reopen it on the next merge to main.",
   "include-component-in-tag": false,
+  "draft": true,
   "packages": {
     ".": {
       "package-name": "code-bench-app",
