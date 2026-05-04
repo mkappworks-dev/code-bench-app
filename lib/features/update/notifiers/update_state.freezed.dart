@@ -55,7 +55,7 @@ extension UpdateStatePatterns on UpdateState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( UpdateStateIdle value)?  idle,TResult Function( UpdateStateChecking value)?  checking,TResult Function( UpdateStateAvailable value)?  available,TResult Function( UpdateStateDownloading value)?  downloading,TResult Function( UpdateStateInstalling value)?  installing,TResult Function( UpdateStateUpToDate value)?  upToDate,TResult Function( UpdateStateError value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( UpdateStateIdle value)?  idle,TResult Function( UpdateStateChecking value)?  checking,TResult Function( UpdateStateAvailable value)?  available,TResult Function( UpdateStateDownloading value)?  downloading,TResult Function( UpdateStateInstalling value)?  installing,TResult Function( UpdateStateReadyToRestart value)?  readyToRestart,TResult Function( UpdateStateUpToDate value)?  upToDate,TResult Function( UpdateStateError value)?  error,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case UpdateStateIdle() when idle != null:
@@ -63,7 +63,8 @@ return idle(_that);case UpdateStateChecking() when checking != null:
 return checking(_that);case UpdateStateAvailable() when available != null:
 return available(_that);case UpdateStateDownloading() when downloading != null:
 return downloading(_that);case UpdateStateInstalling() when installing != null:
-return installing(_that);case UpdateStateUpToDate() when upToDate != null:
+return installing(_that);case UpdateStateReadyToRestart() when readyToRestart != null:
+return readyToRestart(_that);case UpdateStateUpToDate() when upToDate != null:
 return upToDate(_that);case UpdateStateError() when error != null:
 return error(_that);case _:
   return orElse();
@@ -83,7 +84,7 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( UpdateStateIdle value)  idle,required TResult Function( UpdateStateChecking value)  checking,required TResult Function( UpdateStateAvailable value)  available,required TResult Function( UpdateStateDownloading value)  downloading,required TResult Function( UpdateStateInstalling value)  installing,required TResult Function( UpdateStateUpToDate value)  upToDate,required TResult Function( UpdateStateError value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( UpdateStateIdle value)  idle,required TResult Function( UpdateStateChecking value)  checking,required TResult Function( UpdateStateAvailable value)  available,required TResult Function( UpdateStateDownloading value)  downloading,required TResult Function( UpdateStateInstalling value)  installing,required TResult Function( UpdateStateReadyToRestart value)  readyToRestart,required TResult Function( UpdateStateUpToDate value)  upToDate,required TResult Function( UpdateStateError value)  error,}){
 final _that = this;
 switch (_that) {
 case UpdateStateIdle():
@@ -91,7 +92,8 @@ return idle(_that);case UpdateStateChecking():
 return checking(_that);case UpdateStateAvailable():
 return available(_that);case UpdateStateDownloading():
 return downloading(_that);case UpdateStateInstalling():
-return installing(_that);case UpdateStateUpToDate():
+return installing(_that);case UpdateStateReadyToRestart():
+return readyToRestart(_that);case UpdateStateUpToDate():
 return upToDate(_that);case UpdateStateError():
 return error(_that);}
 }
@@ -107,7 +109,7 @@ return error(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( UpdateStateIdle value)?  idle,TResult? Function( UpdateStateChecking value)?  checking,TResult? Function( UpdateStateAvailable value)?  available,TResult? Function( UpdateStateDownloading value)?  downloading,TResult? Function( UpdateStateInstalling value)?  installing,TResult? Function( UpdateStateUpToDate value)?  upToDate,TResult? Function( UpdateStateError value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( UpdateStateIdle value)?  idle,TResult? Function( UpdateStateChecking value)?  checking,TResult? Function( UpdateStateAvailable value)?  available,TResult? Function( UpdateStateDownloading value)?  downloading,TResult? Function( UpdateStateInstalling value)?  installing,TResult? Function( UpdateStateReadyToRestart value)?  readyToRestart,TResult? Function( UpdateStateUpToDate value)?  upToDate,TResult? Function( UpdateStateError value)?  error,}){
 final _that = this;
 switch (_that) {
 case UpdateStateIdle() when idle != null:
@@ -115,7 +117,8 @@ return idle(_that);case UpdateStateChecking() when checking != null:
 return checking(_that);case UpdateStateAvailable() when available != null:
 return available(_that);case UpdateStateDownloading() when downloading != null:
 return downloading(_that);case UpdateStateInstalling() when installing != null:
-return installing(_that);case UpdateStateUpToDate() when upToDate != null:
+return installing(_that);case UpdateStateReadyToRestart() when readyToRestart != null:
+return readyToRestart(_that);case UpdateStateUpToDate() when upToDate != null:
 return upToDate(_that);case UpdateStateError() when error != null:
 return error(_that);case _:
   return null;
@@ -134,14 +137,15 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function()?  checking,TResult Function( UpdateInfo info)?  available,TResult Function( UpdateInfo info,  double progress)?  downloading,TResult Function( UpdateInfo info)?  installing,TResult Function()?  upToDate,TResult Function( UpdateFailure failure)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function()?  checking,TResult Function( UpdateInfo info)?  available,TResult Function( UpdateInfo info,  double progress)?  downloading,TResult Function( UpdateInfo info)?  installing,TResult Function( UpdateInfo info)?  readyToRestart,TResult Function()?  upToDate,TResult Function( UpdateFailure failure)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case UpdateStateIdle() when idle != null:
 return idle();case UpdateStateChecking() when checking != null:
 return checking();case UpdateStateAvailable() when available != null:
 return available(_that.info);case UpdateStateDownloading() when downloading != null:
 return downloading(_that.info,_that.progress);case UpdateStateInstalling() when installing != null:
-return installing(_that.info);case UpdateStateUpToDate() when upToDate != null:
+return installing(_that.info);case UpdateStateReadyToRestart() when readyToRestart != null:
+return readyToRestart(_that.info);case UpdateStateUpToDate() when upToDate != null:
 return upToDate();case UpdateStateError() when error != null:
 return error(_that.failure);case _:
   return orElse();
@@ -161,14 +165,15 @@ return error(_that.failure);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function()  checking,required TResult Function( UpdateInfo info)  available,required TResult Function( UpdateInfo info,  double progress)  downloading,required TResult Function( UpdateInfo info)  installing,required TResult Function()  upToDate,required TResult Function( UpdateFailure failure)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function()  checking,required TResult Function( UpdateInfo info)  available,required TResult Function( UpdateInfo info,  double progress)  downloading,required TResult Function( UpdateInfo info)  installing,required TResult Function( UpdateInfo info)  readyToRestart,required TResult Function()  upToDate,required TResult Function( UpdateFailure failure)  error,}) {final _that = this;
 switch (_that) {
 case UpdateStateIdle():
 return idle();case UpdateStateChecking():
 return checking();case UpdateStateAvailable():
 return available(_that.info);case UpdateStateDownloading():
 return downloading(_that.info,_that.progress);case UpdateStateInstalling():
-return installing(_that.info);case UpdateStateUpToDate():
+return installing(_that.info);case UpdateStateReadyToRestart():
+return readyToRestart(_that.info);case UpdateStateUpToDate():
 return upToDate();case UpdateStateError():
 return error(_that.failure);}
 }
@@ -184,14 +189,15 @@ return error(_that.failure);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function()?  checking,TResult? Function( UpdateInfo info)?  available,TResult? Function( UpdateInfo info,  double progress)?  downloading,TResult? Function( UpdateInfo info)?  installing,TResult? Function()?  upToDate,TResult? Function( UpdateFailure failure)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function()?  checking,TResult? Function( UpdateInfo info)?  available,TResult? Function( UpdateInfo info,  double progress)?  downloading,TResult? Function( UpdateInfo info)?  installing,TResult? Function( UpdateInfo info)?  readyToRestart,TResult? Function()?  upToDate,TResult? Function( UpdateFailure failure)?  error,}) {final _that = this;
 switch (_that) {
 case UpdateStateIdle() when idle != null:
 return idle();case UpdateStateChecking() when checking != null:
 return checking();case UpdateStateAvailable() when available != null:
 return available(_that.info);case UpdateStateDownloading() when downloading != null:
 return downloading(_that.info,_that.progress);case UpdateStateInstalling() when installing != null:
-return installing(_that.info);case UpdateStateUpToDate() when upToDate != null:
+return installing(_that.info);case UpdateStateReadyToRestart() when readyToRestart != null:
+return readyToRestart(_that.info);case UpdateStateUpToDate() when upToDate != null:
 return upToDate();case UpdateStateError() when error != null:
 return error(_that.failure);case _:
   return null;
@@ -475,6 +481,81 @@ class _$UpdateStateInstallingCopyWithImpl<$Res>
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? info = null,}) {
   return _then(UpdateStateInstalling(
+null == info ? _self.info : info // ignore: cast_nullable_to_non_nullable
+as UpdateInfo,
+  ));
+}
+
+/// Create a copy of UpdateState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$UpdateInfoCopyWith<$Res> get info {
+  
+  return $UpdateInfoCopyWith<$Res>(_self.info, (value) {
+    return _then(_self.copyWith(info: value));
+  });
+}
+}
+
+/// @nodoc
+
+
+class UpdateStateReadyToRestart implements UpdateState {
+  const UpdateStateReadyToRestart(this.info);
+  
+
+ final  UpdateInfo info;
+
+/// Create a copy of UpdateState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$UpdateStateReadyToRestartCopyWith<UpdateStateReadyToRestart> get copyWith => _$UpdateStateReadyToRestartCopyWithImpl<UpdateStateReadyToRestart>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateStateReadyToRestart&&(identical(other.info, info) || other.info == info));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,info);
+
+@override
+String toString() {
+  return 'UpdateState.readyToRestart(info: $info)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $UpdateStateReadyToRestartCopyWith<$Res> implements $UpdateStateCopyWith<$Res> {
+  factory $UpdateStateReadyToRestartCopyWith(UpdateStateReadyToRestart value, $Res Function(UpdateStateReadyToRestart) _then) = _$UpdateStateReadyToRestartCopyWithImpl;
+@useResult
+$Res call({
+ UpdateInfo info
+});
+
+
+$UpdateInfoCopyWith<$Res> get info;
+
+}
+/// @nodoc
+class _$UpdateStateReadyToRestartCopyWithImpl<$Res>
+    implements $UpdateStateReadyToRestartCopyWith<$Res> {
+  _$UpdateStateReadyToRestartCopyWithImpl(this._self, this._then);
+
+  final UpdateStateReadyToRestart _self;
+  final $Res Function(UpdateStateReadyToRestart) _then;
+
+/// Create a copy of UpdateState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? info = null,}) {
+  return _then(UpdateStateReadyToRestart(
 null == info ? _self.info : info // ignore: cast_nullable_to_non_nullable
 as UpdateInfo,
   ));

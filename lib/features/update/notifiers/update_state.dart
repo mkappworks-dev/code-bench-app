@@ -13,6 +13,7 @@ sealed class UpdateState with _$UpdateState {
   const factory UpdateState.available(UpdateInfo info) = UpdateStateAvailable;
   const factory UpdateState.downloading(UpdateInfo info, double progress) = UpdateStateDownloading;
   const factory UpdateState.installing(UpdateInfo info) = UpdateStateInstalling;
+  const factory UpdateState.readyToRestart(UpdateInfo info) = UpdateStateReadyToRestart;
   const factory UpdateState.upToDate() = UpdateStateUpToDate;
   const factory UpdateState.error(UpdateFailure failure) = UpdateStateError;
 }
