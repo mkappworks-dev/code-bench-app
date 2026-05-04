@@ -1,13 +1,26 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (e.g. v0.2.0). Must already exist."
+        description: "Tag (e.g. v0.2.0). For published releases, the tag must exist; for drafts, supply release_id below."
+        required: true
+        type: string
+      release_id:
+        description: "Optional GitHub release ID. Set when publishing a stuck draft release; leave blank for a normal published-tag rerun."
+        required: false
+        type: string
+        default: ""
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+      release_id:
+        required: true
+        type: string
+      sha:
         required: true
         type: string
 
@@ -36,7 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ inputs.sha || inputs.tag || github.ref }}
 
       - uses: subosito/flutter-action@v2.23.0
         with:
@@ -260,7 +273,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ inputs.sha || inputs.tag || github.ref }}
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -268,13 +281,63 @@ jobs:
           path: artifacts/
           merge-multiple: true
 
-      - name: Upload release artifacts and publish
+      # workflow_call path: release-please created a draft release with no
+      # underlying git tag. Upload assets via the GitHub API using the
+      # release_id (tag-based lookup is unreliable for drafts), then PATCH
+      # draft=false to publish — this is also what creates the git tag at
+      # the release's target_commitish. GITHUB_TOKEN is used so the
+      # implicit tag-creation event does NOT recursively trigger workflows.
+      - name: Upload assets and publish draft release
+        if: inputs.release_id != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RELEASE_ID: ${{ inputs.release_id }}
+        run: |
+          set -euo pipefail
+          UPLOAD_URL=$(gh api "/repos/$REPO/releases/$RELEASE_ID" --jq '.upload_url' | sed 's/{?name,label}//')
+
+          # Make retries idempotent: delete any existing assets so a re-run
+          # after a partially-failed upload does not 422 on duplicate names.
+          # Newly-created drafts have no assets, so this is a no-op on the
+          # happy path.
+          EXISTING=$(gh api "/repos/$REPO/releases/$RELEASE_ID/assets" --jq '.[].id')
+          for ASSET_ID in $EXISTING; do
+            echo "Deleting existing asset $ASSET_ID..."
+            gh api --method DELETE "/repos/$REPO/releases/$RELEASE_ID/assets/$ASSET_ID" >/dev/null
+          done
+
+          # When wiring up Windows/Linux platforms, add their artifacts here:
+          #   artifacts/CodeBench-windows.zip
+          #   artifacts/CodeBench-linux.tar.gz
+          for FILE in artifacts/CodeBench-macos.dmg artifacts/CodeBench-macos.zip; do
+            [ -f "$FILE" ] || { echo "::error::Missing $FILE"; exit 1; }
+            NAME=$(basename "$FILE")
+            MIME_TYPE=$(file -b --mime-type "$FILE")
+            echo "Uploading $NAME ($MIME_TYPE)..."
+            curl -fsSL \
+              -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Content-Type: $MIME_TYPE" \
+              --data-binary "@$FILE" \
+              "$UPLOAD_URL?name=$NAME" >/dev/null
+          done
+          echo "Publishing release $RELEASE_ID..."
+          gh api --method PATCH "/repos/$REPO/releases/$RELEASE_ID" -F draft=false >/dev/null
+
+      # workflow_dispatch path: tag already exists and is published (manual
+      # recovery for a stuck release.yml run). softprops finds the existing
+      # release by tag and uploads/replaces assets — no draft involved.
+      # When wiring up Windows/Linux platforms, add their artifacts to the
+      # `files:` block below:
+      #   artifacts/CodeBench-windows.zip
+      #   artifacts/CodeBench-linux.tar.gz
+      - name: Upload release artifacts (manual)
+        if: inputs.release_id == ''
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.tag || github.ref_name }}
-          draft: false
+          tag_name: ${{ inputs.tag }}
           files: |
             artifacts/CodeBench-macos.dmg
             artifacts/CodeBench-macos.zip
-            # artifacts/CodeBench-windows.zip
-            # artifacts/CodeBench-linux.tar.gz
