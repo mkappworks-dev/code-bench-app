@@ -53,6 +53,7 @@ class ApiKeysStep extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const TextStyle(fontSize: 12),
                 ),
                 onPressed: canContinue ? onContinue : null,
                 child: const Text('Continue →', style: TextStyle(fontSize: 12)),

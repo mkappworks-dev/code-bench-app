@@ -107,6 +107,7 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                textStyle: const TextStyle(fontSize: 12),
               ),
               onPressed: _selectedPath == null || _adding ? null : _addProject,
               child: _adding

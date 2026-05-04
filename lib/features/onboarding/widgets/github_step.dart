@@ -33,6 +33,7 @@ class GithubStep extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const TextStyle(fontSize: 12),
                 ),
                 onPressed: onContinue,
                 child: const Text('Continue →', style: TextStyle(fontSize: 12)),
