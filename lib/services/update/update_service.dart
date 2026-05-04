@@ -39,6 +39,10 @@ class UpdateService {
   final UpdateInstallDatasource _installDs;
   final UpdateInstallStatusDatasource _statusDs;
 
+  /// Stored after a successful [applyUpdate]; reused by [relaunchApp] so the
+  /// path isn't re-derived from a potentially different process state.
+  String? _installedAppPath;
+
   Future<UpdateInfo?> checkForUpdate() async {
     final info = await _repo.fetchLatestRelease();
     if (info == null) return null;
@@ -101,12 +105,14 @@ class UpdateService {
       dLog('[UpdateService] applyUpdate unexpected error: ${e.runtimeType}: $e\n$st');
       Error.throwWithStackTrace(UpdateInstallException('Install failed: ${e.runtimeType}: $e'), st);
     }
+    // Only reached on success — store so relaunchApp doesn't re-derive it.
+    _installedAppPath = appPath;
   }
 
   /// Relaunches the installed app bundle and exits the current process.
   /// Never returns normally.
   Future<Never> relaunchApp() async {
-    final appPath = _installDs.currentAppPath();
+    final appPath = _installedAppPath ?? _installDs.currentAppPath();
     return _installDs.relaunchApp(appPath: appPath);
   }
 
