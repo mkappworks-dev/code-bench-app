@@ -164,7 +164,7 @@ class _GeminiProviderCardState extends ConsumerState<GeminiProviderCard> {
           // Always selected — there's no other option to pick yet.
           title: 'API Key',
           selected: true,
-          initiallyExpanded: _dotStatus != DotStatus.savedVerified && _dotStatus != DotStatus.savedUnverified,
+          initiallyExpanded: false,
           badge: _apiKeyBadge(),
           body: _GeminiApiKeyBody(
             controller: widget.controller,
@@ -182,7 +182,7 @@ class _GeminiProviderCardState extends ConsumerState<GeminiProviderCard> {
           title: 'Gemini CLI',
           selected: false,
           disabled: true,
-          badge: const CardStatusBadge(label: 'Coming in Phase 9', tone: TransportBadgeTone.muted),
+          badge: const CardStatusBadge(label: 'Coming soon', tone: TransportBadgeTone.muted),
           body: Text(
             'Will use the gemini CLI when released',
             style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
@@ -217,27 +217,30 @@ class _GeminiApiKeyBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: AppTextField(
-            controller: controller,
-            obscureText: obscure,
-            fontSize: 12,
-            fontFamily: ThemeConstants.editorFontFamily,
-            hintText: 'API key',
-            suffixIcon: IconButton(
-              icon: Icon(obscure ? AppIcons.hideSecret : AppIcons.showSecret, size: 14),
-              onPressed: onToggleObscure,
-            ),
+        AppTextField(
+          controller: controller,
+          obscureText: obscure,
+          fontSize: 12,
+          fontFamily: ThemeConstants.editorFontFamily,
+          hintText: 'API key',
+          suffixIcon: IconButton(
+            icon: Icon(obscure ? AppIcons.hideSecret : AppIcons.showSecret, size: 14),
+            onPressed: onToggleObscure,
           ),
         ),
-        const SizedBox(width: 6),
-        InlineTestButton(loading: saveLoading, testPassed: testPassed, onPressed: onTest),
-        const SizedBox(width: 6),
-        InlineSaveButton(loading: false, onPressed: onSave),
-        const SizedBox(width: 6),
-        InlineClearButton(onPressed: onClear),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            InlineTestButton(loading: saveLoading, testPassed: testPassed, onPressed: onTest),
+            const SizedBox(width: 8),
+            InlineSaveButton(loading: false, onPressed: onSave),
+            const SizedBox(width: 8),
+            InlineClearButton(onPressed: onClear),
+          ],
+        ),
       ],
     );
   }

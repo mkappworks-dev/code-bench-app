@@ -122,9 +122,7 @@ class _SelectableTransportCardState extends State<SelectableTransportCard> {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final interactive = widget.onTap != null && !widget.disabled;
-    final borderColor = widget.errorState
-        ? c.error.withValues(alpha: 0.4)
-        : (widget.selected ? c.accent.withValues(alpha: 0.5) : c.borderColor);
+    final borderColor = widget.errorState ? c.error.withValues(alpha: 0.4) : c.deepBorder;
     final dotColor = widget.errorState
         ? c.error
         : (widget.selected ? c.accent : (interactive ? c.textSecondary : c.mutedFg));
@@ -144,23 +142,20 @@ class _SelectableTransportCardState extends State<SelectableTransportCard> {
       ],
     );
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 120),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    return Container(
       decoration: BoxDecoration(
-        color: _hovered && interactive && !widget.selected ? c.accentTintMid.withValues(alpha: 0.3) : null,
         border: Border.all(color: borderColor),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Opacity(
-        opacity: widget.disabled ? 0.6 : 1.0,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Tap the banner area to select; the chevron has its own gesture
-            // detector that wins the arena (deeper) so expand/collapse doesn't
-            // also flip the radio.
-            MouseRegion(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Tap the banner area to select; the chevron has its own gesture
+          // detector that wins the arena (deeper) so expand/collapse doesn't
+          // also flip the radio.
+          Opacity(
+            opacity: widget.disabled ? 0.6 : 1.0,
+            child: MouseRegion(
               cursor: interactive ? SystemMouseCursors.click : MouseCursor.defer,
               onEnter: (_) {
                 if (interactive) setState(() => _hovered = true);
@@ -169,15 +164,31 @@ class _SelectableTransportCardState extends State<SelectableTransportCard> {
               child: GestureDetector(
                 onTap: interactive ? widget.onTap : null,
                 behavior: HitTestBehavior.opaque,
-                child: headerRow,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: _hovered && interactive
+                        ? Color.alphaBlend(c.surfaceHoverOverlay, c.inputSurface)
+                        : c.inputSurface,
+                    borderRadius: _expanded
+                        ? const BorderRadius.vertical(top: Radius.circular(3))
+                        : BorderRadius.circular(3),
+                  ),
+                  child: headerRow,
+                ),
               ),
             ),
-            if (_expanded) ...[
-              const SizedBox(height: 10),
-              Padding(padding: const EdgeInsets.only(left: 22), child: widget.body),
-            ],
+          ),
+          if (_expanded) ...[
+            Divider(height: 1, thickness: 1, color: c.borderColor),
+            Container(
+              color: c.sidebarBackground,
+              padding: const EdgeInsets.fromLTRB(27, 9, 10, 10),
+              child: widget.body,
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

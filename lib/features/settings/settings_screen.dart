@@ -137,32 +137,35 @@ class _SettingsLeftNavState extends State<_SettingsLeftNav> {
           const Spacer(),
           const UpdateChip(),
           const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              onEnter: (_) => setState(() => _backHovered = true),
-              onExit: (_) => setState(() => _backHovered = false),
-              child: GestureDetector(
-                onTap: widget.onBack,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 120),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _backHovered ? c.chipStroke : c.chipFill,
-                    border: Border.all(color: c.chipStroke),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(AppIcons.arrowLeft, size: 11, color: _backHovered ? c.textPrimary : c.textSecondary),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Back',
-                        style: TextStyle(color: _backHovered ? c.textPrimary : c.textSecondary, fontSize: 11),
-                      ),
-                    ],
+          SizedBox(
+            width: double.infinity,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                onEnter: (_) => setState(() => _backHovered = true),
+                onExit: (_) => setState(() => _backHovered = false),
+                child: GestureDetector(
+                  onTap: widget.onBack,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 120),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _backHovered ? c.chipStroke : c.chipFill,
+                      border: Border.all(color: c.chipStroke),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(AppIcons.arrowLeft, size: 11, color: _backHovered ? c.textPrimary : c.textSecondary),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Back',
+                          style: TextStyle(color: _backHovered ? c.textPrimary : c.textSecondary, fontSize: 11),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

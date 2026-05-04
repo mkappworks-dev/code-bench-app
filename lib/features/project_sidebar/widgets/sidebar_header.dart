@@ -78,12 +78,7 @@ class SidebarHeader extends ConsumerWidget {
         children: [
           Text(
             'PROJECTS',
-            style: TextStyle(
-              color: c.mutedFg,
-              fontSize: ThemeConstants.uiFontSizeLabel,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.8,
-            ),
+            style: TextStyle(color: c.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.8),
           ),
           const Spacer(),
           Builder(

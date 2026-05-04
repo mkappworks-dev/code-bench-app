@@ -13,6 +13,7 @@ import '../project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'notifiers/archive_actions.dart';
 import 'notifiers/archive_failure.dart';
+import '../settings/widgets/section_label.dart';
 import 'widgets/archive_error_view.dart';
 import 'widgets/archived_session_card.dart';
 
@@ -48,49 +49,59 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
       }
     });
 
-    return sessionsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      error: (e, st) {
-        dLog('[archive] load failed: $e\n$st');
-        return ArchiveErrorView(
-          onRetry: () => ref.read(projectSidebarActionsProvider.notifier).refreshArchivedSessions(),
-        );
-      },
-      data: (sessions) {
-        if (sessions.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(AppIcons.archive, size: 32, color: c.mutedFg),
-                const SizedBox(height: 12),
-                Text('No archived conversations', style: TextStyle(color: c.textSecondary, fontSize: 12)),
-              ],
-            ),
-          );
-        }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionLabel('Archive'),
+        const SizedBox(height: 8),
+        Expanded(
+          child: sessionsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            error: (e, st) {
+              dLog('[archive] load failed: $e\n$st');
+              return ArchiveErrorView(
+                onRetry: () => ref.read(projectSidebarActionsProvider.notifier).refreshArchivedSessions(),
+              );
+            },
+            data: (sessions) {
+              if (sessions.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(AppIcons.archive, size: 32, color: c.mutedFg),
+                      const SizedBox(height: 12),
+                      Text('No archived conversations', style: TextStyle(color: c.textSecondary, fontSize: 12)),
+                    ],
+                  ),
+                );
+              }
 
-        final projects = switch (projectsAsync) {
-          AsyncData(:final value) => value,
-          _ => const <Project>[],
-        };
-        final projectMap = {for (final p in projects) p.id: p.name};
+              final projects = switch (projectsAsync) {
+                AsyncData(:final value) => value,
+                _ => const <Project>[],
+              };
+              final projectMap = {for (final p in projects) p.id: p.name};
 
-        final groups = <String?, List<ChatSession>>{};
-        for (final s in sessions) {
-          groups.putIfAbsent(s.projectId, () => []).add(s);
-        }
+              final groups = <String?, List<ChatSession>>{};
+              for (final s in sessions) {
+                groups.putIfAbsent(s.projectId, () => []).add(s);
+              }
 
-        return ListView(
-          children: [
-            for (final entry in groups.entries) ...[
-              ProjectHeader(name: projectMap[entry.key] ?? 'No Project'),
-              for (final s in entry.value) ArchivedSessionCard(session: s),
-              const SizedBox(height: 8),
-            ],
-          ],
-        );
-      },
+              return ListView(
+                padding: const EdgeInsets.only(right: 24, bottom: 24),
+                children: [
+                  for (final entry in groups.entries) ...[
+                    ProjectHeader(name: projectMap[entry.key] ?? 'No Project'),
+                    for (final s in entry.value) ArchivedSessionCard(session: s),
+                    const SizedBox(height: 8),
+                  ],
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
