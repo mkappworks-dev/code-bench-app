@@ -33,6 +33,7 @@ class UpdateDialog extends ConsumerStatefulWidget {
 
 class _UpdateDialogState extends ConsumerState<UpdateDialog> {
   String _currentVersion = '';
+  bool _restarting = false;
 
   @override
   void initState() {
@@ -53,13 +54,15 @@ class _UpdateDialogState extends ConsumerState<UpdateDialog> {
     final title = switch (updateState) {
       UpdateStateDownloading() => 'Downloading…',
       UpdateStateInstalling() => 'Installing…',
+      UpdateStateReadyToRestart() => 'Ready to restart',
       UpdateStateError() => 'Update Failed',
       _ => 'Update Available',
     };
 
     final subtitle = switch (updateState) {
       UpdateStateDownloading(:final progress) => 'Downloading… ${(progress * 100).round()}%',
-      UpdateStateInstalling() => 'The app will restart shortly',
+      UpdateStateInstalling() => 'Installing update…',
+      UpdateStateReadyToRestart(:final info) => 'v${info.version} is installed — relaunch to activate',
       UpdateStateError() => 'Something went wrong',
       _ => 'Code Bench ${widget.info.version} is ready',
     };
@@ -71,26 +74,40 @@ class _UpdateDialogState extends ConsumerState<UpdateDialog> {
       subtitle: subtitle,
       maxWidth: 400,
       content: _DialogContent(info: widget.info, updateState: updateState, currentVersion: _currentVersion),
-      actions: [
-        AppDialogAction.cancel(
-          label: busy ? 'Hide' : 'Cancel',
-          onPressed: busy
-              ? Navigator.of(context)
-                    .pop // hides dialog; download continues in background
-              : () {
-                  ref.read(updateProvider.notifier).dismiss();
-                  Navigator.of(context).pop();
+      actions: updateState is UpdateStateReadyToRestart
+          ? [
+              AppDialogAction.cancel(label: 'Restart Later', onPressed: Navigator.of(context).pop),
+              AppDialogAction.primary(
+                label: 'Restart Now',
+                onPressed: _restarting
+                    ? null
+                    : () {
+                        setState(() => _restarting = true);
+                        unawaited(ref.read(updateProvider.notifier).restartNow());
+                      },
+              ),
+            ]
+          : [
+              AppDialogAction.cancel(
+                label: busy ? 'Hide' : 'Cancel',
+                onPressed: busy
+                    ? Navigator.of(context)
+                          .pop // hides dialog; download continues in background
+                    : () {
+                        ref.read(updateProvider.notifier).dismiss();
+                        Navigator.of(context).pop();
+                      },
+              ),
+              AppDialogAction.primary(
+                label: 'Download & Install',
+                onPressed: switch (updateState) {
+                  UpdateStateAvailable() || UpdateStateError() => () => unawaited(
+                    ref.read(updateProvider.notifier).downloadAndInstall(widget.info),
+                  ),
+                  _ => null,
                 },
-        ),
-        AppDialogAction.primary(
-          label: 'Download & Install',
-          onPressed: switch (updateState) {
-            UpdateStateAvailable() ||
-            UpdateStateError() => () => unawaited(ref.read(updateProvider.notifier).downloadAndInstall(widget.info)),
-            _ => null,
-          },
-        ),
-      ],
+              ),
+            ],
     );
   }
 }
@@ -125,12 +142,12 @@ class _DialogContent extends StatelessWidget {
         switch (updateState) {
           UpdateStateDownloading(:final progress) => _ProgressBar(progress: progress),
           UpdateStateInstalling() => const _InstallingRow(),
+          UpdateStateReadyToRestart() => const _ReadyRow(),
           UpdateStateError(:final failure) => _ErrorRow(failure: failure, info: info),
           UpdateStateIdle() ||
           UpdateStateChecking() ||
           UpdateStateAvailable() ||
-          UpdateStateUpToDate() ||
-          UpdateStateReadyToRestart() => _ReleaseNotes(notes: info.releaseNotes),
+          UpdateStateUpToDate() => _ReleaseNotes(notes: info.releaseNotes),
         },
       ],
     );
@@ -227,7 +244,35 @@ class _InstallingRow extends StatelessWidget {
       children: [
         SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5, color: c.accent)),
         const SizedBox(width: 10),
-        Text('Replacing app bundle and relaunching…', style: TextStyle(color: c.textSecondary, fontSize: 11)),
+        Text('Replacing app bundle…', style: TextStyle(color: c.textSecondary, fontSize: 11)),
+      ],
+    );
+  }
+}
+
+class _ReadyRow extends StatelessWidget {
+  const _ReadyRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: c.successTintBg,
+            shape: BoxShape.circle,
+            border: Border.all(color: c.success.withValues(alpha: 0.3)),
+          ),
+          child: Icon(AppIcons.check, size: 9, color: c.success),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          'App bundle updated. Restart to run the new version.',
+          style: TextStyle(color: c.textSecondary, fontSize: 11),
+        ),
       ],
     );
   }
