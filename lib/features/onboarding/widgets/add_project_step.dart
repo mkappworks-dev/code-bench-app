@@ -104,6 +104,9 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
               style: FilledButton.styleFrom(
                 backgroundColor: c.accent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               onPressed: _selectedPath == null || _adding ? null : _addProject,
               child: _adding

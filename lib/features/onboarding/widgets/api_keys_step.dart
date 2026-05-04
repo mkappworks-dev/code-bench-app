@@ -50,6 +50,9 @@ class ApiKeysStep extends ConsumerWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: c.accent,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 onPressed: canContinue ? onContinue : null,
                 child: const Text('Continue →', style: TextStyle(fontSize: 12)),
