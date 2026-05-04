@@ -1,4 +1,4 @@
-// lib/features/integrations/widgets/github_connected_card.dart
+// lib/features/github/widgets/github_connected_card.dart
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/theme_constants.dart';
