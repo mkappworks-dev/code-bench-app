@@ -62,7 +62,10 @@ class UpdateNotifier extends _$UpdateNotifier {
   }
 
   Future<void> checkForUpdates() async {
-    if (state is UpdateStateChecking || state is UpdateStateDownloading || state is UpdateStateInstalling) {
+    if (state is UpdateStateChecking ||
+        state is UpdateStateDownloading ||
+        state is UpdateStateInstalling ||
+        state is UpdateStateReadyToRestart) {
       dLog('[UpdateNotifier] checkForUpdates skipped — busy in ${state.runtimeType}');
       return;
     }
@@ -117,8 +120,8 @@ class UpdateNotifier extends _$UpdateNotifier {
           .read(updateServiceProvider)
           .downloadUpdate(info: info, onProgress: (progress) => state = UpdateState.downloading(info, progress));
       state = UpdateState.installing(info);
-      await ref.read(updateServiceProvider).installUpdate(zipPath);
-      // exit(0) is called inside installUpdate — code below is unreachable on success
+      await ref.read(updateServiceProvider).applyUpdate(zipPath);
+      state = UpdateState.readyToRestart(info);
     } on UpdateDownloadException catch (e, st) {
       dLog('[UpdateNotifier] download failed: $e\n$st');
       state = UpdateState.error(UpdateFailure.downloadFailed(e.message));
@@ -132,6 +135,16 @@ class UpdateNotifier extends _$UpdateNotifier {
   }
 
   void dismiss() => state = const UpdateState.idle();
+
+  Future<void> restartNow() async {
+    try {
+      await ref.read(updateServiceProvider).relaunchApp();
+      // Never reaches here in production — process exits inside relaunchApp.
+    } catch (e, st) {
+      dLog('[UpdateNotifier] restartNow failed: $e\n$st');
+      state = UpdateState.error(_asFailure(e));
+    }
+  }
 
   /// Reads the install-status sentinel left behind by the relaunch script of
   /// a previous attempt; if it reports a failure, surfaces it as state and

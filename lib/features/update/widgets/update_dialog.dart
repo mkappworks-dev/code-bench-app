@@ -129,7 +129,8 @@ class _DialogContent extends StatelessWidget {
           UpdateStateIdle() ||
           UpdateStateChecking() ||
           UpdateStateAvailable() ||
-          UpdateStateUpToDate() => _ReleaseNotes(notes: info.releaseNotes),
+          UpdateStateUpToDate() ||
+          UpdateStateReadyToRestart() => _ReleaseNotes(notes: info.releaseNotes),
         },
       ],
     );
