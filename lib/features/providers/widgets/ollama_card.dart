@@ -189,78 +189,88 @@ class _OllamaCardState extends ConsumerState<OllamaCard> {
       ],
     );
 
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: c.deepBorder),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            onEnter: (_) => setState(() => _hovered = true),
-            onExit: (_) => setState(() => _hovered = false),
-            child: GestureDetector(
-              onTap: () => setState(() {
-                _expanded = !_expanded;
-                if (!_expanded) {
-                  _testPassed = false;
-                  _showSaveAnyway = false;
-                }
-              }),
-              behavior: HitTestBehavior.opaque,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                decoration: BoxDecoration(
-                  color: _hovered ? Color.alphaBlend(c.surfaceHoverOverlay, c.inputSurface) : c.inputSurface,
-                  borderRadius: _expanded
-                      ? const BorderRadius.vertical(top: Radius.circular(3))
-                      : BorderRadius.circular(3),
-                ),
-                child: headerContent,
-              ),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Ollama',
+          style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: c.deepBorder),
+            borderRadius: BorderRadius.circular(4),
           ),
-          if (_expanded) ...[
-            Divider(height: 1, thickness: 1, color: c.borderColor),
-            Container(
-              color: c.sidebarBackground,
-              padding: const EdgeInsets.fromLTRB(10, 9, 10, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppTextField(
-                    controller: widget.controller,
-                    fontFamily: ThemeConstants.editorFontFamily,
-                    hintText: 'http://localhost:11434',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                onEnter: (_) => setState(() => _hovered = true),
+                onExit: (_) => setState(() => _hovered = false),
+                child: GestureDetector(
+                  onTap: () => setState(() {
+                    _expanded = !_expanded;
+                    if (!_expanded) {
+                      _testPassed = false;
+                      _showSaveAnyway = false;
+                    }
+                  }),
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 120),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: _hovered ? Color.alphaBlend(c.surfaceHoverOverlay, c.inputSurface) : c.inputSurface,
+                      borderRadius: _expanded
+                          ? const BorderRadius.vertical(top: Radius.circular(3))
+                          : BorderRadius.circular(3),
+                    ),
+                    child: headerContent,
                   ),
-                  if (_showSaveAnyway) ...[
-                    const SizedBox(height: 8),
-                    InlineErrorRow(message: 'Cannot connect to Ollama', onSaveAnyway: _saveAnyway),
-                  ],
-                  const SizedBox(height: 8),
-                  Row(
+                ),
+              ),
+              if (_expanded) ...[
+                Divider(height: 1, thickness: 1, color: c.borderColor),
+                Container(
+                  color: c.sidebarBackground,
+                  padding: const EdgeInsets.fromLTRB(10, 9, 10, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      InlineTestButton(
-                        loading: _saveLoading,
-                        testPassed: _testPassed,
-                        passedLabel: '✓ Connected',
-                        onPressed: _test,
+                      AppTextField(
+                        controller: widget.controller,
+                        fontFamily: ThemeConstants.editorFontFamily,
+                        hintText: 'http://localhost:11434',
                       ),
-                      const SizedBox(width: 8),
-                      InlineSaveButton(loading: false, onPressed: _save),
-                      const SizedBox(width: 8),
-                      InlineClearButton(onPressed: _clear),
+                      if (_showSaveAnyway) ...[
+                        const SizedBox(height: 8),
+                        InlineErrorRow(message: 'Cannot connect to Ollama', onSaveAnyway: _saveAnyway),
+                      ],
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          InlineTestButton(
+                            loading: _saveLoading,
+                            testPassed: _testPassed,
+                            passedLabel: '✓ Connected',
+                            onPressed: _test,
+                          ),
+                          const SizedBox(width: 8),
+                          InlineSaveButton(loading: false, onPressed: _save),
+                          const SizedBox(width: 8),
+                          InlineClearButton(onPressed: _clear),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
