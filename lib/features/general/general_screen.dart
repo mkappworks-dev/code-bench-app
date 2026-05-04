@@ -14,7 +14,7 @@ import '../../core/widgets/app_text_field.dart';
 import 'widgets/app_dropdown.dart';
 import '../settings/widgets/section_label.dart';
 import 'widgets/settings_group.dart';
-import '../settings/widgets/settings_chip_button.dart';
+import '../../core/widgets/chip_button.dart';
 import '../update/widgets/update_section.dart';
 
 class GeneralScreen extends ConsumerStatefulWidget {
@@ -270,13 +270,13 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                     SettingsRow(
                       label: 'Restore defaults',
                       description: 'Reset auto-commit, terminal app, and delete confirmation to their defaults.',
-                      trailing: SettingsChipButton(label: 'Restore', onPressed: _restoreDefaults),
+                      trailing: ChipButton(label: 'Restore', onPressed: _restoreDefaults),
                     ),
                     SettingsRow(
                       label: 'Wipe all data',
                       description:
                           'Delete API keys, GitHub sign-in, chat history, projects, and MCP servers. Cannot be undone.',
-                      trailing: SettingsChipButton(label: 'Wipe', onPressed: _confirmWipeAllData, isDestructive: true),
+                      trailing: ChipButton(label: 'Wipe', onPressed: _confirmWipeAllData, isDestructive: true),
                       isLast: true,
                     ),
                   ],
@@ -292,7 +292,7 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
                         description:
                             'Show the 3-step wizard on next launch. Does not clear API keys, GitHub sign-in, or projects.',
                         trailing: Builder(
-                          builder: (ctx) => SettingsChipButton(
+                          builder: (ctx) => ChipButton(
                             label: 'Replay',
                             onPressed: () async {
                               await ref.read(settingsActionsProvider.notifier).replayOnboarding();

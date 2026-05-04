@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/chip_button.dart';
 import '../../providers/notifiers/providers_notifier.dart';
 import '../../providers/widgets/api_keys_list.dart';
 
@@ -42,14 +43,7 @@ class ApiKeysStep extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            TextButton(
-              onPressed: onSkip,
-              style: TextButton.styleFrom(
-                foregroundColor: c.textMuted,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-              ),
-              child: const Text('Skip for now', style: TextStyle(fontSize: 12)),
-            ),
+            ChipButton(label: 'Skip for now', onPressed: onSkip),
             Opacity(
               opacity: canContinue ? 1.0 : 0.4,
               child: FilledButton(

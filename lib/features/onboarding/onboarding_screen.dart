@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_snack_bar.dart';
+import '../../core/widgets/chip_button.dart';
 import '../settings/notifiers/settings_actions.dart';
 import 'notifiers/onboarding_notifier.dart';
 import 'widgets/step_progress_indicator.dart';
@@ -33,11 +35,9 @@ class OnboardingScreen extends ConsumerWidget {
       backgroundColor: c.background,
       body: Row(
         children: [
-          // ── Left: branding (38% width, unchanged from original) ──────────
           const _BrandingPanel(),
-          // ── Right: content (62% width) ───────────────────────────────────
           Expanded(
-            flex: 62,
+            flex: 75,
             child: _ContentPanel(step: step, stepTitles: _stepTitles, stepSubtitles: _stepSubtitles),
           ),
         ],
@@ -45,8 +45,6 @@ class OnboardingScreen extends ConsumerWidget {
     );
   }
 }
-
-// ── Left branding panel ────────────────────────────────────────────────────
 
 class _BrandingPanel extends StatelessWidget {
   const _BrandingPanel();
@@ -108,8 +106,6 @@ class _BrandingPanel extends StatelessWidget {
   }
 }
 
-// ── Right content panel ────────────────────────────────────────────────────
-
 class _ContentPanel extends ConsumerWidget {
   const _ContentPanel({required this.step, required this.stepTitles, required this.stepSubtitles});
 
@@ -167,15 +163,10 @@ class _ContentPanel extends ConsumerWidget {
           if (step > 0)
             Align(
               alignment: Alignment.centerLeft,
-              child: TextButton.icon(
+              child: ChipButton(
+                label: 'Back',
+                icon: AppIcons.arrowLeft,
                 onPressed: () => ref.read(onboardingProvider.notifier).back(),
-                icon: Icon(Icons.chevron_left, size: 16, color: c.dimFg),
-                label: Text('Back', style: TextStyle(color: c.dimFg, fontSize: 12)),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
               ),
             )
           else

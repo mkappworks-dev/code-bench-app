@@ -8,7 +8,7 @@ import '../../core/widgets/app_snack_bar.dart';
 import '../../data/coding_tools/models/denylist_category.dart';
 import '../../data/coding_tools/models/denylist_defaults.dart';
 import '../settings/widgets/section_label.dart';
-import '../settings/widgets/settings_chip_button.dart';
+import '../../core/widgets/chip_button.dart';
 import 'notifiers/coding_tools_denylist_actions.dart';
 import 'notifiers/coding_tools_denylist_notifier.dart';
 import 'widgets/denylist_category_group.dart';
@@ -147,7 +147,7 @@ class _CodingToolsScreenState extends ConsumerState<CodingToolsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SectionLabel('Coding Tools'),
-                SettingsChipButton(label: '↺ Restore all defaults', onPressed: _restoreAllDefaults),
+                ChipButton(label: '↺ Restore all defaults', onPressed: _restoreAllDefaults),
               ],
             ),
           ),

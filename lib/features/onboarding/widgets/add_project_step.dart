@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snack_bar.dart';
+import '../../../core/widgets/chip_button.dart';
 import '../../../shell/notifiers/git_actions.dart';
 import '../../project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../project_sidebar/notifiers/project_sidebar_failure.dart';
@@ -98,14 +99,7 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            TextButton(
-              onPressed: widget.onSkip,
-              style: TextButton.styleFrom(
-                foregroundColor: c.textMuted,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-              ),
-              child: const Text('Skip for now', style: TextStyle(fontSize: 12)),
-            ),
+            ChipButton(label: 'Skip for now', onPressed: widget.onSkip),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: c.accent,

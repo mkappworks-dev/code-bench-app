@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/chip_button.dart';
 import '../../github/notifiers/github_auth_notifier.dart';
 import '../../github/widgets/github_account_view.dart';
 
@@ -24,14 +25,7 @@ class GithubStep extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            TextButton(
-              onPressed: onSkip,
-              style: TextButton.styleFrom(
-                foregroundColor: c.textMuted,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-              ),
-              child: const Text('Skip for now', style: TextStyle(fontSize: 12)),
-            ),
+            ChipButton(label: 'Skip for now', onPressed: onSkip),
             if (account != null)
               FilledButton(
                 style: FilledButton.styleFrom(

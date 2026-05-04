@@ -1,20 +1,25 @@
+// lib/core/widgets/chip_button.dart
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/theme_constants.dart';
-import '../../../core/theme/app_colors.dart';
+import '../constants/theme_constants.dart';
+import '../theme/app_colors.dart';
 
-class SettingsChipButton extends StatefulWidget {
-  const SettingsChipButton({super.key, required this.label, required this.onPressed, this.isDestructive = false});
+/// Compact pill-shaped button used across settings panels and the
+/// onboarding wizard: rounded border, hover-tinted fill, optional
+/// leading icon, optional destructive (red) variant.
+class ChipButton extends StatefulWidget {
+  const ChipButton({super.key, required this.label, required this.onPressed, this.icon, this.isDestructive = false});
 
   final String label;
   final VoidCallback onPressed;
+  final IconData? icon;
   final bool isDestructive;
 
   @override
-  State<SettingsChipButton> createState() => _SettingsChipButtonState();
+  State<ChipButton> createState() => _ChipButtonState();
 }
 
-class _SettingsChipButtonState extends State<SettingsChipButton> {
+class _ChipButtonState extends State<ChipButton> {
   bool _hovered = false;
 
   @override
@@ -39,9 +44,15 @@ class _SettingsChipButtonState extends State<SettingsChipButton> {
             border: Border.all(color: borderColor),
             borderRadius: BorderRadius.circular(5),
           ),
-          child: Text(
-            widget.label,
-            style: TextStyle(color: fg, fontSize: ThemeConstants.uiFontSizeSmall),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.icon != null) ...[Icon(widget.icon, size: 11, color: fg), const SizedBox(width: 6)],
+              Text(
+                widget.label,
+                style: TextStyle(color: fg, fontSize: ThemeConstants.uiFontSizeSmall),
+              ),
+            ],
           ),
         ),
       ),
