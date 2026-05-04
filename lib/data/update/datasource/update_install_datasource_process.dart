@@ -147,7 +147,7 @@ class UpdateInstallDatasourceProcess implements UpdateInstallDatasource {
   @override
   Future<Never> relaunchApp({required String appPath}) async {
     try {
-      await Process.start('open', [appPath], mode: ProcessStartMode.detached);
+      await Process.start('open', ['-n', appPath], mode: ProcessStartMode.detached);
     } catch (e) {
       dLog('[UpdateInstallDatasource] relaunchApp Process.start failed: $e');
       rethrow;
