@@ -35,13 +35,13 @@ abstract interface class UpdateInstallDatasource {
   /// [UpdateInstallException] if Gatekeeper would refuse to launch the bundle.
   Future<void> assessGatekeeper(String appPath);
 
-  /// Writes the relaunch script and spawns it detached, then exits the
-  /// running process with code 0. Never returns normally on success.
+  /// Runs the bundle-swap script synchronously: backs up the current bundle,
+  /// ditto-copies the new one in, optionally re-verifies codesign, writes the
+  /// status sentinel, and cleans up temp files. Returns normally on success.
+  /// Throws [UpdateInstallException] on any failure.
   ///
-  /// The spawned script: backs up the current bundle, ditto-copies the new
-  /// one in, optionally re-verifies codesign, writes a status sentinel to
-  /// [statusSentinelPath], cleans up tempdirs/zip, and `open`s the new app.
-  Future<Never> swapAndRelaunch({
+  /// Does NOT relaunch — call [relaunchApp] when the user is ready.
+  Future<void> applyUpdate({
     required String currentAppPath,
     required String newAppPath,
     required String extractDir,
@@ -50,7 +50,11 @@ abstract interface class UpdateInstallDatasource {
     required bool enforceSignature,
   });
 
+  /// Opens [appPath] and exits the current process with code 0.
+  /// Never returns normally.
+  Future<Never> relaunchApp({required String appPath});
+
   /// Best-effort delete of [extractDir]. Used by callers when install aborts
-  /// before reaching [swapAndRelaunch]. Never throws.
+  /// before reaching [applyUpdate]. Never throws.
   void cleanupExtractDir(String extractDir);
 }

@@ -106,7 +106,7 @@ class UpdateInstallDatasourceProcess implements UpdateInstallDatasource {
   }
 
   @override
-  Future<Never> swapAndRelaunch({
+  Future<void> applyUpdate({
     required String currentAppPath,
     required String newAppPath,
     required String extractDir,
@@ -114,29 +114,44 @@ class UpdateInstallDatasourceProcess implements UpdateInstallDatasource {
     required String statusSentinelPath,
     required bool enforceSignature,
   }) async {
-    final scriptDir = await Directory.systemTemp.createTemp('cb-relaunch-');
-    final scriptPath = p.join(scriptDir.path, 'cb_relaunch.sh');
-    await File(scriptPath).writeAsString(_relaunchScript);
-
-    final chmodResult = await Process.run('chmod', ['+x', scriptPath]);
-    if (chmodResult.exitCode != 0) {
-      throw UpdateInstallException('Could not make relaunch script executable: ${chmodResult.stderr}');
+    final scriptDir = await Directory.systemTemp.createTemp('cb-apply-');
+    final scriptPath = p.join(scriptDir.path, 'cb_apply.sh');
+    try {
+      await File(scriptPath).writeAsString(_applyScript);
+      final chmod = await Process.run('chmod', ['+x', scriptPath]);
+      if (chmod.exitCode != 0) {
+        throw UpdateInstallException('Could not make apply script executable: ${chmod.stderr}');
+      }
+      final result = await Process.run('/bin/bash', [
+        scriptPath,
+        currentAppPath,
+        newAppPath,
+        extractDir,
+        zipPath,
+        statusSentinelPath,
+        enforceSignature ? '1' : '0',
+      ]);
+      if (result.exitCode != 0) {
+        dLog('[UpdateInstallDatasource] apply script exited ${result.exitCode}: ${result.stderr}');
+        throw UpdateInstallException('Bundle swap failed (exit ${result.exitCode}): ${result.stderr}');
+      }
+    } finally {
+      try {
+        Directory(scriptDir.path).deleteSync(recursive: true);
+      } catch (e) {
+        dLog('[UpdateInstallDatasource] failed to clean up script dir ${scriptDir.path}: $e');
+      }
     }
+  }
 
-    // Detached so the spawned bash outlives this process; awaited so the
-    // child is guaranteed to be forked before exit(0) below.
-    await Process.start('/bin/bash', [
-      scriptPath,
-      currentAppPath,
-      newAppPath,
-      extractDir,
-      zipPath,
-      statusSentinelPath,
-      scriptDir.path,
-      enforceSignature ? '1' : '0',
-    ], mode: ProcessStartMode.detached);
-
-    // Brief delay so the spawned process has settled before parent dies.
+  @override
+  Future<Never> relaunchApp({required String appPath}) async {
+    try {
+      await Process.start('open', [appPath], mode: ProcessStartMode.detached);
+    } catch (e) {
+      dLog('[UpdateInstallDatasource] relaunchApp Process.start failed: $e');
+      rethrow;
+    }
     await Future<void>.delayed(const Duration(milliseconds: 100));
     exit(0);
   }
@@ -151,19 +166,16 @@ class UpdateInstallDatasourceProcess implements UpdateInstallDatasource {
     }
   }
 
-  static const _relaunchScript = r'''#!/bin/bash
+  static const _applyScript = r'''#!/bin/bash
 # Args: $1=appPath $2=srcAppPath $3=extractDir $4=zipPath
-#       $5=statusPath $6=scriptDir $7=enforceSignature(0|1)
+#       $5=statusPath $6=enforceSignature(0|1)
 #
 # Why -u alone, not -eu: every fallible step is explicitly checked with
 # `if ! <cmd>; then ... fi` and the failure-path branches restore $APP.old
-# with un-`||true`'d `rm -rf "$APP"` and bare `mv` calls. Adding `-e` would
-# exit before those restores can run, leaving the user with a corrupt $APP
-# and the trap unable to recover. Future contributors: keep the `if !`
-# discipline; do not add `-e`.
+# before exiting. Adding -e would exit before those restores can run.
 set -u
 APP="$1"; SRC="$2"; EXTRACT_DIR="$3"; ZIP="$4"
-STATUS="$5"; SCRIPT_DIR="$6"; VERIFY="$7"
+STATUS="$5"; VERIFY="$6"
 
 write_status() {
   mkdir -p "$(dirname "$STATUS")" 2>/dev/null || true
@@ -178,13 +190,11 @@ restore_if_needed() {
 }
 
 cleanup() {
-  rm -rf "$EXTRACT_DIR" "$SCRIPT_DIR" 2>/dev/null || true
+  rm -rf "$EXTRACT_DIR" 2>/dev/null || true
   rm -f "$ZIP" 2>/dev/null || true
 }
 
 trap 'restore_if_needed; write_status "failed" "interrupted"; cleanup; exit 1' INT TERM
-
-sleep 1
 
 # 1. Back up the running bundle
 if ! mv "$APP" "$APP.old"; then
@@ -217,6 +227,6 @@ fi
 rm -rf "$APP.old" 2>/dev/null || true
 write_status "ok" ""
 cleanup
-open "$APP"
+exit 0
 ''';
 }

@@ -55,13 +55,14 @@ extension UpdateFailurePatterns on UpdateFailure {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( UpdateNetworkError value)?  networkError,TResult Function( UpdateDownloadFailed value)?  downloadFailed,TResult Function( UpdateInstallFailed value)?  installFailed,TResult Function( UpdateUnknownError value)?  unknown,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( UpdateNetworkError value)?  networkError,TResult Function( UpdateDownloadFailed value)?  downloadFailed,TResult Function( UpdateInstallFailed value)?  installFailed,TResult Function( UpdateRelaunchFailed value)?  relaunchFailed,TResult Function( UpdateUnknownError value)?  unknown,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case UpdateNetworkError() when networkError != null:
 return networkError(_that);case UpdateDownloadFailed() when downloadFailed != null:
 return downloadFailed(_that);case UpdateInstallFailed() when installFailed != null:
-return installFailed(_that);case UpdateUnknownError() when unknown != null:
+return installFailed(_that);case UpdateRelaunchFailed() when relaunchFailed != null:
+return relaunchFailed(_that);case UpdateUnknownError() when unknown != null:
 return unknown(_that);case _:
   return orElse();
 
@@ -80,13 +81,14 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( UpdateNetworkError value)  networkError,required TResult Function( UpdateDownloadFailed value)  downloadFailed,required TResult Function( UpdateInstallFailed value)  installFailed,required TResult Function( UpdateUnknownError value)  unknown,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( UpdateNetworkError value)  networkError,required TResult Function( UpdateDownloadFailed value)  downloadFailed,required TResult Function( UpdateInstallFailed value)  installFailed,required TResult Function( UpdateRelaunchFailed value)  relaunchFailed,required TResult Function( UpdateUnknownError value)  unknown,}){
 final _that = this;
 switch (_that) {
 case UpdateNetworkError():
 return networkError(_that);case UpdateDownloadFailed():
 return downloadFailed(_that);case UpdateInstallFailed():
-return installFailed(_that);case UpdateUnknownError():
+return installFailed(_that);case UpdateRelaunchFailed():
+return relaunchFailed(_that);case UpdateUnknownError():
 return unknown(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -101,13 +103,14 @@ return unknown(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( UpdateNetworkError value)?  networkError,TResult? Function( UpdateDownloadFailed value)?  downloadFailed,TResult? Function( UpdateInstallFailed value)?  installFailed,TResult? Function( UpdateUnknownError value)?  unknown,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( UpdateNetworkError value)?  networkError,TResult? Function( UpdateDownloadFailed value)?  downloadFailed,TResult? Function( UpdateInstallFailed value)?  installFailed,TResult? Function( UpdateRelaunchFailed value)?  relaunchFailed,TResult? Function( UpdateUnknownError value)?  unknown,}){
 final _that = this;
 switch (_that) {
 case UpdateNetworkError() when networkError != null:
 return networkError(_that);case UpdateDownloadFailed() when downloadFailed != null:
 return downloadFailed(_that);case UpdateInstallFailed() when installFailed != null:
-return installFailed(_that);case UpdateUnknownError() when unknown != null:
+return installFailed(_that);case UpdateRelaunchFailed() when relaunchFailed != null:
+return relaunchFailed(_that);case UpdateUnknownError() when unknown != null:
 return unknown(_that);case _:
   return null;
 
@@ -125,12 +128,13 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String? detail)?  networkError,TResult Function( String? detail)?  downloadFailed,TResult Function( String? detail)?  installFailed,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String? detail)?  networkError,TResult Function( String? detail)?  downloadFailed,TResult Function( String? detail)?  installFailed,TResult Function( String? detail)?  relaunchFailed,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case UpdateNetworkError() when networkError != null:
 return networkError(_that.detail);case UpdateDownloadFailed() when downloadFailed != null:
 return downloadFailed(_that.detail);case UpdateInstallFailed() when installFailed != null:
-return installFailed(_that.detail);case UpdateUnknownError() when unknown != null:
+return installFailed(_that.detail);case UpdateRelaunchFailed() when relaunchFailed != null:
+return relaunchFailed(_that.detail);case UpdateUnknownError() when unknown != null:
 return unknown(_that.error);case _:
   return orElse();
 
@@ -149,12 +153,13 @@ return unknown(_that.error);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String? detail)  networkError,required TResult Function( String? detail)  downloadFailed,required TResult Function( String? detail)  installFailed,required TResult Function( Object error)  unknown,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String? detail)  networkError,required TResult Function( String? detail)  downloadFailed,required TResult Function( String? detail)  installFailed,required TResult Function( String? detail)  relaunchFailed,required TResult Function( Object error)  unknown,}) {final _that = this;
 switch (_that) {
 case UpdateNetworkError():
 return networkError(_that.detail);case UpdateDownloadFailed():
 return downloadFailed(_that.detail);case UpdateInstallFailed():
-return installFailed(_that.detail);case UpdateUnknownError():
+return installFailed(_that.detail);case UpdateRelaunchFailed():
+return relaunchFailed(_that.detail);case UpdateUnknownError():
 return unknown(_that.error);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -169,12 +174,13 @@ return unknown(_that.error);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String? detail)?  networkError,TResult? Function( String? detail)?  downloadFailed,TResult? Function( String? detail)?  installFailed,TResult? Function( Object error)?  unknown,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String? detail)?  networkError,TResult? Function( String? detail)?  downloadFailed,TResult? Function( String? detail)?  installFailed,TResult? Function( String? detail)?  relaunchFailed,TResult? Function( Object error)?  unknown,}) {final _that = this;
 switch (_that) {
 case UpdateNetworkError() when networkError != null:
 return networkError(_that.detail);case UpdateDownloadFailed() when downloadFailed != null:
 return downloadFailed(_that.detail);case UpdateInstallFailed() when installFailed != null:
-return installFailed(_that.detail);case UpdateUnknownError() when unknown != null:
+return installFailed(_that.detail);case UpdateRelaunchFailed() when relaunchFailed != null:
+return relaunchFailed(_that.detail);case UpdateUnknownError() when unknown != null:
 return unknown(_that.error);case _:
   return null;
 
@@ -373,6 +379,72 @@ class _$UpdateInstallFailedCopyWithImpl<$Res>
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? detail = freezed,}) {
   return _then(UpdateInstallFailed(
+freezed == detail ? _self.detail : detail // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class UpdateRelaunchFailed implements UpdateFailure {
+  const UpdateRelaunchFailed([this.detail]);
+  
+
+ final  String? detail;
+
+/// Create a copy of UpdateFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$UpdateRelaunchFailedCopyWith<UpdateRelaunchFailed> get copyWith => _$UpdateRelaunchFailedCopyWithImpl<UpdateRelaunchFailed>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateRelaunchFailed&&(identical(other.detail, detail) || other.detail == detail));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,detail);
+
+@override
+String toString() {
+  return 'UpdateFailure.relaunchFailed(detail: $detail)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $UpdateRelaunchFailedCopyWith<$Res> implements $UpdateFailureCopyWith<$Res> {
+  factory $UpdateRelaunchFailedCopyWith(UpdateRelaunchFailed value, $Res Function(UpdateRelaunchFailed) _then) = _$UpdateRelaunchFailedCopyWithImpl;
+@useResult
+$Res call({
+ String? detail
+});
+
+
+
+
+}
+/// @nodoc
+class _$UpdateRelaunchFailedCopyWithImpl<$Res>
+    implements $UpdateRelaunchFailedCopyWith<$Res> {
+  _$UpdateRelaunchFailedCopyWithImpl(this._self, this._then);
+
+  final UpdateRelaunchFailed _self;
+  final $Res Function(UpdateRelaunchFailed) _then;
+
+/// Create a copy of UpdateFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? detail = freezed,}) {
+  return _then(UpdateRelaunchFailed(
 freezed == detail ? _self.detail : detail // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
