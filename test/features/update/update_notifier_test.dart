@@ -31,11 +31,10 @@ class _FakeUpdateService extends Fake implements UpdateService {
   }
 
   @override
-  Future<Never> relaunchApp() async {
+  Future<Never> relaunchApp() {
     relaunchCalled = true;
     // Never completes — mirrors production behaviour (process would exit).
-    await Completer<Never>().future;
-    throw StateError('unreachable');
+    return Completer<Never>().future;
   }
 
   @override
