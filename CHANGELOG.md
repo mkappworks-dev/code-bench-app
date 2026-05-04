@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.5.0...v0.6.0) (2026-05-04)
+
+
+### Features
+
+* **update:** add Ready to Restart deferred-restart flow ([#66](https://github.com/mkappworks-dev/code-bench-app/issues/66)) ([5f8394c](https://github.com/mkappworks-dev/code-bench-app/commit/5f8394c6094f279d3b538b8bd6e9447b3aec0597))
+
+
+### Bug Fixes
+
+* **release:** publish release only after artifacts are uploaded ([#64](https://github.com/mkappworks-dev/code-bench-app/issues/64)) ([353d2e2](https://github.com/mkappworks-dev/code-bench-app/commit/353d2e202bc1fe2a3c29905f487d6a7d2a2c748f))
+
 ## [0.5.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.4.2...v0.5.0) (2026-05-03)
 
 
