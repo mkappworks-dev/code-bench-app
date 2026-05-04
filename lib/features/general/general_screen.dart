@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../core/theme/app_colors.dart';
@@ -129,20 +131,54 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
   }
 
   Future<void> _wipeAllData() async {
-    final failures = await ref.read(settingsActionsProvider.notifier).wipeAllData();
+    final (:failures, :githubSignedOut) = await ref.read(settingsActionsProvider.notifier).wipeAllData();
     if (!mounted) return;
     if (failures.isEmpty) {
-      AppSnackBar.show(
-        context,
-        'All data wiped. Restart the app to see the onboarding wizard.',
-        type: AppSnackBarType.success,
-      );
+      if (githubSignedOut) {
+        AppSnackBar.show(
+          context,
+          'All data wiped. Restart the app to see the onboarding wizard.',
+          message: 'Token cleared locally. To revoke on GitHub, open the app connections page.',
+          type: AppSnackBarType.success,
+          actionLabel: 'Revoke on GitHub',
+          onAction: _openRevocationPage,
+        );
+      } else {
+        AppSnackBar.show(
+          context,
+          'All data wiped. Restart the app to see the onboarding wizard.',
+          type: AppSnackBarType.success,
+        );
+      }
     } else {
       AppSnackBar.show(
         context,
         'Wipe partially failed: ${failures.join(', ')}. Check logs.',
         type: AppSnackBarType.error,
       );
+    }
+  }
+
+  Future<void> _openRevocationPage() async {
+    final uri = Uri.parse('https://github.com/settings/connections/applications/${ApiConstants.githubClientId}');
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && mounted) {
+        AppSnackBar.show(
+          context,
+          'Could not open browser — visit github.com/settings/applications',
+          type: AppSnackBarType.warning,
+        );
+      }
+    } catch (e, st) {
+      dLog('[GeneralScreen] launchUrl revoke failed: $e\n$st');
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          'Could not open browser — visit github.com/settings/applications',
+          type: AppSnackBarType.warning,
+        );
+      }
     }
   }
 
