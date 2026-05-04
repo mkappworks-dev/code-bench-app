@@ -22,6 +22,7 @@ class OllamaCard extends ConsumerStatefulWidget {
 
 class _OllamaCardState extends ConsumerState<OllamaCard> {
   bool _expanded = false;
+  bool _hovered = false;
   bool _saveLoading = false;
   bool _testPassed = false;
   bool _showSaveAnyway = false;
@@ -169,59 +170,70 @@ class _OllamaCardState extends ConsumerState<OllamaCard> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final headerContent = Row(
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: _dotColor(c), shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          'Ollama',
+          style: TextStyle(
+            color: c.headingText,
+            fontSize: ThemeConstants.uiFontSizeSmall,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const Spacer(),
+        _OllamaStatusBadge(status: _dotStatus, label: _statusLabel()),
+        const SizedBox(width: 8),
+        Icon(_expanded ? AppIcons.chevronUp : AppIcons.chevronDown, size: 14, color: c.mutedFg),
+      ],
+    );
+
     return Container(
       decoration: BoxDecoration(
-        color: c.inputSurface,
         border: Border.all(color: c.deepBorder),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          InkWell(
-            onTap: () => setState(() {
-              _expanded = !_expanded;
-              if (!_expanded) {
-                _testPassed = false;
-                _showSaveAnyway = false;
-              }
-            }),
-            borderRadius: BorderRadius.circular(8),
-            overlayColor: WidgetStateProperty.resolveWith(
-              (states) => states.contains(WidgetState.hovered) ? c.surfaceHoverOverlay : null,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(color: _dotColor(c), shape: BoxShape.circle),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Ollama',
-                    style: TextStyle(
-                      color: c.textPrimary,
-                      fontSize: ThemeConstants.uiFontSizeSmall,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _statusLabel(),
-                    style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
-                  ),
-                  const Spacer(),
-                  Icon(_expanded ? AppIcons.chevronUp : AppIcons.chevronDown, size: 14, color: c.mutedFg),
-                ],
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) => setState(() => _hovered = true),
+            onExit: (_) => setState(() => _hovered = false),
+            child: GestureDetector(
+              onTap: () => setState(() {
+                _expanded = !_expanded;
+                if (!_expanded) {
+                  _testPassed = false;
+                  _showSaveAnyway = false;
+                }
+              }),
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: _hovered ? Color.alphaBlend(c.surfaceHoverOverlay, c.inputSurface) : c.inputSurface,
+                  borderRadius: _expanded
+                      ? const BorderRadius.vertical(top: Radius.circular(3))
+                      : BorderRadius.circular(3),
+                ),
+                child: headerContent,
               ),
             ),
           ),
-          if (_expanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+          if (_expanded) ...[
+            Divider(height: 1, thickness: 1, color: c.borderColor),
+            Container(
+              color: c.sidebarBackground,
+              padding: const EdgeInsets.fromLTRB(10, 9, 10, 10),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AppTextField(
                     controller: widget.controller,
@@ -232,7 +244,7 @@ class _OllamaCardState extends ConsumerState<OllamaCard> {
                     const SizedBox(height: 8),
                     InlineErrorRow(message: 'Cannot connect to Ollama', onSaveAnyway: _saveAnyway),
                   ],
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       InlineTestButton(
@@ -250,8 +262,41 @@ class _OllamaCardState extends ConsumerState<OllamaCard> {
                 ],
               ),
             ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _OllamaStatusBadge extends StatelessWidget {
+  const _OllamaStatusBadge({required this.status, required this.label});
+  final DotStatus status;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final (dotColor, textColor) = switch (status) {
+      DotStatus.empty => (c.mutedFg, c.textMuted),
+      DotStatus.unsaved => (c.warning, c.warning),
+      DotStatus.savedVerified => (c.success, c.success),
+      DotStatus.savedUnverified => (c.success.withValues(alpha: 0.45), c.textSecondary),
+    };
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: dotColor),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(color: textColor, fontSize: ThemeConstants.uiFontSizeSmall),
+        ),
+      ],
     );
   }
 }
