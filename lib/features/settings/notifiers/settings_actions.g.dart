@@ -38,7 +38,7 @@ final class SettingsActionsProvider extends $AsyncNotifierProvider<SettingsActio
   SettingsActions create() => SettingsActions();
 }
 
-String _$settingsActionsHash() => r'df4c363605fa2574b95359880b2233efba0165ad';
+String _$settingsActionsHash() => r'82bdd535ca686bf5c00e4123828daf6a09a0371a';
 
 /// Imperative actions for onboarding and data wipe. API key test/save
 /// methods have moved to ProvidersActions in features/providers/.
