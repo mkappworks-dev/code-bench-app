@@ -56,9 +56,9 @@ class UpdateService {
       );
 
   /// Verifies the downloaded bundle's authenticity and swaps it in for the
-  /// running install. Never returns normally on success — the spawned
-  /// relaunch script outlives this process.
-  Future<void> installUpdate(String zipPath) async {
+  /// running install. Returns normally on success — call [relaunchApp] to
+  /// restart into the new version.
+  Future<void> applyUpdate(String zipPath) async {
     final appPath = _installDs.currentAppPath();
     _assertNotDevBuild(appPath);
     final extractDir = await _installDs.createExtractDir();
@@ -66,10 +66,6 @@ class UpdateService {
       await _installDs.extractZip(zipPath: zipPath, destDir: extractDir);
       final extractedAppPath = await _installDs.resolveExtractedAppPath(extractDir);
 
-      // Authenticity gate: refuse anything not signed by the same Team ID as
-      // the running bundle. When the running bundle is unsigned (dev build),
-      // require the downloaded bundle to be unsigned too — refuses any
-      // signed↔unsigned crossover.
       final currentTeamId = await _installDs.readTeamId(appPath);
       final downloadedTeamId = await _installDs.readTeamId(extractedAppPath);
       if (currentTeamId != downloadedTeamId) {
@@ -91,7 +87,7 @@ class UpdateService {
       );
 
       final statusPath = await _statusDs.sentinelPath();
-      await _installDs.swapAndRelaunch(
+      await _installDs.applyUpdate(
         currentAppPath: appPath,
         newAppPath: extractedAppPath,
         extractDir: extractDir,
@@ -101,13 +97,17 @@ class UpdateService {
       );
     } catch (e, st) {
       _installDs.cleanupExtractDir(extractDir);
-      // Preserve typed UpdateException; wrap anything else (raw I/O, etc.) so
-      // higher layers never see implementation-leak exceptions. Preserve the
-      // original stack trace so Flutter's error reporter sees the real cause.
       if (e is UpdateException) rethrow;
-      dLog('[UpdateService] installUpdate unexpected error: ${e.runtimeType}: $e\n$st');
+      dLog('[UpdateService] applyUpdate unexpected error: ${e.runtimeType}: $e\n$st');
       Error.throwWithStackTrace(UpdateInstallException('Install failed: ${e.runtimeType}: $e'), st);
     }
+  }
+
+  /// Relaunches the installed app bundle and exits the current process.
+  /// Never returns normally.
+  Future<Never> relaunchApp() async {
+    final appPath = _installDs.currentAppPath();
+    return _installDs.relaunchApp(appPath: appPath);
   }
 
   /// Refuses install if the running bundle is a Flutter dev build. The swap
