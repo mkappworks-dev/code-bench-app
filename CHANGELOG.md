@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.6.1...v0.7.0) (2026-05-04)
+
+
+### Features
+
+* **providers:** redesign provider & onboarding UI with collapsible cards ([#67](https://github.com/mkappworks-dev/code-bench-app/issues/67)) ([d1c9d4e](https://github.com/mkappworks-dev/code-bench-app/commit/d1c9d4e0634af7c726b4916b15fddde8cbb370d7))
+
 ## [0.6.1](https://github.com/mkappworks-dev/code-bench-app/compare/v0.6.0...v0.6.1) (2026-05-04)
 
 
