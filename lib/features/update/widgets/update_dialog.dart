@@ -49,6 +49,15 @@ class _UpdateDialogState extends ConsumerState<UpdateDialog> {
   @override
   Widget build(BuildContext context) {
     final updateState = ref.watch(updateProvider);
+
+    // Reset the optimistic disabled-button flag if the state transitions to
+    // error (e.g. Process.start failed after the button was tapped).
+    ref.listen<UpdateState>(updateProvider, (_, next) {
+      if (next is UpdateStateError && _restarting) {
+        setState(() => _restarting = false);
+      }
+    });
+
     final busy = updateState is UpdateStateDownloading || updateState is UpdateStateInstalling;
 
     final title = switch (updateState) {
@@ -300,6 +309,9 @@ class _ErrorRow extends StatelessWidget {
       UpdateNetworkError() => 'Could not reach GitHub. Check your connection.',
       UpdateDownloadFailed() => 'Download failed. Check your connection and try again.',
       UpdateInstallFailed() => 'Install failed. Try downloading manually.',
+      UpdateRelaunchFailed() =>
+        'The update is installed. Quit and reopen Code Bench from your '
+            'Applications folder to launch the new version.',
       UpdateUnknownError() => 'Something went wrong. Try downloading manually.',
     };
     return Column(
