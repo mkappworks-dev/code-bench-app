@@ -8,7 +8,7 @@ import 'package:path/path.dart' as p;
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snack_bar.dart';
-import '../../../core/widgets/chip_button.dart';
+import '../../../core/widgets/buttons.dart';
 import '../../../shell/notifiers/git_actions.dart';
 import '../../project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../project_sidebar/notifiers/project_sidebar_failure.dart';
@@ -100,15 +100,10 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             ChipButton(label: 'Skip for now', onPressed: widget.onSkip, size: ChipButtonSize.medium),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: c.accent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-              ),
-              onPressed: _selectedPath == null || _adding ? null : _addProject,
-              child: _adding
-                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Add Project', style: TextStyle(fontSize: 12)),
+            PrimaryButton(
+              label: 'Add Project',
+              onPressed: (_selectedPath == null || _adding) ? null : _addProject,
+              loading: _adding,
             ),
           ],
         ),

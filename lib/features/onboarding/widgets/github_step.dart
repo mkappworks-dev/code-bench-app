@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/chip_button.dart';
+import '../../../core/widgets/buttons.dart';
 import '../../github/notifiers/github_auth_notifier.dart';
 import '../../github/widgets/github_account_view.dart';
 
@@ -13,7 +12,6 @@ class GithubStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = AppColors.of(context);
     final account = ref.watch(gitHubAuthProvider).value;
 
     return Column(
@@ -25,15 +23,7 @@ class GithubStep extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             ChipButton(label: 'Skip for now', onPressed: onSkip, size: ChipButtonSize.medium),
-            if (account != null)
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: c.accent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                ),
-                onPressed: onContinue,
-                child: const Text('Continue →', style: TextStyle(fontSize: 12)),
-              ),
+            if (account != null) PrimaryButton(label: 'Continue →', onPressed: onContinue),
           ],
         ),
       ],

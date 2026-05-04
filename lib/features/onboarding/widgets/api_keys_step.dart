@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/chip_button.dart';
+import '../../../core/widgets/buttons.dart';
 import '../../providers/notifiers/providers_notifier.dart';
 import '../../providers/widgets/api_keys_list.dart';
 
@@ -25,7 +24,6 @@ class ApiKeysStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = AppColors.of(context);
     final canContinue = switch (ref.watch(apiKeysProvider)) {
       AsyncData(:final value) => _hasAnyConfig(value),
       _ => false,
@@ -34,27 +32,13 @@ class ApiKeysStep extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Expanded(
-          child: SingleChildScrollView(
-            child: Padding(padding: EdgeInsets.fromLTRB(0, 0, 16, 0), child: ApiKeysList()),
-          ),
-        ),
+        const Expanded(child: SingleChildScrollView(child: ApiKeysList())),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             ChipButton(label: 'Skip for now', onPressed: onSkip, size: ChipButtonSize.medium),
-            Opacity(
-              opacity: canContinue ? 1.0 : 0.4,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: c.accent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                ),
-                onPressed: canContinue ? onContinue : null,
-                child: const Text('Continue →', style: TextStyle(fontSize: 12)),
-              ),
-            ),
+            PrimaryButton(label: 'Continue →', onPressed: canContinue ? onContinue : null),
           ],
         ),
       ],

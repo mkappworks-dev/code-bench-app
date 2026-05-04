@@ -8,7 +8,7 @@ import '../../core/widgets/app_snack_bar.dart';
 import '../../data/coding_tools/models/denylist_category.dart';
 import '../../data/coding_tools/models/denylist_defaults.dart';
 import '../settings/widgets/section_label.dart';
-import '../../core/widgets/chip_button.dart';
+import '../../core/widgets/buttons.dart';
 import 'notifiers/coding_tools_denylist_actions.dart';
 import 'notifiers/coding_tools_denylist_notifier.dart';
 import 'widgets/denylist_category_group.dart';

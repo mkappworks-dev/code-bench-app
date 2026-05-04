@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_snack_bar.dart';
-import '../../core/widgets/chip_button.dart';
+import '../../core/widgets/buttons.dart';
 import '../settings/notifiers/settings_actions.dart';
 import 'notifiers/onboarding_notifier.dart';
 import 'widgets/step_progress_indicator.dart';
