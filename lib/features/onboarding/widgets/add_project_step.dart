@@ -8,7 +8,7 @@ import 'package:path/path.dart' as p;
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snack_bar.dart';
-import '../../../core/widgets/chip_button.dart';
+import '../../../core/widgets/buttons.dart';
 import '../../../shell/notifiers/git_actions.dart';
 import '../../project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../project_sidebar/notifiers/project_sidebar_failure.dart';
@@ -100,25 +100,10 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             ChipButton(label: 'Skip for now', onPressed: widget.onSkip, size: ChipButtonSize.medium),
-            Opacity(
-              opacity: (_selectedPath == null || _adding) ? 0.4 : 1.0,
-              child: MouseRegion(
-                cursor: (_selectedPath == null || _adding) ? MouseCursor.defer : SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: (_selectedPath == null || _adding) ? null : _addProject,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(color: c.accent, borderRadius: BorderRadius.circular(6)),
-                    child: _adding
-                        ? SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: c.onAccent),
-                          )
-                        : Text('Add Project', style: TextStyle(color: c.onAccent, fontSize: 12)),
-                  ),
-                ),
-              ),
+            PrimaryButton(
+              label: 'Add Project',
+              onPressed: (_selectedPath == null || _adding) ? null : _addProject,
+              loading: _adding,
             ),
           ],
         ),

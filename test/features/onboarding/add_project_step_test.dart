@@ -31,9 +31,7 @@ void main() {
       ),
     );
     final gesture = tester.widget<GestureDetector>(
-      find
-          .ancestor(of: find.text('Add Project'), matching: find.byType(GestureDetector))
-          .first,
+      find.ancestor(of: find.text('Add Project'), matching: find.byType(GestureDetector)).first,
     );
     expect(gesture.onTap, isNull);
   });
