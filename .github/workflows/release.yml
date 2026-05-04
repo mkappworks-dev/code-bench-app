@@ -268,10 +268,11 @@ jobs:
           path: artifacts/
           merge-multiple: true
 
-      - name: Upload release artifacts
+      - name: Upload release artifacts and publish
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
+          draft: false
           files: |
             artifacts/CodeBench-macos.dmg
             artifacts/CodeBench-macos.zip
