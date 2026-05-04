@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/mkappworks-dev/code-bench-app/compare/v0.7.0...v0.7.1) (2026-05-04)
+
+
+### Bug Fixes
+
+* **update:** use open -n to force new app instance on relaunch ([#75](https://github.com/mkappworks-dev/code-bench-app/issues/75)) ([bd4e5c0](https://github.com/mkappworks-dev/code-bench-app/commit/bd4e5c00450bfc46d0302bd62537a813dd9521d1))
+
 ## [0.7.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.6.1...v0.7.0) (2026-05-04)
 
 
