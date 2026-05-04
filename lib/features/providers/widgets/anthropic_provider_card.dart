@@ -250,7 +250,7 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
           selected: !isCli,
           // Open the editor by default if no key is saved yet OR the user is
           // currently typing — otherwise stay collapsed.
-          initiallyExpanded: _dotStatus != DotStatus.savedVerified && _dotStatus != DotStatus.savedUnverified,
+          initiallyExpanded: false,
           badge: _apiKeyBadge(),
           onTap: isCli ? () => _setTransport('api-key') : null,
           body: _ApiKeyBody(
@@ -371,19 +371,23 @@ class _ClaudeCliBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     if (broken) {
-      return Row(
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              '⚠ $binaryName no longer detected',
-              style: TextStyle(color: c.error, fontSize: ThemeConstants.uiFontSizeSmall),
-              overflow: TextOverflow.ellipsis,
-            ),
+          Text(
+            '⚠ $binaryName no longer detected',
+            style: TextStyle(color: c.error, fontSize: ThemeConstants.uiFontSizeSmall),
           ),
-          const SizedBox(width: 6),
-          _CardButton(label: 'Switch to API Key', onPressed: onSwitchToApiKey),
-          const SizedBox(width: 6),
-          _CardButton(label: 'Recheck', onPressed: onRecheck),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(child: InstallCommand(command: installCommand)),
+              const SizedBox(width: 6),
+              _CardButton(label: 'Switch to API Key', onPressed: onSwitchToApiKey),
+              const SizedBox(width: 6),
+              _CardButton(label: 'Recheck', onPressed: onRecheck),
+            ],
+          ),
         ],
       );
     }
