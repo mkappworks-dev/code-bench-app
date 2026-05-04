@@ -1,4 +1,15 @@
-name: Release
+# Builds and publishes a Code Bench release. Two ways it runs:
+#
+# 1. Automatic (workflow_call) — chained from release-please.yml when a
+#    Release Please PR is merged. Builds artifacts, uploads them to the
+#    draft release, then PATCHes draft=false to publish (which is what
+#    creates the v* git tag). This is the normal path; do nothing.
+#
+# 2. Manual (workflow_dispatch) — recovery only. Use the "Run workflow"
+#    button when the chained run failed mid-way. See the "Recovering a
+#    stuck release" section of README.md for Shape A (stuck draft, supply
+#    `release_id`) and Shape B (orphaned tag, leave `release_id` blank).
+name: Release (build + publish)
 
 on:
   workflow_dispatch:
@@ -327,7 +338,7 @@ jobs:
           gh api --method PATCH "/repos/$REPO/releases/$RELEASE_ID" -F draft=false >/dev/null
 
       # workflow_dispatch path: tag already exists and is published (manual
-      # recovery for a stuck release.yml run). softprops finds the existing
+      # recovery for a stuck build-and-publish.yml run). softprops finds the existing
       # release by tag and uploads/replaces assets — no draft involved.
       # When wiring up Windows/Linux platforms, add their artifacts to the
       # `files:` block below:

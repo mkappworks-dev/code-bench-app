@@ -99,8 +99,8 @@ Developer Portal whenever you need.
 6. **Certificate** → select your active Developer ID Application
    certificate → Continue.
 7. **Provisioning Profile Name:** `Code Bench Developer ID` — must match
-   `FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER` in `release.yml`. If you
-   change the name here, change it in the workflow too.
+   `FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER` in `build-and-publish.yml`.
+   If you change the name here, change it in the workflow too.
 8. **Generate → Download** → you get `Code_Bench_Developer_ID.provisionprofile`.
 9. Base64-encode and copy to clipboard:
    ```
