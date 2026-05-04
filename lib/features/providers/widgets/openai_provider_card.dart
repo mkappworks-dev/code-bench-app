@@ -245,7 +245,7 @@ class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
         SelectableTransportCard(
           title: 'API Key',
           selected: !isCli,
-          initiallyExpanded: _dotStatus != DotStatus.savedVerified && _dotStatus != DotStatus.savedUnverified,
+          initiallyExpanded: false,
           badge: _apiKeyBadge(),
           onTap: isCli ? () => _setTransport('api-key') : null,
           body: _OpenAIApiKeyBody(
@@ -352,19 +352,23 @@ class _CodexCliBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     if (broken) {
-      return Row(
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              '⚠ $binaryName no longer detected',
-              style: TextStyle(color: c.error, fontSize: ThemeConstants.uiFontSizeSmall),
-              overflow: TextOverflow.ellipsis,
-            ),
+          Text(
+            '⚠ $binaryName no longer detected',
+            style: TextStyle(color: c.error, fontSize: ThemeConstants.uiFontSizeSmall),
           ),
-          const SizedBox(width: 6),
-          _CardButton(label: 'Switch to API Key', onPressed: onSwitchToApiKey),
-          const SizedBox(width: 6),
-          _CardButton(label: 'Recheck', onPressed: onRecheck),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(child: InstallCommand(command: installCommand)),
+              const SizedBox(width: 6),
+              _CardButton(label: 'Switch to API Key', onPressed: onSwitchToApiKey),
+              const SizedBox(width: 6),
+              _CardButton(label: 'Recheck', onPressed: onRecheck),
+            ],
+          ),
         ],
       );
     }
