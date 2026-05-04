@@ -138,13 +138,20 @@ class UpdateInstallDatasourceProcess implements UpdateInstallDatasource {
     } finally {
       try {
         Directory(scriptDir.path).deleteSync(recursive: true);
-      } catch (_) {}
+      } catch (e) {
+        dLog('[UpdateInstallDatasource] failed to clean up script dir ${scriptDir.path}: $e');
+      }
     }
   }
 
   @override
   Future<Never> relaunchApp({required String appPath}) async {
-    await Process.start('open', [appPath], mode: ProcessStartMode.detached);
+    try {
+      await Process.start('open', [appPath], mode: ProcessStartMode.detached);
+    } catch (e) {
+      dLog('[UpdateInstallDatasource] relaunchApp Process.start failed: $e');
+      rethrow;
+    }
     await Future<void>.delayed(const Duration(milliseconds: 100));
     exit(0);
   }
