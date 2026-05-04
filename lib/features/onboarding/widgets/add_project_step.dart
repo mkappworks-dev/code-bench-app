@@ -99,7 +99,7 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            ChipButton(label: 'Skip for now', onPressed: widget.onSkip),
+            ChipButton(label: 'Skip for now', onPressed: widget.onSkip, size: ChipButtonSize.medium),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: c.accent,

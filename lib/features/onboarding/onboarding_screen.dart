@@ -155,7 +155,7 @@ class _ContentPanel extends ConsumerWidget {
     final c = AppColors.of(context);
     return Container(
       color: c.background,
-      padding: const EdgeInsets.symmetric(horizontal: 56, vertical: 48),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

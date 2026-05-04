@@ -39,11 +39,11 @@ class ApiKeysStep extends ConsumerWidget {
             child: Padding(padding: EdgeInsets.fromLTRB(0, 0, 16, 0), child: ApiKeysList()),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            ChipButton(label: 'Skip for now', onPressed: onSkip),
+            ChipButton(label: 'Skip for now', onPressed: onSkip, size: ChipButtonSize.medium),
             Opacity(
               opacity: canContinue ? 1.0 : 0.4,
               child: FilledButton(

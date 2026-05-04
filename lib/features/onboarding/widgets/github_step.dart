@@ -21,11 +21,10 @@ class GithubStep extends ConsumerWidget {
       children: [
         const GithubAccountView(),
         const Spacer(),
-        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            ChipButton(label: 'Skip for now', onPressed: onSkip),
+            ChipButton(label: 'Skip for now', onPressed: onSkip, size: ChipButtonSize.medium),
             if (account != null)
               FilledButton(
                 style: FilledButton.styleFrom(
