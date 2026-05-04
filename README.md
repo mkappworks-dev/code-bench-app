@@ -35,15 +35,15 @@ The app is chat-centric: a single conversation surface with a project sidebar on
 
 ## Platforms
 
-| Platform | Status                                                                                                                                                                                                                |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| macOS    | ✅ Supported — built, signed, notarized, and released in CI on every tag                                                                                                                                              |
-| Windows  | ⚠️ Unsupported — Flutter build target exists, but no CI, no signing, no released binaries. Use at your own risk and expect to fix things.                                                                             |
-| Linux    | ⚠️ Unsupported — same caveats as Windows. Both matrix entries are commented out in [`.github/workflows/build.yml`](.github/workflows/build.yml) and [`.github/workflows/release.yml`](.github/workflows/release.yml). |
+| Platform | Status                                                                                                                                                                                                                                    |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| macOS    | ✅ Supported — built, signed, notarized, and released in CI on every tag                                                                                                                                                                  |
+| Windows  | ⚠️ Unsupported — Flutter build target exists, but no CI, no signing, no released binaries. Use at your own risk and expect to fix things.                                                                                                 |
+| Linux    | ⚠️ Unsupported — same caveats as Windows. Both matrix entries are commented out in [`.github/workflows/build.yml`](.github/workflows/build.yml) and [`.github/workflows/build-and-publish.yml`](.github/workflows/build-and-publish.yml). |
 
 iOS, Android, and Web are out of scope.
 
-> If you want Windows or Linux to be a supported platform, the path is: re-enable the matrix entries in [`build.yml`](.github/workflows/build.yml) and [`release.yml`](.github/workflows/release.yml), add platform-appropriate code-signing, fix anything that breaks, and update this section. Until that happens, treat the desktop builds for those targets as a developer-only escape hatch.
+> If you want Windows or Linux to be a supported platform, the path is: re-enable the matrix entries in [`build.yml`](.github/workflows/build.yml) and [`build-and-publish.yml`](.github/workflows/build-and-publish.yml), add platform-appropriate code-signing, fix anything that breaks, and update this section. Until that happens, treat the desktop builds for those targets as a developer-only escape hatch.
 
 ## Requirements
 
@@ -286,7 +286,7 @@ flutter build linux --release   # → build/linux/x64/release/bundle/ (unsupport
 
 ## Releasing (macOS)
 
-Releases are managed by [release-please](https://github.com/googleapis/release-please). Every merge to `main` updates an open release PR that bumps `pubspec.yaml`, writes `CHANGELOG.md`, and proposes the next semver version based on conventional commit types (`feat:` → minor, `fix:` → patch, `feat!:` / `BREAKING CHANGE:` → major). Merging that PR creates a `v*` tag, which triggers [`.github/workflows/release.yml`](.github/workflows/release.yml) to build the macOS app, sign with a Developer ID, notarize through Apple's notary service, staple the ticket, and upload `CodeBench-macos.dmg` and `CodeBench-macos.zip` to the release. The in-app auto-updater consumes those artifacts on next launch of older clients.
+Releases are managed by [release-please](https://github.com/googleapis/release-please). Every merge to `main` updates an open release PR that bumps `pubspec.yaml`, writes `CHANGELOG.md`, and proposes the next semver version based on conventional commit types (`feat:` → minor, `fix:` → patch, `feat!:` / `BREAKING CHANGE:` → major). Merging that PR triggers [`.github/workflows/release-please.yml`](.github/workflows/release-please.yml), which creates a draft GitHub release and chains [`.github/workflows/build-and-publish.yml`](.github/workflows/build-and-publish.yml) to build the macOS app, sign with a Developer ID, notarize through Apple's notary service, staple the ticket, and upload `CodeBench-macos.dmg` and `CodeBench-macos.zip` to the draft. The chained workflow then publishes the draft (`PATCH draft=false`), which is the moment the `v*` git tag gets created and the release becomes "latest." The in-app auto-updater consumes those artifacts on next launch of older clients.
 
 ### Required GitHub Actions secrets
 
@@ -313,13 +313,39 @@ Add these under **Settings → Secrets and variables → Actions** before the fi
 
 > **Never manually bump `pubspec.yaml` or push `v*` tags.** release-please owns both. Manual bumps or tags will confuse the manifest and produce duplicate or mis-versioned releases.
 
-### Recovering a stuck release
+### Manual recovery (`workflow_dispatch`)
 
-If a tag exists on GitHub but `release.yml` never ran (the release page is missing the `CodeBench-macos.dmg` and `CodeBench-macos.zip`, only GitHub's auto-generated source archives are present), the tag was likely created by `GITHUB_TOKEN` and didn't trigger workflows. Re-run the build manually:
+The `Release (build + publish)` workflow has a **Run workflow** button under **Actions tab → Release (build + publish)**. Use it for the recovery scenarios below — it's the safety valve when the chained automatic flow fails or you need to operate on an existing release out-of-band. Do **not** use it for normal releases; merging a Release Please PR is what cuts a release.
 
-**Actions tab → Release → Run workflow → enter the tag (e.g. `v0.2.0`) → Run.**
+**Inputs:**
 
-This builds and signs from the tag, then uploads the artifacts into the existing release without overwriting the changelog.
+| Input        | When to set it                                       |
+| ------------ | ---------------------------------------------------- |
+| `tag`        | Always — the tag string, e.g. `v0.2.0`               |
+| `release_id` | Only when publishing a **stuck draft**; otherwise blank |
+
+**Scenario A — stuck draft (no tag yet).** `release-please.yml` ran but the chained run failed mid-way (build crashed, notarization timeout, upload failed). Result: a draft release exists in the **Releases** tab with a "Draft" badge, but no `v*` tag was created.
+
+1. Open the draft release; copy the release ID from the URL (`releases/edit/<id>`).
+2. **Actions tab → Release (build + publish) → Run workflow.**
+3. Enter the tag (e.g. `v0.2.0`) **and** the release ID → **Run**.
+
+The workflow re-runs the build, deletes any half-uploaded assets, re-uploads, and flips `draft=false` to publish — which is what finally creates the git tag.
+
+**Scenario B — re-upload assets to a published release.** The release shipped, but the DMG was discovered to be corrupted, or you want to attach an additional file. Tag exists, release is non-draft.
+
+1. **Actions tab → Release (build + publish) → Run workflow.**
+2. Enter the tag, **leave release ID blank** → **Run**.
+
+The workflow checks out the tag, builds fresh, and softprops uploads (replacing same-named assets). The changelog is not overwritten.
+
+**Scenario C — orphaned tag with no release object.** Rare. Someone pushed `git tag v0.2.0 && git push origin v0.2.0` outside the Release Please flow. Tag exists, no release object yet.
+
+Same steps as Scenario B (tag only, blank release ID). softprops creates the release for that tag and uploads artifacts.
+
+**Scenario D — testing pipeline changes on an existing tag.** You modified the build / sign / notarize steps in `build-and-publish.yml` and want to verify on a real tag without merging a Release Please PR.
+
+Same steps as Scenario B. Be aware: this **will replace existing assets** on that release — pick a throwaway test tag if you don't want to disturb a real release.
 
 ## Testing & Linting
 
