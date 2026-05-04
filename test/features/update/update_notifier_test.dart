@@ -15,15 +15,20 @@ import 'package:code_bench_app/services/update/update_service.dart';
 // ── Fake UpdateService ────────────────────────────────────────────────────────
 
 class _FakeUpdateService extends Fake implements UpdateService {
-  Object? applyError; // set to UpdateInstallException to simulate failure
+  Object? applyError; // set to throw from applyUpdate
+  Object? downloadError; // set to throw from downloadUpdate
+  Object? relaunchError; // set to throw from relaunchApp
   bool relaunchCalled = false;
+  UpdateInstallStatus? lastInstallStatus; // returned by readLastInstallStatus
 
   @override
   Future<UpdateInfo?> checkForUpdate() async => null;
 
   @override
-  Future<String> downloadUpdate({required UpdateInfo info, required void Function(double) onProgress}) async =>
-      '/tmp/fake.zip';
+  Future<String> downloadUpdate({required UpdateInfo info, required void Function(double) onProgress}) async {
+    if (downloadError != null) throw downloadError!;
+    return '/tmp/fake.zip';
+  }
 
   @override
   Future<void> applyUpdate(String zipPath) async {
@@ -33,12 +38,15 @@ class _FakeUpdateService extends Fake implements UpdateService {
   @override
   Future<Never> relaunchApp() {
     relaunchCalled = true;
+    if (relaunchError != null) {
+      return Future.error(relaunchError!);
+    }
     // Never completes — mirrors production behaviour (process would exit).
     return Completer<Never>().future;
   }
 
   @override
-  Future<UpdateInstallStatus?> readLastInstallStatus() async => null;
+  Future<UpdateInstallStatus?> readLastInstallStatus() async => lastInstallStatus;
 
   @override
   Future<void> clearLastInstallStatus() async {}
@@ -64,7 +72,7 @@ void main() {
 
   setUp(() => fake = _FakeUpdateService());
 
-  // ── downloadAndInstall → ReadyToRestart ───────────────────────────────────
+  // ── downloadAndInstall ────────────────────────────────────────────────────
 
   group('downloadAndInstall', () {
     test('transitions to ReadyToRestart on success', () async {
@@ -83,18 +91,68 @@ void main() {
       final err = (c.read(updateProvider) as UpdateStateError).failure;
       expect(err, isA<UpdateInstallFailed>());
     });
+
+    test('transitions to error when downloadUpdate throws UpdateDownloadException', () async {
+      fake.downloadError = const UpdateDownloadException('timeout');
+      final c = _makeContainer(fake);
+      await c.read(updateProvider.notifier).downloadAndInstall(_kInfo);
+      expect(c.read(updateProvider), isA<UpdateStateError>());
+      final err = (c.read(updateProvider) as UpdateStateError).failure;
+      expect(err, isA<UpdateDownloadFailed>());
+    });
+
+    test('is a no-op when state is already ReadyToRestart', () async {
+      final c = _makeContainer(fake);
+      await c.read(updateProvider.notifier).downloadAndInstall(_kInfo);
+      expect(c.read(updateProvider), isA<UpdateStateReadyToRestart>());
+      // Second call must be skipped — state must remain ReadyToRestart.
+      await c.read(updateProvider.notifier).downloadAndInstall(_kInfo);
+      expect(c.read(updateProvider), isA<UpdateStateReadyToRestart>());
+    });
+  });
+
+  // ── dismiss ───────────────────────────────────────────────────────────────
+
+  group('dismiss', () {
+    test('transitions ReadyToRestart back to Idle', () async {
+      final c = _makeContainer(fake);
+      await c.read(updateProvider.notifier).downloadAndInstall(_kInfo);
+      expect(c.read(updateProvider), isA<UpdateStateReadyToRestart>());
+      c.read(updateProvider.notifier).dismiss();
+      expect(c.read(updateProvider), isA<UpdateStateIdle>());
+    });
   });
 
   // ── restartNow ────────────────────────────────────────────────────────────
 
   group('restartNow', () {
-    test('calls relaunchApp on the service', () async {
+    test('calls relaunchApp and state remains ReadyToRestart while pending', () async {
       final c = _makeContainer(fake);
+      // Reach ReadyToRestart first via the real path.
+      await c.read(updateProvider.notifier).downloadAndInstall(_kInfo);
+      expect(c.read(updateProvider), isA<UpdateStateReadyToRestart>());
+
       // Don't await — relaunchApp never completes in the fake.
       unawaited(c.read(updateProvider.notifier).restartNow());
       // Pump microtasks so the call reaches the fake.
       await Future<void>.microtask(() {});
+
       expect(fake.relaunchCalled, isTrue);
+      // State must remain ReadyToRestart — no premature transition.
+      expect(c.read(updateProvider), isA<UpdateStateReadyToRestart>());
+    });
+
+    test('transitions to UpdateRelaunchFailed error when relaunchApp throws', () async {
+      fake.relaunchError = Exception('open failed');
+      final c = _makeContainer(fake);
+      await c.read(updateProvider.notifier).downloadAndInstall(_kInfo);
+      expect(c.read(updateProvider), isA<UpdateStateReadyToRestart>());
+
+      await c.read(updateProvider.notifier).restartNow();
+
+      expect(c.read(updateProvider), isA<UpdateStateError>());
+      final err = (c.read(updateProvider) as UpdateStateError).failure;
+      expect(err, isA<UpdateRelaunchFailed>());
     });
   });
 
@@ -103,12 +161,34 @@ void main() {
   group('checkForUpdates guard', () {
     test('skips check when state is ReadyToRestart', () async {
       final c = _makeContainer(fake);
-      // Put notifier into ReadyToRestart state first.
       await c.read(updateProvider.notifier).downloadAndInstall(_kInfo);
       expect(c.read(updateProvider), isA<UpdateStateReadyToRestart>());
-      // checkForUpdates should be a no-op now.
       await c.read(updateProvider.notifier).checkForUpdates();
       expect(c.read(updateProvider), isA<UpdateStateReadyToRestart>());
+    });
+  });
+
+  // ── _surfacePreviousInstallStatus ─────────────────────────────────────────
+
+  group('_surfacePreviousInstallStatus', () {
+    test('surfaces failed sentinel as installFailed error on startup', () async {
+      fake.lastInstallStatus = (status: 'failed', detail: 'ditto-failed', timestamp: '2026-01-01T00:00:00Z');
+      final c = _makeContainer(fake);
+      // Reading the provider triggers build(), which calls unawaited(_surfacePreviousInstallStatus()).
+      // delayed(Duration.zero) drains microtasks + one event-loop turn so the async chain completes.
+      c.read(updateProvider);
+      await Future<void>.delayed(Duration.zero);
+      expect(c.read(updateProvider), isA<UpdateStateError>());
+      final err = (c.read(updateProvider) as UpdateStateError).failure;
+      expect(err, isA<UpdateInstallFailed>());
+    });
+
+    test('does not surface sentinel when status is ok', () async {
+      fake.lastInstallStatus = (status: 'ok', detail: '', timestamp: '2026-01-01T00:00:00Z');
+      final c = _makeContainer(fake);
+      c.read(updateProvider);
+      await Future<void>.delayed(Duration.zero);
+      expect(c.read(updateProvider), isA<UpdateStateIdle>());
     });
   });
 }
