@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.2](https://github.com/mkappworks-dev/code-bench-app/compare/v0.7.1...v0.7.2) (2026-05-04)
+
+
+### Bug Fixes
+
+* **onboarding:** sign out GitHub on wipe + align button heights across all steps ([#77](https://github.com/mkappworks-dev/code-bench-app/issues/77)) ([e496c62](https://github.com/mkappworks-dev/code-bench-app/commit/e496c6257ed171ad1e928613d98cf2b2bf88a74a))
+
 ## [0.7.1](https://github.com/mkappworks-dev/code-bench-app/compare/v0.7.0...v0.7.1) (2026-05-04)
 
 
