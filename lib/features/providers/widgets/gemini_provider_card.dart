@@ -164,7 +164,7 @@ class _GeminiProviderCardState extends ConsumerState<GeminiProviderCard> {
           // Always selected — there's no other option to pick yet.
           title: 'API Key',
           selected: true,
-          initiallyExpanded: _dotStatus != DotStatus.savedVerified && _dotStatus != DotStatus.savedUnverified,
+          initiallyExpanded: false,
           badge: _apiKeyBadge(),
           body: _GeminiApiKeyBody(
             controller: widget.controller,
