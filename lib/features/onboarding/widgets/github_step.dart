@@ -26,17 +26,16 @@ class GithubStep extends ConsumerWidget {
           children: [
             ChipButton(label: 'Skip for now', onPressed: onSkip, size: ChipButtonSize.medium),
             if (account != null)
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: c.accent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  textStyle: const TextStyle(fontSize: 12),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: onContinue,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(color: c.accent, borderRadius: BorderRadius.circular(6)),
+                    child: Text('Continue →', style: TextStyle(color: c.onAccent, fontSize: 12)),
+                  ),
                 ),
-                onPressed: onContinue,
-                child: const Text('Continue →', style: TextStyle(fontSize: 12)),
               ),
           ],
         ),

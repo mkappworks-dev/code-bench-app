@@ -100,19 +100,25 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             ChipButton(label: 'Skip for now', onPressed: widget.onSkip, size: ChipButtonSize.medium),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: c.accent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                textStyle: const TextStyle(fontSize: 12),
+            Opacity(
+              opacity: (_selectedPath == null || _adding) ? 0.4 : 1.0,
+              child: MouseRegion(
+                cursor: (_selectedPath == null || _adding) ? MouseCursor.defer : SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: (_selectedPath == null || _adding) ? null : _addProject,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(color: c.accent, borderRadius: BorderRadius.circular(6)),
+                    child: _adding
+                        ? SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: c.onAccent),
+                          )
+                        : Text('Add Project', style: TextStyle(color: c.onAccent, fontSize: 12)),
+                  ),
+                ),
               ),
-              onPressed: _selectedPath == null || _adding ? null : _addProject,
-              child: _adding
-                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Add Project', style: TextStyle(fontSize: 12)),
             ),
           ],
         ),
