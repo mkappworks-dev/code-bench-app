@@ -142,16 +142,13 @@ class _SelectableTransportCardState extends State<SelectableTransportCard> {
       ],
     );
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 120),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    return Container(
       decoration: BoxDecoration(
-        color: _hovered && interactive && !widget.selected ? c.accentTintMid.withValues(alpha: 0.3) : null,
         border: Border.all(color: borderColor),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Tap the banner area to select; the chevron has its own gesture
           // detector that wins the arena (deeper) so expand/collapse doesn't
@@ -167,13 +164,29 @@ class _SelectableTransportCardState extends State<SelectableTransportCard> {
               child: GestureDetector(
                 onTap: interactive ? widget.onTap : null,
                 behavior: HitTestBehavior.opaque,
-                child: headerRow,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: _hovered && interactive
+                        ? Color.alphaBlend(c.surfaceHoverOverlay, c.inputSurface)
+                        : c.inputSurface,
+                    borderRadius: _expanded
+                        ? const BorderRadius.vertical(top: Radius.circular(3))
+                        : BorderRadius.circular(3),
+                  ),
+                  child: headerRow,
+                ),
               ),
             ),
           ),
           if (_expanded) ...[
-            const SizedBox(height: 10),
-            Padding(padding: const EdgeInsets.only(left: 22), child: widget.body),
+            Divider(height: 1, thickness: 1, color: c.borderColor),
+            Container(
+              color: c.sidebarBackground,
+              padding: const EdgeInsets.fromLTRB(27, 9, 10, 10),
+              child: widget.body,
+            ),
           ],
         ],
       ),

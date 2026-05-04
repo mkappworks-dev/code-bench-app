@@ -179,12 +179,8 @@ class _OllamaCardState extends ConsumerState<OllamaCard> {
         ),
         const SizedBox(width: 10),
         Text(
-          'Ollama',
-          style: TextStyle(
-            color: c.headingText,
-            fontSize: ThemeConstants.uiFontSizeSmall,
-            fontWeight: FontWeight.w600,
-          ),
+          'Ollama Server URL',
+          style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall, fontWeight: FontWeight.w600),
         ),
         const Spacer(),
         _OllamaStatusBadge(status: _dotStatus, label: _statusLabel()),

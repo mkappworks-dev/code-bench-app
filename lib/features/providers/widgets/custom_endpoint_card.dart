@@ -212,8 +212,8 @@ class _CustomEndpointCardState extends ConsumerState<CustomEndpointCard> {
         ),
         const SizedBox(width: 10),
         Text(
-          'Custom',
-          style: TextStyle(color: c.headingText, fontSize: ThemeConstants.uiFontSizeSmall, fontWeight: FontWeight.w600),
+          'Custom Server URL/API Key',
+          style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall, fontWeight: FontWeight.w600),
         ),
         const Spacer(),
         _CustomStatusBadge(status: _dotStatus, label: _statusLabel()),

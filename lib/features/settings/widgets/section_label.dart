@@ -12,7 +12,7 @@ class SectionLabel extends StatelessWidget {
     final c = AppColors.of(context);
     return Text(
       label.toUpperCase(),
-      style: TextStyle(color: c.mutedFg, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.8),
+      style: TextStyle(color: c.textSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.8),
     );
   }
 }

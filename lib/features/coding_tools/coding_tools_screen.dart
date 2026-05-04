@@ -137,61 +137,71 @@ class _CodingToolsScreenState extends ConsumerState<CodingToolsScreen> {
       error: (e, _) => Center(
         child: Text('Failed to load denylist settings.', style: TextStyle(color: c.textSecondary, fontSize: 12)),
       ),
-      data: (state) => SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      data: (state) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 24),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SectionLabel('Coding Tools'),
+                SettingsChipButton(label: '↺ Restore all defaults', onPressed: _restoreAllDefaults),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(right: 24, bottom: 24),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SectionLabel('Coding Tools'),
-                  SettingsChipButton(label: '↺ Restore all defaults', onPressed: _restoreAllDefaults),
+                  Text(
+                    'Files and folders the agent may not read, list, or modify.',
+                    style: TextStyle(color: c.textSecondary, fontSize: 12),
+                  ),
+                  const SizedBox(height: 16),
+                  const RipgrepAvailabilityBanner(),
+                  for (final cat in _categories) ...[
+                    DenylistCategoryGroup(
+                      title: cat.title,
+                      subtitle: cat.subtitle,
+                      baseline: DenylistDefaults.forCategory(cat.category),
+                      userAdded: state.userAdded[cat.category] ?? const <String>{},
+                      suppressed: state.suppressedDefaults[cat.category] ?? const <String>{},
+                      inputHint: cat.hint,
+                      isSubmitting: isLoading,
+                      onAdd: (value) =>
+                          ref.read(codingToolsDenylistActionsProvider.notifier).addUserEntry(cat.category, value),
+                      onRemoveUser: (value) =>
+                          ref.read(codingToolsDenylistActionsProvider.notifier).removeUserEntry(cat.category, value),
+                      onSuppressBaseline: (value) => _confirmSuppressBaseline(cat.category, value),
+                      onRestoreBaseline: (value) =>
+                          ref.read(codingToolsDenylistActionsProvider.notifier).restoreBaseline(cat.category, value),
+                      onRestoreCategory: () => _confirmRestoreCategory(
+                        cat.category,
+                        state.suppressedDefaults[cat.category] ?? const <String>{},
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  const SizedBox(height: 8),
+                  Divider(height: 1, thickness: 1, color: c.borderColor),
+                  const SizedBox(height: 8),
+                  const SectionLabel('About'),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Entries with strikethrough are baseline defaults you have opted out of. '
+                    'They can be restored at any time.',
+                    style: TextStyle(color: c.textSecondary, fontSize: 11),
+                  ),
                 ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Files and folders the agent may not read, list, or modify.',
-                style: TextStyle(color: c.textSecondary, fontSize: 12),
-              ),
-              const SizedBox(height: 16),
-              const RipgrepAvailabilityBanner(),
-              for (final cat in _categories) ...[
-                DenylistCategoryGroup(
-                  title: cat.title,
-                  subtitle: cat.subtitle,
-                  baseline: DenylistDefaults.forCategory(cat.category),
-                  userAdded: state.userAdded[cat.category] ?? const <String>{},
-                  suppressed: state.suppressedDefaults[cat.category] ?? const <String>{},
-                  inputHint: cat.hint,
-                  isSubmitting: isLoading,
-                  onAdd: (value) =>
-                      ref.read(codingToolsDenylistActionsProvider.notifier).addUserEntry(cat.category, value),
-                  onRemoveUser: (value) =>
-                      ref.read(codingToolsDenylistActionsProvider.notifier).removeUserEntry(cat.category, value),
-                  onSuppressBaseline: (value) => _confirmSuppressBaseline(cat.category, value),
-                  onRestoreBaseline: (value) =>
-                      ref.read(codingToolsDenylistActionsProvider.notifier).restoreBaseline(cat.category, value),
-                  onRestoreCategory: () =>
-                      _confirmRestoreCategory(cat.category, state.suppressedDefaults[cat.category] ?? const <String>{}),
-                ),
-                const SizedBox(height: 12),
-              ],
-              const SizedBox(height: 8),
-              Divider(height: 1, thickness: 1, color: c.borderColor),
-              const SizedBox(height: 8),
-              const SectionLabel('About'),
-              const SizedBox(height: 4),
-              Text(
-                'Entries with strikethrough are baseline defaults you have opted out of. '
-                'They can be restored at any time.',
-                style: TextStyle(color: c.textSecondary, fontSize: 11),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

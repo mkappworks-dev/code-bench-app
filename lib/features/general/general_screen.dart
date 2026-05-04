@@ -157,156 +157,167 @@ class _GeneralScreenState extends ConsumerState<GeneralScreen> {
       AppSnackBar.show(context, 'Failed to reset — please try again.', type: AppSnackBarType.error);
     });
     final c = AppColors.of(context);
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SectionLabel('General'),
-          const SizedBox(height: 8),
-          SettingsGroup(
-            rows: [
-              SettingsRow(
-                label: 'Theme',
-                description: 'How Code Bench looks',
-                trailing: Builder(
-                  builder: (ctx) => AppDropdown<ThemeMode>(
-                    value: _themeMode,
-                    items: const [ThemeMode.system, ThemeMode.dark, ThemeMode.light],
-                    label: (m) => switch (m) {
-                      ThemeMode.system => 'System',
-                      ThemeMode.dark => 'Dark',
-                      ThemeMode.light => 'Light',
-                    },
-                    onChanged: (mode) async {
-                      await ref.read(generalPrefsProvider.notifier).setThemeMode(mode);
-                      setState(() => _themeMode = mode);
-                    },
-                    context: ctx,
-                  ),
-                ),
-              ),
-              SettingsRow(
-                label: 'Delete confirmation',
-                description: 'Ask before deleting a session',
-                trailing: _deleteConfirmation == null
-                    ? const SizedBox()
-                    : Transform.scale(
-                        scale: 0.75,
-                        child: Switch(
-                          value: _deleteConfirmation!,
-                          onChanged: (v) async {
-                            await ref.read(generalPrefsProvider.notifier).setDeleteConfirmation(v);
-                            setState(() => _deleteConfirmation = v);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionLabel('General'),
+        const SizedBox(height: 8),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(right: 24, bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SettingsGroup(
+                  rows: [
+                    SettingsRow(
+                      label: 'Theme',
+                      description: 'How Code Bench looks',
+                      trailing: Builder(
+                        builder: (ctx) => AppDropdown<ThemeMode>(
+                          value: _themeMode,
+                          items: const [ThemeMode.system, ThemeMode.dark, ThemeMode.light],
+                          label: (m) => switch (m) {
+                            ThemeMode.system => 'System',
+                            ThemeMode.dark => 'Dark',
+                            ThemeMode.light => 'Light',
                           },
-                          thumbColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) return Colors.white;
-                            return c.sendDisabledIconColor;
-                          }),
-                          trackColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) return c.accent;
-                            return c.sendDisabledFill;
-                          }),
-                          trackOutlineColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) return Colors.transparent;
-                            return c.sendDisabledStroke;
-                          }),
+                          onChanged: (mode) async {
+                            await ref.read(generalPrefsProvider.notifier).setThemeMode(mode);
+                            setState(() => _themeMode = mode);
+                          },
+                          context: ctx,
                         ),
                       ),
-              ),
-              SettingsRow(
-                label: 'Auto-commit',
-                description: 'Skip commit dialog; commit immediately with AI-generated message',
-                trailing: _autoCommit == null
-                    ? const SizedBox()
-                    : Transform.scale(
-                        scale: 0.75,
-                        child: Switch(
-                          value: _autoCommit!,
-                          onChanged: (v) async {
-                            await ref.read(generalPrefsProvider.notifier).setAutoCommit(v);
-                            setState(() => _autoCommit = v);
-                          },
-                          thumbColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) return Colors.white;
-                            return c.sendDisabledIconColor;
-                          }),
-                          trackColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) return c.accent;
-                            return c.sendDisabledFill;
-                          }),
-                          trackOutlineColor: WidgetStateProperty.resolveWith((states) {
-                            if (states.contains(WidgetState.selected)) return Colors.transparent;
-                            return c.sendDisabledStroke;
-                          }),
-                        ),
-                      ),
-              ),
-              SettingsRow(
-                label: 'Terminal app',
-                description: 'App to open when "Open Terminal" is tapped',
-                trailing: SizedBox(
-                  width: 140,
-                  child: AppTextField(controller: _terminalAppController, fontFamily: ThemeConstants.editorFontFamily),
-                ),
-                isLast: true,
-              ),
-            ],
-          ),
-          Divider(height: 36, thickness: 1, color: c.borderColor),
-          const UpdateSection(),
-          Divider(height: 36, thickness: 1, color: c.borderColor),
-          SectionLabel('Reset'),
-          const SizedBox(height: 8),
-          SettingsGroup(
-            rows: [
-              SettingsRow(
-                label: 'Restore defaults',
-                description: 'Reset auto-commit, terminal app, and delete confirmation to their defaults.',
-                trailing: SettingsChipButton(label: 'Restore', onPressed: _restoreDefaults),
-              ),
-              SettingsRow(
-                label: 'Wipe all data',
-                description:
-                    'Delete API keys, GitHub sign-in, chat history, projects, and MCP servers. Cannot be undone.',
-                trailing: SettingsChipButton(label: 'Wipe', onPressed: _confirmWipeAllData, isDestructive: true),
-                isLast: true,
-              ),
-            ],
-          ),
-          if (kDebugMode) ...[
-            Divider(height: 36, thickness: 1, color: c.borderColor),
-            SectionLabel('Debug'),
-            const SizedBox(height: 8),
-            SettingsGroup(
-              rows: [
-                SettingsRow(
-                  label: 'Replay onboarding wizard',
-                  description:
-                      'Show the 3-step wizard on next launch. Does not clear API keys, GitHub sign-in, or projects.',
-                  trailing: Builder(
-                    builder: (ctx) => SettingsChipButton(
-                      label: 'Replay',
-                      onPressed: () async {
-                        await ref.read(settingsActionsProvider.notifier).replayOnboarding();
-                        if (!ctx.mounted) return;
-                        if (!ref.read(settingsActionsProvider).hasError) {
-                          AppSnackBar.show(
-                            ctx,
-                            'Wizard will replay on next launch',
-                            type: AppSnackBarType.info,
-                            duration: const Duration(seconds: 2),
-                          );
-                        }
-                      },
                     ),
-                  ),
-                  isLast: true,
+                    SettingsRow(
+                      label: 'Delete confirmation',
+                      description: 'Ask before deleting a session',
+                      trailing: _deleteConfirmation == null
+                          ? const SizedBox()
+                          : Transform.scale(
+                              scale: 0.75,
+                              child: Switch(
+                                value: _deleteConfirmation!,
+                                onChanged: (v) async {
+                                  await ref.read(generalPrefsProvider.notifier).setDeleteConfirmation(v);
+                                  setState(() => _deleteConfirmation = v);
+                                },
+                                thumbColor: WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.selected)) return Colors.white;
+                                  return c.sendDisabledIconColor;
+                                }),
+                                trackColor: WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.selected)) return c.accent;
+                                  return c.sendDisabledFill;
+                                }),
+                                trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.selected)) return Colors.transparent;
+                                  return c.sendDisabledStroke;
+                                }),
+                              ),
+                            ),
+                    ),
+                    SettingsRow(
+                      label: 'Auto-commit',
+                      description: 'Skip commit dialog; commit immediately with AI-generated message',
+                      trailing: _autoCommit == null
+                          ? const SizedBox()
+                          : Transform.scale(
+                              scale: 0.75,
+                              child: Switch(
+                                value: _autoCommit!,
+                                onChanged: (v) async {
+                                  await ref.read(generalPrefsProvider.notifier).setAutoCommit(v);
+                                  setState(() => _autoCommit = v);
+                                },
+                                thumbColor: WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.selected)) return Colors.white;
+                                  return c.sendDisabledIconColor;
+                                }),
+                                trackColor: WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.selected)) return c.accent;
+                                  return c.sendDisabledFill;
+                                }),
+                                trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.selected)) return Colors.transparent;
+                                  return c.sendDisabledStroke;
+                                }),
+                              ),
+                            ),
+                    ),
+                    SettingsRow(
+                      label: 'Terminal app',
+                      description: 'App to open when "Open Terminal" is tapped',
+                      trailing: SizedBox(
+                        width: 140,
+                        child: AppTextField(
+                          controller: _terminalAppController,
+                          fontFamily: ThemeConstants.editorFontFamily,
+                        ),
+                      ),
+                      isLast: true,
+                    ),
+                  ],
                 ),
+                Divider(height: 36, thickness: 1, color: c.borderColor),
+                const UpdateSection(),
+                Divider(height: 36, thickness: 1, color: c.borderColor),
+                SectionLabel('Reset'),
+                const SizedBox(height: 8),
+                SettingsGroup(
+                  rows: [
+                    SettingsRow(
+                      label: 'Restore defaults',
+                      description: 'Reset auto-commit, terminal app, and delete confirmation to their defaults.',
+                      trailing: SettingsChipButton(label: 'Restore', onPressed: _restoreDefaults),
+                    ),
+                    SettingsRow(
+                      label: 'Wipe all data',
+                      description:
+                          'Delete API keys, GitHub sign-in, chat history, projects, and MCP servers. Cannot be undone.',
+                      trailing: SettingsChipButton(label: 'Wipe', onPressed: _confirmWipeAllData, isDestructive: true),
+                      isLast: true,
+                    ),
+                  ],
+                ),
+                if (kDebugMode) ...[
+                  Divider(height: 36, thickness: 1, color: c.borderColor),
+                  SectionLabel('Debug'),
+                  const SizedBox(height: 8),
+                  SettingsGroup(
+                    rows: [
+                      SettingsRow(
+                        label: 'Replay onboarding wizard',
+                        description:
+                            'Show the 3-step wizard on next launch. Does not clear API keys, GitHub sign-in, or projects.',
+                        trailing: Builder(
+                          builder: (ctx) => SettingsChipButton(
+                            label: 'Replay',
+                            onPressed: () async {
+                              await ref.read(settingsActionsProvider.notifier).replayOnboarding();
+                              if (!ctx.mounted) return;
+                              if (!ref.read(settingsActionsProvider).hasError) {
+                                AppSnackBar.show(
+                                  ctx,
+                                  'Wizard will replay on next launch',
+                                  type: AppSnackBarType.info,
+                                  duration: const Duration(seconds: 2),
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                        isLast: true,
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
-          ],
-        ],
-      ),
+          ),
+        ),
+      ],
     );
   }
 }

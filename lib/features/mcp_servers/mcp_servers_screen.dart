@@ -68,7 +68,7 @@ class _McpServersScreenState extends ConsumerState<McpServersScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
+            padding: const EdgeInsets.fromLTRB(0, 0, 24, 16),
             child: Row(
               children: [
                 SectionLabel('MCP Servers'),
@@ -116,7 +116,7 @@ class _McpServersScreenState extends ConsumerState<McpServersScreen> {
               data: (servers) => servers.isEmpty
                   ? _EmptyState(onAdd: _openAdd)
                   : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.only(right: 24, bottom: 24),
                       itemCount: servers.length,
                       itemBuilder: (_, i) => McpServerCard(
                         config: servers[i],

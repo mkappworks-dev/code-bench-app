@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../../core/constants/theme_constants.dart';
 import '../../core/widgets/app_snack_bar.dart';
 import '../../data/shared/ai_model.dart';
 import '../settings/widgets/section_label.dart';
@@ -82,32 +83,57 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
       }
     });
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SectionLabel('API Keys'),
-          const SizedBox(height: 8),
-          OpenAIProviderCard(controller: _controllers[AIProvider.openai]!, initialApiKey: _initialOpenAi),
-          const SizedBox(height: 16),
-          AnthropicProviderCard(controller: _controllers[AIProvider.anthropic]!, initialApiKey: _initialAnthropic),
-          const SizedBox(height: 16),
-          GeminiProviderCard(controller: _controllers[AIProvider.gemini]!, initialApiKey: _initialGemini),
-          Divider(height: 36, thickness: 1, color: c.borderColor),
-          SectionLabel('Ollama (Local)'),
-          const SizedBox(height: 8),
-          OllamaCard(controller: _ollamaController, initialValue: _initialOllamaUrl),
-          Divider(height: 36, thickness: 1, color: c.borderColor),
-          SectionLabel('Custom Endpoint (OpenAI-compatible)'),
-          const SizedBox(height: 8),
-          CustomEndpointCard(
-            urlController: _customEndpointController,
-            apiKeyController: _customApiKeyController,
-            initialUrl: _initialCustomEndpoint,
-            initialApiKey: _initialCustomApiKey,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionLabel('Providers'),
+        const SizedBox(height: 8),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(right: 24, bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                OpenAIProviderCard(controller: _controllers[AIProvider.openai]!, initialApiKey: _initialOpenAi),
+                const SizedBox(height: 16),
+                AnthropicProviderCard(
+                  controller: _controllers[AIProvider.anthropic]!,
+                  initialApiKey: _initialAnthropic,
+                ),
+                const SizedBox(height: 16),
+                GeminiProviderCard(controller: _controllers[AIProvider.gemini]!, initialApiKey: _initialGemini),
+                const SizedBox(height: 16),
+                Text(
+                  'Ollama',
+                  style: TextStyle(
+                    color: c.textPrimary,
+                    fontSize: ThemeConstants.uiFontSizeSmall,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                OllamaCard(controller: _ollamaController, initialValue: _initialOllamaUrl),
+                const SizedBox(height: 16),
+                Text(
+                  'Custom Endpoint (OpenAI-compatible)',
+                  style: TextStyle(
+                    color: c.textPrimary,
+                    fontSize: ThemeConstants.uiFontSizeSmall,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                CustomEndpointCard(
+                  urlController: _customEndpointController,
+                  apiKeyController: _customApiKeyController,
+                  initialUrl: _initialCustomEndpoint,
+                  initialApiKey: _initialCustomApiKey,
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

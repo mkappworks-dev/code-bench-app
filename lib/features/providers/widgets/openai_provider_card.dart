@@ -305,27 +305,30 @@ class _OpenAIApiKeyBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: AppTextField(
-            controller: controller,
-            obscureText: obscure,
-            fontSize: 12,
-            fontFamily: ThemeConstants.editorFontFamily,
-            hintText: 'API key',
-            suffixIcon: IconButton(
-              icon: Icon(obscure ? AppIcons.hideSecret : AppIcons.showSecret, size: 14),
-              onPressed: onToggleObscure,
-            ),
+        AppTextField(
+          controller: controller,
+          obscureText: obscure,
+          fontSize: 12,
+          fontFamily: ThemeConstants.editorFontFamily,
+          hintText: 'API key',
+          suffixIcon: IconButton(
+            icon: Icon(obscure ? AppIcons.hideSecret : AppIcons.showSecret, size: 14),
+            onPressed: onToggleObscure,
           ),
         ),
-        const SizedBox(width: 6),
-        InlineTestButton(loading: saveLoading, testPassed: testPassed, onPressed: onTest),
-        const SizedBox(width: 6),
-        InlineSaveButton(loading: false, onPressed: onSave),
-        const SizedBox(width: 6),
-        InlineClearButton(onPressed: onClear),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            InlineTestButton(loading: saveLoading, testPassed: testPassed, onPressed: onTest),
+            const SizedBox(width: 8),
+            InlineSaveButton(loading: false, onPressed: onSave),
+            const SizedBox(width: 8),
+            InlineClearButton(onPressed: onClear),
+          ],
+        ),
       ],
     );
   }
@@ -363,9 +366,9 @@ class _CodexCliBody extends StatelessWidget {
           Row(
             children: [
               Expanded(child: InstallCommand(command: installCommand)),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               _CardButton(label: 'Switch to API Key', onPressed: onSwitchToApiKey),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               _CardButton(label: 'Recheck', onPressed: onRecheck),
             ],
           ),
@@ -376,7 +379,7 @@ class _CodexCliBody extends StatelessWidget {
       return Row(
         children: [
           Expanded(child: InstallCommand(command: installCommand)),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           _CardButton(label: 'Recheck', onPressed: onRecheck),
         ],
       );
@@ -390,7 +393,7 @@ class _CodexCliBody extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
         _CardButton(label: 'Recheck', onPressed: onRecheck),
       ],
     );

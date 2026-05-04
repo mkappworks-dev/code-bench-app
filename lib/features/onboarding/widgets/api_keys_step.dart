@@ -102,8 +102,14 @@ class _ApiKeysStepState extends ConsumerState<ApiKeysStep> {
       final key = _controllers[provider]!.text.trim();
       if (key.isEmpty) continue;
       await actions.saveApiKey(provider.name, key);
-      if (!mounted) { setState(() => _saving = false); return; }
-      if (ref.read(providersActionsProvider).hasError) { setState(() => _saving = false); return; }
+      if (!mounted) {
+        setState(() => _saving = false);
+        return;
+      }
+      if (ref.read(providersActionsProvider).hasError) {
+        setState(() => _saving = false);
+        return;
+      }
     }
     setState(() => _saving = false);
     if (!mounted) return;
@@ -235,8 +241,7 @@ class _OnboardingProviderCardState extends ConsumerState<_OnboardingProviderCard
   DotStatus _dotStatus = DotStatus.empty;
   String _savedValue = '';
 
-  bool get _isUrlProvider =>
-      widget.provider == AIProvider.ollama || widget.provider == AIProvider.custom;
+  bool get _isUrlProvider => widget.provider == AIProvider.ollama || widget.provider == AIProvider.custom;
 
   @override
   void initState() {
@@ -366,11 +371,7 @@ class _OnboardingProviderCardState extends ConsumerState<_OnboardingProviderCard
       children: [
         Text(
           widget.provider.displayName,
-          style: TextStyle(
-            color: c.headingText,
-            fontSize: ThemeConstants.uiFontSizeSmall,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: c.headingText, fontSize: ThemeConstants.uiFontSizeSmall, fontWeight: FontWeight.w600),
         ),
         const Spacer(),
         Row(
@@ -384,23 +385,13 @@ class _OnboardingProviderCardState extends ConsumerState<_OnboardingProviderCard
             const SizedBox(width: 5),
             Text(
               badgeLabel,
-              style: TextStyle(
-                color: dotColor,
-                fontSize: ThemeConstants.uiFontSizeLabel,
-              ),
+              style: TextStyle(color: dotColor, fontSize: ThemeConstants.uiFontSizeLabel),
             ),
           ],
         ),
-        if (widget.canRemove) ...[
-          const SizedBox(width: 8),
-          _RemoveButton(onPressed: widget.onRemove),
-        ],
+        if (widget.canRemove) ...[const SizedBox(width: 8), _RemoveButton(onPressed: widget.onRemove)],
         const SizedBox(width: 8),
-        Icon(
-          _expanded ? AppIcons.chevronUp : AppIcons.chevronDown,
-          size: 14,
-          color: c.mutedFg,
-        ),
+        Icon(_expanded ? AppIcons.chevronUp : AppIcons.chevronDown, size: 14, color: c.mutedFg),
       ],
     );
 
@@ -423,9 +414,7 @@ class _OnboardingProviderCardState extends ConsumerState<_OnboardingProviderCard
                 duration: const Duration(milliseconds: 120),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 decoration: BoxDecoration(
-                  color: _hovered
-                      ? Color.alphaBlend(c.surfaceHoverOverlay, c.inputSurface)
-                      : c.inputSurface,
+                  color: _hovered ? Color.alphaBlend(c.surfaceHoverOverlay, c.inputSurface) : c.inputSurface,
                   borderRadius: _expanded
                       ? const BorderRadius.vertical(top: Radius.circular(3))
                       : BorderRadius.circular(3),
@@ -442,10 +431,7 @@ class _OnboardingProviderCardState extends ConsumerState<_OnboardingProviderCard
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (widget.showCliBanner) ...[
-                    _CliBanner(onUseCli: widget.onCliUsed),
-                    const SizedBox(height: 8),
-                  ],
+                  if (widget.showCliBanner) ...[_CliBanner(onUseCli: widget.onCliUsed), const SizedBox(height: 8)],
                   AppTextField(
                     controller: widget.controller,
                     obscureText: _isUrlProvider ? false : _obscure,
@@ -465,18 +451,11 @@ class _OnboardingProviderCardState extends ConsumerState<_OnboardingProviderCard
                   Row(
                     children: [
                       if (!_isUrlProvider) ...[
-                        InlineTestButton(
-                          loading: _saveLoading,
-                          testPassed: _testPassed,
-                          onPressed: _test,
-                        ),
+                        InlineTestButton(loading: _saveLoading, testPassed: _testPassed, onPressed: _test),
                         const SizedBox(width: 6),
                       ],
                       InlineSaveButton(loading: false, onPressed: _save),
-                      if (_savedValue.isNotEmpty) ...[
-                        const SizedBox(width: 6),
-                        InlineClearButton(onPressed: _clear),
-                      ],
+                      if (_savedValue.isNotEmpty) ...[const SizedBox(width: 6), InlineClearButton(onPressed: _clear)],
                     ],
                   ),
                 ],
@@ -559,11 +538,7 @@ class _UseCliButtonState extends State<_UseCliButton> {
           ),
           child: Text(
             'Use CLI',
-            style: TextStyle(
-              color: c.accent,
-              fontSize: ThemeConstants.uiFontSizeLabel,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(color: c.accent, fontSize: ThemeConstants.uiFontSizeLabel, fontWeight: FontWeight.w500),
           ),
         ),
       ),

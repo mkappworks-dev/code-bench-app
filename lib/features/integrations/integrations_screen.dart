@@ -97,31 +97,44 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
       AsyncData(:final value) => (value, false),
     };
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SectionLabel('GitHub'),
-          const SizedBox(height: 8),
-          if (account != null)
-            GithubConnectedCard(account: account, onDisconnect: _signOut)
-          else
-            GithubDisconnectedCard(isLoading: isLoading, onConnectOAuth: _connectOAuth),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: c.accentTintMid,
-              border: Border.all(color: c.accent.withValues(alpha: 0.2)),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              'GitHub is used to create pull requests and list branches from within chat sessions.',
-              style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionLabel('Integrations'),
+        const SizedBox(height: 8),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(right: 24, bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'GitHub',
+                  style: TextStyle(color: c.textPrimary, fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                if (account != null)
+                  GithubConnectedCard(account: account, onDisconnect: _signOut)
+                else
+                  GithubDisconnectedCard(isLoading: isLoading, onConnectOAuth: _connectOAuth),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: c.accentTintMid,
+                    border: Border.all(color: c.accent.withValues(alpha: 0.2)),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'GitHub is used to create pull requests and list branches from within chat sessions.',
+                    style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
