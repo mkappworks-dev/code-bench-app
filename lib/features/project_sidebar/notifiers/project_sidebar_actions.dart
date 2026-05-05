@@ -8,7 +8,7 @@ import '../../../data/shared/ai_model.dart';
 import '../../../data/session/models/chat_session.dart';
 import '../../../data/project/models/project_action.dart';
 import '../../chat/notifiers/chat_notifier.dart';
-import '../../../layout/notifiers/git_live_state_notifier.dart';
+import '../../git/notifiers/git_live_state_notifier.dart';
 import 'project_sidebar_notifier.dart';
 import '../../../services/project/project_service.dart';
 import '../../../services/session/session_service.dart';

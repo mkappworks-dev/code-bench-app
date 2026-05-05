@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/utils/debug_logger.dart';
-import '../../services/ide/ide_service.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../services/ide/ide_service.dart';
 import 'ide_launch_failure.dart';
 
 export 'ide_launch_failure.dart';

@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/utils/debug_logger.dart';
-import '../../services/git/git_service.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../services/git/git_service.dart';
 import 'git_actions_failure.dart';
 
 part 'git_actions.g.dart';

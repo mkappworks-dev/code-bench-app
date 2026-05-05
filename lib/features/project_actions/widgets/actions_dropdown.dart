@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/constants/app_icons.dart';
-import '../../core/constants/theme_constants.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/utils/instant_menu.dart';
-import '../../data/project/models/project.dart';
-import '../../data/project/models/project_action.dart';
-import '../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
+import '../../../core/constants/app_icons.dart';
+import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/instant_menu.dart';
+import '../../../data/project/models/project.dart';
+import '../../../data/project/models/project_action.dart';
+import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../notifiers/action_output_notifier.dart';
 import 'action_button.dart';
 import 'add_action_dialog.dart';
-import 'project_guard.dart';
+import '../../../layout/widgets/project_guard.dart';
 
 /// Dropdown button that lists project actions and exposes an "Add action"
 /// entry. Shown in the top action bar when a project is active.

@@ -11,7 +11,7 @@ import '../features/chat/widgets/changes_panel.dart';
 import '../features/project_sidebar/project_sidebar.dart';
 import '../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
-import 'widgets/action_output_panel.dart';
+import '../features/project_actions/widgets/action_output_panel.dart';
 import 'widgets/app_lifecycle_observer.dart';
 import 'widgets/status_bar.dart';
 import 'widgets/top_action_bar.dart';

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/constants/app_icons.dart';
-import '../../core/widgets/app_snack_bar.dart';
-import '../../data/project/models/project.dart';
+import '../../../core/constants/app_icons.dart';
+import '../../../core/widgets/app_snack_bar.dart';
+import '../../../data/project/models/project.dart';
 import '../notifiers/git_actions.dart';
 import '../notifiers/git_actions_failure.dart';
-import '../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
-import 'action_button.dart';
-import 'project_guard.dart';
+import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
+import '../../project_actions/widgets/action_button.dart';
+import '../../../layout/widgets/project_guard.dart';
 
 /// Button shown in the top action bar when the active project is confirmed
 /// to not be a git repository. Initialises a new repo on tap.

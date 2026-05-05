@@ -9,7 +9,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
-import '../../../layout/notifiers/ide_launch_actions.dart';
+import '../../project_actions/notifiers/ide_launch_actions.dart';
 import '../notifiers/ripgrep_availability_notifier.dart';
 
 class RipgrepAvailabilityBanner extends ConsumerStatefulWidget {

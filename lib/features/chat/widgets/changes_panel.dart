@@ -12,7 +12,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/apply/models/applied_change.dart';
 import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
-import '../../../layout/notifiers/git_actions.dart';
+import '../../git/notifiers/git_actions.dart';
 import '../notifiers/chat_notifier.dart';
 import '../notifiers/code_apply_actions.dart';
 import '../notifiers/code_apply_failure.dart';

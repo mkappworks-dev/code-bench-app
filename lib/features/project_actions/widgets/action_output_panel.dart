@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/constants/theme_constants.dart';
-import '../../core/theme/app_colors.dart';
+import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../notifiers/action_output_notifier.dart';
 
 class ActionOutputPanel extends ConsumerWidget {

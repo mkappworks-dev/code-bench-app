@@ -4,16 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/constants/app_icons.dart';
-import '../../core/constants/theme_constants.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/widgets/app_snack_bar.dart';
-import '../../core/utils/instant_menu.dart';
-import '../../data/project/models/project.dart';
-import '../../features/chat/notifiers/create_pr_actions.dart';
-import '../../features/chat/widgets/commit_dialog.dart';
-import '../../features/chat/widgets/create_pr_dialog.dart';
-import '../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
+import '../../../core/constants/app_icons.dart';
+import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_snack_bar.dart';
+import '../../../core/utils/instant_menu.dart';
+import '../../../data/project/models/project.dart';
+import '../../../features/chat/notifiers/create_pr_actions.dart';
+import '../../../features/chat/widgets/commit_dialog.dart';
+import '../../../features/chat/widgets/create_pr_dialog.dart';
+import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../notifiers/commit_message_actions.dart';
 import '../notifiers/commit_message_failure.dart';
 import '../notifiers/pr_preflight_result.dart';
@@ -21,7 +21,7 @@ import '../notifiers/commit_push_button_notifier.dart';
 import '../notifiers/git_actions.dart';
 import '../notifiers/git_actions_failure.dart';
 import '../notifiers/git_remotes_notifier.dart';
-import 'project_guard.dart';
+import '../../../layout/widgets/project_guard.dart';
 
 class CommitPushButton extends ConsumerStatefulWidget {
   const CommitPushButton({super.key, required this.project});

@@ -5,7 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../data/project/models/project.dart';
 import '../../features/chat/notifiers/chat_notifier.dart';
 import '../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
-import 'git_live_state_notifier.dart';
+import '../../features/git/notifiers/git_live_state_notifier.dart';
 
 export '../../features/project_sidebar/notifiers/project_sidebar_notifier.dart' show activeWorktreePathProvider;
 

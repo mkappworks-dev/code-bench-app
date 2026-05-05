@@ -1,9 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/utils/debug_logger.dart';
-import '../../services/git/git_service.dart';
-import '../../services/github/github_service.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../services/git/git_service.dart';
+import '../../../services/github/github_service.dart';
 import 'git_live_state_notifier.dart';
 import 'git_remotes_notifier.dart';
 

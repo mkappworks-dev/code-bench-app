@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_icons.dart';
-import '../../core/constants/theme_constants.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/widgets/app_dialog.dart';
-import '../../core/widgets/app_text_field.dart';
-import '../../data/project/models/project_action.dart';
+import '../../../core/constants/app_icons.dart';
+import '../../../core/constants/theme_constants.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/app_text_field.dart';
+import '../../../data/project/models/project_action.dart';
 
 /// Dialog for adding a new project action (name + shell command).
 ///

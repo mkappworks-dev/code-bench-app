@@ -8,8 +8,8 @@ import '../../../services/ai/ai_service.dart';
 import '../../../services/ai/claude_cli_prompt_service.dart';
 import '../../../services/github/github_service.dart';
 import '../../../services/providers/providers_service.dart';
-import '../../../layout/notifiers/git_actions.dart';
-import '../../../layout/notifiers/pr_preflight_result.dart';
+import '../../git/notifiers/git_actions.dart';
+import '../../git/notifiers/pr_preflight_result.dart';
 import 'chat_notifier.dart';
 import 'create_pr_failure.dart';
 
