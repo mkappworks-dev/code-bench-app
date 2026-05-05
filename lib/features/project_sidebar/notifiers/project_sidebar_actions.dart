@@ -8,7 +8,7 @@ import '../../../data/shared/ai_model.dart';
 import '../../../data/session/models/chat_session.dart';
 import '../../../data/project/models/project_action.dart';
 import '../../chat/notifiers/chat_notifier.dart';
-import '../../../shell/notifiers/git_live_state_notifier.dart';
+import '../../../layout/notifiers/git_live_state_notifier.dart';
 import 'project_sidebar_notifier.dart';
 import '../../../services/project/project_service.dart';
 import '../../../services/session/session_service.dart';
@@ -61,16 +61,23 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     });
   }
 
-  Future<void> addExistingFolder(String path) async {
+  Future<String?> addExistingFolder(String path) async {
     state = const AsyncLoading();
+    String? sessionId;
     state = await AsyncValue.guard(() async {
       try {
-        await _projects.addExistingFolder(path);
+        final project = await _projects.addExistingFolder(path);
+        final model = ref.read(selectedModelProvider);
+        sessionId = await (await _sessions).createSession(model: model, projectId: project.id);
+        ref.read(activeProjectIdProvider.notifier).set(project.id);
+        ref.read(activeSessionIdProvider.notifier).set(sessionId);
       } catch (e, st) {
         dLog('[ProjectSidebarActions] addExistingFolder failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
       }
     });
+    if (state is AsyncError) return null;
+    return sessionId;
   }
 
   Future<void> relocateProject(String id, String path) async {
@@ -203,6 +210,9 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     state = await AsyncValue.guard(() async {
       try {
         await (await _sessions).archiveSession(id);
+        if (ref.read(activeSessionIdProvider) == id) {
+          ref.read(activeSessionIdProvider.notifier).set(null);
+        }
       } catch (e, st) {
         dLog('[ProjectSidebarActions] archiveSession failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
@@ -215,6 +225,9 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     state = await AsyncValue.guard(() async {
       try {
         await (await _sessions).deleteSession(id);
+        if (ref.read(activeSessionIdProvider) == id) {
+          ref.read(activeSessionIdProvider.notifier).set(null);
+        }
       } catch (e, st) {
         dLog('[ProjectSidebarActions] deleteSession failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);

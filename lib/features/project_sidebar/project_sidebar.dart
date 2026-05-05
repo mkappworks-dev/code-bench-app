@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -71,24 +70,28 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
 
     setState(() => _adding = true);
     try {
-      await ref.read(projectSidebarActionsProvider.notifier).addExistingFolder(result);
+      final sessionId = await ref.read(projectSidebarActionsProvider.notifier).addExistingFolder(result);
       if (!mounted) return;
-      if (!ref.read(projectSidebarActionsProvider).hasError) {
-        final added = ref.read(projectsProvider).value?.firstWhereOrNull((p) => p.path == result);
-        if (added != null) {
-          ref.read(activeProjectIdProvider.notifier).set(added.id);
-          ref.read(expandedProjectIdsProvider.notifier).expand(added.id);
+      if (sessionId != null) {
+        final projectId = ref.read(activeProjectIdProvider);
+        if (projectId != null) {
+          ref.read(expandedProjectIdsProvider.notifier).expand(projectId);
         }
+        context.go('/chat/$sessionId');
       }
     } finally {
       if (mounted) setState(() => _adding = false);
     }
   }
 
-  Future<void> _runSessionMutation(Future<void> Function() op) async {
+  Future<void> _runSessionMutation(Future<void> Function() op, {String? sessionId}) async {
+    final wasActive = sessionId != null && ref.read(activeSessionIdProvider) == sessionId;
     setState(() => _mutating = true);
     try {
       await op();
+      if (mounted && wasActive && !ref.read(projectSidebarActionsProvider).hasError) {
+        context.go('/chat');
+      }
     } finally {
       if (mounted) setState(() => _mutating = false);
     }
@@ -220,11 +223,13 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
                         onArchive: (sessionId) => unawaited(
                           _runSessionMutation(
                             () => ref.read(projectSidebarActionsProvider.notifier).archiveSession(sessionId),
+                            sessionId: sessionId,
                           ),
                         ),
                         onDelete: (sessionId) => unawaited(
                           _runSessionMutation(
                             () => ref.read(projectSidebarActionsProvider.notifier).deleteSession(sessionId),
+                            sessionId: sessionId,
                           ),
                         ),
                       ),
