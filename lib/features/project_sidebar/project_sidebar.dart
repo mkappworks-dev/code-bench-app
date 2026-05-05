@@ -99,9 +99,16 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
 
   Future<void> _newConversation(BuildContext context, String projectId) async {
     final model = ref.read(selectedModelProvider);
-    final sessionId = await ref
-        .read(projectSidebarActionsProvider.notifier)
-        .createSession(model: model, projectId: projectId);
+    late String sessionId;
+    try {
+      sessionId = await ref
+          .read(projectSidebarActionsProvider.notifier)
+          .createSession(model: model, projectId: projectId);
+    } catch (_) {
+      if (!context.mounted) return;
+      AppSnackBar.show(context, 'Failed to create conversation — please try again.', type: AppSnackBarType.error);
+      return;
+    }
     ref.read(activeSessionIdProvider.notifier).set(sessionId);
     ref.read(activeProjectIdProvider.notifier).set(projectId);
     if (context.mounted) context.go('/chat/$sessionId');
