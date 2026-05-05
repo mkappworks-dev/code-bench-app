@@ -25,6 +25,12 @@ abstract interface class GitDatasource {
   Future<void> createBranch(String name, {String? baseBranch});
   Future<void> createWorktree(String branchName, String worktreePath, {String? baseBranch});
   Future<List<GitChangedFile>> getChangedFiles();
+
+  /// Returns the set of file paths changed in the current branch vs the remote
+  /// default branch. Tries `origin/main` then `origin/master`; falls back to
+  /// `git diff --name-only HEAD` when neither remote ref exists. Deduplicates
+  /// across commits (a file renamed and edited in two commits appears once).
+  Future<List<String>> getBranchChangedFiles();
 }
 
 class GitRemote {

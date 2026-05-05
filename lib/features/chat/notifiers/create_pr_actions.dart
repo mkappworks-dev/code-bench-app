@@ -107,14 +107,12 @@ class CreatePrActions extends _$CreatePrActions {
   /// fails. AI failures are always silent — the branch name is used as the
   /// fallback title.
   Future<({String title, String body, List<String> branches})> loadContent(
+    String path,
     String owner,
     String repo,
     String currentBranch,
   ) async {
-    final sessionId = ref.read(activeSessionIdProvider);
-    final changedFiles = sessionId != null
-        ? ref.read(appliedChangesProvider.notifier).changesForSession(sessionId).map((c) => c.filePath).toList()
-        : <String>[];
+    final changedFiles = await ref.read(gitActionsProvider.notifier).getBranchChangedFiles(path);
 
     // Start both concurrently before awaiting either.
     final contentFut = _generatePrContent(changedFiles: changedFiles, branch: currentBranch);
@@ -240,9 +238,9 @@ class CreatePrActions extends _$CreatePrActions {
   String _buildPrPrompt(List<String> changedFiles) =>
       'Generate a PR title and bullet-point body for these '
       'changes: ${changedFiles.isEmpty ? "general changes" : changedFiles.join(", ")}. '
-      'The TITLE must follow Conventional Commits — `<type>(<optional scope>): <subject>` — '
+      'The TITLE must follow Conventional Commits — <type>(<optional scope>): <subject> — '
       'where type is one of feat, fix, chore, docs, refactor, test, perf, build, ci, style. '
-      'Keep the title under 70 chars, lowercase subject, no trailing period. '
+      'Keep the title to 70 chars or fewer, lowercase subject, no trailing period. '
       'Reply in this exact format:\nTITLE: <title>\nBODY:\n<bullets>';
 
   ({String title, String body}) _parsePrResponse(String text, {required ({String title, String body}) fallback}) {

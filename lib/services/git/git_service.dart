@@ -50,6 +50,7 @@ class GitService {
   Future<void> createWorktree(String path, String branchName, String worktreePath, {String? baseBranch}) =>
       _ds(path).createWorktree(branchName, worktreePath, baseBranch: baseBranch);
   Future<List<GitChangedFile>> getChangedFiles(String path) => _ds(path).getChangedFiles();
+  Future<List<String>> getBranchChangedFiles(String path) => _ds(path).getBranchChangedFiles();
 
   Future<GitLiveState> fetchLiveState(String path) {
     assert(_liveState != null, 'GitService: liveState not injected — using live process fallback');

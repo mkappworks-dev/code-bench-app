@@ -157,7 +157,9 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
       case PrPreflightPassed(:final owner, :final repo, :final currentBranch):
         if (!mounted) return;
         // Phase 2: open dialog immediately; AI + branch list load in parallel.
-        final contentFuture = ref.read(createPrActionsProvider.notifier).loadContent(owner, repo, currentBranch);
+        final contentFuture = ref
+            .read(createPrActionsProvider.notifier)
+            .loadContent(widget.project.path, owner, repo, currentBranch);
         final result = await CreatePrDialog.show(context, contentFuture: contentFuture);
         if (result == null) return;
         final prUrl = await ref

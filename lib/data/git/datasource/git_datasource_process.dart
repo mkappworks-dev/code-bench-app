@@ -357,6 +357,26 @@ class GitDatasourceProcess implements GitDatasource {
     return output.split('\n').map(_parseLine).whereType<GitChangedFile>().toList();
   }
 
+  @override
+  Future<List<String>> getBranchChangedFiles() async {
+    for (final base in ['origin/main', 'origin/master']) {
+      final r = await Process.run('git', [
+        'log',
+        '--name-only',
+        '--pretty=format:',
+        'HEAD',
+        '^$base',
+      ], workingDirectory: _projectPath);
+      if (r.exitCode == 0) {
+        final files = (r.stdout as String).split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toSet().toList();
+        if (files.isNotEmpty) return files;
+      }
+    }
+    // Fallback: uncommitted changes vs HEAD.
+    final r = await Process.run('git', ['diff', '--name-only', 'HEAD'], workingDirectory: _projectPath);
+    return (r.stdout as String).split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
+  }
+
   static GitChangedFile? _parseLine(String line) {
     final parts = line.split('\t');
     if (parts.length < 3) return null;

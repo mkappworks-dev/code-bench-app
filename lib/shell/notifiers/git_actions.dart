@@ -165,4 +165,15 @@ class GitActions extends _$GitActions {
       return [];
     }
   }
+
+  /// Returns files changed in the current branch vs the remote default branch.
+  /// Non-throwing: returns an empty list on any error.
+  Future<List<String>> getBranchChangedFiles(String projectPath) async {
+    try {
+      return await _git().getBranchChangedFiles(projectPath);
+    } catch (e) {
+      dLog('[GitActions] getBranchChangedFiles failed: ${e.runtimeType}');
+      return [];
+    }
+  }
 }
