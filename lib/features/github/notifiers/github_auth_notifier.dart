@@ -27,8 +27,7 @@ Future<List<GitHubAppInstallation>> githubInstallations(Ref ref) async {
 class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   Completer<void>? _cancelSignal;
 
-  // Saved before AsyncLoading so cancel can restore it without clobbering an
-  // already-signed-in account during a re-auth attempt.
+  // Saved before AsyncLoading so cancel can restore it on re-auth.
   GitHubAccount? _accountBeforeDeviceFlow;
 
   @override
@@ -75,10 +74,6 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
     }
   }
 
-  /// Starts Device Flow auth. Returns the device code for the dialog to
-  /// display, or `null` if the request failed (notifier transitions to
-  /// `AsyncError`). State: `AsyncLoading` → `AsyncData(account)` on success,
-  /// `AsyncError` on failure, `AsyncData(null)` if cancelled.
   Future<DeviceCodeResponse?> startDeviceFlow() async {
     // Complete any in-flight poll first so it can't race and clobber this one.
     final prior = _cancelSignal;
@@ -116,13 +111,9 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
     if (result is AsyncError) {
       state = AsyncError(GitHubAuthFailure.pollFailed(userMessage(result.error!)), result.stackTrace!);
     } else {
-      // state = result BEFORE invalidate: the invalidation cascades up to
-      // gitHubAuthProvider (AsyncLoading → AsyncData(account)), which would
-      // fire ref.listen a second time while the dialog is still dismissing,
-      // causing a double-pop and the NavigatorState !_debugLocked assertion.
+      // Assign state before invalidating — invalidation cascades into build() and double-fires ref.listen, causing a double-pop.
       state = result;
-      // Without this, githubApiDatasourceProvider keeps its app-start null
-      // value and the first API call after sign-in throws StateError.
+      // Datasource holds a null token until invalidated after first sign-in.
       svc.invalidateApiDatasource();
     }
   }
@@ -139,16 +130,10 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
     _accountBeforeDeviceFlow = null;
   }
 
-  /// Re-fetches the GitHub App installations. Routed through the notifier so
-  /// widgets never call `ref.invalidate(githubInstallationsProvider)` directly
-  /// (forbidden by the architecture rule). Used by lifecycle observers and the
-  /// disconnect dialog to pick up changes made on github.com.
   void refreshInstallations() {
     ref.invalidate(githubInstallationsProvider);
   }
 
-  // Delete-before-clear: an optimistic AsyncData(null) followed by a failed
-  // keychain delete would leave the token on disk with the UI showing signed-out.
   Future<void> signOut() async {
     state = const AsyncLoading();
     final svc = await ref.read(githubServiceProvider.future);
@@ -156,9 +141,7 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
       await svc.signOut();
       return null;
     });
-    // Invalidate AFTER the guard writes state — invalidation cascades up
-    // through repo → service → auth notifier and would otherwise rebuild
-    // build() before the guard's success value lands on state.
+    // Invalidate after guard — cascades to build() and would overwrite the success state.
     if (!state.hasError) {
       svc.invalidateApiDatasource();
     }

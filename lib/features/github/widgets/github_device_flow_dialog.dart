@@ -12,21 +12,12 @@ import '../../../core/widgets/app_dialog.dart';
 import '../../../data/github/models/device_code_response.dart';
 import '../notifiers/github_auth_notifier.dart';
 
-/// Frosted-glass dialog implementing the GitHub Device Flow user-facing screen.
-///
-/// Mounted by tapping "Connect with GitHub". On mount it asks the notifier to
-/// `startDeviceFlow()`, displays the resulting 8-character code (auto-copying
-/// it to clipboard), and listens for the auth provider to transition to a
-/// signed-in state — at which point the dialog dismisses itself.
 class GitHubDeviceFlowDialog extends ConsumerStatefulWidget {
   const GitHubDeviceFlowDialog({super.key});
 
   static Future<void> show(BuildContext context) => showDialog<void>(
     context: context,
-    // The dialog must only dismiss via Cancel (so the notifier's cancel path
-    // runs and the in-flight poll is released). Tap-outside / Escape would
-    // pop the route directly, leaving the background poller racing a stale
-    // notifier state.
+    // Must not be tap-dismissible — that bypasses cancelDeviceFlow() and leaves the background poll running.
     barrierDismissible: false,
     builder: (_) => const GitHubDeviceFlowDialog(),
   );
@@ -40,21 +31,13 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
   String? _error;
   // Stashed verification URL shown as a fallback when browser launch fails.
   String? _launchFailedUri;
-  // Guard against the cascade rebuild of gitHubAuthProvider (triggered by
-  // ref.invalidate(githubApiDatasourceProvider) after Device Flow completes)
-  // firing a second AsyncData(account) while the dialog route is still in its
-  // exit animation. Without this, the second fire would call Navigator.pop()
-  // on an already-popping route, causing the !_debugLocked assertion.
+  // Guards against a second Navigator.pop() during the exit animation caused by the datasource invalidation cascade.
   bool _dismissed = false;
 
   @override
   void initState() {
     super.initState();
-    // Defer kicking off the device-flow request until after the first frame.
-    // startDeviceFlow() synchronously sets `state = AsyncLoading`, which
-    // Riverpod forbids while a widget is still mounting. The post-frame
-    // callback ensures the dialog is fully attached before we mutate the
-    // notifier.
+    // Defer until after mount — startDeviceFlow() sets AsyncLoading synchronously, which Riverpod forbids during widget build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) unawaited(_start());
     });
@@ -92,8 +75,6 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
     try {
       await launchUrl(Uri.parse(uri));
     } catch (_) {
-      // launchUrl is widget-permitted. On failure, surface the URL inline so
-      // the user can open it manually — it is not displayed anywhere else.
       if (mounted) setState(() => _launchFailedUri = uri);
     }
   }
@@ -101,9 +82,7 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
   Future<void> _copyCode(String userCode) async {
     try {
       await Clipboard.setData(ClipboardData(text: userCode));
-    } catch (_) {
-      // Clipboard is widget-permitted; nothing to do on failure.
-    }
+    } catch (_) {}
   }
 
   @override
@@ -147,9 +126,7 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
       actions = [AppDialogAction.cancel(onPressed: _onCancel)];
     }
 
-    // PopScope blocks Escape / system-back from dismissing the route. The
-    // only sanctioned exit is the Cancel action, which routes through
-    // [_onCancel] so the notifier's cancel path runs.
+    // Blocks Escape/back — only Cancel via _onCancel is sanctioned so the notifier's cancel path runs.
     return PopScope(
       canPop: false,
       child: AppDialog(
@@ -215,7 +192,6 @@ class _DeviceFlowContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         const SizedBox(height: 8),
-        // Hero code chip — tap to copy.
         MouseRegion(
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
@@ -243,7 +219,6 @@ class _DeviceFlowContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        // Auto-clipboard hint — confirms the silent copy that fires on mount.
         Center(
           child: Text(
             '✓  Copied to clipboard — tap code to copy again',
@@ -251,12 +226,10 @@ class _DeviceFlowContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        // 2-step checklist.
         _Step(number: 1, label: 'Code copied — ready to paste', done: true),
         const SizedBox(height: 8),
         _Step(number: 2, label: 'Open the verification URL and paste'),
         const SizedBox(height: 16),
-        // Pulse + waiting indicator, sits just above the actions divider.
         Center(
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -352,9 +325,7 @@ class _Step extends StatelessWidget {
   }
 }
 
-/// Soft teal dot that pulses to indicate background polling. Not a spinner —
-/// the polling cadence is on the order of seconds, so a slow pulse reads as
-/// "alive" without becoming visual noise.
+// Pulses to show background polling — intentionally not a spinner, the cadence is too slow for that.
 class _PulsingDot extends StatefulWidget {
   const _PulsingDot();
 

@@ -15,17 +15,7 @@ import 'github_api_datasource.dart';
 
 part 'github_api_datasource_dio.g.dart';
 
-/// Provides a [GitHubApiDatasource] initialised with the stored token,
-/// or `null` when no token is available.
-///
-/// Wires an `onUnauthorized` callback that fires when GitHub rejects the
-/// token on a real API call (not a deliberate `validateToken()` probe).
-/// The callback clears the stored credential and self-invalidates this
-/// provider. Because [githubRepositoryProvider] watches this provider,
-/// and [githubServiceProvider] watches the repo, and [gitHubAuthProvider]
-/// watches the service, the invalidation cascades up the reactive graph
-/// and the UI transitions to the disconnected state automatically — with
-/// no cross-layer import required.
+// onUnauthorized clears the token and self-invalidates — cascades up through repo → service → auth notifier automatically.
 @Riverpod(keepAlive: true)
 Future<GitHubApiDatasource?> githubApiDatasource(Ref ref) async {
   final storage = ref.watch(secureStorageProvider);
@@ -42,20 +32,8 @@ Future<GitHubApiDatasource?> githubApiDatasource(Ref ref) async {
   );
 }
 
-/// Dio-backed implementation of [GitHubApiDatasource].
-///
-/// SECURITY: Do NOT attach `LogInterceptor(requestHeader: true)` or any
-/// logger that dumps request headers. The `Authorization` header contains
-/// the user's GitHub Personal Access Token, and anything that prints it
-/// to the console is one `debugPrint` away from a leak.
-///
-/// On any 401 response from a "real" API call (not a deliberate
-/// `validateToken()` probe — that path opts out via
-/// [_skipUnauthorizedHandlerKey]), the optional [onUnauthorized] callback
-/// fires exactly once per instance. Because a new instance is constructed
-/// on every provider rebuild after sign-out, the once-per-instance guard
-/// is sufficient for de-duping a 401-cluster without leaking across
-/// sessions.
+/// SECURITY: Do NOT attach `LogInterceptor(requestHeader: true)` — the `Authorization` header contains the PAT.
+// onUnauthorized fires once per instance on real 401s; new instance per rebuild means no cross-session leakage.
 class GitHubApiDatasourceDio implements GitHubApiDatasource {
   GitHubApiDatasourceDio(String token, {Future<void> Function()? onUnauthorized})
     : _onUnauthorized = onUnauthorized,
@@ -66,8 +44,6 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
     _attachUnauthorizedInterceptor();
   }
 
-  /// Test-only constructor that accepts a pre-configured [Dio] instance so
-  /// tests can inject a fake [HttpClientAdapter] without hitting real GitHub.
   @visibleForTesting
   GitHubApiDatasourceDio.withDio(Dio dio, {Future<void> Function()? onUnauthorized})
     : _onUnauthorized = onUnauthorized,
@@ -75,10 +51,7 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
     _attachUnauthorizedInterceptor();
   }
 
-  /// `Options.extra` key that opts a request out of the 401 → onUnauthorized
-  /// handler. Used by [validateToken] which has its own "401 means no" path
-  /// (returns `null`) — surfacing that 401 to the global handler would
-  /// trigger sign-out from a probe instead of from a user-facing failure.
+  // Opts a request out of the 401 → onUnauthorized handler — validateToken has its own "401 means no" path.
   static const String _skipUnauthorizedHandlerKey = 'skipUnauthorizedHandler';
 
   final Dio _dio;
@@ -134,25 +107,13 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
   }
 
   /// Returns the GitHub username if the token is valid, null otherwise.
-  /// Only catches [DioException] — a malformed response (bad JSON shape,
-  /// missing `login` field) will propagate so the caller can distinguish
-  /// "token rejected" from "GitHub returned something unexpected".
   @override
   Future<String?> validateToken() async {
     try {
-      final response = await _dio.get(
-        '/user',
-        // Probe path — opt out of the 401 → onUnauthorized handler so a
-        // stale token detected here triggers sign-out via the deliberate
-        // path (the caller decides what to do with `null`), not as a side
-        // effect of the probe itself.
-        options: Options(extra: const {_skipUnauthorizedHandlerKey: true}),
-      );
+      final response = await _dio.get('/user', options: Options(extra: const {_skipUnauthorizedHandlerKey: true}));
       final data = response.data as Map<String, dynamic>;
       return data['login'] as String?;
     } on DioException catch (e) {
-      // Only log the exception type to avoid any risk of a future
-      // `toString()` override leaking the Authorization header.
       dLog('[GitHubApiDatasourceDio] validateToken failed: ${e.type} ${e.response?.statusCode}');
       return null;
     }
@@ -228,10 +189,6 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
     }
   }
 
-  /// Fetches a single pull request by number. Returns the raw GitHub
-  /// payload — callers that only need a handful of fields are cheaper
-  /// to feed raw maps than to maintain a typed PR model for fields we
-  /// don't strongly typecheck yet.
   @override
   Future<Map<String, dynamic>> getPullRequest(String owner, String repo, int number) async {
     try {
@@ -247,8 +204,6 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
   // with path segments (e.g. "../pulls") is rejected here.
   static final _safeSha = RegExp(r'^[0-9a-f]{7,40}$');
 
-  /// Lists check-runs (CI statuses) for a commit SHA. Used by the PR card
-  /// to render CI chips next to the PR title.
   @override
   Future<List<Map<String, dynamic>>> getCheckRuns(String owner, String repo, String sha) async {
     if (!_safeSha.hasMatch(sha)) {
@@ -264,7 +219,6 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
     }
   }
 
-  /// Posts an APPROVE review on a pull request.
   @override
   Future<void> approvePullRequest(String owner, String repo, int number) async {
     try {
@@ -274,9 +228,6 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
     }
   }
 
-  /// Merges a pull request. Uses the default merge strategy configured
-  /// on the repo — we deliberately don't expose strategy as a parameter
-  /// until there is UI that lets the user pick one.
   @override
   Future<void> mergePullRequest(String owner, String repo, int number) async {
     try {
@@ -304,9 +255,7 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
     } on DioException catch (e) {
       throw NetworkException('Failed to get app installations', statusCode: e.response?.statusCode, originalError: e);
     } catch (e) {
-      // Catches TypeError / cast failures from a shape change in GitHub's
-      // response (e.g. `id` returned as null/string during API rollouts) so
-      // the failure leaves a breadcrumb instead of propagating uncaught.
+      // Catches TypeError/cast failures from unexpected GitHub response shapes.
       dLog('[GitHubApiDatasourceDio] getInstallations parse error: ${e.runtimeType}');
       rethrow;
     }
@@ -322,9 +271,7 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
       final items = response.data as List;
       if (items.isEmpty) return null;
       final url = (items.first as Map<String, dynamic>)['html_url'] as String?;
-      // A null html_url with a present PR row would let the caller treat it
-      // as "no open PR" and re-enable Create PR — silently producing a
-      // duplicate. Logged so the unexpected payload is visible in triage.
+      // Guard: missing html_url would silently re-enable "Create PR" against an already-open PR.
       if (url == null) {
         dLog('[GitHubApiDatasourceDio] findOpenPrUrlForBranch: html_url missing from PR payload');
       }
@@ -334,7 +281,6 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
     }
   }
 
-  /// Creates a pull request. Returns the HTML URL of the created PR.
   @override
   Future<String> createPullRequest({
     required String owner,

@@ -6,19 +6,13 @@ part 'create_pr_failure.freezed.dart';
 sealed class CreatePrFailure with _$CreatePrFailure {
   const factory CreatePrFailure.notAuthenticated() = CreatePrNotAuthenticated;
 
-  /// GitHub returned 404 from a repo-scoped endpoint. Almost always means
-  /// the Benchlabs Codebench GitHub App is not installed on this repository
-  /// (GitHub returns 404 instead of 403 to avoid leaking the existence of
-  /// private resources). Could also indicate a typo'd or deleted repo.
+  // GitHub returns 404 (not 403) for unauthorized repo-scoped endpoints.
   const factory CreatePrFailure.appNotInstalled() = CreatePrAppNotInstalled;
 
   const factory CreatePrFailure.network(String message) = CreatePrNetwork;
   const factory CreatePrFailure.permissionDenied() = CreatePrPermissionDenied;
   const factory CreatePrFailure.unknown(Object error) = CreatePrUnknownError;
 
-  /// Raised by [CreatePrActions.loadContent] when branch listing or AI content
-  /// generation cannot be completed. Carries a pre-formatted, user-facing
-  /// message so the dialog can display it without re-translating the
-  /// underlying failure type.
+  // Pre-formatted user-facing message; no re-translation needed at the widget layer.
   const factory CreatePrFailure.loadContentFailed(String message) = CreatePrLoadContentFailed;
 }

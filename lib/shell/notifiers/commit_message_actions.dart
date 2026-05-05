@@ -12,21 +12,13 @@ import 'commit_message_failure.dart';
 
 part 'commit_message_actions.g.dart';
 
-/// Generates an AI-assisted commit message. Always returns a usable value —
-/// the `'chore: update files'` fallback — even when the AI call is
-/// unavailable, so the commit flow is never blocked by a network error.
-///
-/// On [NetworkException], the notifier emits [AsyncError] carrying a
-/// [CommitMessageFailure] so widgets can surface an inline "AI unavailable"
-/// notice via [ref.listen] without needing a try/catch in widget code.
+/// AI commit-message generator. Always returns a usable string — falls back to
+/// `'chore: update files'` so the commit flow is never blocked by a network error.
 @Riverpod(keepAlive: true)
 class CommitMessageActions extends _$CommitMessageActions {
   @override
   FutureOr<void> build() {}
 
-  /// Reads the active session's changed files and the autoCommit preference,
-  /// then generates a commit message. Callers receive both values so they can
-  /// decide whether to show the commit dialog or commit automatically.
   Future<({String message, bool autoCommit})> prepareCommit() async {
     final sessionId = ref.read(activeSessionIdProvider);
     final changedFiles = sessionId != null
@@ -37,9 +29,6 @@ class CommitMessageActions extends _$CommitMessageActions {
     return (message: message, autoCommit: autoCommit);
   }
 
-  /// Generates a conventional commit message for [changedFiles] using the
-  /// currently selected AI model. Returns `'chore: update files'` as a
-  /// fallback when the AI call is unavailable.
   Future<String> generateCommitMessage(List<String> changedFiles) async {
     const fallback = 'chore: update files';
     final model = ref.read(selectedModelProvider);

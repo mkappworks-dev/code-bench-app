@@ -65,9 +65,6 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> with SingleTick
       },
       onError: (Object e) {
         if (!mounted) return;
-        // Extract the pre-formatted user-facing message from the typed
-        // failure so the error view shows e.g. "Your GitHub token is no
-        // longer valid…" rather than `CreatePrLoadContentFailed(message: …)`.
         final msg = switch (e) {
           CreatePrLoadContentFailed(:final message) => message,
           _ => e.toString(),

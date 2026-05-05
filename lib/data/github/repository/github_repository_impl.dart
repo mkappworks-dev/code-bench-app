@@ -18,9 +18,6 @@ Future<GitHubRepository> githubRepository(Ref ref) async {
   return GitHubRepositoryImpl(auth: auth, api: api);
 }
 
-/// Delegates auth calls to [GitHubAuthDatasource] and API calls to
-/// [GitHubApiDatasource]. API methods throw [StateError] when no token
-/// is available (i.e. [api] is null).
 class GitHubRepositoryImpl implements GitHubRepository {
   GitHubRepositoryImpl({required GitHubAuthDatasource auth, GitHubApiDatasource? api}) : _auth = auth, _api = api;
 
@@ -32,8 +29,6 @@ class GitHubRepositoryImpl implements GitHubRepository {
     if (api == null) throw StateError('GitHub API datasource is not available — no token stored');
     return api;
   }
-
-  // Auth delegation
 
   @override
   Future<DeviceCodeResponse> requestDeviceCode() => _auth.requestDeviceCode();
@@ -57,8 +52,6 @@ class GitHubRepositoryImpl implements GitHubRepository {
 
   @override
   Future<void> signOut() => _auth.signOut();
-
-  // API delegation
 
   @override
   Future<List<Repository>> listRepositories({int page = 1}) => _requireApi.listRepositories(page: page);

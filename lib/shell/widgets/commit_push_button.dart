@@ -23,11 +23,6 @@ import '../notifiers/git_actions_failure.dart';
 import '../notifiers/git_remotes_notifier.dart';
 import 'project_guard.dart';
 
-/// Split button: left half commits, right half opens Push / Pull / PR dropdown.
-///
-/// All display state (can-flags, badge label, remote list) comes from
-/// [commitPushButtonStateProvider]. The widget keeps only [_pushing] and
-/// [_pulling] to label the busy state correctly ("Pushing…" vs "Pulling…").
 class CommitPushButton extends ConsumerStatefulWidget {
   const CommitPushButton({super.key, required this.project});
 
@@ -141,7 +136,6 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
   Future<void> _showCreatePrDialog() async {
     if (!ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
 
-    // Phase 1: fast checks — token, branch, remote, existing PR (~200 ms).
     final preflight = await ref.read(createPrActionsProvider.notifier).fastPreflight(widget.project.path);
     switch (preflight) {
       case PrPreflightFailed(:final message, :final actionUrl, :final actionLabel):
@@ -156,7 +150,6 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
         return;
       case PrPreflightPassed(:final owner, :final repo, :final currentBranch):
         if (!mounted) return;
-        // Phase 2: open dialog immediately; AI + branch list load in parallel.
         final contentFuture = ref
             .read(createPrActionsProvider.notifier)
             .loadContent(widget.project.path, owner, repo, currentBranch);

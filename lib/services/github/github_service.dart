@@ -27,12 +27,7 @@ class GitHubService {
   final GitHubRepository _repo;
   final void Function()? _invalidateApiDatasource;
 
-  /// Forces the underlying API datasource provider to rebuild — picks up
-  /// the new token after sign-in, or drops the dangling Dio instance after
-  /// sign-out. The cascade through repo → service → auth notifier then
-  /// flips the UI without any cross-layer import. Notifiers call this
-  /// instead of reaching past the service to invalidate the datasource
-  /// provider directly.
+  // Rebuilds the datasource — picks up new token after sign-in, drops stale instance after sign-out.
   void invalidateApiDatasource() => _invalidateApiDatasource?.call();
 
   Future<DeviceCodeResponse> requestDeviceCode() => _repo.requestDeviceCode();

@@ -19,9 +19,6 @@ GitService gitService(Ref ref) {
   return GitService(repo: ref.watch(gitRepositoryProvider), liveState: ref.watch(gitLiveStateDatasourceProvider));
 }
 
-/// Owns all git business logic: composite operations, live-state queries, and
-/// branch management. [GitRepository] handles 4 cheap primitives; heavier
-/// operations go directly to [GitDatasourceProcess] via [_ds].
 class GitService {
   GitService({required GitRepository repo, GitLiveStateDatasource? liveState}) : _repo = repo, _liveState = liveState;
 

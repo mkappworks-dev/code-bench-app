@@ -1,4 +1,3 @@
-// lib/features/github/widgets/github_disconnect_dialog.dart
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -28,15 +27,10 @@ class GitHubDisconnectDialog extends ConsumerStatefulWidget {
 }
 
 class _GitHubDisconnectDialogState extends ConsumerState<GitHubDisconnectDialog> {
-  // Tracks whether the user has tapped the OAuth revoke link. Combined with an
-  // empty installations list, this confirms GitHub-side revocation is complete
-  // and triggers auto-completion of the local disconnect.
+  // Set after launchUrl succeeds; combined with empty installations, triggers auto-disconnect.
   bool _oauthLinkOpened = false;
 
-  // Polls installations while the OAuth revoke page is open so the dialog
-  // owns its own refresh cadence — does not depend on GithubConnectedCard's
-  // lifecycle observer (which may be unmounted if the user navigates away
-  // from settings while the dialog is showing).
+  // Owned poll cadence — independent of GithubConnectedCard (which may be unmounted).
   Timer? _installationsPoll;
 
   @override
@@ -56,8 +50,7 @@ class _GitHubDisconnectDialogState extends ConsumerState<GitHubDisconnectDialog>
 
   Future<void> _openOAuthRevoke() async {
     final ok = await _openUrl('https://github.com/settings/connections/applications/${ApiConstants.githubClientId}');
-    // Only mark the OAuth step as opened after launchUrl actually succeeded —
-    // a failed launch must not enable phantom auto-completion of disconnect.
+    // Only mark opened after launchUrl succeeds — a failed launch must not trigger auto-disconnect.
     if (!ok || !mounted) return;
     setState(() => _oauthLinkOpened = true);
     _installationsPoll?.cancel();
@@ -79,9 +72,6 @@ class _GitHubDisconnectDialogState extends ConsumerState<GitHubDisconnectDialog>
     final showOauthRow = !(_oauthLinkOpened && installs.isEmpty);
     final hasManualSteps = showOauthRow || installs.isNotEmpty;
 
-    // Once the user has opened the OAuth revoke page and GitHub confirms the
-    // app installation is gone, auto-complete the local disconnect so the app
-    // never ends up in a "Connected" state with an already-revoked token.
     ref.listen(githubInstallationsProvider, (_, next) {
       if (!_oauthLinkOpened) return;
       if (next case AsyncData(value: final v) when v.isEmpty) {
@@ -90,8 +80,7 @@ class _GitHubDisconnectDialogState extends ConsumerState<GitHubDisconnectDialog>
     });
 
     return PopScope(
-      // Prevent barrier-tap and back-key dismissal after revocation so the
-      // user cannot escape into the broken "Connected + spinner" UI state.
+      // Prevent tap-outside/back dismissal after revocation — user must not escape to a stale "Connected" state.
       canPop: !(_oauthLinkOpened && installs.isEmpty),
       child: AppDialog(
         icon: Icons.link_off_rounded,
@@ -106,7 +95,6 @@ class _GitHubDisconnectDialogState extends ConsumerState<GitHubDisconnectDialog>
           onOpenUrl: _openUrl,
         ),
         actions: [
-          // Hide Cancel once revocation is confirmed — only Disconnect remains.
           if (!(_oauthLinkOpened && installs.isEmpty))
             AppDialogAction.cancel(onPressed: () => Navigator.of(context).pop()),
           AppDialogAction.destructive(label: 'Disconnect', onPressed: _complete),

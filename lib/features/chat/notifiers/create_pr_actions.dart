@@ -15,18 +15,8 @@ import 'create_pr_failure.dart';
 
 part 'create_pr_actions.g.dart';
 
-/// Command notifier owning the entire "Create PR" workflow: AI title/body
-/// generation, GitHub preflight (token, branch, remote, branch list), and
-/// the final create-PR API call. Widgets never touch [GitHubRepository] or
-/// [SecureStorage] directly — they go through here so the GitHub PAT never
-/// crosses the widget layer.
-///
-/// ### Security
-///
-/// Only `e.runtimeType` is ever logged. A full `$e` could invoke
-/// `DioException.toString()`, which serialises request headers and would
-/// leak the `Authorization: Bearer <PAT>` token. Same discipline as
-/// [PrCardNotifier]; see `macos/Runner/README.md`.
+/// SECURITY: Only log `e.runtimeType` — `$e` can invoke DioException.toString()
+/// which serialises the Authorization header and leaks the PAT.
 @Riverpod(keepAlive: true)
 class CreatePrActions extends _$CreatePrActions {
   @override
@@ -34,31 +24,20 @@ class CreatePrActions extends _$CreatePrActions {
 
   CreatePrFailure _asFailure(Object e) => switch (e) {
     AuthException() => const CreatePrFailure.notAuthenticated(),
-    // GitHub's API always throws NetworkException, never AuthException.
-    // A 401 means the stored token was rejected — treat it as notAuthenticated
-    // so callers can surface a "reconnect" message rather than a generic network error.
+    // GitHub returns NetworkException for 401; treat as notAuthenticated so the UI shows "reconnect".
     NetworkException(:final statusCode) when statusCode == 401 => const CreatePrFailure.notAuthenticated(),
     NetworkException(:final statusCode) when statusCode == 403 => const CreatePrFailure.permissionDenied(),
-    // GitHub returns 404 for repo-scoped endpoints when the App is not
-    // installed on that repo (it hides private resources rather than 403).
+    // GitHub returns 404 (not 403) when the App is not installed on the repo.
     NetworkException(:final statusCode) when statusCode == 404 => const CreatePrFailure.appNotInstalled(),
     NetworkException(:final message) => CreatePrFailure.network(message),
     _ => CreatePrFailure.unknown(e),
   };
 
-  /// Returns `true` when a GitHub token is available (PAT or OAuth).
-  /// Resolves the shared [githubRepositoryProvider] rather than reading
-  /// secure storage directly, so the widget never sees the token.
   Future<bool> hasToken() async {
     final repo = await ref.read(githubServiceProvider.future);
     return repo.isAuthenticated();
   }
 
-  /// Runs the fast checks for [path]: token, branch validity, origin remote,
-  /// and existing-PR detection. Returns [PrPreflightPassed] with the resolved
-  /// owner/repo/branch when all pass, or [PrPreflightFailed] with a
-  /// user-facing message. Never touches AI or the branches API — those run
-  /// concurrently after the dialog opens via [loadContent].
   Future<PrPreflightResult> fastPreflight(String path) async {
     final git = ref.read(gitActionsProvider.notifier);
 
@@ -104,15 +83,7 @@ class CreatePrActions extends _$CreatePrActions {
     return PrPreflightResult.passed(owner: owner, repo: repo, currentBranch: currentBranch);
   }
 
-  /// Generates the AI title/body and lists branches concurrently. Returns the
-  /// dialog content record, or throws a typed [CreatePrLoadContentFailed]
-  /// when branch listing fails. AI failures are always silent — the branch
-  /// name is used as the fallback title.
-  ///
-  /// Calls [_listBranchesRaw] directly (not the public [listBranches] which
-  /// owns `state`) so that a failure here does not pollute
-  /// `createPrActionsProvider.state` and trigger snackbars in unrelated
-  /// listeners (e.g. the existing one in `commit_push_button.dart`).
+  // Uses _listBranchesRaw (not listBranches) — a failure here must not pollute notifier state and trigger unrelated snackbars.
   Future<({String title, String body, List<String> branches})> loadContent(
     String path,
     String owner,
@@ -146,16 +117,11 @@ class CreatePrActions extends _$CreatePrActions {
     return (title: content.title, body: content.body, branches: branches);
   }
 
-  /// Internal branch lister that does not mutate notifier state. Used by
-  /// [loadContent] to keep concurrent failures from leaking into
-  /// `createPrActionsProvider.state`.
   Future<List<String>> _listBranchesRaw(String owner, String repo) async {
     final repository = await ref.read(githubServiceProvider.future);
     return repository.listBranches(owner, repo);
   }
 
-  /// Lists branches for [owner]/[repo]. Returns `null` and emits
-  /// [AsyncError] carrying a [CreatePrFailure] when the call fails.
   Future<List<String>?> listBranches(String owner, String repo) async {
     state = const AsyncLoading();
     List<String>? result;
@@ -171,8 +137,6 @@ class CreatePrActions extends _$CreatePrActions {
     return result;
   }
 
-  /// Creates a pull request and returns the PR's html_url, or `null`
-  /// and emits [AsyncError] carrying a [CreatePrFailure] on failure.
   Future<String?> createPullRequest({
     required String owner,
     required String repo,
@@ -205,16 +169,7 @@ class CreatePrActions extends _$CreatePrActions {
     return result;
   }
 
-  /// Best-effort AI generation of a PR title and bullet-point body. Returns
-  /// the branch-name fallback when AI is unconfigured or any error occurs —
-  /// state is never set to [AsyncError] from this path so the failure stays
-  /// silent. The dialog still opens; the user can edit the title/body before
-  /// submitting.
-  ///
-  /// Two paths:
-  /// 1. API-key transport — uses [aiServiceProvider] (Dio/HTTP).
-  /// 2. Anthropic CLI transport — runs `claude -p "..."` via
-  ///    [claudeCliPromptServiceProvider] when no API key is stored.
+  // Best-effort — returns branch-name fallback on any error; never sets AsyncError so the failure stays silent.
   Future<({String title, String body})> _generatePrContent({
     required List<String> changedFiles,
     required String branch,
@@ -235,7 +190,6 @@ class CreatePrActions extends _$CreatePrActions {
       }
     }
 
-    // No API key — try the Claude CLI one-shot path for Anthropic CLI transport.
     if (model.provider == AIProvider.anthropic) {
       final transport = await providers.readAnthropicTransport();
       if (transport == 'cli') {

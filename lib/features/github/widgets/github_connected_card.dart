@@ -1,4 +1,3 @@
-// lib/features/github/widgets/github_connected_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -70,7 +69,6 @@ class _GithubConnectedCardState extends ConsumerState<GithubConnectedCard> with 
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Account header row ──────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
@@ -141,7 +139,6 @@ class _GithubConnectedCardState extends ConsumerState<GithubConnectedCard> with 
             ),
           ),
           Divider(height: 1, thickness: 1, color: c.deepBorder),
-          // ── Installations section ───────────────────────────────────────
           _InstallationsSection(
             installationsAsync: installationsAsync,
             onOpenUrl: _openUrl,
@@ -152,8 +149,6 @@ class _GithubConnectedCardState extends ConsumerState<GithubConnectedCard> with 
     );
   }
 }
-
-// ── Installations section ─────────────────────────────────────────────────────
 
 class _InstallationsSection extends StatelessWidget {
   const _InstallationsSection({required this.installationsAsync, required this.onOpenUrl, required this.onInstall});
@@ -212,8 +207,6 @@ class _InstallationsSection extends StatelessWidget {
   }
 }
 
-// ── Empty state ───────────────────────────────────────────────────────────────
-
 class _EmptyInstallState extends StatelessWidget {
   const _EmptyInstallState({required this.onInstall});
 
@@ -271,8 +264,6 @@ class _EmptyInstallState extends StatelessWidget {
     );
   }
 }
-
-// ── Installed list ────────────────────────────────────────────────────────────
 
 class _InstalledList extends StatelessWidget {
   const _InstalledList({required this.installs, required this.onOpenUrl, required this.onInstall});
@@ -333,8 +324,6 @@ class _InstalledList extends StatelessWidget {
     );
   }
 }
-
-// ── Single installation row ───────────────────────────────────────────────────
 
 class _InstallRow extends StatelessWidget {
   const _InstallRow({required this.install, required this.onManage});
@@ -405,8 +394,6 @@ class _InstallRow extends StatelessWidget {
     );
   }
 }
-
-// ── Fallback avatar ───────────────────────────────────────────────────────────
 
 class PersonIcon extends StatelessWidget {
   const PersonIcon({super.key, required this.c});

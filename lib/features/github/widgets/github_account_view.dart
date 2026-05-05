@@ -1,4 +1,3 @@
-// lib/features/github/widgets/github_account_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,8 +13,6 @@ import 'github_device_flow_dialog.dart';
 import 'github_disconnect_dialog.dart';
 import 'github_disconnected_card.dart';
 
-/// Shared by [GithubSection] (settings) and [GithubStep] (onboarding) so the
-/// GitHub auth interaction is identical across both entry points.
 class GithubAccountView extends ConsumerStatefulWidget {
   const GithubAccountView({super.key});
 
@@ -39,9 +36,7 @@ class _GithubAccountViewState extends ConsumerState<GithubAccountView> {
   Future<void> _signOut() async {
     await ref.read(gitHubAuthProvider.notifier).signOut();
     if (!mounted) return;
-    // Skip the success snackbar when signOut failed — the ref.listen below
-    // surfaces the typed failure message. Showing both produces a green
-    // "Disconnected" toast immediately followed by a red error toast.
+    // Skip on error — ref.listen below already surfaces the failure toast, so two toasts would fire.
     if (ref.read(gitHubAuthProvider).hasError) return;
     AppSnackBar.show(context, 'Disconnected from GitHub', type: AppSnackBarType.success);
   }

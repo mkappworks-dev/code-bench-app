@@ -26,7 +26,6 @@ class GitDatasourceProcess implements GitDatasource {
     return out;
   }
 
-  /// Runs `git init` in [_projectPath]. Throws [GitException] on failure.
   @override
   Future<void> initGit() async {
     final result = await Process.run('git', ['init'], workingDirectory: _projectPath);
@@ -35,8 +34,6 @@ class GitDatasourceProcess implements GitDatasource {
     }
   }
 
-  /// Stages all changes and commits with [message].
-  /// Returns the short SHA of the new commit.
   @override
   Future<String> commit(String message) async {
     final addResult = await Process.run('git', ['add', '-A'], workingDirectory: _projectPath);
@@ -61,7 +58,6 @@ class GitDatasourceProcess implements GitDatasource {
     return match.group(1)!;
   }
 
-  /// Runs `git push`. Returns the branch name pushed to.
   @override
   Future<String> push() async {
     final branch = await _currentBranch() ?? '';
@@ -80,8 +76,6 @@ class GitDatasourceProcess implements GitDatasource {
     return branch;
   }
 
-  /// Runs `git pull`. Returns number of new commits pulled (computed by
-  /// diffing HEAD before and after).
   @override
   Future<int> pull() async {
     // Capture HEAD before the pull so we can count commits accurately.
@@ -111,10 +105,7 @@ class GitDatasourceProcess implements GitDatasource {
     return int.tryParse((countResult.stdout as String).trim()) ?? 0;
   }
 
-  /// Fetches and returns how many commits HEAD is behind origin/[branch].
-  /// Returns `null` if the count could not be determined (no remote, no
-  /// upstream, offline, or any other failure). Callers should render this
-  /// as an unknown/unavailable state rather than as "up to date".
+  /// Returns `null` when the count cannot be determined — callers must render this as unknown, not "up to date".
   @override
   Future<int?> fetchBehindCount() async {
     final branch = await _currentBranch();
@@ -138,7 +129,6 @@ class GitDatasourceProcess implements GitDatasource {
     return int.tryParse((countResult.stdout as String).trim());
   }
 
-  /// Returns the current branch name, or `null` if it cannot be determined.
   @override
   Future<String?> currentBranch() => _currentBranch();
 
@@ -162,7 +152,6 @@ class GitDatasourceProcess implements GitDatasource {
     return (result.stdout as String).trim();
   }
 
-  /// Returns the URL of the configured `origin` remote, or `null` if unset.
   @override
   Future<String?> getOriginUrl() async {
     final result = await Process.run('git', ['remote', 'get-url', 'origin'], workingDirectory: _projectPath);
@@ -171,7 +160,6 @@ class GitDatasourceProcess implements GitDatasource {
     return url.isEmpty ? null : url;
   }
 
-  /// Returns list of configured git remotes.
   @override
   Future<List<GitRemote>> listRemotes() async {
     final result = await Process.run('git', ['remote', '-v'], workingDirectory: _projectPath);
@@ -192,7 +180,6 @@ class GitDatasourceProcess implements GitDatasource {
     return remotes;
   }
 
-  /// Returns local branch names, current branch first, then alphabetical.
   @override
   Future<List<String>> listLocalBranches() async {
     final result = await Process.run('git', ['branch', '--format=%(refname:short)'], workingDirectory: _projectPath);
@@ -206,13 +193,7 @@ class GitDatasourceProcess implements GitDatasource {
     return all..sort();
   }
 
-  /// Returns a map of branch name → worktree filesystem path for every
-  /// git worktree OTHER than this one ([_projectPath]).
-  ///
-  /// Skips the block whose `worktree` path matches [_projectPath] so the
-  /// current working tree is never reported as "occupied elsewhere".
-  /// This path-based skip is correct for both the main working tree (block 0
-  /// = self) and linked worktrees (block 0 is the main repo, NOT self).
+  /// Skips the block matching [_projectPath] — correct for both main worktree (block 0 = self) and linked worktrees.
   @override
   Future<({Map<String, String> active, Set<String> stale})> worktreeBranches() async {
     final result = await Process.run('git', ['worktree', 'list', '--porcelain'], workingDirectory: _projectPath);
@@ -243,13 +224,7 @@ class GitDatasourceProcess implements GitDatasource {
     return (active: active, stale: stale);
   }
 
-  /// Switches the working tree to [branch] using `git switch`.
-  ///
-  /// Uses `git switch` (git 2.23+, 2019) rather than `git checkout` so a
-  /// branch name that happens to match a tracked file path cannot fall
-  /// through to "restore this file" semantics — `switch` only operates on
-  /// refs, never pathspecs.
-  /// Throws [ArgumentError] for flag-shaped names, [GitException] on git failure.
+  // Uses `git switch` not `git checkout` — branch names matching tracked file paths can't fall through to pathspec semantics.
   @override
   Future<void> checkout(String branch) async {
     if (branch.isEmpty) throw ArgumentError('Branch name must not be empty.');
@@ -265,8 +240,6 @@ class GitDatasourceProcess implements GitDatasource {
     }
   }
 
-  /// Validates [name] and runs `git checkout -b [name]`.
-  /// Throws [ArgumentError] for flag-shaped names, [GitException] on git failure.
   @override
   Future<void> createBranch(String name, {String? baseBranch}) async {
     if (name.isEmpty) throw ArgumentError('Branch name must not be empty.');
@@ -286,8 +259,6 @@ class GitDatasourceProcess implements GitDatasource {
     }
   }
 
-  /// Creates a new git worktree at [worktreePath] on a new branch [branchName].
-  /// Throws [ArgumentError] for flag-shaped names, [GitException] on git failure.
   @override
   Future<void> createWorktree(String branchName, String worktreePath, {String? baseBranch}) async {
     if (branchName.isEmpty) throw ArgumentError('Branch name must not be empty.');
@@ -312,7 +283,6 @@ class GitDatasourceProcess implements GitDatasource {
     }
   }
 
-  /// Pushes current branch to a named [remote].
   @override
   Future<void> pushToRemote(String remote) async {
     // Defense-in-depth: reject remotes that look like flags so a remote
@@ -335,8 +305,6 @@ class GitDatasourceProcess implements GitDatasource {
     }
   }
 
-  /// Returns staged changes via `git diff --cached --numstat`.
-  /// Falls back to `git diff --numstat HEAD` when nothing is staged.
   @override
   Future<List<GitChangedFile>> getChangedFiles() async {
     var result = await Process.run('git', ['diff', '--cached', '--numstat'], workingDirectory: _projectPath);
@@ -375,11 +343,7 @@ class GitDatasourceProcess implements GitDatasource {
         stderrs.add('$base: ${(r.stderr as String).trim()}');
       }
     }
-    // Fallback: uncommitted changes vs HEAD. This intentionally only returns
-    // *uncommitted* changes — when both `origin/{main,master}` lookups fail,
-    // we still want to feed *something* useful into the AI PR-content prompt
-    // rather than abort. Logged so an empty / wrong file list during PR
-    // creation is debuggable from a single breadcrumb.
+    // Fallback to HEAD diff — feeds something useful into the AI prompt rather than abort entirely.
     if (stderrs.isNotEmpty) {
       dLog(
         '[GitDatasourceProcess] getBranchChangedFiles falling back to HEAD diff — bases failed: ${stderrs.join('; ')}',

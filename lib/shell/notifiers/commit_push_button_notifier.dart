@@ -26,10 +26,6 @@ abstract class CommitPushButtonState with _$CommitPushButtonState {
   }) = _CommitPushButtonState;
 }
 
-/// Returns the `html_url` of the first open PR for [path]'s current branch,
-/// or `null` when none exists, the check is still loading, or any error occurs.
-/// Used by [commitPushButtonStateProvider] to disable "Create PR" when a PR is
-/// already open.
 @riverpod
 Future<String?> existingOpenPrUrl(Ref ref, String path) async {
   final liveState = ref.watch(gitLiveStateProvider(path)).value;
@@ -46,15 +42,11 @@ Future<String?> existingOpenPrUrl(Ref ref, String path) async {
   final repo = repoMatch.group(2)!;
 
   try {
-    // Provider body — watch (reactive) per Riverpod convention. ref.read
-    // would skip rebuilds when the GitHub service is invalidated on
-    // sign-in/out, leaving the cached "no open PR" result stale.
+    // ref.watch (not ref.read) — must rebuild when githubServiceProvider is invalidated on sign-in/out.
     final service = await ref.watch(githubServiceProvider.future);
     return await service.findOpenPrUrlForBranch(owner, repo, branch);
   } catch (e) {
-    // Logged so a flapping duplicate-PR check (rate limit, bad token,
-    // unexpected payload shape) leaves a breadcrumb instead of silently
-    // re-enabling "Create PR" against an already-open PR.
+    // Logged so a flapping check (rate limit, bad token) leaves a breadcrumb instead of silently re-enabling "Create PR".
     dLog('[existingOpenPrUrl] PR check failed: ${e.runtimeType}');
     return null;
   }
@@ -76,9 +68,7 @@ CommitPushButtonState commitPushButtonState(Ref ref, String path) {
   final remotes = remotesData?.remotes ?? const [];
   final canDropdown = canPush || canPull || canPr || remotes.isNotEmpty;
 
-  // `hasUncommitted == null` or `aheadCount == null` means the git probe
-  // failed — show `!` badge so a disabled Commit is never mistaken for
-  // a clean repo.
+  // null hasUncommitted/aheadCount means the git probe failed — show ! so a disabled Commit isn't mistaken for a clean repo.
   final bool hasUnknownProbe =
       liveState?.isGit == true && (liveState?.hasUncommitted == null || liveState?.aheadCount == null);
 

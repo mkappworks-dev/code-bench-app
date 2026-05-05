@@ -8,11 +8,6 @@ import 'git_actions_failure.dart';
 
 part 'git_actions.g.dart';
 
-/// Command notifier for all git operations.
-///
-/// Widgets never reach [GitRepository] directly — they call methods here.
-/// State is [AsyncValue<void>]: loading/error/data are driven by each method.
-/// Typed failures are emitted as [AsyncError] carrying a [GitActionsFailure].
 @Riverpod(keepAlive: true)
 class GitActions extends _$GitActions {
   @override
@@ -80,10 +75,7 @@ class GitActions extends _$GitActions {
     });
   }
 
-  /// Sequential push to each remote; returns which succeeded and which failed.
-  ///
-  /// Individual remote failures are swallowed and collected — the overall
-  /// state remains [AsyncData] so the caller can inspect `pushed`/`failed`.
+  // Individual remote failures are swallowed — state stays AsyncData so the caller can inspect pushed/failed.
   Future<({List<String> pushed, List<String> failed})> pushAllRemotes(
     String projectPath,
     List<GitRemote> remotes,
@@ -153,10 +145,6 @@ class GitActions extends _$GitActions {
 
   bool isGitRepo(String path) => _git().isGitRepo(path);
 
-  /// Returns the list of changed files for [projectPath].
-  ///
-  /// Non-throwing: returns an empty list on any error so callers that display
-  /// this data informally (e.g. commit dialog file list) degrade gracefully.
   Future<List<GitChangedFile>> fetchChangedFiles(String projectPath) async {
     try {
       return await _git().getChangedFiles(projectPath);
@@ -166,8 +154,6 @@ class GitActions extends _$GitActions {
     }
   }
 
-  /// Returns files changed in the current branch vs the remote default branch.
-  /// Non-throwing: returns an empty list on any error.
   Future<List<String>> getBranchChangedFiles(String projectPath) async {
     try {
       return await _git().getBranchChangedFiles(projectPath);
