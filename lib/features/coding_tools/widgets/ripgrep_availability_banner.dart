@@ -29,6 +29,23 @@ class _RipgrepAvailabilityBannerState extends ConsumerState<RipgrepAvailabilityB
   bool _recheckRequested = false;
 
   @override
+  void initState() {
+    super.initState();
+    ref.listenManual(ideLaunchActionsProvider, (prev, next) {
+      if (next is! AsyncError) return;
+      final failure = next.error;
+      if (failure is! IdeLaunchFailure) return;
+      if (!mounted) return;
+      switch (failure) {
+        case IdeLaunchFailed(:final message):
+          AppSnackBar.show(context, message, type: AppSnackBarType.error);
+        case IdeLaunchUnknownError():
+          AppSnackBar.show(context, 'Could not open the editor — unexpected error.', type: AppSnackBarType.error);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = ref.watch(ripgrepAvailabilityStateProvider);
 
