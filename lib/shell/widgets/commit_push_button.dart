@@ -140,7 +140,9 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
 
   Future<void> _showCreatePrDialog() async {
     if (!ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
-    final preflight = await ref.read(createPrActionsProvider.notifier).preparePr(widget.project.path);
+
+    // Phase 1: fast checks — token, branch, remote, existing PR (~200 ms).
+    final preflight = await ref.read(createPrActionsProvider.notifier).fastPreflight(widget.project.path);
     switch (preflight) {
       case PrPreflightFailed(:final message, :final actionUrl, :final actionLabel):
         _snack(
@@ -152,16 +154,11 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
               : () => unawaited(launchUrl(Uri.parse(actionUrl), mode: LaunchMode.externalApplication)),
         );
         return;
-      case PrPreflightReady(
-        :final title,
-        :final body,
-        :final branches,
-        :final owner,
-        :final repo,
-        :final currentBranch,
-      ):
+      case PrPreflightPassed(:final owner, :final repo, :final currentBranch):
         if (!mounted) return;
-        final result = await CreatePrDialog.show(context, initialTitle: title, initialBody: body, branches: branches);
+        // Phase 2: open dialog immediately; AI + branch list load in parallel.
+        final contentFuture = ref.read(createPrActionsProvider.notifier).loadContent(owner, repo, currentBranch);
+        final result = await CreatePrDialog.show(context, contentFuture: contentFuture);
         if (result == null) return;
         final prUrl = await ref
             .read(createPrActionsProvider.notifier)

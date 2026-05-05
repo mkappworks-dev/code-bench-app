@@ -56,6 +56,8 @@ class GitHubService {
       _repo.approvePullRequest(owner, repo, number);
   Future<void> mergePullRequest(String owner, String repo, int number) => _repo.mergePullRequest(owner, repo, number);
   Future<List<GitHubAppInstallation>> getInstallations() => _repo.getInstallations();
+  Future<String?> findOpenPrUrlForBranch(String owner, String repo, String branch) =>
+      _repo.findOpenPrUrlForBranch(owner, repo, branch);
   Future<String> createPullRequest({
     required String owner,
     required String repo,

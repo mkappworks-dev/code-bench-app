@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../services/git/git_service.dart';
+import '../../services/github/github_service.dart';
 import 'git_live_state_notifier.dart';
 import 'git_remotes_notifier.dart';
 
@@ -24,6 +25,33 @@ abstract class CommitPushButtonState with _$CommitPushButtonState {
   }) = _CommitPushButtonState;
 }
 
+/// Returns the `html_url` of the first open PR for [path]'s current branch,
+/// or `null` when none exists, the check is still loading, or any error occurs.
+/// Used by [commitPushButtonStateProvider] to disable "Create PR" when a PR is
+/// already open.
+@riverpod
+Future<String?> existingOpenPrUrl(Ref ref, String path) async {
+  final liveState = ref.watch(gitLiveStateProvider(path)).value;
+  final branch = liveState?.branch;
+  if (branch == null || liveState?.isOnDefaultBranch == true) return null;
+
+  final remotesData = ref.watch(gitRemotesProvider(path)).value;
+  final originUrl = remotesData?.remotes.where((r) => r.name == 'origin').firstOrNull?.url;
+  if (originUrl == null) return null;
+
+  final repoMatch = RegExp(r'github\.com[:/]([^/]+)/([^/\.]+)').firstMatch(originUrl);
+  if (repoMatch == null) return null;
+  final owner = repoMatch.group(1)!;
+  final repo = repoMatch.group(2)!;
+
+  try {
+    final service = await ref.read(githubServiceProvider.future);
+    return await service.findOpenPrUrlForBranch(owner, repo, branch);
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Derives all [CommitPushButton] display flags from live git state,
 /// behind-count, and the loaded remote list for [path].
 @riverpod
@@ -31,11 +59,12 @@ CommitPushButtonState commitPushButtonState(Ref ref, String path) {
   final liveState = ref.watch(gitLiveStateProvider(path)).value;
   final behind = ref.watch(behindCountProvider(path)).value;
   final remotesData = ref.watch(gitRemotesProvider(path)).value;
+  final existingPrUrl = ref.watch(existingOpenPrUrlProvider(path)).value;
 
   final canCommit = liveState?.hasUncommitted == true;
   final canPush = (liveState?.aheadCount ?? 0) > 0;
   final canPull = (behind ?? 0) > 0;
-  final canPr = liveState?.branch != null && !(liveState?.isOnDefaultBranch ?? true);
+  final canPr = liveState?.branch != null && !(liveState?.isOnDefaultBranch ?? true) && existingPrUrl == null;
   final remotes = remotesData?.remotes ?? const [];
   final canDropdown = canPush || canPull || canPr || remotes.isNotEmpty;
 

@@ -66,4 +66,8 @@ abstract interface class GitHubRepository {
   /// Returns all installations of this GitHub App accessible to the
   /// authenticated user. See [GitHubApiDatasource.getInstallations].
   Future<List<GitHubAppInstallation>> getInstallations();
+
+  /// Returns the `html_url` of the first open PR whose head matches
+  /// `{owner}:{branch}`, or `null` when none exists.
+  Future<String?> findOpenPrUrlForBranch(String owner, String repo, String branch);
 }

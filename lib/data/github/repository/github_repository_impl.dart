@@ -121,4 +121,8 @@ class GitHubRepositoryImpl implements GitHubRepository {
 
   @override
   Future<List<GitHubAppInstallation>> getInstallations() => _requireApi.getInstallations();
+
+  @override
+  Future<String?> findOpenPrUrlForBranch(String owner, String repo, String branch) =>
+      _requireApi.findOpenPrUrlForBranch(owner, repo, branch);
 }

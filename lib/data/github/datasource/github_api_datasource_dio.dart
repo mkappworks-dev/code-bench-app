@@ -306,6 +306,21 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
     }
   }
 
+  @override
+  Future<String?> findOpenPrUrlForBranch(String owner, String repo, String branch) async {
+    try {
+      final response = await _dio.get(
+        '/repos/$owner/$repo/pulls',
+        queryParameters: {'state': 'open', 'head': '$owner:$branch', 'per_page': 1},
+      );
+      final items = response.data as List;
+      if (items.isEmpty) return null;
+      return (items.first as Map<String, dynamic>)['html_url'] as String?;
+    } on DioException catch (e) {
+      throw NetworkException('Failed to check existing PRs', statusCode: e.response?.statusCode, originalError: e);
+    }
+  }
+
   /// Creates a pull request. Returns the HTML URL of the created PR.
   @override
   Future<String> createPullRequest({
