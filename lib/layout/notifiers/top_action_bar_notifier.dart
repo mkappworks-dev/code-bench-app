@@ -43,7 +43,7 @@ TopActionBarState topActionBarState(Ref ref) {
           ) ??
       'Code Bench';
 
-  final project = projectId == null
+  final project = projectId == null || sessionId == null
       ? null
       : ref.watch(projectsProvider).whenOrNull(data: (list) => list.firstWhereOrNull((p) => p.id == projectId));
 
