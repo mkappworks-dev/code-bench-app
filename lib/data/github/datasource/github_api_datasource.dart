@@ -1,3 +1,4 @@
+import '../models/app_installation.dart';
 import '../models/repository.dart';
 
 abstract interface class GitHubApiDatasource {
@@ -16,19 +17,14 @@ abstract interface class GitHubApiDatasource {
 
   Future<List<Map<String, dynamic>>> listPullRequests(String owner, String repo, {String state = 'open'});
 
-  /// Fetches a single pull request by number. Returns the raw GitHub payload.
   Future<Map<String, dynamic>> getPullRequest(String owner, String repo, int number);
 
-  /// Lists check-runs (CI statuses) for a commit SHA.
   Future<List<Map<String, dynamic>>> getCheckRuns(String owner, String repo, String sha);
 
-  /// Posts an APPROVE review on a pull request.
   Future<void> approvePullRequest(String owner, String repo, int number);
 
-  /// Merges a pull request.
   Future<void> mergePullRequest(String owner, String repo, int number);
 
-  /// Creates a pull request. Returns the HTML URL of the created PR.
   Future<String> createPullRequest({
     required String owner,
     required String repo,
@@ -38,4 +34,10 @@ abstract interface class GitHubApiDatasource {
     required String base,
     bool draft = false,
   });
+
+  Future<List<GitHubAppInstallation>> getInstallations();
+
+  /// Returns the `html_url` of the first open PR whose head matches
+  /// `{owner}:{branch}`, or `null` when none exists.
+  Future<String?> findOpenPrUrlForBranch(String owner, String repo, String branch);
 }

@@ -1,4 +1,3 @@
-// lib/services/providers/providers_service.dart
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/_core/secure_storage.dart';
@@ -6,6 +5,7 @@ import '../../data/providers/repository/credentials_repository.dart';
 import '../../data/providers/repository/credentials_repository_impl.dart';
 import '../../data/providers/repository/provider_prefs_repository.dart';
 import '../../data/providers/repository/provider_prefs_repository_impl.dart';
+import '../../data/shared/ai_model.dart';
 
 part 'providers_service.g.dart';
 
@@ -16,13 +16,7 @@ ProvidersService providersService(Ref ref) => ProvidersService(
   storage: ref.watch(secureStorageProvider),
 );
 
-/// Facade over the split provider-config repositories.
-///
-/// Two stores back this service: [CredentialsRepository] for secrets
-/// (API keys) and [ProviderPrefsRepository] for non-secret flags
-/// (Ollama URL, custom endpoint, Anthropic transport). The facade
-/// preserves a single call surface for notifiers so the split is
-/// invisible above the service layer.
+// Facade: [CredentialsRepository] for secrets, [ProviderPrefsRepository] for non-secret flags — split invisible above service layer.
 class ProvidersService {
   ProvidersService({
     required CredentialsRepository credentials,
@@ -36,8 +30,6 @@ class ProvidersService {
   final ProviderPrefsRepository _prefs;
   final SecureStorage _storage;
 
-  // ── Credentials ──────────────────────────────────────────────────────
-
   Future<String?> readApiKey(String provider) => _credentials.readApiKey(provider);
   Future<void> writeApiKey(String provider, String key) => _credentials.writeApiKey(provider, key);
   Future<void> deleteApiKey(String provider) => _credentials.deleteApiKey(provider);
@@ -45,8 +37,6 @@ class ProvidersService {
   Future<String?> readCustomApiKey() => _credentials.readCustomApiKey();
   Future<void> writeCustomApiKey(String key) => _credentials.writeCustomApiKey(key);
   Future<void> deleteCustomApiKey() => _credentials.deleteCustomApiKey();
-
-  // ── Preferences ──────────────────────────────────────────────────────
 
   Future<String?> readOllamaUrl() => _prefs.readOllamaUrl();
   Future<void> writeOllamaUrl(String url) => _prefs.writeOllamaUrl(url);
@@ -64,12 +54,15 @@ class ProvidersService {
   Future<void> writeOpenaiTransport(String value) => _prefs.writeOpenaiTransport(value);
   Future<void> deleteOpenaiTransport() => _prefs.deleteOpenaiTransport();
 
-  // ── Cross-cutting wipe ───────────────────────────────────────────────
+  Future<bool> hasCredentialsFor(AIProvider provider) async {
+    return switch (provider) {
+      AIProvider.anthropic ||
+      AIProvider.openai ||
+      AIProvider.gemini => (await readApiKey(provider.name) ?? '').isNotEmpty,
+      AIProvider.ollama => (await readOllamaUrl() ?? 'http://localhost:11434').isNotEmpty,
+      AIProvider.custom => (await readCustomEndpoint() ?? '').isNotEmpty,
+    };
+  }
 
-  /// Wipes every provider-owned secure storage entry. Called by
-  /// SettingsService.wipeAllData() — not directly from widgets or notifiers.
-  /// Bypasses the per-domain repos because the wipe is inherently
-  /// cross-cutting (and matches the existing bundle-wide keychain sweep
-  /// behaviour in [SecureStorage.deleteAll]).
   Future<void> deleteAll() => _storage.deleteAll();
 }

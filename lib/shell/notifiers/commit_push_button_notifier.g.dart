@@ -8,6 +8,93 @@ part of 'commit_push_button_notifier.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Returns the `html_url` of the first open PR for [path]'s current branch,
+/// or `null` when none exists, the check is still loading, or any error occurs.
+/// Used by [commitPushButtonStateProvider] to disable "Create PR" when a PR is
+/// already open.
+
+@ProviderFor(existingOpenPrUrl)
+final existingOpenPrUrlProvider = ExistingOpenPrUrlFamily._();
+
+/// Returns the `html_url` of the first open PR for [path]'s current branch,
+/// or `null` when none exists, the check is still loading, or any error occurs.
+/// Used by [commitPushButtonStateProvider] to disable "Create PR" when a PR is
+/// already open.
+
+final class ExistingOpenPrUrlProvider extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  /// Returns the `html_url` of the first open PR for [path]'s current branch,
+  /// or `null` when none exists, the check is still loading, or any error occurs.
+  /// Used by [commitPushButtonStateProvider] to disable "Create PR" when a PR is
+  /// already open.
+  ExistingOpenPrUrlProvider._({required ExistingOpenPrUrlFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'existingOpenPrUrlProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$existingOpenPrUrlHash();
+
+  @override
+  String toString() {
+    return r'existingOpenPrUrlProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    final argument = this.argument as String;
+    return existingOpenPrUrl(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ExistingOpenPrUrlProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$existingOpenPrUrlHash() => r'a106b441a04a74c2d6f91a7dc6d557664f88a63a';
+
+/// Returns the `html_url` of the first open PR for [path]'s current branch,
+/// or `null` when none exists, the check is still loading, or any error occurs.
+/// Used by [commitPushButtonStateProvider] to disable "Create PR" when a PR is
+/// already open.
+
+final class ExistingOpenPrUrlFamily extends $Family with $FunctionalFamilyOverride<FutureOr<String?>, String> {
+  ExistingOpenPrUrlFamily._()
+    : super(
+        retry: null,
+        name: r'existingOpenPrUrlProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Returns the `html_url` of the first open PR for [path]'s current branch,
+  /// or `null` when none exists, the check is still loading, or any error occurs.
+  /// Used by [commitPushButtonStateProvider] to disable "Create PR" when a PR is
+  /// already open.
+
+  ExistingOpenPrUrlProvider call(String path) => ExistingOpenPrUrlProvider._(argument: path, from: this);
+
+  @override
+  String toString() => r'existingOpenPrUrlProvider';
+}
+
 /// Derives all [CommitPushButton] display flags from live git state,
 /// behind-count, and the loaded remote list for [path].
 
@@ -67,7 +154,7 @@ final class CommitPushButtonStateProvider
   }
 }
 
-String _$commitPushButtonStateHash() => r'a676ab7b21566e09a203891e0fc7225e59f50da0';
+String _$commitPushButtonStateHash() => r'282cc7be8e4b9563ebc43cc7df401bbd222dac22';
 
 /// Derives all [CommitPushButton] display flags from live git state,
 /// behind-count, and the loaded remote list for [path].

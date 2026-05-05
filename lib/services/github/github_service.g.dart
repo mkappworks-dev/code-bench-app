@@ -39,4 +39,4 @@ final class GithubServiceProvider
   }
 }
 
-String _$githubServiceHash() => r'14612b81633eb8ca1d5ee164815445f91c0a756e';
+String _$githubServiceHash() => r'2c511070ae90eb40000f2c868efc64dc796fe13b';

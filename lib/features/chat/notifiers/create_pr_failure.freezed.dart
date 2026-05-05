@@ -55,14 +55,16 @@ extension CreatePrFailurePatterns on CreatePrFailure {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( CreatePrNotAuthenticated value)?  notAuthenticated,TResult Function( CreatePrNetwork value)?  network,TResult Function( CreatePrPermissionDenied value)?  permissionDenied,TResult Function( CreatePrUnknownError value)?  unknown,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( CreatePrNotAuthenticated value)?  notAuthenticated,TResult Function( CreatePrAppNotInstalled value)?  appNotInstalled,TResult Function( CreatePrNetwork value)?  network,TResult Function( CreatePrPermissionDenied value)?  permissionDenied,TResult Function( CreatePrUnknownError value)?  unknown,TResult Function( CreatePrLoadContentFailed value)?  loadContentFailed,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case CreatePrNotAuthenticated() when notAuthenticated != null:
-return notAuthenticated(_that);case CreatePrNetwork() when network != null:
+return notAuthenticated(_that);case CreatePrAppNotInstalled() when appNotInstalled != null:
+return appNotInstalled(_that);case CreatePrNetwork() when network != null:
 return network(_that);case CreatePrPermissionDenied() when permissionDenied != null:
 return permissionDenied(_that);case CreatePrUnknownError() when unknown != null:
-return unknown(_that);case _:
+return unknown(_that);case CreatePrLoadContentFailed() when loadContentFailed != null:
+return loadContentFailed(_that);case _:
   return orElse();
 
 }
@@ -80,14 +82,16 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( CreatePrNotAuthenticated value)  notAuthenticated,required TResult Function( CreatePrNetwork value)  network,required TResult Function( CreatePrPermissionDenied value)  permissionDenied,required TResult Function( CreatePrUnknownError value)  unknown,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( CreatePrNotAuthenticated value)  notAuthenticated,required TResult Function( CreatePrAppNotInstalled value)  appNotInstalled,required TResult Function( CreatePrNetwork value)  network,required TResult Function( CreatePrPermissionDenied value)  permissionDenied,required TResult Function( CreatePrUnknownError value)  unknown,required TResult Function( CreatePrLoadContentFailed value)  loadContentFailed,}){
 final _that = this;
 switch (_that) {
 case CreatePrNotAuthenticated():
-return notAuthenticated(_that);case CreatePrNetwork():
+return notAuthenticated(_that);case CreatePrAppNotInstalled():
+return appNotInstalled(_that);case CreatePrNetwork():
 return network(_that);case CreatePrPermissionDenied():
 return permissionDenied(_that);case CreatePrUnknownError():
-return unknown(_that);}
+return unknown(_that);case CreatePrLoadContentFailed():
+return loadContentFailed(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -101,14 +105,16 @@ return unknown(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( CreatePrNotAuthenticated value)?  notAuthenticated,TResult? Function( CreatePrNetwork value)?  network,TResult? Function( CreatePrPermissionDenied value)?  permissionDenied,TResult? Function( CreatePrUnknownError value)?  unknown,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( CreatePrNotAuthenticated value)?  notAuthenticated,TResult? Function( CreatePrAppNotInstalled value)?  appNotInstalled,TResult? Function( CreatePrNetwork value)?  network,TResult? Function( CreatePrPermissionDenied value)?  permissionDenied,TResult? Function( CreatePrUnknownError value)?  unknown,TResult? Function( CreatePrLoadContentFailed value)?  loadContentFailed,}){
 final _that = this;
 switch (_that) {
 case CreatePrNotAuthenticated() when notAuthenticated != null:
-return notAuthenticated(_that);case CreatePrNetwork() when network != null:
+return notAuthenticated(_that);case CreatePrAppNotInstalled() when appNotInstalled != null:
+return appNotInstalled(_that);case CreatePrNetwork() when network != null:
 return network(_that);case CreatePrPermissionDenied() when permissionDenied != null:
 return permissionDenied(_that);case CreatePrUnknownError() when unknown != null:
-return unknown(_that);case _:
+return unknown(_that);case CreatePrLoadContentFailed() when loadContentFailed != null:
+return loadContentFailed(_that);case _:
   return null;
 
 }
@@ -125,13 +131,15 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notAuthenticated,TResult Function( String message)?  network,TResult Function()?  permissionDenied,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notAuthenticated,TResult Function()?  appNotInstalled,TResult Function( String message)?  network,TResult Function()?  permissionDenied,TResult Function( Object error)?  unknown,TResult Function( String message)?  loadContentFailed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case CreatePrNotAuthenticated() when notAuthenticated != null:
-return notAuthenticated();case CreatePrNetwork() when network != null:
+return notAuthenticated();case CreatePrAppNotInstalled() when appNotInstalled != null:
+return appNotInstalled();case CreatePrNetwork() when network != null:
 return network(_that.message);case CreatePrPermissionDenied() when permissionDenied != null:
 return permissionDenied();case CreatePrUnknownError() when unknown != null:
-return unknown(_that.error);case _:
+return unknown(_that.error);case CreatePrLoadContentFailed() when loadContentFailed != null:
+return loadContentFailed(_that.message);case _:
   return orElse();
 
 }
@@ -149,13 +157,15 @@ return unknown(_that.error);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notAuthenticated,required TResult Function( String message)  network,required TResult Function()  permissionDenied,required TResult Function( Object error)  unknown,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notAuthenticated,required TResult Function()  appNotInstalled,required TResult Function( String message)  network,required TResult Function()  permissionDenied,required TResult Function( Object error)  unknown,required TResult Function( String message)  loadContentFailed,}) {final _that = this;
 switch (_that) {
 case CreatePrNotAuthenticated():
-return notAuthenticated();case CreatePrNetwork():
+return notAuthenticated();case CreatePrAppNotInstalled():
+return appNotInstalled();case CreatePrNetwork():
 return network(_that.message);case CreatePrPermissionDenied():
 return permissionDenied();case CreatePrUnknownError():
-return unknown(_that.error);}
+return unknown(_that.error);case CreatePrLoadContentFailed():
+return loadContentFailed(_that.message);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -169,13 +179,15 @@ return unknown(_that.error);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notAuthenticated,TResult? Function( String message)?  network,TResult? Function()?  permissionDenied,TResult? Function( Object error)?  unknown,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notAuthenticated,TResult? Function()?  appNotInstalled,TResult? Function( String message)?  network,TResult? Function()?  permissionDenied,TResult? Function( Object error)?  unknown,TResult? Function( String message)?  loadContentFailed,}) {final _that = this;
 switch (_that) {
 case CreatePrNotAuthenticated() when notAuthenticated != null:
-return notAuthenticated();case CreatePrNetwork() when network != null:
+return notAuthenticated();case CreatePrAppNotInstalled() when appNotInstalled != null:
+return appNotInstalled();case CreatePrNetwork() when network != null:
 return network(_that.message);case CreatePrPermissionDenied() when permissionDenied != null:
 return permissionDenied();case CreatePrUnknownError() when unknown != null:
-return unknown(_that.error);case _:
+return unknown(_that.error);case CreatePrLoadContentFailed() when loadContentFailed != null:
+return loadContentFailed(_that.message);case _:
   return null;
 
 }
@@ -207,6 +219,38 @@ int get hashCode => runtimeType.hashCode;
 @override
 String toString() {
   return 'CreatePrFailure.notAuthenticated()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class CreatePrAppNotInstalled implements CreatePrFailure {
+  const CreatePrAppNotInstalled();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreatePrAppNotInstalled);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'CreatePrFailure.appNotInstalled()';
 }
 
 
@@ -372,6 +416,72 @@ class _$CreatePrUnknownErrorCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? error = null,}) {
   return _then(CreatePrUnknownError(
 null == error ? _self.error : error ,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class CreatePrLoadContentFailed implements CreatePrFailure {
+  const CreatePrLoadContentFailed(this.message);
+  
+
+ final  String message;
+
+/// Create a copy of CreatePrFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CreatePrLoadContentFailedCopyWith<CreatePrLoadContentFailed> get copyWith => _$CreatePrLoadContentFailedCopyWithImpl<CreatePrLoadContentFailed>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreatePrLoadContentFailed&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,message);
+
+@override
+String toString() {
+  return 'CreatePrFailure.loadContentFailed(message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CreatePrLoadContentFailedCopyWith<$Res> implements $CreatePrFailureCopyWith<$Res> {
+  factory $CreatePrLoadContentFailedCopyWith(CreatePrLoadContentFailed value, $Res Function(CreatePrLoadContentFailed) _then) = _$CreatePrLoadContentFailedCopyWithImpl;
+@useResult
+$Res call({
+ String message
+});
+
+
+
+
+}
+/// @nodoc
+class _$CreatePrLoadContentFailedCopyWithImpl<$Res>
+    implements $CreatePrLoadContentFailedCopyWith<$Res> {
+  _$CreatePrLoadContentFailedCopyWithImpl(this._self, this._then);
+
+  final CreatePrLoadContentFailed _self;
+  final $Res Function(CreatePrLoadContentFailed) _then;
+
+/// Create a copy of CreatePrFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+  return _then(CreatePrLoadContentFailed(
+null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 

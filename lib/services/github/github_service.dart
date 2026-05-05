@@ -1,18 +1,18 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../data/github/datasource/github_api_datasource_dio.dart';
+import '../../data/github/models/app_installation.dart';
 import '../../data/github/models/device_code_response.dart';
+import '../../data/github/models/repository.dart';
 import '../../data/github/repository/github_repository.dart';
 import '../../data/github/repository/github_repository_impl.dart';
-import '../../data/github/models/repository.dart';
-
-export '../../data/github/models/repository.dart' show GitHubAccount, GitTreeItem, Repository;
 
 part 'github_service.g.dart';
 
 @Riverpod(keepAlive: true)
 Future<GitHubService> githubService(Ref ref) async {
   final repo = await ref.watch(githubRepositoryProvider.future);
-  return GitHubService(repo: repo);
+  return GitHubService(repo: repo, invalidateApiDatasource: () => ref.invalidate(githubApiDatasourceProvider));
 }
 
 /// Thin delegation service for GitHub operations.
@@ -20,9 +20,15 @@ Future<GitHubService> githubService(Ref ref) async {
 /// All GitHub business logic that requires composition lives here.
 /// [GitHubRepository] retains the primitives.
 class GitHubService {
-  GitHubService({required GitHubRepository repo}) : _repo = repo;
+  GitHubService({required GitHubRepository repo, void Function()? invalidateApiDatasource})
+    : _repo = repo,
+      _invalidateApiDatasource = invalidateApiDatasource;
 
   final GitHubRepository _repo;
+  final void Function()? _invalidateApiDatasource;
+
+  // Rebuilds the datasource — picks up new token after sign-in, drops stale instance after sign-out.
+  void invalidateApiDatasource() => _invalidateApiDatasource?.call();
 
   Future<DeviceCodeResponse> requestDeviceCode() => _repo.requestDeviceCode();
   Future<GitHubAccount?> pollForUserToken(
@@ -52,6 +58,9 @@ class GitHubService {
   Future<void> approvePullRequest(String owner, String repo, int number) =>
       _repo.approvePullRequest(owner, repo, number);
   Future<void> mergePullRequest(String owner, String repo, int number) => _repo.mergePullRequest(owner, repo, number);
+  Future<List<GitHubAppInstallation>> getInstallations() => _repo.getInstallations();
+  Future<String?> findOpenPrUrlForBranch(String owner, String repo, String branch) =>
+      _repo.findOpenPrUrlForBranch(owner, repo, branch);
   Future<String> createPullRequest({
     required String owner,
     required String repo,

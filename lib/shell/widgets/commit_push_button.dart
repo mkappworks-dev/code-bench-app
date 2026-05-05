@@ -23,11 +23,6 @@ import '../notifiers/git_actions_failure.dart';
 import '../notifiers/git_remotes_notifier.dart';
 import 'project_guard.dart';
 
-/// Split button: left half commits, right half opens Push / Pull / PR dropdown.
-///
-/// All display state (can-flags, badge label, remote list) comes from
-/// [commitPushButtonStateProvider]. The widget keeps only [_pushing] and
-/// [_pulling] to label the busy state correctly ("Pushing…" vs "Pulling…").
 class CommitPushButton extends ConsumerStatefulWidget {
   const CommitPushButton({super.key, required this.project});
 
@@ -140,21 +135,25 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
 
   Future<void> _showCreatePrDialog() async {
     if (!ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
-    final preflight = await ref.read(commitMessageActionsProvider.notifier).preparePr(widget.project.path);
+
+    final preflight = await ref.read(createPrActionsProvider.notifier).fastPreflight(widget.project.path);
     switch (preflight) {
-      case PrPreflightFailed(:final message):
-        _snack(message);
+      case PrPreflightFailed(:final message, :final actionUrl, :final actionLabel):
+        _snack(
+          message,
+          duration: const Duration(seconds: 8),
+          actionLabel: actionLabel,
+          onAction: actionUrl == null
+              ? null
+              : () => unawaited(launchUrl(Uri.parse(actionUrl), mode: LaunchMode.externalApplication)),
+        );
         return;
-      case PrPreflightReady(
-        :final title,
-        :final body,
-        :final branches,
-        :final owner,
-        :final repo,
-        :final currentBranch,
-      ):
+      case PrPreflightPassed(:final owner, :final repo, :final currentBranch):
         if (!mounted) return;
-        final result = await CreatePrDialog.show(context, initialTitle: title, initialBody: body, branches: branches);
+        final contentFuture = ref
+            .read(createPrActionsProvider.notifier)
+            .loadContent(widget.project.path, owner, repo, currentBranch);
+        final result = await CreatePrDialog.show(context, contentFuture: contentFuture);
         if (result == null) return;
         final prUrl = await ref
             .read(createPrActionsProvider.notifier)
@@ -207,7 +206,6 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
       if (failure is! CommitMessageFailure) return;
       final msg = switch (failure) {
         CommitMessageUnavailable() => 'AI commit message unavailable — using default.',
-        PrContentUnavailable() => 'AI title/body unavailable — using a default. Check your model provider.',
         CommitMessageUnknown() => 'AI unavailable — using a default. Check your API key and model provider.',
       };
       AppSnackBar.show(context, msg, type: AppSnackBarType.warning);

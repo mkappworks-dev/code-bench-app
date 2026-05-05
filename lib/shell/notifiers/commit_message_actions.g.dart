@@ -8,10 +8,9 @@ part of 'commit_message_actions.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Generates AI-assisted text for git workflows: commit messages and PR
-/// title / body. Both methods always return a usable value — the fallback
-/// string — even when the AI call fails, so the commit / PR flow is never
-/// blocked by a network error.
+/// Generates an AI-assisted commit message. Always returns a usable value —
+/// the `'chore: update files'` fallback — even when the AI call is
+/// unavailable, so the commit flow is never blocked by a network error.
 ///
 /// On [NetworkException], the notifier emits [AsyncError] carrying a
 /// [CommitMessageFailure] so widgets can surface an inline "AI unavailable"
@@ -20,19 +19,17 @@ part of 'commit_message_actions.dart';
 @ProviderFor(CommitMessageActions)
 final commitMessageActionsProvider = CommitMessageActionsProvider._();
 
-/// Generates AI-assisted text for git workflows: commit messages and PR
-/// title / body. Both methods always return a usable value — the fallback
-/// string — even when the AI call fails, so the commit / PR flow is never
-/// blocked by a network error.
+/// Generates an AI-assisted commit message. Always returns a usable value —
+/// the `'chore: update files'` fallback — even when the AI call is
+/// unavailable, so the commit flow is never blocked by a network error.
 ///
 /// On [NetworkException], the notifier emits [AsyncError] carrying a
 /// [CommitMessageFailure] so widgets can surface an inline "AI unavailable"
 /// notice via [ref.listen] without needing a try/catch in widget code.
 final class CommitMessageActionsProvider extends $AsyncNotifierProvider<CommitMessageActions, void> {
-  /// Generates AI-assisted text for git workflows: commit messages and PR
-  /// title / body. Both methods always return a usable value — the fallback
-  /// string — even when the AI call fails, so the commit / PR flow is never
-  /// blocked by a network error.
+  /// Generates an AI-assisted commit message. Always returns a usable value —
+  /// the `'chore: update files'` fallback — even when the AI call is
+  /// unavailable, so the commit flow is never blocked by a network error.
   ///
   /// On [NetworkException], the notifier emits [AsyncError] carrying a
   /// [CommitMessageFailure] so widgets can surface an inline "AI unavailable"
@@ -56,12 +53,11 @@ final class CommitMessageActionsProvider extends $AsyncNotifierProvider<CommitMe
   CommitMessageActions create() => CommitMessageActions();
 }
 
-String _$commitMessageActionsHash() => r'c2bd299e8cb9ffe50b5eab7f8510f2cf10991507';
+String _$commitMessageActionsHash() => r'24e5c931afc14cac9d8753dbb30674acc28e0440';
 
-/// Generates AI-assisted text for git workflows: commit messages and PR
-/// title / body. Both methods always return a usable value — the fallback
-/// string — even when the AI call fails, so the commit / PR flow is never
-/// blocked by a network error.
+/// Generates an AI-assisted commit message. Always returns a usable value —
+/// the `'chore: update files'` fallback — even when the AI call is
+/// unavailable, so the commit flow is never blocked by a network error.
 ///
 /// On [NetworkException], the notifier emits [AsyncError] carrying a
 /// [CommitMessageFailure] so widgets can surface an inline "AI unavailable"

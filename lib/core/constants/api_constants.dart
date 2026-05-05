@@ -27,6 +27,9 @@ class ApiConstants {
   // non-secret. Forks must register their own GitHub App and replace this.
   static const String githubClientId = 'Iv23liSxSoUtHVlXrNGx';
 
+  // Slug must match the App's URL slug in github.com/settings/apps. Forks must replace.
+  static const String githubAppInstallUrl = 'https://github.com/apps/benchlabs-codebench/installations/new';
+
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(minutes: 5);

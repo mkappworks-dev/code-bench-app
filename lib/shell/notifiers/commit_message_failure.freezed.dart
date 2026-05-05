@@ -55,12 +55,11 @@ extension CommitMessageFailurePatterns on CommitMessageFailure {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( CommitMessageUnavailable value)?  commitMessageUnavailable,TResult Function( PrContentUnavailable value)?  prContentUnavailable,TResult Function( CommitMessageUnknown value)?  unknown,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( CommitMessageUnavailable value)?  commitMessageUnavailable,TResult Function( CommitMessageUnknown value)?  unknown,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case CommitMessageUnavailable() when commitMessageUnavailable != null:
-return commitMessageUnavailable(_that);case PrContentUnavailable() when prContentUnavailable != null:
-return prContentUnavailable(_that);case CommitMessageUnknown() when unknown != null:
+return commitMessageUnavailable(_that);case CommitMessageUnknown() when unknown != null:
 return unknown(_that);case _:
   return orElse();
 
@@ -79,12 +78,11 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( CommitMessageUnavailable value)  commitMessageUnavailable,required TResult Function( PrContentUnavailable value)  prContentUnavailable,required TResult Function( CommitMessageUnknown value)  unknown,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( CommitMessageUnavailable value)  commitMessageUnavailable,required TResult Function( CommitMessageUnknown value)  unknown,}){
 final _that = this;
 switch (_that) {
 case CommitMessageUnavailable():
-return commitMessageUnavailable(_that);case PrContentUnavailable():
-return prContentUnavailable(_that);case CommitMessageUnknown():
+return commitMessageUnavailable(_that);case CommitMessageUnknown():
 return unknown(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -99,12 +97,11 @@ return unknown(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( CommitMessageUnavailable value)?  commitMessageUnavailable,TResult? Function( PrContentUnavailable value)?  prContentUnavailable,TResult? Function( CommitMessageUnknown value)?  unknown,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( CommitMessageUnavailable value)?  commitMessageUnavailable,TResult? Function( CommitMessageUnknown value)?  unknown,}){
 final _that = this;
 switch (_that) {
 case CommitMessageUnavailable() when commitMessageUnavailable != null:
-return commitMessageUnavailable(_that);case PrContentUnavailable() when prContentUnavailable != null:
-return prContentUnavailable(_that);case CommitMessageUnknown() when unknown != null:
+return commitMessageUnavailable(_that);case CommitMessageUnknown() when unknown != null:
 return unknown(_that);case _:
   return null;
 
@@ -122,11 +119,10 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  commitMessageUnavailable,TResult Function()?  prContentUnavailable,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  commitMessageUnavailable,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case CommitMessageUnavailable() when commitMessageUnavailable != null:
-return commitMessageUnavailable();case PrContentUnavailable() when prContentUnavailable != null:
-return prContentUnavailable();case CommitMessageUnknown() when unknown != null:
+return commitMessageUnavailable();case CommitMessageUnknown() when unknown != null:
 return unknown(_that.error);case _:
   return orElse();
 
@@ -145,11 +141,10 @@ return unknown(_that.error);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  commitMessageUnavailable,required TResult Function()  prContentUnavailable,required TResult Function( Object error)  unknown,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  commitMessageUnavailable,required TResult Function( Object error)  unknown,}) {final _that = this;
 switch (_that) {
 case CommitMessageUnavailable():
-return commitMessageUnavailable();case PrContentUnavailable():
-return prContentUnavailable();case CommitMessageUnknown():
+return commitMessageUnavailable();case CommitMessageUnknown():
 return unknown(_that.error);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -164,11 +159,10 @@ return unknown(_that.error);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  commitMessageUnavailable,TResult? Function()?  prContentUnavailable,TResult? Function( Object error)?  unknown,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  commitMessageUnavailable,TResult? Function( Object error)?  unknown,}) {final _that = this;
 switch (_that) {
 case CommitMessageUnavailable() when commitMessageUnavailable != null:
-return commitMessageUnavailable();case PrContentUnavailable() when prContentUnavailable != null:
-return prContentUnavailable();case CommitMessageUnknown() when unknown != null:
+return commitMessageUnavailable();case CommitMessageUnknown() when unknown != null:
 return unknown(_that.error);case _:
   return null;
 
@@ -201,38 +195,6 @@ int get hashCode => runtimeType.hashCode;
 @override
 String toString() {
   return 'CommitMessageFailure.commitMessageUnavailable()';
-}
-
-
-}
-
-
-
-
-/// @nodoc
-
-
-class PrContentUnavailable implements CommitMessageFailure {
-  const PrContentUnavailable();
-  
-
-
-
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PrContentUnavailable);
-}
-
-
-@override
-int get hashCode => runtimeType.hashCode;
-
-@override
-String toString() {
-  return 'CommitMessageFailure.prContentUnavailable()';
 }
 
 

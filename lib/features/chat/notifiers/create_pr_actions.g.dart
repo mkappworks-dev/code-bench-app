@@ -8,10 +8,11 @@ part of 'create_pr_actions.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Command notifier mediating every GitHub-API call the "Create PR"
-/// dialog flow makes. Widgets never touch [GitHubRepository] or
-/// [SecureStorage] directly — they go through here so the
-/// GitHub PAT never crosses the widget layer.
+/// Command notifier owning the entire "Create PR" workflow: AI title/body
+/// generation, GitHub preflight (token, branch, remote, branch list), and
+/// the final create-PR API call. Widgets never touch [GitHubRepository] or
+/// [SecureStorage] directly — they go through here so the GitHub PAT never
+/// crosses the widget layer.
 ///
 /// ### Security
 ///
@@ -23,10 +24,11 @@ part of 'create_pr_actions.dart';
 @ProviderFor(CreatePrActions)
 final createPrActionsProvider = CreatePrActionsProvider._();
 
-/// Command notifier mediating every GitHub-API call the "Create PR"
-/// dialog flow makes. Widgets never touch [GitHubRepository] or
-/// [SecureStorage] directly — they go through here so the
-/// GitHub PAT never crosses the widget layer.
+/// Command notifier owning the entire "Create PR" workflow: AI title/body
+/// generation, GitHub preflight (token, branch, remote, branch list), and
+/// the final create-PR API call. Widgets never touch [GitHubRepository] or
+/// [SecureStorage] directly — they go through here so the GitHub PAT never
+/// crosses the widget layer.
 ///
 /// ### Security
 ///
@@ -35,10 +37,11 @@ final createPrActionsProvider = CreatePrActionsProvider._();
 /// leak the `Authorization: Bearer <PAT>` token. Same discipline as
 /// [PrCardNotifier]; see `macos/Runner/README.md`.
 final class CreatePrActionsProvider extends $AsyncNotifierProvider<CreatePrActions, void> {
-  /// Command notifier mediating every GitHub-API call the "Create PR"
-  /// dialog flow makes. Widgets never touch [GitHubRepository] or
-  /// [SecureStorage] directly — they go through here so the
-  /// GitHub PAT never crosses the widget layer.
+  /// Command notifier owning the entire "Create PR" workflow: AI title/body
+  /// generation, GitHub preflight (token, branch, remote, branch list), and
+  /// the final create-PR API call. Widgets never touch [GitHubRepository] or
+  /// [SecureStorage] directly — they go through here so the GitHub PAT never
+  /// crosses the widget layer.
   ///
   /// ### Security
   ///
@@ -65,12 +68,13 @@ final class CreatePrActionsProvider extends $AsyncNotifierProvider<CreatePrActio
   CreatePrActions create() => CreatePrActions();
 }
 
-String _$createPrActionsHash() => r'72233580ef2733554d9158a40fafbe2ac458ebdc';
+String _$createPrActionsHash() => r'bde6ebe808b0522d59d5301e98d955768bcd5967';
 
-/// Command notifier mediating every GitHub-API call the "Create PR"
-/// dialog flow makes. Widgets never touch [GitHubRepository] or
-/// [SecureStorage] directly — they go through here so the
-/// GitHub PAT never crosses the widget layer.
+/// Command notifier owning the entire "Create PR" workflow: AI title/body
+/// generation, GitHub preflight (token, branch, remote, branch list), and
+/// the final create-PR API call. Widgets never touch [GitHubRepository] or
+/// [SecureStorage] directly — they go through here so the GitHub PAT never
+/// crosses the widget layer.
 ///
 /// ### Security
 ///

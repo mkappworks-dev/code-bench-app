@@ -19,9 +19,6 @@ GitService gitService(Ref ref) {
   return GitService(repo: ref.watch(gitRepositoryProvider), liveState: ref.watch(gitLiveStateDatasourceProvider));
 }
 
-/// Owns all git business logic: composite operations, live-state queries, and
-/// branch management. [GitRepository] handles 4 cheap primitives; heavier
-/// operations go directly to [GitDatasourceProcess] via [_ds].
 class GitService {
   GitService({required GitRepository repo, GitLiveStateDatasource? liveState}) : _repo = repo, _liveState = liveState;
 
@@ -50,6 +47,7 @@ class GitService {
   Future<void> createWorktree(String path, String branchName, String worktreePath, {String? baseBranch}) =>
       _ds(path).createWorktree(branchName, worktreePath, baseBranch: baseBranch);
   Future<List<GitChangedFile>> getChangedFiles(String path) => _ds(path).getChangedFiles();
+  Future<List<String>> getBranchChangedFiles(String path) => _ds(path).getBranchChangedFiles();
 
   Future<GitLiveState> fetchLiveState(String path) {
     assert(_liveState != null, 'GitService: liveState not injected — using live process fallback');
