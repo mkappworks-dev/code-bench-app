@@ -9,7 +9,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../core/widgets/buttons.dart';
-import '../../../shell/notifiers/git_actions.dart';
+import '../../../layout/notifiers/git_actions.dart';
 import '../../project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../project_sidebar/notifiers/project_sidebar_failure.dart';
 
