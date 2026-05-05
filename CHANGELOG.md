@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.7.2...v0.8.0) (2026-05-05)
+
+
+### Features
+
+* **github:** revocation-aware disconnect, app installations, refined Create PR flow ([#79](https://github.com/mkappworks-dev/code-bench-app/issues/79)) ([89ba2c6](https://github.com/mkappworks-dev/code-bench-app/commit/89ba2c6efac438d6a159cd6dca20c669fb730793))
+
 ## [0.7.2](https://github.com/mkappworks-dev/code-bench-app/compare/v0.7.1...v0.7.2) (2026-05-04)
 
 
