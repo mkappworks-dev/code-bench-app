@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/data/git/datasource/git_datasource.dart';
 import 'package:code_bench_app/services/git/git_service.dart';
-import 'package:code_bench_app/shell/notifiers/git_actions.dart';
-import 'package:code_bench_app/shell/notifiers/git_actions_failure.dart';
+import 'package:code_bench_app/features/git/notifiers/git_actions.dart';
+import 'package:code_bench_app/features/git/notifiers/git_actions_failure.dart';
 
 // ── Fake GitService ───────────────────────────────────────────────────────────
 
