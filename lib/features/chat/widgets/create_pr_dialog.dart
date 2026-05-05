@@ -96,25 +96,93 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> {
                 Row(
                   children: [
                     Text(
-                      'Base branch:',
-                      style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                      'Base',
+                      style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeLabel),
                     ),
-                    const SizedBox(width: 8),
-                    DropdownButton<String>(
-                      value: widget.branches.contains(_base) ? _base : null,
-                      dropdownColor: c.panelBackground,
-                      style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
-                      items: widget.branches.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
-                      onChanged: (v) {
-                        if (v != null) setState(() => _base = v);
-                      },
+                    const SizedBox(width: 6),
+                    PopupMenuButton<String>(
+                      onSelected: (v) => setState(() => _base = v),
+                      color: c.panelBackground,
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(color: c.deepBorder),
+                      ),
+                      itemBuilder: (_) => widget.branches
+                          .map(
+                            (b) => PopupMenuItem(
+                              value: b,
+                              height: 32,
+                              child: Text(
+                                b,
+                                style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSizeSmall),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: c.chipFill,
+                          border: Border.all(color: c.chipStroke),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.call_split, size: 12, color: c.accent),
+                            const SizedBox(width: 4),
+                            Text(
+                              _base,
+                              style: TextStyle(
+                                color: c.textPrimary,
+                                fontSize: ThemeConstants.uiFontSizeSmall,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(Icons.keyboard_arrow_down, size: 14, color: c.dimFg),
+                          ],
+                        ),
+                      ),
                     ),
                     const Spacer(),
-                    Text(
-                      'Draft PR',
-                      style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                    const SizedBox(width: 6),
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _draft = !_draft),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 140),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _draft ? c.accentTintLight : c.chipFill,
+                            border: Border.all(color: _draft ? c.accentBorderTeal : c.chipStroke),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 140),
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(color: _draft ? c.accent : c.mutedFg, shape: BoxShape.circle),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Draft',
+                                style: TextStyle(
+                                  color: _draft ? c.accent : c.chipText,
+                                  fontSize: ThemeConstants.uiFontSizeSmall,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                    Switch(value: _draft, onChanged: (v) => setState(() => _draft = v)),
                   ],
                 ),
               ],
