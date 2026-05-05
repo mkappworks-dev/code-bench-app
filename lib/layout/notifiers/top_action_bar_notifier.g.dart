@@ -48,4 +48,4 @@ final class TopActionBarStateProvider
   }
 }
 
-String _$topActionBarStateHash() => r'989e88a0935717d23c5cceb5017fea8dce644c16';
+String _$topActionBarStateHash() => r'7f0bd0293bdffdda95133e0da5727b50716510d8';

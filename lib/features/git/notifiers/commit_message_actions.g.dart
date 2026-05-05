@@ -8,17 +8,32 @@ part of 'commit_message_actions.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// AI commit-message generator. Always returns a usable string — falls back to
-/// `'chore: update files'` so the commit flow is never blocked by a network error.
+/// Generates an AI-assisted commit message. Always returns a usable value —
+/// the `'chore: update files'` fallback — even when the AI call is
+/// unavailable, so the commit flow is never blocked by a network error.
+///
+/// On [NetworkException], the notifier emits [AsyncError] carrying a
+/// [CommitMessageFailure] so widgets can surface an inline "AI unavailable"
+/// notice via [ref.listen] without needing a try/catch in widget code.
 
 @ProviderFor(CommitMessageActions)
 final commitMessageActionsProvider = CommitMessageActionsProvider._();
 
-/// AI commit-message generator. Always returns a usable string — falls back to
-/// `'chore: update files'` so the commit flow is never blocked by a network error.
+/// Generates an AI-assisted commit message. Always returns a usable value —
+/// the `'chore: update files'` fallback — even when the AI call is
+/// unavailable, so the commit flow is never blocked by a network error.
+///
+/// On [NetworkException], the notifier emits [AsyncError] carrying a
+/// [CommitMessageFailure] so widgets can surface an inline "AI unavailable"
+/// notice via [ref.listen] without needing a try/catch in widget code.
 final class CommitMessageActionsProvider extends $AsyncNotifierProvider<CommitMessageActions, void> {
-  /// AI commit-message generator. Always returns a usable string — falls back to
-  /// `'chore: update files'` so the commit flow is never blocked by a network error.
+  /// Generates an AI-assisted commit message. Always returns a usable value —
+  /// the `'chore: update files'` fallback — even when the AI call is
+  /// unavailable, so the commit flow is never blocked by a network error.
+  ///
+  /// On [NetworkException], the notifier emits [AsyncError] carrying a
+  /// [CommitMessageFailure] so widgets can surface an inline "AI unavailable"
+  /// notice via [ref.listen] without needing a try/catch in widget code.
   CommitMessageActionsProvider._()
     : super(
         from: null,
@@ -40,8 +55,13 @@ final class CommitMessageActionsProvider extends $AsyncNotifierProvider<CommitMe
 
 String _$commitMessageActionsHash() => r'24e5c931afc14cac9d8753dbb30674acc28e0440';
 
-/// AI commit-message generator. Always returns a usable string — falls back to
-/// `'chore: update files'` so the commit flow is never blocked by a network error.
+/// Generates an AI-assisted commit message. Always returns a usable value —
+/// the `'chore: update files'` fallback — even when the AI call is
+/// unavailable, so the commit flow is never blocked by a network error.
+///
+/// On [NetworkException], the notifier emits [AsyncError] carrying a
+/// [CommitMessageFailure] so widgets can surface an inline "AI unavailable"
+/// notice via [ref.listen] without needing a try/catch in widget code.
 
 abstract class _$CommitMessageActions extends $AsyncNotifier<void> {
   FutureOr<void> build();
