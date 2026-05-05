@@ -53,7 +53,7 @@ final class CommitMessageActionsProvider extends $AsyncNotifierProvider<CommitMe
   CommitMessageActions create() => CommitMessageActions();
 }
 
-String _$commitMessageActionsHash() => r'93db16fa6ec25405b6ddd23784c5912fd4b3cdce';
+String _$commitMessageActionsHash() => r'24e5c931afc14cac9d8753dbb30674acc28e0440';
 
 /// Generates an AI-assisted commit message. Always returns a usable value —
 /// the `'chore: update files'` fallback — even when the AI call is

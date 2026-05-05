@@ -68,7 +68,7 @@ final class CreatePrActionsProvider extends $AsyncNotifierProvider<CreatePrActio
   CreatePrActions create() => CreatePrActions();
 }
 
-String _$createPrActionsHash() => r'3bb9275ddddeb0004bb58414453aea98eae95482';
+String _$createPrActionsHash() => r'bde6ebe808b0522d59d5301e98d955768bcd5967';
 
 /// Command notifier owning the entire "Create PR" workflow: AI title/body
 /// generation, GitHub preflight (token, branch, remote, branch list), and

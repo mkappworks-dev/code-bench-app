@@ -9,6 +9,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../notifiers/github_auth_notifier.dart';
 
+const String _kInstallAppLabel = 'Install GitHub App ↗';
+const String _kManageLabel = 'Manage ↗';
+
 class GithubConnectedCard extends ConsumerStatefulWidget {
   const GithubConnectedCard({super.key, required this.account, required this.onDisconnect});
 
@@ -37,7 +40,7 @@ class _GithubConnectedCardState extends ConsumerState<GithubConnectedCard> with 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      ref.invalidate(githubInstallationsProvider);
+      ref.read(gitHubAuthProvider.notifier).refreshInstallations();
     }
   }
 
@@ -188,7 +191,7 @@ class _InstallationsSection extends StatelessWidget {
             GestureDetector(
               onTap: onInstall,
               child: Text(
-                'Install GitHub App ↗',
+                _kInstallAppLabel,
                 style: TextStyle(
                   color: c.accent,
                   fontSize: ThemeConstants.uiFontSizeLabel,
@@ -251,7 +254,7 @@ class _EmptyInstallState extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  'Install GitHub App ↗',
+                  _kInstallAppLabel,
                   style: TextStyle(
                     color: c.accent,
                     fontSize: ThemeConstants.uiFontSizeSmall,
@@ -312,7 +315,7 @@ class _InstalledList extends StatelessWidget {
                 child: GestureDetector(
                   onTap: onInstall,
                   child: Text(
-                    'Install GitHub App ↗',
+                    _kInstallAppLabel,
                     style: TextStyle(
                       color: c.accent,
                       fontSize: ThemeConstants.uiFontSizeLabel,
@@ -390,7 +393,7 @@ class _InstallRow extends StatelessWidget {
             child: GestureDetector(
               onTap: onManage,
               child: Text(
-                'Manage ↗',
+                _kManageLabel,
                 style: TextStyle(color: c.dimFg, fontSize: ThemeConstants.uiFontSizeBadge),
               ),
             ),

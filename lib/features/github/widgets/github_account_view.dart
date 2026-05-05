@@ -38,6 +38,10 @@ class _GithubAccountViewState extends ConsumerState<GithubAccountView> {
   Future<void> _signOut() async {
     await ref.read(gitHubAuthProvider.notifier).signOut();
     if (!mounted) return;
+    // Skip the success snackbar when signOut failed — the ref.listen below
+    // surfaces the typed failure message. Showing both produces a green
+    // "Disconnected" toast immediately followed by a red error toast.
+    if (ref.read(gitHubAuthProvider).hasError) return;
     AppSnackBar.show(context, 'Disconnected from GitHub', type: AppSnackBarType.success);
   }
 
@@ -54,6 +58,9 @@ class _GithubAccountViewState extends ConsumerState<GithubAccountView> {
       final error = next.error;
       final msg = switch (error) {
         GitHubAuthTokenRevoked() => 'Signed out: your GitHub token was revoked. Please reconnect.',
+        GitHubAuthSignOutFailed(:final message) => message,
+        GitHubAuthRequestFailed(:final message) => message,
+        GitHubAuthPollFailed(:final message) => message,
         AuthException(:final message) => message,
         _ => 'GitHub auth failed — please try again.',
       };

@@ -95,17 +95,24 @@ class CreatePrActions extends _$CreatePrActions {
           actionLabel: 'Open',
         );
       }
-    } catch (_) {
+    } catch (e) {
       // Best-effort — if the check fails, let the user attempt creation anyway.
+      // Logged so a flapping check (rate limit, bad token) is debuggable.
+      dLog('[CreatePrActions] fastPreflight existing-PR check failed: ${e.runtimeType}');
     }
 
     return PrPreflightResult.passed(owner: owner, repo: repo, currentBranch: currentBranch);
   }
 
   /// Generates the AI title/body and lists branches concurrently. Returns the
-  /// dialog content record, or throws a user-facing [String] if [listBranches]
-  /// fails. AI failures are always silent — the branch name is used as the
-  /// fallback title.
+  /// dialog content record, or throws a typed [CreatePrLoadContentFailed]
+  /// when branch listing fails. AI failures are always silent — the branch
+  /// name is used as the fallback title.
+  ///
+  /// Calls [_listBranchesRaw] directly (not the public [listBranches] which
+  /// owns `state`) so that a failure here does not pollute
+  /// `createPrActionsProvider.state` and trigger snackbars in unrelated
+  /// listeners (e.g. the existing one in `commit_push_button.dart`).
   Future<({String title, String body, List<String> branches})> loadContent(
     String path,
     String owner,
@@ -116,24 +123,35 @@ class CreatePrActions extends _$CreatePrActions {
 
     // Start both concurrently before awaiting either.
     final contentFut = _generatePrContent(changedFiles: changedFiles, branch: currentBranch);
-    final branchesFut = listBranches(owner, repo);
+    final branchesFut = _listBranchesRaw(owner, repo);
 
     final content = await contentFut;
-    final branches = await branchesFut;
-
-    if (branches == null) {
-      final error = state.error;
-      final msg = switch (error) {
+    final List<String> branches;
+    try {
+      branches = await branchesFut;
+    } catch (e, st) {
+      final status = e is NetworkException ? e.statusCode : null;
+      dLog('[CreatePrActions] loadContent listBranches failed: ${e.runtimeType} (status=$status)');
+      final failure = _asFailure(e);
+      final msg = switch (failure) {
         CreatePrNotAuthenticated() => 'Your GitHub token is no longer valid — reconnect in Settings → Providers.',
         CreatePrAppNotInstalled() => "GitHub App isn't installed on $owner/$repo — install it to enable PRs.",
         CreatePrPermissionDenied() => 'GitHub token lacks repo access — check token scopes in Settings → Providers.',
         CreatePrNetwork(:final message) => 'Could not list branches for $owner/$repo — $message.',
         _ => 'Could not list branches for $owner/$repo — check your GitHub token and repo access.',
       };
-      throw msg;
+      Error.throwWithStackTrace(CreatePrFailure.loadContentFailed(msg), st);
     }
 
     return (title: content.title, body: content.body, branches: branches);
+  }
+
+  /// Internal branch lister that does not mutate notifier state. Used by
+  /// [loadContent] to keep concurrent failures from leaking into
+  /// `createPrActionsProvider.state`.
+  Future<List<String>> _listBranchesRaw(String owner, String repo) async {
+    final repository = await ref.read(githubServiceProvider.future);
+    return repository.listBranches(owner, repo);
   }
 
   /// Lists branches for [owner]/[repo]. Returns `null` and emits
@@ -143,8 +161,7 @@ class CreatePrActions extends _$CreatePrActions {
     List<String>? result;
     state = await AsyncValue.guard(() async {
       try {
-        final repository = await ref.read(githubServiceProvider.future);
-        result = await repository.listBranches(owner, repo);
+        result = await _listBranchesRaw(owner, repo);
       } catch (e, st) {
         final status = e is NetworkException ? e.statusCode : null;
         dLog('[CreatePrActions] listBranches failed: ${e.runtimeType} (status=$status)');

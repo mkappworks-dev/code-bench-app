@@ -303,6 +303,12 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
       }).toList();
     } on DioException catch (e) {
       throw NetworkException('Failed to get app installations', statusCode: e.response?.statusCode, originalError: e);
+    } catch (e) {
+      // Catches TypeError / cast failures from a shape change in GitHub's
+      // response (e.g. `id` returned as null/string during API rollouts) so
+      // the failure leaves a breadcrumb instead of propagating uncaught.
+      dLog('[GitHubApiDatasourceDio] getInstallations parse error: ${e.runtimeType}');
+      rethrow;
     }
   }
 
@@ -315,7 +321,14 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
       );
       final items = response.data as List;
       if (items.isEmpty) return null;
-      return (items.first as Map<String, dynamic>)['html_url'] as String?;
+      final url = (items.first as Map<String, dynamic>)['html_url'] as String?;
+      // A null html_url with a present PR row would let the caller treat it
+      // as "no open PR" and re-enable Create PR — silently producing a
+      // duplicate. Logged so the unexpected payload is visible in triage.
+      if (url == null) {
+        dLog('[GitHubApiDatasourceDio] findOpenPrUrlForBranch: html_url missing from PR payload');
+      }
+      return url;
     } on DioException catch (e) {
       throw NetworkException('Failed to check existing PRs', statusCode: e.response?.statusCode, originalError: e);
     }

@@ -1,4 +1,6 @@
 // lib/features/github/widgets/github_disconnect_dialog.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,17 +32,38 @@ class _GitHubDisconnectDialogState extends ConsumerState<GitHubDisconnectDialog>
   // and triggers auto-completion of the local disconnect.
   bool _oauthLinkOpened = false;
 
-  Future<void> _openUrl(String url) async {
+  // Polls installations while the OAuth revoke page is open so the dialog
+  // owns its own refresh cadence — does not depend on GithubConnectedCard's
+  // lifecycle observer (which may be unmounted if the user navigates away
+  // from settings while the dialog is showing).
+  Timer? _installationsPoll;
+
+  @override
+  void dispose() {
+    _installationsPoll?.cancel();
+    super.dispose();
+  }
+
+  Future<bool> _openUrl(String url) async {
     try {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      return await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     } catch (e, st) {
       dLog('[GitHubDisconnectDialog] launchUrl failed: $e\n$st');
+      return false;
     }
   }
 
   Future<void> _openOAuthRevoke() async {
+    final ok = await _openUrl('https://github.com/settings/connections/applications/${ApiConstants.githubClientId}');
+    // Only mark the OAuth step as opened after launchUrl actually succeeded —
+    // a failed launch must not enable phantom auto-completion of disconnect.
+    if (!ok || !mounted) return;
     setState(() => _oauthLinkOpened = true);
-    await _openUrl('https://github.com/settings/connections/applications/${ApiConstants.githubClientId}');
+    _installationsPoll?.cancel();
+    _installationsPoll = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (!mounted) return;
+      ref.read(gitHubAuthProvider.notifier).refreshInstallations();
+    });
   }
 
   void _complete() {

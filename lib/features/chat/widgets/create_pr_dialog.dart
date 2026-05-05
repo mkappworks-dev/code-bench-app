@@ -6,6 +6,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../notifiers/create_pr_failure.dart';
 
 class PrFormResult {
   const PrFormResult({required this.title, required this.body, required this.base, required this.draft});
@@ -64,7 +65,14 @@ class _CreatePrDialogState extends ConsumerState<CreatePrDialog> with SingleTick
       },
       onError: (Object e) {
         if (!mounted) return;
-        setState(() => _loadError = e.toString());
+        // Extract the pre-formatted user-facing message from the typed
+        // failure so the error view shows e.g. "Your GitHub token is no
+        // longer valid…" rather than `CreatePrLoadContentFailed(message: …)`.
+        final msg = switch (e) {
+          CreatePrLoadContentFailed(:final message) => message,
+          _ => e.toString(),
+        };
+        setState(() => _loadError = msg);
       },
     );
   }

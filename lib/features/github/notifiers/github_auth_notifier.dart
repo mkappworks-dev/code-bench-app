@@ -17,7 +17,12 @@ part 'github_auth_notifier.g.dart';
 @riverpod
 Future<List<GitHubAppInstallation>> githubInstallations(Ref ref) async {
   final svc = await ref.watch(githubServiceProvider.future);
-  return svc.getInstallations();
+  try {
+    return await svc.getInstallations();
+  } catch (e) {
+    dLog('[githubInstallationsProvider] failed: ${e.runtimeType}');
+    rethrow;
+  }
 }
 
 @Riverpod(keepAlive: true)
@@ -136,14 +141,12 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
     _accountBeforeDeviceFlow = null;
   }
 
-  Future<List<GitHubAppInstallation>?> fetchInstallations() async {
-    try {
-      final svc = await ref.read(githubServiceProvider.future);
-      return await svc.getInstallations();
-    } catch (e) {
-      dLog('[GitHubAuthNotifier] fetchInstallations failed: ${e.runtimeType}');
-      return null;
-    }
+  /// Re-fetches the GitHub App installations. Routed through the notifier so
+  /// widgets never call `ref.invalidate(githubInstallationsProvider)` directly
+  /// (forbidden by the architecture rule). Used by lifecycle observers and the
+  /// disconnect dialog to pick up changes made on github.com.
+  void refreshInstallations() {
+    ref.invalidate(githubInstallationsProvider);
   }
 
   // Delete-before-clear: an optimistic AsyncData(null) followed by a failed
@@ -153,8 +156,13 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
     state = await AsyncValue.guard(() async {
       final svc = await ref.read(githubServiceProvider.future);
       await svc.signOut();
-      ref.invalidate(githubApiDatasourceProvider);
       return null;
     });
+    // Invalidate AFTER the guard writes state — invalidation cascades up
+    // through repo → service → auth notifier and would otherwise rebuild
+    // build() before the guard's success value lands on state.
+    if (!state.hasError) {
+      ref.invalidate(githubApiDatasourceProvider);
+    }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../core/utils/debug_logger.dart';
 import '../../services/git/git_service.dart';
 import '../../services/github/github_service.dart';
 import 'git_live_state_notifier.dart';
@@ -45,9 +46,16 @@ Future<String?> existingOpenPrUrl(Ref ref, String path) async {
   final repo = repoMatch.group(2)!;
 
   try {
-    final service = await ref.read(githubServiceProvider.future);
+    // Provider body — watch (reactive) per Riverpod convention. ref.read
+    // would skip rebuilds when the GitHub service is invalidated on
+    // sign-in/out, leaving the cached "no open PR" result stale.
+    final service = await ref.watch(githubServiceProvider.future);
     return await service.findOpenPrUrlForBranch(owner, repo, branch);
-  } catch (_) {
+  } catch (e) {
+    // Logged so a flapping duplicate-PR check (rate limit, bad token,
+    // unexpected payload shape) leaves a breadcrumb instead of silently
+    // re-enabling "Create PR" against an already-open PR.
+    dLog('[existingOpenPrUrl] PR check failed: ${e.runtimeType}');
     return null;
   }
 }

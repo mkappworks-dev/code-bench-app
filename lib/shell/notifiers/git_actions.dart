@@ -172,7 +172,7 @@ class GitActions extends _$GitActions {
     try {
       return await _git().getBranchChangedFiles(projectPath);
     } catch (e) {
-      dLog('[GitActions] getBranchChangedFiles failed: ${e.runtimeType}');
+      dLog('[GitActions] getBranchChangedFiles failed: $e');
       return [];
     }
   }

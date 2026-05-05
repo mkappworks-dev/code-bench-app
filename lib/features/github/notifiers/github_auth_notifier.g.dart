@@ -45,7 +45,7 @@ final class GithubInstallationsProvider
   }
 }
 
-String _$githubInstallationsHash() => r'fad012dc395cd22ed0d00e26f725d6d6f445167a';
+String _$githubInstallationsHash() => r'6ef1e6ac69ee82425c2575b9ae3185e988277603';
 
 @ProviderFor(GitHubAuthNotifier)
 final gitHubAuthProvider = GitHubAuthNotifierProvider._();
@@ -70,7 +70,7 @@ final class GitHubAuthNotifierProvider extends $AsyncNotifierProvider<GitHubAuth
   GitHubAuthNotifier create() => GitHubAuthNotifier();
 }
 
-String _$gitHubAuthNotifierHash() => r'3e015dad9c0a96eadfba816e6b681326524f7e9a';
+String _$gitHubAuthNotifierHash() => r'f9321346585b8b6b36620bdd9260b7f897059e5a';
 
 abstract class _$GitHubAuthNotifier extends $AsyncNotifier<GitHubAccount?> {
   FutureOr<GitHubAccount?> build();

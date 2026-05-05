@@ -44,7 +44,12 @@ class CommitMessageActions extends _$CommitMessageActions {
     const fallback = 'chore: update files';
     final model = ref.read(selectedModelProvider);
     final providers = ref.read(providersServiceProvider);
-    if (!await providers.hasCredentialsFor(model.provider)) return fallback;
+    if (!await providers.hasCredentialsFor(model.provider)) {
+      // Reset any prior AsyncError so the inline "AI unavailable" notice
+      // doesn't linger across calls when the user later removes credentials.
+      state = const AsyncData(null);
+      return fallback;
+    }
     state = const AsyncLoading();
     String message = fallback;
     state = await AsyncValue.guard(() async {

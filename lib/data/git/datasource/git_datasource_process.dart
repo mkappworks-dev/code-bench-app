@@ -359,6 +359,7 @@ class GitDatasourceProcess implements GitDatasource {
 
   @override
   Future<List<String>> getBranchChangedFiles() async {
+    final stderrs = <String>[];
     for (final base in ['origin/main', 'origin/master']) {
       final r = await Process.run('git', [
         'log',
@@ -370,9 +371,20 @@ class GitDatasourceProcess implements GitDatasource {
       if (r.exitCode == 0) {
         final files = (r.stdout as String).split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toSet().toList();
         if (files.isNotEmpty) return files;
+      } else {
+        stderrs.add('$base: ${(r.stderr as String).trim()}');
       }
     }
-    // Fallback: uncommitted changes vs HEAD.
+    // Fallback: uncommitted changes vs HEAD. This intentionally only returns
+    // *uncommitted* changes — when both `origin/{main,master}` lookups fail,
+    // we still want to feed *something* useful into the AI PR-content prompt
+    // rather than abort. Logged so an empty / wrong file list during PR
+    // creation is debuggable from a single breadcrumb.
+    if (stderrs.isNotEmpty) {
+      dLog(
+        '[GitDatasourceProcess] getBranchChangedFiles falling back to HEAD diff — bases failed: ${stderrs.join('; ')}',
+      );
+    }
     final r = await Process.run('git', ['diff', '--name-only', 'HEAD'], workingDirectory: _projectPath);
     return (r.stdout as String).split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
   }

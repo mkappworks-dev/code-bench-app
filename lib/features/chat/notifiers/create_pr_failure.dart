@@ -15,4 +15,10 @@ sealed class CreatePrFailure with _$CreatePrFailure {
   const factory CreatePrFailure.network(String message) = CreatePrNetwork;
   const factory CreatePrFailure.permissionDenied() = CreatePrPermissionDenied;
   const factory CreatePrFailure.unknown(Object error) = CreatePrUnknownError;
+
+  /// Raised by [CreatePrActions.loadContent] when branch listing or AI content
+  /// generation cannot be completed. Carries a pre-formatted, user-facing
+  /// message so the dialog can display it without re-translating the
+  /// underlying failure type.
+  const factory CreatePrFailure.loadContentFailed(String message) = CreatePrLoadContentFailed;
 }
