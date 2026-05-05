@@ -44,9 +44,10 @@ StatusBarState statusBarState(Ref ref) {
   final changeCount = activeSessionId != null ? (allChanges[activeSessionId]?.length ?? 0) : 0;
 
   // Use worktree override for the active session if set, else the stored path.
+  // Requires an active session — no session means no git state and no branch picker.
   final worktreeOverrides = ref.watch(activeWorktreePathProvider);
-  final effectivePath = activeProject != null
-      ? (activeSessionId != null ? worktreeOverrides[activeSessionId] : null) ?? activeProject.path
+  final effectivePath = activeProject != null && activeSessionId != null
+      ? worktreeOverrides[activeSessionId] ?? activeProject.path
       : null;
   final liveStateAsync = effectivePath != null ? ref.watch(gitLiveStateProvider(effectivePath)) : null;
 
