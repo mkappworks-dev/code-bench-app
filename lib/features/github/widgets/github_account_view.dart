@@ -6,6 +6,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snack_bar.dart';
+import '../../../data/github/models/repository.dart';
 import '../notifiers/github_auth_failure.dart';
 import '../notifiers/github_auth_notifier.dart';
 import 'github_connected_card.dart';

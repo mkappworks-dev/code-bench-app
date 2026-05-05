@@ -4,13 +4,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
+import '../../../data/github/models/app_installation.dart';
 import '../../../data/github/models/device_code_response.dart';
+import '../../../data/github/models/repository.dart';
 import '../../../services/github/github_service.dart';
 import 'github_auth_failure.dart';
-
-// Re-exports so widgets only need to import this one notifier file.
-export '../../../data/github/models/repository.dart' show GitHubAccount;
-export '../../../services/github/github_service.dart' show GitHubAppInstallation;
 
 part 'github_auth_notifier.g.dart';
 
@@ -125,7 +123,7 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
       state = result;
       // Without this, githubApiDatasourceProvider keeps its app-start null
       // value and the first API call after sign-in throws StateError.
-      ref.invalidate(githubApiDatasourceProvider);
+      svc.invalidateApiDatasource();
     }
   }
 
@@ -153,8 +151,8 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
   // keychain delete would leave the token on disk with the UI showing signed-out.
   Future<void> signOut() async {
     state = const AsyncLoading();
+    final svc = await ref.read(githubServiceProvider.future);
     state = await AsyncValue.guard(() async {
-      final svc = await ref.read(githubServiceProvider.future);
       await svc.signOut();
       return null;
     });
@@ -162,7 +160,7 @@ class GitHubAuthNotifier extends _$GitHubAuthNotifier {
     // through repo → service → auth notifier and would otherwise rebuild
     // build() before the guard's success value lands on state.
     if (!state.hasError) {
-      ref.invalidate(githubApiDatasourceProvider);
+      svc.invalidateApiDatasource();
     }
   }
 }

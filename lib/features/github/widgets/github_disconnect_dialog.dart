@@ -10,6 +10,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../data/github/models/app_installation.dart';
 import '../notifiers/github_auth_notifier.dart';
 
 class GitHubDisconnectDialog extends ConsumerStatefulWidget {

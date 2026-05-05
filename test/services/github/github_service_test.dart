@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/data/github/models/repository.dart';
 import 'package:code_bench_app/data/github/repository/github_repository.dart';
 import 'package:code_bench_app/services/github/github_service.dart';
 

@@ -7,6 +7,8 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/debug_logger.dart';
+import '../../../data/github/models/app_installation.dart';
+import '../../../data/github/models/repository.dart';
 import '../notifiers/github_auth_notifier.dart';
 
 const String _kInstallAppLabel = 'Install GitHub App ↗';

@@ -70,7 +70,7 @@ final class GitHubAuthNotifierProvider extends $AsyncNotifierProvider<GitHubAuth
   GitHubAuthNotifier create() => GitHubAuthNotifier();
 }
 
-String _$gitHubAuthNotifierHash() => r'f9321346585b8b6b36620bdd9260b7f897059e5a';
+String _$gitHubAuthNotifierHash() => r'359f293b3ff341622b8e3d94c9623515dacccc73';
 
 abstract class _$GitHubAuthNotifier extends $AsyncNotifier<GitHubAccount?> {
   FutureOr<GitHubAccount?> build();

@@ -1,21 +1,18 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../data/github/datasource/github_api_datasource_dio.dart';
 import '../../data/github/models/app_installation.dart';
 import '../../data/github/models/device_code_response.dart';
+import '../../data/github/models/repository.dart';
 import '../../data/github/repository/github_repository.dart';
 import '../../data/github/repository/github_repository_impl.dart';
-import '../../data/github/models/repository.dart';
-
-export '../../data/github/datasource/github_api_datasource_dio.dart' show githubApiDatasourceProvider;
-export '../../data/github/models/app_installation.dart' show GitHubAppInstallation;
-export '../../data/github/models/repository.dart' show GitHubAccount, GitTreeItem, Repository;
 
 part 'github_service.g.dart';
 
 @Riverpod(keepAlive: true)
 Future<GitHubService> githubService(Ref ref) async {
   final repo = await ref.watch(githubRepositoryProvider.future);
-  return GitHubService(repo: repo);
+  return GitHubService(repo: repo, invalidateApiDatasource: () => ref.invalidate(githubApiDatasourceProvider));
 }
 
 /// Thin delegation service for GitHub operations.
@@ -23,9 +20,20 @@ Future<GitHubService> githubService(Ref ref) async {
 /// All GitHub business logic that requires composition lives here.
 /// [GitHubRepository] retains the primitives.
 class GitHubService {
-  GitHubService({required GitHubRepository repo}) : _repo = repo;
+  GitHubService({required GitHubRepository repo, void Function()? invalidateApiDatasource})
+    : _repo = repo,
+      _invalidateApiDatasource = invalidateApiDatasource;
 
   final GitHubRepository _repo;
+  final void Function()? _invalidateApiDatasource;
+
+  /// Forces the underlying API datasource provider to rebuild — picks up
+  /// the new token after sign-in, or drops the dangling Dio instance after
+  /// sign-out. The cascade through repo → service → auth notifier then
+  /// flips the UI without any cross-layer import. Notifiers call this
+  /// instead of reaching past the service to invalidate the datasource
+  /// provider directly.
+  void invalidateApiDatasource() => _invalidateApiDatasource?.call();
 
   Future<DeviceCodeResponse> requestDeviceCode() => _repo.requestDeviceCode();
   Future<GitHubAccount?> pollForUserToken(
