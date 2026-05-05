@@ -8,29 +8,11 @@ part of 'action_output_notifier.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Notifier that runs a user-defined [ProjectAction] as a subprocess and
-/// streams its stdout/stderr lines into [ActionOutputState].
-///
-/// Lives in `lib/shell/notifiers/` because [ActionOutputPanel] (the widget
-/// that displays it) is a shell-level widget. Process lifecycle is owned by
-/// [ActionRunnerService] — widgets only call [run] and [clear].
 
 @ProviderFor(ActionOutputNotifier)
 final actionOutputProvider = ActionOutputNotifierProvider._();
 
-/// Notifier that runs a user-defined [ProjectAction] as a subprocess and
-/// streams its stdout/stderr lines into [ActionOutputState].
-///
-/// Lives in `lib/shell/notifiers/` because [ActionOutputPanel] (the widget
-/// that displays it) is a shell-level widget. Process lifecycle is owned by
-/// [ActionRunnerService] — widgets only call [run] and [clear].
 final class ActionOutputNotifierProvider extends $NotifierProvider<ActionOutputNotifier, ActionOutputState> {
-  /// Notifier that runs a user-defined [ProjectAction] as a subprocess and
-  /// streams its stdout/stderr lines into [ActionOutputState].
-  ///
-  /// Lives in `lib/shell/notifiers/` because [ActionOutputPanel] (the widget
-  /// that displays it) is a shell-level widget. Process lifecycle is owned by
-  /// [ActionRunnerService] — widgets only call [run] and [clear].
   ActionOutputNotifierProvider._()
     : super(
         from: null,
@@ -55,14 +37,7 @@ final class ActionOutputNotifierProvider extends $NotifierProvider<ActionOutputN
   }
 }
 
-String _$actionOutputNotifierHash() => r'6053dac27fd2ca9ffb51fb91dc4cbe1bb9d07c4b';
-
-/// Notifier that runs a user-defined [ProjectAction] as a subprocess and
-/// streams its stdout/stderr lines into [ActionOutputState].
-///
-/// Lives in `lib/shell/notifiers/` because [ActionOutputPanel] (the widget
-/// that displays it) is a shell-level widget. Process lifecycle is owned by
-/// [ActionRunnerService] — widgets only call [run] and [clear].
+String _$actionOutputNotifierHash() => r'c6e3530ea0ce274624c34620e6f45d662eb5c6cc';
 
 abstract class _$ActionOutputNotifier extends $Notifier<ActionOutputState> {
   ActionOutputState build();

@@ -76,7 +76,11 @@ class ActionOutputNotifier extends _$ActionOutputNotifier {
     } catch (e) {
       _currentRun = null;
       dLog('[ActionOutputNotifier] run failed unexpectedly: $e');
-      state = state.copyWith(status: ActionStatus.failed, lines: [...state.lines, 'Action failed unexpectedly.'], exitCode: -1);
+      state = state.copyWith(
+        status: ActionStatus.failed,
+        lines: [...state.lines, 'Action failed unexpectedly.'],
+        exitCode: -1,
+      );
     }
   }
 }
