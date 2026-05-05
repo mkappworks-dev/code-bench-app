@@ -88,7 +88,7 @@ class GitActions extends _$GitActions {
         try {
           await _git().pushToRemote(projectPath, remote.name);
           pushed.add(remote.name);
-        } on Exception catch (e) {
+        } catch (e) {
           dLog('[GitActions] pushToRemote(${remote.name}) failed: ${e.runtimeType}');
           failed.add(remote.name);
         }
