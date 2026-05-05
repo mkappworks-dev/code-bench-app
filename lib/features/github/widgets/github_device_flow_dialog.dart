@@ -40,6 +40,12 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
   String? _error;
   // Stashed verification URL shown as a fallback when browser launch fails.
   String? _launchFailedUri;
+  // Guard against the cascade rebuild of gitHubAuthProvider (triggered by
+  // ref.invalidate(githubApiDatasourceProvider) after Device Flow completes)
+  // firing a second AsyncData(account) while the dialog route is still in its
+  // exit animation. Without this, the second fire would call Navigator.pop()
+  // on an already-popping route, causing the !_debugLocked assertion.
+  bool _dismissed = false;
 
   @override
   void initState() {
@@ -104,7 +110,10 @@ class _GitHubDeviceFlowDialogState extends ConsumerState<GitHubDeviceFlowDialog>
   Widget build(BuildContext context) {
     ref.listen(gitHubAuthProvider, (previous, next) {
       next.whenData((account) {
-        if (account != null && mounted) Navigator.of(context).pop();
+        if (account != null && mounted && !_dismissed) {
+          _dismissed = true;
+          Navigator.of(context).pop();
+        }
       });
       if (next.hasError && mounted) {
         setState(() => _error = userMessage(next.error!));

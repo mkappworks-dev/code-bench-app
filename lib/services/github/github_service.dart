@@ -1,10 +1,13 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../data/github/models/app_installation.dart';
 import '../../data/github/models/device_code_response.dart';
 import '../../data/github/repository/github_repository.dart';
 import '../../data/github/repository/github_repository_impl.dart';
 import '../../data/github/models/repository.dart';
 
+export '../../data/github/datasource/github_api_datasource_dio.dart' show githubApiDatasourceProvider;
+export '../../data/github/models/app_installation.dart' show GitHubAppInstallation;
 export '../../data/github/models/repository.dart' show GitHubAccount, GitTreeItem, Repository;
 
 part 'github_service.g.dart';
@@ -52,6 +55,7 @@ class GitHubService {
   Future<void> approvePullRequest(String owner, String repo, int number) =>
       _repo.approvePullRequest(owner, repo, number);
   Future<void> mergePullRequest(String owner, String repo, int number) => _repo.mergePullRequest(owner, repo, number);
+  Future<List<GitHubAppInstallation>> getInstallations() => _repo.getInstallations();
   Future<String> createPullRequest({
     required String owner,
     required String repo,

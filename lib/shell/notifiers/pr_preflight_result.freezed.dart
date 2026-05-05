@@ -119,11 +119,11 @@ return failed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String title,  String body,  List<String> branches,  String owner,  String repo,  String currentBranch)?  ready,TResult Function( String message)?  failed,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String title,  String body,  List<String> branches,  String owner,  String repo,  String currentBranch)?  ready,TResult Function( String message,  String? actionUrl,  String? actionLabel)?  failed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case PrPreflightReady() when ready != null:
 return ready(_that.title,_that.body,_that.branches,_that.owner,_that.repo,_that.currentBranch);case PrPreflightFailed() when failed != null:
-return failed(_that.message);case _:
+return failed(_that.message,_that.actionUrl,_that.actionLabel);case _:
   return orElse();
 
 }
@@ -141,11 +141,11 @@ return failed(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String title,  String body,  List<String> branches,  String owner,  String repo,  String currentBranch)  ready,required TResult Function( String message)  failed,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String title,  String body,  List<String> branches,  String owner,  String repo,  String currentBranch)  ready,required TResult Function( String message,  String? actionUrl,  String? actionLabel)  failed,}) {final _that = this;
 switch (_that) {
 case PrPreflightReady():
 return ready(_that.title,_that.body,_that.branches,_that.owner,_that.repo,_that.currentBranch);case PrPreflightFailed():
-return failed(_that.message);}
+return failed(_that.message,_that.actionUrl,_that.actionLabel);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -159,11 +159,11 @@ return failed(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String title,  String body,  List<String> branches,  String owner,  String repo,  String currentBranch)?  ready,TResult? Function( String message)?  failed,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String title,  String body,  List<String> branches,  String owner,  String repo,  String currentBranch)?  ready,TResult? Function( String message,  String? actionUrl,  String? actionLabel)?  failed,}) {final _that = this;
 switch (_that) {
 case PrPreflightReady() when ready != null:
 return ready(_that.title,_that.body,_that.branches,_that.owner,_that.repo,_that.currentBranch);case PrPreflightFailed() when failed != null:
-return failed(_that.message);case _:
+return failed(_that.message,_that.actionUrl,_that.actionLabel);case _:
   return null;
 
 }
@@ -257,10 +257,12 @@ as String,
 
 
 class PrPreflightFailed implements PrPreflightResult {
-  const PrPreflightFailed(this.message);
+  const PrPreflightFailed(this.message, {this.actionUrl, this.actionLabel});
   
 
  final  String message;
+ final  String? actionUrl;
+ final  String? actionLabel;
 
 /// Create a copy of PrPreflightResult
 /// with the given fields replaced by the non-null parameter values.
@@ -272,16 +274,16 @@ $PrPreflightFailedCopyWith<PrPreflightFailed> get copyWith => _$PrPreflightFaile
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PrPreflightFailed&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PrPreflightFailed&&(identical(other.message, message) || other.message == message)&&(identical(other.actionUrl, actionUrl) || other.actionUrl == actionUrl)&&(identical(other.actionLabel, actionLabel) || other.actionLabel == actionLabel));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message);
+int get hashCode => Object.hash(runtimeType,message,actionUrl,actionLabel);
 
 @override
 String toString() {
-  return 'PrPreflightResult.failed(message: $message)';
+  return 'PrPreflightResult.failed(message: $message, actionUrl: $actionUrl, actionLabel: $actionLabel)';
 }
 
 
@@ -292,7 +294,7 @@ abstract mixin class $PrPreflightFailedCopyWith<$Res> implements $PrPreflightRes
   factory $PrPreflightFailedCopyWith(PrPreflightFailed value, $Res Function(PrPreflightFailed) _then) = _$PrPreflightFailedCopyWithImpl;
 @useResult
 $Res call({
- String message
+ String message, String? actionUrl, String? actionLabel
 });
 
 
@@ -309,10 +311,12 @@ class _$PrPreflightFailedCopyWithImpl<$Res>
 
 /// Create a copy of PrPreflightResult
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? message = null,Object? actionUrl = freezed,Object? actionLabel = freezed,}) {
   return _then(PrPreflightFailed(
 null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String,
+as String,actionUrl: freezed == actionUrl ? _self.actionUrl : actionUrl // ignore: cast_nullable_to_non_nullable
+as String?,actionLabel: freezed == actionLabel ? _self.actionLabel : actionLabel // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

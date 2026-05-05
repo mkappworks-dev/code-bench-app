@@ -6,6 +6,7 @@ import '../../data/providers/repository/credentials_repository.dart';
 import '../../data/providers/repository/credentials_repository_impl.dart';
 import '../../data/providers/repository/provider_prefs_repository.dart';
 import '../../data/providers/repository/provider_prefs_repository_impl.dart';
+import '../../data/shared/ai_model.dart';
 
 part 'providers_service.g.dart';
 
@@ -63,6 +64,21 @@ class ProvidersService {
   Future<String?> readOpenaiTransport() => _prefs.readOpenaiTransport();
   Future<void> writeOpenaiTransport(String value) => _prefs.writeOpenaiTransport(value);
   Future<void> deleteOpenaiTransport() => _prefs.deleteOpenaiTransport();
+
+  // ── Capability check ────────────────────────────────────────────────
+
+  /// Returns true when [provider] has the credentials it needs for an HTTP
+  /// AI call. Mirrors the fallback in `aiRepositoryProvider` so a Provider
+  /// that "would build successfully with defaults" reports as configured.
+  Future<bool> hasCredentialsFor(AIProvider provider) async {
+    return switch (provider) {
+      AIProvider.anthropic ||
+      AIProvider.openai ||
+      AIProvider.gemini => (await readApiKey(provider.name) ?? '').isNotEmpty,
+      AIProvider.ollama => (await readOllamaUrl() ?? 'http://localhost:11434').isNotEmpty,
+      AIProvider.custom => (await readCustomEndpoint() ?? '').isNotEmpty,
+    };
+  }
 
   // ── Cross-cutting wipe ───────────────────────────────────────────────
 

@@ -9,6 +9,7 @@ import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/_core/secure_storage.dart';
+import '../models/app_installation.dart';
 import '../models/repository.dart';
 import 'github_api_datasource.dart';
 
@@ -282,6 +283,26 @@ class GitHubApiDatasourceDio implements GitHubApiDatasource {
       await _dio.put('/repos/$owner/$repo/pulls/$number/merge');
     } on DioException catch (e) {
       throw NetworkException('Failed to merge PR', statusCode: e.response?.statusCode, originalError: e);
+    }
+  }
+
+  @override
+  Future<List<GitHubAppInstallation>> getInstallations() async {
+    try {
+      final response = await _dio.get('/user/installations', queryParameters: {'per_page': 100});
+      final data = response.data as Map<String, dynamic>;
+      final items = (data['installations'] as List?) ?? [];
+      return items.map((item) {
+        final i = item as Map<String, dynamic>;
+        final account = i['account'] as Map<String, dynamic>? ?? {};
+        return GitHubAppInstallation(
+          id: i['id'] as int,
+          accountLogin: account['login'] as String? ?? '',
+          isOrg: (account['type'] as String?)?.toLowerCase() == 'organization',
+        );
+      }).toList();
+    } on DioException catch (e) {
+      throw NetworkException('Failed to get app installations', statusCode: e.response?.statusCode, originalError: e);
     }
   }
 

@@ -1,3 +1,4 @@
+import '../models/app_installation.dart';
 import '../models/repository.dart';
 
 abstract interface class GitHubApiDatasource {
@@ -38,4 +39,9 @@ abstract interface class GitHubApiDatasource {
     required String base,
     bool draft = false,
   });
+
+  /// Returns all installations of this GitHub App that the authenticated user
+  /// can access. Uses `GET /user/installations` which is scoped to the current
+  /// App's token. An empty list means the App has not been installed anywhere.
+  Future<List<GitHubAppInstallation>> getInstallations();
 }

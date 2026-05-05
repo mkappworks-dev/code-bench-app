@@ -16,5 +16,8 @@ sealed class PrPreflightResult with _$PrPreflightResult {
     required String currentBranch,
   }) = PrPreflightReady;
 
-  const factory PrPreflightResult.failed(String message) = PrPreflightFailed;
+  /// [actionUrl] / [actionLabel] are surfaced as a snackbar action button —
+  /// e.g. "Install" linking to the GitHub App installation page when the
+  /// preflight detects the App is not installed on the target repo.
+  const factory PrPreflightResult.failed(String message, {String? actionUrl, String? actionLabel}) = PrPreflightFailed;
 }

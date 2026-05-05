@@ -140,10 +140,17 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
 
   Future<void> _showCreatePrDialog() async {
     if (!ensureProjectAvailable(context, ref, widget.project.id, widget.project.path)) return;
-    final preflight = await ref.read(commitMessageActionsProvider.notifier).preparePr(widget.project.path);
+    final preflight = await ref.read(createPrActionsProvider.notifier).preparePr(widget.project.path);
     switch (preflight) {
-      case PrPreflightFailed(:final message):
-        _snack(message);
+      case PrPreflightFailed(:final message, :final actionUrl, :final actionLabel):
+        _snack(
+          message,
+          duration: const Duration(seconds: 8),
+          actionLabel: actionLabel,
+          onAction: actionUrl == null
+              ? null
+              : () => unawaited(launchUrl(Uri.parse(actionUrl), mode: LaunchMode.externalApplication)),
+        );
         return;
       case PrPreflightReady(
         :final title,
@@ -207,7 +214,6 @@ class _CommitPushButtonState extends ConsumerState<CommitPushButton> {
       if (failure is! CommitMessageFailure) return;
       final msg = switch (failure) {
         CommitMessageUnavailable() => 'AI commit message unavailable — using default.',
-        PrContentUnavailable() => 'AI title/body unavailable — using a default. Check your model provider.',
         CommitMessageUnknown() => 'AI unavailable — using a default. Check your API key and model provider.',
       };
       AppSnackBar.show(context, msg, type: AppSnackBarType.warning);

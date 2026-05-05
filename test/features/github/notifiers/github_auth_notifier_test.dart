@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/github/models/device_code_response.dart';
 import 'package:code_bench_app/data/github/repository/github_repository.dart';
 import 'package:code_bench_app/data/github/repository/github_repository_impl.dart';
-import 'package:code_bench_app/data/github/models/repository.dart';
 import 'package:code_bench_app/features/github/notifiers/github_auth_failure.dart';
 import 'package:code_bench_app/features/github/notifiers/github_auth_notifier.dart';
 

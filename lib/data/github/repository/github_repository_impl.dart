@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../models/app_installation.dart';
 import '../models/device_code_response.dart';
 import '../models/repository.dart';
 import '../datasource/github_api_datasource.dart';
@@ -117,4 +118,7 @@ class GitHubRepositoryImpl implements GitHubRepository {
     base: base,
     draft: draft,
   );
+
+  @override
+  Future<List<GitHubAppInstallation>> getInstallations() => _requireApi.getInstallations();
 }

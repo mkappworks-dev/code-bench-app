@@ -1,3 +1,4 @@
+import '../models/app_installation.dart';
 import '../models/device_code_response.dart';
 import '../models/repository.dart';
 
@@ -61,4 +62,8 @@ abstract interface class GitHubRepository {
     required String base,
     bool draft = false,
   });
+
+  /// Returns all installations of this GitHub App accessible to the
+  /// authenticated user. See [GitHubApiDatasource.getInstallations].
+  Future<List<GitHubAppInstallation>> getInstallations();
 }
