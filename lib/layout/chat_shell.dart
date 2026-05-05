@@ -32,7 +32,8 @@ class ChatShell extends ConsumerWidget {
           .read(projectSidebarActionsProvider.notifier)
           .createSession(model: model, projectId: projectId);
     } catch (_) {
-      if (context.mounted) AppSnackBar.show(context, 'Failed to create conversation — please try again.', type: AppSnackBarType.error);
+      if (context.mounted)
+        AppSnackBar.show(context, 'Failed to create conversation — please try again.', type: AppSnackBarType.error);
       return;
     }
     ref.read(activeSessionIdProvider.notifier).set(sessionId);
