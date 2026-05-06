@@ -1465,13 +1465,53 @@ ProviderCapabilities capabilitiesFor(AIModel model) => const ProviderCapabilitie
 );
 ```
 
-- [ ] **Step 2: Format + analyze + commit**
+- [ ] **Step 2: Retry-without-effort on 400 if the endpoint rejects `reasoning_effort`**
+
+Some self-hosted OpenAI-compatible endpoints (vLLM, llama.cpp, LiteLLM in strict mode) reject unknown JSON keys with a 400. Without protection, **this PR would regress those users**: their previously-working sessions would start failing the moment effort flowed through.
+
+Wrap the request in a try/catch that detects this specific 400 and retries without the field:
+
+```dart
+Stream<String> streamMessage(...) async* {
+  final body = buildCustomRequestBody(model: model, messages: messages, settings: settings);
+  yield* _attemptStream(body, settings: settings, model: model, messages: messages);
+}
+
+Stream<String> _attemptStream(
+  Map<String, dynamic> body, {
+  required ProviderTurnSettings? settings,
+  required AIModel model,
+  required List<Map<String, String>> messages,
+}) async* {
+  try {
+    final response = await _dio.post(...);
+    // existing yield-loop body
+  } on DioException catch (e) {
+    final status = e.response?.statusCode;
+    final bodyText = e.response?.data?.toString() ?? '';
+    final mentionsEffort = status == 400 && bodyText.contains('reasoning_effort');
+    if (mentionsEffort && body.containsKey('reasoning_effort')) {
+      sLog('[CustomRemoteDatasource] endpoint rejected reasoning_effort; retrying without it');
+      final fallback = Map<String, dynamic>.from(body)..remove('reasoning_effort');
+      yield* _attemptStream(fallback, settings: settings, model: model, messages: messages);
+      return;
+    }
+    rethrow;
+  }
+}
+```
+
+The `sLog` (release-build-surviving) makes the silent degradation visible in support logs. The retry happens at most once because the second invocation has `body.containsKey('reasoning_effort')` false.
+
+Hoist `buildCustomRequestBody` as a `@visibleForTesting` helper so the body shape is testable.
+
+- [ ] **Step 3: Format + analyze + commit**
 
 ```bash
 dart format lib/data/ai/datasource/custom_remote_datasource_dio.dart
 flutter analyze lib/data/ai/datasource/ 2>&1 | tail -5
 git add lib/data/ai/datasource/custom_remote_datasource_dio.dart
-git commit -m "feat(custom-api): add reasoning_effort + capabilities surface"
+git commit -m "feat(custom-api): add reasoning_effort with rejection-retry + capabilities surface"
 ```
 
 ---
@@ -1810,6 +1850,10 @@ final caps = ref.watch(chatInputBarOptionsProvider(widget.sessionId));
 Wrap each existing dropdown:
 
 ```dart
+// Model picker — visible only when the provider supports model override.
+// (Every current provider returns true; the gate exists for future fixed-model bots.)
+if (caps?.supportsModelOverride == true) _ModelPicker(...),
+
 // Mode dropdown — render only when more than one mode supported
 if ((caps?.supportedModes ?? const <ChatMode>{}).length > 1)
   _ModeDropdown(supported: caps!.supportedModes, ...),
