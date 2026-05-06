@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.8.0...v0.9.0) (2026-05-06)
+
+
+### Features
+
+* **UI:** session UX improvements + layout refactor ([#81](https://github.com/mkappworks-dev/code-bench-app/issues/81)) ([1fcb5da](https://github.com/mkappworks-dev/code-bench-app/commit/1fcb5da2875ba01f392045159d2fbf3ab0e9dba7))
+
 ## [0.8.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.7.2...v0.8.0) (2026-05-05)
 
 
