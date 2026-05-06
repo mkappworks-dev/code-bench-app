@@ -63,7 +63,7 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
     supportsModelOverride: true,
     supportsSystemPrompt: true,
     supportedModes: const {ChatMode.chat},
-    supportedEfforts: isAnthropicAdaptiveOnly(model.modelId)
+    supportedEfforts: AIModels.isAnthropicAdaptiveOnly(model.modelId)
         ? const <ChatEffort>{}
         : const {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
     supportedPermissions: const <ChatPermission>{},

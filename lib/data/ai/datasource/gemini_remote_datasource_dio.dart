@@ -33,8 +33,8 @@ Map<String, dynamic> buildGeminiRequestBody({
         ],
       },
   };
-  if (settings?.effort != null && supportsGeminiThinking(model.modelId)) {
-    final thinkingConfig = isGemini3(model.modelId)
+  if (settings?.effort != null && AIModels.supportsGeminiThinking(model.modelId)) {
+    final thinkingConfig = AIModels.isGemini3(model.modelId)
         ? {'thinkingLevel': mapGeminiThinkingLevel(settings!.effort!)}
         : {'thinkingBudget': mapGeminiThinkingBudget(settings!.effort!)};
     body['generationConfig'] = {'thinkingConfig': thinkingConfig};
@@ -58,7 +58,7 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     supportsModelOverride: true,
     supportsSystemPrompt: true,
     supportedModes: const {ChatMode.chat},
-    supportedEfforts: supportsGeminiThinking(model.modelId)
+    supportedEfforts: AIModels.supportsGeminiThinking(model.modelId)
         ? const {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max}
         : const <ChatEffort>{},
     supportedPermissions: const <ChatPermission>{},

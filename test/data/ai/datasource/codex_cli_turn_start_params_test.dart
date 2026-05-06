@@ -1,4 +1,5 @@
 import 'package:code_bench_app/data/ai/datasource/codex_cli_datasource_process.dart';
+import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -49,16 +50,16 @@ void main() {
       expect(params.containsKey('model'), isFalse);
     });
 
-    test('isCodexCompatibleModel allowlist', () {
-      expect(isCodexCompatibleModel('gpt-5-codex'), isTrue);
-      expect(isCodexCompatibleModel('gpt-5'), isTrue);
-      expect(isCodexCompatibleModel('o1'), isTrue);
-      expect(isCodexCompatibleModel('o3-mini'), isTrue);
-      expect(isCodexCompatibleModel('o4-mini'), isTrue);
-      expect(isCodexCompatibleModel('codex-mini'), isTrue);
-      expect(isCodexCompatibleModel('gpt-4o'), isFalse);
-      expect(isCodexCompatibleModel('gpt-4o-mini'), isFalse);
-      expect(isCodexCompatibleModel('claude-3-5-sonnet'), isFalse);
+    test('AIModels.isCodexCompatibleModel allowlist', () {
+      expect(AIModels.isCodexCompatibleModel('gpt-5-codex'), isTrue);
+      expect(AIModels.isCodexCompatibleModel('gpt-5'), isTrue);
+      expect(AIModels.isCodexCompatibleModel('o1'), isTrue);
+      expect(AIModels.isCodexCompatibleModel('o3-mini'), isTrue);
+      expect(AIModels.isCodexCompatibleModel('o4-mini'), isTrue);
+      expect(AIModels.isCodexCompatibleModel('codex-mini'), isTrue);
+      expect(AIModels.isCodexCompatibleModel('gpt-4o'), isFalse);
+      expect(AIModels.isCodexCompatibleModel('gpt-4o-mini'), isFalse);
+      expect(AIModels.isCodexCompatibleModel('claude-3-5-sonnet'), isFalse);
     });
 
     test('includes effort when provided', () {

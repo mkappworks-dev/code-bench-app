@@ -44,20 +44,6 @@ AuthStatus parseCodexAuthOutput(int exitCode, String output) {
   return const AuthStatus.unknown();
 }
 
-/// Codex (with a ChatGPT account) only accepts a narrow set of model ids on
-/// `turn/start`. Forwarding e.g. `gpt-4o` returns a 400 with
-/// `"The 'gpt-4o' model is not supported when using Codex with a ChatGPT account."`,
-/// so we omit `model` for picks outside the allowlist and let Codex pick its
-/// own default (typically `gpt-5-codex`).
-@visibleForTesting
-bool isCodexCompatibleModel(String modelId) {
-  return modelId.startsWith('gpt-5') ||
-      modelId.startsWith('codex') ||
-      modelId.startsWith('o1') ||
-      modelId.startsWith('o3') ||
-      modelId.startsWith('o4-mini');
-}
-
 @visibleForTesting
 Map<String, dynamic> buildCodexTurnStartParams(
   String threadId,
@@ -66,7 +52,11 @@ Map<String, dynamic> buildCodexTurnStartParams(
   ChatEffort? effort,
   ChatPermission? permission,
 }) {
-  final effectiveModelId = (modelId != null && isCodexCompatibleModel(modelId)) ? modelId : null;
+  // Codex (with a ChatGPT account) only accepts a narrow set of model ids on
+  // `turn/start`; forwarding e.g. `gpt-4o` returns a 400 with
+  // `"The 'gpt-4o' model is not supported when using Codex with a ChatGPT
+  // account."`. The allowlist lives on `AIModels.isCodexCompatibleModel`.
+  final effectiveModelId = (modelId != null && AIModels.isCodexCompatibleModel(modelId)) ? modelId : null;
   return {
     'threadId': threadId,
     'input': [

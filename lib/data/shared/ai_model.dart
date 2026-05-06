@@ -177,5 +177,62 @@ class AIModels {
     gemini20Flash,
   ];
 
+  // -- Model-id predicates --
+  //
+  // Each predicate answers a different "what category is this id?" question.
+  // They are deliberately not collapsed into one predicate because the
+  // categories overlap but aren't identical:
+  //   chat           ⊃  reasoning
+  //   reasoning      ∩  codex-compatible
+  //   adaptive-only  ⊂  anthropic
+  //
+  // Mappers in `data/ai/util/setting_mappers.dart` consume these predicates;
+  // datasources gate capabilities on them. Adding a new family means
+  // updating the prefix list here once, not threading the change through
+  // three files.
+
+  /// OpenAI chat-capable model families. Used by `fetchAvailableModels`
+  /// to filter `/v1/models` (which also returns audio/embedding/image
+  /// /moderation models that share the endpoint).
+  static const openAiChatModelPrefixes = <String>['gpt-', 'o1', 'o3', 'o4-mini', 'codex-'];
+
+  /// OpenAI reasoning families that accept the `reasoning_effort` field.
+  /// Subset of [openAiChatModelPrefixes] — `gpt-4o*` is chat but not reasoning.
+  static const openAiReasoningPrefixes = <String>['o1', 'o3', 'o4-mini', 'gpt-5'];
+
+  /// Models accepted by Codex CLI's `turn/start` (with a ChatGPT account).
+  /// Forwarding `gpt-4o` etc. returns a 400 — drop the field for non-matching
+  /// picks and let Codex use its account default.
+  static const codexCompatiblePrefixes = <String>['gpt-5', 'codex', 'o1', 'o3', 'o4-mini'];
+
+  /// Anthropic models that drive thinking adaptively and reject a manual
+  /// `thinking.budget_tokens`. The Anthropic-API mapper returns null for
+  /// these so the field is omitted from the request body.
+  static const anthropicAdaptiveOnlyIds = <String>{'claude-opus-4-7', 'claude-opus-4-7-20251201'};
+
+  /// Returns true when [modelId] looks like an OpenAI chat-capable model.
+  static bool isOpenAiChatModelId(String modelId) => openAiChatModelPrefixes.any(modelId.startsWith);
+
+  /// Returns true when [modelId] is an OpenAI reasoning model that honours
+  /// `reasoning_effort` in the request body.
+  static bool isOpenAiReasoningModel(String modelId) => openAiReasoningPrefixes.any(modelId.startsWith);
+
+  /// Returns true when [modelId] is acceptable as Codex CLI's `model` field
+  /// on `turn/start`.
+  static bool isCodexCompatibleModel(String modelId) => codexCompatiblePrefixes.any(modelId.startsWith);
+
+  /// Returns true when [modelId] is an Anthropic adaptive-only model that
+  /// rejects manual `thinking.budget_tokens`.
+  static bool isAnthropicAdaptiveOnly(String modelId) => anthropicAdaptiveOnlyIds.contains(modelId);
+
+  /// Returns true when [modelId] is in Gemini's v3 family (uses
+  /// `thinkingLevel`, not `thinkingBudget`).
+  static bool isGemini3(String modelId) => modelId.startsWith('gemini-3');
+
+  /// Returns true when [modelId] is a Gemini model that supports thinking
+  /// (2.5 family + 3 family). Pre-2.5 Gemini ignores `generationConfig.thinkingConfig`.
+  static bool supportsGeminiThinking(String modelId) =>
+      modelId.startsWith('gemini-2.5') || modelId.startsWith('gemini-3');
+
   static AIModel? fromId(String modelId) => defaults.firstWhereOrNull((m) => m.modelId == modelId);
 }

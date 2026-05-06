@@ -24,7 +24,7 @@ Map<String, dynamic> buildOpenAiRequestBody({
   ProviderTurnSettings? settings,
 }) {
   final body = <String, dynamic>{'model': model.modelId, 'messages': messages, 'stream': true};
-  if (settings?.effort != null && isOpenAiReasoningModel(model.modelId)) {
+  if (settings?.effort != null && AIModels.isOpenAiReasoningModel(model.modelId)) {
     body['reasoning_effort'] = mapOpenAIReasoningEffort(settings!.effort!);
   }
   return body;
@@ -47,7 +47,7 @@ class OpenAIRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     supportsModelOverride: true,
     supportsSystemPrompt: true,
     supportedModes: const {ChatMode.chat},
-    supportedEfforts: isOpenAiReasoningModel(model.modelId)
+    supportedEfforts: AIModels.isOpenAiReasoningModel(model.modelId)
         ? const {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max}
         : const <ChatEffort>{},
     supportedPermissions: const <ChatPermission>{},
@@ -136,18 +136,12 @@ class OpenAIRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
       );
       final response = await testDio.get(ApiConstants.openAiModelsEndpoint);
       final data = response.data as Map<String, dynamic>;
-      // Allowlist chat-capable model families: gpt-*, o1*, o3*, o4-mini*, codex-*.
-      // Excludes audio/embedding/image/moderation models that share `/v1/models`
-      // (whisper-, tts-, dall-e-, text-embedding-, omni-moderation-).
-      bool isChatModel(String id) =>
-          id.startsWith('gpt-') ||
-          id.startsWith('o1') ||
-          id.startsWith('o3') ||
-          id.startsWith('o4-mini') ||
-          id.startsWith('codex-');
+      // Filter to chat-capable model families. Prefix list lives on
+      // `AIModels.openAiChatModelPrefixes` so it stays adjacent to the
+      // hardcoded OpenAI entries — one place to add new families.
       final models = (data['data'] as List)
           .map((m) => m['id'] as String)
-          .where(isChatModel)
+          .where(AIModels.isOpenAiChatModelId)
           .map((id) => AIModel(id: id, provider: AIProvider.openai, name: id, modelId: id))
           .toList();
       return models;

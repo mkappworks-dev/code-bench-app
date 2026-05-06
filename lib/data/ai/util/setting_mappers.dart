@@ -1,7 +1,11 @@
 import '../../../core/utils/debug_logger.dart';
+import '../../shared/ai_model.dart';
 import '../../shared/session_settings.dart';
 
-const _anthropicAdaptiveOnly = <String>{'claude-opus-4-7', 'claude-opus-4-7-20251201'};
+// Wire-format mappers for per-provider settings. Model-id predicates
+// (`isOpenAiReasoningModel`, `isAnthropicAdaptiveOnly`, etc.) live on
+// `AIModels` so model knowledge stays in one place — this file only
+// translates app-side enums to provider-side values.
 
 String mapClaudeEffort(ChatEffort e) => switch (e) {
   ChatEffort.low => 'low',
@@ -39,7 +43,7 @@ String mapCodexApprovalPolicy(ChatPermission p) => switch (p) {
 };
 
 int? mapAnthropicThinkingBudget(ChatEffort effort, {required int maxTokens, required String modelId}) {
-  if (_anthropicAdaptiveOnly.contains(modelId)) return null;
+  if (AIModels.isAnthropicAdaptiveOnly(modelId)) return null;
   final raw = switch (effort) {
     ChatEffort.low => 2048,
     ChatEffort.medium => 8192,
@@ -54,8 +58,6 @@ int? mapAnthropicThinkingBudget(ChatEffort effort, {required int maxTokens, requ
   return raw;
 }
 
-bool isAnthropicAdaptiveOnly(String modelId) => _anthropicAdaptiveOnly.contains(modelId);
-
 /// OpenAI's `reasoning_effort` accepts only `minimal|low|medium|high`.
 /// `ChatEffort.max` is clamped to `high` rather than emitted as `xhigh` (which
 /// would 400 on o1/o3/o4-mini/gpt-5). The custom-endpoint datasource shares
@@ -67,10 +69,6 @@ String mapOpenAIReasoningEffort(ChatEffort e) => switch (e) {
   ChatEffort.high => 'high',
   ChatEffort.max => 'high',
 };
-
-const _openAiReasoningPrefixes = <String>['o1', 'o3', 'o4-mini', 'gpt-5'];
-
-bool isOpenAiReasoningModel(String modelId) => _openAiReasoningPrefixes.any(modelId.startsWith);
 
 int mapGeminiThinkingBudget(ChatEffort e) => switch (e) {
   ChatEffort.low => 2048,
@@ -85,9 +83,5 @@ String mapGeminiThinkingLevel(ChatEffort e) => switch (e) {
   ChatEffort.high => 'high',
   ChatEffort.max => 'high',
 };
-
-bool isGemini3(String modelId) => modelId.startsWith('gemini-3');
-
-bool supportsGeminiThinking(String modelId) => modelId.startsWith('gemini-2.5') || modelId.startsWith('gemini-3');
 
 bool mapOllamaThink(ChatEffort? e) => e != null;

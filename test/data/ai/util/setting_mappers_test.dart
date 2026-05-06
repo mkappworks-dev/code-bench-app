@@ -1,4 +1,5 @@
 import 'package:code_bench_app/data/ai/util/setting_mappers.dart';
+import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -98,10 +99,48 @@ void main() {
       expect(mapGeminiThinkingLevel(ChatEffort.medium), 'medium');
       expect(mapGeminiThinkingLevel(ChatEffort.low), 'low');
     });
-    test('isGemini3 detects v3 family', () {
-      expect(isGemini3('gemini-3-pro'), isTrue);
-      expect(isGemini3('gemini-2.5-flash'), isFalse);
-      expect(isGemini3('gemini-1.5-pro'), isFalse);
+  });
+
+  // Model-id predicates moved to `AIModels` so model knowledge has one home.
+  // Coverage here ensures the wire-format mappers above keep matching the
+  // predicates' categorisation.
+  group('AIModels.isGemini3', () {
+    test('detects v3 family only', () {
+      expect(AIModels.isGemini3('gemini-3-pro'), isTrue);
+      expect(AIModels.isGemini3('gemini-2.5-flash'), isFalse);
+      expect(AIModels.isGemini3('gemini-1.5-pro'), isFalse);
+    });
+  });
+
+  group('AIModels.supportsGeminiThinking', () {
+    test('2.5 + 3 family yes; 1.5 and earlier no', () {
+      expect(AIModels.supportsGeminiThinking('gemini-3-pro'), isTrue);
+      expect(AIModels.supportsGeminiThinking('gemini-2.5-flash'), isTrue);
+      expect(AIModels.supportsGeminiThinking('gemini-2.5-pro'), isTrue);
+      expect(AIModels.supportsGeminiThinking('gemini-2.0-flash'), isFalse);
+      expect(AIModels.supportsGeminiThinking('gemini-1.5-pro'), isFalse);
+    });
+  });
+
+  group('AIModels.isOpenAiReasoningModel', () {
+    test('reasoning families yes; gpt-4o family no', () {
+      expect(AIModels.isOpenAiReasoningModel('o1'), isTrue);
+      expect(AIModels.isOpenAiReasoningModel('o3'), isTrue);
+      expect(AIModels.isOpenAiReasoningModel('o3-mini'), isTrue);
+      expect(AIModels.isOpenAiReasoningModel('o4-mini'), isTrue);
+      expect(AIModels.isOpenAiReasoningModel('gpt-5'), isTrue);
+      expect(AIModels.isOpenAiReasoningModel('gpt-5-codex'), isTrue);
+      expect(AIModels.isOpenAiReasoningModel('gpt-4o'), isFalse);
+      expect(AIModels.isOpenAiReasoningModel('gpt-4o-mini'), isFalse);
+    });
+  });
+
+  group('AIModels.isAnthropicAdaptiveOnly', () {
+    test('Opus 4.7 (and dated build) yes; Sonnet/Haiku no', () {
+      expect(AIModels.isAnthropicAdaptiveOnly('claude-opus-4-7'), isTrue);
+      expect(AIModels.isAnthropicAdaptiveOnly('claude-opus-4-7-20251201'), isTrue);
+      expect(AIModels.isAnthropicAdaptiveOnly('claude-sonnet-4-6'), isFalse);
+      expect(AIModels.isAnthropicAdaptiveOnly('claude-haiku-4-5-20251001'), isFalse);
     });
   });
 
