@@ -91,10 +91,10 @@ const int _consecutiveParseFailureLimit = 5;
 /// `--output-format stream-json` output, normalized to [ProviderRuntimeEvent].
 ///
 /// First turn for a session uses `--session-id <id>`; subsequent turns reuse
-/// the session via `--resume <id>`. The CLI itself runs under
-/// `--permission-mode bypassPermissions` so Code Bench's permission rules do
-/// not gate its tool use — the user is warned via the chat permission card
-/// before delegation begins.
+/// the session via `--resume <id>`. The CLI's `--permission-mode` is derived
+/// from the user's mode/permission picks via `mapClaudePermissionMode` —
+/// `fullAccess` maps to `bypassPermissions`, `readOnly` (or any plan-mode
+/// turn) maps to `plan`, `askBefore` maps to `default`.
 class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   ClaudeCliDatasourceProcess({required this.binaryPath});
 
@@ -402,8 +402,9 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
   @override
   void respondToPermissionRequest(String requestId, {required bool approved}) {
-    // Claude Code CLI runs with --permission-mode bypassPermissions, so it
-    // never sends permission requests back to the host.
+    // Claude Code CLI manages its own permission UI inline; in bypassPermissions
+    // mode it never asks, and in plan/default modes the prompt happens in the
+    // CLI's own terminal flow rather than being forwarded to the host.
   }
 
   @override
