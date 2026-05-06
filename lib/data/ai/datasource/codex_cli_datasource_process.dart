@@ -6,6 +6,9 @@ import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
+import '../../shared/ai_model.dart';
+import '../../shared/session_settings.dart';
+import '../util/setting_mappers.dart';
 import 'ai_provider_datasource.dart';
 import 'binary_resolver_process.dart';
 import 'provider_input_guards.dart';
@@ -42,12 +45,36 @@ AuthStatus parseCodexAuthOutput(int exitCode, String output) {
 }
 
 @visibleForTesting
-Map<String, dynamic> buildCodexTurnStartParams(String threadId, String prompt) {
+Map<String, dynamic> buildCodexTurnStartParams(
+  String threadId,
+  String prompt, {
+  String? modelId,
+  ChatEffort? effort,
+  ChatPermission? permission,
+}) {
   return {
     'threadId': threadId,
     'input': [
       {'type': 'text', 'text': prompt},
     ],
+    'model': ?modelId,
+    if (effort != null) 'effort': mapCodexEffort(effort),
+    if (permission != null) 'sandboxPolicy': mapCodexSandboxPolicy(permission),
+    if (permission != null) 'approvalPolicy': mapCodexApprovalPolicy(permission),
+  };
+}
+
+@visibleForTesting
+Map<String, dynamic> buildCodexThreadStartParams({
+  required String workingDirectory,
+  required String sessionId,
+  String? developerInstructions,
+}) {
+  return {
+    'cwd': workingDirectory,
+    if (sessionId.isNotEmpty) 'resumeThreadId': sessionId,
+    if (developerInstructions != null && developerInstructions.isNotEmpty)
+      'developerInstructions': developerInstructions,
   };
 }
 
@@ -167,22 +194,32 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   }
 
   @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => const ProviderCapabilities(
+    supportsModelOverride: true,
+    supportsSystemPrompt: true,
+    supportedModes: {ChatMode.chat, ChatMode.act},
+    supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
+    supportedPermissions: {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess},
+  );
+
+  @override
   Stream<ProviderRuntimeEvent> sendAndStream({
     required String prompt,
     required String sessionId,
     required String workingDirectory,
+    ProviderTurnSettings? settings,
   }) {
     // Defensive close: a prior turn may have leaked an open controller (e.g.
     // racing cancel + completion). Closing is idempotent.
     _streamController?.close();
     _streamController = StreamController<ProviderRuntimeEvent>.broadcast();
-    _send(prompt, sessionId, workingDirectory);
+    _send(prompt, sessionId, workingDirectory, settings);
     return _streamController!.stream;
   }
 
-  Future<void> _send(String prompt, String sessionId, String workingDirectory) async {
+  Future<void> _send(String prompt, String sessionId, String workingDirectory, ProviderTurnSettings? settings) async {
     try {
-      _streamController?.add(ProviderInit(provider: id));
+      _streamController?.add(ProviderInit(provider: id, modelId: settings?.modelId));
 
       // sessionId guard — Codex uses this value as `resumeThreadId` over
       // JSON-RPC. A non-UUID value could resume a foreign thread or trip
@@ -214,10 +251,10 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
       }
 
       // Start or resume a Codex thread
-      _providerThreadId ??= await _startThread(sessionId, workingDirectory);
+      _providerThreadId ??= await _startThread(sessionId, workingDirectory, settings?.systemPrompt);
 
       // Send the user's turn
-      await _sendTurn(prompt);
+      await _sendTurn(prompt, settings);
 
       // Events stream back via notifications; [_handleNotification] drives
       // the StreamController. We wait here until turn/completed or an error.
@@ -656,12 +693,15 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     _notify('initialized');
   }
 
-  Future<String> _startThread(String sessionId, String workingDirectory) async {
-    final result = await _request('thread/start', {
-      'cwd': workingDirectory,
-      // Use sessionId as a resume cursor if available
-      if (sessionId.isNotEmpty) 'resumeThreadId': sessionId,
-    });
+  Future<String> _startThread(String sessionId, String workingDirectory, String? developerInstructions) async {
+    final result = await _request(
+      'thread/start',
+      buildCodexThreadStartParams(
+        workingDirectory: workingDirectory,
+        sessionId: sessionId,
+        developerInstructions: developerInstructions,
+      ),
+    );
     final threadId = result['thread']?['id'] as String?;
     if (threadId == null) {
       dLog('[CodexCli] thread/start response missing thread.id: $result');
@@ -671,8 +711,17 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     return threadId;
   }
 
-  Future<void> _sendTurn(String prompt) async {
-    await _request('turn/start', buildCodexTurnStartParams(_providerThreadId!, prompt));
+  Future<void> _sendTurn(String prompt, ProviderTurnSettings? settings) async {
+    await _request(
+      'turn/start',
+      buildCodexTurnStartParams(
+        _providerThreadId!,
+        prompt,
+        modelId: settings?.modelId,
+        effort: settings?.effort,
+        permission: settings?.permission,
+      ),
+    );
     dLog('[CodexCli] Turn started');
   }
 
