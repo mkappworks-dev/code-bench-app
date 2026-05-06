@@ -8,41 +8,23 @@ part of 'transport_readiness_notifier.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Derived chat-input readiness for the active model + transport.
-///
-/// CLI transport: composes installed-binary status with auth status. Auth
-/// `unknown` maps to [TransportReadiness.ready] (honest bias — never block on
-/// probe failure; the pre-send fresh probe in [ChatMessagesNotifier] catches
-/// real signed-out cases).
-///
-/// HTTP transport: readiness is fully determined by whether the matching API
-/// key/URL is configured.
+/// CLI auth `unknown` maps to [TransportReadiness.ready] — never block send on
+/// a probe we couldn't run; the fresh pre-send probe in [ChatMessagesNotifier]
+/// catches real signed-out cases.
 
 @ProviderFor(transportReadiness)
 final transportReadinessProvider = TransportReadinessProvider._();
 
-/// Derived chat-input readiness for the active model + transport.
-///
-/// CLI transport: composes installed-binary status with auth status. Auth
-/// `unknown` maps to [TransportReadiness.ready] (honest bias — never block on
-/// probe failure; the pre-send fresh probe in [ChatMessagesNotifier] catches
-/// real signed-out cases).
-///
-/// HTTP transport: readiness is fully determined by whether the matching API
-/// key/URL is configured.
+/// CLI auth `unknown` maps to [TransportReadiness.ready] — never block send on
+/// a probe we couldn't run; the fresh pre-send probe in [ChatMessagesNotifier]
+/// catches real signed-out cases.
 
 final class TransportReadinessProvider
     extends $FunctionalProvider<TransportReadiness, TransportReadiness, TransportReadiness>
     with $Provider<TransportReadiness> {
-  /// Derived chat-input readiness for the active model + transport.
-  ///
-  /// CLI transport: composes installed-binary status with auth status. Auth
-  /// `unknown` maps to [TransportReadiness.ready] (honest bias — never block on
-  /// probe failure; the pre-send fresh probe in [ChatMessagesNotifier] catches
-  /// real signed-out cases).
-  ///
-  /// HTTP transport: readiness is fully determined by whether the matching API
-  /// key/URL is configured.
+  /// CLI auth `unknown` maps to [TransportReadiness.ready] — never block send on
+  /// a probe we couldn't run; the fresh pre-send probe in [ChatMessagesNotifier]
+  /// catches real signed-out cases.
   TransportReadinessProvider._()
     : super(
         from: null,

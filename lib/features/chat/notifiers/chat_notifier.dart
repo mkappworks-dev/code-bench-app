@@ -78,12 +78,20 @@ class SessionPermissionNotifier extends _$SessionPermissionNotifier {
   void set(ChatPermission permission) => state = permission;
 }
 
+const _validTransports = {'api-key', 'cli'};
+
 /// Resolves which `AIProviderDatasource` ID (in `AIProviderService`) should
 /// handle this turn, based on the active model and the persisted per-provider
 /// transport choice. Returns null when the user has selected the API-key
 /// (HTTP) path, which routes through `streamMessage` inside `SessionService`.
 String? _resolveProviderId(AIModel model, ApiKeysNotifierState? prefs) {
   if (prefs == null) return null;
+  if (model.provider == AIProvider.anthropic && !_validTransports.contains(prefs.anthropicTransport)) {
+    dLog('[ChatMessagesNotifier] unrecognised anthropicTransport=${prefs.anthropicTransport} — falling back to HTTP');
+  }
+  if (model.provider == AIProvider.openai && !_validTransports.contains(prefs.openaiTransport)) {
+    dLog('[ChatMessagesNotifier] unrecognised openaiTransport=${prefs.openaiTransport} — falling back to HTTP');
+  }
   return switch ((model.provider, prefs)) {
     (AIProvider.anthropic, ApiKeysNotifierState(anthropicTransport: 'cli')) => 'claude-cli',
     (AIProvider.openai, ApiKeysNotifierState(openaiTransport: 'cli')) => 'codex',
@@ -166,18 +174,16 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     }
 
     // Cached readiness can be stale — re-probe to catch out-of-band sign-outs.
+    // Route through the service so probe failures share the fail-open contract.
     if (providerId != null) {
-      final ds = ref.read(aIProviderServiceProvider.notifier).getProvider(providerId);
-      if (ds != null) {
-        final freshAuth = await ds.verifyAuth();
-        if (freshAuth is AuthUnauthenticated) {
-          state = AsyncData(_preSendMessages);
-          activeMessageIdNotifier.set(null);
-          _sendInProgress = false;
-          return AgentFailure.transportNotReady(
-            TransportReadiness.signedOut(provider: providerId, signInCommand: freshAuth.signInCommand),
-          );
-        }
+      final freshAuth = await ref.read(aIProviderServiceProvider.notifier).getAuthStatus(providerId);
+      if (freshAuth is AuthUnauthenticated) {
+        state = AsyncData(_preSendMessages);
+        activeMessageIdNotifier.set(null);
+        _sendInProgress = false;
+        return AgentFailure.transportNotReady(
+          TransportReadiness.signedOut(provider: providerId, signInCommand: freshAuth.signInCommand),
+        );
       }
     }
 

@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/utils/debug_logger.dart';
 import '../../../data/ai/models/auth_status.dart';
 import '../../../data/chat/models/transport_readiness.dart';
 import '../../../data/shared/ai_model.dart';
@@ -8,6 +9,8 @@ import '../../providers/notifiers/providers_notifier.dart';
 import 'chat_notifier.dart';
 
 part 'transport_readiness_notifier.g.dart';
+
+const _validTransports = {'api-key', 'cli'};
 
 /// CLI auth `unknown` maps to [TransportReadiness.ready] — never block send on
 /// a probe we couldn't run; the fresh pre-send probe in [ChatMessagesNotifier]
@@ -43,6 +46,12 @@ TransportReadiness transportReadiness(Ref ref) {
 }
 
 String? _resolveCliProviderId(AIModel model, ApiKeysNotifierState prefs) {
+  if (model.provider == AIProvider.anthropic && !_validTransports.contains(prefs.anthropicTransport)) {
+    dLog('[transportReadiness] unrecognised anthropicTransport=${prefs.anthropicTransport} — falling back to HTTP');
+  }
+  if (model.provider == AIProvider.openai && !_validTransports.contains(prefs.openaiTransport)) {
+    dLog('[transportReadiness] unrecognised openaiTransport=${prefs.openaiTransport} — falling back to HTTP');
+  }
   return switch ((model.provider, prefs)) {
     (AIProvider.anthropic, ApiKeysNotifierState(anthropicTransport: 'cli')) => 'claude-cli',
     (AIProvider.openai, ApiKeysNotifierState(openaiTransport: 'cli')) => 'codex',

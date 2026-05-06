@@ -49,7 +49,7 @@ class AIProviderService extends _$AIProviderService {
     final DetectionResult result;
     try {
       result = await provider.detect();
-    } on Exception catch (e) {
+    } catch (e) {
       dLog('[AIProviderService] detect($id) threw: $e');
       return ProviderStatus.unavailable(
         reason: 'Detection failed: ${e.runtimeType}',
@@ -73,10 +73,13 @@ class AIProviderService extends _$AIProviderService {
   /// exceptions — send is never blocked on a probe we couldn't run.
   Future<AuthStatus> getAuthStatus(String id) async {
     final provider = state[id];
-    if (provider == null) return const AuthStatus.unknown();
+    if (provider == null) {
+      dLog('[AIProviderService] getAuthStatus: provider $id not registered');
+      return const AuthStatus.unknown();
+    }
     try {
       return await provider.verifyAuth();
-    } on Exception catch (e) {
+    } catch (e) {
       dLog('[AIProviderService] verifyAuth($id) threw: $e');
       return const AuthStatus.unknown();
     }
