@@ -22,7 +22,6 @@ After this change, every option the active provider supports flows through unmod
 - **Routing Anthropic/OpenAI/Gemini/Ollama HTTP providers through the agent loop.** Today only `provider == custom + mode == act + projectPath != null` reaches `AgentService.runAgenticTurn` ([session_service.dart:172](../../../lib/services/session/session_service.dart#L172)). That's the *only* path where our `ToolRegistry` (and therefore the user's denylist + MCP servers) fires. Wiring tool execution into the other HTTP datasources is a separate, larger PR.
 - **Denylist (segment / filename / extension / prefix) propagation to providers.** Stays scoped to `custom + act + projectPath` until the agent-loop refactor lands.
 - **MCP server passthrough.** Our app-configured MCP servers stay scoped to the same `custom + act` path. Anthropic's server-side MCP connector (beta `mcp-client-2025-11-20`) and OpenAI Responses API's remote-MCP feature remain untouched — they're correct candidates for a follow-up but require new datasource code paths.
-- **Gemini 3 thinking.** Gemini 3 replaced `thinkingConfig.thinkingBudget` with `thinkingLevel`. We target the Gemini 2.5 shape only; Gemini 3 effort is dropped silently with a `dLog` until a follow-up.
 - **OpenAI Responses migration.** Sticking with `/v1/chat/completions`.
 - **Auto-detecting model lists from the CLI / API itself.** Model picker still uses the static `AIModels` catalog.
 
@@ -66,9 +65,11 @@ The matrix is grounded in 2025–2026 docs and the schemas captured at design ti
 
 | Provider | Mapping |
 |---|---|
-| Claude CLI | `readOnly`/`askBefore` → `--permission-mode default`; `fullAccess` → `--permission-mode bypassPermissions` |
+| Claude CLI | `readOnly` → `--permission-mode plan` (true read-only enforcement); `askBefore` → `--permission-mode default`; `fullAccess` → `--permission-mode bypassPermissions` |
 | Codex CLI | `sandboxPolicy` (`readOnly`/`workspaceWrite`/`dangerFullAccess`) + `approvalPolicy` (`on-request`/`on-request`/`never`) on `turn/start` |
 | HTTP providers | Out of scope — enforced app-side by the agent loop on `custom + act` only (already implemented) |
+
+**Mode×Permission collision rule for Claude:** if `mode == plan` *or* `permission == readOnly`, both produce `--permission-mode plan`. They're semantically equivalent (read-only execution) so this collapse is intentional. `mode == plan` always wins regardless of permission (planning is the stronger constraint).
 
 ## Architecture
 
@@ -107,7 +108,7 @@ abstract class ProviderTurnSettings with _$ProviderTurnSettings {
 }
 ```
 
-`ChatMode/ChatEffort/ChatPermission` come from `lib/data/session/models/session_settings.dart` — already cross-cutting across `services/`, `features/chat/`, `data/session/`. Letting `data/ai/` import the same is consistent. (A relocation to `data/shared/` is a deferred cleanup.)
+`ChatMode/ChatEffort/ChatPermission` are **relocated in this PR** from `lib/data/session/models/session_settings.dart` to `lib/data/shared/session_settings.dart`. Per [CLAUDE.md](../../../CLAUDE.md): "Cross-cutting types used by two or more domains live in `lib/data/shared/`." These enums are already imported by `features/chat/`, `services/{session,agent,coding_tools}/`, and `data/session/`; adding `data/ai/` as a fourth importer (this PR's plumbing) makes the relocation overdue rather than optional. The file moves verbatim — no API change, just a path change. Every existing import is updated.
 
 ### `ProviderCapabilities` (new — `lib/data/ai/models/provider_capabilities.dart`)
 
@@ -124,66 +125,114 @@ abstract class ProviderCapabilities with _$ProviderCapabilities {
 }
 ```
 
-Exposed via a new `ProviderCapabilities get capabilities` getter on `AIProviderDatasource`. Each datasource owns its own const; the widget reads it through a notifier.
-
-Capability constants per datasource (matrix at the bottom of this section):
+**Model-aware** — each datasource exposes a function, not a const, so capabilities can shrink based on the *picked* model. Two interfaces gain getters:
 
 ```dart
-// claude_cli_datasource_process.dart
-static const _capabilities = ProviderCapabilities(
-  supportsModelOverride: true, supportsSystemPrompt: true,
-  supportedModes: {ChatMode.chat, ChatMode.plan, ChatMode.act},
-  supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
-  supportedPermissions: {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess},
-);
+// AIProviderDatasource (CLI providers)
+ProviderCapabilities capabilitiesFor(AIModel model);
 
-// codex_cli_datasource_process.dart
-static const _capabilities = ProviderCapabilities(
-  supportsModelOverride: true, supportsSystemPrompt: true,
-  supportedModes: {ChatMode.chat, ChatMode.act},
-  supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
-  supportedPermissions: {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess},
-);
+// TextStreamingDatasource (HTTP providers)
+ProviderCapabilities capabilitiesFor(AIModel model);
+```
 
-// anthropic_remote_datasource_dio.dart
-static const _capabilities = ProviderCapabilities(
-  supportsModelOverride: true, supportsSystemPrompt: true,
-  supportedModes: {ChatMode.chat},
-  supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
-  supportedPermissions: {},
-);
+CLI datasources usually return the same capability for any model (the CLI itself accepts every flag for every model it can run). HTTP datasources gate on model id:
 
-// openai_remote_datasource_dio.dart
-static const _capabilities = ProviderCapabilities(
-  supportsModelOverride: true, supportsSystemPrompt: true,
-  supportedModes: {ChatMode.chat},
-  supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
-  supportedPermissions: {},
-);
+- **Anthropic**: effort dropped from `supportedEfforts` when `model.modelId` is on the Opus 4.7+ adaptive-only allowlist (the API 400s on manual `thinking` for those models).
+- **OpenAI**: effort included only when `model.modelId` matches the reasoning-model allowlist (`o1*`, `o3*`, `o4-mini*`, `gpt-5*` family). Non-reasoning models render no effort dropdown.
+- **Gemini**: effort included on Gemini 2.5+ family ids; on Gemini 3 family the implementation switches the request body to `thinkingLevel` (see `mapGeminiThinkingLevel` below); pre-2.5 ids render no effort.
+- **Ollama / Custom**: effort always advertised (single boolean for Ollama; best-effort enum for Custom — endpoint may ignore).
 
-// gemini_remote_datasource_dio.dart
-static const _capabilities = ProviderCapabilities(
-  supportsModelOverride: true, supportsSystemPrompt: true,
-  supportedModes: {ChatMode.chat},
-  supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
-  supportedPermissions: {},
-);
+A separate `defaultCapabilities` const is exposed so the chat-input bar can render "what does this provider support in principle" while a session is being created (no model picked yet). Once a model is picked, the notifier switches to `capabilitiesFor(model)`.
 
-// ollama_remote_datasource_dio.dart
-static const _capabilities = ProviderCapabilities(
-  supportsModelOverride: true, supportsSystemPrompt: true,
-  supportedModes: {ChatMode.chat},
-  supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},  // boolean coercion
-  supportedPermissions: {},
-);
+Implementation per datasource:
 
-// custom_remote_datasource_dio.dart
-static const _capabilities = ProviderCapabilities(
-  supportsModelOverride: true, supportsSystemPrompt: true,
-  supportedModes: {ChatMode.chat, ChatMode.act},  // act runs the agent loop today
-  supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
-  supportedPermissions: {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess},
-);
+```dart
+// CLI providers — capability is model-independent
+class ClaudeCliDatasourceProcess implements AIProviderDatasource {
+  static const _allEfforts = {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max};
+  static const _allPermissions = {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess};
+
+  @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => const ProviderCapabilities(
+    supportsModelOverride: true, supportsSystemPrompt: true,
+    supportedModes: {ChatMode.chat, ChatMode.plan, ChatMode.act},
+    supportedEfforts: _allEfforts,
+    supportedPermissions: _allPermissions,
+  );
+}
+
+class CodexCliDatasourceProcess implements AIProviderDatasource {
+  @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => const ProviderCapabilities(
+    supportsModelOverride: true, supportsSystemPrompt: true,
+    supportedModes: {ChatMode.chat, ChatMode.act},  // no `plan` equivalent
+    supportedEfforts: _allEfforts,
+    supportedPermissions: _allPermissions,
+  );
+}
+
+// HTTP providers — capability is model-aware
+class AnthropicRemoteDatasourceDio implements TextStreamingDatasource {
+  static const _adaptiveOnly = {'claude-opus-4-7', 'claude-opus-4-7-20251201'};
+  @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => ProviderCapabilities(
+    supportsModelOverride: true, supportsSystemPrompt: true,
+    supportedModes: const {ChatMode.chat},
+    supportedEfforts: _adaptiveOnly.contains(model.modelId)
+        ? const {}
+        : const {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
+    supportedPermissions: const {},
+  );
+}
+
+class OpenAIRemoteDatasourceDio implements TextStreamingDatasource {
+  static const _reasoningPrefixes = ['o1', 'o3', 'o4-mini', 'gpt-5'];
+  @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => ProviderCapabilities(
+    supportsModelOverride: true, supportsSystemPrompt: true,
+    supportedModes: const {ChatMode.chat},
+    supportedEfforts: _reasoningPrefixes.any(model.modelId.startsWith)
+        ? const {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max}
+        : const {},
+    supportedPermissions: const {},
+  );
+}
+
+class GeminiRemoteDatasourceDio implements TextStreamingDatasource {
+  // Gemini 2.5 (thinkingBudget int) and Gemini 3 (thinkingLevel enum) both surface effort.
+  // Pre-2.5 (e.g. 1.5 family) doesn't.
+  static bool _supportsThinking(String modelId) =>
+      modelId.startsWith('gemini-2.5') || modelId.startsWith('gemini-3');
+  @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => ProviderCapabilities(
+    supportsModelOverride: true, supportsSystemPrompt: true,
+    supportedModes: const {ChatMode.chat},
+    supportedEfforts: _supportsThinking(model.modelId)
+        ? const {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max}
+        : const {},
+    supportedPermissions: const {},
+  );
+}
+
+class OllamaRemoteDatasourceDio implements TextStreamingDatasource {
+  @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => const ProviderCapabilities(
+    supportsModelOverride: true, supportsSystemPrompt: true,
+    supportedModes: {ChatMode.chat},
+    supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
+    supportedPermissions: {},
+  );
+}
+
+class CustomRemoteDatasourceDio implements TextStreamingDatasource {
+  @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => const ProviderCapabilities(
+    supportsModelOverride: true, supportsSystemPrompt: true,
+    supportedModes: {ChatMode.chat, ChatMode.act},  // act runs the agent loop today
+    supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
+    supportedPermissions: {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess},
+  );
+}
 ```
 
 ### Mapping functions — `lib/data/ai/util/setting_mappers.dart`
@@ -201,7 +250,7 @@ String mapClaudeEffort(ChatEffort e) => switch (e) {
 String mapClaudePermissionMode({required ChatMode mode, required ChatPermission permission}) {
   if (mode == ChatMode.plan) return 'plan';
   return switch (permission) {
-    ChatPermission.readOnly => 'default',
+    ChatPermission.readOnly => 'plan',  // Claude's `plan` is true read-only enforcement
     ChatPermission.askBefore => 'default',
     ChatPermission.fullAccess => 'bypassPermissions',
   };
@@ -253,13 +302,25 @@ String mapOpenAIReasoningEffort(ChatEffort e) => switch (e) {
   ChatEffort.max => 'xhigh',
 };
 
-/// Gemini thinkingBudget — integer token allowance. `-1` = dynamic.
+/// Gemini 2.5 — integer thinkingBudget token allowance. `-1` = dynamic.
 int mapGeminiThinkingBudget(ChatEffort e) => switch (e) {
   ChatEffort.low => 2048,
   ChatEffort.medium => 8192,
   ChatEffort.high => 16384,
   ChatEffort.max => -1,  // dynamic = "use as much as you need"
 };
+
+/// Gemini 3 — enum thinkingLevel.
+String mapGeminiThinkingLevel(ChatEffort e) => switch (e) {
+  ChatEffort.low => 'low',
+  ChatEffort.medium => 'medium',
+  ChatEffort.high => 'high',
+  ChatEffort.max => 'high',  // Gemini 3 caps at "high"; map max → high
+};
+
+/// True when the Gemini model id is on the v3 family (uses `thinkingLevel`
+/// instead of `thinkingBudget`).
+bool isGemini3(String modelId) => modelId.startsWith('gemini-3');
 
 /// Ollama coerces effort to a boolean: anything ≥ low → think enabled.
 bool mapOllamaThink(ChatEffort? e) => e != null;
@@ -274,13 +335,16 @@ bool mapOllamaThink(ChatEffort? e) => e != null;
 | Mode `chat` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Mode `plan` | ✓ | — | — | — | — | — | — |
 | Mode `act` | ✓ | ✓ | — | — | — | — | ✓ |
-| Effort `low/medium/high/max` | ✓ | ✓ (max→xhigh) | ✓ (token budget; null on Opus 4.7+) | ✓ (max→xhigh; only on reasoning models) | ✓ (token budget; max=`-1` dynamic) | ✓ (any → `think:true`) | ✓ (Ollama-compat enum) |
-| Permission `readOnly`/`askBefore` | ✓ (degrades to `default`) | ✓ | — | — | — | — | ✓ (agent loop) |
-| Permission `fullAccess` | ✓ (`bypassPermissions`) | ✓ (`dangerFullAccess`) | — | — | — | — | ✓ (agent loop) |
+| Effort `low/medium/high/max` | ✓ | ✓ (max→xhigh) | ✓ on Sonnet/Opus 4.x; **hidden on Opus 4.7+** | ✓ (max→xhigh) **only on o1/o3/o4-mini/gpt-5 family** | ✓ on Gemini 2.5 (token budget) and Gemini 3 (`thinkingLevel`); hidden on 1.5 | ✓ (any → `think:true`) | ✓ (best-effort `reasoning_effort`) |
+| Permission `readOnly` | ✓ (`--permission-mode plan`) | ✓ (`readOnly` sandbox) | — | — | — | — | ✓ (agent loop) |
+| Permission `askBefore` | ✓ (`--permission-mode default`) | ✓ (`workspaceWrite` + `on-request`) | — | — | — | — | ✓ (agent loop) |
+| Permission `fullAccess` | ✓ (`bypassPermissions`) | ✓ (`dangerFullAccess` + `never`) | — | — | — | — | ✓ (agent loop) |
+
+**Model-aware columns** (Anthropic / OpenAI / Gemini): the matrix shows the *most-permissive* row per provider. Whether the dropdown actually renders depends on `capabilitiesFor(model)` for the user's currently-picked model — for example, an OpenAI session on `gpt-4o` shows no effort dropdown at all; switching to `gpt-5` makes it appear.
 
 ## Population — what flows where
 
-### 1. `ChatInputBar` reads capabilities
+### 1. `ChatInputBar` reads capabilities (model-aware)
 
 New notifier `lib/features/chat/notifiers/chat_input_bar_options_notifier.dart`:
 
@@ -289,14 +353,24 @@ New notifier `lib/features/chat/notifiers/chat_input_bar_options_notifier.dart`:
 ProviderCapabilities? chatInputBarOptions(Ref ref, String sessionId) {
   final session = ref.watch(activeSessionProvider(sessionId));
   if (session == null) return null;
-  final ds = ref.watch(aIProviderServiceProvider).getProvider(session.providerId);
-  return ds?.capabilities;
+  final model = AIModels.byId(session.modelId);
+  if (model == null) return null;
+
+  // CLI providers → AIProviderDatasource
+  final cliDs = ref.watch(aIProviderServiceProvider).getProvider(session.providerId);
+  if (cliDs != null) return cliDs.capabilitiesFor(model);
+
+  // HTTP providers → TextStreamingDatasource lookup by AIProvider enum
+  final httpDs = ref.watch(textStreamingDatasourceForProvider(model.provider));
+  return httpDs?.capabilitiesFor(model);
 }
 ```
 
 Widget gates each dropdown:
 - `null` → entire options strip rendered disabled with tooltip "Provider not detected"
 - non-null → render only options where `caps.supportedX` is non-empty / true; filter dropdown items to the supported subset
+
+Switching the model mid-session (already a supported flow via `patchSessionSettings`) re-runs the notifier and the strip re-renders with the new model's capabilities.
 
 ### 2. `SessionService` builds `ProviderTurnSettings`
 
@@ -420,18 +494,21 @@ if (settings?.effort != null && _isReasoningModel(model.modelId)) {
 **Gemini**:
 
 ```dart
+Map<String, dynamic>? thinkingConfig() {
+  if (settings?.effort == null) return null;
+  if (isGemini3(model.modelId)) {
+    return {'thinkingLevel': mapGeminiThinkingLevel(settings!.effort!)};
+  }
+  return {'thinkingBudget': mapGeminiThinkingBudget(settings!.effort!)};
+}
+
 final body = <String, dynamic>{
   ...,
-  if (settings?.effort != null)
-    'generationConfig': {
-      'thinkingConfig': {
-        'thinkingBudget': mapGeminiThinkingBudget(settings!.effort!),
-      },
-    },
+  if (thinkingConfig() != null) 'generationConfig': {'thinkingConfig': thinkingConfig()},
 };
 ```
 
-Gemini 3 models (when added to catalog) are detected via id prefix and skipped with `dLog`.
+Branches on `isGemini3(modelId)` so v2.5 gets the integer budget and v3 gets the enum level. Pre-2.5 models render no effort dropdown (per `capabilitiesFor`) so this code path isn't reached.
 
 **Ollama** (`/api/chat`):
 
@@ -468,11 +545,20 @@ Some custom endpoints will reject unknown fields. We swallow that as a `BadReque
 | `lib/data/ai/util/setting_mappers.dart` | Pure mapping functions (single source of truth) |
 | `lib/features/chat/notifiers/chat_input_bar_options_notifier.dart` | Reactive capabilities lookup |
 
+### Moved (verbatim — only paths and imports change)
+
+| From → To |
+|---|
+| `lib/data/session/models/session_settings.dart` → `lib/data/shared/session_settings.dart` |
+
+Importers updated (15 files): `lib/features/chat/notifiers/chat_notifier.dart`, `session_settings_actions.dart`, `lib/features/chat/widgets/chat_input_bar.dart`, `work_log_section.dart`, `lib/services/session/session_service.dart`, `lib/services/agent/agent_service.dart`, `lib/services/agent/agent_exceptions.dart`, `lib/services/coding_tools/tool_registry.dart`, plus matching test files (`session_service_test.dart`, `agent_service_test.dart`, `tool_registry_test.dart`, `chat_notifier_test.dart`, `chat_notifier_cancel_test.dart`).
+
 ### Modified
 
 | Path | Change |
 |---|---|
-| `lib/data/ai/datasource/ai_provider_datasource.dart` | Add `capabilities` getter; add `settings` param to `sendAndStream` |
+| `lib/data/ai/datasource/ai_provider_datasource.dart` | Add `capabilitiesFor(AIModel)` getter; add `settings` param to `sendAndStream` |
+| `lib/data/ai/datasource/text_streaming_datasource.dart` | Add `capabilitiesFor(AIModel)` getter; add `settings` param to `streamMessage` |
 | `lib/data/ai/datasource/claude_cli_datasource_process.dart` | Capabilities const; honour settings in argv; drop hardcoded `bypassPermissions`; emit `modelId` on `ProviderInit` |
 | `lib/data/ai/datasource/codex_cli_datasource_process.dart` | Capabilities const; pass settings through `buildCodexTurnStartParams` and `_startThread`; emit `modelId` on `ProviderInit` (drop `_version`) |
 | `lib/data/ai/datasource/anthropic_remote_datasource_dio.dart` | Capabilities const; add `thinking.budget_tokens` from effort (with Opus 4.7+ skip + clamp) |
@@ -510,8 +596,9 @@ No e2e UI tests — capability filtering is exercised via the notifier test; wid
 | Risk | Mitigation |
 |---|---|
 | Anthropic Opus 4.7+ 400s on manual `thinking` | `mapAnthropicThinkingBudget` returns null on the allowlist; the `thinking` field is omitted entirely, falling back to the model's adaptive thinking |
-| OpenAI non-reasoning model rejects `reasoning_effort` | `_isReasoningModel` allowlist gates the field |
-| Capabilities are static-per-datasource but effort applies only to *some* models (OpenAI o-series, Anthropic Sonnet 4+, Gemini 2.5+) — UI shows the dropdown even when the picked model ignores it | Accepted: keep capabilities datasource-scoped; document as "soft UI lie" in the README. A model-aware capability surface (capability per provider × model) is a follow-up if it becomes painful |
+| OpenAI non-reasoning model rejects `reasoning_effort` | Capability matrix is model-aware — `capabilitiesFor(model)` returns empty `supportedEfforts` for non-reasoning models, so the dropdown is hidden. Defence-in-depth: the request-body builder also gates via the same allowlist. |
+| Anthropic adaptive-only models (Opus 4.7+) 400 on manual `thinking` | Same — `capabilitiesFor` returns empty `supportedEfforts` for those ids; dropdown hidden. Mapper returns null as a second guard. |
+| New model lands without an entry in the reasoning/adaptive allowlists | Default capability is "effort not supported" → dropdown hidden until the allowlist is updated. Fail-closed is the safer default. |
 | Custom endpoint rejects `reasoning_effort` | `BadRequestException` is wrapped with a recoverable message, not a hard fail; user can switch effort to a lower value or pick a different endpoint |
 | Gemini 3 model would be misconfigured by `thinkingBudget` | Gemini 3 prefix detection skips with `dLog`; capability matrix unchanged for now |
 | Capability drift — adding a new app enum without updating each datasource | Dart's exhaustive `switch` in the mapper file fail-compiles. Each datasource also has explicit `Set` literals — adding a value won't auto-include it (default = "not supported", which is the safer default) |
@@ -537,6 +624,4 @@ No e2e UI tests — capability filtering is exercised via the notifier test; wid
 
 - Routing Anthropic / OpenAI / Gemini / Ollama through the agent loop (and thus exposing tools / denylist / our app-side MCP servers to them).
 - Anthropic server-side MCP connector and OpenAI Responses-API remote MCP — both are correct future-PR candidates.
-- Migrating the existing `ChatMode/ChatEffort/ChatPermission` enums to `data/shared/`.
 - Auto-detecting model lists per provider.
-- Gemini 3 `thinkingLevel` enum (added when Gemini 3 models enter the catalog).
