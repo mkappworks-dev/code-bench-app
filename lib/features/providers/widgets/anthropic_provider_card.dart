@@ -6,6 +6,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../data/ai/models/auth_status.dart';
 import '../../../data/shared/ai_model.dart';
 import '../notifiers/ai_provider_status_notifier.dart';
 import '../notifiers/providers_actions.dart';
@@ -199,12 +200,12 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
     _ => null,
   };
 
-  CardStatusBadge _cliBadge({required bool selected}) {
+  Widget _cliBadge({required bool selected}) {
     final entry = _cliEntry();
     final loading = ref.watch(aiProviderStatusProvider) is AsyncLoading;
     if (loading) return const CardStatusBadge(label: 'Checking…', tone: TransportBadgeTone.muted);
     final status = entry?.status;
-    return switch (status) {
+    final installPill = switch (status) {
       ProviderAvailable(:final version) => CardStatusBadge(
         label: 'Installed · $version',
         tone: TransportBadgeTone.success,
@@ -215,6 +216,18 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
             : const CardStatusBadge(label: 'Not installed', tone: TransportBadgeTone.muted),
       null => const CardStatusBadge(label: 'Not installed', tone: TransportBadgeTone.muted),
     };
+    if (status is ProviderAvailable && entry?.authStatus is AuthUnauthenticated) {
+      return Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        alignment: WrapAlignment.end,
+        children: [
+          installPill,
+          const CardStatusBadge(label: 'Signed out', tone: TransportBadgeTone.warning),
+        ],
+      );
+    }
+    return installPill;
   }
 
   @override
