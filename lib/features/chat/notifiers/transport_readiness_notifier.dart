@@ -9,15 +9,9 @@ import 'chat_notifier.dart';
 
 part 'transport_readiness_notifier.g.dart';
 
-/// Derived chat-input readiness for the active model + transport.
-///
-/// CLI transport: composes installed-binary status with auth status. Auth
-/// `unknown` maps to [TransportReadiness.ready] (honest bias — never block on
-/// probe failure; the pre-send fresh probe in [ChatMessagesNotifier] catches
-/// real signed-out cases).
-///
-/// HTTP transport: readiness is fully determined by whether the matching API
-/// key/URL is configured.
+/// CLI auth `unknown` maps to [TransportReadiness.ready] — never block send on
+/// a probe we couldn't run; the fresh pre-send probe in [ChatMessagesNotifier]
+/// catches real signed-out cases.
 @riverpod
 TransportReadiness transportReadiness(Ref ref) {
   final model = ref.watch(selectedModelProvider);

@@ -69,9 +69,8 @@ class AIProviderService extends _$AIProviderService {
     };
   }
 
-  /// Auth status for a single provider. Returns [AuthStatus.unknown] for
-  /// unregistered providers and any probe exceptions — never blocks send on
-  /// a probe failure (honest bias).
+  /// Returns [AuthStatus.unknown] for unregistered providers and probe
+  /// exceptions — send is never blocked on a probe we couldn't run.
   Future<AuthStatus> getAuthStatus(String id) async {
     final provider = state[id];
     if (provider == null) return const AuthStatus.unknown();

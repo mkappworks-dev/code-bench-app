@@ -238,8 +238,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
             case AgentNetworkExhausted():
               showErrorSnackBar(context, 'Stream ended unexpectedly — try again.');
             case AgentTransportNotReady(:final readiness):
-              // Strip is the primary surface; snackbar is a fallback for paths
-              // that bypass the strip (e.g. continueAgenticTurn).
+              // Fallback for paths that bypass the strip (continueAgenticTurn).
               showErrorSnackBar(context, _readinessSnackbarText(readiness));
             case AgentUnknownError(:final error):
               showErrorSnackBar(context, userMessage(error, fallback: 'Failed to get a response.'));

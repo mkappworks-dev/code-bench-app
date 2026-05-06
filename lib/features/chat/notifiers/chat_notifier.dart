@@ -156,8 +156,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final prefs = await ref.read(apiKeysProvider.future);
     final providerId = _resolveProviderId(model, prefs);
 
-    // Pre-flight against derived readiness — belt+suspenders for paths that
-    // bypass the input bar (e.g. continueAgenticTurn).
+    // Belt+suspenders: catches paths that bypass the input bar (continueAgenticTurn).
     final readiness = ref.read(transportReadinessProvider);
     if (readiness is! TransportReady && readiness is! TransportUnknown) {
       state = AsyncData(_preSendMessages);
@@ -166,7 +165,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
       return AgentFailure.transportNotReady(readiness);
     }
 
-    // Fresh CLI auth re-probe — picks up state changes since the last cache.
+    // Cached readiness can be stale — re-probe to catch out-of-band sign-outs.
     if (providerId != null) {
       final ds = ref.read(aIProviderServiceProvider.notifier).getProvider(providerId);
       if (ds != null) {
