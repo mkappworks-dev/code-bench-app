@@ -6,7 +6,10 @@ import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
+import '../../shared/ai_model.dart';
+import '../../shared/session_settings.dart';
 import '../models/stream_event.dart';
+import '../util/setting_mappers.dart';
 import 'ai_provider_datasource.dart';
 import 'binary_resolver_process.dart';
 import 'claude_cli_stream_parser.dart';
@@ -46,6 +49,38 @@ AuthStatus parseClaudeAuthOutput(int exitCode, String stdout) {
 AIProviderDatasource claudeCliDatasourceProcess(Ref ref) {
   // TODO: read binaryPath from settings once settings model is updated
   return ClaudeCliDatasourceProcess(binaryPath: 'claude');
+}
+
+@visibleForTesting
+List<String> buildClaudeCliArgs({
+  required String sessionId,
+  required String prompt,
+  required bool isFirstTurn,
+  ProviderTurnSettings? settings,
+}) {
+  final modelId = settings?.modelId;
+  final effort = settings?.effort;
+  final systemPrompt = settings?.systemPrompt;
+  final permissionMode = mapClaudePermissionMode(
+    mode: settings?.mode ?? ChatMode.chat,
+    permission: settings?.permission ?? ChatPermission.fullAccess,
+  );
+
+  return [
+    '-p',
+    '--output-format',
+    'stream-json',
+    '--include-partial-messages',
+    '--verbose',
+    if (modelId != null) ...['--model', modelId],
+    if (effort != null) ...['--effort', mapClaudeEffort(effort)],
+    if (systemPrompt != null && systemPrompt.isNotEmpty) ...['--append-system-prompt', systemPrompt],
+    '--permission-mode',
+    permissionMode,
+    if (isFirstTurn) ...['--session-id', sessionId] else ...['--resume', sessionId],
+    '--',
+    prompt,
+  ];
 }
 
 /// Abort after N consecutive parse failures — a healthy stream produces
@@ -130,13 +165,23 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   }
 
   @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => const ProviderCapabilities(
+    supportsModelOverride: true,
+    supportsSystemPrompt: true,
+    supportedModes: {ChatMode.chat, ChatMode.plan, ChatMode.act},
+    supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
+    supportedPermissions: {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess},
+  );
+
+  @override
   Stream<ProviderRuntimeEvent> sendAndStream({
     required String prompt,
     required String sessionId,
     required String workingDirectory,
+    ProviderTurnSettings? settings,
   }) {
     final controller = StreamController<ProviderRuntimeEvent>.broadcast();
-    _stream(controller, prompt: prompt, sessionId: sessionId, workingDirectory: workingDirectory);
+    _stream(controller, prompt: prompt, sessionId: sessionId, workingDirectory: workingDirectory, settings: settings);
     return controller.stream;
   }
 
@@ -145,10 +190,11 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
     required String prompt,
     required String sessionId,
     required String workingDirectory,
+    ProviderTurnSettings? settings,
   }) async {
     Process? spawned;
     try {
-      controller.add(ProviderInit(provider: id));
+      controller.add(ProviderInit(provider: id, modelId: settings?.modelId));
 
       // sessionId guard — we only ever generate v4 UUIDs, but a future
       // import/restore path could leak an attacker-shaped value into argv.
@@ -170,21 +216,14 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       }
 
       final isFirstTurn = !_knownSessions.contains(sessionId);
-      final args = <String>[
-        '-p',
-        '--output-format',
-        'stream-json',
-        '--include-partial-messages',
-        '--permission-mode',
-        'bypassPermissions',
-        '--verbose',
-        if (isFirstTurn) ...['--session-id', sessionId] else ...['--resume', sessionId],
-        // `--` ends Claude Code's option parsing; the prompt after it is
-        // always treated positionally, so a `-`-prefixed prompt cannot
-        // become a flag.
-        '--',
-        prompt,
-      ];
+      // `--` ends Claude Code's option parsing; the prompt after it is always
+      // treated positionally, so a `-`-prefixed prompt cannot become a flag.
+      final args = buildClaudeCliArgs(
+        sessionId: sessionId,
+        prompt: prompt,
+        isFirstTurn: isFirstTurn,
+        settings: settings,
+      );
 
       // Minimal env — inheriting parent's full env would leak
       // ANTHROPIC_API_KEY / GITHUB_TOKEN / AWS_* into the CLI's child
