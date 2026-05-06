@@ -24,7 +24,8 @@ final sessionSettingsActionsProvider = SessionSettingsActionsProvider._();
 /// Reacts to [activeSessionIdProvider] changes and pushes the stored values
 /// into their respective reactive notifiers so [ChatInputBar] always reflects
 /// the active session's settings.
-final class SessionSettingsActionsProvider extends $AsyncNotifierProvider<SessionSettingsActions, void> {
+final class SessionSettingsActionsProvider
+    extends $AsyncNotifierProvider<SessionSettingsActions, void> {
   /// Coordinator notifier that loads and persists the five per-session chat
   /// settings (model, system prompt, mode, effort, permission).
   ///
@@ -50,7 +51,8 @@ final class SessionSettingsActionsProvider extends $AsyncNotifierProvider<Sessio
   SessionSettingsActions create() => SessionSettingsActions();
 }
 
-String _$sessionSettingsActionsHash() => r'2557341e698f3eafd90fb4dde19270fe3c897fd1';
+String _$sessionSettingsActionsHash() =>
+    r'2557341e698f3eafd90fb4dde19270fe3c897fd1';
 
 /// Coordinator notifier that loads and persists the five per-session chat
 /// settings (model, system prompt, mode, effort, permission).
@@ -66,7 +68,13 @@ abstract class _$SessionSettingsActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

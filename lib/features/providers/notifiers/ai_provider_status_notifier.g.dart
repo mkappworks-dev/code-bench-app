@@ -23,7 +23,8 @@ final aiProviderStatusProvider = AiProviderStatusNotifierProvider._();
 /// violates the architecture rule that widgets only reach notifiers, not
 /// providers).
 final class AiProviderStatusNotifierProvider
-    extends $AsyncNotifierProvider<AiProviderStatusNotifier, List<ProviderEntry>> {
+    extends
+        $AsyncNotifierProvider<AiProviderStatusNotifier, List<ProviderEntry>> {
   /// Async snapshot of all registered AI providers with their availability
   /// status. The `recheck` method is the widget-facing entry point — widgets
   /// must never call `ref.refresh(aiProviderStatusProvider)` directly (that
@@ -48,7 +49,8 @@ final class AiProviderStatusNotifierProvider
   AiProviderStatusNotifier create() => AiProviderStatusNotifier();
 }
 
-String _$aiProviderStatusNotifierHash() => r'91b5b5d50ac082b7b3d30776dfc40cb8613152b0';
+String _$aiProviderStatusNotifierHash() =>
+    r'91b5b5d50ac082b7b3d30776dfc40cb8613152b0';
 
 /// Async snapshot of all registered AI providers with their availability
 /// status. The `recheck` method is the widget-facing entry point — widgets
@@ -56,12 +58,14 @@ String _$aiProviderStatusNotifierHash() => r'91b5b5d50ac082b7b3d30776dfc40cb8613
 /// violates the architecture rule that widgets only reach notifiers, not
 /// providers).
 
-abstract class _$AiProviderStatusNotifier extends $AsyncNotifier<List<ProviderEntry>> {
+abstract class _$AiProviderStatusNotifier
+    extends $AsyncNotifier<List<ProviderEntry>> {
   FutureOr<List<ProviderEntry>> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<List<ProviderEntry>>, List<ProviderEntry>>;
+    final ref =
+        this.ref as $Ref<AsyncValue<List<ProviderEntry>>, List<ProviderEntry>>;
     final element =
         ref.element
             as $ClassProviderElement<
