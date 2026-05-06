@@ -27,6 +27,16 @@ AuthStatus parseCodexAuthOutput(int exitCode, String output) {
   return const AuthStatus.unknown();
 }
 
+@visibleForTesting
+Map<String, dynamic> buildCodexTurnStartParams(String threadId, String prompt) {
+  return {
+    'threadId': threadId,
+    'input': [
+      {'type': 'text', 'text': prompt},
+    ],
+  };
+}
+
 @riverpod
 AIProviderDatasource codexCliDatasourceProcess(Ref ref) {
   // TODO: read binaryPath from settings once settings model is updated
@@ -640,7 +650,7 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   }
 
   Future<void> _sendTurn(String prompt) async {
-    await _request('turn/start', {'input': prompt});
+    await _request('turn/start', buildCodexTurnStartParams(_providerThreadId!, prompt));
     dLog('[CodexCli] Turn started');
   }
 
