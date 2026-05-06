@@ -29,5 +29,19 @@ void main() {
     test('empty output returns unknown', () {
       expect(parseCodexAuthOutput(1, ''), const AuthStatus.unknown());
     });
+
+    test('substring match in non-leading position does not match', () {
+      // Defensive: a future codex output like "Logged in users: 0" should not
+      // be misread as authenticated. The parser anchors on line start.
+      expect(parseCodexAuthOutput(0, 'Active sessions: 1\nLogged in users: 0\n'), const AuthStatus.unknown());
+    });
+
+    test('marker survives surrounding noise on its own line', () {
+      // codex sometimes prints leading whitespace; trim() per line handles it.
+      expect(
+        parseCodexAuthOutput(0, '  Logged in using ChatGPT\nsome trailing line\n'),
+        const AuthStatus.authenticated(),
+      );
+    });
   });
 }

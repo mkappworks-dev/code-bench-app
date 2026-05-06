@@ -14,13 +14,16 @@ part 'codex_cli_datasource_process.g.dart';
 
 @visibleForTesting
 AuthStatus parseCodexAuthOutput(int exitCode, String output) {
-  // Exit code is intentionally ignored: `codex login status` exits 1 when not
-  // signed in but still emits a recognisable "Not logged in" line. The output
-  // string is the merged stdout+stderr — codex writes its status to stderr.
-  if (output.contains('Not logged in')) {
+  // Match on whole-line markers so an accidental substring (e.g. a future
+  // "Logged in users: N" counter) cannot match. Exit code is intentionally
+  // ignored — codex writes its status to stderr and exits 1 when signed out.
+  final lines = output.split('\n').map((l) => l.trim());
+  if (lines.any((l) => l == 'Not logged in')) {
     return const AuthStatus.unauthenticated(signInCommand: 'codex login');
   }
-  if (output.contains('Logged in')) return const AuthStatus.authenticated();
+  if (lines.any((l) => l.startsWith('Logged in using '))) {
+    return const AuthStatus.authenticated();
+  }
   return const AuthStatus.unknown();
 }
 
