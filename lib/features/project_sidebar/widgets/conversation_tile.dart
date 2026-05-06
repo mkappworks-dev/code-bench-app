@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
@@ -25,7 +27,7 @@ class ConversationTile extends StatelessWidget {
   final VoidCallback? onArchive;
   final VoidCallback? onDelete;
 
-  void _showContextMenu(BuildContext context, Offset globalPosition) async {
+  Future<void> _showContextMenu(BuildContext context, Offset globalPosition) async {
     final c = AppColors.of(context);
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final action = await showInstantMenu<String>(
@@ -122,7 +124,7 @@ class ConversationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     return GestureDetector(
-      onSecondaryTapUp: (details) => _showContextMenu(context, details.globalPosition),
+      onSecondaryTapUp: (details) => unawaited(_showContextMenu(context, details.globalPosition)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(5),
