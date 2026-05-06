@@ -24,7 +24,7 @@ class ArchiveActions extends _$ArchiveActions {
         final svc = await ref.read(sessionServiceProvider.future);
         await svc.unarchiveSession(id);
       } catch (e, st) {
-        dLog('[ArchiveActions] unarchiveSession failed: $e');
+        dLog('[ArchiveActions] unarchiveSession failed: ${e.runtimeType}');
         Error.throwWithStackTrace(_asFailure(e), st);
       }
     });
@@ -37,7 +37,7 @@ class ArchiveActions extends _$ArchiveActions {
         final svc = await ref.read(sessionServiceProvider.future);
         await svc.deleteSession(id);
       } catch (e, st) {
-        dLog('[ArchiveActions] deleteSession failed: $e');
+        dLog('[ArchiveActions] deleteSession failed: ${e.runtimeType}');
         Error.throwWithStackTrace(_asFailure(e), st);
       }
     });
@@ -46,13 +46,16 @@ class ArchiveActions extends _$ArchiveActions {
   Future<void> unarchiveAllForProject(List<String> ids) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
+      var i = 0;
       try {
         final svc = await ref.read(sessionServiceProvider.future);
-        for (final id in ids) {
-          await svc.unarchiveSession(id);
+        for (; i < ids.length; i++) {
+          await svc.unarchiveSession(ids[i]);
         }
       } catch (e, st) {
-        dLog('[ArchiveActions] unarchiveAllForProject failed: $e');
+        dLog(
+          '[ArchiveActions] unarchiveAllForProject failed at ids[$i]=${ids.elementAtOrNull(i)} (${i + 1}/${ids.length}): ${e.runtimeType}',
+        );
         Error.throwWithStackTrace(_asFailure(e), st);
       }
     });
@@ -61,13 +64,16 @@ class ArchiveActions extends _$ArchiveActions {
   Future<void> deleteAllForProject(List<String> ids) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
+      var i = 0;
       try {
         final svc = await ref.read(sessionServiceProvider.future);
-        for (final id in ids) {
-          await svc.deleteSession(id);
+        for (; i < ids.length; i++) {
+          await svc.deleteSession(ids[i]);
         }
       } catch (e, st) {
-        dLog('[ArchiveActions] deleteAllForProject failed: $e');
+        dLog(
+          '[ArchiveActions] deleteAllForProject failed at ids[$i]=${ids.elementAtOrNull(i)} (${i + 1}/${ids.length}): ${e.runtimeType}',
+        );
         Error.throwWithStackTrace(_asFailure(e), st);
       }
     });
