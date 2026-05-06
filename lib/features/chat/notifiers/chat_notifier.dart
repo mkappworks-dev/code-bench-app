@@ -98,7 +98,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final svc = await ref.watch(sessionServiceProvider.future);
     final history = await svc.loadHistory(sessionId);
 
-    final registry = ref.read(chatStreamServiceProvider);
+    final registry = ref.watch(chatStreamServiceProvider);
     final stateSub = registry.watchState(sessionId).listen((s) {
       switch (s) {
         case ChatStreamFailed(:final failure):
@@ -125,7 +125,10 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     ref.read(agentCancelProvider.notifier).clear();
 
     final sessionId = ref.read(activeSessionIdProvider);
-    if (sessionId == null) throw StateError('No active session — cannot send message.');
+    if (sessionId == null) {
+      _sendInProgress = false;
+      throw StateError('No active session — cannot send message.');
+    }
 
     final model = ref.read(selectedModelProvider);
     final service = await ref.read(sessionServiceProvider.future);
@@ -197,9 +200,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
       return null;
     }
 
-    // Subscribe AFTER start() so the first yield from watchState is
-    // ChatStreamConnecting, not ChatStreamIdle, which would otherwise
-    // complete the completer immediately before streaming begins.
+    // Subscribe after start() so watchState's first yield is connecting, not idle.
     late final StreamSubscription<ChatStreamState> termSub;
     termSub = registry.watchState(sessionId).listen((s) {
       switch (s) {

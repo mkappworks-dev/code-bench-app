@@ -77,8 +77,7 @@ class ChatStreamService {
         final shouldRetry = isRetryable && attempt <= backoff.length;
         if (shouldRetry) {
           final delay = backoff[attempt - 1];
-          // scheduleMicrotask defers the emit until after the stateStream async*
-          // generator has subscribed to the broadcast controller via yield*.
+          // Defer until yield* in stateStream has subscribed to the broadcast controller.
           scheduleMicrotask(() {
             if (handle._controller.isClosed) return;
             handle._emit(ChatStreamState.retrying(attempt: attempt, nextDelay: delay));
