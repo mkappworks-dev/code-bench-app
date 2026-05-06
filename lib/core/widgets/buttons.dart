@@ -12,52 +12,64 @@ enum ChipButtonSize {
   medium,
 }
 
-/// Internal shell shared by [ChipButton] and [PrimaryButton]. Owns
-/// the size tokens, hover state, gesture handling, and layout. Callers
-/// supply the colors so the shell stays variant-agnostic.
-class _ChipButtonShell extends StatefulWidget {
-  const _ChipButtonShell({
+/// Hover-state shell shared by [ChipButton], [PrimaryButton], and
+/// feature-specific chips. Callers supply all visual tokens; the shell
+/// owns only the hover state machine, animated transitions, and layout.
+class ChipButtonShell extends StatefulWidget {
+  const ChipButtonShell({
+    super.key,
     required this.label,
     required this.onPressed,
-    required this.size,
+    required this.padding,
+    required this.fontSize,
+    required this.iconSize,
+    required this.gap,
+    required this.radius,
     required this.restFill,
     required this.hoverFill,
     required this.foreground,
+    this.hoverForeground,
     this.borderColor,
+    this.hoverBorderColor,
+    this.fontWeight,
     this.icon,
     this.loadingChild,
   });
 
   final String label;
   final VoidCallback? onPressed;
-  final ChipButtonSize size;
+  final EdgeInsets padding;
+  final double fontSize;
+  final double iconSize;
+  final double gap;
+  final double radius;
   final Color restFill;
   final Color hoverFill;
   final Color foreground;
+  final Color? hoverForeground;
   final Color? borderColor;
+  final Color? hoverBorderColor;
+  final FontWeight? fontWeight;
   final IconData? icon;
 
-  /// When non-null, replaces the label/icon row — used by
-  /// [PrimaryButton] to swap in a spinner without changing
-  /// dimensions.
+  /// When non-null, replaces the label/icon row — used to show a spinner
+  /// without changing the button's dimensions.
   final Widget? loadingChild;
 
   @override
-  State<_ChipButtonShell> createState() => _ChipButtonShellState();
+  State<ChipButtonShell> createState() => _ChipButtonShellState();
 }
 
-class _ChipButtonShellState extends State<_ChipButtonShell> {
+class _ChipButtonShellState extends State<ChipButtonShell> {
   bool _hovered = false;
 
   bool get _enabled => widget.onPressed != null;
 
   @override
   Widget build(BuildContext context) {
-    final (padding, fontSize, iconSize, gap) = switch (widget.size) {
-      ChipButtonSize.small => (const EdgeInsets.symmetric(horizontal: 10, vertical: 5), 11.0, 11.0, 6.0),
-      ChipButtonSize.medium => (const EdgeInsets.symmetric(horizontal: 16, vertical: 10), 12.0, 14.0, 8.0),
-    };
-    final radius = widget.size == ChipButtonSize.medium ? 6.0 : 5.0;
+    final active = _hovered && _enabled;
+    final fg = active && widget.hoverForeground != null ? widget.hoverForeground! : widget.foreground;
+    final effectiveBorder = active && widget.hoverBorderColor != null ? widget.hoverBorderColor! : widget.borderColor;
 
     return MouseRegion(
       cursor: _enabled ? SystemMouseCursors.click : MouseCursor.defer,
@@ -69,11 +81,11 @@ class _ChipButtonShellState extends State<_ChipButtonShell> {
         onTap: widget.onPressed,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
-          padding: padding,
+          padding: widget.padding,
           decoration: BoxDecoration(
-            color: (_hovered && _enabled) ? widget.hoverFill : widget.restFill,
-            border: widget.borderColor != null ? Border.all(color: widget.borderColor!) : null,
-            borderRadius: BorderRadius.circular(radius),
+            color: active ? widget.hoverFill : widget.restFill,
+            border: effectiveBorder != null ? Border.all(color: effectiveBorder) : null,
+            borderRadius: BorderRadius.circular(widget.radius),
           ),
           child:
               widget.loadingChild ??
@@ -81,12 +93,12 @@ class _ChipButtonShellState extends State<_ChipButtonShell> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (widget.icon != null) ...[
-                    Icon(widget.icon, size: iconSize, color: widget.foreground),
-                    SizedBox(width: gap),
+                    Icon(widget.icon, size: widget.iconSize, color: fg),
+                    SizedBox(width: widget.gap),
                   ],
                   Text(
                     widget.label,
-                    style: TextStyle(color: widget.foreground, fontSize: fontSize),
+                    style: TextStyle(color: fg, fontSize: widget.fontSize, fontWeight: widget.fontWeight),
                   ),
                 ],
               ),
@@ -110,7 +122,7 @@ class ChipButton extends StatelessWidget {
   });
 
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final IconData? icon;
   final bool isDestructive;
   final ChipButtonSize size;
@@ -122,11 +134,20 @@ class ChipButton extends StatelessWidget {
     final borderColor = isDestructive ? c.error.withValues(alpha: 0.5) : c.chipStroke;
     final restFill = isDestructive ? c.errorTintBg : c.chipFill;
     final hoverFill = isDestructive ? c.error.withValues(alpha: 0.2) : c.chipStroke;
+    final (padding, fontSize, iconSize, gap) = switch (size) {
+      ChipButtonSize.small => (const EdgeInsets.symmetric(horizontal: 10, vertical: 5), 11.0, 11.0, 6.0),
+      ChipButtonSize.medium => (const EdgeInsets.symmetric(horizontal: 16, vertical: 10), 12.0, 14.0, 8.0),
+    };
+    final radius = size == ChipButtonSize.medium ? 6.0 : 5.0;
 
-    return _ChipButtonShell(
+    return ChipButtonShell(
       label: label,
       onPressed: onPressed,
-      size: size,
+      padding: padding,
+      fontSize: fontSize,
+      iconSize: iconSize,
+      gap: gap,
+      radius: radius,
       restFill: restFill,
       hoverFill: hoverFill,
       foreground: fg,
@@ -173,14 +194,23 @@ class PrimaryButton extends StatelessWidget {
     final base = color ?? c.accent;
     final hover = color == null ? c.accentHover : Color.alphaBlend(Colors.black.withValues(alpha: 0.1), base);
     final disabled = onPressed == null;
+    final (padding, fontSize, iconSize, gap) = switch (size) {
+      ChipButtonSize.small => (const EdgeInsets.symmetric(horizontal: 10, vertical: 5), 11.0, 11.0, 6.0),
+      ChipButtonSize.medium => (const EdgeInsets.symmetric(horizontal: 16, vertical: 10), 12.0, 14.0, 8.0),
+    };
+    final radius = size == ChipButtonSize.medium ? 6.0 : 5.0;
     final spinnerSize = size == ChipButtonSize.medium ? 14.0 : 11.0;
 
     return Opacity(
       opacity: disabled ? 0.4 : 1.0,
-      child: _ChipButtonShell(
+      child: ChipButtonShell(
         label: label,
         onPressed: onPressed,
-        size: size,
+        padding: padding,
+        fontSize: fontSize,
+        iconSize: iconSize,
+        gap: gap,
+        radius: radius,
         restFill: base,
         hoverFill: hover,
         foreground: c.onAccent,

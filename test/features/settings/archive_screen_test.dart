@@ -11,11 +11,21 @@ import 'package:code_bench_app/features/archive/notifiers/archive_actions.dart';
 
 class _FakeArchiveActions extends ArchiveActions {
   final List<String> unarchiveCalls = [];
+  final List<String> deleteCalls = [];
+  final List<List<String>> unarchiveAllCalls = [];
+  final List<List<String>> deleteAllCalls = [];
 
   @override
-  Future<void> unarchiveSession(String id) async {
-    unarchiveCalls.add(id);
-  }
+  Future<void> unarchiveSession(String id) async => unarchiveCalls.add(id);
+
+  @override
+  Future<void> deleteSession(String id) async => deleteCalls.add(id);
+
+  @override
+  Future<void> unarchiveAllForProject(List<String> ids) async => unarchiveAllCalls.add(ids);
+
+  @override
+  Future<void> deleteAllForProject(List<String> ids) async => deleteAllCalls.add(ids);
 }
 
 Widget _buildArchive({
@@ -60,7 +70,7 @@ void main() {
     expect(find.text('Unarchive'), findsOneWidget);
   });
 
-  testWidgets('Unarchive button calls archiveActionsProvider.unarchiveSession', (tester) async {
+  testWidgets('Unarchive button fires onUnarchive callback', (tester) async {
     final fake = _FakeArchiveActions();
     final session = ChatSession(
       sessionId: 's2',
@@ -77,5 +87,110 @@ void main() {
     await tester.pump();
 
     expect(fake.unarchiveCalls, contains('s2'));
+  });
+
+  testWidgets('deleteSession records call on fake', (tester) async {
+    final fake = _FakeArchiveActions();
+    await fake.deleteSession('s99');
+    expect(fake.deleteCalls, contains('s99'));
+  });
+
+  testWidgets('unarchiveAllForProject records ids', (tester) async {
+    final fake = _FakeArchiveActions();
+    await fake.unarchiveAllForProject(['a', 'b']);
+    expect(fake.unarchiveAllCalls, [
+      ['a', 'b'],
+    ]);
+  });
+
+  testWidgets('deleteAllForProject records ids', (tester) async {
+    final fake = _FakeArchiveActions();
+    await fake.deleteAllForProject(['x', 'y']);
+    expect(fake.deleteAllCalls, [
+      ['x', 'y'],
+    ]);
+  });
+
+  testWidgets('archived session card shows Delete button', (tester) async {
+    final session = ChatSession(
+      sessionId: 's3',
+      title: 'Chat to delete',
+      modelId: 'm',
+      providerId: 'anthropic',
+      createdAt: DateTime(2025),
+      updatedAt: DateTime(2025),
+    );
+    await tester.pumpWidget(_buildArchive(sessions: [session]));
+    await tester.pump();
+
+    expect(find.text('Delete'), findsOneWidget);
+  });
+
+  testWidgets('Delete button shows confirmation dialog', (tester) async {
+    final session = ChatSession(
+      sessionId: 's4',
+      title: 'Deletable chat',
+      modelId: 'm',
+      providerId: 'anthropic',
+      createdAt: DateTime(2025),
+      updatedAt: DateTime(2025),
+    );
+    await tester.pumpWidget(_buildArchive(sessions: [session]));
+    await tester.pump();
+
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete archived conversation?'), findsOneWidget);
+    expect(find.text('Deletable chat'), findsWidgets);
+  });
+
+  testWidgets('single project group is expanded by default', (tester) async {
+    final session = ChatSession(
+      sessionId: 'exp1',
+      title: 'Expandable session',
+      modelId: 'm',
+      providerId: 'anthropic',
+      createdAt: DateTime(2025),
+      updatedAt: DateTime(2025),
+    );
+    await tester.pumpWidget(_buildArchive(sessions: [session]));
+    await tester.pump();
+
+    // Session card is visible without tapping the header (expanded by default).
+    expect(find.text('Expandable session'), findsOneWidget);
+    expect(find.text('Unarchive'), findsOneWidget);
+  });
+
+  testWidgets('multiple project groups are collapsed by default', (tester) async {
+    final project1 = Project(id: 'p1', path: '/a', name: 'alpha', createdAt: DateTime(2025));
+    final project2 = Project(id: 'p2', path: '/b', name: 'beta', createdAt: DateTime(2025));
+    final s1 = ChatSession(
+      sessionId: 'c1',
+      title: 'Alpha session',
+      modelId: 'm',
+      providerId: 'anthropic',
+      projectId: 'p1',
+      createdAt: DateTime(2025),
+      updatedAt: DateTime(2025),
+    );
+    final s2 = ChatSession(
+      sessionId: 'c2',
+      title: 'Beta session',
+      modelId: 'm',
+      providerId: 'anthropic',
+      projectId: 'p2',
+      createdAt: DateTime(2025),
+      updatedAt: DateTime(2025),
+    );
+    await tester.pumpWidget(_buildArchive(sessions: [s1, s2], projects: [project1, project2]));
+    await tester.pump();
+
+    // Session cards not visible — groups are collapsed.
+    expect(find.text('Alpha session'), findsNothing);
+    expect(find.text('Beta session'), findsNothing);
+    // But project name headers are visible.
+    expect(find.textContaining('ALPHA'), findsOneWidget);
+    expect(find.textContaining('BETA'), findsOneWidget);
   });
 }
