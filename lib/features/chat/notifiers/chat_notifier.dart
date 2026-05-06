@@ -152,6 +152,9 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final registry = ref.read(chatStreamServiceProvider);
     final completer = Completer<Object?>();
 
+    var disposed = false;
+    ref.onDispose(() => disposed = true);
+
     String? streamingAssistantId;
 
     registry.start(
@@ -177,6 +180,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
                 sink.addError(NetworkException('No response — the model may still be loading.'), StackTrace.current),
           ),
       onMessage: (msg) {
+        if (disposed) return;
         if (msg.sessionId != sessionId) return;
         if (msg.role == MessageRole.assistant && streamingAssistantId == null) {
           streamingAssistantId = msg.id;
@@ -203,6 +207,10 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     // Subscribe after start() so watchState's first yield is connecting, not idle.
     late final StreamSubscription<ChatStreamState> termSub;
     termSub = registry.watchState(sessionId).listen((s) {
+      if (disposed) {
+        termSub.cancel();
+        return;
+      }
       switch (s) {
         case ChatStreamDone():
           if (!completer.isCompleted) completer.complete(null);
@@ -217,6 +225,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
           break;
       }
     });
+    ref.onDispose(() => termSub.cancel());
 
     final result = await completer.future;
     _sendInProgress = false;
