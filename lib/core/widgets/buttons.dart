@@ -87,7 +87,8 @@ class _ChipButtonShellState extends State<ChipButtonShell> {
             border: effectiveBorder != null ? Border.all(color: effectiveBorder) : null,
             borderRadius: BorderRadius.circular(widget.radius),
           ),
-          child: widget.loadingChild ??
+          child:
+              widget.loadingChild ??
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
