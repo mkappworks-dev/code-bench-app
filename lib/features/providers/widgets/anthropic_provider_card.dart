@@ -168,7 +168,18 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
     };
     final entry = entries.where((e) => e.id == _providerId).firstOrNull;
     if (entry?.isAvailable ?? false) {
-      AppSnackBar.show(context, 'Claude Code CLI detected', type: AppSnackBarType.success);
+      switch (entry!.authStatus) {
+        case AuthAuthenticated():
+          AppSnackBar.show(context, 'Claude Code CLI ready — signed in', type: AppSnackBarType.success);
+        case AuthUnauthenticated(:final signInCommand):
+          AppSnackBar.show(
+            context,
+            'Claude Code CLI installed — sign in with `$signInCommand`',
+            type: AppSnackBarType.warning,
+          );
+        case AuthUnknown():
+          AppSnackBar.show(context, 'Claude Code CLI detected', type: AppSnackBarType.success);
+      }
       return;
     }
     final reason = entry?.status is ProviderUnavailable
@@ -223,12 +234,7 @@ class _AnthropicProviderCardState extends ConsumerState<AnthropicProviderCard> {
         _ => null,
       };
       if (authPill != null) {
-        return Wrap(
-          spacing: 6,
-          runSpacing: 4,
-          alignment: WrapAlignment.end,
-          children: [installPill, authPill],
-        );
+        return Wrap(spacing: 6, runSpacing: 4, alignment: WrapAlignment.end, children: [installPill, authPill]);
       }
     }
     return installPill;
