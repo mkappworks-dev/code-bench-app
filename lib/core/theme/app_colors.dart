@@ -234,7 +234,6 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color subtleTealFg;
   final Color accentTintLight;
   final Color accentTintMid;
-  // New glass tokens ★
   final Color glassFill;
   final Color glassBorder;
   final Color subtleBorder;
@@ -413,7 +412,6 @@ class AppColors extends ThemeExtension<AppColors> {
   );
 
   static const AppColors light = AppColors(
-    // Themed
     background: Color(0xFFF0F2F5),
     textPrimary: Color(0xFF1E2329),
     textSecondary: Color(0xFF3A424D),
@@ -506,7 +504,6 @@ class AppColors extends ThemeExtension<AppColors> {
     subtleTealFg: Color(0xFF2A7A6E),
     accentTintLight: Color(0x0A4EC9B0),
     accentTintMid: Color(0x144EC9B0),
-    // Elevated Glass light ★
     glassFill: Color(0xFFFFFFFF),
     glassBorder: Color(0x1A000000),
     subtleBorder: Color(0x17000000),

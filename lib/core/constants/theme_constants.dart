@@ -2,15 +2,12 @@
 class ThemeConstants {
   ThemeConstants._();
 
-  // Icon sizes
   static const double iconSizeSmall = 14;
   static const double iconSizeMedium = 18;
   static const double iconSizeLarge = 24;
 
-  // Action button height — exact height of small action buttons in the top bar
   static const double actionButtonHeight = 22;
 
-  // Font
   static const String editorFontFamily = 'JetBrains Mono';
   static const double editorFontSize = 13;
   static const double uiFontSize = 12;

@@ -43,7 +43,6 @@ class AppSnackBar extends StatelessWidget {
     VoidCallback? onAction,
     Duration duration = const Duration(seconds: 4),
   }) {
-    // Dismiss any existing toast immediately.
     _current?.dismiss();
     _current = null;
 

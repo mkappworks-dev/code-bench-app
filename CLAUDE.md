@@ -180,13 +180,16 @@ Default to **no comments**. Add one only when the **WHY** is non-obvious — a h
 - Comments that explain WHAT the code does (well-named identifiers already do this)
 - Comments that reference callers, tasks, or issues ("used by X", "added for Y flow", "see issue #123")
 - File-header comments that repeat the file path (`// lib/path/to/file.dart`)
-- Section-header dividers (`// ── Label ──`) in widget build methods
+- Section-header dividers anywhere (`// ── Label ──`, `// Label`, `// --- Label ---`) — in widget build methods, constants files, notifiers, datasources, everywhere
+- Plain category labels in constants files (`// Window`, `// Font`, `// Actions`) — constant names are self-describing
+- Decorative markers (`// New tokens ★`, `// Themed`)
 - Doc comments on private helpers that only restate the method name
 
 **Keep, at most 1 line:**
 - Non-obvious ordering invariants ("must assign state before invalidating — invalidation cascades into build()")
 - Race-condition guards ("cancel in-flight poll before starting a new one")
 - Security constraints ("only log `e.runtimeType` — `$e` serialises the Authorization header")
+- Known limitations on intentionally simplified code ("quoted args not supported; whitespace-only split")
 - Linter-suppress directives (`// ignore: unnecessary_statements`) — always keep; add a trailing inline comment only when the suppressed statement needs explanation
 
 **Multi-line comments:** trim to 1 line. If the WHY cannot be expressed in one line, the constraint probably belongs in a commit message or PR description instead.
