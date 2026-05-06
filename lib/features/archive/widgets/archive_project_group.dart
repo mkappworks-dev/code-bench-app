@@ -5,6 +5,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../data/session/models/chat_session.dart';
+import 'archive_chip.dart';
 import 'archived_session_card.dart';
 
 class ArchiveProjectGroup extends StatefulWidget {
@@ -107,14 +108,14 @@ class _ArchiveProjectGroupState extends State<ArchiveProjectGroup> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _ActionChip(
+                        ArchiveChip(
                           icon: AppIcons.archiveRestore,
                           label: 'Unarchive All',
                           isDestructive: false,
                           onTap: widget.isLoading ? null : widget.onUnarchiveAll,
                         ),
                         const SizedBox(width: 5),
-                        _ActionChip(
+                        ArchiveChip(
                           icon: AppIcons.trash,
                           label: 'Delete All',
                           isDestructive: true,
@@ -142,64 +143,6 @@ class _ArchiveProjectGroupState extends State<ArchiveProjectGroup> {
                 .toList(),
           ),
       ],
-    );
-  }
-}
-
-class _ActionChip extends StatefulWidget {
-  const _ActionChip({required this.icon, required this.label, required this.isDestructive, required this.onTap});
-
-  final IconData icon;
-  final String label;
-  final bool isDestructive;
-  final VoidCallback? onTap;
-
-  @override
-  State<_ActionChip> createState() => _ActionChipState();
-}
-
-class _ActionChipState extends State<_ActionChip> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    final hovered = _hovered;
-    final Color fg = widget.isDestructive ? (hovered ? c.error : c.chipText) : (hovered ? c.accent : c.chipText);
-    final Color bg = widget.isDestructive
-        ? (hovered ? c.error.withValues(alpha: 0.12) : c.chipFill)
-        : (hovered ? c.accentTintMid : c.chipFill);
-    final Color border = widget.isDestructive
-        ? (hovered ? c.destructiveBorder : c.chipStroke)
-        : (hovered ? c.accentBorderTeal : c.chipStroke);
-
-    return MouseRegion(
-      cursor: widget.onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: bg,
-            border: Border.all(color: border),
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(widget.icon, size: 10, color: fg),
-              const SizedBox(width: 4),
-              Text(
-                widget.label,
-                style: TextStyle(color: fg, fontSize: ThemeConstants.uiFontSizeLabel, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
