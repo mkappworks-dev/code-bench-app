@@ -32,7 +32,7 @@ final class ArchiveActionsProvider extends $AsyncNotifierProvider<ArchiveActions
   ArchiveActions create() => ArchiveActions();
 }
 
-String _$archiveActionsHash() => r'5feff420e4e5ee544413a5271f47c2604554afa6';
+String _$archiveActionsHash() => r'b2bc3326ad25a09b91ad2514489739fd46dd5afa';
 
 abstract class _$ArchiveActions extends $AsyncNotifier<void> {
   FutureOr<void> build();
