@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/errors/app_exception.dart';
+import '../../core/utils/debug_logger.dart';
 import '../../data/chat/models/agent_failure.dart';
 import '../../data/shared/chat_message.dart';
 import '../agent/agent_exceptions.dart';
@@ -33,13 +34,16 @@ class ChatStreamService {
     required String sessionId,
     required Stream<ChatMessage> Function() streamFactory,
     required void Function(ChatMessage) onMessage,
+    void Function()? onCancel,
     List<Duration> backoff = _defaultBackoff,
   }) {
     if (sessionId.isEmpty) {
       throw ArgumentError.value(sessionId, 'sessionId', 'must be non-empty');
     }
     final handle = _handles.putIfAbsent(sessionId, () => _StreamHandle(sessionId));
-    if (handle.subscription != null) return;
+    // Block re-entry while either an active subscription or a pending retry timer exists — the timer keeps the connect-loop alive even after `cancelOnError: true` clears the subscription.
+    if (handle.subscription != null || handle.retryTimer != null) return;
+    handle.onCancel = onCancel;
     _attemptConnect(handle, streamFactory, onMessage, backoff, attempt: 1);
   }
 
@@ -56,14 +60,10 @@ class ChatStreamService {
     handle.subscription = streamFactory().listen(
       (msg) {
         if (msg.sessionId != handle.sessionId) {
-          assert(() {
-            // ignore: avoid_print
-            print(
-              '[ChatStreamService] dropped cross-session chunk: '
-              'expected=${handle.sessionId} got=${msg.sessionId}',
-            );
-            return true;
-          }());
+          dLog(
+            '[ChatStreamService] dropped cross-session chunk: '
+            'expected=${handle.sessionId} got=${msg.sessionId}',
+          );
           return;
         }
         sawChunk = true;
@@ -73,16 +73,18 @@ class ChatStreamService {
         onMessage(msg);
       },
       onError: (Object e, StackTrace st) {
+        // `cancelOnError: true` invalidates the subscription on error — drop our reference synchronously so a re-entrant `start()` during the retry window isn't blocked by a stale handle.
+        handle.subscription = null;
         final isRetryable = !sawChunk && (e is NetworkException || e is TimeoutException);
         final shouldRetry = isRetryable && attempt <= backoff.length;
         if (shouldRetry) {
           final delay = backoff[attempt - 1];
-          // Defer until yield* in stateStream has subscribed to the broadcast controller.
           scheduleMicrotask(() {
             if (handle._controller.isClosed) return;
             handle._emit(ChatStreamState.retrying(attempt: attempt, nextDelay: delay));
             handle.retryTimer?.cancel();
             handle.retryTimer = Timer(delay, () {
+              handle.retryTimer = null;
               if (handle._controller.isClosed) return;
               _attemptConnect(handle, streamFactory, onMessage, backoff, attempt: attempt + 1);
             });
@@ -90,7 +92,6 @@ class ChatStreamService {
         } else {
           final failure = isRetryable ? AgentFailure.networkExhausted(attempt) : _mapError(e);
           handle._emit(ChatStreamState.failed(failure));
-          handle.subscription = null;
         }
       },
       onDone: () {
@@ -110,6 +111,9 @@ class ChatStreamService {
   Future<void> cancel(String sessionId) async {
     final handle = _handles[sessionId];
     if (handle == null) return;
+    // Invoke first so the underlying transport (e.g. Claude CLI process) is signalled to stop before we tear down the Dart subscription that might otherwise outrun it.
+    handle.onCancel?.call();
+    handle.onCancel = null;
     handle.retryTimer?.cancel();
     handle.retryTimer = null;
     await handle.subscription?.cancel();
@@ -138,6 +142,7 @@ class _StreamHandle {
   final StreamController<ChatStreamState> _controller = StreamController<ChatStreamState>.broadcast();
   StreamSubscription<ChatMessage>? subscription;
   Timer? retryTimer;
+  void Function()? onCancel;
   ChatStreamState latest = const ChatStreamState.idle();
 
   Stream<ChatStreamState> get stateStream async* {

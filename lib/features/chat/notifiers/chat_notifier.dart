@@ -186,6 +186,8 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
             onTimeout: (sink) =>
                 sink.addError(NetworkException('No response — the model may still be loading.'), StackTrace.current),
           ),
+      // Flip the cooperative cancel flag from the registry so bulk cancels (e.g. delete-all-sessions) reach the underlying CLI process, not just the Dart subscription.
+      onCancel: cancelN.request,
       onMessage: (msg) {
         if (disposed) return;
         if (msg.sessionId != sessionId) return;

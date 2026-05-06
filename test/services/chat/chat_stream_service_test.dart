@@ -78,6 +78,41 @@ void main() {
   });
 
   group('cancel', () {
+    test('cancel invokes the onCancel callback supplied to start', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final registry = container.read(chatStreamServiceProvider);
+      final source = StreamController<ChatMessage>();
+      var cancelled = 0;
+      registry.start(
+        sessionId: 's',
+        streamFactory: () => source.stream,
+        onMessage: (_) {},
+        onCancel: () => cancelled++,
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      await registry.cancel('s');
+      expect(cancelled, 1);
+    });
+
+    test('cancelAll invokes onCancel for every active session', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final registry = container.read(chatStreamServiceProvider);
+      final s1 = StreamController<ChatMessage>();
+      final s2 = StreamController<ChatMessage>();
+      var cancelledA = 0;
+      var cancelledB = 0;
+      registry.start(sessionId: 'a', streamFactory: () => s1.stream, onMessage: (_) {}, onCancel: () => cancelledA++);
+      registry.start(sessionId: 'b', streamFactory: () => s2.stream, onMessage: (_) {}, onCancel: () => cancelledB++);
+      await Future<void>.delayed(Duration.zero);
+
+      await registry.cancelAll();
+      expect(cancelledA, 1);
+      expect(cancelledB, 1);
+    });
+
     test('cancel stops the subscription and emits idle', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -169,6 +204,43 @@ void main() {
       final failed = states.last as ChatStreamFailed;
       expect(failed.failure, isA<AgentNetworkExhausted>());
       expect((failed.failure as AgentNetworkExhausted).attempts, 3);
+    });
+
+    test('cancel during retry-backoff lets a fresh start attach a new listener', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final registry = container.read(chatStreamServiceProvider);
+
+      var firstFactoryCalls = 0;
+      Stream<ChatMessage> firstFactory() async* {
+        firstFactoryCalls++;
+        throw NetworkException('flaky');
+      }
+
+      registry.start(
+        sessionId: 's',
+        streamFactory: firstFactory,
+        onMessage: (_) {},
+        backoff: const [Duration(milliseconds: 50)],
+      );
+      // Give the first attempt time to fail and schedule a retry timer.
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      expect(firstFactoryCalls, 1);
+
+      await registry.cancel('s');
+
+      var secondFactoryCalls = 0;
+      Stream<ChatMessage> secondFactory() async* {
+        secondFactoryCalls++;
+        yield _msg('ok');
+      }
+
+      registry.start(sessionId: 's', streamFactory: secondFactory, onMessage: (_) {});
+      // Wait long enough that the original retry timer would have fired if it weren't cancelled.
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      expect(secondFactoryCalls, 1, reason: 'fresh start must attach a new listener after cancel');
+      expect(firstFactoryCalls, 1, reason: 'cancelled retry timer must not re-invoke the original factory');
     });
 
     test('errors after first chunk arrives are NOT retried', () async {
