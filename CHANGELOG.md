@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.9.0...v0.10.0) (2026-05-06)
+
+
+### Features
+
+* **archive:** collapsible groups, per-session delete, bulk actions, sidebar delete confirm ([#83](https://github.com/mkappworks-dev/code-bench-app/issues/83)) ([bd1ed94](https://github.com/mkappworks-dev/code-bench-app/commit/bd1ed9403f947ec9f478391686e40af424e70ff5))
+
 ## [0.9.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.8.0...v0.9.0) (2026-05-06)
 
 
