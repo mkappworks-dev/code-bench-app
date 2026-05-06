@@ -35,6 +35,8 @@ class ChatMessages extends Table {
   TextColumn get codeBlocksJson => text().withDefault(const Constant('[]'))();
   TextColumn get toolEventsJson => text().withDefault(const Constant('[]'))();
   DateTimeColumn get timestamp => dateTime()();
+  TextColumn get providerId => text().nullable()();
+  TextColumn get modelId => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -204,7 +206,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(chatMessages, chatMessages.providerId);
+        await m.addColumn(chatMessages, chatMessages.modelId);
+      }
+    },
+  );
 }
 
 QueryExecutor _openConnection() {
