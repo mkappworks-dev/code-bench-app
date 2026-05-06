@@ -790,19 +790,27 @@ class _ReadinessStrip extends ConsumerWidget {
   };
 
   Future<void> _copyCommand(BuildContext context, String command) async {
+    var copied = true;
     try {
       await Clipboard.setData(ClipboardData(text: command));
     } catch (e) {
+      copied = false;
       dLog('[chat_input_bar] clipboard write failed: $e');
     }
     if (!context.mounted) return;
-    AppSnackBar.show(context, '"$command" copied — paste in your terminal', type: AppSnackBarType.success);
+    if (copied) {
+      AppSnackBar.show(context, '"$command" copied — paste in your terminal', type: AppSnackBarType.success);
+    } else {
+      AppSnackBar.show(context, 'Couldn\'t copy — run `$command` manually', type: AppSnackBarType.warning);
+    }
   }
 
   Future<void> _copyAndOpenTerminal(BuildContext context, WidgetRef ref, String command) async {
+    var copied = true;
     try {
       await Clipboard.setData(ClipboardData(text: command));
     } catch (e) {
+      copied = false;
       dLog('[chat_input_bar] clipboard write failed: $e');
     }
     final project = ref.read(activeProjectProvider);
@@ -810,7 +818,9 @@ class _ReadinessStrip extends ConsumerWidget {
       if (context.mounted) {
         AppSnackBar.show(
           context,
-          'No active project — paste in your terminal manually.',
+          copied
+              ? 'No active project — paste in your terminal manually.'
+              : 'Couldn\'t copy — run `$command` in a terminal manually.',
           type: AppSnackBarType.warning,
         );
       }
@@ -821,8 +831,10 @@ class _ReadinessStrip extends ConsumerWidget {
     final err = ref.read(ideLaunchActionsProvider).error;
     if (err != null) {
       AppSnackBar.show(context, '$err', type: AppSnackBarType.error);
-    } else {
+    } else if (copied) {
       AppSnackBar.show(context, 'Opened terminal — paste to sign in', type: AppSnackBarType.success);
+    } else {
+      AppSnackBar.show(context, 'Opened terminal — type `$command` to sign in', type: AppSnackBarType.warning);
     }
   }
 }
