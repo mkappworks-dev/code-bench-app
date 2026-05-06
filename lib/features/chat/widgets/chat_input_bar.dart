@@ -21,8 +21,7 @@ import '../notifiers/available_models_notifier.dart';
 import '../notifiers/session_settings_actions.dart';
 import '../notifiers/session_settings_failure.dart';
 import '../../../data/chat/models/agent_failure.dart';
-import '../../../services/chat/chat_stream_service.dart';
-import '../../../services/chat/chat_stream_state.dart';
+import '../notifiers/chat_session_streaming.dart';
 
 /// Private in-memory store of per-session chat-input drafts.
 ///
@@ -177,8 +176,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
   }
 
   bool get _isStreaming {
-    final s = ref.read(chatStreamWatchProvider(widget.sessionId)).value;
-    return s is ChatStreamConnecting || s is ChatStreamStreaming || s is ChatStreamRetrying;
+    return ref.read(chatSessionStreamingProvider(widget.sessionId)).value ?? false;
   }
 
   Future<void> _send() async {
@@ -487,11 +485,9 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     // (e.g. app-resume refresh, write-button guard, or ApplyService catch).
     final project = ref.watch(activeProjectProvider);
     final isMissing = project?.status == ProjectStatus.missing;
-    final streamState = ref.watch(chatStreamWatchProvider(widget.sessionId));
-    final isStreaming = streamState.maybeWhen(
-      data: (s) => s is ChatStreamConnecting || s is ChatStreamStreaming || s is ChatStreamRetrying,
-      orElse: () => false,
-    );
+    final isStreaming = ref
+        .watch(chatSessionStreamingProvider(widget.sessionId))
+        .maybeWhen(data: (v) => v, orElse: () => false);
     final isSending = _isSending || isStreaming;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),

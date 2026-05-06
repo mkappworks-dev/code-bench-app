@@ -17,11 +17,6 @@ ChatStreamService chatStreamService(Ref ref) {
   return registry;
 }
 
-@riverpod
-Stream<ChatStreamState> chatStreamWatch(Ref ref, String sessionId) {
-  return ref.watch(chatStreamServiceProvider).watchState(sessionId);
-}
-
 class ChatStreamService {
   final Map<String, _StreamHandle> _handles = {};
 
