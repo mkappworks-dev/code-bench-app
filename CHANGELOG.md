@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/mkappworks-dev/code-bench-app/compare/v0.10.0...v0.10.1) (2026-05-06)
+
+
+### Bug Fixes
+
+* **release:** set force-tag-creation to anchor next release cycle ([#86](https://github.com/mkappworks-dev/code-bench-app/issues/86)) ([2943f0f](https://github.com/mkappworks-dev/code-bench-app/commit/2943f0fc9da7b79d374a775fb7d793a337db659c))
+
 ## [0.10.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.9.0...v0.10.0) (2026-05-06)
 
 

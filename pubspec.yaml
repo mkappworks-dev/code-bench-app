@@ -2,7 +2,7 @@ name: code_bench_app
 description: "Desktop AI coding assistant — chat, run tools, and edit files on your local repo"
 publish_to: "none"
 
-version: 0.10.0
+version: 0.10.1
 
 environment:
   sdk: ^3.8.0
