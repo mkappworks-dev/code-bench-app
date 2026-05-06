@@ -247,7 +247,6 @@ class _PRCardState extends ConsumerState<PRCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Stale-data banner ──────────────────────────────────────────────
           if (s.pollError != null) ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

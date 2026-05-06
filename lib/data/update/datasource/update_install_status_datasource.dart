@@ -1,4 +1,3 @@
-// lib/data/update/datasource/update_install_status_datasource.dart
 import '../models/update_install_status.dart';
 
 /// Reads and clears the install-status sentinel that the relaunch script

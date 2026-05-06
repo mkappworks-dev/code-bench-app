@@ -5,8 +5,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_database.g.dart';
 
-// ── Tables ──────────────────────────────────────────────────────────────────
-
 @DataClassName('ChatSessionRow')
 class ChatSessions extends Table {
   TextColumn get sessionId => text()();
@@ -70,8 +68,6 @@ class McpServers extends Table {
   @override
   Set<Column> get primaryKey => {id};
 }
-
-// ── DAOs ─────────────────────────────────────────────────────────────────────
 
 @DriftAccessor(tables: [ChatSessions, ChatMessages])
 class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
@@ -199,8 +195,6 @@ class McpDao extends DatabaseAccessor<AppDatabase> with _$McpDaoMixin {
   Future<void> deleteAll() => delete(mcpServers).go();
 }
 
-// ── Database ─────────────────────────────────────────────────────────────────
-
 @DriftDatabase(
   tables: [ChatSessions, ChatMessages, WorkspaceProjects, McpServers],
   daos: [SessionDao, ProjectDao, McpDao],
@@ -223,8 +217,6 @@ QueryExecutor _openConnection() {
     native: DriftNativeOptions(databaseDirectory: getApplicationSupportDirectory),
   );
 }
-
-// ── Provider ──────────────────────────────────────────────────────────────────
 
 @Riverpod(keepAlive: true)
 AppDatabase appDatabase(Ref ref) {

@@ -1,5 +1,3 @@
-// lib/data/coding_tools/models/tool_context.dart
-
 import 'package:path/path.dart' as p;
 
 import '../../../core/utils/debug_logger.dart';

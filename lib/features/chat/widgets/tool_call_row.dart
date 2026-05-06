@@ -55,7 +55,6 @@ class _ToolCallRowState extends State<ToolCallRow> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── Collapsed row ─────────────────────────────────────────────────
         GestureDetector(
           onTap: () => setState(() => _expanded = !_expanded),
           child: Container(
@@ -146,7 +145,6 @@ class _ToolCallRowState extends State<ToolCallRow> {
             ),
           ),
         ),
-        // ── Expanded section ───────────────────────────────────────────────
         if (_expanded)
           Container(
             padding: const EdgeInsets.all(10),

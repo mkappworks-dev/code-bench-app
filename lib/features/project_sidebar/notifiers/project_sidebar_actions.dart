@@ -35,8 +35,6 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     _ => ProjectSidebarFailure.unknown(e),
   };
 
-  // ── Project mutations ──────────────────────────────────────────────────────
-
   Future<void> refreshProjectStatuses() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
@@ -125,8 +123,6 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     });
   }
 
-  // ── Git state ─────────────────────────────────────────────────────────────
-
   /// Invalidates all cached git state for [projectPath].
   ///
   /// Call this after any in-app git mutation (commit, push, pull, checkout,
@@ -164,8 +160,6 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     });
   }
 
-  // ── Filesystem helpers ─────────────────────────────────────────────────────
-
   /// Returns `true` when the folder at [path] currently exists on disk.
   /// Used by widgets that need a fast availability check without async I/O.
   bool projectExistsOnDisk(String path) => _projects.projectExistsOnDisk(path);
@@ -187,8 +181,6 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     });
     return resolved;
   }
-
-  // ── Session mutations ──────────────────────────────────────────────────────
 
   Future<String> createSession({required AIModel model, required String projectId}) async {
     state = const AsyncLoading();

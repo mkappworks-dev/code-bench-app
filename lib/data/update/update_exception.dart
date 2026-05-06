@@ -1,4 +1,3 @@
-// lib/data/update/update_exception.dart
 sealed class UpdateException implements Exception {
   const UpdateException([this.message]);
   final String? message;

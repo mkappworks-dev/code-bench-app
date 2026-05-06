@@ -19,8 +19,6 @@ class SessionRepositoryImpl implements SessionRepository {
 
   final SessionDatasource _ds;
 
-  // ── CRUD — delegate to datasource ─────────────────────────────────────────
-
   @override
   Stream<List<ChatSession>> watchAllSessions() => _ds.watchAllSessions();
 

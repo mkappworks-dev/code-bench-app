@@ -102,8 +102,6 @@ class ChangesPanel extends ConsumerWidget {
   }
 }
 
-// ── Single change entry ───────────────────────────────────────────────────────
-
 class _ChangeEntry extends ConsumerStatefulWidget {
   const _ChangeEntry({required this.change, required this.project});
 

@@ -1,4 +1,3 @@
-// lib/core/widgets/github_icon.dart
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';

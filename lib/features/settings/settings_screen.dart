@@ -62,8 +62,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-// ── Left nav ──────────────────────────────────────────────────────────────────
-
 class _SettingsLeftNav extends StatefulWidget {
   const _SettingsLeftNav({required this.activeNav, required this.onSelect, required this.onBack});
 

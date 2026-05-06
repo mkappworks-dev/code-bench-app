@@ -34,8 +34,6 @@ class SessionSettingsActions extends _$SessionSettingsActions {
     });
   }
 
-  // ── Internal ───────────────────────────────────────────────────────────────
-
   Future<void> _loadForSession(String sessionId) async {
     final svc = await ref.read(sessionServiceProvider.future);
     final session = await svc.getSession(sessionId);
@@ -56,8 +54,6 @@ class SessionSettingsActions extends _$SessionSettingsActions {
         .read(sessionPermissionProvider.notifier)
         .set(ChatPermission.values.firstWhereOrNull((p) => p.name == session.permission) ?? ChatPermission.fullAccess);
   }
-
-  // ── Public API ────────────────────────────────────────────────────────────
 
   Future<void> updateModel(String sessionId, AIModel model) async {
     state = const AsyncLoading();

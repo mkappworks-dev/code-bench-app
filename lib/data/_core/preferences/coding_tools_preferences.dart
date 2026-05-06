@@ -45,8 +45,6 @@ class CodingToolsPreferences {
     await prefs.remove(_kDenylistState);
   }
 
-  // --- Serialization ---
-
   Map<String, dynamic> _serialize(CodingToolsDenylistState s) => {
     'userAdded': {for (final e in s.userAdded.entries) e.key.name: e.value.toList()},
     'suppressedDefaults': {for (final e in s.suppressedDefaults.entries) e.key.name: e.value.toList()},

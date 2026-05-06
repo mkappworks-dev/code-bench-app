@@ -343,8 +343,6 @@ Stream<List<ChatSession>> archivedSessions(Ref ref) {
       .maybeWhen(data: (svc) => svc.watchArchivedSessions(), orElse: () => const Stream.empty());
 }
 
-// ── Applied changes (in-memory, keyed by sessionId) ─────────────────────────
-
 @Riverpod(keepAlive: true)
 class AppliedChangesNotifier extends _$AppliedChangesNotifier {
   @override
@@ -363,8 +361,6 @@ class AppliedChangesNotifier extends _$AppliedChangesNotifier {
   List<AppliedChange> changesForSession(String sessionId) => state[sessionId] ?? [];
 }
 
-// ── Active message ID (for the status bar "Working for Xs" pill) ─────────────
-
 @Riverpod(keepAlive: true)
 class ActiveMessageIdNotifier extends _$ActiveMessageIdNotifier {
   @override
@@ -372,8 +368,6 @@ class ActiveMessageIdNotifier extends _$ActiveMessageIdNotifier {
 
   void set(String? id) => state = id;
 }
-
-// ── Changes panel visibility ─────────────────────────────────────────────────
 
 @Riverpod(keepAlive: true)
 class ChangesPanelVisibleNotifier extends _$ChangesPanelVisibleNotifier {

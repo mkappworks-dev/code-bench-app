@@ -1,4 +1,3 @@
-// lib/features/update/widgets/update_dialog.dart
 import 'dart:async';
 
 import 'package:flutter/material.dart';

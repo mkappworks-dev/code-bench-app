@@ -360,8 +360,6 @@ class _BranchPickerPopoverState extends ConsumerState<BranchPickerPopover> {
   }
 }
 
-// ── Sub-widgets ───────────────────────────────────────────────────────────────
-
 class _DialogHeader extends StatelessWidget {
   const _DialogHeader({
     required this.currentBranch,

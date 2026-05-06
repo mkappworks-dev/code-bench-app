@@ -1,4 +1,3 @@
-// lib/features/integrations/integrations_screen.dart
 import 'package:flutter/material.dart';
 
 import '../settings/widgets/section_label.dart';

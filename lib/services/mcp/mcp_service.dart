@@ -55,8 +55,6 @@ class McpService {
     _ => 'Failed to connect',
   };
 
-  // ── CRUD delegation ──────────────────────────────────────────────────────
-
   /// Returns a stream of all configured MCP servers.
   Stream<List<McpServerConfig>> watchAll() => _repository.watchAll();
 
@@ -65,8 +63,6 @@ class McpService {
 
   /// Deletes an MCP server configuration by [id].
   Future<void> delete(String id) => _repository.delete(id);
-
-  // ── Session lifecycle ─────────────────────────────────────────────────────
 
   Future<Future<void> Function()> startSession({
     required ToolRegistry registry,

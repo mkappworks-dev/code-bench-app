@@ -1,5 +1,3 @@
-// lib/data/coding_tools/models/grep_match.dart
-
 /// One matched line returned by a grep datasource, with surrounding context.
 class GrepMatch {
   const GrepMatch({

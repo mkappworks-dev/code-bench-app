@@ -161,8 +161,6 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
   }
 }
 
-// ── Progress dots header ────────────────────────────────────────────────────
-
 class _StepHeader extends StatelessWidget {
   const _StepHeader({required this.currentStep, required this.totalSteps, required this.sectionLabel});
 
@@ -207,8 +205,6 @@ class _StepHeader extends StatelessWidget {
     );
   }
 }
-
-// ── Option row ──────────────────────────────────────────────────────────────
 
 class _OptionRow extends StatelessWidget {
   const _OptionRow({required this.index, required this.label, required this.isSelected, required this.onTap});

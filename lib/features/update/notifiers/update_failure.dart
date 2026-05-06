@@ -1,4 +1,3 @@
-// lib/features/update/notifiers/update_failure.dart
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'update_failure.freezed.dart';

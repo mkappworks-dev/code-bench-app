@@ -11,11 +11,9 @@ part 'stream_event.freezed.dart';
 /// Claude Code CLI transport adds richer variants: [TextDelta], [ToolUseStart],
 /// [ToolUseInputDelta], [ToolUseComplete], [ToolResult], [ThinkingDelta],
 /// [StreamDone], [StreamParseFailure], [StreamError]. These coexist with the
-/// OpenAI-oriented `StreamTextDelta`/`StreamToolCall*`/`StreamFinish` variants
-/// used by `custom_remote_datasource_dio.dart`.
+/// OpenAI-oriented `StreamTextDelta`/`StreamToolCall*`/`StreamFinish` variants.
 @freezed
 sealed class StreamEvent with _$StreamEvent {
-  // ---- OpenAI wire-format variants (custom_remote_datasource_dio) ----
   const factory StreamEvent.textDelta(String text) = StreamTextDelta;
   const factory StreamEvent.toolCallStart({required String id, required String name}) = StreamToolCallStart;
   const factory StreamEvent.toolCallArgsDelta({required String id, required String argsJsonFragment}) =
@@ -25,7 +23,6 @@ sealed class StreamEvent with _$StreamEvent {
   /// OpenAI `finish_reason` — typically "stop", "tool_calls", or "length".
   const factory StreamEvent.finish({required String reason}) = StreamFinish;
 
-  // ---- Claude Code CLI variants (claude_cli_stream_parser) ----
   const factory StreamEvent.cliTextDelta(String text) = TextDelta;
   const factory StreamEvent.cliToolUseStart({required String id, required String name}) = ToolUseStart;
   const factory StreamEvent.cliToolUseInputDelta({required String id, required String partialJson}) = ToolUseInputDelta;

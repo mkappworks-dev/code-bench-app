@@ -1,5 +1,3 @@
-// lib/services/coding_tools/tool_registry.dart
-
 import 'package:collection/collection.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

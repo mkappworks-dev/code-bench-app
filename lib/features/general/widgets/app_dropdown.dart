@@ -1,4 +1,3 @@
-// lib/features/settings/widgets/app_dropdown.dart
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_icons.dart';

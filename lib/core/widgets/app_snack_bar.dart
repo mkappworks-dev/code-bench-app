@@ -158,8 +158,6 @@ class AppSnackBar extends StatelessWidget {
   }
 }
 
-// ── Overlay toast wrapper ─────────────────────────────────────────────────────
-
 class _Toast extends StatefulWidget {
   const _Toast({
     required this.label,

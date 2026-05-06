@@ -161,8 +161,6 @@ class _AddProjectStepState extends ConsumerState<AddProjectStep> {
   }
 }
 
-// ── Selected folder preview ────────────────────────────────────────────────
-
 class _SelectedFolderPreview extends StatefulWidget {
   const _SelectedFolderPreview({required this.path, required this.isGit, required this.onBrowse});
 

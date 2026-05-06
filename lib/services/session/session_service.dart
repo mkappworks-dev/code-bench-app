@@ -47,8 +47,6 @@ class SessionService {
   final AIProviderService? _providerService;
   static const _uuid = Uuid();
 
-  // ── CRUD delegation ────────────────────────────────────────────────────────
-
   Stream<List<ChatSession>> watchAllSessions() => _session.watchAllSessions();
   Stream<List<ChatSession>> watchSessionsByProject(String projectId) => _session.watchSessionsByProject(projectId);
   Stream<List<ChatSession>> watchArchivedSessions() => _session.watchArchivedSessions();

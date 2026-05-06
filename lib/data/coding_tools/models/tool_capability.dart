@@ -1,5 +1,3 @@
-// lib/data/coding_tools/models/tool_capability.dart
-
 /// Declarative tag describing the side-effect surface of a [Tool].
 /// Drives [ToolRegistry]'s permission-aware filtering.
 ///
