@@ -20,6 +20,7 @@ import 'ask_user_question_card.dart';
 import 'code_block_widget.dart';
 import 'iteration_cap_banner.dart';
 import 'permission_request_card.dart';
+import 'provider_label.dart';
 import 'streaming_dot.dart';
 import 'tool_call_row.dart';
 import 'work_log_section.dart';
@@ -237,7 +238,11 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
                     Padding(
                       key: ValueKey('tool-row-${event.id}'),
                       padding: const EdgeInsets.only(bottom: 4),
-                      child: ToolCallRow(event: event),
+                      child: ToolCallRow(
+                        event: event,
+                        providerLabel: providerLabelFor(message.providerId),
+                        modelLabel: message.modelId,
+                      ),
                     ),
                   if (message.isStreaming &&
                       !message.toolEvents.any((e) => e.status == ToolStatus.running) &&
