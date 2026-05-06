@@ -15,10 +15,6 @@ Future<GitHubService> githubService(Ref ref) async {
   return GitHubService(repo: repo, invalidateApiDatasource: () => ref.invalidate(githubApiDatasourceProvider));
 }
 
-/// Thin delegation service for GitHub operations.
-///
-/// All GitHub business logic that requires composition lives here.
-/// [GitHubRepository] retains the primitives.
 class GitHubService {
   GitHubService({required GitHubRepository repo, void Function()? invalidateApiDatasource})
     : _repo = repo,

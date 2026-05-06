@@ -7,9 +7,7 @@ import 'coding_tool_result.dart';
 import 'effective_denylist.dart';
 import 'path_result.dart';
 
-/// Request-scoped inputs to a [Tool.execute] call. Carries per-call data
-/// plus safety helpers that centralize the resolve + assertWithinProject
-/// + denylist ritual every file-touching tool used to repeat.
+/// Request-scoped inputs to a [Tool.execute] call. Carries safety helpers that centralize path validation and denylist checks.
 class ToolContext {
   ToolContext({
     required this.projectPath,
