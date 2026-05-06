@@ -217,6 +217,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     late final StreamSubscription<ChatStreamState> termSub;
     termSub = registry.watchState(sessionId).listen((s) {
       if (disposed) {
+        if (!completer.isCompleted) completer.complete(null);
         termSub.cancel();
         return;
       }
