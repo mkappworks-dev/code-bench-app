@@ -222,6 +222,8 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       }
 
       _process = spawned;
+      // Claude CLI commits the session on spawn; subsequent turns must use --resume even if this stream errors before message_stop.
+      _knownSessions.add(sessionId);
 
       // Cap stderr so a chatty crash can't balloon memory.
       const stderrCap = 64 * 1024;
@@ -279,9 +281,6 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
         } else if (!sawDone) {
           dLog('[ClaudeCli] stdout closed without message_stop (exit=0)');
           controller.add(const ProviderStreamFailure(error: 'stream closed without message_stop'));
-        } else {
-          // Mark this session as known so subsequent turns use --resume.
-          _knownSessions.add(sessionId);
         }
       } finally {
         await stderrSub.cancel();
