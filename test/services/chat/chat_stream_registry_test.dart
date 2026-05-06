@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:code_bench_app/core/errors/app_exception.dart';
 import 'package:code_bench_app/data/chat/models/agent_failure.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
-import 'package:code_bench_app/services/chat/chat_stream_registry.dart';
+import 'package:code_bench_app/services/chat/chat_stream_service.dart';
 import 'package:code_bench_app/services/chat/chat_stream_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,14 +20,14 @@ void main() {
   test('latestState returns idle for unknown sessions', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final registry = container.read(chatStreamRegistryProvider);
+    final registry = container.read(chatStreamServiceProvider);
     expect(registry.latestState('unknown'), isA<ChatStreamIdle>());
   });
 
   test('watchState emits the current state immediately', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final registry = container.read(chatStreamRegistryProvider);
+    final registry = container.read(chatStreamServiceProvider);
     final first = await registry.watchState('s').first;
     expect(first, isA<ChatStreamIdle>());
   });
@@ -36,7 +36,7 @@ void main() {
     test('start emits connecting → streaming → done as chunks arrive', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamRegistryProvider);
+      final registry = container.read(chatStreamServiceProvider);
 
       final source = StreamController<ChatMessage>();
       final states = <ChatStreamState>[];
@@ -62,7 +62,7 @@ void main() {
     test('start drops chunks whose sessionId does not match', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamRegistryProvider);
+      final registry = container.read(chatStreamServiceProvider);
       final source = StreamController<ChatMessage>();
       final messages = <ChatMessage>[];
 
@@ -81,7 +81,7 @@ void main() {
     test('cancel stops the subscription and emits idle', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamRegistryProvider);
+      final registry = container.read(chatStreamServiceProvider);
       final source = StreamController<ChatMessage>();
       final states = <ChatStreamState>[];
       registry.watchState('s').listen(states.add);
@@ -102,7 +102,7 @@ void main() {
     test('cancelAll stops every active session', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamRegistryProvider);
+      final registry = container.read(chatStreamServiceProvider);
       final s1 = StreamController<ChatMessage>();
       final s2 = StreamController<ChatMessage>();
       registry.start(sessionId: 'a', streamFactory: () => s1.stream, onMessage: (_) {});
@@ -119,7 +119,7 @@ void main() {
     test('retries on NetworkException before any chunk arrives', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamRegistryProvider);
+      final registry = container.read(chatStreamServiceProvider);
 
       var calls = 0;
       Stream<ChatMessage> factory() async* {
@@ -150,7 +150,7 @@ void main() {
     test('after retries are exhausted, emits failed(networkExhausted)', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamRegistryProvider);
+      final registry = container.read(chatStreamServiceProvider);
 
       Stream<ChatMessage> factory() async* {
         throw NetworkException('still flaky');
@@ -174,7 +174,7 @@ void main() {
     test('errors after first chunk arrives are NOT retried', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamRegistryProvider);
+      final registry = container.read(chatStreamServiceProvider);
 
       var calls = 0;
       Stream<ChatMessage> factory() async* {

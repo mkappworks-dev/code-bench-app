@@ -8,16 +8,16 @@ import '../../data/shared/chat_message.dart';
 import '../agent/agent_exceptions.dart';
 import 'chat_stream_state.dart';
 
-part 'chat_stream_registry.g.dart';
+part 'chat_stream_service.g.dart';
 
 @Riverpod(keepAlive: true)
-ChatStreamRegistry chatStreamRegistry(Ref ref) {
-  final registry = ChatStreamRegistry();
+ChatStreamService chatStreamService(Ref ref) {
+  final registry = ChatStreamService();
   ref.onDispose(registry.dispose);
   return registry;
 }
 
-class ChatStreamRegistry {
+class ChatStreamService {
   final Map<String, _StreamHandle> _handles = {};
 
   static const _defaultBackoff = [Duration(milliseconds: 500), Duration(seconds: 1), Duration(seconds: 2)];
@@ -59,7 +59,7 @@ class ChatStreamRegistry {
           assert(() {
             // ignore: avoid_print
             print(
-              '[ChatStreamRegistry] dropped cross-session chunk: '
+              '[ChatStreamService] dropped cross-session chunk: '
               'expected=${handle.sessionId} got=${msg.sessionId}',
             );
             return true;
