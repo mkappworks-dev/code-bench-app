@@ -66,4 +66,4 @@ final class ChatInputBarOptionsProvider
   }
 }
 
-String _$chatInputBarOptionsHash() => r'69c6368a797e1610deab53deef53442ecf45555a';
+String _$chatInputBarOptionsHash() => r'e883eb249ff82a0c977df8f5d1dcdcab05505be0';
