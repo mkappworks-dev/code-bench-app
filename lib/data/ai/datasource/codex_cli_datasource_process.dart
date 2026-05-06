@@ -734,4 +734,8 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
         .trim()
         .toLowerCase();
   }
+
+  // Replaced with real impl in Task 5; stubbed so the codebase compiles.
+  @override
+  Future<AuthStatus> verifyAuth() async => const AuthStatus.unknown();
 }
