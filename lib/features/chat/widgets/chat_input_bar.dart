@@ -20,7 +20,8 @@ import '../notifiers/available_models_failure.dart';
 import '../notifiers/available_models_notifier.dart';
 import '../notifiers/session_settings_actions.dart';
 import '../notifiers/session_settings_failure.dart';
-import '../notifiers/agent_failure.dart';
+import '../../../data/chat/models/agent_failure.dart';
+import '../notifiers/chat_session_streaming.dart';
 
 /// Private in-memory store of per-session chat-input drafts.
 ///
@@ -137,6 +138,15 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     if (oldWidget.sessionId != widget.sessionId) {
       _stashDraft(oldWidget.sessionId, _controller.text);
       _controller.text = _sessionDrafts[widget.sessionId] ?? '';
+      if (_isSending) setState(() => _isSending = false);
+      // Sync pulse animation to the new session's registry state.
+      final newSessionStreaming = _isStreaming;
+      if (newSessionStreaming && !_pulseController.isAnimating) {
+        _pulseController.repeat(reverse: true);
+      } else if (!newSessionStreaming && _pulseController.isAnimating) {
+        _pulseController.stop();
+        _pulseController.reset();
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _focusNode.requestFocus();
       });
@@ -165,8 +175,12 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     return existsOnDisk;
   }
 
+  bool get _isStreaming {
+    return ref.read(chatSessionStreamingProvider(widget.sessionId)).value ?? false;
+  }
+
   Future<void> _send() async {
-    if (_isSending) return;
+    if (_isSending || _isStreaming) return;
 
     // Check project availability BEFORE the empty-text bailout so that a
     // tap on the disabled send button (which routes through this method)
@@ -216,6 +230,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
               showErrorSnackBar(context, 'Stream ended unexpectedly — try again.');
             case AgentToolDispatchFailed():
               break; // surfaced to the model as a tool_result
+            case AgentNetworkExhausted():
+              showErrorSnackBar(context, 'Stream ended unexpectedly — try again.');
             case AgentUnknownError(:final error):
               showErrorSnackBar(context, userMessage(error, fallback: 'Failed to get a response.'));
           }
@@ -469,6 +485,10 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     // (e.g. app-resume refresh, write-button guard, or ApplyService catch).
     final project = ref.watch(activeProjectProvider);
     final isMissing = project?.status == ProjectStatus.missing;
+    final isStreaming = ref
+        .watch(chatSessionStreamingProvider(widget.sessionId))
+        .maybeWhen(data: (v) => v, orElse: () => false);
+    final isSending = _isSending || isStreaming;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
       decoration: BoxDecoration(color: c.background),
@@ -493,7 +513,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                 if (event is KeyDownEvent &&
                     event.logicalKey == LogicalKeyboardKey.enter &&
                     !HardwareKeyboard.instance.isShiftPressed &&
-                    !_isSending) {
+                    !isSending) {
                   // Let _send() own the missing-project branch so Enter
                   // surfaces the same snackbar as the tap on the button.
                   _send();
@@ -576,7 +596,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                     ),
                   ),
                   const Spacer(),
-                  if (_isSending)
+                  if (isSending)
                     AnimatedBuilder(
                       animation: _pulseOpacity,
                       builder: (context, child) => Opacity(opacity: _pulseOpacity.value, child: child),

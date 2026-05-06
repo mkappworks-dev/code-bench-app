@@ -234,6 +234,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
       final parser = ClaudeCliStreamParser();
       var sawDone = false;
+      var sessionCommitted = false;
       var consecutiveParseFailures = 0;
       var aborted = false;
 
@@ -263,6 +264,11 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
             continue;
           }
           consecutiveParseFailures = 0;
+          // Mark the session known on first real CLI event — the CLI commits its session-store at that point. Marking on `Process.start` was too eager: a spawn that hung at auth never wrote the session, so a later `--resume` would fail.
+          if (!sessionCommitted) {
+            _knownSessions.add(sessionId);
+            sessionCommitted = true;
+          }
           if (mapped == null) continue;
           if (mapped is ProviderStreamDone) sawDone = true;
           controller.add(mapped);
@@ -279,9 +285,6 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
         } else if (!sawDone) {
           dLog('[ClaudeCli] stdout closed without message_stop (exit=0)');
           controller.add(const ProviderStreamFailure(error: 'stream closed without message_stop'));
-        } else {
-          // Mark this session as known so subsequent turns use --resume.
-          _knownSessions.add(sessionId);
         }
       } finally {
         await stderrSub.cancel();

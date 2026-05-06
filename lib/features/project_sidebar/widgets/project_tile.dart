@@ -101,7 +101,7 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                       )
                     : null,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   child: Row(
                     children: [
                       // Chevron
@@ -135,7 +135,6 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                           ),
                         ),
                       ),
-                      // New-chat icon — hidden entirely when missing
                       if (!isMissing)
                         AnimatedOpacity(
                           opacity: _hovered ? 1.0 : 0.0,
@@ -150,7 +149,6 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                           ),
                         ),
                       const SizedBox(width: 4),
-                      // Git icon — faint when missing or not a repo
                       Tooltip(
                         message: isGit ? (liveState?.branch ?? 'git') : '',
                         child: Icon(AppIcons.gitBranch, size: 13, color: isGit ? c.success : c.faintFg),
@@ -164,28 +162,29 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
         ),
         if (widget.isExpanded && widget.sessions.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(left: 24, right: 10, bottom: 6),
+            padding: const EdgeInsets.only(left: 10, right: 10, bottom: 2),
             child: Column(
-              children: widget.sessions
-                  .map(
-                    (s) => ConversationTile(
-                      session: s,
-                      isActive: s.sessionId == widget.activeSessionId,
-                      onTap: () => widget.onSessionTap(s.sessionId),
-                      onArchive: () => widget.onArchive(s.sessionId),
-                      onDelete: () => widget.onDelete(s.sessionId),
-                      onRename: () async {
-                        if (!context.mounted) return;
-                        final newTitle = await RenameConversationDialog.show(context, s.title);
-                        if (newTitle != null) {
-                          await ref
-                              .read(projectSidebarActionsProvider.notifier)
-                              .updateSessionTitle(s.sessionId, newTitle);
-                        }
-                      },
-                    ),
-                  )
-                  .toList(),
+              children: [
+                SizedBox(height: 2),
+                ...widget.sessions.map(
+                  (s) => ConversationTile(
+                    session: s,
+                    isActive: s.sessionId == widget.activeSessionId,
+                    onTap: () => widget.onSessionTap(s.sessionId),
+                    onArchive: () => widget.onArchive(s.sessionId),
+                    onDelete: () => widget.onDelete(s.sessionId),
+                    onRename: () async {
+                      if (!context.mounted) return;
+                      final newTitle = await RenameConversationDialog.show(context, s.title);
+                      if (newTitle != null) {
+                        await ref
+                            .read(projectSidebarActionsProvider.notifier)
+                            .updateSessionTitle(s.sessionId, newTitle);
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
       ],

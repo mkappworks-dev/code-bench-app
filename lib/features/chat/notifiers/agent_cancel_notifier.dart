@@ -12,4 +12,7 @@ class AgentCancelNotifier extends _$AgentCancelNotifier {
 
   void request() => state = true;
   void clear() => state = false;
+
+  /// Stable accessor for closures captured by `ChatStreamService` — `ref.read` would throw after the originating notifier disposes.
+  bool get cancelled => state;
 }

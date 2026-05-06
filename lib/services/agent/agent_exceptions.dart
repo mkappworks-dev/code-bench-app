@@ -1,8 +1,6 @@
 /// Typed exceptions thrown by [AgentService] and [SessionService] when the
-/// agentic loop cannot proceed. These live in the services layer so the
-/// services never depend on `lib/features/`. [ChatMessagesNotifier] maps
-/// them into the UI-facing [AgentFailure] union (`lib/features/chat/notifiers/
-/// agent_failure.dart`).
+/// agentic loop cannot proceed. [ChatMessagesNotifier] maps them into the
+/// UI-facing [AgentFailure] union (`lib/data/chat/models/agent_failure.dart`).
 sealed class AgentException implements Exception {}
 
 /// Thrown from [SessionService.sendAndStream] when `ChatMode.act` is used with

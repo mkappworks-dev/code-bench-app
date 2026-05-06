@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/ai/models/stream_event.dart';
 import 'package:code_bench_app/data/ai/repository/text_streaming_repository.dart';
@@ -19,6 +21,8 @@ import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/services/agent/agent_service.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
+import 'package:code_bench_app/services/chat/chat_stream_service.dart';
+import 'package:code_bench_app/services/chat/chat_stream_state.dart';
 import 'package:code_bench_app/services/coding_tools/tool_registry.dart';
 import 'package:code_bench_app/services/coding_tools/tools/list_dir_tool.dart';
 import 'package:code_bench_app/services/coding_tools/tools/read_file_tool.dart';
@@ -51,6 +55,9 @@ class _FakeSessionRepo extends Fake implements SessionRepository {
 
   @override
   Future<void> updateSessionTitle(String sessionId, String title) async {}
+
+  @override
+  Future<void> deleteAllSessionsAndMessages() async {}
 }
 
 class _FakeAIRepo extends Fake implements TextStreamingRepository, ToolStreamingRepository {
@@ -118,7 +125,9 @@ void main() {
       agent: _buildAgent(ai: fakeAI),
     );
     final model = AIModel(id: 'claude-3', modelId: 'claude-3', provider: AIProvider.anthropic, name: 'Claude');
-    final events = await svc.sendAndStream(sessionId: 'sid', userInput: 'hi', model: model).toList();
+    final events = await svc
+        .sendAndStream(sessionId: 'sid', userInput: 'hi', model: model, cancelFlag: () => false)
+        .toList();
 
     // First event: user message
     expect(events.first.role, MessageRole.user);
@@ -152,6 +161,7 @@ void main() {
       sessionId: 's1',
       userInput: 'do the thing',
       model: const AIModel(id: 'm', provider: AIProvider.custom, name: 'm', modelId: 'm'),
+      cancelFlag: () => false,
       mode: ChatMode.act,
       permission: ChatPermission.fullAccess,
       projectPath: projectDir.path,
@@ -162,5 +172,25 @@ void main() {
     final assistant = messages.where((m) => m.role == MessageRole.assistant).last;
     expect(assistant.content, 'done');
     expect(assistant.isStreaming, isFalse);
+  });
+
+  test('deleteAllSessionsAndMessages cancels active streams first', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final chatSvc = container.read(chatStreamServiceProvider);
+
+    final src = StreamController<ChatMessage>();
+    chatSvc.start(sessionId: 's', streamFactory: () => src.stream, onMessage: (_) {});
+    await Future<void>.delayed(Duration.zero);
+    expect(chatSvc.latestState('s'), isA<ChatStreamConnecting>());
+
+    final svc = SessionService(
+      session: _FakeSessionRepo(),
+      ai: _FakeAIRepo(),
+      agent: _buildAgent(ai: _FakeAIRepo()),
+      chatStreamService: chatSvc,
+    );
+    await svc.deleteAllSessionsAndMessages();
+    expect(chatSvc.latestState('s'), isA<ChatStreamIdle>());
   });
 }

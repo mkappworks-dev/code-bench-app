@@ -6,7 +6,8 @@ export '../../../data/mcp/models/mcp_server_status.dart';
 
 part 'mcp_server_status_notifier.g.dart';
 
-@riverpod
+/// `keepAlive` so a captured instance survives the chat tab unmount while `ChatStreamService` is still emitting updates.
+@Riverpod(keepAlive: true)
 class McpServerStatusNotifier extends _$McpServerStatusNotifier {
   @override
   Map<String, McpServerStatus> build() => {};
