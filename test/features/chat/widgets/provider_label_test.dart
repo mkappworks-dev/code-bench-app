@@ -39,8 +39,8 @@ void main() {
       expect(providerLabelFor('custom'), 'Custom');
     });
 
-    test('unknown id returns the raw id (last-resort fallback)', () {
-      expect(providerLabelFor('something-new'), 'something-new');
+    test('unknown id returns null so the badge is hidden', () {
+      expect(providerLabelFor('something-new'), isNull);
     });
   });
 }

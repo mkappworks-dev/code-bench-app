@@ -8,6 +8,6 @@ String? providerLabelFor(String? providerId) {
     'gemini' => 'Gemini API',
     'ollama' => 'Ollama',
     'custom' => 'Custom',
-    _ => providerId,
+    _ => null,
   };
 }

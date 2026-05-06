@@ -182,7 +182,7 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
 
   Future<void> _send(String prompt, String sessionId, String workingDirectory) async {
     try {
-      _streamController?.add(ProviderInit(provider: id, modelId: _version));
+      _streamController?.add(ProviderInit(provider: id));
 
       // sessionId guard — Codex uses this value as `resumeThreadId` over
       // JSON-RPC. A non-UUID value could resume a foreign thread or trip

@@ -99,6 +99,7 @@ class SessionService {
   ({String? providerId, String? modelId}) _attribution({AIModel? model, String? cliProviderId, String? cliModelId}) {
     if (cliProviderId != null) return (providerId: cliProviderId, modelId: cliModelId);
     if (model != null) return (providerId: model.provider.name, modelId: model.modelId);
+    assert(false, '_attribution called with no model and no cliProviderId');
     return (providerId: null, modelId: null);
   }
 
@@ -257,7 +258,7 @@ class SessionService {
     final assistantId = _uuid.v4();
     final contentBuffer = StringBuffer();
     final toolEvents = <ToolEvent>[];
-    String? streamProviderId = ds.id;
+    String? streamProviderId;
     String? streamModelId;
 
     ChatMessage snapshot({bool streaming = true}) => ChatMessage(
