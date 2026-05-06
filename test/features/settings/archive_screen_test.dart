@@ -144,4 +144,46 @@ void main() {
     expect(find.text('Delete archived conversation?'), findsOneWidget);
     expect(find.text('Deletable chat'), findsWidgets);
   });
+
+  testWidgets('single project group is expanded by default', (tester) async {
+    final session = ChatSession(
+      sessionId: 'exp1',
+      title: 'Expandable session',
+      modelId: 'm',
+      providerId: 'anthropic',
+      createdAt: DateTime(2025),
+      updatedAt: DateTime(2025),
+    );
+    await tester.pumpWidget(_buildArchive(sessions: [session]));
+    await tester.pump();
+
+    // Session card is visible without tapping the header (expanded by default).
+    expect(find.text('Expandable session'), findsOneWidget);
+    expect(find.text('Unarchive'), findsOneWidget);
+  });
+
+  testWidgets('multiple project groups are collapsed by default', (tester) async {
+    final project1 = Project(id: 'p1', path: '/a', name: 'alpha', createdAt: DateTime(2025));
+    final project2 = Project(id: 'p2', path: '/b', name: 'beta', createdAt: DateTime(2025));
+    final s1 = ChatSession(
+      sessionId: 'c1', title: 'Alpha session', modelId: 'm', providerId: 'anthropic',
+      projectId: 'p1', createdAt: DateTime(2025), updatedAt: DateTime(2025),
+    );
+    final s2 = ChatSession(
+      sessionId: 'c2', title: 'Beta session', modelId: 'm', providerId: 'anthropic',
+      projectId: 'p2', createdAt: DateTime(2025), updatedAt: DateTime(2025),
+    );
+    await tester.pumpWidget(_buildArchive(
+      sessions: [s1, s2],
+      projects: [project1, project2],
+    ));
+    await tester.pump();
+
+    // Session cards not visible — groups are collapsed.
+    expect(find.text('Alpha session'), findsNothing);
+    expect(find.text('Beta session'), findsNothing);
+    // But project name headers are visible.
+    expect(find.textContaining('ALPHA'), findsOneWidget);
+    expect(find.textContaining('BETA'), findsOneWidget);
+  });
 }
