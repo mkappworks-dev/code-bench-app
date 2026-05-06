@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../features/chat/notifiers/agent_failure.dart';
+import '../../data/chat/models/agent_failure.dart';
 
 part 'chat_stream_state.freezed.dart';
 

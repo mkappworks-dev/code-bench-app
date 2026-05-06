@@ -20,7 +20,7 @@ import '../notifiers/available_models_failure.dart';
 import '../notifiers/available_models_notifier.dart';
 import '../notifiers/session_settings_actions.dart';
 import '../notifiers/session_settings_failure.dart';
-import '../notifiers/agent_failure.dart';
+import '../../../data/chat/models/agent_failure.dart';
 
 /// Private in-memory store of per-session chat-input drafts.
 ///

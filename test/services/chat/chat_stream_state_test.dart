@@ -1,4 +1,4 @@
-import 'package:code_bench_app/features/chat/notifiers/agent_failure.dart';
+import 'package:code_bench_app/data/chat/models/agent_failure.dart';
 import 'package:code_bench_app/services/chat/chat_stream_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 

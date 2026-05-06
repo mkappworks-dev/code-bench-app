@@ -16,7 +16,7 @@ import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../../mcp_servers/notifiers/mcp_server_status_notifier.dart';
 import '../../providers/notifiers/providers_notifier.dart';
 import 'agent_cancel_notifier.dart';
-import 'agent_failure.dart';
+import '../../../data/chat/models/agent_failure.dart';
 import 'agent_permission_request_notifier.dart';
 
 part 'chat_notifier.g.dart';
