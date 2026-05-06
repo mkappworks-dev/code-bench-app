@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_icons.dart';
-
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../core/utils/relative_time.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../data/session/models/chat_session.dart';
 
 class ConversationTile extends StatelessWidget {
@@ -90,7 +90,32 @@ class ConversationTile extends StatelessWidget {
 
     if (action == 'rename') onRename?.call();
     if (action == 'archive') onArchive?.call();
-    if (action == 'delete') onDelete?.call();
+    if (action == 'delete') {
+      if (!context.mounted) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AppDialog(
+          icon: AppIcons.trash,
+          iconType: AppDialogIconType.destructive,
+          title: 'Delete this conversation?',
+          content: Builder(
+            builder: (context) {
+              final c = AppColors.of(context);
+              return Text(
+                '"${session.title}" and all its messages will be permanently deleted. '
+                'This cannot be undone.',
+                style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
+              );
+            },
+          ),
+          actions: [
+            AppDialogAction.cancel(onPressed: () => Navigator.of(ctx).pop(false)),
+            AppDialogAction.destructive(label: 'Delete', onPressed: () => Navigator.of(ctx).pop(true)),
+          ],
+        ),
+      );
+      if (confirmed == true) onDelete?.call();
+    }
   }
 
   @override

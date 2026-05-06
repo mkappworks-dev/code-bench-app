@@ -49,4 +49,71 @@ void main() {
 
     expect(archived, 's1');
   });
+
+  testWidgets('right-click Delete shows confirmation dialog before firing onDelete', (tester) async {
+    bool deleted = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: [AppColors.dark]),
+        home: Scaffold(
+          body: ConversationTile(session: session, isActive: false, onTap: () {}, onDelete: () => deleted = true),
+        ),
+      ),
+    );
+
+    await tester.sendEventToBinding(
+      TestPointer(1, PointerDeviceKind.mouse).hover(tester.getCenter(find.text('My session'))),
+    );
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('My session')),
+      kind: PointerDeviceKind.mouse,
+      buttons: kSecondaryMouseButton,
+    );
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    // Dialog shown, onDelete not yet called.
+    expect(find.text('Delete this conversation?'), findsOneWidget);
+    expect(deleted, isFalse);
+
+    // Confirm deletion.
+    await tester.tap(find.text('Delete').last);
+    await tester.pumpAndSettle();
+
+    expect(deleted, isTrue);
+  });
+
+  testWidgets('right-click Delete — Cancel does not call onDelete', (tester) async {
+    bool deleted = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: [AppColors.dark]),
+        home: Scaffold(
+          body: ConversationTile(session: session, isActive: false, onTap: () {}, onDelete: () => deleted = true),
+        ),
+      ),
+    );
+
+    await tester.sendEventToBinding(
+      TestPointer(1, PointerDeviceKind.mouse).hover(tester.getCenter(find.text('My session'))),
+    );
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('My session')),
+      kind: PointerDeviceKind.mouse,
+      buttons: kSecondaryMouseButton,
+    );
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(deleted, isFalse);
+  });
 }
