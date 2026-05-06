@@ -303,9 +303,8 @@ Exhaustive matrix over `(transport-pref, providerEntry, apiKey)` → expected `T
 
 - **No window-focus auto-recheck** (Q3-A — recheck button + next Send re-probes are sufficient).
 - **No filesystem watch** on `~/.codex/` / `~/.claude/`.
-- **No Open Terminal.app** action — clipboard-only, leaves the user in control.
 - **No persisted auth-required marker** in chat history — the proactive gate makes this unnecessary.
-- **No "Sign in" inline launcher** that runs `claude auth login` / `codex login` in a pseudo-terminal — those commands are interactive and security-sensitive; clipboard handoff is the correct affordance.
+- **No inline pseudo-terminal launcher** that auto-types `claude auth login` / `codex login` for the user — those commands are interactive and security-sensitive. The "Open in terminal" button opens a fresh shell at the project cwd with the command pre-copied; the user pastes. We deliberately don't drive keystrokes into a terminal we don't own.
 - **No probe-result cache TTL** — probes are cheap (~150 ms / ~50 ms), and freshness is more valuable than the savings.
 
   *How we'd know to add a TTL later (concrete trigger criteria):*
@@ -317,7 +316,7 @@ Exhaustive matrix over `(transport-pref, providerEntry, apiKey)` → expected `T
   | Frame-budget impact | Flutter DevTools → Performance → Timeline; record while opening providers screen / switching sessions; look for `verifyAuth` frames in the >16 ms band | Any frame > 16 ms with `verifyAuth` on the critical path (causes a dropped frame) |
   | UI rebuild churn | dLog at the top of `aiProviderStatusProvider.build()`; observe rebuild count during navigation | Provider rebuilds during interactions that shouldn't invalidate it (e.g., typing in chat → status rebuild) |
 
-  Adding a 30 s TTL would live inside `AIProviderService` (not the datasource, so the freshness guarantee in the pre-send path is preserved). Implementation sketch: a per-`(providerId, probeKind)` `(DateTime stampedAt, Future<X> result)` map; reads return the cached future if `now - stampedAt < 30s`, else re-probe. ~30 LoC, easily added if any signal above hits its threshold.
+  Adding a 60 s TTL would live inside `AIProviderService` (not the datasource, so the freshness guarantee in the pre-send path is preserved). Implementation sketch: a per-`(providerId, probeKind)` `(DateTime stampedAt, Future<X> result)` map; reads return the cached future if `now - stampedAt < 60s`, else re-probe. ~30 LoC, easily added if any signal above hits its threshold.
 
 ## Architecture compliance
 
