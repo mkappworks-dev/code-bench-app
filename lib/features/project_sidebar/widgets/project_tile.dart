@@ -166,26 +166,24 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
             child: Column(
               children: [
                 SizedBox(height: 2),
-                ...widget.sessions
-                    .map(
-                      (s) => ConversationTile(
-                        session: s,
-                        isActive: s.sessionId == widget.activeSessionId,
-                        onTap: () => widget.onSessionTap(s.sessionId),
-                        onArchive: () => widget.onArchive(s.sessionId),
-                        onDelete: () => widget.onDelete(s.sessionId),
-                        onRename: () async {
-                          if (!context.mounted) return;
-                          final newTitle = await RenameConversationDialog.show(context, s.title);
-                          if (newTitle != null) {
-                            await ref
-                                .read(projectSidebarActionsProvider.notifier)
-                                .updateSessionTitle(s.sessionId, newTitle);
-                          }
-                        },
-                      ),
-                    )
-                    .toList(),
+                ...widget.sessions.map(
+                  (s) => ConversationTile(
+                    session: s,
+                    isActive: s.sessionId == widget.activeSessionId,
+                    onTap: () => widget.onSessionTap(s.sessionId),
+                    onArchive: () => widget.onArchive(s.sessionId),
+                    onDelete: () => widget.onDelete(s.sessionId),
+                    onRename: () async {
+                      if (!context.mounted) return;
+                      final newTitle = await RenameConversationDialog.show(context, s.title);
+                      if (newTitle != null) {
+                        await ref
+                            .read(projectSidebarActionsProvider.notifier)
+                            .updateSessionTitle(s.sessionId, newTitle);
+                      }
+                    },
+                  ),
+                ),
               ],
             ),
           ),
