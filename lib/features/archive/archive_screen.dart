@@ -56,6 +56,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
           null => 'Done',
         };
         AppSnackBar.show(context, message, type: AppSnackBarType.success);
+        _pendingAction = null;
       }
     });
 
@@ -103,6 +104,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
                 children: [
                   for (final entry in groups.entries)
                     ArchiveProjectGroup(
+                      key: ValueKey(entry.key),
                       projectName: projectMap[entry.key] ?? 'No Project',
                       sessions: entry.value,
                       initiallyExpanded: groups.length == 1,
