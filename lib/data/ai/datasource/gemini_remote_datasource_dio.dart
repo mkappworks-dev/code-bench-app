@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:meta/meta.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/errors/app_exception.dart';
@@ -9,8 +10,37 @@ import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
+import '../../../data/shared/session_settings.dart';
+import '../models/provider_capabilities.dart';
+import '../models/provider_turn_settings.dart';
+import '../util/setting_mappers.dart';
 import 'ai_remote_datasource.dart';
 import 'text_streaming_datasource.dart';
+
+@visibleForTesting
+Map<String, dynamic> buildGeminiRequestBody({
+  required AIModel model,
+  required List<Map<String, dynamic>> contents,
+  String? systemPrompt,
+  ProviderTurnSettings? settings,
+}) {
+  final body = <String, dynamic>{
+    'contents': contents,
+    if (systemPrompt != null)
+      'system_instruction': {
+        'parts': [
+          {'text': systemPrompt},
+        ],
+      },
+  };
+  if (settings?.effort != null && supportsGeminiThinking(model.modelId)) {
+    final thinkingConfig = isGemini3(model.modelId)
+        ? {'thinkingLevel': mapGeminiThinkingLevel(settings!.effort!)}
+        : {'thinkingBudget': mapGeminiThinkingBudget(settings!.effort!)};
+    body['generationConfig'] = {'thinkingConfig': thinkingConfig};
+  }
+  return body;
+}
 
 class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
   GeminiRemoteDatasourceDio(String apiKey)
@@ -24,22 +54,31 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
   AIProvider get provider => AIProvider.gemini;
 
   @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => ProviderCapabilities(
+    supportsModelOverride: true,
+    supportsSystemPrompt: true,
+    supportedModes: const {ChatMode.chat},
+    supportedEfforts: supportsGeminiThinking(model.modelId)
+        ? const {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max}
+        : const <ChatEffort>{},
+    supportedPermissions: const <ChatPermission>{},
+  );
+
+  @override
   Stream<String> streamMessage({
     required List<ChatMessage> history,
     required String prompt,
     required AIModel model,
     String? systemPrompt,
+    ProviderTurnSettings? settings,
   }) async* {
     final contents = _buildContents(history, prompt);
-    final body = <String, dynamic>{
-      'contents': contents,
-      if (systemPrompt != null)
-        'system_instruction': {
-          'parts': [
-            {'text': systemPrompt},
-          ],
-        },
-    };
+    final body = buildGeminiRequestBody(
+      model: model,
+      contents: contents,
+      systemPrompt: systemPrompt,
+      settings: settings,
+    );
 
     try {
       final response = await _dio.post(
