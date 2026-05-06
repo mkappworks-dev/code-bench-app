@@ -27,7 +27,7 @@ class ArchiveChip extends StatelessWidget {
     final c = AppColors.of(context);
     final hoverFg = isDestructive ? c.error : c.accent;
     final hoverFill = isDestructive ? c.error.withValues(alpha: 0.12) : c.accentTintMid;
-    final hoverBorder = isDestructive ? c.destructiveBorder : c.accentBorderTeal;
+    final hoverBorder = isDestructive ? null : c.accentBorderTeal;
     final (padding, iconSize, gap, fontSize, radius) = switch (size) {
       ArchiveChipSize.group => (
         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
