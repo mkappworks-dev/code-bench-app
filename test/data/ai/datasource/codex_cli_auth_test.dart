@@ -4,27 +4,29 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('parseCodexAuthOutput', () {
-    test('exit 0 with "Logged in using ChatGPT" returns authenticated', () {
+    test('"Logged in using ChatGPT" returns authenticated', () {
       final out = parseCodexAuthOutput(0, 'Logged in using ChatGPT\n');
       expect(out, const AuthStatus.authenticated());
     });
 
-    test('exit 0 with "Logged in using API key" returns authenticated', () {
+    test('"Logged in using API key" returns authenticated', () {
       final out = parseCodexAuthOutput(0, 'Logged in using API key\n');
       expect(out, const AuthStatus.authenticated());
     });
 
-    test('exit 0 with "Not logged in" returns unauthenticated with codex login', () {
-      final out = parseCodexAuthOutput(0, 'Not logged in\n');
+    test('"Not logged in" with non-zero exit returns unauthenticated', () {
+      // codex login status writes "Not logged in" to stderr and exits 1;
+      // the parser trusts the content over the exit code.
+      final out = parseCodexAuthOutput(1, 'Not logged in\n');
       expect(out, isA<AuthUnauthenticated>());
       expect((out as AuthUnauthenticated).signInCommand, 'codex login');
     });
 
-    test('exit 0 with unrecognised stdout returns unknown', () {
+    test('unrecognised output returns unknown', () {
       expect(parseCodexAuthOutput(0, 'something else\n'), const AuthStatus.unknown());
     });
 
-    test('non-zero exit returns unknown', () {
+    test('empty output returns unknown', () {
       expect(parseCodexAuthOutput(1, ''), const AuthStatus.unknown());
     });
   });

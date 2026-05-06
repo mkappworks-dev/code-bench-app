@@ -13,12 +13,14 @@ import 'provider_input_guards.dart';
 part 'codex_cli_datasource_process.g.dart';
 
 @visibleForTesting
-AuthStatus parseCodexAuthOutput(int exitCode, String stdout) {
-  if (exitCode != 0) return const AuthStatus.unknown();
-  if (stdout.contains('Logged in')) return const AuthStatus.authenticated();
-  if (stdout.contains('Not logged in')) {
+AuthStatus parseCodexAuthOutput(int exitCode, String output) {
+  // Exit code is intentionally ignored: `codex login status` exits 1 when not
+  // signed in but still emits a recognisable "Not logged in" line. The output
+  // string is the merged stdout+stderr — codex writes its status to stderr.
+  if (output.contains('Not logged in')) {
     return const AuthStatus.unauthenticated(signInCommand: 'codex login');
   }
+  if (output.contains('Logged in')) return const AuthStatus.authenticated();
   return const AuthStatus.unknown();
 }
 
@@ -748,7 +750,10 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
         environment: _shellPath != null ? {'PATH': _shellPath!} : const {},
         includeParentEnvironment: true,
       ).timeout(const Duration(seconds: 5));
-      return parseCodexAuthOutput(result.exitCode, result.stdout as String);
+      // Codex writes its status line to stderr even on exit 0 — merge both
+      // streams so the parser doesn't have to guess which channel was used.
+      final combined = '${result.stdout}${result.stderr}';
+      return parseCodexAuthOutput(result.exitCode, combined);
     } catch (e) {
       sLog('[CodexCli] verifyAuth failed: ${e.runtimeType}');
       return const AuthStatus.unknown();
