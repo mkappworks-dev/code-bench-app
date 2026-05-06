@@ -6,6 +6,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../data/ai/models/auth_status.dart';
 import '../../../data/shared/ai_model.dart';
 import '../notifiers/ai_provider_status_notifier.dart';
 import '../notifiers/providers_actions.dart';
@@ -167,7 +168,18 @@ class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
     };
     final entry = entries.where((e) => e.id == _providerId).firstOrNull;
     if (entry?.isAvailable ?? false) {
-      AppSnackBar.show(context, 'Codex CLI detected', type: AppSnackBarType.success);
+      switch (entry!.authStatus) {
+        case AuthAuthenticated():
+          AppSnackBar.show(context, 'Codex CLI ready — signed in', type: AppSnackBarType.success);
+        case AuthUnauthenticated(:final signInCommand):
+          AppSnackBar.show(
+            context,
+            'Codex CLI installed — sign in with `$signInCommand`',
+            type: AppSnackBarType.warning,
+          );
+        case AuthUnknown():
+          AppSnackBar.show(context, 'Codex CLI detected', type: AppSnackBarType.success);
+      }
       return;
     }
     final reason = entry?.status is ProviderUnavailable
@@ -197,11 +209,12 @@ class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
     _ => null,
   };
 
-  CardStatusBadge _cliBadge({required bool selected}) {
+  Widget _cliBadge({required bool selected}) {
     final entry = _cliEntry();
     final loading = ref.watch(aiProviderStatusProvider) is AsyncLoading;
     if (loading) return const CardStatusBadge(label: 'Checking…', tone: TransportBadgeTone.muted);
-    return switch (entry?.status) {
+    final status = entry?.status;
+    final installPill = switch (status) {
       ProviderAvailable(:final version) => CardStatusBadge(
         label: 'Installed · $version',
         tone: TransportBadgeTone.success,
@@ -212,6 +225,17 @@ class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
             : const CardStatusBadge(label: 'Not installed', tone: TransportBadgeTone.muted),
       null => const CardStatusBadge(label: 'Not installed', tone: TransportBadgeTone.muted),
     };
+    if (status is ProviderAvailable) {
+      final authPill = switch (entry?.authStatus) {
+        AuthAuthenticated() => const CardStatusBadge(label: 'Signed in', tone: TransportBadgeTone.success),
+        AuthUnauthenticated() => const CardStatusBadge(label: 'Signed out', tone: TransportBadgeTone.warning),
+        _ => null,
+      };
+      if (authPill != null) {
+        return Wrap(spacing: 6, runSpacing: 4, alignment: WrapAlignment.end, children: [installPill, authPill]);
+      }
+    }
+    return installPill;
   }
 
   @override

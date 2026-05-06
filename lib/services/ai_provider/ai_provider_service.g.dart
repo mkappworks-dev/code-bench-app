@@ -52,7 +52,7 @@ final class AIProviderServiceProvider extends $NotifierProvider<AIProviderServic
   }
 }
 
-String _$aIProviderServiceHash() => r'cb0dae151cf6f81a865985e2a91d63d914bb03bf';
+String _$aIProviderServiceHash() => r'f6bc10884224ac6b90b193a5b3017a3f39d3d137';
 
 /// Service that manages all available AI providers and their status.
 ///

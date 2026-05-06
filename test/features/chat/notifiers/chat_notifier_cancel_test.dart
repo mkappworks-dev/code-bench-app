@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:code_bench_app/data/chat/models/transport_readiness.dart';
 import 'package:code_bench_app/data/session/models/permission_request.dart';
 import 'package:code_bench_app/data/session/models/session_settings.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
@@ -10,6 +11,7 @@ import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_messages_actions.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_messages_failure.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
+import 'package:code_bench_app/features/chat/notifiers/transport_readiness_notifier.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'package:code_bench_app/features/providers/notifiers/providers_notifier.dart';
 import 'package:code_bench_app/services/mcp/mcp_service.dart' show McpRemoveCallback, McpStatusCallback;
@@ -85,6 +87,7 @@ ProviderContainer _makeContainer(_FakeSessionService svc) {
       selectedModelProvider.overrideWithValue(AIModels.claude35Sonnet),
       activeProjectProvider.overrideWithValue(null),
       apiKeysProvider.overrideWith(_FakeApiKeysNotifier.new),
+      transportReadinessProvider.overrideWithValue(const TransportReadiness.ready()),
     ],
   );
 }

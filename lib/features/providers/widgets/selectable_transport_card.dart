@@ -75,7 +75,7 @@ class SelectableTransportCard extends StatefulWidget {
   final String title;
   final Widget body;
   final bool selected;
-  final CardStatusBadge badge;
+  final Widget badge;
 
   /// Whether the body is visible on first build. Defaults to `false` — the
   /// banner-only state is the compact default. Pass `true` for cards that

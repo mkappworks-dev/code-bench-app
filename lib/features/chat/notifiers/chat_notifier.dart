@@ -5,11 +5,15 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
+import '../../../data/ai/models/auth_status.dart';
+import '../../../data/chat/models/agent_failure.dart';
+import '../../../data/chat/models/transport_readiness.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/apply/models/applied_change.dart';
 import '../../../data/session/models/session_settings.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/chat_session.dart';
+import '../../../services/ai_provider/ai_provider_service.dart';
 import '../../../services/chat/chat_stream_service.dart';
 import '../../../services/chat/chat_stream_state.dart';
 import '../../../services/session/session_service.dart';
@@ -18,6 +22,7 @@ import '../../mcp_servers/notifiers/mcp_server_status_notifier.dart';
 import '../../providers/notifiers/providers_notifier.dart';
 import 'agent_cancel_notifier.dart';
 import 'agent_permission_request_notifier.dart';
+import 'transport_readiness_notifier.dart';
 
 part 'chat_notifier.g.dart';
 
@@ -73,12 +78,20 @@ class SessionPermissionNotifier extends _$SessionPermissionNotifier {
   void set(ChatPermission permission) => state = permission;
 }
 
+const _validTransports = {'api-key', 'cli'};
+
 /// Resolves which `AIProviderDatasource` ID (in `AIProviderService`) should
 /// handle this turn, based on the active model and the persisted per-provider
 /// transport choice. Returns null when the user has selected the API-key
 /// (HTTP) path, which routes through `streamMessage` inside `SessionService`.
 String? _resolveProviderId(AIModel model, ApiKeysNotifierState? prefs) {
   if (prefs == null) return null;
+  if (model.provider == AIProvider.anthropic && !_validTransports.contains(prefs.anthropicTransport)) {
+    dLog('[ChatMessagesNotifier] unrecognised anthropicTransport=${prefs.anthropicTransport} — falling back to HTTP');
+  }
+  if (model.provider == AIProvider.openai && !_validTransports.contains(prefs.openaiTransport)) {
+    dLog('[ChatMessagesNotifier] unrecognised openaiTransport=${prefs.openaiTransport} — falling back to HTTP');
+  }
   return switch ((model.provider, prefs)) {
     (AIProvider.anthropic, ApiKeysNotifierState(anthropicTransport: 'cli')) => 'claude-cli',
     (AIProvider.openai, ApiKeysNotifierState(openaiTransport: 'cli')) => 'codex',
@@ -150,6 +163,29 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     // HTTP path even when CLI transport is selected. Always wait for storage.
     final prefs = await ref.read(apiKeysProvider.future);
     final providerId = _resolveProviderId(model, prefs);
+
+    // Belt+suspenders: catches paths that bypass the input bar (continueAgenticTurn).
+    final readiness = ref.read(transportReadinessProvider);
+    if (readiness is! TransportReady && readiness is! TransportUnknown) {
+      state = AsyncData(_preSendMessages);
+      activeMessageIdNotifier.set(null);
+      _sendInProgress = false;
+      return AgentFailure.transportNotReady(readiness);
+    }
+
+    // Cached readiness can be stale — re-probe to catch out-of-band sign-outs.
+    // Route through the service so probe failures share the fail-open contract.
+    if (providerId != null) {
+      final freshAuth = await ref.read(aIProviderServiceProvider.notifier).getAuthStatus(providerId);
+      if (freshAuth is AuthUnauthenticated) {
+        state = AsyncData(_preSendMessages);
+        activeMessageIdNotifier.set(null);
+        _sendInProgress = false;
+        return AgentFailure.transportNotReady(
+          TransportReadiness.signedOut(provider: providerId, signInCommand: freshAuth.signInCommand),
+        );
+      }
+    }
 
     final registry = ref.read(chatStreamServiceProvider);
     final completer = Completer<Object?>();

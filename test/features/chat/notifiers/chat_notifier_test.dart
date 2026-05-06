@@ -2,11 +2,14 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/data/chat/models/agent_failure.dart';
+import 'package:code_bench_app/data/chat/models/transport_readiness.dart';
 import 'package:code_bench_app/data/session/models/permission_request.dart';
 import 'package:code_bench_app/data/session/models/session_settings.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
+import 'package:code_bench_app/features/chat/notifiers/transport_readiness_notifier.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'package:code_bench_app/features/providers/notifiers/providers_notifier.dart';
 import 'package:code_bench_app/services/chat/chat_stream_service.dart';
@@ -141,5 +144,30 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     // No uncaught error means the fix works.
+  });
+
+  test('sendMessage returns AgentTransportNotReady when readiness is signedOut', () async {
+    final svc = _DisposalTestSessionService();
+    final container = ProviderContainer(
+      overrides: [
+        sessionServiceProvider.overrideWith((ref) async => svc),
+        activeSessionIdProvider.overrideWithValue('s'),
+        selectedModelProvider.overrideWithValue(AIModels.claude35Sonnet),
+        activeProjectProvider.overrideWithValue(null),
+        apiKeysProvider.overrideWith(_DisposalTestFakeApiKeysNotifier.new),
+        transportReadinessProvider.overrideWithValue(
+          const TransportReadiness.signedOut(provider: 'codex', signInCommand: 'codex login'),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(chatMessagesProvider('s').future);
+    final result = await container.read(chatMessagesProvider('s').notifier).sendMessage('hi');
+    expect(result, isA<AgentTransportNotReady>());
+    final readiness = (result as AgentTransportNotReady).readiness;
+    expect(readiness, isA<TransportSignedOut>());
+    expect((readiness as TransportSignedOut).provider, 'codex');
+    expect(readiness.signInCommand, 'codex login');
   });
 }
