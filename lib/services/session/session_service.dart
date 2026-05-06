@@ -96,6 +96,12 @@ class SessionService {
   Future<void> persistMessage(String sessionId, ChatMessage message) => _session.persistMessage(sessionId, message);
   Future<List<ChatSession>> getSessionsByProject(String projectId) => _session.getSessionsByProject(projectId);
 
+  ({String? providerId, String? modelId}) _attribution({AIModel? model, String? cliProviderId, String? cliModelId}) {
+    if (cliProviderId != null) return (providerId: cliProviderId, modelId: cliModelId);
+    if (model != null) return (providerId: model.provider.name, modelId: model.modelId);
+    return (providerId: null, modelId: null);
+  }
+
   Stream<ChatMessage> sendAndStream({
     required String sessionId,
     required String userInput,
@@ -170,6 +176,7 @@ class SessionService {
     }
 
     if (mode == ChatMode.act && model.provider == AIProvider.custom && projectPath != null) {
+      final attribution = _attribution(model: model);
       await for (final msg in _agent.runAgenticTurn(
         sessionId: sessionId,
         history: historyExcludingCurrent,
@@ -182,10 +189,13 @@ class SessionService {
         onMcpStatusChanged: onMcpStatusChanged,
         onMcpServerRemoved: onMcpServerRemoved,
       )) {
-        if (!msg.isStreaming) {
-          await _session.persistMessage(sessionId, msg);
+        final stamped = msg.role == MessageRole.assistant
+            ? msg.copyWith(providerId: attribution.providerId, modelId: attribution.modelId)
+            : msg;
+        if (!stamped.isStreaming) {
+          await _session.persistMessage(sessionId, stamped);
         }
-        yield msg;
+        yield stamped;
       }
       if (historyExcludingCurrent.isEmpty && userInput.isNotEmpty) {
         final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
@@ -197,6 +207,7 @@ class SessionService {
     // Plain text path (unchanged).
     final assistantId = _uuid.v4();
     final buffer = StringBuffer();
+    final plainAttribution = _attribution(model: model);
 
     await for (final chunk in _ai.streamMessage(
       history: historyExcludingCurrent,
@@ -212,6 +223,8 @@ class SessionService {
         content: buffer.toString(),
         timestamp: DateTime.now(),
         isStreaming: true,
+        providerId: plainAttribution.providerId,
+        modelId: plainAttribution.modelId,
       );
     }
 
@@ -221,6 +234,8 @@ class SessionService {
       role: MessageRole.assistant,
       content: buffer.toString(),
       timestamp: DateTime.now(),
+      providerId: plainAttribution.providerId,
+      modelId: plainAttribution.modelId,
     );
     await _session.persistMessage(sessionId, finalMsg);
     yield finalMsg;
@@ -242,6 +257,8 @@ class SessionService {
     final assistantId = _uuid.v4();
     final contentBuffer = StringBuffer();
     final toolEvents = <ToolEvent>[];
+    String? streamProviderId = ds.id;
+    String? streamModelId;
 
     ChatMessage snapshot({bool streaming = true}) => ChatMessage(
       id: assistantId,
@@ -251,6 +268,8 @@ class SessionService {
       timestamp: DateTime.now(),
       isStreaming: streaming,
       toolEvents: List.unmodifiable(toolEvents),
+      providerId: streamProviderId,
+      modelId: streamModelId,
     );
 
     var interrupted = false;
@@ -266,8 +285,10 @@ class SessionService {
       }
 
       switch (event) {
-        case ProviderInit(:final provider):
-          dLog('[SessionService] provider $provider started');
+        case ProviderInit(:final provider, :final modelId):
+          streamProviderId = provider;
+          streamModelId = modelId;
+          dLog('[SessionService] provider $provider started (model=$modelId)');
 
         case ProviderTextDelta(:final text):
           contentBuffer.write(text);
@@ -322,6 +343,8 @@ class SessionService {
         content: contentBuffer.isEmpty ? '[interrupted]' : '${contentBuffer.toString()}\n[interrupted]',
         timestamp: DateTime.now(),
         toolEvents: List.unmodifiable(toolEvents),
+        providerId: streamProviderId,
+        modelId: streamModelId,
       );
       await _session.persistMessage(sessionId, interruptedMsg);
       yield interruptedMsg;
