@@ -13,17 +13,31 @@ import 'provider_input_guards.dart';
 part 'codex_cli_datasource_process.g.dart';
 
 @visibleForTesting
+const int codexAuthOutputSizeLimit = 64 * 1024;
+
+// Reject parenthesised qualifiers like "(expired)" / "(read-only)" so a
+// degraded session isn't read as fully authenticated.
+final RegExp _codexLoggedInPattern = RegExp(r'^Logged in using [^()]+$');
+
+@visibleForTesting
 AuthStatus parseCodexAuthOutput(int exitCode, String output) {
   // Match on whole-line markers so an accidental substring (e.g. a future
   // "Logged in users: N" counter) cannot match. Exit code is intentionally
   // ignored — codex writes its status to stderr and exits 1 when signed out.
-  final lines = output.split('\n').map((l) => l.trim());
+  if (output.length > codexAuthOutputSizeLimit) {
+    dLog(
+      '[CodexCli] auth status output exceeds ${codexAuthOutputSizeLimit}B (${output.length}B) — treating as unknown',
+    );
+    return const AuthStatus.unknown();
+  }
+  final lines = output.split('\n').map((l) => l.trim()).toList();
   if (lines.any((l) => l == 'Not logged in')) {
     return const AuthStatus.unauthenticated(signInCommand: 'codex login');
   }
-  if (lines.any((l) => l.startsWith('Logged in using '))) {
+  if (lines.any(_codexLoggedInPattern.hasMatch)) {
     return const AuthStatus.authenticated();
   }
+  dLog('[CodexCli] auth status output unrecognised (${output.length}B) — treating as unknown');
   return const AuthStatus.unknown();
 }
 
@@ -461,6 +475,8 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     final message = error['message'] as String? ?? 'Unknown error';
     if (completer != null) {
       completer.completeError(Exception('Codex error: $message'));
+    } else {
+      dLog('[CodexCli] No pending request for error id $id (server-acknowledged: $message)');
     }
     _streamController?.add(ProviderStreamFailure(error: 'Codex error: $message'));
   }
@@ -518,12 +534,18 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     // asynchronously and the error would be unhandled.
     completer.future.then(
       (result) {
-        if (_process == null) return;
+        if (_process == null) {
+          sLog('[CodexCli] Approval response dropped — process gone (id=$id)');
+          return;
+        }
         _respond(id, result);
       },
       onError: (Object e) {
         dLog('[CodexCli] Approval error: ${redactSecrets('$e')} — denying');
-        if (_process == null) return;
+        if (_process == null) {
+          sLog('[CodexCli] Approval auto-deny dropped — process gone (id=$id)');
+          return;
+        }
         _respond(id, {'decision': 'denied'});
       },
     );
@@ -753,20 +775,33 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
 
   @override
   Future<AuthStatus> verifyAuth() async {
+    if (_resolvedPath == null) {
+      sLog('[CodexCli] verifyAuth skipped — binary not yet resolved');
+      return const AuthStatus.unknown();
+    }
     try {
-      final exePath = _resolvedPath ?? binaryPath;
-      // Inherit parent env so HOME/USER reach the CLI (it reads auth state
-      // from $HOME); only override PATH when we have the login-shell value.
+      // Forward only what the CLI needs (HOME/USER/CODEX_HOME for auth state,
+      // PATH for child lookups) so user-exported API keys don't leak in.
+      final parentEnv = Platform.environment;
+      final probeEnv = <String, String>{
+        if (parentEnv['HOME'] != null) 'HOME': parentEnv['HOME']!,
+        if (parentEnv['USER'] != null) 'USER': parentEnv['USER']!,
+        if (parentEnv['CODEX_HOME'] != null) 'CODEX_HOME': parentEnv['CODEX_HOME']!,
+        'PATH': _shellPath ?? parentEnv['PATH'] ?? '',
+      };
       final result = await Process.run(
-        exePath,
+        _resolvedPath!,
         ['login', 'status'],
-        environment: _shellPath != null ? {'PATH': _shellPath!} : const {},
-        includeParentEnvironment: true,
+        environment: probeEnv,
+        includeParentEnvironment: false,
       ).timeout(const Duration(seconds: 5));
       // Codex writes its status line to stderr even on exit 0 — merge both
       // streams so the parser doesn't have to guess which channel was used.
       final combined = '${result.stdout}${result.stderr}';
       return parseCodexAuthOutput(result.exitCode, combined);
+    } on TimeoutException {
+      sLog('[CodexCli] verifyAuth timed out after 5s');
+      return const AuthStatus.unknown();
     } catch (e) {
       sLog('[CodexCli] verifyAuth failed: ${e.runtimeType}');
       return const AuthStatus.unknown();
