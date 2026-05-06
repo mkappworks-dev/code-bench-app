@@ -10,18 +10,17 @@ import '../../../data/apply/models/applied_change.dart';
 import '../../../data/session/models/session_settings.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/chat_session.dart';
-import '../../../services/agent/agent_exceptions.dart';
+import '../../../services/chat/chat_stream_service.dart';
+import '../../../services/chat/chat_stream_state.dart';
 import '../../../services/session/session_service.dart';
 import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../../mcp_servers/notifiers/mcp_server_status_notifier.dart';
 import '../../providers/notifiers/providers_notifier.dart';
 import 'agent_cancel_notifier.dart';
-import '../../../data/chat/models/agent_failure.dart';
 import 'agent_permission_request_notifier.dart';
 
 part 'chat_notifier.g.dart';
 
-// System prompt per session (in-memory only, keyed by sessionId)
 @Riverpod(keepAlive: true)
 class SessionSystemPromptNotifier extends _$SessionSystemPromptNotifier {
   @override
@@ -34,7 +33,6 @@ class SessionSystemPromptNotifier extends _$SessionSystemPromptNotifier {
   String? getPrompt(String sessionId) => state[sessionId];
 }
 
-// Currently active session ID
 @Riverpod(keepAlive: true)
 class ActiveSessionIdNotifier extends _$ActiveSessionIdNotifier {
   @override
@@ -43,7 +41,6 @@ class ActiveSessionIdNotifier extends _$ActiveSessionIdNotifier {
   void set(String? id) => state = id;
 }
 
-// Currently selected model
 @Riverpod(keepAlive: true)
 class SelectedModelNotifier extends _$SelectedModelNotifier {
   @override
@@ -52,7 +49,6 @@ class SelectedModelNotifier extends _$SelectedModelNotifier {
   void select(AIModel model) => state = model;
 }
 
-// Mode for the current session (chat / plan / act)
 @Riverpod(keepAlive: true)
 class SessionModeNotifier extends _$SessionModeNotifier {
   @override
@@ -61,7 +57,6 @@ class SessionModeNotifier extends _$SessionModeNotifier {
   void set(ChatMode mode) => state = mode;
 }
 
-// Effort level for the current session (low / medium / high / max)
 @Riverpod(keepAlive: true)
 class SessionEffortNotifier extends _$SessionEffortNotifier {
   @override
@@ -70,7 +65,6 @@ class SessionEffortNotifier extends _$SessionEffortNotifier {
   void set(ChatEffort effort) => state = effort;
 }
 
-// Permission level for the current session
 @Riverpod(keepAlive: true)
 class SessionPermissionNotifier extends _$SessionPermissionNotifier {
   @override
@@ -78,14 +72,6 @@ class SessionPermissionNotifier extends _$SessionPermissionNotifier {
 
   void set(ChatPermission permission) => state = permission;
 }
-
-/// Maps service-layer [AgentException]s into the widget-facing [AgentFailure]
-/// union. Kept file-private so widgets never see the raw exception types.
-AgentFailure _asAgentFailure(Object e) => switch (e) {
-  ProviderDoesNotSupportToolsException() => const AgentFailure.providerDoesNotSupportTools(),
-  StreamAbortedUnexpectedlyException(:final reason) => AgentFailure.streamAbortedUnexpectedly(reason),
-  _ => AgentFailure.unknown(e),
-};
 
 /// Resolves which `AIProviderDatasource` ID (in `AIProviderService`) should
 /// handle this turn, based on the active model and the persisted per-provider
@@ -100,19 +86,32 @@ String? _resolveProviderId(AIModel model, ApiKeysNotifierState? prefs) {
   };
 }
 
-// Messages for the current session
 @riverpod
 class ChatMessagesNotifier extends _$ChatMessagesNotifier {
   static const _uuid = Uuid();
-  StreamSubscription<ChatMessage>? _activeSubscription;
-  Completer<Object?>? _sendCompleter;
   bool _cancelRequested = false;
+  bool _sendInProgress = false;
   List<ChatMessage> _preSendMessages = [];
 
   @override
   Future<List<ChatMessage>> build(String sessionId) async {
     final svc = await ref.watch(sessionServiceProvider.future);
-    return svc.loadHistory(sessionId);
+    final history = await svc.loadHistory(sessionId);
+
+    final registry = ref.read(chatStreamServiceProvider);
+    final stateSub = registry.watchState(sessionId).listen((s) {
+      switch (s) {
+        case ChatStreamFailed(:final failure):
+          dLog('[ChatMessagesNotifier] stream failed for $sessionId: $failure');
+        case ChatStreamDone() || ChatStreamIdle():
+          ref.read(activeMessageIdProvider.notifier).set(null);
+        default:
+          break;
+      }
+    });
+    ref.onDispose(stateSub.cancel);
+
+    return history;
   }
 
   /// Sends [input] and streams the response into state.
@@ -122,6 +121,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
   /// needing a try-catch around a notifier call.
   Future<Object?> sendMessage(String input, {String? systemPrompt}) async {
     _cancelRequested = false;
+    _sendInProgress = true;
     ref.read(agentCancelProvider.notifier).clear();
 
     final sessionId = ref.read(activeSessionIdProvider);
@@ -134,12 +134,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     state = AsyncData(List.from(_preSendMessages));
 
     final activeMessageIdNotifier = ref.read(activeMessageIdProvider.notifier);
-    // Sentinel value: communicates "send in progress" to widgets that gate
-    // hover actions (Retry/Edit/Delete) on `activeMessageIdProvider`. Replaced
-    // with the real assistant message ID as soon as the first chunk arrives.
     activeMessageIdNotifier.set('pending');
-    String? streamingAssistantId;
-    _sendCompleter = Completer<Object?>();
 
     final mode = ref.read(sessionModeProvider);
     final permission = ref.read(sessionPermissionProvider);
@@ -151,69 +146,79 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final prefs = await ref.read(apiKeysProvider.future);
     final providerId = _resolveProviderId(model, prefs);
 
-    _activeSubscription = service
-        .sendAndStream(
-          sessionId: sessionId,
-          userInput: input,
-          model: model,
-          systemPrompt: systemPrompt,
-          mode: mode,
-          permission: permission,
-          projectPath: projectPath,
-          providerId: providerId,
-          cancelFlag: () => ref.read(agentCancelProvider),
-          requestPermission: (req) => ref.read(agentPermissionRequestProvider.notifier).request(req),
-          onMcpStatusChanged: ref.read(mcpServerStatusProvider.notifier).setStatus,
-          onMcpServerRemoved: ref.read(mcpServerStatusProvider.notifier).remove,
-        )
-        .timeout(
-          const Duration(seconds: 60),
-          onTimeout: (sink) =>
-              sink.addError(NetworkException('No response — the model may still be loading.'), StackTrace.current),
-        )
-        .listen(
-          (msg) {
-            if (msg.role == MessageRole.assistant && streamingAssistantId == null) {
-              streamingAssistantId = msg.id;
-              activeMessageIdNotifier.set(msg.id);
-            }
-            final current = state.value ?? [];
-            final idx = current.indexWhere((m) => m.id == msg.id);
-            if (idx >= 0) {
-              final updated = List<ChatMessage>.from(current);
-              updated[idx] = msg;
-              state = AsyncData(updated);
-            } else {
-              state = AsyncData([...current, msg]);
-            }
-          },
-          onError: (Object e, StackTrace st) {
-            dLog('[sendMessage] stream error: $e\n$st');
-            // Preserve any partial assistant snapshot the agent loop yielded
-            // before the abort — rolling back to _preSendMessages would erase
-            // the user-visible content that already streamed in.
-            final failure = _asAgentFailure(e);
-            final completer = _sendCompleter;
-            if (completer != null && !completer.isCompleted) completer.complete(failure);
-          },
-          onDone: () {
-            final completer = _sendCompleter;
-            if (completer != null && !completer.isCompleted) completer.complete(null);
-          },
-          cancelOnError: true,
-        );
+    final registry = ref.read(chatStreamServiceProvider);
+    final completer = Completer<Object?>();
+
+    String? streamingAssistantId;
+
+    registry.start(
+      sessionId: sessionId,
+      streamFactory: () => service
+          .sendAndStream(
+            sessionId: sessionId,
+            userInput: input,
+            model: model,
+            systemPrompt: systemPrompt,
+            mode: mode,
+            permission: permission,
+            projectPath: projectPath,
+            providerId: providerId,
+            cancelFlag: () => ref.read(agentCancelProvider),
+            requestPermission: (req) => ref.read(agentPermissionRequestProvider.notifier).request(req),
+            onMcpStatusChanged: ref.read(mcpServerStatusProvider.notifier).setStatus,
+            onMcpServerRemoved: ref.read(mcpServerStatusProvider.notifier).remove,
+          )
+          .timeout(
+            const Duration(seconds: 60),
+            onTimeout: (sink) =>
+                sink.addError(NetworkException('No response — the model may still be loading.'), StackTrace.current),
+          ),
+      onMessage: (msg) {
+        if (msg.sessionId != sessionId) return;
+        if (msg.role == MessageRole.assistant && streamingAssistantId == null) {
+          streamingAssistantId = msg.id;
+          activeMessageIdNotifier.set(msg.id);
+        }
+        final current = state.value ?? [];
+        final idx = current.indexWhere((m) => m.id == msg.id);
+        if (idx >= 0) {
+          final updated = List<ChatMessage>.from(current);
+          updated[idx] = msg;
+          state = AsyncData(updated);
+        } else {
+          state = AsyncData([...current, msg]);
+        }
+      },
+    );
 
     if (_cancelRequested) {
-      _activeSubscription?.cancel();
-      _activeSubscription = null;
-      // completer already completed by cancelSend, nothing more to do
+      unawaited(registry.cancel(sessionId));
+      _sendInProgress = false;
       return null;
     }
 
-    final result = await _sendCompleter!.future;
-    _sendCompleter = null;
-    _activeSubscription = null;
-    activeMessageIdNotifier.set(null);
+    // Subscribe AFTER start() so the first yield from watchState is
+    // ChatStreamConnecting, not ChatStreamIdle, which would otherwise
+    // complete the completer immediately before streaming begins.
+    late final StreamSubscription<ChatStreamState> termSub;
+    termSub = registry.watchState(sessionId).listen((s) {
+      switch (s) {
+        case ChatStreamDone():
+          if (!completer.isCompleted) completer.complete(null);
+          termSub.cancel();
+        case ChatStreamFailed(:final failure):
+          if (!completer.isCompleted) completer.complete(failure);
+          termSub.cancel();
+        case ChatStreamIdle():
+          if (!completer.isCompleted) completer.complete(null);
+          termSub.cancel();
+        default:
+          break;
+      }
+    });
+
+    final result = await completer.future;
+    _sendInProgress = false;
     return result;
   }
 
@@ -223,26 +228,20 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
   /// error is surfaced (the badge is already on screen; only its survival
   /// across app restarts is at risk).
   void cancelSend() {
-    if (_sendCompleter == null) return; // nothing to cancel
+    if (!_sendInProgress) return;
+    final sessionId = ref.read(activeSessionIdProvider);
+    if (sessionId == null) return;
+
     _cancelRequested = true;
-    _activeSubscription?.cancel();
-    _activeSubscription = null;
+    _sendInProgress = false;
+    final registry = ref.read(chatStreamServiceProvider);
+    unawaited(registry.cancel(sessionId));
     ref.read(agentCancelProvider.notifier).request();
     // Unblock any in-flight permission dialog so the agent loop can exit its
     // `await requestPermission(...)` rather than hanging until the UI is
     // manually dismissed.
     ref.read(agentPermissionRequestProvider.notifier).cancel();
     ref.read(activeMessageIdProvider.notifier).set(null);
-
-    final sessionId = ref.read(activeSessionIdProvider);
-    if (sessionId == null) {
-      // No active session — nothing to persist or attribute the marker to.
-      // Complete the completer so sendMessage unblocks.
-      final completer = _sendCompleter;
-      _sendCompleter = null;
-      if (completer != null && !completer.isCompleted) completer.complete(null);
-      return;
-    }
 
     final current = state.value ?? _preSendMessages;
     final marker = ChatMessage(
@@ -253,13 +252,6 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
       timestamp: DateTime.now(),
     );
     state = AsyncData([...current, marker]);
-
-    // Null the completer BEFORE completing so a late `onDone` from the
-    // already-cancelled subscription doesn't double-complete and throw a
-    // StateError that Dart's stream infrastructure would silently swallow.
-    final completer = _sendCompleter;
-    _sendCompleter = null;
-    if (completer != null && !completer.isCompleted) completer.complete(null);
     unawaited(_persistInterrupted(sessionId, marker));
   }
 
@@ -319,7 +311,6 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
   }
 }
 
-// Sessions list
 @riverpod
 Stream<List<ChatSession>> chatSessions(Ref ref) {
   return ref
@@ -327,7 +318,6 @@ Stream<List<ChatSession>> chatSessions(Ref ref) {
       .maybeWhen(data: (svc) => svc.watchAllSessions(), orElse: () => const Stream.empty());
 }
 
-// Sessions for a specific project
 @riverpod
 Stream<List<ChatSession>> projectSessions(Ref ref, String projectId) {
   return ref
@@ -335,7 +325,6 @@ Stream<List<ChatSession>> projectSessions(Ref ref, String projectId) {
       .maybeWhen(data: (svc) => svc.watchSessionsByProject(projectId), orElse: () => const Stream.empty());
 }
 
-// Archived sessions
 @riverpod
 Stream<List<ChatSession>> archivedSessions(Ref ref) {
   return ref
