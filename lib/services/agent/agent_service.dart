@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/utils/debug_logger.dart';
+import '../../data/ai/models/provider_turn_settings.dart';
 import '../../data/ai/models/stream_event.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
 import '../../data/ai/repository/tool_streaming_repository.dart';
@@ -78,6 +79,7 @@ class AgentService {
     Future<bool> Function(PermissionRequest req)? requestPermission,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
+    ProviderTurnSettings? settings,
   }) async* {
     final reqPermission = requestPermission ?? ((_) async => true);
     final Future<void> Function() teardown;
@@ -129,7 +131,12 @@ class AgentService {
         String? finishReason;
 
         try {
-          await for (final event in _ai.streamMessageWithTools(wireMessages: wire, tools: tools, model: model)) {
+          await for (final event in _ai.streamMessageWithTools(
+            wireMessages: wire,
+            tools: tools,
+            model: model,
+            settings: settings,
+          )) {
             switch (event) {
               case StreamTextDelta(:final text):
                 textBuffer.write(text);

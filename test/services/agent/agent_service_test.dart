@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/data/ai/models/provider_turn_settings.dart';
 import 'package:code_bench_app/data/ai/models/stream_event.dart';
 import 'package:code_bench_app/data/ai/repository/tool_streaming_repository.dart';
 import 'package:code_bench_app/data/coding_tools/datasource/coding_tools_datasource_io.dart';
@@ -50,6 +51,7 @@ class _FakeAIRepo implements ToolStreamingRepository {
     required List<Map<String, dynamic>> wireMessages,
     required List<Tool> tools,
     required AIModel model,
+    ProviderTurnSettings? settings,
   }) async* {
     final events = scripts[_round++];
     for (final e in events) {
@@ -343,9 +345,10 @@ class _WireCapturingFakeRepo extends _FakeAIRepo {
     required List<Map<String, dynamic>> wireMessages,
     required List<Tool> tools,
     required AIModel model,
+    ProviderTurnSettings? settings,
   }) {
     onWire(wireMessages);
-    return super.streamMessageWithTools(wireMessages: wireMessages, tools: tools, model: model);
+    return super.streamMessageWithTools(wireMessages: wireMessages, tools: tools, model: model, settings: settings);
   }
 }
 
@@ -358,8 +361,9 @@ class _CapturingFakeRepo extends _FakeAIRepo {
     required List<Map<String, dynamic>> wireMessages,
     required List<Tool> tools,
     required AIModel model,
+    ProviderTurnSettings? settings,
   }) {
     onSend(tools);
-    return super.streamMessageWithTools(wireMessages: wireMessages, tools: tools, model: model);
+    return super.streamMessageWithTools(wireMessages: wireMessages, tools: tools, model: model, settings: settings);
   }
 }

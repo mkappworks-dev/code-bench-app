@@ -94,12 +94,13 @@ class AIRepositoryImpl implements AIRepository, TextStreamingRepository, ToolStr
     required List<Map<String, dynamic>> wireMessages,
     required List<Tool> tools,
     required AIModel model,
+    ProviderTurnSettings? settings,
   }) {
     final src = _source(model.provider);
     if (src is! CustomRemoteDatasourceDio) {
       throw UnsupportedError('streamMessageWithTools is only supported on AIProvider.custom in the MVP');
     }
-    return src.streamMessageWithTools(messages: wireMessages, tools: tools, model: model);
+    return src.streamMessageWithTools(messages: wireMessages, tools: tools, model: model, settings: settings);
   }
 
   @override

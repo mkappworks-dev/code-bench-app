@@ -196,13 +196,15 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     required List<Map<String, dynamic>> messages,
     required List<Tool> tools,
     required AIModel model,
+    ProviderTurnSettings? settings,
   }) async* {
-    final body = {
+    final body = <String, dynamic>{
       'model': model.modelId,
       'stream': true,
       'messages': messages,
       'tools': tools.map((t) => t.toOpenAiToolJson()).toList(),
       'tool_choice': 'auto',
+      if (settings?.effort != null) 'reasoning_effort': mapOpenAIReasoningEffort(settings!.effort!),
     };
 
     try {

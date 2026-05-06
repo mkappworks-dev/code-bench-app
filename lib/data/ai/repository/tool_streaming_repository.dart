@@ -1,5 +1,6 @@
 import '../../coding_tools/models/tool.dart';
 import '../../shared/ai_model.dart';
+import '../models/provider_turn_settings.dart';
 import '../models/stream_event.dart';
 
 /// Capability for repositories that stream function-calling / tool-use
@@ -11,5 +12,6 @@ abstract interface class ToolStreamingRepository {
     required List<Map<String, dynamic>> wireMessages,
     required List<Tool> tools,
     required AIModel model,
+    ProviderTurnSettings? settings,
   });
 }

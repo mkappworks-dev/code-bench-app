@@ -18,6 +18,7 @@ import 'package:code_bench_app/data/filesystem/datasource/filesystem_datasource_
 import 'package:code_bench_app/data/filesystem/repository/filesystem_repository_impl.dart';
 import 'package:code_bench_app/data/apply/repository/apply_repository_impl.dart';
 import 'package:code_bench_app/data/shared/session_settings.dart';
+import 'package:code_bench_app/data/session/models/chat_session.dart';
 import 'package:code_bench_app/data/session/repository/session_repository.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
@@ -60,6 +61,9 @@ class _FakeSessionRepo extends Fake implements SessionRepository {
 
   @override
   Future<void> deleteAllSessionsAndMessages() async {}
+
+  @override
+  Future<ChatSession?> getSession(String sessionId) async => null;
 }
 
 class _FakeAIRepo extends Fake implements TextStreamingRepository, ToolStreamingRepository {
@@ -92,6 +96,7 @@ class _ScriptedAI implements TextStreamingRepository, ToolStreamingRepository {
     required List<Map<String, dynamic>> wireMessages,
     required List<Tool> tools,
     required AIModel model,
+    ProviderTurnSettings? settings,
   }) async* {
     for (final e in rounds[_r++]) {
       yield e;

@@ -140,22 +140,31 @@ class SessionService {
         .where((m) => m.id != persistedUserMsgId && m.role != MessageRole.interrupted)
         .toList();
 
+    // Build the per-turn settings bundle once and pass it down both transports.
+    // The session row holds `effort` as a string; coerce to enum before sending.
+    final session = await _session.getSession(sessionId);
+    ChatEffort? sessionEffort;
+    if (session?.effort != null) {
+      for (final e in ChatEffort.values) {
+        if (e.name == session!.effort) {
+          sessionEffort = e;
+          break;
+        }
+      }
+    }
+    final providerSettings = ProviderTurnSettings(
+      modelId: model.modelId,
+      systemPrompt: systemPrompt,
+      mode: mode,
+      effort: sessionEffort,
+      permission: permission,
+    );
+
     // Provider transport: route through AIProviderDatasource when the user has
     // selected a named provider (claude-cli, codex, etc.).
     if (providerId != null) {
       final ds = _providerService?.getProvider(providerId);
       if (ds != null) {
-        // CLI providers run with their own permission model
-        // (`bypassPermissions` for Claude, codex's own approval flow). The
-        // user's act/permission picks in the chat UI don't apply on this
-        // path — log so the override is visible in dev builds. The chat
-        // permission card warns the user before a CLI turn begins.
-        if (mode == ChatMode.act || permission != ChatPermission.fullAccess) {
-          dLog(
-            '[SessionService] CLI provider $providerId — '
-            'mode=$mode and permission=$permission ignored; CLI manages its own permissions',
-          );
-        }
         yield* _streamProvider(
           ds: ds,
           sessionId: sessionId,
@@ -163,6 +172,7 @@ class SessionService {
           projectPath: projectPath,
           requestPermission: requestPermission,
           cancelFlag: cancelFlag,
+          settings: providerSettings,
         );
         if (historyExcludingCurrent.isEmpty && userInput.isNotEmpty) {
           final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
@@ -189,6 +199,7 @@ class SessionService {
         requestPermission: requestPermission,
         onMcpStatusChanged: onMcpStatusChanged,
         onMcpServerRemoved: onMcpServerRemoved,
+        settings: providerSettings,
       )) {
         final stamped = msg.role == MessageRole.assistant
             ? msg.copyWith(providerId: attribution.providerId, modelId: attribution.modelId)
@@ -215,6 +226,7 @@ class SessionService {
       prompt: userInput,
       model: model,
       systemPrompt: systemPrompt,
+      settings: providerSettings,
     )) {
       buffer.write(chunk);
       yield ChatMessage(
@@ -254,6 +266,7 @@ class SessionService {
     required String? projectPath,
     required Future<bool> Function(PermissionRequest req)? requestPermission,
     required bool Function() cancelFlag,
+    ProviderTurnSettings? settings,
   }) async* {
     final assistantId = _uuid.v4();
     final contentBuffer = StringBuffer();
@@ -278,6 +291,7 @@ class SessionService {
       prompt: prompt,
       sessionId: sessionId,
       workingDirectory: projectPath ?? Directory.current.path,
+      settings: settings,
     )) {
       if (cancelFlag()) {
         ds.cancel();
