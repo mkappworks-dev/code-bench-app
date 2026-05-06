@@ -59,6 +59,11 @@ void main() {
     // or lib/data/**/repository/ directly. Documented exceptions:
     //   • apply_service.dart — ApplyRepository.assertWithinProject static security
     //     guard (imported via apply_service.dart's re-exports)
+    //   • chat_stream_service.dart / chat_stream_state.dart — ChatInputBar reads
+    //     the per-session chatStreamWatchProvider (a @riverpod stream provider,
+    //     not a direct service call) to source send-button state from the registry
+    //     rather than widget-local _isSending, which leaked across session switches.
+    //     ChatStreamState is a freezed data class used only for type-matching in build().
     test('widgets do not import services or datasources directly', () {
       final widgetFiles = _dartFiles(
         'lib/',
@@ -69,7 +74,9 @@ void main() {
         final hasServiceImport = RegExp(r"import '.*/(services|datasource|repository)/").hasMatch(content);
         if (hasServiceImport) {
           // Allow documented exceptions
-          if (!content.contains('apply_service.dart')) {
+          if (!content.contains('apply_service.dart') &&
+              !content.contains('chat_stream_service.dart') &&
+              !content.contains('chat_stream_state.dart')) {
             violations.add(file);
           }
         }

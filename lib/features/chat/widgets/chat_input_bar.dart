@@ -21,6 +21,8 @@ import '../notifiers/available_models_notifier.dart';
 import '../notifiers/session_settings_actions.dart';
 import '../notifiers/session_settings_failure.dart';
 import '../../../data/chat/models/agent_failure.dart';
+import '../../../services/chat/chat_stream_service.dart';
+import '../../../services/chat/chat_stream_state.dart';
 
 /// Private in-memory store of per-session chat-input drafts.
 ///
@@ -137,6 +139,15 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     if (oldWidget.sessionId != widget.sessionId) {
       _stashDraft(oldWidget.sessionId, _controller.text);
       _controller.text = _sessionDrafts[widget.sessionId] ?? '';
+      if (_isSending) setState(() => _isSending = false);
+      // Sync pulse animation to the new session's registry state.
+      final newSessionStreaming = _isStreaming;
+      if (newSessionStreaming && !_pulseController.isAnimating) {
+        _pulseController.repeat(reverse: true);
+      } else if (!newSessionStreaming && _pulseController.isAnimating) {
+        _pulseController.stop();
+        _pulseController.reset();
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _focusNode.requestFocus();
       });
@@ -165,8 +176,13 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     return existsOnDisk;
   }
 
+  bool get _isStreaming {
+    final s = ref.read(chatStreamWatchProvider(widget.sessionId)).value;
+    return s is ChatStreamConnecting || s is ChatStreamStreaming || s is ChatStreamRetrying;
+  }
+
   Future<void> _send() async {
-    if (_isSending) return;
+    if (_isSending || _isStreaming) return;
 
     // Check project availability BEFORE the empty-text bailout so that a
     // tap on the disabled send button (which routes through this method)
@@ -471,6 +487,12 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     // (e.g. app-resume refresh, write-button guard, or ApplyService catch).
     final project = ref.watch(activeProjectProvider);
     final isMissing = project?.status == ProjectStatus.missing;
+    final streamState = ref.watch(chatStreamWatchProvider(widget.sessionId));
+    final isStreaming = streamState.maybeWhen(
+      data: (s) => s is ChatStreamConnecting || s is ChatStreamStreaming || s is ChatStreamRetrying,
+      orElse: () => false,
+    );
+    final isSending = _isSending || isStreaming;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
       decoration: BoxDecoration(color: c.background),
@@ -495,7 +517,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                 if (event is KeyDownEvent &&
                     event.logicalKey == LogicalKeyboardKey.enter &&
                     !HardwareKeyboard.instance.isShiftPressed &&
-                    !_isSending) {
+                    !isSending) {
                   // Let _send() own the missing-project branch so Enter
                   // surfaces the same snackbar as the tap on the button.
                   _send();
@@ -578,7 +600,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                     ),
                   ),
                   const Spacer(),
-                  if (_isSending)
+                  if (isSending)
                     AnimatedBuilder(
                       animation: _pulseOpacity,
                       builder: (context, child) => Opacity(opacity: _pulseOpacity.value, child: child),
