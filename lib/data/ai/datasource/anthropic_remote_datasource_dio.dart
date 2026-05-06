@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:meta/meta.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/errors/app_exception.dart';
@@ -9,8 +10,37 @@ import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
+import '../../../data/shared/session_settings.dart';
+import '../models/provider_capabilities.dart';
+import '../models/provider_turn_settings.dart';
+import '../util/setting_mappers.dart';
 import 'ai_remote_datasource.dart';
 import 'text_streaming_datasource.dart';
+
+@visibleForTesting
+Map<String, dynamic> buildAnthropicRequestBody({
+  required AIModel model,
+  required List<Map<String, String>> messages,
+  required int maxTokens,
+  String? systemPrompt,
+  ProviderTurnSettings? settings,
+}) {
+  final body = <String, dynamic>{
+    'model': model.modelId,
+    'max_tokens': maxTokens,
+    'messages': messages,
+    'stream': true,
+    'system': ?systemPrompt,
+  };
+  final effort = settings?.effort;
+  if (effort != null) {
+    final budget = mapAnthropicThinkingBudget(effort, maxTokens: maxTokens, modelId: model.modelId);
+    if (budget != null) {
+      body['thinking'] = {'type': 'enabled', 'budget_tokens': budget};
+    }
+  }
+  return body;
+}
 
 class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
   AnthropicRemoteDatasourceDio(String apiKey)
@@ -29,17 +59,32 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
   AIProvider get provider => AIProvider.anthropic;
 
   @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => ProviderCapabilities(
+    supportsModelOverride: true,
+    supportsSystemPrompt: true,
+    supportedModes: const {ChatMode.chat},
+    supportedEfforts: isAnthropicAdaptiveOnly(model.modelId)
+        ? const <ChatEffort>{}
+        : const {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
+    supportedPermissions: const <ChatPermission>{},
+  );
+
+  @override
   Stream<String> streamMessage({
     required List<ChatMessage> history,
     required String prompt,
     required AIModel model,
     String? systemPrompt,
+    ProviderTurnSettings? settings,
   }) async* {
     final messages = _buildMessages(history, prompt);
-    final body = <String, dynamic>{'model': model.modelId, 'max_tokens': 4096, 'messages': messages, 'stream': true};
-    if (systemPrompt != null) {
-      body['system'] = systemPrompt;
-    }
+    final body = buildAnthropicRequestBody(
+      model: model,
+      messages: messages,
+      maxTokens: 4096,
+      systemPrompt: systemPrompt,
+      settings: settings,
+    );
 
     try {
       final response = await _dio.post(
