@@ -1,10 +1,15 @@
+import '../../shared/ai_model.dart';
 import '../models/auth_status.dart';
 import '../models/detection_result.dart';
+import '../models/provider_capabilities.dart';
 import '../models/provider_runtime_event.dart';
+import '../models/provider_turn_settings.dart';
 
 export '../models/auth_status.dart';
 export '../models/detection_result.dart';
+export '../models/provider_capabilities.dart';
 export '../models/provider_runtime_event.dart';
+export '../models/provider_turn_settings.dart';
 
 /// Contract for pluggable AI provider datasources (Claude CLI, Codex, etc.).
 ///
@@ -26,11 +31,17 @@ abstract interface class AIProviderDatasource {
   /// (not on PATH) so the UI can render the right recovery affordance.
   Future<DetectionResult> detect();
 
+  /// Capability surface for the picked [model]. CLI providers usually return
+  /// the same value for any model (the CLI accepts every flag for any model);
+  /// HTTP providers may shrink the surface based on model id.
+  ProviderCapabilities capabilitiesFor(AIModel model);
+
   /// Send a message and stream normalized [ProviderRuntimeEvent]s.
   Stream<ProviderRuntimeEvent> sendAndStream({
     required String prompt,
     required String sessionId,
     required String workingDirectory,
+    ProviderTurnSettings? settings,
   });
 
   /// Cancel any in-flight request.

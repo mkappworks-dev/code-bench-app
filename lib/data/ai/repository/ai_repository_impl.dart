@@ -11,6 +11,8 @@ import '../datasource/gemini_remote_datasource_dio.dart';
 import '../datasource/ollama_remote_datasource_dio.dart';
 import '../datasource/openai_remote_datasource_dio.dart';
 import '../datasource/text_streaming_datasource.dart';
+import '../models/provider_capabilities.dart';
+import '../models/provider_turn_settings.dart';
 import '../models/stream_event.dart';
 import 'ai_repository.dart';
 import 'text_streaming_repository.dart';
@@ -55,6 +57,7 @@ class AIRepositoryImpl implements AIRepository, TextStreamingRepository, ToolStr
     required String prompt,
     required AIModel model,
     String? systemPrompt,
+    ProviderTurnSettings? settings,
   }) {
     final src = _source(model.provider);
     final streaming = src is TextStreamingDatasource ? src as TextStreamingDatasource : null;
@@ -68,7 +71,22 @@ class AIRepositoryImpl implements AIRepository, TextStreamingRepository, ToolStr
         'CLI transports reach their streamEvents path.',
       );
     }
-    return streaming.streamMessage(history: history, prompt: prompt, model: model, systemPrompt: systemPrompt);
+    return streaming.streamMessage(
+      history: history,
+      prompt: prompt,
+      model: model,
+      systemPrompt: systemPrompt,
+      settings: settings,
+    );
+  }
+
+  @override
+  ProviderCapabilities? capabilitiesFor(AIModel model) {
+    final src = _sources[model.provider];
+    if (src is TextStreamingDatasource) {
+      return (src as TextStreamingDatasource).capabilitiesFor(model);
+    }
+    return null;
   }
 
   @override

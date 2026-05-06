@@ -1,5 +1,7 @@
 import '../../shared/ai_model.dart';
 import '../../shared/chat_message.dart';
+import '../models/provider_capabilities.dart';
+import '../models/provider_turn_settings.dart';
 
 /// Capability for transports that stream raw text tokens.
 ///
@@ -11,10 +13,16 @@ import '../../shared/chat_message.dart';
 /// interfaces; CLI-backed transports implement only `AIRemoteDatasource`
 /// and expose structured event streams through their concrete type.
 abstract interface class TextStreamingDatasource {
+  /// Capability surface for the picked [model]. HTTP datasources may shrink
+  /// the supported sets when a model lacks server-side support (e.g. non-
+  /// reasoning OpenAI models drop `effort`; pre-2.5 Gemini drops it).
+  ProviderCapabilities capabilitiesFor(AIModel model);
+
   Stream<String> streamMessage({
     required List<ChatMessage> history,
     required String prompt,
     required AIModel model,
     String? systemPrompt,
+    ProviderTurnSettings? settings,
   });
 }
