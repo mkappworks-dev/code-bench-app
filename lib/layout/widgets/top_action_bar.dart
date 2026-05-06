@@ -5,10 +5,10 @@ import '../../core/constants/theme_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/project/models/project.dart';
 import '../notifiers/top_action_bar_notifier.dart';
-import 'actions_dropdown.dart';
-import 'commit_push_button.dart';
-import 'init_git_button.dart';
-import 'code_dropdown.dart';
+import '../../features/project_actions/widgets/actions_dropdown.dart';
+import '../../features/git/widgets/commit_push_button.dart';
+import '../../features/git/widgets/init_git_button.dart';
+import '../../features/project_actions/widgets/code_dropdown.dart';
 
 /// Top bar showing the active session title, project badges, and action
 /// buttons (Actions dropdown, VS Code, Commit & Push / Initialize Git).

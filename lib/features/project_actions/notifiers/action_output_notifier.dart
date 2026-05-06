@@ -1,9 +1,10 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../data/project/models/action_run.dart';
-import '../../data/project/models/project_action.dart';
-import '../../services/project/action_runner_service.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../data/project/models/action_run.dart';
+import '../../../data/project/models/project_action.dart';
+import '../../../services/project/action_runner_service.dart';
 
 part 'action_output_notifier.freezed.dart';
 part 'action_output_notifier.g.dart';
@@ -20,12 +21,6 @@ abstract class ActionOutputState with _$ActionOutputState {
   }) = _ActionOutputState;
 }
 
-/// Notifier that runs a user-defined [ProjectAction] as a subprocess and
-/// streams its stdout/stderr lines into [ActionOutputState].
-///
-/// Lives in `lib/shell/notifiers/` because [ActionOutputPanel] (the widget
-/// that displays it) is a shell-level widget. Process lifecycle is owned by
-/// [ActionRunnerService] — widgets only call [run] and [clear].
 @Riverpod(keepAlive: true)
 class ActionOutputNotifier extends _$ActionOutputNotifier {
   ActionRun? _currentRun;
@@ -68,6 +63,7 @@ class ActionOutputNotifier extends _$ActionOutputNotifier {
       state = state.copyWith(status: code == 0 ? ActionStatus.done : ActionStatus.failed, exitCode: code);
     } on ActionRunnerException catch (e) {
       _currentRun = null;
+      dLog('[ActionOutputNotifier] run failed to start: ${e.executable}');
       state = state.copyWith(
         status: ActionStatus.failed,
         lines: [
@@ -75,6 +71,14 @@ class ActionOutputNotifier extends _$ActionOutputNotifier {
           'Command not found or failed to start: ${e.executable}',
           'Check the action in the Actions dropdown → Add action.',
         ],
+        exitCode: -1,
+      );
+    } catch (e) {
+      _currentRun = null;
+      dLog('[ActionOutputNotifier] run failed unexpectedly: $e');
+      state = state.copyWith(
+        status: ActionStatus.failed,
+        lines: [...state.lines, 'Action failed unexpectedly.'],
         exitCode: -1,
       );
     }

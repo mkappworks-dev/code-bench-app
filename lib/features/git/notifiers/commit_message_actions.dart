@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/errors/app_exception.dart';
-import '../../core/utils/debug_logger.dart';
-import '../../data/_core/preferences/general_preferences.dart';
-import '../../features/chat/notifiers/chat_notifier.dart';
-import '../../services/ai/ai_service.dart';
-import '../../services/providers/providers_service.dart';
+import '../../../core/errors/app_exception.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../data/_core/preferences/general_preferences.dart';
+import '../../../features/chat/notifiers/chat_notifier.dart';
+import '../../../services/ai/ai_service.dart';
+import '../../../services/providers/providers_service.dart';
 import 'commit_message_failure.dart';
 
 part 'commit_message_actions.g.dart';

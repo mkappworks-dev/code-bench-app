@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/data/project/models/project_action.dart';
-import 'package:code_bench_app/shell/notifiers/action_output_notifier.dart';
+import 'package:code_bench_app/features/project_actions/notifiers/action_output_notifier.dart';
 
 void main() {
   test('ActionOutputState starts idle', () {

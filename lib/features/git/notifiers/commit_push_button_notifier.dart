@@ -1,9 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/utils/debug_logger.dart';
-import '../../services/git/git_service.dart';
-import '../../services/github/github_service.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../services/git/git_service.dart';
+import '../../../services/github/github_service.dart';
 import 'git_live_state_notifier.dart';
 import 'git_remotes_notifier.dart';
 
@@ -46,8 +46,8 @@ Future<String?> existingOpenPrUrl(Ref ref, String path) async {
     final service = await ref.watch(githubServiceProvider.future);
     return await service.findOpenPrUrlForBranch(owner, repo, branch);
   } catch (e) {
-    // Logged so a flapping check (rate limit, bad token) leaves a breadcrumb instead of silently re-enabling "Create PR".
-    dLog('[existingOpenPrUrl] PR check failed: ${e.runtimeType}');
+    // On failure, null causes canPr=true — PR check is best-effort; the user will get the real error on click.
+    dLog('[existingOpenPrUrl] PR check failed: $e');
     return null;
   }
 }

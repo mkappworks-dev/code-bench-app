@@ -3,11 +3,23 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/data/project/models/project.dart';
 import 'package:code_bench_app/data/project/models/project_action.dart';
+import 'package:code_bench_app/data/session/models/chat_session.dart';
+import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/services/project/project_service.dart';
+import 'package:code_bench_app/services/session/session_service.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_failure.dart';
 
-// ── Fake ProjectService ───────────────────────────────────────────────────────
+class _FakeSessionService extends Fake implements SessionService {
+  @override
+  Future<String> createSession({required AIModel model, String? title, String? projectId}) async => 'fake-session';
+
+  @override
+  Future<List<ChatSession>> getSessionsByProject(String projectId) async => const [];
+
+  @override
+  Future<void> deleteSession(String sessionId) async {}
+}
 
 class _FakeProjectService extends Fake implements ProjectService {
   Object? _addError;
@@ -49,10 +61,13 @@ class _FakeProjectService extends Fake implements ProjectService {
   Future<void> deleteAllProjects() => throw UnimplementedError();
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 ProviderContainer _makeContainer(_FakeProjectService fakeService) {
-  final c = ProviderContainer(overrides: [projectServiceProvider.overrideWithValue(fakeService)]);
+  final c = ProviderContainer(
+    overrides: [
+      projectServiceProvider.overrideWithValue(fakeService),
+      sessionServiceProvider.overrideWith((ref) async => _FakeSessionService()),
+    ],
+  );
   addTearDown(c.dispose);
   return c;
 }
@@ -63,8 +78,6 @@ void main() {
   setUp(() {
     fakeService = _FakeProjectService();
   });
-
-  // ── addExistingFolder ────────────────────────────────────────────────────────
 
   group('addExistingFolder', () {
     test('happy path — state becomes AsyncData', () async {
@@ -91,8 +104,6 @@ void main() {
       expect(c.read(projectSidebarActionsProvider).error, isA<ProjectSidebarInvalidPath>());
     });
   });
-
-  // ── removeProject ────────────────────────────────────────────────────────────
 
   group('removeProject', () {
     test('happy path — state becomes AsyncData', () async {

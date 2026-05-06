@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/constants/app_icons.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/utils/instant_menu.dart';
-import '../../core/utils/snackbar_helper.dart';
+import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/instant_menu.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import '../notifiers/ide_launch_actions.dart';
 import 'action_button.dart';
-import 'project_guard.dart';
+import '../../../layout/widgets/project_guard.dart';
 
 /// Dropdown that opens the project in VS Code, Cursor, Finder, or Terminal.
 class CodeDropdown extends ConsumerStatefulWidget {

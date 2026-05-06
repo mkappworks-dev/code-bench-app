@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../core/utils/debug_logger.dart';
-import '../../services/git/git_service.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../services/git/git_service.dart';
 import 'git_actions_failure.dart';
 
 part 'git_actions.g.dart';
@@ -88,7 +88,7 @@ class GitActions extends _$GitActions {
         try {
           await _git().pushToRemote(projectPath, remote.name);
           pushed.add(remote.name);
-        } on Exception catch (e) {
+        } catch (e) {
           dLog('[GitActions] pushToRemote(${remote.name}) failed: ${e.runtimeType}');
           failed.add(remote.name);
         }

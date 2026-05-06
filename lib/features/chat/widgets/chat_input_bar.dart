@@ -110,6 +110,9 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
       begin: 0.4,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNode.requestFocus();
+    });
   }
 
   @override
@@ -134,6 +137,9 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     if (oldWidget.sessionId != widget.sessionId) {
       _stashDraft(oldWidget.sessionId, _controller.text);
       _controller.text = _sessionDrafts[widget.sessionId] ?? '';
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _focusNode.requestFocus();
+      });
     }
   }
 

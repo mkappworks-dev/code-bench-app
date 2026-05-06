@@ -9,7 +9,7 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
-import '../../../shell/notifiers/ide_launch_actions.dart';
+import '../../project_actions/notifiers/ide_launch_actions.dart';
 import '../notifiers/ripgrep_availability_notifier.dart';
 
 class RipgrepAvailabilityBanner extends ConsumerStatefulWidget {
@@ -27,6 +27,23 @@ class _RipgrepAvailabilityBannerState extends ConsumerState<RipgrepAvailabilityB
   // Set to true when the user manually triggers a recheck so the listener
   // knows to show a snackbar when the check resolves.
   bool _recheckRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(ideLaunchActionsProvider, (prev, next) {
+      if (next is! AsyncError) return;
+      final failure = next.error;
+      if (failure is! IdeLaunchFailure) return;
+      if (!mounted) return;
+      switch (failure) {
+        case IdeLaunchFailed(:final message):
+          AppSnackBar.show(context, message, type: AppSnackBarType.error);
+        case IdeLaunchUnknownError():
+          AppSnackBar.show(context, 'Could not open the editor — unexpected error.', type: AppSnackBarType.error);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

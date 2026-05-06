@@ -67,7 +67,7 @@ final class ExistingOpenPrUrlProvider extends $FunctionalProvider<AsyncValue<Str
   }
 }
 
-String _$existingOpenPrUrlHash() => r'a106b441a04a74c2d6f91a7dc6d557664f88a63a';
+String _$existingOpenPrUrlHash() => r'6e92877c6f31ae11888172cd8c2d021123dbe11a';
 
 /// Returns the `html_url` of the first open PR for [path]'s current branch,
 /// or `null` when none exists, the check is still loading, or any error occurs.

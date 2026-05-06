@@ -6,12 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/theme/app_colors.dart';
+import '../core/widgets/app_snack_bar.dart';
 import '../features/chat/notifiers/chat_notifier.dart';
 import '../features/chat/widgets/changes_panel.dart';
 import '../features/project_sidebar/project_sidebar.dart';
 import '../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
-import 'widgets/action_output_panel.dart';
+import '../features/project_actions/widgets/action_output_panel.dart';
 import 'widgets/app_lifecycle_observer.dart';
 import 'widgets/status_bar.dart';
 import 'widgets/top_action_bar.dart';
@@ -25,9 +26,16 @@ class ChatShell extends ConsumerWidget {
     final projectId = ref.read(activeProjectIdProvider);
     if (projectId == null) return;
     final model = ref.read(selectedModelProvider);
-    final sessionId = await ref
-        .read(projectSidebarActionsProvider.notifier)
-        .createSession(model: model, projectId: projectId);
+    late String sessionId;
+    try {
+      sessionId = await ref
+          .read(projectSidebarActionsProvider.notifier)
+          .createSession(model: model, projectId: projectId);
+    } catch (_) {
+      if (context.mounted)
+        AppSnackBar.show(context, 'Failed to create conversation — please try again.', type: AppSnackBarType.error);
+      return;
+    }
     ref.read(activeSessionIdProvider.notifier).set(sessionId);
     if (context.mounted) context.go('/chat/$sessionId');
   }

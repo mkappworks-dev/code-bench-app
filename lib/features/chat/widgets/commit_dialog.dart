@@ -10,7 +10,7 @@ import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../data/_core/preferences/general_preferences.dart';
 import '../../../data/git/models/git_changed_file.dart';
-import '../../../shell/notifiers/git_actions.dart';
+import '../../git/notifiers/git_actions.dart';
 
 class CommitDialog extends ConsumerStatefulWidget {
   const CommitDialog({super.key, required this.initialMessage, required this.projectPath});

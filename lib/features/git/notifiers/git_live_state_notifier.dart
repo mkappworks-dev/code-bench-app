@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../data/git/models/git_live_state.dart';
-import '../../services/git/git_service.dart';
+import '../../../data/git/models/git_live_state.dart';
+import '../../../services/git/git_service.dart';
 
-export '../../data/git/models/git_live_state.dart';
+export '../../../data/git/models/git_live_state.dart';
 
 part 'git_live_state_notifier.g.dart';
 
