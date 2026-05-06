@@ -1,25 +1,72 @@
-// lib/features/archive/widgets/archived_session_card.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/relative_time.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../data/session/models/chat_session.dart';
-import '../notifiers/archive_actions.dart';
 
-class ArchivedSessionCard extends ConsumerStatefulWidget {
-  const ArchivedSessionCard({super.key, required this.session});
+class ArchivedSessionCard extends StatefulWidget {
+  const ArchivedSessionCard({super.key, required this.session, required this.onUnarchive, required this.onDelete});
 
   final ChatSession session;
+  final VoidCallback onUnarchive;
+  final VoidCallback onDelete;
 
   @override
-  ConsumerState<ArchivedSessionCard> createState() => _ArchivedSessionCardState();
+  State<ArchivedSessionCard> createState() => _ArchivedSessionCardState();
 }
 
-class _ArchivedSessionCardState extends ConsumerState<ArchivedSessionCard> {
-  bool _hovered = false;
+class _ArchivedSessionCardState extends State<ArchivedSessionCard> {
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AppDialog(
+        icon: AppIcons.trash,
+        iconType: AppDialogIconType.destructive,
+        title: 'Delete archived conversation?',
+        content: Builder(
+          builder: (context) {
+            final c = AppColors.of(context);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: c.chipFill,
+                    border: Border.all(color: c.chipStroke),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    widget.session.title,
+                    style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'This will permanently delete the conversation and all its messages. '
+                  'This cannot be undone.',
+                  style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
+                ),
+              ],
+            );
+          },
+        ),
+        actions: [
+          AppDialogAction.cancel(onPressed: () => Navigator.of(ctx).pop(false)),
+          AppDialogAction.destructive(label: 'Delete', onPressed: () => Navigator.of(ctx).pop(true)),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      if (!mounted) return;
+      widget.onDelete();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,39 +99,83 @@ class _ArchivedSessionCardState extends ConsumerState<ArchivedSessionCard> {
             ),
           ),
           const SizedBox(width: 12),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            onEnter: (_) => setState(() => _hovered = true),
-            onExit: (_) => setState(() => _hovered = false),
-            child: GestureDetector(
-              onTap: () => ref.read(archiveActionsProvider.notifier).unarchiveSession(widget.session.sessionId),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: _hovered ? c.accentTintMid : c.chipFill,
-                  border: Border.all(color: _hovered ? c.accent.withValues(alpha: 0.35) : c.chipStroke),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(AppIcons.archiveRestore, size: 12, color: _hovered ? c.accent : c.chipText),
-                    const SizedBox(width: 5),
-                    Text(
-                      'Unarchive',
-                      style: TextStyle(
-                        color: _hovered ? c.accent : c.chipText,
-                        fontSize: ThemeConstants.uiFontSizeSmall,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _CardChip(
+                icon: AppIcons.archiveRestore,
+                label: 'Unarchive',
+                isDestructive: false,
+                onTap: widget.onUnarchive,
               ),
-            ),
+              const SizedBox(width: 6),
+              _CardChip(
+                icon: AppIcons.trash,
+                label: 'Delete',
+                isDestructive: true,
+                onTap: () => _confirmDelete(context),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CardChip extends StatefulWidget {
+  const _CardChip({required this.icon, required this.label, required this.isDestructive, required this.onTap});
+
+  final IconData icon;
+  final String label;
+  final bool isDestructive;
+  final VoidCallback onTap;
+
+  @override
+  State<_CardChip> createState() => _CardChipState();
+}
+
+class _CardChipState extends State<_CardChip> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final hovered = _hovered;
+    final Color fg = widget.isDestructive ? (hovered ? c.error : c.chipText) : (hovered ? c.accent : c.chipText);
+    final Color bg = widget.isDestructive
+        ? (hovered ? c.error.withValues(alpha: 0.12) : c.chipFill)
+        : (hovered ? c.accentTintMid : c.chipFill);
+    final Color border = widget.isDestructive
+        ? (hovered ? c.destructiveBorder : c.chipStroke)
+        : (hovered ? c.accentBorderTeal : c.chipStroke);
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: bg,
+            border: Border.all(color: border),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(widget.icon, size: 12, color: fg),
+              const SizedBox(width: 5),
+              Text(
+                widget.label,
+                style: TextStyle(color: fg, fontSize: ThemeConstants.uiFontSizeSmall, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

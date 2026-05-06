@@ -1,4 +1,3 @@
-// lib/features/archive/archive_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_icons.dart';
@@ -93,7 +92,12 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
                 children: [
                   for (final entry in groups.entries) ...[
                     ProjectHeader(name: projectMap[entry.key] ?? 'No Project'),
-                    for (final s in entry.value) ArchivedSessionCard(session: s),
+                    for (final s in entry.value)
+                      ArchivedSessionCard(
+                        session: s,
+                        onUnarchive: () => ref.read(archiveActionsProvider.notifier).unarchiveSession(s.sessionId),
+                        onDelete: () {},
+                      ),
                     const SizedBox(height: 8),
                   ],
                 ],

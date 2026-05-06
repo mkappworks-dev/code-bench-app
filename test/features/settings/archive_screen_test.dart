@@ -70,7 +70,7 @@ void main() {
     expect(find.text('Unarchive'), findsOneWidget);
   });
 
-  testWidgets('Unarchive button calls archiveActionsProvider.unarchiveSession', (tester) async {
+  testWidgets('Unarchive button fires onUnarchive callback', (tester) async {
     final fake = _FakeArchiveActions();
     final session = ChatSession(
       sessionId: 's2',
@@ -109,5 +109,39 @@ void main() {
     expect(fake.deleteAllCalls, [
       ['x', 'y'],
     ]);
+  });
+
+  testWidgets('archived session card shows Delete button', (tester) async {
+    final session = ChatSession(
+      sessionId: 's3',
+      title: 'Chat to delete',
+      modelId: 'm',
+      providerId: 'anthropic',
+      createdAt: DateTime(2025),
+      updatedAt: DateTime(2025),
+    );
+    await tester.pumpWidget(_buildArchive(sessions: [session]));
+    await tester.pump();
+
+    expect(find.text('Delete'), findsOneWidget);
+  });
+
+  testWidgets('Delete button shows confirmation dialog', (tester) async {
+    final session = ChatSession(
+      sessionId: 's4',
+      title: 'Deletable chat',
+      modelId: 'm',
+      providerId: 'anthropic',
+      createdAt: DateTime(2025),
+      updatedAt: DateTime(2025),
+    );
+    await tester.pumpWidget(_buildArchive(sessions: [session]));
+    await tester.pump();
+
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete archived conversation?'), findsOneWidget);
+    expect(find.text('Deletable chat'), findsWidgets);
   });
 }
