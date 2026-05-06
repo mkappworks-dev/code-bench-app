@@ -74,4 +74,42 @@ void main() {
       expect(messages.map((m) => m.id), ['b']);
     });
   });
+
+  group('cancel', () {
+    test('cancel stops the subscription and emits idle', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final registry = container.read(chatStreamRegistryProvider);
+      final source = StreamController<ChatMessage>();
+      final states = <ChatStreamState>[];
+      registry.watchState('s').listen(states.add);
+      registry.start(sessionId: 's', streamFactory: () => source.stream, onMessage: (_) {});
+      await Future<void>.delayed(Duration.zero);
+      source.add(_msg('a'));
+      await Future<void>.delayed(Duration.zero);
+
+      await registry.cancel('s');
+      expect(registry.latestState('s'), isA<ChatStreamIdle>());
+
+      final received = <ChatMessage>[];
+      source.add(_msg('b'));
+      await Future<void>.delayed(Duration.zero);
+      expect(received, isEmpty);
+    });
+
+    test('cancelAll stops every active session', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final registry = container.read(chatStreamRegistryProvider);
+      final s1 = StreamController<ChatMessage>();
+      final s2 = StreamController<ChatMessage>();
+      registry.start(sessionId: 'a', streamFactory: () => s1.stream, onMessage: (_) {});
+      registry.start(sessionId: 'b', streamFactory: () => s2.stream, onMessage: (_) {});
+      await Future<void>.delayed(Duration.zero);
+
+      await registry.cancelAll();
+      expect(registry.latestState('a'), isA<ChatStreamIdle>());
+      expect(registry.latestState('b'), isA<ChatStreamIdle>());
+    });
+  });
 }

@@ -75,6 +75,20 @@ class ChatStreamRegistry {
     _ => AgentFailure.unknown(e),
   };
 
+  Future<void> cancel(String sessionId) async {
+    final handle = _handles[sessionId];
+    if (handle == null) return;
+    await handle.subscription?.cancel();
+    handle.subscription = null;
+    handle._emit(const ChatStreamState.idle());
+  }
+
+  Future<void> cancelAll() async {
+    for (final id in _handles.keys.toList()) {
+      await cancel(id);
+    }
+  }
+
   Future<void> dispose() async {
     for (final h in _handles.values) {
       await h.dispose();
