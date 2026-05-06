@@ -30,9 +30,21 @@ void main() {
         ),
       );
       expect(args, containsAllInOrder(['--model', 'sonnet']));
-      expect(args, containsAllInOrder(['--effort', 'high']));
+      // `--effort` is intentionally not forwarded to Claude CLI today; the
+      // flag isn't reliably accepted across versions in the wild.
+      expect(args, isNot(contains('--effort')));
       expect(args, containsAllInOrder(['--append-system-prompt', 'be concise']));
       expect(args, containsAllInOrder(['--permission-mode', 'default']));
+    });
+
+    test('effort is never forwarded as --effort even when set', () {
+      final args = buildClaudeCliArgs(
+        sessionId: 's',
+        prompt: 'p',
+        isFirstTurn: true,
+        settings: const ProviderTurnSettings(effort: ChatEffort.max),
+      );
+      expect(args, isNot(contains('--effort')));
     });
 
     test('mode=plan overrides permission to plan', () {

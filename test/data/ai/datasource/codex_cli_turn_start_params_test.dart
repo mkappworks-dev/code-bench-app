@@ -37,9 +37,28 @@ void main() {
       expect((input.first as Map<String, dynamic>)['text'], '');
     });
 
-    test('includes model when provided', () {
+    test('includes model when it is Codex-compatible', () {
       final params = buildCodexTurnStartParams('thread-1', 'hi', modelId: 'gpt-5-codex');
       expect(params['model'], 'gpt-5-codex');
+    });
+
+    test('omits model when it is not Codex-compatible (e.g. gpt-4o)', () {
+      // Codex with a ChatGPT account 400s on non-allowlisted models. Dropping
+      // the field lets Codex pick its own default rather than failing the turn.
+      final params = buildCodexTurnStartParams('thread-1', 'hi', modelId: 'gpt-4o');
+      expect(params.containsKey('model'), isFalse);
+    });
+
+    test('isCodexCompatibleModel allowlist', () {
+      expect(isCodexCompatibleModel('gpt-5-codex'), isTrue);
+      expect(isCodexCompatibleModel('gpt-5'), isTrue);
+      expect(isCodexCompatibleModel('o1'), isTrue);
+      expect(isCodexCompatibleModel('o3-mini'), isTrue);
+      expect(isCodexCompatibleModel('o4-mini'), isTrue);
+      expect(isCodexCompatibleModel('codex-mini'), isTrue);
+      expect(isCodexCompatibleModel('gpt-4o'), isFalse);
+      expect(isCodexCompatibleModel('gpt-4o-mini'), isFalse);
+      expect(isCodexCompatibleModel('claude-3-5-sonnet'), isFalse);
     });
 
     test('includes effort when provided', () {

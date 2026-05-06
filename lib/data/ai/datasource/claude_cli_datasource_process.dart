@@ -66,13 +66,17 @@ List<String> buildClaudeCliArgs({
     sLog('[ClaudeCli] rejected flag-shaped modelId at argv boundary');
     modelId = null;
   }
-  final effort = settings?.effort;
   final systemPrompt = settings?.systemPrompt;
   final permissionMode = mapClaudePermissionMode(
     mode: settings?.mode ?? ChatMode.chat,
     permission: settings?.permission ?? ChatPermission.fullAccess,
   );
 
+  // `--effort` is intentionally NOT forwarded: the flag is not consistently
+  // accepted across Claude CLI versions in the wild — passing it produced
+  // "exited 1" failures on user installs. The user's effort pick still lives
+  // in the session row (and reaches the Anthropic API path via
+  // `thinking.budget_tokens`), but here we let the CLI use its own default.
   return [
     '-p',
     '--output-format',
@@ -80,7 +84,6 @@ List<String> buildClaudeCliArgs({
     '--include-partial-messages',
     '--verbose',
     if (modelId != null) ...['--model', modelId],
-    if (effort != null) ...['--effort', mapClaudeEffort(effort)],
     if (systemPrompt != null && systemPrompt.isNotEmpty) ...['--append-system-prompt', systemPrompt],
     '--permission-mode',
     permissionMode,
@@ -176,7 +179,10 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
     supportsModelOverride: true,
     supportsSystemPrompt: true,
     supportedModes: {ChatMode.chat, ChatMode.plan, ChatMode.act},
-    supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
+    // Effort is intentionally empty: see buildClaudeCliArgs for why we don't
+    // forward `--effort` to the CLI today. Hiding the chip avoids a setting
+    // that would silently no-op on the wire.
+    supportedEfforts: <ChatEffort>{},
     supportedPermissions: {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess},
   );
 
@@ -297,6 +303,13 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       }
 
       _process = spawned;
+
+      // Close stdin immediately. Newer Claude CLI versions read stdin in `-p`
+      // mode even when a positional prompt is provided, blocking with
+      // "Warning: no stdin data received in 3s, proceeding without it" before
+      // exiting 1. Sending EOF up-front signals there will be no piped input,
+      // so the CLI stays on the positional-prompt code path.
+      unawaited(spawned.stdin.close());
 
       // Cap stderr so a chatty crash can't balloon memory.
       const stderrCap = 64 * 1024;
