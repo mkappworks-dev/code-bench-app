@@ -15,6 +15,7 @@ import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/agent_cancel_notifier.dart';
+import '../notifiers/chat_input_bar_options_provider.dart';
 import '../notifiers/chat_notifier.dart';
 import '../../../data/shared/session_settings.dart';
 import '../notifiers/available_models_failure.dart';
@@ -496,6 +497,16 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final mode = ref.watch(sessionModeProvider);
     final effort = ref.watch(sessionEffortProvider);
     final permission = ref.watch(sessionPermissionProvider);
+    // Capabilities for the active provider+model. `null` means transport not
+    // yet known (prefs still loading or no datasource registered) — render the
+    // chips disabled so the user can still see the picks but can't change them.
+    final caps = ref.watch(chatInputBarOptionsProvider);
+    final showEffort = (caps?.supportedEfforts.isNotEmpty) ?? false;
+    final showMode = (caps?.supportedModes.length ?? 0) > 1;
+    final showPermission = (caps?.supportedPermissions.isNotEmpty) ?? false;
+    final supportedEfforts = caps?.supportedEfforts.toList() ?? const <ChatEffort>[];
+    final supportedModes = caps?.supportedModes.toList() ?? const <ChatMode>[];
+    final supportedPermissions = caps?.supportedPermissions.toList() ?? const <ChatPermission>[];
     // Re-render whenever the active project or its status changes so the
     // send button + Enter key disable the moment the folder goes missing
     // (e.g. app-resume refresh, write-button guard, or ApplyService catch).
@@ -582,48 +593,56 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                           onTap: () => _showModelPicker(ctx),
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      Builder(
-                        builder: (ctx) => _ControlChip(
-                          label: effort.label,
-                          onTap: () => _showDropdown(
-                            ctx,
-                            ChatEffort.values,
-                            effort,
-                            (e) => e.label,
-                            (e) => ref.read(sessionSettingsActionsProvider.notifier).updateEffort(widget.sessionId, e),
+                      if (showEffort) ...[
+                        const SizedBox(width: 4),
+                        Builder(
+                          builder: (ctx) => _ControlChip(
+                            label: effort.label,
+                            onTap: () => _showDropdown(
+                              ctx,
+                              supportedEfforts,
+                              effort,
+                              (e) => e.label,
+                              (e) =>
+                                  ref.read(sessionSettingsActionsProvider.notifier).updateEffort(widget.sessionId, e),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Builder(
-                        builder: (ctx) => _ControlChip(
-                          icon: AppIcons.chat,
-                          label: mode.label,
-                          onTap: () => _showDropdown(
-                            ctx,
-                            ChatMode.values,
-                            mode,
-                            (m) => m.label,
-                            (m) => ref.read(sessionSettingsActionsProvider.notifier).updateMode(widget.sessionId, m),
+                      ],
+                      if (showMode) ...[
+                        const SizedBox(width: 4),
+                        Builder(
+                          builder: (ctx) => _ControlChip(
+                            icon: AppIcons.chat,
+                            label: mode.label,
+                            onTap: () => _showDropdown(
+                              ctx,
+                              supportedModes,
+                              mode,
+                              (m) => m.label,
+                              (m) => ref.read(sessionSettingsActionsProvider.notifier).updateMode(widget.sessionId, m),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Builder(
-                        builder: (ctx) => _ControlChip(
-                          icon: AppIcons.lock,
-                          label: permission.label,
-                          onTap: () => _showDropdown(
-                            ctx,
-                            ChatPermission.values,
-                            permission,
-                            (p) => p.label,
-                            (p) =>
-                                ref.read(sessionSettingsActionsProvider.notifier).updatePermission(widget.sessionId, p),
+                      ],
+                      if (showPermission) ...[
+                        const SizedBox(width: 4),
+                        Builder(
+                          builder: (ctx) => _ControlChip(
+                            icon: AppIcons.lock,
+                            label: permission.label,
+                            onTap: () => _showDropdown(
+                              ctx,
+                              supportedPermissions,
+                              permission,
+                              (p) => p.label,
+                              (p) => ref
+                                  .read(sessionSettingsActionsProvider.notifier)
+                                  .updatePermission(widget.sessionId, p),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                       const Spacer(),
                       if (isSending)
                         AnimatedBuilder(
