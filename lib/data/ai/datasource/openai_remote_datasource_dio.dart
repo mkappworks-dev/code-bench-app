@@ -136,9 +136,18 @@ class OpenAIRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
       );
       final response = await testDio.get(ApiConstants.openAiModelsEndpoint);
       final data = response.data as Map<String, dynamic>;
+      // Allowlist chat-capable model families: gpt-*, o1*, o3*, o4-mini*, codex-*.
+      // Excludes audio/embedding/image/moderation models that share `/v1/models`
+      // (whisper-, tts-, dall-e-, text-embedding-, omni-moderation-).
+      bool isChatModel(String id) =>
+          id.startsWith('gpt-') ||
+          id.startsWith('o1') ||
+          id.startsWith('o3') ||
+          id.startsWith('o4-mini') ||
+          id.startsWith('codex-');
       final models = (data['data'] as List)
           .map((m) => m['id'] as String)
-          .where((id) => id.startsWith('gpt-'))
+          .where(isChatModel)
           .map((id) => AIModel(id: id, provider: AIProvider.openai, name: id, modelId: id))
           .toList();
       return models;

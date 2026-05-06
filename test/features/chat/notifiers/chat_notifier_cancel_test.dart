@@ -84,7 +84,7 @@ ProviderContainer _makeContainer(_FakeSessionService svc) {
     overrides: [
       sessionServiceProvider.overrideWith((ref) async => svc),
       activeSessionIdProvider.overrideWithValue('session-1'),
-      selectedModelProvider.overrideWithValue(AIModels.claude35Sonnet),
+      selectedModelProvider.overrideWithValue(AIModels.sonnet46),
       activeProjectProvider.overrideWithValue(null),
       apiKeysProvider.overrideWith(_FakeApiKeysNotifier.new),
       transportReadinessProvider.overrideWithValue(const TransportReadiness.ready()),

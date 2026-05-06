@@ -43,8 +43,40 @@ abstract class AIModel with _$AIModel {
   factory AIModel.fromJson(Map<String, dynamic> json) => _$AIModelFromJson(json);
 }
 
-// Predefined models
+// Hardcoded 2026 lineup. The live `/models` calls on each datasource feed the
+// picker dynamically; this list is the offline-fallback when those calls fail
+// AND the seed used by `AIModels.fromId` to map a session's stored modelId
+// back to a typed [AIModel].
 class AIModels {
+  // OpenAI
+  static const gpt5 = AIModel(
+    id: 'gpt-5',
+    provider: AIProvider.openai,
+    name: 'GPT-5',
+    modelId: 'gpt-5',
+    contextWindow: 400000,
+    supportsStreaming: true,
+    isDefault: true,
+  );
+
+  static const gpt5Mini = AIModel(
+    id: 'gpt-5-mini',
+    provider: AIProvider.openai,
+    name: 'GPT-5 Mini',
+    modelId: 'gpt-5-mini',
+    contextWindow: 400000,
+    supportsStreaming: true,
+  );
+
+  static const gpt5Codex = AIModel(
+    id: 'gpt-5-codex',
+    provider: AIProvider.openai,
+    name: 'GPT-5 Codex',
+    modelId: 'gpt-5-codex',
+    contextWindow: 400000,
+    supportsStreaming: true,
+  );
+
   static const gpt4o = AIModel(
     id: 'gpt-4o',
     provider: AIProvider.openai,
@@ -52,7 +84,6 @@ class AIModels {
     modelId: 'gpt-4o',
     contextWindow: 128000,
     supportsStreaming: true,
-    isDefault: true,
   );
 
   static const gpt4oMini = AIModel(
@@ -64,36 +95,87 @@ class AIModels {
     supportsStreaming: true,
   );
 
-  static const claude35Sonnet = AIModel(
-    id: 'claude-3-5-sonnet-20241022',
+  // Anthropic
+  static const opus47 = AIModel(
+    id: 'claude-opus-4-7',
     provider: AIProvider.anthropic,
-    name: 'Claude 3.5 Sonnet',
-    modelId: 'claude-3-5-sonnet-20241022',
+    name: 'Claude Opus 4.7',
+    modelId: 'claude-opus-4-7',
+    contextWindow: 200000,
+    supportsStreaming: true,
+  );
+
+  static const sonnet46 = AIModel(
+    id: 'claude-sonnet-4-6',
+    provider: AIProvider.anthropic,
+    name: 'Claude Sonnet 4.6',
+    modelId: 'claude-sonnet-4-6',
     contextWindow: 200000,
     supportsStreaming: true,
     isDefault: true,
   );
 
-  static const claude3Haiku = AIModel(
-    id: 'claude-3-haiku-20240307',
+  static const haiku45 = AIModel(
+    id: 'claude-haiku-4-5-20251001',
     provider: AIProvider.anthropic,
-    name: 'Claude 3 Haiku',
-    modelId: 'claude-3-haiku-20240307',
+    name: 'Claude Haiku 4.5',
+    modelId: 'claude-haiku-4-5-20251001',
     contextWindow: 200000,
     supportsStreaming: true,
   );
 
-  static const geminiFlash = AIModel(
+  // Gemini
+  static const gemini3Pro = AIModel(
+    id: 'gemini-3-pro',
+    provider: AIProvider.gemini,
+    name: 'Gemini 3 Pro',
+    modelId: 'gemini-3-pro',
+    contextWindow: 2000000,
+    supportsStreaming: true,
+  );
+
+  static const gemini25Pro = AIModel(
+    id: 'gemini-2.5-pro',
+    provider: AIProvider.gemini,
+    name: 'Gemini 2.5 Pro',
+    modelId: 'gemini-2.5-pro',
+    contextWindow: 2000000,
+    supportsStreaming: true,
+  );
+
+  static const gemini25Flash = AIModel(
+    id: 'gemini-2.5-flash',
+    provider: AIProvider.gemini,
+    name: 'Gemini 2.5 Flash',
+    modelId: 'gemini-2.5-flash',
+    contextWindow: 1000000,
+    supportsStreaming: true,
+    isDefault: true,
+  );
+
+  static const gemini20Flash = AIModel(
     id: 'gemini-2.0-flash',
     provider: AIProvider.gemini,
     name: 'Gemini 2.0 Flash',
     modelId: 'gemini-2.0-flash',
     contextWindow: 1000000,
     supportsStreaming: true,
-    isDefault: true,
   );
 
-  static List<AIModel> get defaults => [gpt4o, gpt4oMini, claude35Sonnet, claude3Haiku, geminiFlash];
+  static List<AIModel> get defaults => [
+    gpt5,
+    gpt5Mini,
+    gpt5Codex,
+    gpt4o,
+    gpt4oMini,
+    opus47,
+    sonnet46,
+    haiku45,
+    gemini3Pro,
+    gemini25Pro,
+    gemini25Flash,
+    gemini20Flash,
+  ];
 
   static AIModel? fromId(String modelId) => defaults.firstWhereOrNull((m) => m.modelId == modelId);
 }

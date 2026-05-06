@@ -115,7 +115,7 @@ void main() {
       overrides: [
         sessionServiceProvider.overrideWith((ref) async => svc),
         activeSessionIdProvider.overrideWithValue('s'),
-        selectedModelProvider.overrideWithValue(AIModels.claude35Sonnet),
+        selectedModelProvider.overrideWithValue(AIModels.sonnet46),
         activeProjectProvider.overrideWithValue(null),
         apiKeysProvider.overrideWith(_DisposalTestFakeApiKeysNotifier.new),
       ],
@@ -152,7 +152,7 @@ void main() {
       overrides: [
         sessionServiceProvider.overrideWith((ref) async => svc),
         activeSessionIdProvider.overrideWithValue('s'),
-        selectedModelProvider.overrideWithValue(AIModels.claude35Sonnet),
+        selectedModelProvider.overrideWithValue(AIModels.sonnet46),
         activeProjectProvider.overrideWithValue(null),
         apiKeysProvider.overrideWith(_DisposalTestFakeApiKeysNotifier.new),
         transportReadinessProvider.overrideWithValue(

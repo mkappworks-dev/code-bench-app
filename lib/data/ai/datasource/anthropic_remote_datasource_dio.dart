@@ -171,8 +171,45 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
   }
 
   @override
-  Future<List<AIModel>> fetchAvailableModels(String apiKey) {
-    return Future.value(AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList());
+  Future<List<AIModel>> fetchAvailableModels(String apiKey) async {
+    try {
+      final response = await _dio.get('/models');
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        dLog('[AnthropicRemoteDatasource] /v1/models payload not a JSON object — using hardcoded fallback');
+        return AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList();
+      }
+      final list = data['data'];
+      if (list is! List) {
+        dLog('[AnthropicRemoteDatasource] /v1/models missing "data" list — using hardcoded fallback');
+        return AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList();
+      }
+      final models = <AIModel>[];
+      for (final entry in list) {
+        if (entry is! Map) continue;
+        final id = entry['id'];
+        if (id is! String || id.isEmpty) continue;
+        final displayName = entry['display_name'];
+        models.add(
+          AIModel(
+            id: id,
+            provider: AIProvider.anthropic,
+            name: (displayName is String && displayName.isNotEmpty) ? displayName : id,
+            modelId: id,
+            contextWindow: 200000,
+          ),
+        );
+      }
+      // Empty list from a 200 OK is unusual but possible — fall back rather
+      // than render an empty section.
+      if (models.isEmpty) {
+        return AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList();
+      }
+      return models;
+    } on DioException catch (e) {
+      dLog('[AnthropicRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode ?? ''}');
+      return AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList();
+    }
   }
 
   List<Map<String, String>> _buildMessages(List<ChatMessage> history, String prompt) {

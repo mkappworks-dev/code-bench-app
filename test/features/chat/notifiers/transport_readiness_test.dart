@@ -91,7 +91,7 @@ ProviderContainer _container({
 void main() {
   test('CLI install ok + authenticated → ready', () async {
     final c = _container(
-      model: AIModels.claude35Sonnet,
+      model: AIModels.sonnet46,
       prefs: _claudeCliPrefs,
       entries: [_entry(id: 'claude-cli')],
     );
@@ -103,7 +103,7 @@ void main() {
 
   test('CLI install ok + unauthenticated → signedOut(provider, signInCommand)', () async {
     final c = _container(
-      model: AIModels.claude35Sonnet,
+      model: AIModels.sonnet46,
       prefs: _claudeCliPrefs,
       entries: [
         _entry(
@@ -124,7 +124,7 @@ void main() {
 
   test('CLI install missing → notInstalled(provider)', () async {
     final c = _container(
-      model: AIModels.claude35Sonnet,
+      model: AIModels.sonnet46,
       prefs: _claudeCliPrefs,
       entries: [
         _entry(
@@ -144,7 +144,7 @@ void main() {
 
   test('CLI auth unknown → ready (honest bias)', () async {
     final c = _container(
-      model: AIModels.claude35Sonnet,
+      model: AIModels.sonnet46,
       prefs: _claudeCliPrefs,
       entries: [_entry(id: 'claude-cli', authStatus: const AuthStatus.unknown())],
     );
@@ -155,14 +155,14 @@ void main() {
   });
 
   test('AsyncLoading providerEntries → unknown', () async {
-    final c = _container(model: AIModels.claude35Sonnet, prefs: _claudeCliPrefs, entriesLoading: true);
+    final c = _container(model: AIModels.sonnet46, prefs: _claudeCliPrefs, entriesLoading: true);
     addTearDown(c.dispose);
     await c.read(apiKeysProvider.future);
     expect(c.read(transportReadinessProvider), const TransportReadiness.unknown());
   });
 
   test('HTTP transport, key configured → ready', () async {
-    final c = _container(model: AIModels.claude35Sonnet, prefs: _httpPrefs, entries: const []);
+    final c = _container(model: AIModels.sonnet46, prefs: _httpPrefs, entries: const []);
     addTearDown(c.dispose);
     await c.read(apiKeysProvider.future);
     await c.read(aiProviderStatusProvider.future);
@@ -170,7 +170,7 @@ void main() {
   });
 
   test('HTTP transport, key empty → httpKeyMissing(provider)', () async {
-    final c = _container(model: AIModels.claude35Sonnet, prefs: _emptyPrefs, entries: const []);
+    final c = _container(model: AIModels.sonnet46, prefs: _emptyPrefs, entries: const []);
     addTearDown(c.dispose);
     await c.read(apiKeysProvider.future);
     await c.read(aiProviderStatusProvider.future);

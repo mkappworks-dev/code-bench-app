@@ -49,7 +49,7 @@ class ActiveSessionIdNotifier extends _$ActiveSessionIdNotifier {
 @Riverpod(keepAlive: true)
 class SelectedModelNotifier extends _$SelectedModelNotifier {
   @override
-  AIModel build() => AIModels.claude35Sonnet;
+  AIModel build() => AIModels.sonnet46;
 
   void select(AIModel model) => state = model;
 }
