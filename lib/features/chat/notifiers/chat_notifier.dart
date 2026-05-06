@@ -10,7 +10,7 @@ import '../../../data/chat/models/agent_failure.dart';
 import '../../../data/chat/models/transport_readiness.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/apply/models/applied_change.dart';
-import '../../../data/session/models/session_settings.dart';
+import '../../../data/shared/session_settings.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/chat_session.dart';
 import '../../../services/ai_provider/ai_provider_service.dart';

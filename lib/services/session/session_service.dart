@@ -9,7 +9,7 @@ import '../ai_provider/ai_provider_service.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
 import '../../data/ai/repository/text_streaming_repository.dart';
 import '../../data/session/models/permission_request.dart';
-import '../../data/session/models/session_settings.dart';
+import '../../data/shared/session_settings.dart';
 import '../../data/session/models/tool_event.dart';
 import '../../data/shared/ai_model.dart';
 import '../../data/shared/chat_message.dart';

@@ -4,7 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
-import '../../../data/session/models/session_settings.dart';
+import '../../../data/shared/session_settings.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../services/session/session_service.dart';
 import 'chat_notifier.dart';

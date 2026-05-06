@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../data/session/models/session_settings.dart';
+import '../../../data/shared/session_settings.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/tool_event.dart';
 import '../notifiers/chat_notifier.dart';

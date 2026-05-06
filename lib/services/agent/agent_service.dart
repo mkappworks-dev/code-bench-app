@@ -12,7 +12,7 @@ import '../../data/ai/repository/tool_streaming_repository.dart';
 import '../../data/coding_tools/models/coding_tool_result.dart';
 import '../../data/coding_tools/models/tool_capability.dart';
 import '../../data/session/models/permission_request.dart';
-import '../../data/session/models/session_settings.dart';
+import '../../data/shared/session_settings.dart';
 import '../../data/session/models/tool_event.dart';
 import '../../data/shared/ai_model.dart';
 import '../../data/shared/chat_message.dart';
