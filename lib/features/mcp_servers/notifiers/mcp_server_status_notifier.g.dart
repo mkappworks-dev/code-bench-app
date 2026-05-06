@@ -8,19 +8,34 @@ part of 'mcp_server_status_notifier.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// `keepAlive` because `ChatStreamService` outlives the chat tab and may emit
+/// MCP status updates while no widget is watching. An autoDispose notifier
+/// would have its instance torn down between the tab unmount and the next
+/// stream tick, causing `setStatus`/`remove` calls captured by the registry
+/// to write to a disposed notifier.
 
 @ProviderFor(McpServerStatusNotifier)
 final mcpServerStatusProvider = McpServerStatusNotifierProvider._();
 
+/// `keepAlive` because `ChatStreamService` outlives the chat tab and may emit
+/// MCP status updates while no widget is watching. An autoDispose notifier
+/// would have its instance torn down between the tab unmount and the next
+/// stream tick, causing `setStatus`/`remove` calls captured by the registry
+/// to write to a disposed notifier.
 final class McpServerStatusNotifierProvider
     extends $NotifierProvider<McpServerStatusNotifier, Map<String, McpServerStatus>> {
+  /// `keepAlive` because `ChatStreamService` outlives the chat tab and may emit
+  /// MCP status updates while no widget is watching. An autoDispose notifier
+  /// would have its instance torn down between the tab unmount and the next
+  /// stream tick, causing `setStatus`/`remove` calls captured by the registry
+  /// to write to a disposed notifier.
   McpServerStatusNotifierProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'mcpServerStatusProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -38,7 +53,13 @@ final class McpServerStatusNotifierProvider
   }
 }
 
-String _$mcpServerStatusNotifierHash() => r'8cb8ba1cbc6ed0f13a4c6bd96a37b41d9d337780';
+String _$mcpServerStatusNotifierHash() => r'52287402abd0c1e91b66f3f27e01bd0ba30eee07';
+
+/// `keepAlive` because `ChatStreamService` outlives the chat tab and may emit
+/// MCP status updates while no widget is watching. An autoDispose notifier
+/// would have its instance torn down between the tab unmount and the next
+/// stream tick, causing `setStatus`/`remove` calls captured by the registry
+/// to write to a disposed notifier.
 
 abstract class _$McpServerStatusNotifier extends $Notifier<Map<String, McpServerStatus>> {
   Map<String, McpServerStatus> build();

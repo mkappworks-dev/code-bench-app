@@ -46,7 +46,7 @@ final class AgentCancelNotifierProvider extends $NotifierProvider<AgentCancelNot
   }
 }
 
-String _$agentCancelNotifierHash() => r'c43ce94e836454f64ec244ec3e23302b76465627';
+String _$agentCancelNotifierHash() => r'b49ede477b869083c7a1f52de140e8c9ca618dc6';
 
 /// Cooperative cancel flag read by [AgentService] at each tool boundary.
 /// Separate from the plain-text stream cancel so both can be flipped by a

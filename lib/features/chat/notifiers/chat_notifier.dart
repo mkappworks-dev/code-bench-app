@@ -100,6 +100,8 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
 
     final registry = ref.watch(chatStreamServiceProvider);
     final stateSub = registry.watchState(sessionId).listen((s) {
+      // `stateSub.cancel` is async; a final event can race the dispose callback.
+      if (!ref.mounted) return;
       switch (s) {
         case ChatStreamFailed(:final failure):
           dLog('[ChatMessagesNotifier] stream failed for $sessionId: $failure');
@@ -155,6 +157,11 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     var disposed = false;
     ref.onDispose(() => disposed = true);
 
+    // Capture stable notifier instances; the registry outlives this notifier and `ref` would throw post-dispose.
+    final cancelN = ref.read(agentCancelProvider.notifier);
+    final permN = ref.read(agentPermissionRequestProvider.notifier);
+    final mcpN = ref.read(mcpServerStatusProvider.notifier);
+
     String? streamingAssistantId;
 
     registry.start(
@@ -169,10 +176,10 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
             permission: permission,
             projectPath: projectPath,
             providerId: providerId,
-            cancelFlag: () => ref.read(agentCancelProvider),
-            requestPermission: (req) => ref.read(agentPermissionRequestProvider.notifier).request(req),
-            onMcpStatusChanged: ref.read(mcpServerStatusProvider.notifier).setStatus,
-            onMcpServerRemoved: ref.read(mcpServerStatusProvider.notifier).remove,
+            cancelFlag: () => cancelN.cancelled,
+            requestPermission: permN.request,
+            onMcpStatusChanged: mcpN.setStatus,
+            onMcpServerRemoved: mcpN.remove,
           )
           .timeout(
             const Duration(seconds: 60),
