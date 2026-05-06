@@ -125,7 +125,9 @@ void main() {
       agent: _buildAgent(ai: fakeAI),
     );
     final model = AIModel(id: 'claude-3', modelId: 'claude-3', provider: AIProvider.anthropic, name: 'Claude');
-    final events = await svc.sendAndStream(sessionId: 'sid', userInput: 'hi', model: model).toList();
+    final events = await svc
+        .sendAndStream(sessionId: 'sid', userInput: 'hi', model: model, cancelFlag: () => false)
+        .toList();
 
     // First event: user message
     expect(events.first.role, MessageRole.user);
@@ -159,6 +161,7 @@ void main() {
       sessionId: 's1',
       userInput: 'do the thing',
       model: const AIModel(id: 'm', provider: AIProvider.custom, name: 'm', modelId: 'm'),
+      cancelFlag: () => false,
       mode: ChatMode.act,
       permission: ChatPermission.fullAccess,
       projectPath: projectDir.path,

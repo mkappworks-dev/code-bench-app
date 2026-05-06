@@ -96,18 +96,16 @@ class SessionService {
   Future<void> persistMessage(String sessionId, ChatMessage message) => _session.persistMessage(sessionId, message);
   Future<List<ChatSession>> getSessionsByProject(String projectId) => _session.getSessionsByProject(projectId);
 
-  static bool _neverCancel() => false;
-
   Stream<ChatMessage> sendAndStream({
     required String sessionId,
     required String userInput,
     required AIModel model,
+    required bool Function() cancelFlag,
     String? systemPrompt,
     ChatMode mode = ChatMode.chat,
     ChatPermission permission = ChatPermission.fullAccess,
     String? projectPath,
     String? providerId,
-    bool Function() cancelFlag = _neverCancel,
     Future<bool> Function(PermissionRequest req)? requestPermission,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
