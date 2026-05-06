@@ -214,16 +214,20 @@ class _OpenAIProviderCardState extends ConsumerState<OpenAIProviderCard> {
             : const CardStatusBadge(label: 'Not installed', tone: TransportBadgeTone.muted),
       null => const CardStatusBadge(label: 'Not installed', tone: TransportBadgeTone.muted),
     };
-    if (status is ProviderAvailable && entry?.authStatus is AuthUnauthenticated) {
-      return Wrap(
-        spacing: 6,
-        runSpacing: 4,
-        alignment: WrapAlignment.end,
-        children: [
-          installPill,
-          const CardStatusBadge(label: 'Signed out', tone: TransportBadgeTone.warning),
-        ],
-      );
+    if (status is ProviderAvailable) {
+      final authPill = switch (entry?.authStatus) {
+        AuthAuthenticated() => const CardStatusBadge(label: 'Signed in', tone: TransportBadgeTone.success),
+        AuthUnauthenticated() => const CardStatusBadge(label: 'Signed out', tone: TransportBadgeTone.warning),
+        _ => null,
+      };
+      if (authPill != null) {
+        return Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          alignment: WrapAlignment.end,
+          children: [installPill, authPill],
+        );
+      }
     }
     return installPill;
   }
