@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:meta/meta.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/errors/app_exception.dart';
@@ -9,8 +10,25 @@ import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
+import '../../../data/shared/session_settings.dart';
+import '../models/provider_capabilities.dart';
+import '../models/provider_turn_settings.dart';
+import '../util/setting_mappers.dart';
 import 'ai_remote_datasource.dart';
 import 'text_streaming_datasource.dart';
+
+@visibleForTesting
+Map<String, dynamic> buildOpenAiRequestBody({
+  required AIModel model,
+  required List<Map<String, String>> messages,
+  ProviderTurnSettings? settings,
+}) {
+  final body = <String, dynamic>{'model': model.modelId, 'messages': messages, 'stream': true};
+  if (settings?.effort != null && isOpenAiReasoningModel(model.modelId)) {
+    body['reasoning_effort'] = mapOpenAIReasoningEffort(settings!.effort!);
+  }
+  return body;
+}
 
 class OpenAIRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
   OpenAIRemoteDatasourceDio(String apiKey)
@@ -25,14 +43,26 @@ class OpenAIRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
   AIProvider get provider => AIProvider.openai;
 
   @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => ProviderCapabilities(
+    supportsModelOverride: true,
+    supportsSystemPrompt: true,
+    supportedModes: const {ChatMode.chat},
+    supportedEfforts: isOpenAiReasoningModel(model.modelId)
+        ? const {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max}
+        : const <ChatEffort>{},
+    supportedPermissions: const <ChatPermission>{},
+  );
+
+  @override
   Stream<String> streamMessage({
     required List<ChatMessage> history,
     required String prompt,
     required AIModel model,
     String? systemPrompt,
+    ProviderTurnSettings? settings,
   }) async* {
     final messages = _buildMessages(history, prompt, systemPrompt);
-    final body = {'model': model.modelId, 'messages': messages, 'stream': true};
+    final body = buildOpenAiRequestBody(model: model, messages: messages, settings: settings);
 
     try {
       final response = await _dio.post(
