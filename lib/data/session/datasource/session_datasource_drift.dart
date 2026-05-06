@@ -22,8 +22,6 @@ class SessionDatasourceDrift implements SessionDatasource {
   final AppDatabase _db;
   static const _uuid = Uuid();
 
-  // ── Sessions ───────────────────────────────────────────────────────────────
-
   @override
   Stream<List<ChatSession>> watchAllSessions() {
     return _db.sessionDao.watchAllSessions().map((rows) => rows.map(_sessionFromRow).toList());
@@ -116,8 +114,6 @@ class SessionDatasourceDrift implements SessionDatasource {
   @override
   Future<void> deleteAllSessionsAndMessages() => _db.sessionDao.deleteAllSessionsAndMessages();
 
-  // ── Messages ───────────────────────────────────────────────────────────────
-
   @override
   Future<List<msg.ChatMessage>> loadHistory(String sessionId, {int limit = 50, int offset = 0}) async {
     final rows = await _db.sessionDao.getMessages(sessionId, limit: limit, offset: offset);
@@ -150,8 +146,6 @@ class SessionDatasourceDrift implements SessionDatasource {
   @override
   Future<void> deleteMessages(String sessionId, List<String> messageIds) =>
       _db.sessionDao.deleteMessages(sessionId, messageIds);
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
 
   ChatSession _sessionFromRow(ChatSessionRow row) {
     return ChatSession(

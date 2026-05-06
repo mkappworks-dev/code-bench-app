@@ -1,4 +1,3 @@
-// lib/features/update/notifiers/update_notifier.dart
 import 'dart:async';
 
 import 'package:package_info_plus/package_info_plus.dart';

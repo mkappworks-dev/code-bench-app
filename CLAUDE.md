@@ -84,15 +84,15 @@ Strictly one-directional: **Widgets → Notifiers → Services → Repositories 
 | Notifier file placement     | `*_notifier.dart`, `*_actions.dart`, `*_failure.dart` all live in `{feature}/notifiers/` | `features/chat/notifiers/chat_notifier.dart`                    |
 | `ref.invalidate` in widgets | **forbidden** — route through a notifier method instead                                  | `refreshGitState()`, `refreshArchivedSessions()`                |
 
-> **Named exception:** `ToolRegistry` (`lib/services/coding_tools/tool_registry.dart`) is intentionally not named `ToolRegistryService`. It is a registry pattern (not a pure service) and the `Service` suffix is reserved for the `ToolRegistryService` that Phase 7 MCP integration may introduce. This is the only approved deviation from the `Service` suffix rule.
+> **Named exception:** `ToolRegistry` (`lib/services/coding_tools/tool_registry.dart`) is intentionally not named `ToolRegistryService` — the only approved deviation from the `Service` suffix rule.
 
 The Riverpod generator strips the `Notifier` suffix when producing the provider variable name (`class ActiveSessionIdNotifier` → `activeSessionIdProvider`). The `Actions` suffix is kept (`class GitActions` → `gitActionsProvider`).
 
 **Where services live:** `lib/services/` only. Services are instantiated via `@riverpod` / `@Riverpod(keepAlive: true)` provider functions — never constructed directly in widgets or notifiers.
 
-**Where domain models live:** co-located under their owning domain's `models/` subfolder (`lib/data/git/models/`, `lib/data/session/models/`, etc.). Cross-cutting types used by two or more data domains live in `lib/data/shared/` (currently `AIModel` and `ChatMessage`). The rule of thumb: if it is ever stored, returned, or passed as a field it is a model and lives under `models/`; if it is only ever thrown it is an exception and lives at the domain root.
+**Where domain models live:** `lib/data/{domain}/models/`. Cross-cutting types used by two or more domains live in `lib/data/shared/`. Stored/returned/passed as a field = model; only ever thrown = exception (lives at the domain root, not in `models/`).
 
-**`Process.run` / `dart:io` / Dio** — allowed only inside `lib/data/**/datasource/` and `lib/services/`. Datasource files encode their I/O type in their filename suffix: `*_dio.dart` for HTTP, `*_process.dart` for shell-outs, `*_io.dart` for filesystem, `*_drift.dart` for SQLite. The one exception is `ApplyRepository.assertWithinProject` (a static security guard), which may be called from widgets that perform their own file reads (e.g. `_loadDiff` in `message_bubble.dart`).
+**`Process.run` / `dart:io` / Dio** — allowed only inside `lib/data/**/datasource/` and `lib/services/`. Datasource files encode their I/O type in their filename suffix: `*_dio.dart` for HTTP, `*_process.dart` for shell-outs, `*_io.dart` for filesystem, `*_drift.dart` for SQLite. Exception: `ApplyRepository.assertWithinProject` (a static security guard) may be called from widgets.
 
 ## Riverpod usage rules
 
@@ -124,7 +124,7 @@ Every command notifier (`*Actions` suffix) extends `AsyncNotifier<void>` with `k
 
 Widgets drive loading via `ref.watch(fooActionsProvider).isLoading`. Errors surface via `ref.listen(fooActionsProvider, ...)` with an exhaustive switch on the failure type.
 
-**Exception — shared provider across multiple widget instances:** `ref.listen` fires once per widget, producing N snackbars for one operation. For self-initiated ops in that case, check `ref.read(fooActionsProvider).hasError` inline after the `await` instead. Keep the `ref.listen` for externally-triggered errors.
+**Exception — shared provider:** For self-initiated ops where `ref.listen` would fire N times (once per widget instance), check `.hasError` inline after the `await` instead; keep `ref.listen` for externally-triggered errors.
 
 Canonical examples:
 
@@ -135,7 +135,7 @@ Canonical examples:
 
 Each Actions/Notifier that can fail owns a `freezed` sealed class named `{Notifier}Failure`:
 
-**Convention:** Strip the `Actions` or `Notifier` suffix from the class name. `FooActions` → `FooFailure`; `BranchPickerNotifier` → `BranchPickerFailure`. The failure class lives in `{feature}/notifiers/{name}_failure.dart` — the same subfolder as the notifier that owns it.
+`FooActions` → `FooFailure`; `BranchPickerNotifier` → `BranchPickerFailure`. File: `{feature}/notifiers/{name}_failure.dart`.
 
 ```dart
 @freezed
@@ -168,7 +168,7 @@ Two helpers live in [lib/core/utils/debug_logger.dart](lib/core/utils/debug_logg
 | Notifiers (`*Actions`, `*Notifier`)                                 | Yes                         | Caught exceptions being turned into `AsyncError` or swallowed; semantic operation failures ("pushToRemote failed")                                                       |
 | Widgets / screens                                                   | **No, with two exceptions** | (1) `AsyncValue.when(error:)` branches that render an error view, (2) widget-layer APIs the arch rule permits in widgets — `launchUrl` failures and `Clipboard` failures |
 
-Log **once**, at the layer that holds the useful context. If a service already `dLog`s a `ProcessException`, the notifier rethrowing it should not log again — it should only log if it's doing additional recovery worth tracing.
+Log **once** — if a service already logged the exception, the notifier should only log again if adding recovery context.
 
 Never `dLog` raw HTTP headers, tokens, or response bodies — see [github_service.dart](lib/services/github/github_service.dart) for the GitHub PAT redaction pattern.
 
@@ -177,16 +177,20 @@ Never `dLog` raw HTTP headers, tokens, or response bodies — see [github_servic
 Default to **no comments**. Add one only when the **WHY** is non-obvious — a hidden constraint, a subtle invariant, a workaround for a specific bug, or behaviour that would surprise a reader.
 
 **Remove or never write:**
+
 - Comments that explain WHAT the code does (well-named identifiers already do this)
 - Comments that reference callers, tasks, or issues ("used by X", "added for Y flow", "see issue #123")
 - File-header comments that repeat the file path (`// lib/path/to/file.dart`)
-- Section-header dividers (`// ── Label ──`) in widget build methods
+- Section-header dividers anywhere (`// ── Label ──`, `// Label`, `// --- Label ---`) — constants files, notifiers, datasources, widgets, everywhere
+- Decorative markers (`// New tokens ★`, `// Themed`)
 - Doc comments on private helpers that only restate the method name
 
 **Keep, at most 1 line:**
+
 - Non-obvious ordering invariants ("must assign state before invalidating — invalidation cascades into build()")
 - Race-condition guards ("cancel in-flight poll before starting a new one")
 - Security constraints ("only log `e.runtimeType` — `$e` serialises the Authorization header")
+- Known limitations on intentionally simplified code ("quoted args not supported; whitespace-only split")
 - Linter-suppress directives (`// ignore: unnecessary_statements`) — always keep; add a trailing inline comment only when the suppressed statement needs explanation
 
 **Multi-line comments:** trim to 1 line. If the WHY cannot be expressed in one line, the constraint probably belongs in a commit message or PR description instead.

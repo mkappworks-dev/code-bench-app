@@ -89,7 +89,6 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> with SingleTick
       final isActMode = ref.watch(sessionModeProvider) == ChatMode.act;
       if (!isActMode) return const SizedBox.shrink();
 
-      // ── Pre-tool "WORKING…" state ──────────────────────────────────────
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
@@ -123,7 +122,6 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> with SingleTick
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── Toggle row ─────────────────────────────────────────────────────
         GestureDetector(
           onTap: () => setState(() => _isExpanded = !_isExpanded),
           child: Padding(
@@ -162,7 +160,6 @@ class _WorkLogSectionState extends ConsumerState<WorkLogSection> with SingleTick
             ),
           ),
         ),
-        // ── Expanded log entries ────────────────────────────────────────────
         if (_isExpanded)
           Container(
             padding: const EdgeInsets.all(8),

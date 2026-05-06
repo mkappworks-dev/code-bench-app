@@ -13,13 +13,11 @@ void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  // Global Flutter error handler
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
     dLog('[FlutterError] ${details.exceptionAsString()}');
   };
 
-  // Initialize window manager for desktop
   if (PlatformUtils.isDesktop) {
     await windowManager.ensureInitialized();
     await windowManager.waitUntilReadyToShow(

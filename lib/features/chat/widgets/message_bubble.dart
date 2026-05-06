@@ -28,8 +28,6 @@ export 'code_block_widget.dart' show CodeBlockBuilder;
 export '../utils/code_fence_parser.dart' show parseCodeFenceInfo;
 export 'streaming_dot.dart' show StreamingDot;
 
-// ── MessageBubble ─────────────────────────────────────────────────────────────
-
 class MessageBubble extends StatelessWidget {
   const MessageBubble({super.key, required this.message, required this.sessionId, this.isLast = false});
 
@@ -49,8 +47,6 @@ class MessageBubble extends StatelessWidget {
     );
   }
 }
-
-// ── User bubble ──────────────────────────────────────────────────────────────
 
 class _UserBubble extends ConsumerStatefulWidget {
   const _UserBubble({required this.message, required this.sessionId, required this.isLast});
@@ -151,8 +147,6 @@ class _BubbleActionButton extends StatelessWidget {
   }
 }
 
-// ── Interrupted badge ────────────────────────────────────────────────────────
-
 class _InterruptedBubble extends StatelessWidget {
   const _InterruptedBubble();
 
@@ -183,8 +177,6 @@ class _InterruptedBubble extends StatelessWidget {
     );
   }
 }
-
-// ── Assistant bubble ─────────────────────────────────────────────────────────
 
 class _AssistantBubble extends ConsumerStatefulWidget {
   const _AssistantBubble({required this.message});
@@ -290,8 +282,6 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
   }
 }
 
-// ── Assistant action row (copy-as-markdown) ──────────────────────────────────
-
 class _AssistantActionRow extends StatefulWidget {
   const _AssistantActionRow({required this.message, required this.hovering});
   final ChatMessage message;
@@ -357,8 +347,6 @@ class _AssistantActionRowState extends State<_AssistantActionRow> {
   }
 }
 
-// ── Message content ───────────────────────────────────────────────────────────
-
 class _MessageContent extends StatelessWidget {
   const _MessageContent({required this.message});
   final ChatMessage message;
@@ -399,8 +387,6 @@ class _MessageContent extends StatelessWidget {
     );
   }
 }
-
-// ── Skeleton lines (shown while agent generates text after tool calls) ────────
 
 class _SkeletonLines extends StatefulWidget {
   const _SkeletonLines();

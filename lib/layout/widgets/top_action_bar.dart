@@ -32,7 +32,6 @@ class TopActionBar extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          // ── Left: title + badges ────────────────────────────────────────
           Text(
             s.sessionTitle,
             style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, fontWeight: FontWeight.w500),
@@ -67,7 +66,6 @@ class TopActionBar extends ConsumerWidget {
             ],
           ],
           const Spacer(),
-          // ── Right: action buttons ───────────────────────────────────────
           if (s.project != null)
             Opacity(
               opacity: s.project!.status == ProjectStatus.missing ? 0.4 : 1.0,

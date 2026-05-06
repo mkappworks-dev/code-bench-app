@@ -192,8 +192,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     }
   }
 
-  // ─── Process management ─────────────────────────────────────────────────
-
   Future<void> _ensureProcess(String workingDirectory) async {
     if (_process != null && _workingDirectory == workingDirectory) return;
 
@@ -332,8 +330,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     );
   }
 
-  // ─── JSON-RPC protocol ──────────────────────────────────────────────────
-
   /// Send a client→server request and await the response.
   Future<Map<String, dynamic>> _request(String method, Map<String, dynamic> params) {
     final id = _nextId++;
@@ -384,8 +380,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
       _resetProcess();
     }
   }
-
-  // ─── Incoming message routing ────────────────────────────────────────────
 
   void _handleLine(String line) {
     if (line.trim().isEmpty) return;
@@ -513,14 +507,12 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   /// Handle a server→client notification (no response expected).
   void _handleNotification(String method, Map<String, dynamic>? params) {
     switch (method) {
-      // ── Text streaming ─────────────────────────────────────────────────
       case 'item/agentMessage/delta':
         final delta = params?['delta'] as String?;
         if (delta != null && delta.isNotEmpty) {
           _streamController?.add(ProviderTextDelta(text: delta));
         }
 
-      // ── Reasoning / thinking ───────────────────────────────────────────
       case 'item/reasoning/textDelta':
       case 'item/reasoning/summaryTextDelta':
         final delta = params?['delta'] as String?;
@@ -528,7 +520,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
           _streamController?.add(ProviderThinkingDelta(thinking: delta));
         }
 
-      // ── Turn lifecycle ─────────────────────────────────────────────────
       case 'turn/started':
         dLog('[CodexCli] Turn started');
 
@@ -543,7 +534,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
         _streamController?.add(ProviderStreamFailure(error: reason));
         _resetTurn();
 
-      // ── Session lifecycle ──────────────────────────────────────────────
       case 'session/connecting':
         dLog('[CodexCli] Session connecting');
       case 'session/ready':
@@ -555,7 +545,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
         dLog('[CodexCli] Session exited/closed');
         _resetProcess();
 
-      // ── Item lifecycle (tool calls) ────────────────────────────────────
       case 'item/started':
         final item = params?['item'] as Map<String, dynamic>?;
         final itemType = item?['type'] as String?;
@@ -571,7 +560,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
           _streamController?.add(ProviderToolUseComplete(toolId: itemId, input: item ?? {}));
         }
 
-      // ── Thread lifecycle ───────────────────────────────────────────────
       case 'thread/started':
         final thread = params?['thread'] as Map<String, dynamic>?;
         _providerThreadId = thread?['id'] as String?;
@@ -581,7 +569,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
         // Token usage — ignore for now
         break;
 
-      // ── Errors / warnings ─────────────────────────────────────────────
       case 'error':
         final errorPayload = params?['error'] as Map<String, dynamic>?;
         final message = errorPayload?['message'] as String? ?? params?['message'] as String? ?? 'Provider error';
@@ -603,8 +590,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
         sLog('[CodexCli] ignoring unknown notification: $method');
     }
   }
-
-  // ─── Protocol steps ──────────────────────────────────────────────────────
 
   Future<void> _initialize() async {
     final result = await _request('initialize', {
@@ -653,8 +638,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     dLog('[CodexCli] Turn started');
   }
 
-  // ─── Public approval API ──────────────────────────────────────────────────
-
   /// Called by the chat notifier when the user approves or denies a
   /// permission request. [decision] is one of: "approved", "denied".
   @override
@@ -666,8 +649,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     }
     completer.complete({'decision': approved ? 'approved' : 'denied'});
   }
-
-  // ─── Cancel / cleanup ─────────────────────────────────────────────────────
 
   @override
   void cancel() {
@@ -733,8 +714,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
         throw Exception('Could not probe Codex CLI: $reason');
     }
   }
-
-  // ─── Helpers ─────────────────────────────────────────────────────────────
 
   String _methodToToolName(String method) {
     return switch (method) {

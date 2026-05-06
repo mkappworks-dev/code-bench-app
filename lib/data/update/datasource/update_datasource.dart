@@ -1,4 +1,3 @@
-// lib/data/update/datasource/update_datasource.dart
 import '../models/update_info.dart';
 
 abstract interface class UpdateDatasource {

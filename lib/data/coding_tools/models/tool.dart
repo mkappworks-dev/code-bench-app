@@ -1,5 +1,3 @@
-// lib/data/coding_tools/models/tool.dart
-
 import 'coding_tool_result.dart';
 import 'tool_capability.dart';
 import 'tool_context.dart';
@@ -16,9 +14,7 @@ abstract class Tool {
 
   Future<CodingToolResult> execute(ToolContext ctx);
 
-  /// Serializes to the OpenAI chat-completions `tools[]` schema, used by
-  /// [CustomRemoteDatasourceDio] when building the request body. Replaces
-  /// `CodingToolDefinition.toOpenAiToolJson()`.
+  /// Serializes to the OpenAI chat-completions `tools[]` schema.
   Map<String, dynamic> toOpenAiToolJson() => {
     'type': 'function',
     'function': {'name': name, 'description': description, 'parameters': inputSchema},

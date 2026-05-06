@@ -1,4 +1,3 @@
-// lib/data/update/update_repository.dart
 import 'models/update_info.dart';
 
 abstract interface class UpdateRepository {

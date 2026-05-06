@@ -1,4 +1,3 @@
-// lib/features/update/widgets/update_chip.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

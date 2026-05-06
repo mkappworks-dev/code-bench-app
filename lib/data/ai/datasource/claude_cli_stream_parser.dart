@@ -9,8 +9,6 @@ import '../models/stream_event.dart';
 /// in practice.
 const int _toolInputBufferCap = 1024 * 1024;
 
-/// Parses Claude Code CLI `--output-format stream-json` lines into Code Bench's
-/// [StreamEvent] shape. Stateful across tool_use input_json_delta frames.
 class ClaudeCliStreamParser {
   final Map<int, _PendingToolUse> _pendingToolUses = {};
 

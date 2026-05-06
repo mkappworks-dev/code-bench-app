@@ -43,7 +43,7 @@ class ActionOutputNotifier extends _$ActionOutputNotifier {
     _currentRun = null;
     state = ActionOutputState(status: ActionStatus.running, lines: const [], actionName: action.name);
 
-    // Split shell command into executable + args (MVP: no quoted-arg support).
+    // quoted args not supported; whitespace-only split
     final parts = action.command.trim().split(RegExp(r'\s+'));
 
     try {

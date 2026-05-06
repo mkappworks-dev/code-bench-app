@@ -1,4 +1,3 @@
-// lib/features/providers/notifiers/providers_actions.dart
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -22,8 +21,6 @@ class ProvidersActions extends _$ProvidersActions {
     StorageException() => ProvidersFailure.storageFailed(operationName),
     _ => ProvidersFailure.unknown(e),
   };
-
-  // ── Connection tests (never throw, return bool) ───────────────────────────
 
   /// Returns `true` when [key] is valid for [provider]. Never throws.
   Future<bool> testApiKey(AIProvider provider, String key) async {
@@ -55,7 +52,6 @@ class ProvidersActions extends _$ProvidersActions {
     }
   }
 
-  // ── Mutations (emit ProvidersFailure on error) ────────────────────────────
   //
   // Each save/delete invalidates `aiRepositoryProvider` so consumers (chat
   // view, model picker, etc.) pick up the new state. Rebuild failures

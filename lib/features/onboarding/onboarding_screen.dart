@@ -194,8 +194,6 @@ class _ContentPanel extends ConsumerWidget {
   }
 }
 
-// ── Feature card (used in branding panel) ─────────────────────────────────
-
 class _FeatureCard extends StatelessWidget {
   const _FeatureCard({required this.icon, required this.title, required this.subtitle});
 
@@ -237,8 +235,6 @@ class _FeatureCard extends StatelessWidget {
     );
   }
 }
-
-// ── </> logo mark ──────────────────────────────────────────────────────────
 
 class _CodeGlyph extends StatelessWidget {
   const _CodeGlyph();

@@ -40,9 +40,7 @@ Future<T?> showInstantMenu<T>({
   );
 }
 
-/// Shows [showInstantMenu] anchored just below the widget whose [buttonContext]
-/// is passed, centered horizontally on that widget. Use inside an onTap handler
-/// wrapped in a [Builder] so [buttonContext] resolves to the button itself.
+/// Use inside an onTap wrapped in a [Builder] so [buttonContext] resolves to the button itself.
 Future<T?> showInstantMenuAnchoredTo<T>({
   required BuildContext buttonContext,
   required List<PopupMenuEntry<T>> items,

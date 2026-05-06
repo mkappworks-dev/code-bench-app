@@ -1,5 +1,3 @@
-// lib/services/coding_tools/tool_registry.dart
-
 import 'package:collection/collection.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -39,12 +37,7 @@ ToolRegistry toolRegistry(Ref ref) => ToolRegistry(
   denylistRepo: ref.watch(codingToolsDenylistRepositoryProvider),
 );
 
-/// Central registry of all tools the agent loop may call. Holds built-in
-/// tools and — via [register] — runtime-added tools (the seam MCP will
-/// plug into in Phase 7).
-///
-/// Replaces the static `CodingTools.all` catalog and the `switch(toolName)`
-/// dispatch in the deleted `CodingToolsService`.
+/// Central registry of all tools the agent loop may call; built-ins plus runtime tools added via [register] (the MCP seam).
 class ToolRegistry {
   ToolRegistry({required List<Tool> builtIns, required CodingToolsDenylistRepository denylistRepo})
     : _tools = [...builtIns],

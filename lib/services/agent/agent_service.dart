@@ -350,14 +350,7 @@ class AgentService {
     return call.args['path']?.toString() ?? '';
   }
 
-  /// Translates in-memory history → OpenAI chat-completions wire format.
-  ///
-  /// Tool results are *not* persisted as separate messages — they live on
-  /// each assistant message's `toolEvents`. Every assistant message carrying
-  /// tool calls emits one `role:'assistant'` block followed by one
-  /// `role:'tool'` block per terminal-status event. This keeps wire-replay
-  /// consistent across session reload without a dedicated system-message
-  /// persistence path.
+  /// Tool results are *not* persisted as separate messages — they live on each assistant message's [ChatMessage.toolEvents].
   List<Map<String, dynamic>> _buildWireMessages(
     List<ChatMessage> history,
     String systemPrompt,

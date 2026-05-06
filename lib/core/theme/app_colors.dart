@@ -1,4 +1,3 @@
-// lib/core/theme/app_colors.dart
 import 'package:flutter/material.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:re_highlight/languages/json.dart';
@@ -14,7 +13,6 @@ import 'package:re_highlight/styles/atom-one-dark.dart';
 /// Registered on ThemeData via AppTheme.dark / AppTheme.light.
 class AppColors extends ThemeExtension<AppColors> {
   const AppColors({
-    // ── Backgrounds ──────────────────────────────────────────────────────
     required this.background,
     required this.sidebarBackground,
     required this.activityBar,
@@ -28,25 +26,20 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.inputBackground,
     required this.borderColor,
     required this.dividerColor,
-    // ── Text ─────────────────────────────────────────────────────────────
     required this.textPrimary,
     required this.textSecondary,
     required this.textMuted,
-    // ── Accent ───────────────────────────────────────────────────────────
     required this.accent,
     required this.accentLight,
     required this.accentHover,
     required this.accentDark,
-    // ── Semantic ─────────────────────────────────────────────────────────
     required this.success,
     required this.warning,
     required this.error,
     required this.info,
-    // ── Chat ─────────────────────────────────────────────────────────────
     required this.userMessageBg,
     required this.assistantMessageBg,
     required this.codeBlockBg,
-    // ── Syntax ───────────────────────────────────────────────────────────
     required this.syntaxKeyword,
     required this.syntaxString,
     required this.syntaxComment,
@@ -54,27 +47,21 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.syntaxType,
     required this.syntaxNumber,
     required this.syntaxVariable,
-    // ── Tabs ─────────────────────────────────────────────────────────────
     required this.tabActive,
     required this.tabInactive,
     required this.tabBorder,
-    // ── Legacy frosted glass ──────────────────────────────────────────────
     required this.frostedBg,
     required this.frostedBorder,
-    // ── VCS badges ───────────────────────────────────────────────────────
     required this.gitBadgeText,
     required this.gitBadgeBg,
     required this.gitBadgeBorder,
-    // ── Input / surface ───────────────────────────────────────────────────
     required this.inputSurface,
     required this.deepBorder,
     required this.mutedFg,
     required this.faintFg,
-    // ── Misc foregrounds ─────────────────────────────────────────────────
     required this.blueAccent,
     required this.dimFg,
     required this.headingText,
-    // ── Status badges ────────────────────────────────────────────────────
     required this.worktreeBadgeBg,
     required this.worktreeBadgeFg,
     required this.selectionBg,
@@ -90,10 +77,8 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.githubButtonBorder,
     required this.githubButtonForeground,
     required this.githubButtonShadow,
-    // ── Diff ─────────────────────────────────────────────────────────────
     required this.diffAdditionBg,
     required this.diffDeletionBg,
-    // ── Surfaces / shadows ────────────────────────────────────────────────
     required this.onAccent,
     required this.frostedSurface,
     required this.destructiveBorder,
@@ -104,7 +89,6 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.shadowHeavy,
     required this.shadowDeep,
     required this.innerGlow,
-    // ── Tinted icon backgrounds ───────────────────────────────────────────
     required this.successTintBg,
     required this.errorTintBg,
     required this.warningTintBg,
@@ -112,7 +96,6 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.successBadgeBg,
     required this.errorBadgeBg,
     required this.warningBadgeBg,
-    // ── Branding ─────────────────────────────────────────────────────────
     required this.brandingGradientTop,
     required this.brandingGradientMid,
     required this.accentGlow,
@@ -122,7 +105,6 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.subtleTealFg,
     required this.accentTintLight,
     required this.accentTintMid,
-    // ── Elevated Glass — new tokens ★ ─────────────────────────────────────
     required this.glassFill,
     required this.glassBorder,
     required this.subtleBorder,
@@ -154,16 +136,11 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.sendDisabledFill,
     required this.sendDisabledStroke,
     required this.sendDisabledIconColor,
-    // ── Modal scrim ───────────────────────────────────────────────────────
     required this.scrimColor,
-    // ── Switch (unselected track) ─────────────────────────────────────────
     required this.switchTrackUnselected,
     required this.switchTrackOutline,
-    // ── JSON editor ───────────────────────────────────────────────────────
     required this.jsonEditorBg,
   });
-
-  // ── Field declarations ────────────────────────────────────────────────────
 
   final Color background;
   final Color sidebarBackground;
@@ -257,7 +234,6 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color subtleTealFg;
   final Color accentTintLight;
   final Color accentTintMid;
-  // New glass tokens ★
   final Color glassFill;
   final Color glassBorder;
   final Color subtleBorder;
@@ -302,11 +278,7 @@ class AppColors extends ThemeExtension<AppColors> {
     );
   }
 
-  // ── Convenience accessor ─────────────────────────────────────────────────
-
   static AppColors of(BuildContext context) => Theme.of(context).extension<AppColors>()!;
-
-  // ── Static instances (used by AppTheme and InputDecorationTheme) ──────────
 
   static const AppColors dark = AppColors(
     background: Color(0xFF141414),
@@ -440,7 +412,6 @@ class AppColors extends ThemeExtension<AppColors> {
   );
 
   static const AppColors light = AppColors(
-    // Themed
     background: Color(0xFFF0F2F5),
     textPrimary: Color(0xFF1E2329),
     textSecondary: Color(0xFF3A424D),
@@ -533,7 +504,6 @@ class AppColors extends ThemeExtension<AppColors> {
     subtleTealFg: Color(0xFF2A7A6E),
     accentTintLight: Color(0x0A4EC9B0),
     accentTintMid: Color(0x144EC9B0),
-    // Elevated Glass light ★
     glassFill: Color(0xFFFFFFFF),
     glassBorder: Color(0x1A000000),
     subtleBorder: Color(0x17000000),
@@ -570,8 +540,6 @@ class AppColors extends ThemeExtension<AppColors> {
     switchTrackOutline: Color(0xFF7A8490),
     jsonEditorBg: Color(0xFFF5F5F5),
   );
-
-  // ── ThemeExtension overrides ──────────────────────────────────────────────
 
   @override
   AppColors copyWith({

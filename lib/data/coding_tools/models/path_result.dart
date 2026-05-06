@@ -1,5 +1,3 @@
-// lib/data/coding_tools/models/path_result.dart
-
 import 'coding_tool_result.dart';
 
 /// Return type for [ToolContext.safePath]. Either carries the vetted

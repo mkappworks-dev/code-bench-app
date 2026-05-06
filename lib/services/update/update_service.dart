@@ -1,4 +1,3 @@
-// lib/services/update/update_service.dart
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

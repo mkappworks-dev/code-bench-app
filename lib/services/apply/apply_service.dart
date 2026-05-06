@@ -19,10 +19,7 @@ ApplyService applyService(Ref ref) {
   return ApplyService(repo: ref.watch(applyRepositoryProvider));
 }
 
-/// Service owning all business logic for file apply operations:
-/// path-traversal guards, size limits, checksum computation, and
-/// diff line-count calculation. [ApplyRepository] is reduced to
-/// raw I/O (read/write/delete/gitCheckout).
+/// Owns all business logic for apply operations; [ApplyRepository] is reduced to raw I/O.
 class ApplyService {
   ApplyService({required ApplyRepository repo, String Function()? uuidGen})
     : _repo = repo,

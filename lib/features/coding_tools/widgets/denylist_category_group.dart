@@ -96,7 +96,6 @@ class _DenylistCategoryGroupState extends State<DenylistCategoryGroup> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header row ─────────────────────────────────────────────────────
           Row(
             children: [
               Text(
@@ -119,13 +118,11 @@ class _DenylistCategoryGroupState extends State<DenylistCategoryGroup> {
           ),
           const SizedBox(height: 4),
 
-          // ── Subtitle ───────────────────────────────────────────────────────
           Text(
             widget.subtitle,
             style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
           ),
 
-          // ── Chip wall ──────────────────────────────────────────────────────
           if (widget.userAdded.isNotEmpty || activeBaseline.isNotEmpty || widget.suppressed.isNotEmpty) ...[
             const SizedBox(height: 10),
             Wrap(
@@ -159,7 +156,6 @@ class _DenylistCategoryGroupState extends State<DenylistCategoryGroup> {
 
           const SizedBox(height: 12),
 
-          // ── Add entry row ──────────────────────────────────────────────────
           Row(
             children: [
               Expanded(

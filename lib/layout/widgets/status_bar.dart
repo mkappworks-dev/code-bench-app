@@ -118,7 +118,6 @@ class _StatusBarState extends ConsumerState<StatusBar> {
       closePicker();
       return;
     }
-    // Use the per-session worktree override if one is set.
     final sessionId = ref.read(activeSessionIdProvider);
     final overrides = ref.read(activeWorktreePathProvider);
     final effectivePath = (sessionId != null ? overrides[sessionId] : null) ?? project.path;

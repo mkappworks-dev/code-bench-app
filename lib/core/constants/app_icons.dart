@@ -4,7 +4,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// Central icon registry. All icon usage in the app goes through this class.
 /// To switch icon packages, update the values here only.
 abstract final class AppIcons {
-  // Navigation / chevrons
   static const IconData chevronDown = LucideIcons.chevronDown;
   static const IconData chevronUp = LucideIcons.chevronUp;
   static const IconData chevronRight = LucideIcons.chevronRight;
@@ -13,7 +12,6 @@ abstract final class AppIcons {
   static const IconData arrowUp = LucideIcons.arrowUp;
   static const IconData arrowUpDown = LucideIcons.arrowUpDown;
 
-  // Actions
   static const IconData add = LucideIcons.plus;
   static const IconData close = LucideIcons.x;
   static const IconData trash = LucideIcons.trash2;
@@ -26,12 +24,10 @@ abstract final class AppIcons {
   static const IconData applying = LucideIcons.hourglass;
   static const IconData sort = LucideIcons.arrowUpDown;
 
-  // Visibility / auth
   static const IconData showSecret = LucideIcons.eye;
   static const IconData hideSecret = LucideIcons.eyeOff;
   static const IconData lock = LucideIcons.lock;
 
-  // Content / files
   static const IconData code = LucideIcons.code;
   static const IconData folder = LucideIcons.folder;
   static const IconData folderOpen = LucideIcons.folderOpen;
@@ -41,17 +37,10 @@ abstract final class AppIcons {
   static const IconData storage = LucideIcons.hardDrive;
   static const IconData rename = LucideIcons.pencil;
 
-  // Chat / AI
   static const IconData chat = LucideIcons.messageSquare;
   static const IconData newChat = LucideIcons.messageSquarePlus;
   static const IconData aiMode = LucideIcons.zap;
 
-  // Git
-  // Note: lucide_icons_flutter does not ship a GitHub octocat glyph. For the
-  // app's GitHub-account avatar/button we use the custom GitHubIcon widget
-  // (lib/core/widgets/github_icon.dart). This IconData is reserved for
-  // surfaces that require an IconData (e.g. AppDialog) and reads as
-  // "external account / sign-in" rather than the octocat.
   static const IconData github = LucideIcons.logIn;
   static const IconData gitMerge = LucideIcons.gitMerge;
   static const IconData gitCommit = LucideIcons.gitCommitHorizontal;
@@ -60,13 +49,11 @@ abstract final class AppIcons {
   static const IconData cloudUpload = LucideIcons.cloudUpload;
   static const IconData gitPullRequest = LucideIcons.gitPullRequest;
 
-  // UI chrome
   static const IconData settings = LucideIcons.settings;
   static const IconData warning = LucideIcons.triangleAlert;
   static const IconData clock = LucideIcons.clock;
   static const IconData externalLink = LucideIcons.externalLink;
   static const IconData refresh = LucideIcons.refreshCw;
 
-  // Updates
   static const IconData update = LucideIcons.arrowDownToLine;
 }

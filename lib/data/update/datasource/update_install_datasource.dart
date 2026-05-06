@@ -1,5 +1,3 @@
-// lib/data/update/datasource/update_install_datasource.dart
-
 /// Performs the side-effectful steps of installing a downloaded update bundle:
 /// extraction, signature inspection, and the bundle swap + relaunch.
 ///

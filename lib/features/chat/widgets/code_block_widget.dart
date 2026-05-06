@@ -22,8 +22,6 @@ import '../notifiers/project_file_scan_actions.dart';
 import '../notifiers/project_file_scan_failure.dart';
 import '../utils/code_fence_parser.dart';
 
-// ── Public builder (used by _MessageContent in message_bubble.dart) ───────────
-
 class CodeBlockBuilder extends MarkdownElementBuilder {
   CodeBlockBuilder({required this.messageId, required this.sessionId});
   final String messageId;
@@ -69,8 +67,6 @@ class CodeBlockBuilder extends MarkdownElementBuilder {
     );
   }
 }
-
-// ── Code block widget ─────────────────────────────────────────────────────────
 
 class _CodeBlockWidget extends ConsumerStatefulWidget {
   const _CodeBlockWidget({
@@ -386,8 +382,6 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
   }
 }
 
-// ── Small header button ───────────────────────────────────────────────────────
-
 class _HeaderButton extends StatelessWidget {
   const _HeaderButton({required this.label, required this.icon, required this.onTap});
   final String label;
@@ -413,8 +407,6 @@ class _HeaderButton extends StatelessWidget {
     );
   }
 }
-
-// ── Tab ───────────────────────────────────────────────────────────────────────
 
 class _Tab extends StatelessWidget {
   const _Tab({required this.label, required this.index, required this.activeIndex, required this.onTap});
@@ -442,8 +434,6 @@ class _Tab extends StatelessWidget {
     );
   }
 }
-
-// ── Copy button ───────────────────────────────────────────────────────────────
 
 class _CopyButton extends StatefulWidget {
   const _CopyButton({required this.code});
@@ -488,8 +478,6 @@ class _CopyButtonState extends State<_CopyButton> {
     );
   }
 }
-
-// ── File picker panel ─────────────────────────────────────────────────────────
 
 /// Inline picker shown when the user clicks Diff… on a code fence that has
 /// no filename. Scans the project directory for common code files and
