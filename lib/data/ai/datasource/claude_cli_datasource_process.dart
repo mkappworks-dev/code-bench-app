@@ -16,7 +16,8 @@ part 'claude_cli_datasource_process.g.dart';
 
 @visibleForTesting
 AuthStatus parseClaudeAuthOutput(int exitCode, String stdout) {
-  if (exitCode != 0) return const AuthStatus.unknown();
+  // Exit code is intentionally ignored: `claude auth status --json` exits 1
+  // when not logged in but still emits a valid `loggedIn:false` JSON body.
   try {
     final decoded = jsonDecode(stdout);
     if (decoded is! Map<String, dynamic>) return const AuthStatus.unknown();
@@ -360,12 +361,13 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   Future<AuthStatus> verifyAuth() async {
     try {
       final exePath = _resolvedPath ?? binaryPath;
-      final probeEnv = _shellPath != null ? {'PATH': _shellPath!} : null;
+      // Inherit parent env so HOME/USER reach the CLI (it reads auth config
+      // from $HOME); only override PATH when we have the login-shell value.
       final result = await Process.run(
         exePath,
         ['auth', 'status', '--json'],
-        environment: probeEnv,
-        includeParentEnvironment: probeEnv == null,
+        environment: _shellPath != null ? {'PATH': _shellPath!} : const {},
+        includeParentEnvironment: true,
       ).timeout(const Duration(seconds: 5));
       return parseClaudeAuthOutput(result.exitCode, result.stdout as String);
     } catch (e) {

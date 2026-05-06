@@ -740,12 +740,13 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   Future<AuthStatus> verifyAuth() async {
     try {
       final exePath = _resolvedPath ?? binaryPath;
-      final probeEnv = _shellPath != null ? {'PATH': _shellPath!} : null;
+      // Inherit parent env so HOME/USER reach the CLI (it reads auth state
+      // from $HOME); only override PATH when we have the login-shell value.
       final result = await Process.run(
         exePath,
         ['login', 'status'],
-        environment: probeEnv,
-        includeParentEnvironment: probeEnv == null,
+        environment: _shellPath != null ? {'PATH': _shellPath!} : const {},
+        includeParentEnvironment: true,
       ).timeout(const Duration(seconds: 5));
       return parseCodexAuthOutput(result.exitCode, result.stdout as String);
     } catch (e) {
