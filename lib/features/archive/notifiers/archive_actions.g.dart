@@ -8,14 +8,11 @@ part of 'archive_actions.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Imperative actions for the Archive screen.
 
 @ProviderFor(ArchiveActions)
 final archiveActionsProvider = ArchiveActionsProvider._();
 
-/// Imperative actions for the Archive screen.
 final class ArchiveActionsProvider extends $AsyncNotifierProvider<ArchiveActions, void> {
-  /// Imperative actions for the Archive screen.
   ArchiveActionsProvider._()
     : super(
         from: null,
@@ -35,9 +32,7 @@ final class ArchiveActionsProvider extends $AsyncNotifierProvider<ArchiveActions
   ArchiveActions create() => ArchiveActions();
 }
 
-String _$archiveActionsHash() => r'ff8468b6a8b20631596608fe141a348b5009c26d';
-
-/// Imperative actions for the Archive screen.
+String _$archiveActionsHash() => r'5feff420e4e5ee544413a5271f47c2604554afa6';
 
 abstract class _$ArchiveActions extends $AsyncNotifier<void> {
   FutureOr<void> build();

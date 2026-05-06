@@ -166,17 +166,24 @@ void main() {
     final project1 = Project(id: 'p1', path: '/a', name: 'alpha', createdAt: DateTime(2025));
     final project2 = Project(id: 'p2', path: '/b', name: 'beta', createdAt: DateTime(2025));
     final s1 = ChatSession(
-      sessionId: 'c1', title: 'Alpha session', modelId: 'm', providerId: 'anthropic',
-      projectId: 'p1', createdAt: DateTime(2025), updatedAt: DateTime(2025),
+      sessionId: 'c1',
+      title: 'Alpha session',
+      modelId: 'm',
+      providerId: 'anthropic',
+      projectId: 'p1',
+      createdAt: DateTime(2025),
+      updatedAt: DateTime(2025),
     );
     final s2 = ChatSession(
-      sessionId: 'c2', title: 'Beta session', modelId: 'm', providerId: 'anthropic',
-      projectId: 'p2', createdAt: DateTime(2025), updatedAt: DateTime(2025),
+      sessionId: 'c2',
+      title: 'Beta session',
+      modelId: 'm',
+      providerId: 'anthropic',
+      projectId: 'p2',
+      createdAt: DateTime(2025),
+      updatedAt: DateTime(2025),
     );
-    await tester.pumpWidget(_buildArchive(
-      sessions: [s1, s2],
-      projects: [project1, project2],
-    ));
+    await tester.pumpWidget(_buildArchive(sessions: [s1, s2], projects: [project1, project2]));
     await tester.pump();
 
     // Session cards not visible — groups are collapsed.
