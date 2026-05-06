@@ -11,11 +11,21 @@ import 'package:code_bench_app/features/archive/notifiers/archive_actions.dart';
 
 class _FakeArchiveActions extends ArchiveActions {
   final List<String> unarchiveCalls = [];
+  final List<String> deleteCalls = [];
+  final List<List<String>> unarchiveAllCalls = [];
+  final List<List<String>> deleteAllCalls = [];
 
   @override
-  Future<void> unarchiveSession(String id) async {
-    unarchiveCalls.add(id);
-  }
+  Future<void> unarchiveSession(String id) async => unarchiveCalls.add(id);
+
+  @override
+  Future<void> deleteSession(String id) async => deleteCalls.add(id);
+
+  @override
+  Future<void> unarchiveAllForProject(List<String> ids) async => unarchiveAllCalls.add(ids);
+
+  @override
+  Future<void> deleteAllForProject(List<String> ids) async => deleteAllCalls.add(ids);
 }
 
 Widget _buildArchive({
@@ -77,5 +87,27 @@ void main() {
     await tester.pump();
 
     expect(fake.unarchiveCalls, contains('s2'));
+  });
+
+  testWidgets('deleteSession records call on fake', (tester) async {
+    final fake = _FakeArchiveActions();
+    await fake.deleteSession('s99');
+    expect(fake.deleteCalls, contains('s99'));
+  });
+
+  testWidgets('unarchiveAllForProject records ids', (tester) async {
+    final fake = _FakeArchiveActions();
+    await fake.unarchiveAllForProject(['a', 'b']);
+    expect(fake.unarchiveAllCalls, [
+      ['a', 'b'],
+    ]);
+  });
+
+  testWidgets('deleteAllForProject records ids', (tester) async {
+    final fake = _FakeArchiveActions();
+    await fake.deleteAllForProject(['x', 'y']);
+    expect(fake.deleteAllCalls, [
+      ['x', 'y'],
+    ]);
   });
 }
