@@ -69,16 +69,33 @@ class AIProviderService extends _$AIProviderService {
     };
   }
 
+  /// Auth status for a single provider. Returns [AuthStatus.unknown] for
+  /// unregistered providers and any probe exceptions — never blocks send on
+  /// a probe failure (honest bias).
+  Future<AuthStatus> getAuthStatus(String id) async {
+    final provider = state[id];
+    if (provider == null) return const AuthStatus.unknown();
+    try {
+      return await provider.verifyAuth();
+    } on Exception catch (e) {
+      dLog('[AIProviderService] verifyAuth($id) threw: $e');
+      return const AuthStatus.unknown();
+    }
+  }
+
   /// Status for all registered providers — consumed by per-provider cards
   /// (e.g. [AnthropicProviderCard]) to enable/disable the CLI transport
   /// option based on whether the local binary is installed.
   Future<List<ProviderEntry>> listWithStatus() async {
-    final entries = <ProviderEntry>[];
-    for (final MapEntry(:key, :value) in state.entries) {
-      final status = await getStatus(key);
-      entries.add(ProviderEntry(id: key, displayName: value.displayName, status: status));
-    }
-    return entries;
+    final futures = state.entries.map((entry) async {
+      final id = entry.key;
+      final ds = entry.value;
+      final status = await getStatus(id);
+      // Auth is meaningless on a missing binary — skip the probe.
+      final authStatus = status is ProviderAvailable ? await getAuthStatus(id) : const AuthStatus.unknown();
+      return ProviderEntry(id: id, displayName: ds.displayName, status: status, authStatus: authStatus);
+    });
+    return Future.wait(futures);
   }
 }
 
@@ -111,11 +128,12 @@ class ProviderAvailable extends ProviderStatus {
 /// Entry in the provider list — surfaced by [listWithStatus] to provider
 /// cards so they can render the right state for their CLI transport option.
 class ProviderEntry {
-  const ProviderEntry({required this.id, required this.displayName, required this.status});
+  const ProviderEntry({required this.id, required this.displayName, required this.status, required this.authStatus});
 
   final String id;
   final String displayName;
   final ProviderStatus status;
+  final AuthStatus authStatus;
 
   bool get isAvailable => status is ProviderAvailable;
 }
