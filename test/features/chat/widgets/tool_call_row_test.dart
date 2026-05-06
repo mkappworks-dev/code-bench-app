@@ -95,4 +95,49 @@ void main() {
     final argText = tester.widget<Text>(find.text('lib/main.dart'));
     expect(argText.style?.decoration, anyOf(isNull, isNot(TextDecoration.lineThrough)));
   });
+
+  group('ToolCallRow provider/model badges', () {
+    Widget hostWithLabels({String? providerLabel, String? modelLabel, ToolEvent? event}) => MaterialApp(
+      theme: ThemeData(extensions: [AppColors.dark]),
+      home: Scaffold(
+        body: ToolCallRow(
+          event:
+              event ??
+              const ToolEvent(
+                id: 'evt1',
+                type: 'provider_tool',
+                toolName: 'read_file',
+                status: ToolStatus.success,
+                source: ToolEventSource.cliTransport,
+              ),
+          providerLabel: providerLabel,
+          modelLabel: modelLabel,
+        ),
+      ),
+    );
+
+    testWidgets('renders both badges when both labels are non-null', (tester) async {
+      await tester.pumpWidget(hostWithLabels(providerLabel: 'Codex CLI', modelLabel: 'gpt-5'));
+      expect(find.text('Codex CLI'), findsOneWidget);
+      expect(find.text('gpt-5'), findsOneWidget);
+    });
+
+    testWidgets('renders only provider badge when modelLabel is null', (tester) async {
+      await tester.pumpWidget(hostWithLabels(providerLabel: 'Claude Code CLI'));
+      expect(find.text('Claude Code CLI'), findsOneWidget);
+      expect(find.text('gpt-5'), findsNothing);
+    });
+
+    testWidgets('renders no badges when both labels are null', (tester) async {
+      await tester.pumpWidget(hostWithLabels());
+      expect(find.text('Codex CLI'), findsNothing);
+      expect(find.text('gpt-5'), findsNothing);
+      expect(find.text('via Claude Code'), findsNothing);
+    });
+
+    testWidgets('hardcoded "via Claude Code" string is gone (regression guard)', (tester) async {
+      await tester.pumpWidget(hostWithLabels());
+      expect(find.text('via Claude Code'), findsNothing);
+    });
+  });
 }

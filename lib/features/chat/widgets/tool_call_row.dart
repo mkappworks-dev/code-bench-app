@@ -8,8 +8,10 @@ import '../../../data/session/models/tool_event.dart';
 /// argument, status, duration, and token counts. Expanding reveals the full
 /// input map and (truncated) output.
 class ToolCallRow extends StatefulWidget {
-  const ToolCallRow({super.key, required this.event});
+  const ToolCallRow({super.key, required this.event, this.providerLabel, this.modelLabel});
   final ToolEvent event;
+  final String? providerLabel;
+  final String? modelLabel;
 
   @override
   State<ToolCallRow> createState() => _ToolCallRowState();
@@ -82,17 +84,13 @@ class _ToolCallRowState extends State<ToolCallRow> {
                     fontFamily: 'monospace',
                   ),
                 ),
-                if (widget.event.source == ToolEventSource.cliTransport) ...[
+                if (widget.providerLabel != null) ...[
                   const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: c.accent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(3),
-                      border: Border.all(color: c.accent.withValues(alpha: 0.3), width: 0.5),
-                    ),
-                    child: Text('via Claude Code', style: TextStyle(fontSize: 10, color: c.accent, letterSpacing: 0.3)),
-                  ),
+                  _BadgeChip(label: widget.providerLabel!, color: c.accent),
+                ],
+                if (widget.modelLabel != null) ...[
+                  const SizedBox(width: 4),
+                  _BadgeChip(label: widget.modelLabel!, color: c.accent),
                 ],
                 if (arg.isNotEmpty) ...[
                   const SizedBox(width: 6),
@@ -212,6 +210,25 @@ class _ToolCallRowState extends State<ToolCallRow> {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _BadgeChip extends StatelessWidget {
+  const _BadgeChip({required this.label, required this.color});
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 10, color: color, letterSpacing: 0.3)),
     );
   }
 }
