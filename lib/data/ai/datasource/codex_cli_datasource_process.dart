@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
@@ -10,6 +11,16 @@ import 'binary_resolver_process.dart';
 import 'provider_input_guards.dart';
 
 part 'codex_cli_datasource_process.g.dart';
+
+@visibleForTesting
+AuthStatus parseCodexAuthOutput(int exitCode, String stdout) {
+  if (exitCode != 0) return const AuthStatus.unknown();
+  if (stdout.contains('Logged in')) return const AuthStatus.authenticated();
+  if (stdout.contains('Not logged in')) {
+    return const AuthStatus.unauthenticated(signInCommand: 'codex login');
+  }
+  return const AuthStatus.unknown();
+}
 
 @riverpod
 AIProviderDatasource codexCliDatasourceProcess(Ref ref) {
@@ -171,7 +182,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
       // Initialize if this is a fresh process
       if (_version == null) {
         await _initialize();
-        await _checkAuth();
       }
 
       // Start or resume a Codex thread
@@ -609,15 +619,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     _notify('initialized');
   }
 
-  Future<void> _checkAuth() async {
-    final result = await _request('account/read', {});
-    final requiresAuth = result['requiresOpenaiAuth'] as bool? ?? false;
-    if (requiresAuth) {
-      throw Exception('Codex is not authenticated. Run `codex login` in your terminal.');
-    }
-    dLog('[CodexCli] Auth ok');
-  }
-
   Future<String> _startThread(String sessionId, String workingDirectory) async {
     final result = await _request('thread/start', {
       'cwd': workingDirectory,
@@ -735,7 +736,21 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
         .toLowerCase();
   }
 
-  // Replaced with real impl in Task 5; stubbed so the codebase compiles.
   @override
-  Future<AuthStatus> verifyAuth() async => const AuthStatus.unknown();
+  Future<AuthStatus> verifyAuth() async {
+    try {
+      final exePath = _resolvedPath ?? binaryPath;
+      final probeEnv = _shellPath != null ? {'PATH': _shellPath!} : null;
+      final result = await Process.run(
+        exePath,
+        ['login', 'status'],
+        environment: probeEnv,
+        includeParentEnvironment: probeEnv == null,
+      ).timeout(const Duration(seconds: 5));
+      return parseCodexAuthOutput(result.exitCode, result.stdout as String);
+    } catch (e) {
+      sLog('[CodexCli] verifyAuth failed: ${e.runtimeType}');
+      return const AuthStatus.unknown();
+    }
+  }
 }
