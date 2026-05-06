@@ -1,6 +1,8 @@
+import '../models/auth_status.dart';
 import '../models/detection_result.dart';
 import '../models/provider_runtime_event.dart';
 
+export '../models/auth_status.dart';
 export '../models/detection_result.dart';
 export '../models/provider_runtime_event.dart';
 
@@ -37,4 +39,8 @@ abstract interface class AIProviderDatasource {
   /// Respond to a pending server-initiated permission request.
   /// No-op for providers that don't support interactive approval (e.g. HTTP/SSE).
   void respondToPermissionRequest(String requestId, {required bool approved});
+
+  /// Returns `AuthStatus.unknown` (not a thrown exception) on probe failure
+  /// — send is never blocked on a probe we couldn't run.
+  Future<AuthStatus> verifyAuth();
 }

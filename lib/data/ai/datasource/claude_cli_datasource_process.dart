@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
@@ -12,6 +13,34 @@ import 'claude_cli_stream_parser.dart';
 import 'provider_input_guards.dart';
 
 part 'claude_cli_datasource_process.g.dart';
+
+@visibleForTesting
+const int claudeAuthOutputSizeLimit = 64 * 1024;
+
+@visibleForTesting
+AuthStatus parseClaudeAuthOutput(int exitCode, String stdout) {
+  // Exit code is intentionally ignored: `claude auth status --json` exits 1
+  // when not logged in but still emits a valid `loggedIn:false` JSON body.
+  if (stdout.length > claudeAuthOutputSizeLimit) {
+    dLog(
+      '[ClaudeCli] auth status output exceeds ${claudeAuthOutputSizeLimit}B (${stdout.length}B) — treating as unknown',
+    );
+    return const AuthStatus.unknown();
+  }
+  try {
+    final decoded = jsonDecode(stdout);
+    if (decoded is! Map<String, dynamic>) return const AuthStatus.unknown();
+    final loggedIn = decoded['loggedIn'];
+    if (loggedIn == true) return const AuthStatus.authenticated();
+    if (loggedIn == false) {
+      return const AuthStatus.unauthenticated(signInCommand: 'claude auth login');
+    }
+    return const AuthStatus.unknown();
+  } catch (e) {
+    dLog('[ClaudeCli] auth status JSON parse failed (${e.runtimeType}, ${stdout.length}B) — treating as unknown');
+    return const AuthStatus.unknown();
+  }
+}
 
 @riverpod
 AIProviderDatasource claudeCliDatasourceProcess(Ref ref) {
@@ -336,6 +365,37 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   void respondToPermissionRequest(String requestId, {required bool approved}) {
     // Claude Code CLI runs with --permission-mode bypassPermissions, so it
     // never sends permission requests back to the host.
+  }
+
+  @override
+  Future<AuthStatus> verifyAuth() async {
+    if (_resolvedPath == null) {
+      sLog('[ClaudeCli] verifyAuth skipped — binary not yet resolved');
+      return const AuthStatus.unknown();
+    }
+    try {
+      // Forward only what the CLI needs (HOME/USER for auth config, PATH for
+      // child lookups) so user-exported API keys don't leak into the probe.
+      final parentEnv = Platform.environment;
+      final probeEnv = <String, String>{
+        if (parentEnv['HOME'] != null) 'HOME': parentEnv['HOME']!,
+        if (parentEnv['USER'] != null) 'USER': parentEnv['USER']!,
+        'PATH': _shellPath ?? parentEnv['PATH'] ?? '',
+      };
+      final result = await Process.run(
+        _resolvedPath!,
+        ['auth', 'status', '--json'],
+        environment: probeEnv,
+        includeParentEnvironment: false,
+      ).timeout(const Duration(seconds: 5));
+      return parseClaudeAuthOutput(result.exitCode, result.stdout as String);
+    } on TimeoutException {
+      sLog('[ClaudeCli] verifyAuth timed out after 5s');
+      return const AuthStatus.unknown();
+    } catch (e) {
+      sLog('[ClaudeCli] verifyAuth failed: ${e.runtimeType}');
+      return const AuthStatus.unknown();
+    }
   }
 
   /// Returns the absolute exe path or null. On null, has already added a

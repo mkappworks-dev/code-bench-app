@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/instant_menu.dart';
+import '../../../core/widgets/app_snack_bar.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
@@ -21,7 +22,11 @@ import '../notifiers/available_models_notifier.dart';
 import '../notifiers/session_settings_actions.dart';
 import '../notifiers/session_settings_failure.dart';
 import '../../../data/chat/models/agent_failure.dart';
+import '../../../data/chat/models/transport_readiness.dart';
+import '../../../core/utils/debug_logger.dart';
+import '../../../features/project_actions/notifiers/ide_launch_actions.dart';
 import '../notifiers/chat_session_streaming.dart';
+import '../notifiers/transport_readiness_notifier.dart';
 
 /// Private in-memory store of per-session chat-input drafts.
 ///
@@ -232,6 +237,9 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
               break; // surfaced to the model as a tool_result
             case AgentNetworkExhausted():
               showErrorSnackBar(context, 'Stream ended unexpectedly — try again.');
+            case AgentTransportNotReady(:final readiness):
+              // Fallback for paths that bypass the strip (continueAgenticTurn).
+              showErrorSnackBar(context, _readinessSnackbarText(readiness));
             case AgentUnknownError(:final error):
               showErrorSnackBar(context, userMessage(error, fallback: 'Failed to get a response.'));
           }
@@ -245,6 +253,14 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
       _focusNode.requestFocus();
     }
   }
+
+  String _readinessSnackbarText(TransportReadiness r) => switch (r) {
+    TransportSignedOut(:final provider, :final signInCommand) =>
+      "${_providerName(provider)} isn't signed in — run $signInCommand",
+    TransportNotInstalled(:final provider) => "${_providerName(provider)} CLI isn't installed.",
+    TransportHttpKeyMissing(:final provider) => '${_providerName(provider)} API key not configured.',
+    TransportReady() || TransportUnknown() => 'Transport not ready.',
+  };
 
   /// Returns a [RelativeRect] whose [bottom] encodes the distance from the
   /// button's bottom edge to the overlay's bottom edge. Combined with
@@ -489,195 +505,365 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
         .watch(chatSessionStreamingProvider(widget.sessionId))
         .maybeWhen(data: (v) => v, orElse: () => false);
     final isSending = _isSending || isStreaming;
+    final readiness = ref.watch(transportReadinessProvider);
+    final notReady = readiness is! TransportReady && readiness is! TransportUnknown;
+    final innerRadius = notReady
+        ? const BorderRadius.only(bottomLeft: Radius.circular(11), bottomRight: Radius.circular(11))
+        : BorderRadius.circular(11);
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
       decoration: BoxDecoration(color: c.background),
-      child: Container(
-        decoration: BoxDecoration(
-          color: c.glassFill,
-          border: Border.all(color: c.glassBorder),
-          borderRadius: BorderRadius.circular(11),
-          boxShadow: [
-            BoxShadow(color: c.chatBoxShadowOuter, blurRadius: 24, offset: const Offset(0, -6)),
-            BoxShadow(color: c.chatBoxShadowDrop, blurRadius: 8, offset: const Offset(0, 2)),
-            BoxShadow(color: c.chatBoxRimGlow, blurRadius: 0, spreadRadius: 0.5),
-          ],
-        ),
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            KeyboardListener(
-              focusNode: _keyboardFocusNode,
-              onKeyEvent: (event) {
-                if (event is KeyDownEvent &&
-                    event.logicalKey == LogicalKeyboardKey.enter &&
-                    !HardwareKeyboard.instance.isShiftPressed &&
-                    !isSending) {
-                  // Let _send() own the missing-project branch so Enter
-                  // surfaces the same snackbar as the tap on the button.
-                  _send();
-                }
-              },
-              child: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                maxLines: null,
-                minLines: 1,
-                style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
-                decoration: InputDecoration(
-                  hintText: isMissing ? 'Project folder is missing — Relocate or Remove to continue' : 'Ask anything',
-                  hintStyle: TextStyle(color: c.faintFg, fontSize: ThemeConstants.uiFontSize),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  filled: false,
-                  contentPadding: EdgeInsets.zero,
-                  isDense: true,
-                ),
-              ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (notReady) _ReadinessStrip(readiness: readiness, sessionId: widget.sessionId),
+          Container(
+            decoration: BoxDecoration(
+              color: c.glassFill,
+              border: Border.all(color: c.glassBorder),
+              borderRadius: innerRadius,
+              boxShadow: [
+                BoxShadow(color: c.chatBoxShadowOuter, blurRadius: 24, offset: const Offset(0, -6)),
+                BoxShadow(color: c.chatBoxShadowDrop, blurRadius: 8, offset: const Offset(0, 2)),
+                BoxShadow(color: c.chatBoxRimGlow, blurRadius: 0, spreadRadius: 0.5),
+              ],
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.only(top: 7),
-              decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: c.faintBorder)),
-              ),
-              child: Row(
-                children: [
-                  Builder(
-                    builder: (ctx) => _ControlChip(
-                      icon: AppIcons.aiMode,
-                      label: model.name,
-                      isWarning: isModelStale,
-                      isLoading: availableState.isLoading,
-                      onTap: () => _showModelPicker(ctx),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                KeyboardListener(
+                  focusNode: _keyboardFocusNode,
+                  onKeyEvent: (event) {
+                    if (event is KeyDownEvent &&
+                        event.logicalKey == LogicalKeyboardKey.enter &&
+                        !HardwareKeyboard.instance.isShiftPressed &&
+                        !isSending &&
+                        !notReady) {
+                      // Let _send() own the missing-project branch so Enter
+                      // surfaces the same snackbar as the tap on the button.
+                      _send();
+                    }
+                  },
+                  child: TextField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    maxLines: null,
+                    minLines: 1,
+                    style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
+                    decoration: InputDecoration(
+                      hintText: isMissing
+                          ? 'Project folder is missing — Relocate or Remove to continue'
+                          : 'Ask anything',
+                      hintStyle: TextStyle(color: c.faintFg, fontSize: ThemeConstants.uiFontSize),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      filled: false,
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Builder(
-                    builder: (ctx) => _ControlChip(
-                      label: effort.label,
-                      onTap: () => _showDropdown(
-                        ctx,
-                        ChatEffort.values,
-                        effort,
-                        (e) => e.label,
-                        (e) => ref.read(sessionSettingsActionsProvider.notifier).updateEffort(widget.sessionId, e),
-                      ),
-                    ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.only(top: 7),
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: c.faintBorder)),
                   ),
-                  const SizedBox(width: 4),
-                  Builder(
-                    builder: (ctx) => _ControlChip(
-                      icon: AppIcons.chat,
-                      label: mode.label,
-                      onTap: () => _showDropdown(
-                        ctx,
-                        ChatMode.values,
-                        mode,
-                        (m) => m.label,
-                        (m) => ref.read(sessionSettingsActionsProvider.notifier).updateMode(widget.sessionId, m),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Builder(
-                    builder: (ctx) => _ControlChip(
-                      icon: AppIcons.lock,
-                      label: permission.label,
-                      onTap: () => _showDropdown(
-                        ctx,
-                        ChatPermission.values,
-                        permission,
-                        (p) => p.label,
-                        (p) => ref.read(sessionSettingsActionsProvider.notifier).updatePermission(widget.sessionId, p),
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  if (isSending)
-                    AnimatedBuilder(
-                      animation: _pulseOpacity,
-                      builder: (context, child) => Opacity(opacity: _pulseOpacity.value, child: child),
-                      child: GestureDetector(
-                        onTap: () {
-                          ref.read(agentCancelProvider.notifier).request();
-                          ref.read(chatMessagesProvider(widget.sessionId).notifier).cancelSend();
-                          _controller.text = _lastSentText;
-                          _controller.selection = TextSelection.collapsed(offset: _lastSentText.length);
-                          _pulseController.stop();
-                          _pulseController.reset();
-                          setState(() => _isSending = false);
-                        },
-                        child: Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: c.glassFill,
-                            border: Border.all(color: c.warning),
-                            borderRadius: BorderRadius.circular(7),
-                          ),
-                          alignment: Alignment.center,
-                          child: Icon(AppIcons.stop, size: 13, color: c.warning),
+                  child: Row(
+                    children: [
+                      Builder(
+                        builder: (ctx) => _ControlChip(
+                          icon: AppIcons.aiMode,
+                          label: model.name,
+                          isWarning: isModelStale,
+                          isLoading: availableState.isLoading,
+                          onTap: () => _showModelPicker(ctx),
                         ),
                       ),
-                    )
-                  else
-                    Tooltip(
-                      message: isMissing ? 'Project folder is missing. Relocate or Remove it from the sidebar.' : '',
-                      child: ListenableBuilder(
-                        listenable: _controller,
-                        builder: (context, _) {
-                          final lc = AppColors.of(context);
-                          final hasText = _controller.text.trim().isNotEmpty;
-                          final Color bg;
-                          final Border? border;
-                          final Color iconColor;
-                          final List<BoxShadow> shadows;
-                          if (hasText && !isMissing) {
-                            bg = lc.accent;
-                            border = null;
-                            iconColor = lc.onAccent;
-                            shadows = [BoxShadow(color: lc.sendGlow, blurRadius: 8, offset: const Offset(0, 2))];
-                          } else {
-                            bg = lc.sendDisabledFill;
-                            border = Border.all(color: lc.sendDisabledStroke);
-                            iconColor = lc.sendDisabledIconColor;
-                            shadows = [];
-                          }
-                          return GestureDetector(
-                            onTap: _send,
+                      const SizedBox(width: 4),
+                      Builder(
+                        builder: (ctx) => _ControlChip(
+                          label: effort.label,
+                          onTap: () => _showDropdown(
+                            ctx,
+                            ChatEffort.values,
+                            effort,
+                            (e) => e.label,
+                            (e) => ref.read(sessionSettingsActionsProvider.notifier).updateEffort(widget.sessionId, e),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Builder(
+                        builder: (ctx) => _ControlChip(
+                          icon: AppIcons.chat,
+                          label: mode.label,
+                          onTap: () => _showDropdown(
+                            ctx,
+                            ChatMode.values,
+                            mode,
+                            (m) => m.label,
+                            (m) => ref.read(sessionSettingsActionsProvider.notifier).updateMode(widget.sessionId, m),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Builder(
+                        builder: (ctx) => _ControlChip(
+                          icon: AppIcons.lock,
+                          label: permission.label,
+                          onTap: () => _showDropdown(
+                            ctx,
+                            ChatPermission.values,
+                            permission,
+                            (p) => p.label,
+                            (p) =>
+                                ref.read(sessionSettingsActionsProvider.notifier).updatePermission(widget.sessionId, p),
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      if (isSending)
+                        AnimatedBuilder(
+                          animation: _pulseOpacity,
+                          builder: (context, child) => Opacity(opacity: _pulseOpacity.value, child: child),
+                          child: GestureDetector(
+                            onTap: () {
+                              ref.read(agentCancelProvider.notifier).request();
+                              ref.read(chatMessagesProvider(widget.sessionId).notifier).cancelSend();
+                              _controller.text = _lastSentText;
+                              _controller.selection = TextSelection.collapsed(offset: _lastSentText.length);
+                              _pulseController.stop();
+                              _pulseController.reset();
+                              setState(() => _isSending = false);
+                            },
                             child: Container(
                               width: 28,
                               height: 28,
                               decoration: BoxDecoration(
-                                gradient: (hasText && !isMissing)
-                                    ? LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: [lc.accent, lc.accentHover],
-                                      )
-                                    : null,
-                                color: (!hasText || isMissing) ? bg : null,
+                                color: c.glassFill,
+                                border: Border.all(color: c.warning),
                                 borderRadius: BorderRadius.circular(7),
-                                border: border,
-                                boxShadow: shadows,
                               ),
-                              child: Center(child: Icon(AppIcons.arrowUp, size: 14, color: iconColor)),
+                              alignment: Alignment.center,
+                              child: Icon(AppIcons.stop, size: 13, color: c.warning),
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                ],
+                          ),
+                        )
+                      else
+                        Tooltip(
+                          message: notReady
+                              ? 'Sign in to send'
+                              : (isMissing ? 'Project folder is missing. Relocate or Remove it from the sidebar.' : ''),
+                          child: ListenableBuilder(
+                            listenable: _controller,
+                            builder: (context, _) {
+                              final lc = AppColors.of(context);
+                              final hasText = _controller.text.trim().isNotEmpty;
+                              final canSend = hasText && !isMissing && !notReady;
+                              final Color bg;
+                              final Border? border;
+                              final Color iconColor;
+                              final List<BoxShadow> shadows;
+                              if (canSend) {
+                                bg = lc.accent;
+                                border = null;
+                                iconColor = lc.onAccent;
+                                shadows = [BoxShadow(color: lc.sendGlow, blurRadius: 8, offset: const Offset(0, 2))];
+                              } else {
+                                bg = lc.sendDisabledFill;
+                                border = Border.all(color: lc.sendDisabledStroke);
+                                iconColor = lc.sendDisabledIconColor;
+                                shadows = [];
+                              }
+                              return GestureDetector(
+                                onTap: notReady ? null : _send,
+                                child: Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    gradient: canSend
+                                        ? LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [lc.accent, lc.accentHover],
+                                          )
+                                        : null,
+                                    color: !canSend ? bg : null,
+                                    borderRadius: BorderRadius.circular(7),
+                                    border: border,
+                                    boxShadow: shadows,
+                                  ),
+                                  child: Center(child: Icon(AppIcons.arrowUp, size: 14, color: iconColor)),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _providerName(String id) => switch (id) {
+  'claude-cli' => 'Claude',
+  'codex' => 'Codex',
+  'anthropic' => 'Anthropic',
+  'openai' => 'OpenAI',
+  'gemini' => 'Gemini',
+  'ollama' => 'Ollama',
+  'custom' => 'Custom',
+  _ => id,
+};
+
+class _ReadinessStrip extends ConsumerWidget {
+  const _ReadinessStrip({required this.readiness, required this.sessionId});
+  final TransportReadiness readiness;
+  final String sessionId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = AppColors.of(context);
+    final (label, command, isError) = switch (readiness) {
+      TransportSignedOut(:final provider, :final signInCommand) => (_signedOutLabel(provider), signInCommand, false),
+      TransportNotInstalled(:final provider) => ("${_providerName(provider)} CLI isn't installed.", null, true),
+      TransportHttpKeyMissing(:final provider) => ('${_providerName(provider)} API key not configured.', null, true),
+      TransportReady() || TransportUnknown() => ('', null, false),
+    };
+    final bg = isError ? c.errorTintBg : c.warningTintBg;
+    final fg = isError ? c.error : c.warning;
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      child: Container(
+        decoration: BoxDecoration(
+          color: bg,
+          border: Border.all(color: fg.withValues(alpha: 0.5)),
+          borderRadius: const BorderRadius.only(topLeft: Radius.circular(11), topRight: Radius.circular(11)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Icon(AppIcons.warning, size: 12, color: fg),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(color: fg, fontSize: ThemeConstants.uiFontSizeSmall),
               ),
             ),
+            if (command != null) ...[
+              const SizedBox(width: 8),
+              _StripIconButton(
+                tooltip: 'Copy command',
+                icon: AppIcons.copy,
+                tone: fg,
+                onPressed: () => _copyCommand(context, command),
+              ),
+              const SizedBox(width: 4),
+              _StripIconButton(
+                tooltip: 'Copy + open in your terminal app',
+                icon: AppIcons.terminal,
+                tone: fg,
+                onPressed: () => _copyAndOpenTerminal(context, ref, command),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
+
+  static String _signedOutLabel(String provider) => switch (provider) {
+    'claude-cli' => "Claude isn't signed in — run claude auth login",
+    'codex' => "Codex isn't signed in — run codex login",
+    _ => "${_providerName(provider)} isn't signed in",
+  };
+
+  Future<void> _copyCommand(BuildContext context, String command) async {
+    var copied = true;
+    try {
+      await Clipboard.setData(ClipboardData(text: command));
+    } catch (e) {
+      copied = false;
+      dLog('[chat_input_bar] clipboard write failed: $e');
+    }
+    if (!context.mounted) return;
+    if (copied) {
+      AppSnackBar.show(context, '"$command" copied — paste in your terminal', type: AppSnackBarType.success);
+    } else {
+      AppSnackBar.show(context, 'Couldn\'t copy — run `$command` manually', type: AppSnackBarType.warning);
+    }
+  }
+
+  Future<void> _copyAndOpenTerminal(BuildContext context, WidgetRef ref, String command) async {
+    var copied = true;
+    try {
+      await Clipboard.setData(ClipboardData(text: command));
+    } catch (e) {
+      copied = false;
+      dLog('[chat_input_bar] clipboard write failed: $e');
+    }
+    final project = ref.read(activeProjectProvider);
+    if (project == null) {
+      if (context.mounted) {
+        AppSnackBar.show(
+          context,
+          copied
+              ? 'No active project — paste in your terminal manually.'
+              : 'Couldn\'t copy — run `$command` in a terminal manually.',
+          type: AppSnackBarType.warning,
+        );
+      }
+      return;
+    }
+    await ref.read(ideLaunchActionsProvider.notifier).openInTerminal(project.path);
+    if (!context.mounted) return;
+    final err = ref.read(ideLaunchActionsProvider).error;
+    if (err != null) {
+      AppSnackBar.show(context, '$err', type: AppSnackBarType.error);
+    } else if (copied) {
+      AppSnackBar.show(context, 'Opened terminal — paste to sign in', type: AppSnackBarType.success);
+    } else {
+      AppSnackBar.show(context, 'Opened terminal — type `$command` to sign in', type: AppSnackBarType.warning);
+    }
+  }
+}
+
+class _StripIconButton extends StatelessWidget {
+  const _StripIconButton({required this.tooltip, required this.icon, required this.tone, required this.onPressed});
+  final String tooltip;
+  final IconData icon;
+  final Color tone;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(5),
+      child: Container(
+        width: 24,
+        height: 24,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          border: Border.all(color: tone.withValues(alpha: 0.5)),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Icon(icon, size: 12, color: tone),
+      ),
+    ),
+  );
 }
 
 class _ControlChip extends StatelessWidget {
