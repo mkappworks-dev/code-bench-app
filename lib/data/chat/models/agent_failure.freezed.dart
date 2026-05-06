@@ -55,7 +55,7 @@ extension AgentFailurePatterns on AgentFailure {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AgentIterationCapReached value)?  iterationCapReached,TResult Function( AgentProviderDoesNotSupportTools value)?  providerDoesNotSupportTools,TResult Function( AgentStreamAbortedUnexpectedly value)?  streamAbortedUnexpectedly,TResult Function( AgentToolDispatchFailed value)?  toolDispatchFailed,TResult Function( AgentNetworkExhausted value)?  networkExhausted,TResult Function( AgentUnknownError value)?  unknown,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AgentIterationCapReached value)?  iterationCapReached,TResult Function( AgentProviderDoesNotSupportTools value)?  providerDoesNotSupportTools,TResult Function( AgentStreamAbortedUnexpectedly value)?  streamAbortedUnexpectedly,TResult Function( AgentToolDispatchFailed value)?  toolDispatchFailed,TResult Function( AgentNetworkExhausted value)?  networkExhausted,TResult Function( AgentTransportNotReady value)?  transportNotReady,TResult Function( AgentUnknownError value)?  unknown,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case AgentIterationCapReached() when iterationCapReached != null:
@@ -63,7 +63,8 @@ return iterationCapReached(_that);case AgentProviderDoesNotSupportTools() when p
 return providerDoesNotSupportTools(_that);case AgentStreamAbortedUnexpectedly() when streamAbortedUnexpectedly != null:
 return streamAbortedUnexpectedly(_that);case AgentToolDispatchFailed() when toolDispatchFailed != null:
 return toolDispatchFailed(_that);case AgentNetworkExhausted() when networkExhausted != null:
-return networkExhausted(_that);case AgentUnknownError() when unknown != null:
+return networkExhausted(_that);case AgentTransportNotReady() when transportNotReady != null:
+return transportNotReady(_that);case AgentUnknownError() when unknown != null:
 return unknown(_that);case _:
   return orElse();
 
@@ -82,7 +83,7 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AgentIterationCapReached value)  iterationCapReached,required TResult Function( AgentProviderDoesNotSupportTools value)  providerDoesNotSupportTools,required TResult Function( AgentStreamAbortedUnexpectedly value)  streamAbortedUnexpectedly,required TResult Function( AgentToolDispatchFailed value)  toolDispatchFailed,required TResult Function( AgentNetworkExhausted value)  networkExhausted,required TResult Function( AgentUnknownError value)  unknown,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AgentIterationCapReached value)  iterationCapReached,required TResult Function( AgentProviderDoesNotSupportTools value)  providerDoesNotSupportTools,required TResult Function( AgentStreamAbortedUnexpectedly value)  streamAbortedUnexpectedly,required TResult Function( AgentToolDispatchFailed value)  toolDispatchFailed,required TResult Function( AgentNetworkExhausted value)  networkExhausted,required TResult Function( AgentTransportNotReady value)  transportNotReady,required TResult Function( AgentUnknownError value)  unknown,}){
 final _that = this;
 switch (_that) {
 case AgentIterationCapReached():
@@ -90,7 +91,8 @@ return iterationCapReached(_that);case AgentProviderDoesNotSupportTools():
 return providerDoesNotSupportTools(_that);case AgentStreamAbortedUnexpectedly():
 return streamAbortedUnexpectedly(_that);case AgentToolDispatchFailed():
 return toolDispatchFailed(_that);case AgentNetworkExhausted():
-return networkExhausted(_that);case AgentUnknownError():
+return networkExhausted(_that);case AgentTransportNotReady():
+return transportNotReady(_that);case AgentUnknownError():
 return unknown(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -105,7 +107,7 @@ return unknown(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AgentIterationCapReached value)?  iterationCapReached,TResult? Function( AgentProviderDoesNotSupportTools value)?  providerDoesNotSupportTools,TResult? Function( AgentStreamAbortedUnexpectedly value)?  streamAbortedUnexpectedly,TResult? Function( AgentToolDispatchFailed value)?  toolDispatchFailed,TResult? Function( AgentNetworkExhausted value)?  networkExhausted,TResult? Function( AgentUnknownError value)?  unknown,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AgentIterationCapReached value)?  iterationCapReached,TResult? Function( AgentProviderDoesNotSupportTools value)?  providerDoesNotSupportTools,TResult? Function( AgentStreamAbortedUnexpectedly value)?  streamAbortedUnexpectedly,TResult? Function( AgentToolDispatchFailed value)?  toolDispatchFailed,TResult? Function( AgentNetworkExhausted value)?  networkExhausted,TResult? Function( AgentTransportNotReady value)?  transportNotReady,TResult? Function( AgentUnknownError value)?  unknown,}){
 final _that = this;
 switch (_that) {
 case AgentIterationCapReached() when iterationCapReached != null:
@@ -113,7 +115,8 @@ return iterationCapReached(_that);case AgentProviderDoesNotSupportTools() when p
 return providerDoesNotSupportTools(_that);case AgentStreamAbortedUnexpectedly() when streamAbortedUnexpectedly != null:
 return streamAbortedUnexpectedly(_that);case AgentToolDispatchFailed() when toolDispatchFailed != null:
 return toolDispatchFailed(_that);case AgentNetworkExhausted() when networkExhausted != null:
-return networkExhausted(_that);case AgentUnknownError() when unknown != null:
+return networkExhausted(_that);case AgentTransportNotReady() when transportNotReady != null:
+return transportNotReady(_that);case AgentUnknownError() when unknown != null:
 return unknown(_that);case _:
   return null;
 
@@ -131,14 +134,15 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  iterationCapReached,TResult Function()?  providerDoesNotSupportTools,TResult Function( String reason)?  streamAbortedUnexpectedly,TResult Function( String toolName,  String message)?  toolDispatchFailed,TResult Function( int attempts)?  networkExhausted,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  iterationCapReached,TResult Function()?  providerDoesNotSupportTools,TResult Function( String reason)?  streamAbortedUnexpectedly,TResult Function( String toolName,  String message)?  toolDispatchFailed,TResult Function( int attempts)?  networkExhausted,TResult Function( TransportReadiness readiness)?  transportNotReady,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case AgentIterationCapReached() when iterationCapReached != null:
 return iterationCapReached();case AgentProviderDoesNotSupportTools() when providerDoesNotSupportTools != null:
 return providerDoesNotSupportTools();case AgentStreamAbortedUnexpectedly() when streamAbortedUnexpectedly != null:
 return streamAbortedUnexpectedly(_that.reason);case AgentToolDispatchFailed() when toolDispatchFailed != null:
 return toolDispatchFailed(_that.toolName,_that.message);case AgentNetworkExhausted() when networkExhausted != null:
-return networkExhausted(_that.attempts);case AgentUnknownError() when unknown != null:
+return networkExhausted(_that.attempts);case AgentTransportNotReady() when transportNotReady != null:
+return transportNotReady(_that.readiness);case AgentUnknownError() when unknown != null:
 return unknown(_that.error);case _:
   return orElse();
 
@@ -157,14 +161,15 @@ return unknown(_that.error);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  iterationCapReached,required TResult Function()  providerDoesNotSupportTools,required TResult Function( String reason)  streamAbortedUnexpectedly,required TResult Function( String toolName,  String message)  toolDispatchFailed,required TResult Function( int attempts)  networkExhausted,required TResult Function( Object error)  unknown,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  iterationCapReached,required TResult Function()  providerDoesNotSupportTools,required TResult Function( String reason)  streamAbortedUnexpectedly,required TResult Function( String toolName,  String message)  toolDispatchFailed,required TResult Function( int attempts)  networkExhausted,required TResult Function( TransportReadiness readiness)  transportNotReady,required TResult Function( Object error)  unknown,}) {final _that = this;
 switch (_that) {
 case AgentIterationCapReached():
 return iterationCapReached();case AgentProviderDoesNotSupportTools():
 return providerDoesNotSupportTools();case AgentStreamAbortedUnexpectedly():
 return streamAbortedUnexpectedly(_that.reason);case AgentToolDispatchFailed():
 return toolDispatchFailed(_that.toolName,_that.message);case AgentNetworkExhausted():
-return networkExhausted(_that.attempts);case AgentUnknownError():
+return networkExhausted(_that.attempts);case AgentTransportNotReady():
+return transportNotReady(_that.readiness);case AgentUnknownError():
 return unknown(_that.error);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -179,14 +184,15 @@ return unknown(_that.error);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  iterationCapReached,TResult? Function()?  providerDoesNotSupportTools,TResult? Function( String reason)?  streamAbortedUnexpectedly,TResult? Function( String toolName,  String message)?  toolDispatchFailed,TResult? Function( int attempts)?  networkExhausted,TResult? Function( Object error)?  unknown,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  iterationCapReached,TResult? Function()?  providerDoesNotSupportTools,TResult? Function( String reason)?  streamAbortedUnexpectedly,TResult? Function( String toolName,  String message)?  toolDispatchFailed,TResult? Function( int attempts)?  networkExhausted,TResult? Function( TransportReadiness readiness)?  transportNotReady,TResult? Function( Object error)?  unknown,}) {final _that = this;
 switch (_that) {
 case AgentIterationCapReached() when iterationCapReached != null:
 return iterationCapReached();case AgentProviderDoesNotSupportTools() when providerDoesNotSupportTools != null:
 return providerDoesNotSupportTools();case AgentStreamAbortedUnexpectedly() when streamAbortedUnexpectedly != null:
 return streamAbortedUnexpectedly(_that.reason);case AgentToolDispatchFailed() when toolDispatchFailed != null:
 return toolDispatchFailed(_that.toolName,_that.message);case AgentNetworkExhausted() when networkExhausted != null:
-return networkExhausted(_that.attempts);case AgentUnknownError() when unknown != null:
+return networkExhausted(_that.attempts);case AgentTransportNotReady() when transportNotReady != null:
+return transportNotReady(_that.readiness);case AgentUnknownError() when unknown != null:
 return unknown(_that.error);case _:
   return null;
 
@@ -457,6 +463,81 @@ as int,
 }
 
 
+}
+
+/// @nodoc
+
+
+class AgentTransportNotReady implements AgentFailure {
+  const AgentTransportNotReady(this.readiness);
+  
+
+ final  TransportReadiness readiness;
+
+/// Create a copy of AgentFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AgentTransportNotReadyCopyWith<AgentTransportNotReady> get copyWith => _$AgentTransportNotReadyCopyWithImpl<AgentTransportNotReady>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AgentTransportNotReady&&(identical(other.readiness, readiness) || other.readiness == readiness));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,readiness);
+
+@override
+String toString() {
+  return 'AgentFailure.transportNotReady(readiness: $readiness)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $AgentTransportNotReadyCopyWith<$Res> implements $AgentFailureCopyWith<$Res> {
+  factory $AgentTransportNotReadyCopyWith(AgentTransportNotReady value, $Res Function(AgentTransportNotReady) _then) = _$AgentTransportNotReadyCopyWithImpl;
+@useResult
+$Res call({
+ TransportReadiness readiness
+});
+
+
+$TransportReadinessCopyWith<$Res> get readiness;
+
+}
+/// @nodoc
+class _$AgentTransportNotReadyCopyWithImpl<$Res>
+    implements $AgentTransportNotReadyCopyWith<$Res> {
+  _$AgentTransportNotReadyCopyWithImpl(this._self, this._then);
+
+  final AgentTransportNotReady _self;
+  final $Res Function(AgentTransportNotReady) _then;
+
+/// Create a copy of AgentFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? readiness = null,}) {
+  return _then(AgentTransportNotReady(
+null == readiness ? _self.readiness : readiness // ignore: cast_nullable_to_non_nullable
+as TransportReadiness,
+  ));
+}
+
+/// Create a copy of AgentFailure
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$TransportReadinessCopyWith<$Res> get readiness {
+  
+  return $TransportReadinessCopyWith<$Res>(_self.readiness, (value) {
+    return _then(_self.copyWith(readiness: value));
+  });
+}
 }
 
 /// @nodoc
