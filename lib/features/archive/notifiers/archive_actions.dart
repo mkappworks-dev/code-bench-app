@@ -54,7 +54,7 @@ class ArchiveActions extends _$ArchiveActions {
         }
       } catch (e, st) {
         dLog(
-          '[ArchiveActions] unarchiveAllForProject failed at ids[$i]=${ids.elementAtOrNull(i)} (${i + 1}/${ids.length}): ${e.runtimeType}',
+          '[ArchiveActions] unarchiveAllForProject failed at ids[$i]=${ids[i]} (${i + 1}/${ids.length}): ${e.runtimeType}',
         );
         Error.throwWithStackTrace(_asFailure(e), st);
       }
@@ -72,7 +72,7 @@ class ArchiveActions extends _$ArchiveActions {
         }
       } catch (e, st) {
         dLog(
-          '[ArchiveActions] deleteAllForProject failed at ids[$i]=${ids.elementAtOrNull(i)} (${i + 1}/${ids.length}): ${e.runtimeType}',
+          '[ArchiveActions] deleteAllForProject failed at ids[$i]=${ids[i]} (${i + 1}/${ids.length}): ${e.runtimeType}',
         );
         Error.throwWithStackTrace(_asFailure(e), st);
       }
