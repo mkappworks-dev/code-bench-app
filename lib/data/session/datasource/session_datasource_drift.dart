@@ -135,6 +135,8 @@ class SessionDatasourceDrift implements SessionDatasource {
         ),
         toolEventsJson: Value(jsonEncode(message.toolEvents.map((e) => e.toJson()).toList())),
         timestamp: Value(message.timestamp),
+        providerId: Value(message.providerId),
+        modelId: Value(message.modelId),
       ),
     );
     await _db.sessionDao.updateSession(sessionId, ChatSessionsCompanion(updatedAt: Value(DateTime.now())));
@@ -198,6 +200,8 @@ class SessionDatasourceDrift implements SessionDatasource {
       codeBlocks: codeBlocks,
       toolEvents: toolEvents,
       timestamp: row.timestamp,
+      providerId: row.providerId,
+      modelId: row.modelId,
     );
   }
 }
