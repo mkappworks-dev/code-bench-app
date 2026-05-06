@@ -7,6 +7,7 @@ import 'package:code_bench_app/services/ai/ai_service.dart';
 import 'package:code_bench_app/services/providers/providers_service.dart';
 import 'package:code_bench_app/features/chat/notifiers/available_models_failure.dart';
 import 'package:code_bench_app/features/chat/notifiers/available_models_notifier.dart';
+import 'package:code_bench_app/features/providers/notifiers/providers_notifier.dart';
 
 // ── Fakes ────────────────────────────────────────────────────────────────────
 
@@ -42,13 +43,37 @@ class _FakeProvidersService extends Fake implements ProvidersService {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-ProviderContainer _makeContainer({required AIService svc, required _FakeProvidersService providers}) {
+/// Default API keys override: empty everywhere, transports left at the
+/// `api-key` default. Tests that need to exercise the cloud-provider live
+/// fetch path can pass a non-empty [apiKeys] to populate keys.
+ProviderContainer _makeContainer({
+  required AIService svc,
+  required _FakeProvidersService providers,
+  ApiKeysNotifierState apiKeys = const ApiKeysNotifierState(
+    openai: '',
+    anthropic: '',
+    gemini: '',
+    ollamaUrl: '',
+    customEndpoint: '',
+    customApiKey: '',
+    anthropicTransport: 'api-key',
+    openaiTransport: 'api-key',
+  ),
+}) {
   return ProviderContainer(
     overrides: [
       aiServiceProvider.overrideWith((ref) async => svc),
       providersServiceProvider.overrideWith((ref) => providers),
+      apiKeysProvider.overrideWith(() => _FakeApiKeysNotifier(apiKeys)),
     ],
   );
+}
+
+class _FakeApiKeysNotifier extends ApiKeysNotifier {
+  _FakeApiKeysNotifier(this._state);
+  final ApiKeysNotifierState _state;
+  @override
+  Future<ApiKeysNotifierState> build() async => _state;
 }
 
 AIModel _ollamaModel(String name) =>
@@ -247,7 +272,89 @@ void main() {
       // the stale-pill reflects that the previously-selected model is gone.
       expect(state.value!.models.any((m) => m.provider == AIProvider.ollama), isFalse);
     });
+
+    // -- Cloud-provider live fetch (gated on configured API key) --
+
+    test('fetches OpenAI models when openai key is configured, dedups against defaults', () async {
+      // Live result includes a brand-new model the hardcoded list doesn't
+      // know about (gpt-6) and gpt-5 (already in defaults). Defaults entry
+      // must win for display name; gpt-6 must appear.
+      final liveOpenAi = [
+        const AIModel(id: 'gpt-6', provider: AIProvider.openai, name: 'gpt-6', modelId: 'gpt-6'),
+        const AIModel(id: 'gpt-5', provider: AIProvider.openai, name: 'gpt-5', modelId: 'gpt-5'),
+      ];
+      final container = _makeContainer(
+        svc: _FakeAIService(models: {AIProvider.openai: liveOpenAi}),
+        providers: _FakeProvidersService(),
+        apiKeys: const ApiKeysNotifierState(
+          openai: 'sk-test',
+          anthropic: '',
+          gemini: '',
+          ollamaUrl: '',
+          customEndpoint: '',
+          customApiKey: '',
+          anthropicTransport: 'api-key',
+          openaiTransport: 'api-key',
+        ),
+      );
+      addTearDown(container.dispose);
+
+      final result = await container.read(availableModelsProvider.future);
+      expect(result.models, contains(AIModels.gpt5)); // hardcoded entry kept (friendly name)
+      expect(result.models.where((m) => m.modelId == 'gpt-5'), hasLength(1));
+      expect(result.models.where((m) => m.modelId == 'gpt-6'), hasLength(1)); // live-only addition
+      expect(result.failures, isEmpty);
+    });
+
+    test('skips OpenAI/Anthropic/Gemini live fetch when no API key is configured', () async {
+      // Track which providers got fetched.
+      final fetchedProviders = <AIProvider>{};
+      final svc = _FakeAIServiceObserved(onFetch: fetchedProviders.add);
+      final container = _makeContainer(
+        svc: svc,
+        providers: _FakeProvidersService(),
+        // All keys empty — default
+      );
+      addTearDown(container.dispose);
+
+      await container.read(availableModelsProvider.future);
+      expect(fetchedProviders, isEmpty);
+    });
+
+    test('classifies OpenAI auth failures so the picker can surface them inline', () async {
+      final container = _makeContainer(
+        svc: _FakeAIService(errors: {AIProvider.openai: const AuthException('invalid key')}),
+        providers: _FakeProvidersService(),
+        apiKeys: const ApiKeysNotifierState(
+          openai: 'sk-bad',
+          anthropic: '',
+          gemini: '',
+          ollamaUrl: '',
+          customEndpoint: '',
+          customApiKey: '',
+          anthropicTransport: 'api-key',
+          openaiTransport: 'api-key',
+        ),
+      );
+      addTearDown(container.dispose);
+
+      final result = await container.read(availableModelsProvider.future);
+      expect(result.failures[AIProvider.openai], isA<ModelProviderAuth>());
+      // Hardcoded defaults still surface so the user has something pickable.
+      expect(result.models, containsAll(AIModels.defaults));
+    });
   });
+}
+
+class _FakeAIServiceObserved extends Fake implements AIService {
+  _FakeAIServiceObserved({required this.onFetch});
+  final void Function(AIProvider) onFetch;
+
+  @override
+  Future<List<AIModel>> fetchAvailableModels(AIProvider provider, String apiKey) async {
+    onFetch(provider);
+    return const [];
+  }
 }
 
 /// Like `_FakeAIService` but allows tests to mutate `errors` between fetches

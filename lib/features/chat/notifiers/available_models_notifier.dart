@@ -7,6 +7,7 @@ import '../../../core/utils/debug_logger.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../services/ai/ai_service.dart';
 import '../../../services/providers/providers_service.dart';
+import '../../providers/notifiers/providers_notifier.dart';
 import 'available_models_failure.dart';
 
 part 'available_models_notifier.g.dart';
@@ -30,11 +31,13 @@ class AvailableModelsNotifier extends _$AvailableModelsNotifier {
   @override
   Future<AvailableModelsResult> build() async {
     final AIService repo;
+    final ApiKeysNotifierState apiKeys;
     final String ollamaUrl;
     final String customEndpoint;
     final String customApiKey;
     try {
       repo = await ref.watch(aiServiceProvider.future);
+      apiKeys = await ref.watch(apiKeysProvider.future);
       final svc = ref.read(providersServiceProvider);
       ollamaUrl = await svc.readOllamaUrl() ?? '';
       customEndpoint = await svc.readCustomEndpoint() ?? '';
@@ -44,7 +47,11 @@ class AvailableModelsNotifier extends _$AvailableModelsNotifier {
       Error.throwWithStackTrace(AvailableModelsFailure.storageError(e), st);
     }
 
-    final models = List<AIModel>.from(AIModels.defaults);
+    // Seed the picker with the hardcoded defaults so users with no keys
+    // configured still see something to pick. Live fetches below ADD models
+    // the hardcoded list doesn't know about (e.g. brand-new releases) but
+    // never replace a hardcoded entry's friendly display name.
+    final modelsById = <String, AIModel>{for (final m in AIModels.defaults) m.modelId: m};
     final failures = <AIProvider, ModelProviderFailure>{};
 
     Future<List<AIModel>> fetchFor(AIProvider provider, String apiKey) async {
@@ -57,17 +64,29 @@ class AvailableModelsNotifier extends _$AvailableModelsNotifier {
       }
     }
 
+    // Cloud providers are gated on a configured API key. With CLI transport
+    // the key may be empty (auth lives in the CLI's own login state); we
+    // skip the live fetch in that case rather than firing a guaranteed 401.
     final futures = <Future<List<AIModel>>>[
+      if (apiKeys.openai.isNotEmpty) fetchFor(AIProvider.openai, apiKeys.openai),
+      if (apiKeys.anthropic.isNotEmpty) fetchFor(AIProvider.anthropic, apiKeys.anthropic),
+      if (apiKeys.gemini.isNotEmpty) fetchFor(AIProvider.gemini, apiKeys.gemini),
       if (ollamaUrl.isNotEmpty) fetchFor(AIProvider.ollama, ''),
       if (customEndpoint.isNotEmpty) fetchFor(AIProvider.custom, customApiKey),
     ];
 
     if (futures.isNotEmpty) {
       final fetched = await Future.wait(futures);
-      models.addAll(fetched.expand((list) => list));
+      for (final list in fetched) {
+        for (final m in list) {
+          // Hardcoded entry wins for display name; live fetch only contributes
+          // models the defaults don't already know about.
+          modelsById.putIfAbsent(m.modelId, () => m);
+        }
+      }
     }
 
-    return AvailableModelsResult(models: models, failures: failures);
+    return AvailableModelsResult(models: modelsById.values.toList(), failures: failures);
   }
 
   /// Manual user-triggered refresh (e.g. the ↺ Refresh row in the picker).

@@ -14,6 +14,7 @@ import '../../../data/shared/ai_model.dart';
 import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
+import '../../../features/providers/notifiers/providers_notifier.dart';
 import '../notifiers/agent_cancel_notifier.dart';
 import '../notifiers/chat_input_bar_options_provider.dart';
 import '../notifiers/chat_notifier.dart';
@@ -335,8 +336,18 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final allModels = result?.models ?? AIModels.defaults;
     final failures = result?.failures ?? const <AIProvider, ModelProviderFailure>{};
 
+    // When OpenAI's transport is `cli`, the app routes through Codex.
+    // Codex with a ChatGPT account only accepts the gpt-5/codex/o-series
+    // families — `gpt-4o` etc. would 400 on `turn/start`. Narrowing the
+    // picker prevents the user from picking a model the transport can't
+    // honour.
+    final restrictOpenAiToCodex = ref.read(apiKeysProvider).value?.openaiTransport == 'cli';
+
     final grouped = <AIProvider, List<AIModel>>{};
     for (final m in allModels) {
+      if (restrictOpenAiToCodex && m.provider == AIProvider.openai && !AIModels.isCodexCompatibleModel(m.modelId)) {
+        continue;
+      }
       grouped.putIfAbsent(m.provider, () => []).add(m);
     }
 
