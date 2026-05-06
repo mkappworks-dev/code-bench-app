@@ -5,11 +5,15 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
+import '../../../data/ai/models/auth_status.dart';
+import '../../../data/chat/models/agent_failure.dart';
+import '../../../data/chat/models/transport_readiness.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/apply/models/applied_change.dart';
 import '../../../data/session/models/session_settings.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/chat_session.dart';
+import '../../../services/ai_provider/ai_provider_service.dart';
 import '../../../services/chat/chat_stream_service.dart';
 import '../../../services/chat/chat_stream_state.dart';
 import '../../../services/session/session_service.dart';
@@ -18,6 +22,7 @@ import '../../mcp_servers/notifiers/mcp_server_status_notifier.dart';
 import '../../providers/notifiers/providers_notifier.dart';
 import 'agent_cancel_notifier.dart';
 import 'agent_permission_request_notifier.dart';
+import 'transport_readiness_notifier.dart';
 
 part 'chat_notifier.g.dart';
 
@@ -150,6 +155,32 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     // HTTP path even when CLI transport is selected. Always wait for storage.
     final prefs = await ref.read(apiKeysProvider.future);
     final providerId = _resolveProviderId(model, prefs);
+
+    // Pre-flight against derived readiness — belt+suspenders for paths that
+    // bypass the input bar (e.g. continueAgenticTurn).
+    final readiness = ref.read(transportReadinessProvider);
+    if (readiness is! TransportReady && readiness is! TransportUnknown) {
+      state = AsyncData(_preSendMessages);
+      activeMessageIdNotifier.set(null);
+      _sendInProgress = false;
+      return AgentFailure.transportNotReady(readiness);
+    }
+
+    // Fresh CLI auth re-probe — picks up state changes since the last cache.
+    if (providerId != null) {
+      final ds = ref.read(aIProviderServiceProvider.notifier).getProvider(providerId);
+      if (ds != null) {
+        final freshAuth = await ds.verifyAuth();
+        if (freshAuth is AuthUnauthenticated) {
+          state = AsyncData(_preSendMessages);
+          activeMessageIdNotifier.set(null);
+          _sendInProgress = false;
+          return AgentFailure.transportNotReady(
+            TransportReadiness.signedOut(provider: providerId, signInCommand: freshAuth.signInCommand),
+          );
+        }
+      }
+    }
 
     final registry = ref.read(chatStreamServiceProvider);
     final completer = Completer<Object?>();
