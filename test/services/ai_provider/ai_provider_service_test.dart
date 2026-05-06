@@ -1,4 +1,5 @@
 import 'package:code_bench_app/data/ai/datasource/ai_provider_datasource.dart';
+import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/services/ai_provider/ai_provider_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,10 +27,14 @@ class _FakeDs implements AIProviderDatasource {
   }
 
   @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => const ProviderCapabilities();
+
+  @override
   Stream<ProviderRuntimeEvent> sendAndStream({
     required String prompt,
     required String sessionId,
     required String workingDirectory,
+    ProviderTurnSettings? settings,
   }) => throw UnimplementedError();
 
   @override

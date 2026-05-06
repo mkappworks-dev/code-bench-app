@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/data/ai/models/provider_capabilities.dart';
+import 'package:code_bench_app/data/ai/models/provider_turn_settings.dart';
 import 'package:code_bench_app/data/ai/models/stream_event.dart';
 import 'package:code_bench_app/data/ai/repository/text_streaming_repository.dart';
 import 'package:code_bench_app/data/ai/repository/tool_streaming_repository.dart';
@@ -62,11 +64,15 @@ class _FakeSessionRepo extends Fake implements SessionRepository {
 
 class _FakeAIRepo extends Fake implements TextStreamingRepository, ToolStreamingRepository {
   @override
+  ProviderCapabilities? capabilitiesFor(AIModel model) => null;
+
+  @override
   Stream<String> streamMessage({
     required List<ChatMessage> history,
     required String prompt,
     required AIModel model,
     String? systemPrompt,
+    ProviderTurnSettings? settings,
   }) async* {
     yield 'hello ';
     yield 'world';
@@ -77,6 +83,9 @@ class _ScriptedAI implements TextStreamingRepository, ToolStreamingRepository {
   _ScriptedAI(this.rounds);
   final List<List<StreamEvent>> rounds;
   int _r = 0;
+
+  @override
+  ProviderCapabilities? capabilitiesFor(AIModel model) => null;
 
   @override
   Stream<StreamEvent> streamMessageWithTools({
@@ -95,6 +104,7 @@ class _ScriptedAI implements TextStreamingRepository, ToolStreamingRepository {
     required String prompt,
     required AIModel model,
     String? systemPrompt,
+    ProviderTurnSettings? settings,
   }) async* {
     yield 'plain-text-path';
   }

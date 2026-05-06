@@ -2,16 +2,35 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:meta/meta.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
+import '../../../data/shared/session_settings.dart';
+import '../models/provider_capabilities.dart';
+import '../models/provider_turn_settings.dart';
 import '../models/stream_event.dart';
+import '../util/setting_mappers.dart';
 import '../../coding_tools/models/tool.dart';
 import 'ai_remote_datasource.dart';
 import 'text_streaming_datasource.dart';
+
+@visibleForTesting
+Map<String, dynamic> buildCustomRequestBody({
+  required AIModel model,
+  required List<Map<String, String>> messages,
+  ProviderTurnSettings? settings,
+}) {
+  return <String, dynamic>{
+    'model': model.modelId,
+    'messages': messages,
+    'stream': true,
+    if (settings?.effort != null) 'reasoning_effort': mapOpenAIReasoningEffort(settings!.effort!),
+  };
+}
 
 /// OpenAI-compatible AI datasource for custom endpoints (e.g. LM Studio, LocalAI).
 class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
@@ -31,15 +50,28 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
   AIProvider get provider => AIProvider.custom;
 
   @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => const ProviderCapabilities(
+    supportsModelOverride: true,
+    supportsSystemPrompt: true,
+    supportedModes: {ChatMode.chat, ChatMode.act},
+    supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
+    supportedPermissions: {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess},
+  );
+
+  @override
   Stream<String> streamMessage({
     required List<ChatMessage> history,
     required String prompt,
     required AIModel model,
     String? systemPrompt,
-  }) async* {
+    ProviderTurnSettings? settings,
+  }) {
     final messages = _buildMessages(history, prompt, systemPrompt);
-    final body = {'model': model.modelId, 'messages': messages, 'stream': true};
+    final body = buildCustomRequestBody(model: model, messages: messages, settings: settings);
+    return _attemptStream(body);
+  }
 
+  Stream<String> _attemptStream(Map<String, dynamic> body) async* {
     try {
       final response = await _dio.post(
         '/chat/completions',
@@ -70,6 +102,19 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
         }
       }
     } on DioException catch (e) {
+      // Some self-hosted OpenAI-compatible endpoints (vLLM, llama.cpp,
+      // strict-mode LiteLLM) reject unknown JSON keys with HTTP 400. Retry
+      // once without `reasoning_effort` so users on those backends keep
+      // working when they pick a non-null effort.
+      final status = e.response?.statusCode;
+      final bodyText = e.response?.data?.toString() ?? '';
+      final mentionsEffort = status == 400 && bodyText.contains('reasoning_effort');
+      if (mentionsEffort && body.containsKey('reasoning_effort')) {
+        sLog('[CustomRemoteDatasource] endpoint rejected reasoning_effort; retrying without it');
+        final fallback = Map<String, dynamic>.from(body)..remove('reasoning_effort');
+        yield* _attemptStream(fallback);
+        return;
+      }
       dLog('[CustomRemoteDatasource] streamMessage failed: ${e.type} ${e.response?.statusCode ?? ''}');
       throw NetworkException('Custom endpoint request failed', statusCode: e.response?.statusCode, originalError: e);
     }
