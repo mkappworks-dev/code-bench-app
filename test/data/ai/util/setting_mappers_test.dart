@@ -73,8 +73,8 @@ void main() {
   });
 
   group('OpenAI reasoning_effort', () {
-    test('max maps to xhigh', () {
-      expect(mapOpenAIReasoningEffort(ChatEffort.max), 'xhigh');
+    test('max clamps to high (OpenAI rejects xhigh)', () {
+      expect(mapOpenAIReasoningEffort(ChatEffort.max), 'high');
     });
     test('others map to themselves', () {
       expect(mapOpenAIReasoningEffort(ChatEffort.low), 'low');

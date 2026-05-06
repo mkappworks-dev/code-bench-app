@@ -3,6 +3,8 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../core/utils/debug_logger.dart';
+
 part 'app_database.g.dart';
 
 @DataClassName('ChatSessionRow')
@@ -212,6 +214,7 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
+      sLog('[AppDatabase] migrating schema $from -> $to');
       if (from < 2) {
         await m.addColumn(chatMessages, chatMessages.providerId);
         await m.addColumn(chatMessages, chatMessages.modelId);

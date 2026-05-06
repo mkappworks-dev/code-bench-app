@@ -39,8 +39,8 @@ void main() {
       expect(providerLabelFor('custom'), 'Custom');
     });
 
-    test('unknown id returns null so the badge is hidden', () {
-      expect(providerLabelFor('something-new'), isNull);
+    test('unknown id falls back to the raw id so legacy badges still render', () {
+      expect(providerLabelFor('something-new'), 'something-new');
     });
   });
 }

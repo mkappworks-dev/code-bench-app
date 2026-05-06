@@ -27,13 +27,13 @@ void main() {
       expect(body.containsKey('reasoning_effort'), isFalse);
     });
 
-    test('max → xhigh', () {
+    test('max clamps to high (OpenAI rejects xhigh)', () {
       final body = buildOpenAiRequestBody(
         model: gpt5,
         messages: const [],
         settings: const ProviderTurnSettings(effort: ChatEffort.max),
       );
-      expect(body['reasoning_effort'], 'xhigh');
+      expect(body['reasoning_effort'], 'high');
     });
   });
 }

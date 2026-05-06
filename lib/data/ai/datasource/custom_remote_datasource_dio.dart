@@ -32,6 +32,28 @@ Map<String, dynamic> buildCustomRequestBody({
   };
 }
 
+/// Returns true when a 400 response body signals the named [field] is
+/// unknown/unsupported. Avoids matching errors that merely *mention* the
+/// field (e.g. validation messages enumerating allowed keys) so unrelated
+/// 400s — oversize context, auth scope — keep their real error path.
+@visibleForTesting
+bool isUnknownFieldRejection(int? status, String? body, String field) {
+  if (status != 400 || body == null || body.isEmpty) return false;
+  if (!body.contains(field)) return false;
+  final lower = body.toLowerCase();
+  const markers = [
+    'unknown',
+    'unsupported',
+    'unrecognized',
+    'unrecognised',
+    'extra_forbidden',
+    'extra fields',
+    'not allowed',
+    'no such',
+  ];
+  return markers.any(lower.contains);
+}
+
 /// OpenAI-compatible AI datasource for custom endpoints (e.g. LM Studio, LocalAI).
 class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
   CustomRemoteDatasourceDio({required String endpoint, required String apiKey})
@@ -71,7 +93,7 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     return _attemptStream(body);
   }
 
-  Stream<String> _attemptStream(Map<String, dynamic> body) async* {
+  Stream<String> _attemptStream(Map<String, dynamic> body, {DioException? originalError}) async* {
     try {
       final response = await _dio.post(
         '/chat/completions',
@@ -104,19 +126,29 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     } on DioException catch (e) {
       // Some self-hosted OpenAI-compatible endpoints (vLLM, llama.cpp,
       // strict-mode LiteLLM) reject unknown JSON keys with HTTP 400. Retry
-      // once without `reasoning_effort` so users on those backends keep
-      // working when they pick a non-null effort.
-      final status = e.response?.statusCode;
-      final bodyText = e.response?.data?.toString() ?? '';
-      final mentionsEffort = status == 400 && bodyText.contains('reasoning_effort');
-      if (mentionsEffort && body.containsKey('reasoning_effort')) {
+      // once without `reasoning_effort` only when the body signals an
+      // unknown-field rejection, so unrelated 400s (oversize context, auth
+      // scope) still surface to the caller with their real message.
+      if (originalError == null &&
+          body.containsKey('reasoning_effort') &&
+          isUnknownFieldRejection(e.response?.statusCode, e.response?.data?.toString(), 'reasoning_effort')) {
         sLog('[CustomRemoteDatasource] endpoint rejected reasoning_effort; retrying without it');
         final fallback = Map<String, dynamic>.from(body)..remove('reasoning_effort');
-        yield* _attemptStream(fallback);
+        yield* _attemptStream(fallback, originalError: e);
         return;
       }
-      dLog('[CustomRemoteDatasource] streamMessage failed: ${e.type} ${e.response?.statusCode ?? ''}');
-      throw NetworkException('Custom endpoint request failed', statusCode: e.response?.statusCode, originalError: e);
+      // If we're here after a retry, surface the *first* error — that's the
+      // signal the caller cares about; the retry was our own remediation.
+      final source = originalError ?? e;
+      dLog(
+        '[CustomRemoteDatasource] streamMessage failed: ${source.type} ${source.response?.statusCode ?? ''}'
+        '${originalError != null ? ' (retry also failed: ${e.type} ${e.response?.statusCode ?? ''})' : ''}',
+      );
+      throw NetworkException(
+        'Custom endpoint request failed',
+        statusCode: source.response?.statusCode,
+        originalError: source,
+      );
     }
   }
 
@@ -197,7 +229,7 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     required List<Tool> tools,
     required AIModel model,
     ProviderTurnSettings? settings,
-  }) async* {
+  }) {
     final body = <String, dynamic>{
       'model': model.modelId,
       'stream': true,
@@ -206,7 +238,10 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
       'tool_choice': 'auto',
       if (settings?.effort != null) 'reasoning_effort': mapOpenAIReasoningEffort(settings!.effort!),
     };
+    return _attemptToolsStream(body);
+  }
 
+  Stream<StreamEvent> _attemptToolsStream(Map<String, dynamic> body, {DioException? originalError}) async* {
     try {
       final response = await _dio.post(
         '/chat/completions',
@@ -273,11 +308,23 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
         }
       }
     } on DioException catch (e) {
-      dLog('[CustomRemoteDatasource] streamMessageWithTools failed: ${e.type} ${e.response?.statusCode ?? ''}');
+      if (originalError == null &&
+          body.containsKey('reasoning_effort') &&
+          isUnknownFieldRejection(e.response?.statusCode, e.response?.data?.toString(), 'reasoning_effort')) {
+        sLog('[CustomRemoteDatasource] endpoint rejected reasoning_effort (tools); retrying without it');
+        final fallback = Map<String, dynamic>.from(body)..remove('reasoning_effort');
+        yield* _attemptToolsStream(fallback, originalError: e);
+        return;
+      }
+      final source = originalError ?? e;
+      dLog(
+        '[CustomRemoteDatasource] streamMessageWithTools failed: ${source.type} ${source.response?.statusCode ?? ''}'
+        '${originalError != null ? ' (retry also failed: ${e.type} ${e.response?.statusCode ?? ''})' : ''}',
+      );
       throw NetworkException(
         'Custom endpoint tool stream failed',
-        statusCode: e.response?.statusCode,
-        originalError: e,
+        statusCode: source.response?.statusCode,
+        originalError: source,
       );
     }
   }

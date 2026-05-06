@@ -99,8 +99,7 @@ class SessionService {
   ({String? providerId, String? modelId}) _attribution({AIModel? model, String? cliProviderId, String? cliModelId}) {
     if (cliProviderId != null) return (providerId: cliProviderId, modelId: cliModelId);
     if (model != null) return (providerId: model.provider.name, modelId: model.modelId);
-    assert(false, '_attribution called with no model and no cliProviderId');
-    return (providerId: null, modelId: null);
+    throw StateError('_attribution called with no model and no cliProviderId');
   }
 
   Stream<ChatMessage> sendAndStream({
@@ -117,6 +116,11 @@ class SessionService {
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
   }) async* {
+    // Normalize whitespace-only system prompts to null so providers see a
+    // consistent absent-vs-present signal — Anthropic's nullable spread
+    // (`'system': ?systemPrompt`) would otherwise send `"system":""`.
+    final effectiveSystemPrompt = (systemPrompt == null || systemPrompt.trim().isEmpty) ? null : systemPrompt;
+
     String? persistedUserMsgId;
     if (userInput.isNotEmpty) {
       final userMsg = ChatMessage(
@@ -154,7 +158,7 @@ class SessionService {
     }
     final providerSettings = ProviderTurnSettings(
       modelId: model.modelId,
-      systemPrompt: systemPrompt,
+      systemPrompt: effectiveSystemPrompt,
       mode: mode,
       effort: sessionEffort,
       permission: permission,
@@ -225,7 +229,7 @@ class SessionService {
       history: historyExcludingCurrent,
       prompt: userInput,
       model: model,
-      systemPrompt: systemPrompt,
+      systemPrompt: effectiveSystemPrompt,
       settings: providerSettings,
     )) {
       buffer.write(chunk);
@@ -271,8 +275,12 @@ class SessionService {
     final assistantId = _uuid.v4();
     final contentBuffer = StringBuffer();
     final toolEvents = <ToolEvent>[];
-    String? streamProviderId;
-    String? streamModelId;
+    // Pre-stamp from the datasource id + selected model so badges still render
+    // if the transport crashes before emitting ProviderInit. ProviderInit
+    // overrides this when it arrives (e.g. CLI version-as-modelId).
+    String streamProviderId = ds.id;
+    String? streamModelId = settings?.modelId;
+    var sawProviderInit = false;
 
     ChatMessage snapshot({bool streaming = true}) => ChatMessage(
       id: assistantId,
@@ -302,7 +310,8 @@ class SessionService {
       switch (event) {
         case ProviderInit(:final provider, :final modelId):
           streamProviderId = provider;
-          streamModelId = modelId;
+          streamModelId = modelId ?? streamModelId;
+          sawProviderInit = true;
           dLog('[SessionService] provider $provider started (model=$modelId)');
 
         case ProviderTextDelta(:final text):
@@ -348,6 +357,10 @@ class SessionService {
           }
           Error.throwWithStackTrace(StreamAbortedUnexpectedlyException(error.toString()), StackTrace.current);
       }
+    }
+
+    if (!sawProviderInit) {
+      dLog('[SessionService] provider ${ds.id} stream ended without ProviderInit (using fallback attribution)');
     }
 
     if (interrupted) {

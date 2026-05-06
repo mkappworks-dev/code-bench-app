@@ -70,5 +70,16 @@ void main() {
       );
       expect(args, isNot(contains('--append-system-prompt')));
     });
+
+    test('flag-shaped modelId is rejected at the argv boundary', () {
+      final args = buildClaudeCliArgs(
+        sessionId: 's',
+        prompt: 'p',
+        isFirstTurn: true,
+        settings: const ProviderTurnSettings(modelId: '--dangerously-skip-permissions'),
+      );
+      expect(args, isNot(contains('--model')));
+      expect(args, isNot(contains('--dangerously-skip-permissions')));
+    });
   });
 }

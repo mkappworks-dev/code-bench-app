@@ -1,3 +1,4 @@
+import '../../../core/utils/debug_logger.dart';
 import '../../shared/session_settings.dart';
 
 const _anthropicAdaptiveOnly = <String>{'claude-opus-4-7', 'claude-opus-4-7-20251201'};
@@ -45,16 +46,26 @@ int? mapAnthropicThinkingBudget(ChatEffort effort, {required int maxTokens, requ
     ChatEffort.high => 16384,
     ChatEffort.max => 32768,
   };
-  return raw >= maxTokens ? maxTokens - 1 : raw;
+  if (raw >= maxTokens) {
+    final clamped = maxTokens - 1;
+    dLog('[setting_mappers] Anthropic thinking budget clamped from $raw to $clamped (max_tokens=$maxTokens)');
+    return clamped;
+  }
+  return raw;
 }
 
 bool isAnthropicAdaptiveOnly(String modelId) => _anthropicAdaptiveOnly.contains(modelId);
 
+/// OpenAI's `reasoning_effort` accepts only `minimal|low|medium|high`.
+/// `ChatEffort.max` is clamped to `high` rather than emitted as `xhigh` (which
+/// would 400 on o1/o3/o4-mini/gpt-5). The custom-endpoint datasource shares
+/// this mapper but layers a one-shot retry that strips the field entirely
+/// when an OpenAI-compatible server still rejects it.
 String mapOpenAIReasoningEffort(ChatEffort e) => switch (e) {
   ChatEffort.low => 'low',
   ChatEffort.medium => 'medium',
   ChatEffort.high => 'high',
-  ChatEffort.max => 'xhigh',
+  ChatEffort.max => 'high',
 };
 
 const _openAiReasoningPrefixes = <String>['o1', 'o3', 'o4-mini', 'gpt-5'];

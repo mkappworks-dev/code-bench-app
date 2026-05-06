@@ -8,6 +8,8 @@ String? providerLabelFor(String? providerId) {
     'gemini' => 'Gemini API',
     'ollama' => 'Ollama',
     'custom' => 'Custom',
-    _ => null,
+    // Fall through with the raw id so legacy or renamed providers still
+    // surface a searchable badge instead of disappearing silently.
+    _ => providerId,
   };
 }

@@ -58,7 +58,14 @@ List<String> buildClaudeCliArgs({
   required bool isFirstTurn,
   ProviderTurnSettings? settings,
 }) {
-  final modelId = settings?.modelId;
+  // Defensive: modelId is sourced from a curated picker today, but a future
+  // BYO-modelId path could land a `--`-prefixed string straight into argv —
+  // matches the github_service.dart flag-shape guard posture.
+  var modelId = settings?.modelId;
+  if (modelId != null && modelId.startsWith('-')) {
+    sLog('[ClaudeCli] rejected flag-shaped modelId at argv boundary');
+    modelId = null;
+  }
   final effort = settings?.effort;
   final systemPrompt = settings?.systemPrompt;
   final permissionMode = mapClaudePermissionMode(
