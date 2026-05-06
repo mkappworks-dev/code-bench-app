@@ -10,16 +10,10 @@ part of 'claude_cli_datasource_process.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(claudeCliDatasourceProcess)
-final claudeCliDatasourceProcessProvider =
-    ClaudeCliDatasourceProcessProvider._();
+final claudeCliDatasourceProcessProvider = ClaudeCliDatasourceProcessProvider._();
 
 final class ClaudeCliDatasourceProcessProvider
-    extends
-        $FunctionalProvider<
-          AIProviderDatasource,
-          AIProviderDatasource,
-          AIProviderDatasource
-        >
+    extends $FunctionalProvider<AIProviderDatasource, AIProviderDatasource, AIProviderDatasource>
     with $Provider<AIProviderDatasource> {
   ClaudeCliDatasourceProcessProvider._()
     : super(
@@ -37,9 +31,7 @@ final class ClaudeCliDatasourceProcessProvider
 
   @$internal
   @override
-  $ProviderElement<AIProviderDatasource> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<AIProviderDatasource> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   AIProviderDatasource create(Ref ref) {
@@ -48,12 +40,8 @@ final class ClaudeCliDatasourceProcessProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(AIProviderDatasource value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<AIProviderDatasource>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<AIProviderDatasource>(value));
   }
 }
 
-String _$claudeCliDatasourceProcessHash() =>
-    r'a5cd39b9127a0cb79dba148a733c5d7847ccfb0f';
+String _$claudeCliDatasourceProcessHash() => r'a5cd39b9127a0cb79dba148a733c5d7847ccfb0f';

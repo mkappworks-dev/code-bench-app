@@ -13,12 +13,7 @@ part of 'codex_cli_datasource_process.dart';
 final codexCliDatasourceProcessProvider = CodexCliDatasourceProcessProvider._();
 
 final class CodexCliDatasourceProcessProvider
-    extends
-        $FunctionalProvider<
-          AIProviderDatasource,
-          AIProviderDatasource,
-          AIProviderDatasource
-        >
+    extends $FunctionalProvider<AIProviderDatasource, AIProviderDatasource, AIProviderDatasource>
     with $Provider<AIProviderDatasource> {
   CodexCliDatasourceProcessProvider._()
     : super(
@@ -36,9 +31,7 @@ final class CodexCliDatasourceProcessProvider
 
   @$internal
   @override
-  $ProviderElement<AIProviderDatasource> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<AIProviderDatasource> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   AIProviderDatasource create(Ref ref) {
@@ -47,12 +40,8 @@ final class CodexCliDatasourceProcessProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(AIProviderDatasource value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<AIProviderDatasource>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<AIProviderDatasource>(value));
   }
 }
 
-String _$codexCliDatasourceProcessHash() =>
-    r'41a7501a03b5ff4f370ec29058a37d181966fc5a';
+String _$codexCliDatasourceProcessHash() => r'41a7501a03b5ff4f370ec29058a37d181966fc5a';
