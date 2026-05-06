@@ -227,11 +227,20 @@ When strip is visible:
 - Empty-field placeholder: `Sign in to send a message…` / `Configure $provider to send…`
 - Filled-field placeholder: unchanged (don't clobber the draft hint).
 
-### CTA button behaviour
+### CTA button behaviour — two icon buttons
 
-- Lucide copy icon trailing the command text (`AppIcons.copy` → `LucideIcons.copy`).
-- On press: `Clipboard.setData(ClipboardData(text: signInCommand))` then `AppSnackBar.show(context, '"$cmd" copied — paste in your terminal', type: AppSnackBarType.success)`.
-- Wrapped in try/catch (per CLAUDE.md Rule 1, clipboard is one of the two permitted exceptions for widget-layer try/catch); failure logs via `dLog` and falls back to a passive snackbar.
+The strip's right side has the command text inline (`claude auth login` / `codex login`) followed by **two icon buttons** placed next to each other:
+
+| Button | Icon | Behaviour |
+|---|---|---|
+| **Copy** | `AppIcons.copy` (`LucideIcons.copy`) | `Clipboard.setData(ClipboardData(text: signInCommand))` then snackbar `'"$cmd" copied — paste in your terminal'` |
+| **Open in terminal** | `LucideIcons.terminal` (add new entry in `lib/core/constants/app_icons.dart` as `AppIcons.terminal`) | First `Clipboard.setData(...)`, then `await ref.read(ideLaunchActionsProvider.notifier).openInTerminal(projectPath);` — opens the user's configured terminal app (`generalPrefs.terminalApp`, default `Terminal`) at the active project's working directory. Snackbar reports either success (`'Opened $terminalApp — paste to sign in'`) or the existing failure-string surface from `IdeLaunchDatasourceProcess.openInTerminal`. |
+
+Reusing `ideLaunchActionsProvider.openInTerminal` means: ✅ existing flag-shape defense in `IdeLaunchDatasourceProcess.buildTerminalArgs` applies; ✅ `terminalApp` preference is honoured (Terminal / iTerm / Warp / Ghostty etc.); ✅ no new service needed; ✅ `Process.run` stays in the existing datasource per the dependency rule.
+
+The clipboard call is wrapped in try/catch (per CLAUDE.md Rule 1, clipboard is one of the two permitted widget-level exceptions); the `openInTerminal` call routes through the Actions notifier so it doesn't need a widget-layer try/catch.
+
+The terminal app does **not** auto-type the command — `open -a $TERMINAL_APP -- $PROJECT_PATH` opens a fresh shell at the project cwd. The user pastes from clipboard. We deliberately don't try to drive keystrokes (security-sensitive, terminal-app-coupled, not portable).
 
 ### Visual tokens (no new tokens needed)
 
@@ -297,7 +306,18 @@ Exhaustive matrix over `(transport-pref, providerEntry, apiKey)` → expected `T
 - **No Open Terminal.app** action — clipboard-only, leaves the user in control.
 - **No persisted auth-required marker** in chat history — the proactive gate makes this unnecessary.
 - **No "Sign in" inline launcher** that runs `claude auth login` / `codex login` in a pseudo-terminal — those commands are interactive and security-sensitive; clipboard handoff is the correct affordance.
-- **No probe-result cache TTL** — probes are cheap (~150 ms / ~50 ms), and freshness is more valuable than the savings. If profiling shows a hotspot we can add a 30-s TTL inside `AIProviderService` later.
+- **No probe-result cache TTL** — probes are cheap (~150 ms / ~50 ms), and freshness is more valuable than the savings.
+
+  *How we'd know to add a TTL later (concrete trigger criteria):*
+
+  | Signal | How to gather | Threshold that justifies a TTL |
+  |---|---|---|
+  | Probe wall-time | Wrap each `verifyAuth()` call in `dLog('[AIProviderService] verifyAuth($id) took ${sw.elapsedMilliseconds}ms')` and read the breadcrumbs during normal use | Any single probe consistently > 500 ms (e.g. a slow-mounted volume, antivirus scan delaying `Process.start`) |
+  | Probe frequency | Count `verifyAuth` invocations per second via the same dLog; `grep -c verifyAuth` over a 60 s session | More than 3 invocations per second sustained, or more than once per keystroke (would indicate the chat input is over-watching) |
+  | Frame-budget impact | Flutter DevTools → Performance → Timeline; record while opening providers screen / switching sessions; look for `verifyAuth` frames in the >16 ms band | Any frame > 16 ms with `verifyAuth` on the critical path (causes a dropped frame) |
+  | UI rebuild churn | dLog at the top of `aiProviderStatusProvider.build()`; observe rebuild count during navigation | Provider rebuilds during interactions that shouldn't invalidate it (e.g., typing in chat → status rebuild) |
+
+  Adding a 30 s TTL would live inside `AIProviderService` (not the datasource, so the freshness guarantee in the pre-send path is preserved). Implementation sketch: a per-`(providerId, probeKind)` `(DateTime stampedAt, Future<X> result)` map; reads return the cached future if `now - stampedAt < 30s`, else re-probe. ~30 LoC, easily added if any signal above hits its threshold.
 
 ## Architecture compliance
 
