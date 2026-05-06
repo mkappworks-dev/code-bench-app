@@ -13,6 +13,7 @@ class ArchiveProjectGroup extends StatefulWidget {
     required this.projectName,
     required this.sessions,
     required this.initiallyExpanded,
+    required this.isLoading,
     required this.onUnarchive,
     required this.onDelete,
     required this.onUnarchiveAll,
@@ -22,6 +23,7 @@ class ArchiveProjectGroup extends StatefulWidget {
   final String projectName;
   final List<ChatSession> sessions;
   final bool initiallyExpanded;
+  final bool isLoading;
   final void Function(String sessionId) onUnarchive;
   final void Function(String sessionId) onDelete;
   final VoidCallback onUnarchiveAll;
@@ -109,14 +111,14 @@ class _ArchiveProjectGroupState extends State<ArchiveProjectGroup> {
                           icon: AppIcons.archiveRestore,
                           label: 'Unarchive All',
                           isDestructive: false,
-                          onTap: widget.onUnarchiveAll,
+                          onTap: widget.isLoading ? null : widget.onUnarchiveAll,
                         ),
                         const SizedBox(width: 5),
                         _ActionChip(
                           icon: AppIcons.trash,
                           label: 'Delete All',
                           isDestructive: true,
-                          onTap: () => _confirmDeleteAll(context),
+                          onTap: widget.isLoading ? null : () => _confirmDeleteAll(context),
                         ),
                       ],
                     ),
@@ -132,6 +134,7 @@ class _ArchiveProjectGroupState extends State<ArchiveProjectGroup> {
                 .map(
                   (s) => ArchivedSessionCard(
                     session: s,
+                    isLoading: widget.isLoading,
                     onUnarchive: () => widget.onUnarchive(s.sessionId),
                     onDelete: () => widget.onDelete(s.sessionId),
                   ),
@@ -149,7 +152,7 @@ class _ActionChip extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isDestructive;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   State<_ActionChip> createState() => _ActionChipState();
@@ -171,7 +174,7 @@ class _ActionChipState extends State<_ActionChip> {
         : (hovered ? c.accentBorderTeal : c.chipStroke);
 
     return MouseRegion(
-      cursor: SystemMouseCursors.click,
+      cursor: widget.onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(

@@ -8,9 +8,16 @@ import '../../../core/widgets/app_dialog.dart';
 import '../../../data/session/models/chat_session.dart';
 
 class ArchivedSessionCard extends StatefulWidget {
-  const ArchivedSessionCard({super.key, required this.session, required this.onUnarchive, required this.onDelete});
+  const ArchivedSessionCard({
+    super.key,
+    required this.session,
+    required this.isLoading,
+    required this.onUnarchive,
+    required this.onDelete,
+  });
 
   final ChatSession session;
+  final bool isLoading;
   final VoidCallback onUnarchive;
   final VoidCallback onDelete;
 
@@ -106,14 +113,14 @@ class _ArchivedSessionCardState extends State<ArchivedSessionCard> {
                 icon: AppIcons.archiveRestore,
                 label: 'Unarchive',
                 isDestructive: false,
-                onTap: widget.onUnarchive,
+                onTap: widget.isLoading ? null : widget.onUnarchive,
               ),
               const SizedBox(width: 6),
               _CardChip(
                 icon: AppIcons.trash,
                 label: 'Delete',
                 isDestructive: true,
-                onTap: () => _confirmDelete(context),
+                onTap: widget.isLoading ? null : () => _confirmDelete(context),
               ),
             ],
           ),
@@ -129,7 +136,7 @@ class _CardChip extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isDestructive;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   State<_CardChip> createState() => _CardChipState();
@@ -151,7 +158,7 @@ class _CardChipState extends State<_CardChip> {
         : (hovered ? c.accentBorderTeal : c.chipStroke);
 
     return MouseRegion(
-      cursor: SystemMouseCursors.click,
+      cursor: widget.onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
