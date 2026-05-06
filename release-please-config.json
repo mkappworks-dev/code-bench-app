@@ -3,9 +3,10 @@
   "release-type": "dart",
   "pull-request-title-pattern": "chore: release v${version}",
   "pull-request-header": "Release ready for review",
-  "pull-request-footer": "- Merging this PR triggers `build-and-publish.yml` (chained from `release-please.yml`) to build, sign, notarize, upload the macOS DMG and ZIP, and publish the draft release — which is what creates the git tag.\n- Do not edit `pubspec.yaml` or `CHANGELOG.md` manually — release-please owns both.\n- To skip a release, close this PR; release-please will reopen it on the next merge to main.",
+  "pull-request-footer": "- Merging this PR triggers `build-and-publish.yml` (chained from `release-please.yml`) to build, sign, notarize, upload the macOS DMG and ZIP, and publish the draft release. The git tag is created up front (`force-tag-creation: true`) so release-please has a stable anchor for the next release cycle.\n- Do not edit `pubspec.yaml` or `CHANGELOG.md` manually — release-please owns both.\n- To skip a release, close this PR; release-please will reopen it on the next merge to main.",
   "include-component-in-tag": false,
   "draft": true,
+  "force-tag-creation": true,
   "packages": {
     ".": {
       "package-name": "code-bench-app",
