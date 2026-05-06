@@ -9,6 +9,10 @@ import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
+import '../../../data/shared/session_settings.dart';
+import '../models/provider_capabilities.dart';
+import '../models/provider_turn_settings.dart';
+import '../util/setting_mappers.dart';
 import 'ai_remote_datasource.dart';
 import 'text_streaming_datasource.dart';
 
@@ -26,14 +30,29 @@ class OllamaRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
   AIProvider get provider => AIProvider.ollama;
 
   @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => const ProviderCapabilities(
+    supportsModelOverride: true,
+    supportsSystemPrompt: true,
+    supportedModes: {ChatMode.chat},
+    supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
+    supportedPermissions: <ChatPermission>{},
+  );
+
+  @override
   Stream<String> streamMessage({
     required List<ChatMessage> history,
     required String prompt,
     required AIModel model,
     String? systemPrompt,
+    ProviderTurnSettings? settings,
   }) async* {
     final messages = _buildMessages(history, prompt, systemPrompt);
-    final body = {'model': model.modelId, 'messages': messages, 'stream': true};
+    final body = <String, dynamic>{
+      'model': model.modelId,
+      'messages': messages,
+      'stream': true,
+      if (settings?.effort != null) 'think': mapOllamaThink(settings!.effort),
+    };
 
     try {
       final response = await _dio.post(
