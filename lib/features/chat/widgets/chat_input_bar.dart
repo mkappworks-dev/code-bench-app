@@ -216,6 +216,8 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
               showErrorSnackBar(context, 'Stream ended unexpectedly — try again.');
             case AgentToolDispatchFailed():
               break; // surfaced to the model as a tool_result
+            case AgentNetworkExhausted():
+              showErrorSnackBar(context, 'Stream ended unexpectedly — try again.');
             case AgentUnknownError(:final error):
               showErrorSnackBar(context, userMessage(error, fallback: 'Failed to get a response.'));
           }
