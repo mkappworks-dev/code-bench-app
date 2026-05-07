@@ -88,7 +88,12 @@ class SessionService {
   Future<void> archiveSession(String sessionId) => _session.archiveSession(sessionId);
   Future<void> unarchiveSession(String sessionId) => _session.unarchiveSession(sessionId);
   Future<void> deleteAllSessionsAndMessages() async {
-    await _chatStreamRegistry?.cancelAll();
+    try {
+      await _chatStreamRegistry?.cancelAll();
+    } catch (e, st) {
+      // Don't let a stuck cancel block the user's "delete everything" intent — log and proceed.
+      sLog('[SessionService] cancelAll during deleteAllSessionsAndMessages failed: $e\n$st');
+    }
     return _session.deleteAllSessionsAndMessages();
   }
 
@@ -358,7 +363,12 @@ class SessionService {
 
         case ProviderStreamFailure(:final error):
           if (contentBuffer.isNotEmpty || toolEvents.isNotEmpty) {
-            await _session.persistMessage(sessionId, snapshot(streaming: false));
+            // Best-effort persist of the partial assistant snapshot; never let a DB error mask the original provider failure that's about to be thrown.
+            try {
+              await _session.persistMessage(sessionId, snapshot(streaming: false));
+            } catch (e, st) {
+              sLog('[SessionService] partial-content persist failed during failure path: $e\n$st');
+            }
           }
           Error.throwWithStackTrace(StreamAbortedUnexpectedlyException(error.toString()), StackTrace.current);
       }

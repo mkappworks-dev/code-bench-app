@@ -167,10 +167,16 @@ class ChatStreamRegistryService {
     handle.onCancel = null;
     handle.retryTimer?.cancel();
     handle.retryTimer = null;
-    await handle.subscription?.cancel();
-    handle.subscription = null;
-    handle._emit(const ChatStreamState.idle());
-    await _flushBufferToPersist(sessionId);
+    try {
+      // Wrap so a broken-pipe throw from the underlying transport's kill cannot prevent the in-flight buffer from being flushed.
+      await handle.subscription?.cancel();
+    } catch (e, st) {
+      sLog('[ChatStreamRegistryService] subscription cancel threw for $sessionId: $e\n$st');
+    } finally {
+      handle.subscription = null;
+      handle._emit(const ChatStreamState.idle());
+      await _flushBufferToPersist(sessionId);
+    }
   }
 
   Future<void> cancelAll() async {
