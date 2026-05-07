@@ -13,6 +13,7 @@ import '../util/setting_mappers.dart';
 import 'ai_provider_datasource.dart';
 import 'binary_resolver_process.dart';
 import 'claude_cli_stream_parser.dart';
+import 'process_launcher.dart';
 import 'provider_input_guards.dart';
 
 part 'claude_cli_datasource_process.g.dart';
@@ -97,9 +98,12 @@ const int _consecutiveParseFailureLimit = 5;
 /// Spawns the locally-installed `claude` CLI binary and streams its
 /// `--output-format stream-json` output, normalized to [ProviderRuntimeEvent].
 class ClaudeCliDatasourceProcess implements AIProviderDatasource {
-  ClaudeCliDatasourceProcess({required this.binaryPath});
+  ClaudeCliDatasourceProcess({required this.binaryPath, ProcessLauncher? processLauncher, String? resolvedPath})
+    : _processLauncher = processLauncher ?? defaultProcessLauncher,
+      _resolvedPath = resolvedPath;
 
   final String binaryPath;
+  final ProcessLauncher _processLauncher;
 
   final Map<String, Process> _processes = {};
   final Set<String> _knownSessions = {};
@@ -251,7 +255,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       if (exePath == null) return;
 
       try {
-        spawned = await Process.start(
+        spawned = await _processLauncher(
           exePath,
           args,
           workingDirectory: workingDirectory,
@@ -277,7 +281,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
           if (parentEnv['SHELL'] != null) 'SHELL': parentEnv['SHELL']!,
         };
         try {
-          spawned = await Process.start(
+          spawned = await _processLauncher(
             exePath,
             args,
             workingDirectory: workingDirectory,
