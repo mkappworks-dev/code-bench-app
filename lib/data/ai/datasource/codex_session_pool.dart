@@ -42,6 +42,7 @@ class CodexSessionPool {
   final ExePathResolver? _exePathResolver;
 
   final Map<String, CodexSession> _sessions = {};
+  // Resolved independently of CodexCliDatasourceProcess.detect()'s cache; each layer probes once and reuses its own field.
   String? _resolvedPath;
   String? _shellPath;
 
@@ -53,8 +54,8 @@ class CodexSessionPool {
     }
     if (existing != null) {
       // Same chat moved between projects — rare; tear down and rebuild.
-      await existing.dispose();
       _sessions.remove(sessionId);
+      await existing.dispose();
     }
     final session = _sessionFactory(
       sessionId: sessionId,
