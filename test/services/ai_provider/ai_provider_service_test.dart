@@ -38,10 +38,11 @@ class _FakeDs implements AIProviderDatasource {
   }) => throw UnimplementedError();
 
   @override
-  void respondToPermissionRequest(String requestId, {required bool approved}) => throw UnimplementedError();
+  void respondToPermissionRequest(String sessionId, String requestId, {required bool approved}) =>
+      throw UnimplementedError();
 
   @override
-  void cancel() => throw UnimplementedError();
+  void cancel(String sessionId) => throw UnimplementedError();
 }
 
 class _AIProviderServiceUnderTest extends AIProviderService {

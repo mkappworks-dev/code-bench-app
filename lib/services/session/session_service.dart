@@ -307,7 +307,7 @@ class SessionService {
       settings: settings,
     )) {
       if (cancelFlag()) {
-        ds.cancel();
+        ds.cancel(sessionId);
         interrupted = true;
         break;
       }
@@ -351,7 +351,7 @@ class SessionService {
                   PermissionRequest(toolEventId: requestId, toolName: toolName, summary: toolName, input: toolInput),
                 )
               : true;
-          ds.respondToPermissionRequest(requestId, approved: approved);
+          ds.respondToPermissionRequest(sessionId, requestId, approved: approved);
 
         case ProviderStreamDone():
           break; // Loop ends naturally.

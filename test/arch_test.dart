@@ -18,6 +18,7 @@ void main() {
     //   • platform_utils.dart — read-only Platform detection, no I/O
     //   • process_launcher.dart — typedef wrapping Process.start, lives in datasource/
     //   • codex_session.dart — owns a Process field and Process.start calls, lives in datasource/
+    //   • codex_session_pool.dart — uses Platform.environment to build the minimal env for spawned sessions, lives in datasource/
     test('dart:io import only in permitted paths', () {
       final violations = _grepImport("dart:io", 'lib/')
           .where(
@@ -29,7 +30,8 @@ void main() {
                 !path.contains('apply_repository.dart') &&
                 !path.contains('platform_utils.dart') &&
                 !path.contains('process_launcher.dart') &&
-                !path.contains('codex_session.dart'),
+                !path.contains('codex_session.dart') &&
+                !path.contains('codex_session_pool.dart'),
           )
           .toList();
       expect(violations, isEmpty, reason: 'dart:io imported outside permitted paths:\n${violations.join('\n')}');

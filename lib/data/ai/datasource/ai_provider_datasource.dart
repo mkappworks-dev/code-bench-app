@@ -35,12 +35,14 @@ abstract interface class AIProviderDatasource {
     ProviderTurnSettings? settings,
   });
 
-  /// Cancel any in-flight request.
-  void cancel();
+  /// Cancel the in-flight turn for [sessionId]. No-op if the session has no
+  /// active turn or no associated process.
+  void cancel(String sessionId);
 
-  /// Respond to a pending server-initiated permission request.
-  /// No-op for providers that don't support interactive approval (e.g. HTTP/SSE).
-  void respondToPermissionRequest(String requestId, {required bool approved});
+  /// Resolve a server-initiated permission request originating from
+  /// [sessionId]'s stream. No-op for providers that don't support
+  /// interactive approval.
+  void respondToPermissionRequest(String sessionId, String requestId, {required bool approved});
 
   /// Returns `AuthStatus.unknown` (not a thrown exception) on probe failure
   /// — send is never blocked on a probe we couldn't run.

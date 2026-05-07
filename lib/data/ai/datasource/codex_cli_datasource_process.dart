@@ -12,7 +12,7 @@ import '../../shared/session_settings.dart';
 import '../util/setting_mappers.dart';
 import 'ai_provider_datasource.dart';
 import 'binary_resolver_process.dart';
-import 'codex_session.dart';
+import 'codex_session_pool.dart';
 import 'process_launcher.dart';
 
 part 'codex_cli_datasource_process.g.dart';
@@ -213,10 +213,10 @@ AIProviderDatasource codexCliDatasourceProcess(Ref ref) {
 ///   8. Server may send approval requests — respond via [respondToRequest]
 class CodexCliDatasourceProcess implements AIProviderDatasource {
   CodexCliDatasourceProcess({required this.binaryPath, ProcessLauncher? processLauncher})
-    : _processLauncher = processLauncher ?? defaultProcessLauncher;
+    : _pool = CodexSessionPool(binaryPath: binaryPath, processLauncher: processLauncher);
 
   final String binaryPath;
-  final ProcessLauncher _processLauncher;
+  final CodexSessionPool _pool;
 
   /// Absolute path to the `codex` binary, resolved via the user's login
   /// shell during [detect]. macOS GUI launches inherit a stripped PATH that
@@ -228,8 +228,6 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   /// was resolved. Passed to child processes so shebang interpreters (e.g.
   /// `node` for `#!/usr/bin/env node`) are reachable in release builds.
   String? _shellPath;
-
-  CodexSession? _session;
 
   @override
   String get id => 'codex';
@@ -295,67 +293,16 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     required String workingDirectory,
     ProviderTurnSettings? settings,
   }) async* {
-    final session = await _ensureSession(sessionId, workingDirectory);
+    final session = await _pool.sessionFor(sessionId, workingDirectory);
     yield* session.sendAndStream(prompt: prompt, settings: settings);
   }
 
-  Future<CodexSession> _ensureSession(String sessionId, String workingDirectory) async {
-    final existing = _session;
-    if (existing != null && existing.sessionId == sessionId && existing.workingDirectory == workingDirectory) {
-      return existing;
-    }
-    if (existing != null) {
-      await existing.dispose();
-    }
-    _session = CodexSession(
-      sessionId: sessionId,
-      workingDirectory: workingDirectory,
-      exePath: await _resolveExePath(),
-      env: _buildMinimalEnv(),
-      processLauncher: _processLauncher,
-    );
-    return _session!;
-  }
-
-  Map<String, String> _buildMinimalEnv() {
-    final parentEnv = Platform.environment;
-    return <String, String>{
-      if (parentEnv['HOME'] != null) 'HOME': parentEnv['HOME']!,
-      'PATH': _shellPath ?? parentEnv['PATH'] ?? '/usr/bin:/bin:/usr/sbin:/sbin',
-      if (parentEnv['USER'] != null) 'USER': parentEnv['USER']!,
-      if (parentEnv['LANG'] != null) 'LANG': parentEnv['LANG']!,
-      if (parentEnv['TMPDIR'] != null) 'TMPDIR': parentEnv['TMPDIR']!,
-      if (parentEnv['SHELL'] != null) 'SHELL': parentEnv['SHELL']!,
-      if (parentEnv['CODEX_HOME'] != null) 'CODEX_HOME': parentEnv['CODEX_HOME']!,
-    };
-  }
+  @override
+  void cancel(String sessionId) => _pool.cancel(sessionId);
 
   @override
-  void cancel() => _session?.cancel();
-
-  @override
-  void respondToPermissionRequest(String requestId, {required bool approved}) =>
-      _session?.respondToPermissionRequest(requestId, approved: approved);
-
-  /// Returns the absolute exe path or throws with a user-facing message.
-  /// The caller's `catch` in [_send] surfaces the message via
-  /// [ProviderStreamFailure].
-  Future<String> _resolveExePath() async {
-    final cached = _resolvedPath;
-    if (cached != null) return cached;
-    final r = await resolveBinary(binaryPath);
-    switch (r) {
-      case BinaryFound(:final path, :final shellPath):
-        _resolvedPath = path;
-        _shellPath = shellPath;
-        return path;
-      case BinaryNotFound():
-        throw Exception('Codex CLI is not installed or not on PATH');
-      case BinaryProbeFailed(:final reason):
-        sLog('[CodexCli] _ensureProcess resolve failed: $reason');
-        throw Exception('Could not probe Codex CLI: $reason');
-    }
-  }
+  void respondToPermissionRequest(String sessionId, String requestId, {required bool approved}) =>
+      _pool.respondToPermissionRequest(sessionId, requestId, approved: approved);
 
   @override
   Future<AuthStatus> verifyAuth() async {

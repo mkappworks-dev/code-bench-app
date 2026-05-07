@@ -101,7 +101,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
   final String binaryPath;
 
-  Process? _process;
+  final Map<String, Process> _processes = {};
   final Set<String> _knownSessions = {};
 
   /// Absolute path to the `claude` binary, resolved via the user's login
@@ -292,7 +292,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
         }
       }
 
-      _process = spawned;
+      _processes[sessionId] = spawned;
 
       // EOF stdin up-front: newer CLI versions block reading stdin in `-p` mode and exit 1 after a 3s warning.
       unawaited(spawned.stdin.close());
@@ -367,9 +367,9 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       dLog('[ClaudeCli] send failed: ${redactSecrets('$e')}\n$st');
       controller.add(ProviderStreamFailure(error: e));
     } finally {
-      // Only clear _process if it still points to ours — a later sendAndStream
-      // call may have already overwritten it.
-      if (identical(_process, spawned)) _process = null;
+      if (identical(_processes[sessionId], spawned)) {
+        _processes.remove(sessionId);
+      }
       await controller.close();
     }
   }
@@ -399,15 +399,12 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   }
 
   @override
-  void cancel() {
-    _process?.kill(ProcessSignal.sigterm);
-    // The controller closes via the `finally` in [_stream] when the process
-    // exits — no need to close it here, and doing so would race with a
-    // freshly-spawned turn.
+  void cancel(String sessionId) {
+    _processes[sessionId]?.kill(ProcessSignal.sigterm);
   }
 
   @override
-  void respondToPermissionRequest(String requestId, {required bool approved}) {
+  void respondToPermissionRequest(String sessionId, String requestId, {required bool approved}) {
     // Claude Code CLI handles its own permission UI inline and never forwards prompts to the host.
   }
 
