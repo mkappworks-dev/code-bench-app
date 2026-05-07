@@ -199,18 +199,7 @@ AIProviderDatasource codexCliDatasourceProcess(Ref ref) {
   return CodexCliDatasourceProcess(binaryPath: 'codex');
 }
 
-/// AI provider that connects to Codex via the `codex app-server` JSON-RPC 2.0
-/// interface.
-///
-/// Protocol lifecycle per session:
-///   1. Spawn `codex app-server` (once per working directory)
-///   2. Send `initialize` request → receive userAgent (version)
-///   3. Send `initialized` notification
-///   4. Send `account/read` to check auth
-///   5. Send `thread/start` to create a session
-///   6. Send `turn/start` for each user message
-///   7. Receive streaming notifications (text, reasoning, tool events)
-///   8. Server may send approval requests — respond via [respondToRequest]
+/// Codex CLI provider; install-level concerns (detect, verifyAuth) live here, per-chat process plumbing in [CodexSessionPool].
 class CodexCliDatasourceProcess implements AIProviderDatasource {
   CodexCliDatasourceProcess({required this.binaryPath, ProcessLauncher? processLauncher})
     : _pool = CodexSessionPool(binaryPath: binaryPath, processLauncher: processLauncher);

@@ -9,14 +9,7 @@ import '../util/setting_mappers.dart';
 import 'process_launcher.dart';
 import 'provider_input_guards.dart';
 
-/// Owns one Codex `app-server` process bound to one chat session.
-///
-/// Construction is pure (no I/O). The first [sendAndStream] call spawns the
-/// process, performs the JSON-RPC handshake (`initialize` -> `initialized`
-/// -> `thread/start`), and then forwards every `turn/start` for the session.
-/// Subsequent `sendAndStream` calls reuse the same process and thread.
-///
-/// Lifecycle ends when [dispose] is called or the process exits.
+/// Owns one Codex `app-server` process bound to one chat session; first [sendAndStream] spawns + handshakes, [dispose] tears down.
 class CodexSession {
   CodexSession({
     required this.sessionId,
