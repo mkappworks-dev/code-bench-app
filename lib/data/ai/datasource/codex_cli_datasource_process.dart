@@ -52,21 +52,130 @@ Map<String, dynamic> buildCodexTurnStartParams(
   ChatEffort? effort,
   ChatPermission? permission,
 }) {
-  // Codex (with a ChatGPT account) only accepts a narrow set of model ids on
-  // `turn/start`; forwarding e.g. `gpt-4o` returns a 400 with
-  // `"The 'gpt-4o' model is not supported when using Codex with a ChatGPT
-  // account."`. The allowlist lives on `AIModels.isCodexCompatibleModel`.
-  final effectiveModelId = (modelId != null && AIModels.isCodexCompatibleModel(modelId)) ? modelId : null;
+  // The picker's OpenAI section is fed by Codex's `model/list` RPC when
+  // `openaiTransport == 'cli'`, so any [modelId] reaching here is already
+  // valid for this account. Forward it verbatim — when null, Codex picks
+  // its account-tier default (e.g. gpt-5.5 on free, varies by plan).
   return {
     'threadId': threadId,
     'input': [
       {'type': 'text', 'text': prompt},
     ],
-    'model': ?effectiveModelId,
+    'model': ?modelId,
     if (effort != null) 'effort': mapCodexEffort(effort),
     if (permission != null) 'sandboxPolicy': mapCodexSandboxPolicy(permission),
     if (permission != null) 'approvalPolicy': mapCodexApprovalPolicy(permission),
   };
+}
+
+/// Parses the JSON result of a `model/list` JSON-RPC response and maps each
+/// non-hidden entry to an [AIModel]. Visible for testing so the parsing
+/// contract can be exercised without a live `codex app-server`.
+@visibleForTesting
+List<AIModel> parseCodexModelList(Map<String, dynamic> result) {
+  final data = result['data'];
+  if (data is! List) return const [];
+  final models = <AIModel>[];
+  for (final entry in data) {
+    if (entry is! Map) continue;
+    if (entry['hidden'] == true) continue;
+    final id = entry['id'];
+    final modelId = entry['model'];
+    final displayName = entry['displayName'];
+    if (id is! String || id.isEmpty) continue;
+    if (modelId is! String || modelId.isEmpty) continue;
+    models.add(
+      AIModel(
+        id: id,
+        provider: AIProvider.openai,
+        name: (displayName is String && displayName.isNotEmpty) ? displayName : id,
+        modelId: modelId,
+      ),
+    );
+  }
+  return models;
+}
+
+/// Spawns a short-lived `codex app-server`, performs the JSON-RPC handshake
+/// (`initialize` → `initialized`), then queries `model/list` for the models
+/// the connected ChatGPT account supports. Hidden entries are filtered out.
+///
+/// Isolated from [CodexCliDatasourceProcess]'s long-lived turn-streaming
+/// process so a model-list refresh can never disturb an in-flight chat.
+Future<List<AIModel>> fetchCodexAvailableModels({String binaryPath = 'codex'}) async {
+  final resolution = await resolveBinary(binaryPath);
+  final String exePath;
+  final String? loginShellPath;
+  switch (resolution) {
+    case BinaryFound(:final path, :final shellPath):
+      exePath = path;
+      loginShellPath = shellPath;
+    case BinaryNotFound():
+      throw Exception('Codex CLI is not installed or not on PATH');
+    case BinaryProbeFailed(:final reason):
+      throw Exception('Could not probe Codex CLI: $reason');
+  }
+
+  final parentEnv = Platform.environment;
+  final env = <String, String>{
+    if (parentEnv['HOME'] != null) 'HOME': parentEnv['HOME']!,
+    'PATH': loginShellPath ?? parentEnv['PATH'] ?? '/usr/bin:/bin:/usr/sbin:/sbin',
+    if (parentEnv['USER'] != null) 'USER': parentEnv['USER']!,
+    if (parentEnv['CODEX_HOME'] != null) 'CODEX_HOME': parentEnv['CODEX_HOME']!,
+  };
+
+  Process? proc;
+  StreamSubscription<String>? sub;
+  try {
+    proc = await Process.start(
+      exePath,
+      ['app-server'],
+      runInShell: false,
+      includeParentEnvironment: false,
+      environment: env,
+    );
+
+    final pending = <int, Completer<Map<String, dynamic>>>{};
+    sub = proc.stdout.transform(const Utf8Decoder(allowMalformed: true)).transform(const LineSplitter()).listen((line) {
+      if (line.trim().isEmpty) return;
+      try {
+        final json = jsonDecode(line) as Map<String, dynamic>;
+        final id = json['id'];
+        if (id is int) {
+          final c = pending.remove(id);
+          if (c != null && !c.isCompleted) {
+            if (json['error'] != null) {
+              c.completeError(Exception('codex error: ${json['error']}'));
+            } else {
+              c.complete((json['result'] as Map<String, dynamic>?) ?? <String, dynamic>{});
+            }
+          }
+        }
+      } catch (_) {}
+    });
+
+    Future<Map<String, dynamic>> rpc(int id, String method, Map<String, dynamic> params) {
+      final c = Completer<Map<String, dynamic>>();
+      pending[id] = c;
+      proc!.stdin.writeln(jsonEncode({'jsonrpc': '2.0', 'id': id, 'method': method, 'params': params}));
+      return c.future.timeout(const Duration(seconds: 10));
+    }
+
+    void notify(String method, [Map<String, dynamic>? params]) {
+      proc!.stdin.writeln(jsonEncode({'jsonrpc': '2.0', 'method': method, 'params': ?params}));
+    }
+
+    await rpc(1, 'initialize', {
+      'clientInfo': {'name': 'code_bench', 'title': 'Code Bench', 'version': '1.0.0'},
+      'capabilities': {'experimentalApi': true},
+    });
+    notify('initialized');
+    final result = await rpc(2, 'model/list', {'includeHidden': false});
+    return parseCodexModelList(result);
+  } finally {
+    await sub?.cancel();
+    proc?.kill();
+  }
 }
 
 @visibleForTesting

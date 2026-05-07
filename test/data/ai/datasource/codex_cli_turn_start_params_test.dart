@@ -1,5 +1,4 @@
 import 'package:code_bench_app/data/ai/datasource/codex_cli_datasource_process.dart';
-import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -38,28 +37,17 @@ void main() {
       expect((input.first as Map<String, dynamic>)['text'], '');
     });
 
-    test('includes model when it is Codex-compatible', () {
-      final params = buildCodexTurnStartParams('thread-1', 'hi', modelId: 'gpt-5-codex');
-      expect(params['model'], 'gpt-5-codex');
+    test('forwards modelId verbatim — picker is the gate', () {
+      // The OpenAI section of the picker is fed by Codex's `model/list` RPC
+      // when transport=cli, so any id reaching here is already valid for the
+      // active account. No client-side allowlist.
+      final params = buildCodexTurnStartParams('thread-1', 'hi', modelId: 'gpt-5.5');
+      expect(params['model'], 'gpt-5.5');
     });
 
-    test('omits model when it is not Codex-compatible (e.g. gpt-4o)', () {
-      // Codex with a ChatGPT account 400s on non-allowlisted models. Dropping
-      // the field lets Codex pick its own default rather than failing the turn.
-      final params = buildCodexTurnStartParams('thread-1', 'hi', modelId: 'gpt-4o');
+    test('omits model when it is null (let Codex pick the account default)', () {
+      final params = buildCodexTurnStartParams('thread-1', 'hi');
       expect(params.containsKey('model'), isFalse);
-    });
-
-    test('AIModels.isCodexCompatibleModel allowlist', () {
-      expect(AIModels.isCodexCompatibleModel('gpt-5-codex'), isTrue);
-      expect(AIModels.isCodexCompatibleModel('gpt-5'), isTrue);
-      expect(AIModels.isCodexCompatibleModel('o1'), isTrue);
-      expect(AIModels.isCodexCompatibleModel('o3-mini'), isTrue);
-      expect(AIModels.isCodexCompatibleModel('o4-mini'), isTrue);
-      expect(AIModels.isCodexCompatibleModel('codex-mini'), isTrue);
-      expect(AIModels.isCodexCompatibleModel('gpt-4o'), isFalse);
-      expect(AIModels.isCodexCompatibleModel('gpt-4o-mini'), isFalse);
-      expect(AIModels.isCodexCompatibleModel('claude-3-5-sonnet'), isFalse);
     });
 
     test('includes effort when provided', () {

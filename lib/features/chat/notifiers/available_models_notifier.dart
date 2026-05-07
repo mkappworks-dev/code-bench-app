@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
+import '../../../data/ai/datasource/codex_cli_datasource_process.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../services/ai/ai_service.dart';
 import '../../../services/providers/providers_service.dart';
@@ -51,7 +52,17 @@ class AvailableModelsNotifier extends _$AvailableModelsNotifier {
     // configured still see something to pick. Live fetches below ADD models
     // the hardcoded list doesn't know about (e.g. brand-new releases) but
     // never replace a hardcoded entry's friendly display name.
-    final modelsById = <String, AIModel>{for (final m in AIModels.defaults) m.modelId: m};
+    //
+    // OpenAI defaults are skipped when `openaiTransport == 'cli'` — Codex
+    // accepts a different (and account-tier-specific) set of model ids, so
+    // showing `gpt-5` / `gpt-4o` in a Codex picker would mean every send
+    // 400s. The Codex `model/list` RPC below feeds the OpenAI section with
+    // ids the connected ChatGPT account actually accepts.
+    final isCodexTransport = apiKeys.openaiTransport == 'cli';
+    final modelsById = <String, AIModel>{
+      for (final m in AIModels.defaults)
+        if (!(isCodexTransport && m.provider == AIProvider.openai)) m.modelId: m,
+    };
     final failures = <AIProvider, ModelProviderFailure>{};
 
     Future<List<AIModel>> fetchFor(AIProvider provider, String apiKey) async {
@@ -64,11 +75,24 @@ class AvailableModelsNotifier extends _$AvailableModelsNotifier {
       }
     }
 
+    Future<List<AIModel>> fetchCodex() async {
+      try {
+        return await fetchCodexAvailableModels();
+      } catch (e) {
+        dLog('[AvailableModelsNotifier] codex model/list failed: ${e.runtimeType}');
+        failures[AIProvider.openai] = _classify(AIProvider.openai, e);
+        return const [];
+      }
+    }
+
     // Cloud providers are gated on a configured API key. With CLI transport
     // the key may be empty (auth lives in the CLI's own login state); we
     // skip the live fetch in that case rather than firing a guaranteed 401.
     final futures = <Future<List<AIModel>>>[
-      if (apiKeys.openai.isNotEmpty) fetchFor(AIProvider.openai, apiKeys.openai),
+      if (isCodexTransport)
+        fetchCodex()
+      else if (apiKeys.openai.isNotEmpty)
+        fetchFor(AIProvider.openai, apiKeys.openai),
       if (apiKeys.anthropic.isNotEmpty) fetchFor(AIProvider.anthropic, apiKeys.anthropic),
       if (apiKeys.gemini.isNotEmpty) fetchFor(AIProvider.gemini, apiKeys.gemini),
       if (ollamaUrl.isNotEmpty) fetchFor(AIProvider.ollama, ''),

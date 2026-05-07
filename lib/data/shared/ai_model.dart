@@ -183,7 +183,6 @@ class AIModels {
   // They are deliberately not collapsed into one predicate because the
   // categories overlap but aren't identical:
   //   chat           ⊃  reasoning
-  //   reasoning      ∩  codex-compatible
   //   adaptive-only  ⊂  anthropic
   //
   // Mappers in `data/ai/util/setting_mappers.dart` consume these predicates;
@@ -212,11 +211,6 @@ class AIModels {
   /// Subset of [openAiChatModelPrefixes] — `gpt-4o*` is chat but not reasoning.
   static const openAiReasoningPrefixes = <String>['o1', 'o3', 'o4-mini', 'gpt-5'];
 
-  /// Models accepted by Codex CLI's `turn/start` (with a ChatGPT account).
-  /// Forwarding `gpt-4o` etc. returns a 400 — drop the field for non-matching
-  /// picks and let Codex use its account default.
-  static const codexCompatiblePrefixes = <String>['gpt-5', 'codex', 'o1', 'o3', 'o4-mini'];
-
   /// Anthropic models that drive thinking adaptively and reject a manual
   /// `thinking.budget_tokens`. The Anthropic-API mapper returns null for
   /// these so the field is omitted from the request body.
@@ -232,10 +226,6 @@ class AIModels {
   /// Returns true when [modelId] is an OpenAI reasoning model that honours
   /// `reasoning_effort` in the request body.
   static bool isOpenAiReasoningModel(String modelId) => openAiReasoningPrefixes.any(modelId.startsWith);
-
-  /// Returns true when [modelId] is acceptable as Codex CLI's `model` field
-  /// on `turn/start`.
-  static bool isCodexCompatibleModel(String modelId) => codexCompatiblePrefixes.any(modelId.startsWith);
 
   /// Returns true when [modelId] is an Anthropic adaptive-only model that
   /// rejects manual `thinking.budget_tokens`.
