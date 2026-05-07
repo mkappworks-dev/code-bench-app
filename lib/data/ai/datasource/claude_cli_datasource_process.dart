@@ -329,7 +329,8 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
           final mapped = _toProviderEvent(event);
           if (event is StreamParseFailure) {
             consecutiveParseFailures++;
-            final preview = line.length > 256 ? '${line.substring(0, 256)}…' : line;
+            // Cap preview at 64 chars — redactSecrets only strips known token shapes; a 256-char window can leak prompt text or file contents the model just read.
+            final preview = line.length > 64 ? '${line.substring(0, 64)}…' : line;
             dLog(
               '[ClaudeCli] parse failure ($consecutiveParseFailures/$_consecutiveParseFailureLimit): ${event.error} — line="${redactSecrets(preview)}"',
             );

@@ -50,7 +50,12 @@ class CodexSession {
   Stream<ProviderRuntimeEvent> sendAndStream({required String prompt, ProviderTurnSettings? settings}) {
     if (_disposed) throw StateError('CodexSession disposed');
     _lastActiveAt = DateTime.now();
-    _streamController?.close();
+    final previous = _streamController;
+    if (previous != null && !previous.isClosed) {
+      // Surface the swap so a still-listening consumer sees a terminal event rather than `onDone` masquerading as success.
+      previous.add(const ProviderStreamFailure(error: 'preempted by new turn'));
+      _resetTurn();
+    }
     // Single-subscription so ProviderInit buffers until `await for` subscribes.
     _streamController = StreamController<ProviderRuntimeEvent>();
     _send(prompt, settings);
@@ -89,20 +94,22 @@ class CodexSession {
   }
 
   Future<void> _send(String prompt, ProviderTurnSettings? settings) async {
+    final controller = _streamController;
+    if (controller == null) return;
     try {
-      _streamController?.add(ProviderInit(provider: 'codex', modelId: settings?.modelId));
+      controller.add(ProviderInit(provider: 'codex', modelId: settings?.modelId));
 
       // sessionId guard — a non-UUID value could resume a foreign thread or allow attacker-shaped input at the RPC boundary.
       if (!uuidV4Regex.hasMatch(sessionId)) {
         sLog('[CodexCli] rejected non-UUID sessionId at RPC boundary');
-        _streamController?.add(const ProviderStreamFailure(error: 'invalid sessionId shape'));
+        controller.add(const ProviderStreamFailure(error: 'invalid sessionId shape'));
         return;
       }
 
       // workingDirectory guard — `/` or a stale path would give Codex tool-use access outside the project.
       if (!workingDirectory.startsWith('/') || workingDirectory == '/' || !Directory(workingDirectory).existsSync()) {
         sLog('[CodexCli] rejected workingDirectory: $workingDirectory');
-        _streamController?.add(const ProviderStreamFailure(error: 'invalid workingDirectory'));
+        controller.add(const ProviderStreamFailure(error: 'invalid workingDirectory'));
         return;
       }
 
@@ -116,8 +123,10 @@ class CodexSession {
 
       await _sendTurn(prompt, settings);
     } catch (e, st) {
+      // Bail if a newer turn replaced the controller mid-await (preempt path); otherwise a "codex turn ended" StateError leaks onto the new turn.
+      if (!identical(_streamController, controller)) return;
       dLog('[CodexCli] send failed: ${redactSecrets('$e')}\n$st');
-      _streamController?.add(ProviderStreamFailure(error: e));
+      controller.add(ProviderStreamFailure(error: e));
       // _resetTurn not _resetProcess — keep the process alive; exitCode handler calls _resetProcess if it died.
       _resetTurn();
     }
@@ -253,7 +262,8 @@ class CodexSession {
       _consecutiveJsonParseFailures = 0;
     } catch (e) {
       _consecutiveJsonParseFailures++;
-      final preview = line.length > 256 ? '${line.substring(0, 256)}…' : line;
+      // Cap preview at 64 chars — redactSecrets only strips known token shapes; a 256-char window can leak prompt text or file contents that the model just read.
+      final preview = line.length > 64 ? '${line.substring(0, 64)}…' : line;
       dLog(
         '[CodexCli] JSON parse error ($_consecutiveJsonParseFailures/$_consecutiveParseFailureLimit): '
         '$e on: ${redactSecrets(preview)}',
@@ -295,11 +305,13 @@ class CodexSession {
     final completer = _pendingRequests.remove(_coerceId(id));
     final message = error['message'] as String? ?? 'Unknown error';
     if (completer != null) {
+      // Don't also emit on the controller — _send's catch already maps the completer's error to a ProviderStreamFailure; double-emit produces two failure events for one error.
       completer.completeError(Exception('Codex error: $message'));
     } else {
+      // Server-acknowledged error with no pending caller: surface it directly so the user sees something rather than the turn quietly stalling.
       dLog('[CodexCli] No pending request for error id $id (server-acknowledged: $message)');
+      _streamController?.add(ProviderStreamFailure(error: 'Codex error: $message'));
     }
-    _streamController?.add(ProviderStreamFailure(error: 'Codex error: $message'));
   }
 
   void _handleServerRequest(dynamic id, String method, Map<String, dynamic>? params) {
