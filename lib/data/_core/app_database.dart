@@ -220,13 +220,7 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(chatMessages, chatMessages.modelId);
       }
     },
-    // Drift only invokes `onUpgrade` when the on-disk version is *lower*
-    // than `schemaVersion`. A hotfix rollback (or dev cycling between
-    // branches) can leave a schema-vN db on disk while the running build
-    // expects schema-v(N-1) — that case skips both `onCreate` and
-    // `onUpgrade` and would crash at the first query with a "column not
-    // found" SQLException. `beforeOpen` runs in both directions, so we
-    // do the downgrade check here.
+    // Downgrade guard: Drift skips onUpgrade when the on-disk schema is newer than the build, which would crash later with "column not found".
     beforeOpen: (details) async {
       final stored = details.versionBefore;
       if (stored != null && stored > details.versionNow) {

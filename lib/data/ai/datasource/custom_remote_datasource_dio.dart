@@ -35,10 +35,7 @@ Map<String, dynamic> buildCustomRequestBody({
   };
 }
 
-/// Returns true when a 400 response body signals the named [field] is
-/// unknown/unsupported. Avoids matching errors that merely *mention* the
-/// field (e.g. validation messages enumerating allowed keys) so unrelated
-/// 400s — oversize context, auth scope — keep their real error path.
+/// True when a 400 body signals the named [field] is unknown — distinct from a 400 that merely lists [field] in a validation message.
 @visibleForTesting
 bool isUnknownFieldRejection(int? status, String? body, String field) {
   if (status != 400 || body == null || body.isEmpty) return false;
@@ -138,11 +135,7 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
         }
       }
     } on DioException catch (e) {
-      // Some self-hosted OpenAI-compatible endpoints (vLLM, llama.cpp,
-      // strict-mode LiteLLM) reject unknown JSON keys with HTTP 400. Retry
-      // once without `reasoning_effort` only when the body signals an
-      // unknown-field rejection, so unrelated 400s (oversize context, auth
-      // scope) still surface to the caller with their real message.
+      // Self-hosted OpenAI-compatible endpoints often reject unknown keys with 400; retry once without reasoning_effort only on unknown-field rejections so unrelated 400s still surface.
       if (originalError == null &&
           body.containsKey('reasoning_effort') &&
           isUnknownFieldRejection(e.response?.statusCode, e.response?.data?.toString(), 'reasoning_effort')) {
@@ -164,8 +157,7 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
         );
         return;
       }
-      // If we're here after a retry, surface the *first* error — that's the
-      // signal the caller cares about; the retry was our own remediation.
+      // After a retry, surface the first error — the retry was our own remediation.
       final source = originalError ?? e;
       dLog(
         '[CustomRemoteDatasource] streamMessage failed: ${source.type} ${source.response?.statusCode ?? ''}'

@@ -118,9 +118,7 @@ class _UserBubbleState extends ConsumerState<_UserBubble> {
               ],
             ),
           ),
-          // Drops on a user bubble means the assistant turn either failed
-          // or hasn't produced a message yet — anchor the notice here so a
-          // silent downgrade doesn't get lost when the stream errors.
+          // Anchor here so a silent downgrade isn't lost when the assistant turn fails before producing a message.
           _DroppedSettingsNotice(messageId: widget.message.id),
         ],
       ),

@@ -48,16 +48,7 @@ class AvailableModelsNotifier extends _$AvailableModelsNotifier {
       Error.throwWithStackTrace(AvailableModelsFailure.storageError(e), st);
     }
 
-    // Seed the picker with the hardcoded defaults so users with no keys
-    // configured still see something to pick. Live fetches below ADD models
-    // the hardcoded list doesn't know about (e.g. brand-new releases) but
-    // never replace a hardcoded entry's friendly display name.
-    //
-    // OpenAI defaults are skipped when `openaiTransport == 'cli'` — Codex
-    // accepts a different (and account-tier-specific) set of model ids, so
-    // showing `gpt-5` / `gpt-4o` in a Codex picker would mean every send
-    // 400s. The Codex `model/list` RPC below feeds the OpenAI section with
-    // ids the connected ChatGPT account actually accepts.
+    // OpenAI defaults are skipped on Codex transport because `gpt-5`/`gpt-4o` 400 against the account-tier-specific model set Codex accepts.
     final isCodexTransport = apiKeys.openaiTransport == 'cli';
     final modelsById = <String, AIModel>{
       for (final m in AIModels.defaults)
@@ -85,9 +76,7 @@ class AvailableModelsNotifier extends _$AvailableModelsNotifier {
       }
     }
 
-    // Cloud providers are gated on a configured API key. With CLI transport
-    // the key may be empty (auth lives in the CLI's own login state); we
-    // skip the live fetch in that case rather than firing a guaranteed 401.
+    // CLI transport: skip the live fetch when no API key is configured (auth lives in the CLI's login state).
     final futures = <Future<List<AIModel>>>[
       if (isCodexTransport)
         fetchCodex()
@@ -103,8 +92,7 @@ class AvailableModelsNotifier extends _$AvailableModelsNotifier {
       final fetched = await Future.wait(futures);
       for (final list in fetched) {
         for (final m in list) {
-          // Hardcoded entry wins for display name; live fetch only contributes
-          // models the defaults don't already know about.
+          // Hardcoded entry wins for display name; live fetch only adds models the defaults don't know.
           modelsById.putIfAbsent(m.modelId, () => m);
         }
       }
@@ -130,9 +118,7 @@ class AvailableModelsNotifier extends _$AvailableModelsNotifier {
     try {
       await future;
     } catch (e) {
-      // Storage errors are already reported via `AsyncError` on the provider
-      // (and listened to by the picker). We only catch here so an unhandled
-      // rejection doesn't crash the Zone — but we still leave a breadcrumb.
+      // Errors already surface via `AsyncError`; this catch only prevents an unhandled-rejection Zone crash.
       dLog('[AvailableModelsNotifier.refresh] swallowed: ${e.runtimeType}');
     }
   }

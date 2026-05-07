@@ -4,13 +4,7 @@ import '../../../data/ai/models/provider_setting_drop.dart';
 
 part 'dropped_settings_notifier.g.dart';
 
-/// Per-message buffer of provider-side capability downgrades. Populated by
-/// `ChatMessagesNotifier.sendMessage` when the request couldn't be honoured
-/// verbatim — e.g. `act` mode coerced to `chat` on a tools-incapable
-/// transport, or `reasoning_effort=high` stripped after an unknown-field 400
-/// from a custom OpenAI-compatible endpoint. Read by `MessageBubble` to
-/// render an inline notice. Not persisted: drops only matter for the live
-/// turn; on app restart the message renders without the notice.
+/// Per-message buffer of provider-side capability downgrades for the live turn — not persisted; cleared on app restart.
 @Riverpod(keepAlive: true)
 class MessageDroppedSettingsNotifier extends _$MessageDroppedSettingsNotifier {
   @override

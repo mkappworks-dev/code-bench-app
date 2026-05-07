@@ -58,9 +58,7 @@ List<String> buildClaudeCliArgs({
   required bool isFirstTurn,
   ProviderTurnSettings? settings,
 }) {
-  // Defensive: modelId is sourced from a curated picker today, but a future
-  // BYO-modelId path could land a `--`-prefixed string straight into argv —
-  // matches the github_service.dart flag-shape guard posture.
+  // Defensive flag-shape guard at the argv boundary in case a future BYO-modelId path lands a `--`-prefixed string.
   var modelId = settings?.modelId;
   if (modelId != null && modelId.startsWith('-')) {
     sLog('[ClaudeCli] rejected flag-shaped modelId at argv boundary');
@@ -72,11 +70,7 @@ List<String> buildClaudeCliArgs({
     permission: settings?.permission ?? ChatPermission.fullAccess,
   );
 
-  // `--effort` is intentionally NOT forwarded: the flag is not consistently
-  // accepted across Claude CLI versions in the wild — passing it produced
-  // "exited 1" failures on user installs. The user's effort pick still lives
-  // in the session row (and reaches the Anthropic API path via
-  // `thinking.budget_tokens`), but here we let the CLI use its own default.
+  // `--effort` is not forwarded — older Claude CLI versions reject it and exit 1.
   if (settings?.effort != null) {
     dLog('[ClaudeCli] ignoring effort=${settings!.effort!.name} — Claude CLI does not accept --effort');
   }
@@ -102,12 +96,6 @@ const int _consecutiveParseFailureLimit = 5;
 
 /// Spawns the locally-installed `claude` CLI binary and streams its
 /// `--output-format stream-json` output, normalized to [ProviderRuntimeEvent].
-///
-/// First turn for a session uses `--session-id <id>`; subsequent turns reuse
-/// the session via `--resume <id>`. The CLI's `--permission-mode` is derived
-/// from the user's mode/permission picks via `mapClaudePermissionMode` —
-/// `fullAccess` maps to `bypassPermissions`, `readOnly` (or any plan-mode
-/// turn) maps to `plan`, `askBefore` maps to `default`.
 class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   ClaudeCliDatasourceProcess({required this.binaryPath});
 
@@ -182,9 +170,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
     supportsModelOverride: true,
     supportsSystemPrompt: true,
     supportedModes: {ChatMode.chat, ChatMode.plan, ChatMode.act},
-    // Effort is intentionally empty: see buildClaudeCliArgs for why we don't
-    // forward `--effort` to the CLI today. Hiding the chip avoids a setting
-    // that would silently no-op on the wire.
+    // Empty: hides the effort chip since `--effort` is not forwarded (see buildClaudeCliArgs).
     supportedEfforts: <ChatEffort>{},
     supportedPermissions: {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess},
   );
@@ -196,10 +182,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
     required String workingDirectory,
     ProviderTurnSettings? settings,
   }) {
-    // Single-subscription (not broadcast): `_stream` runs synchronously up
-    // to its first `await` and emits `ProviderInit` before `sendAndStream`
-    // returns. With broadcast, that event would be dropped (no listener
-    // attached yet); single-sub buffers until `await for` subscribes.
+    // Single-subscription buffers `ProviderInit` until `await for` subscribes; broadcast would drop it.
     final controller = StreamController<ProviderRuntimeEvent>();
     _stream(controller, prompt: prompt, sessionId: sessionId, workingDirectory: workingDirectory, settings: settings);
     return controller.stream;
@@ -311,11 +294,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
       _process = spawned;
 
-      // Close stdin immediately. Newer Claude CLI versions read stdin in `-p`
-      // mode even when a positional prompt is provided, blocking with
-      // "Warning: no stdin data received in 3s, proceeding without it" before
-      // exiting 1. Sending EOF up-front signals there will be no piped input,
-      // so the CLI stays on the positional-prompt code path.
+      // EOF stdin up-front: newer CLI versions block reading stdin in `-p` mode and exit 1 after a 3s warning.
       unawaited(spawned.stdin.close());
 
       // Cap stderr so a chatty crash can't balloon memory.
@@ -429,9 +408,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
   @override
   void respondToPermissionRequest(String requestId, {required bool approved}) {
-    // Claude Code CLI manages its own permission UI inline; in bypassPermissions
-    // mode it never asks, and in plan/default modes the prompt happens in the
-    // CLI's own terminal flow rather than being forwarded to the host.
+    // Claude Code CLI handles its own permission UI inline and never forwards prompts to the host.
   }
 
   @override

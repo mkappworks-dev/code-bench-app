@@ -11,9 +11,7 @@ import '../models/provider_turn_settings.dart';
 /// provide text streaming (CLI-backed routes handled at the SessionService
 /// layer) don't have to declare a method they can't honour.
 abstract interface class TextStreamingRepository {
-  /// Capability surface for [model] on its registered HTTP datasource.
-  /// Returns `null` when no HTTP datasource is registered for the model's
-  /// provider (CLI-only providers).
+  /// Capability surface for [model], or null for CLI-only providers (no HTTP datasource registered).
   ProviderCapabilities? capabilitiesFor(AIModel model);
 
   Stream<String> streamMessage({

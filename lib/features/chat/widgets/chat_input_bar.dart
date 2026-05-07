@@ -29,23 +29,9 @@ import '../../../features/project_actions/notifiers/ide_launch_actions.dart';
 import '../notifiers/chat_session_streaming.dart';
 import '../notifiers/transport_readiness_notifier.dart';
 
-/// Private in-memory store of per-session chat-input drafts.
-///
-/// Not a Riverpod provider because nothing in the tree needs to observe it —
-/// the drafts are only read/written by ChatInputBar itself in response to
-/// session switches. Using a plain module-level map sidesteps Riverpod's
-/// "can't modify provider during build" guard (which fires in
-/// `didUpdateWidget`) and the "ref unsafe after unmount" check (in
-/// `dispose`), both of which are triggered by this widget's lifecycle.
-///
-/// Survives switching between chats within a single app run but is not
-/// persisted across restarts. Empty entries are evicted so the map doesn't
-/// grow with stale keys.
+/// In-memory drafts keyed by sessionId — module-level (not Riverpod) to sidestep "modify provider during build" and "ref unsafe after unmount" guards triggered by this widget's lifecycle.
 final Map<String, String> _sessionDrafts = <String, String>{};
 
-/// Resets `_sessionDrafts` so one widget test can't leak its draft into the
-/// next. Intended only for `setUp` in widget tests — production code should
-/// never call this.
 @visibleForTesting
 void clearSessionDraftsForTesting() => _sessionDrafts.clear();
 
@@ -57,15 +43,9 @@ class ChatInputBar extends ConsumerStatefulWidget {
   ConsumerState<ChatInputBar> createState() => _ChatInputBarState();
 }
 
-/// Hard cap on how many models the picker will render per provider. A
-/// misconfigured Custom endpoint returning thousands of entries would
-/// otherwise build that many `PopupMenuItem`s in a `Column`.
+/// Caps a misconfigured Custom endpoint that returns thousands of entries.
 const int _maxModelsPerProvider = 200;
 
-/// Sealed choice type for the model picker. Replaces the previous
-/// `PopupMenuItem<AIModel>` sentinel pattern: refresh-as-model smuggled the
-/// control action through the value channel, which was brittle (depends on
-/// reference identity of a sentinel value).
 sealed class _ModelPickerChoice {
   const _ModelPickerChoice();
 }
@@ -159,21 +139,11 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     }
   }
 
-  /// Defense-in-depth check run at send time: the freezed `status` field only
-  /// reflects state at the last Drift stream re-emission, so we hit the
-  /// filesystem directly here as the source of truth. On any drift between
-  /// the cached status and the filesystem — either direction — kicks off a
-  /// targeted refresh so the sidebar tile + send button catch up:
-  ///
-  ///  - cached `available` but folder just vanished → block + heal to missing
-  ///  - cached `missing` but folder was restored by the user out-of-band →
-  ///    allow send + heal back to available
+  /// Filesystem is source of truth — `project.status` is a Drift-cached snapshot that can be stale either direction. On drift, fire-and-forget a refresh so the sidebar/send-button catch up.
   bool _isProjectAvailable(Project project) {
     final existsOnDisk = ref.read(projectSidebarActionsProvider.notifier).projectExistsOnDisk(project.path);
     final cachedAsAvailable = project.status == ProjectStatus.available;
     if (existsOnDisk != cachedAsAvailable) {
-      // The notifier logs its own failures; swallow here so this background
-      // refresh never surfaces as an uncaught exception.
       unawaited(
         ref.read(projectSidebarActionsProvider.notifier).refreshProjectStatus(project.id).catchError((Object _) {}),
       );
@@ -188,14 +158,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
   Future<void> _send() async {
     if (_isSending || _isStreaming) return;
 
-    // Check project availability BEFORE the empty-text bailout so that a
-    // tap on the disabled send button (which routes through this method)
-    // still surfaces the "folder missing" snackbar — otherwise the user
-    // gets a silent no-op and no explanation of why sending is blocked.
-    //
-    // The gate defers entirely to the filesystem via `_isProjectAvailable`;
-    // `project.status` is only read for rendering (button dim, hint text),
-    // never for blocking, because it can be stale in either direction.
+    // Check availability BEFORE the empty-text bailout so a tap on the disabled send button still surfaces the "folder missing" snackbar.
     final project = ref.read(activeProjectProvider);
     if (project == null) {
       showErrorSnackBar(context, 'No active project.');
@@ -335,10 +298,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final allModels = result?.models ?? AIModels.defaults;
     final failures = result?.failures ?? const <AIProvider, ModelProviderFailure>{};
 
-    // No transport-aware filter here: when `openaiTransport == 'cli'`,
-    // `availableModelsProvider` already feeds the OpenAI section from
-    // Codex's `model/list` RPC and skips the OpenAI defaults — every entry
-    // we render is something the active transport accepts.
+    // No transport-aware filter here — `availableModelsProvider` already gates the OpenAI section on Codex's `model/list` for cli transport.
     final grouped = <AIProvider, List<AIModel>>{};
     for (final m in allModels) {
       grouped.putIfAbsent(m.provider, () => []).add(m);
@@ -501,12 +461,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final mode = ref.watch(sessionModeProvider);
     final effort = ref.watch(sessionEffortProvider);
     final permission = ref.watch(sessionPermissionProvider);
-    // Capabilities for the active provider+model. `null` means transport not
-    // yet known (prefs still loading or no datasource registered) — keep the
-    // chip hidden until we know. Once known, render the chip but disable it
-    // (with a tooltip) when the provider doesn't expose the dimension; the
-    // user can still see their persisted pick rather than have it vanish on
-    // a model switch.
+    // null caps == transport not yet known; chips hidden until known, then disabled (with tooltip) for unsupported dimensions.
     final caps = ref.watch(chatInputBarOptionsProvider);
     final transportKnown = caps != null;
     final effortDisabled = transportKnown && caps.supportedEfforts.isEmpty;
@@ -916,9 +871,7 @@ class _ControlChip extends StatelessWidget {
   final bool isWarning;
   final bool isLoading;
 
-  /// When non-null the chip renders in a muted style and the tap is a no-op.
-  /// The string is shown as a tooltip explaining why — e.g. "Effort not
-  /// configurable for this model — provider chooses adaptively".
+  /// When non-null the chip is muted, taps no-op, and this string renders as a tooltip explaining why.
   final String? disabledTooltip;
 
   @override

@@ -100,9 +100,6 @@ class SessionService {
   ({String? providerId, String? modelId}) _attribution({AIModel? model, String? cliProviderId, String? cliModelId}) {
     if (cliProviderId != null) return (providerId: cliProviderId, modelId: cliModelId);
     if (model != null) return (providerId: model.provider.name, modelId: model.modelId);
-    // No source of attribution — return null so the caller skips stamping
-    // rather than throwing into the SSE stream. Callers always pass at
-    // least one source today; this is defence-in-depth for future paths.
     return (providerId: null, modelId: null);
   }
 
@@ -121,9 +118,7 @@ class SessionService {
     McpRemoveCallback? onMcpServerRemoved,
     ProviderSettingDropSink? onSettingDropped,
   }) async* {
-    // Normalize whitespace-only system prompts to null so providers see a
-    // consistent absent-vs-present signal — Anthropic's nullable spread
-    // (`'system': ?systemPrompt`) would otherwise send `"system":""`.
+    // Whitespace-only system prompts → null so Anthropic's nullable spread doesn't send `"system":""`.
     final effectiveSystemPrompt = (systemPrompt == null || systemPrompt.trim().isEmpty) ? null : systemPrompt;
 
     String? persistedUserMsgId;
@@ -149,8 +144,7 @@ class SessionService {
         .where((m) => m.id != persistedUserMsgId && m.role != MessageRole.interrupted)
         .toList();
 
-    // Build the per-turn settings bundle once and pass it down both transports.
-    // The session row holds `effort` as a string; coerce to enum before sending.
+    // The session row holds `effort` as a string; coerce to enum before bundling.
     final session = await _session.getSession(sessionId);
     ChatEffort? sessionEffort;
     if (session?.effort != null) {
@@ -189,11 +183,7 @@ class SessionService {
         }
         return;
       }
-      // The caller asked for a CLI transport but the provider service is
-      // either absent (test/misconfig) or doesn't know this id. Silently
-      // re-routing to the HTTP API-key path would send the agentic context
-      // to a different transport than the user picked — sLog so this is
-      // visible in release builds.
+      // sLog so a fall-through to the HTTP path (which uses a different transport than the user picked) is visible in release.
       sLog(
         '[SessionService] providerId=$providerId requested but no datasource registered '
         '(providerService=${_providerService == null ? "absent" : "no-such-provider"}); '
@@ -292,9 +282,7 @@ class SessionService {
     final assistantId = _uuid.v4();
     final contentBuffer = StringBuffer();
     final toolEvents = <ToolEvent>[];
-    // Pre-stamp from the datasource id + selected model so badges still render
-    // if the transport crashes before emitting ProviderInit. ProviderInit
-    // overrides this when it arrives (e.g. CLI version-as-modelId).
+    // Pre-stamp so badges still render if the transport crashes before ProviderInit; ProviderInit overrides on arrival.
     String streamProviderId = ds.id;
     String? streamModelId = settings?.modelId;
     var sawProviderInit = false;

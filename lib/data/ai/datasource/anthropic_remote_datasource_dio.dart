@@ -89,10 +89,7 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
     final body = buildAnthropicRequestBody(
       model: model,
       messages: messages,
-      // 64K leaves room for ChatEffort.max's 32 768-token thinking budget
-      // *and* a meaningful response window. The previous 4 096 cap forced
-      // every effort tier (low → max) to clamp to 4 095, flattening the
-      // entire spectrum on the wire.
+      // 64K leaves room for ChatEffort.max's 32 768-token thinking budget alongside a meaningful response window.
       maxTokens: 64000,
       systemPrompt: systemPrompt,
       settings: settings,
@@ -235,11 +232,7 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
   }
 }
 
-/// Collapses Anthropic's `claude-{family}-{YYYYMMDD}` snapshots so each
-/// family is represented by its newest dated revision. Undated entries
-/// (e.g. `*-latest`) are kept verbatim. Order follows the input list — the
-/// kept entry sits at the position where its base first appeared, so the
-/// API's newest-first ordering is preserved.
+/// Collapses `claude-{family}-{YYYYMMDD}` snapshots to the newest dated revision per family, preserving input order and undated entries.
 @visibleForTesting
 List<AIModel> dropSupersededAnthropicSnapshots(List<AIModel> models) {
   final dateSuffix = RegExp(r'-(\d{8})$');

@@ -8,13 +8,7 @@ import 'chat_notifier.dart';
 
 part 'chat_input_bar_options_notifier.g.dart';
 
-/// Capabilities for the *currently selected* model on its active transport.
-///
-/// Function-style derived provider — no mutable state, only computes the
-/// capability surface from `selectedModelProvider` + `apiKeysProvider` and
-/// delegates the actual repository/datasource lookup to
-/// [ProviderCapabilitiesService]. Returns `null` when prefs haven't loaded —
-/// the input bar treats that as "transport unknown" and disables the strip.
+/// Capabilities for the currently selected model + transport; null while prefs haven't loaded so the input bar can disable the strip.
 @riverpod
 ProviderCapabilities? chatInputBarOptions(Ref ref) {
   final model = ref.watch(selectedModelProvider);

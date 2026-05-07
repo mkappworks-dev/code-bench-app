@@ -53,10 +53,6 @@ Map<String, dynamic> buildCodexTurnStartParams(
   ChatEffort? effort,
   ChatPermission? permission,
 }) {
-  // The picker's OpenAI section is fed by Codex's `model/list` RPC when
-  // `openaiTransport == 'cli'`, so any [modelId] reaching here is already
-  // valid for this account. Forward it verbatim — when null, Codex picks
-  // its account-tier default (e.g. gpt-5.5 on free, varies by plan).
   return {
     'threadId': threadId,
     'input': [
@@ -69,9 +65,7 @@ Map<String, dynamic> buildCodexTurnStartParams(
   };
 }
 
-/// Parses the JSON result of a `model/list` JSON-RPC response and maps each
-/// non-hidden entry to an [AIModel]. Visible for testing so the parsing
-/// contract can be exercised without a live `codex app-server`.
+/// Parses a `model/list` JSON-RPC result into [AIModel]s, dropping hidden entries.
 @visibleForTesting
 List<AIModel> parseCodexModelList(Map<String, dynamic> result) {
   final data = result['data'];
@@ -104,12 +98,7 @@ List<AIModel> parseCodexModelList(Map<String, dynamic> result) {
   return models;
 }
 
-/// Spawns a short-lived `codex app-server`, performs the JSON-RPC handshake
-/// (`initialize` → `initialized`), then queries `model/list` for the models
-/// the connected ChatGPT account supports. Hidden entries are filtered out.
-///
-/// Isolated from [CodexCliDatasourceProcess]'s long-lived turn-streaming
-/// process so a model-list refresh can never disturb an in-flight chat.
+/// Queries `model/list` from a short-lived `codex app-server`, isolated from the long-lived turn-streaming process so refresh can't disturb in-flight chats.
 Future<List<AIModel>> fetchCodexAvailableModels({String binaryPath = 'codex'}) async {
   final resolution = await resolveBinary(binaryPath);
   final String exePath;
@@ -334,16 +323,10 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     required String workingDirectory,
     ProviderTurnSettings? settings,
   }) {
-    // A prior turn may have leaked an open controller (cancel + completion
-    // race). The previous subscriber is gone by now; close() is async but
-    // we don't await it — any unflushed buffered events are intentionally
-    // discarded along with the orphaned controller.
+    // Drop any orphan controller from a cancel + completion race; its subscriber is already gone.
     final orphan = _streamController;
     if (orphan != null) unawaited(orphan.close());
-    // Single-subscription (not broadcast): `_send` runs synchronously up to
-    // its first `await` and emits `ProviderInit` before `sendAndStream`
-    // returns. With broadcast, that event would be dropped (no listener
-    // attached yet); single-sub buffers until `await for` subscribes.
+    // Single-subscription buffers `ProviderInit` until `await for` subscribes; broadcast would drop it.
     _streamController = StreamController<ProviderRuntimeEvent>();
     _send(prompt, sessionId, workingDirectory, settings);
     return _streamController!.stream;

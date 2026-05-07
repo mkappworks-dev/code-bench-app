@@ -14,9 +14,7 @@ import '../models/provider_turn_settings.dart';
 /// interfaces; CLI-backed transports implement only `AIRemoteDatasource`
 /// and expose structured event streams through their concrete type.
 abstract interface class TextStreamingDatasource {
-  /// Capability surface for the picked [model]. HTTP datasources may shrink
-  /// the supported sets when a model lacks server-side support (e.g. non-
-  /// reasoning OpenAI models drop `effort`; pre-2.5 Gemini drops it).
+  /// Capability surface for the picked [model]; HTTP datasources may shrink the supported sets per model id.
   ProviderCapabilities capabilitiesFor(AIModel model);
 
   Stream<String> streamMessage({

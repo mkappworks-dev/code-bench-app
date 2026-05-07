@@ -34,9 +34,7 @@ class OllamaRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     supportsModelOverride: true,
     supportsSystemPrompt: true,
     supportedModes: {ChatMode.chat},
-    // Ollama's `think` flag is binary (true / false / unset). Exposing the
-    // four-tier ChatEffort here would imply granularity the wire format
-    // doesn't carry, so we surface a single tier representing "thinking on".
+    // Ollama's `think` flag is binary; surface a single tier so the UI doesn't imply 4-way granularity.
     supportedEfforts: {ChatEffort.high},
     supportedPermissions: <ChatPermission>{},
   );

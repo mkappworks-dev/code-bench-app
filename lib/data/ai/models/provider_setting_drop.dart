@@ -1,8 +1,6 @@
 import '../../shared/session_settings.dart';
 
-/// One per-turn capability downgrade. Stamped on the assistant message so the
-/// UI can surface "Max effort was clamped to High" / "Act mode coerced to
-/// Chat" without requiring a snackbar that could be missed.
+/// One per-turn capability downgrade, stamped on the assistant message so the UI can surface it without a missable snackbar.
 sealed class ProviderSettingDrop {
   const ProviderSettingDrop({required this.reason});
   final String reason;

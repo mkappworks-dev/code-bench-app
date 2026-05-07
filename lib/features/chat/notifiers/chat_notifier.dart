@@ -83,10 +83,7 @@ class SessionPermissionNotifier extends _$SessionPermissionNotifier {
 
 const _validTransports = {'api-key', 'cli'};
 
-/// Resolves which `AIProviderDatasource` ID (in `AIProviderService`) should
-/// handle this turn, based on the active model and the persisted per-provider
-/// transport choice. Returns null when the user has selected the API-key
-/// (HTTP) path, which routes through `streamMessage` inside `SessionService`.
+/// Returns the CLI provider id when the user picked CLI transport for this provider; null routes through the HTTP path.
 String? _resolveProviderId(AIModel model, ApiKeysNotifierState? prefs) {
   if (prefs == null) return null;
   if (model.provider == AIProvider.anthropic && !_validTransports.contains(prefs.anthropicTransport)) {
@@ -159,20 +156,11 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
 
     final permission = ref.read(sessionPermissionProvider);
     final projectPath = ref.read(activeProjectProvider)?.path;
-    // Await prefs explicitly: `apiKeysProvider` is autoDispose, so when the
-    // chat tab opens fresh (without the Providers screen being mounted) the
-    // first `.value` is null and we'd silently fall through to the legacy
-    // HTTP path even when CLI transport is selected. Always wait for storage.
+    // Await prefs: `apiKeysProvider` is autoDispose; first `.value` is null on a fresh chat tab and would silently fall through to HTTP.
     final prefs = await ref.read(apiKeysProvider.future);
     final providerId = _resolveProviderId(model, prefs);
 
-    // Mode can lag behind a model switch: a session left on `act` by Claude
-    // would still hold `act` after switching to Gemini / Anthropic-HTTP /
-    // OpenAI-HTTP, where the chip is hidden but the stored value persists.
-    // Coerce for the send only — don't touch persisted state, so toggling
-    // back to a tools-capable transport restores the user's preference.
-    // Read AFTER `apiKeysProvider` has resolved so caps reflects the current
-    // model+transport rather than a transient null.
+    // Coerce stale mode for the send only (don't touch persisted state) so toggling back to a tools-capable transport restores the user's preference.
     final caps = ref.read(chatInputBarOptionsProvider);
     final storedMode = ref.read(sessionModeProvider);
     final modeWasCoerced = caps != null && !caps.supportedModes.contains(storedMode);
