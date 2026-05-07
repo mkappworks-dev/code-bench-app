@@ -44,4 +44,4 @@ final class ClaudeCliDatasourceProcessProvider
   }
 }
 
-String _$claudeCliDatasourceProcessHash() => r'ac5ddd45fcc8b06067ccd2f686b978219d1b1ddf';
+String _$claudeCliDatasourceProcessHash() => r'66532e3c5a00e71271878d50f5cf945948d626e7';
