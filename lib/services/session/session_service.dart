@@ -167,28 +167,28 @@ class SessionService {
     // selected a named provider (claude-cli, codex, etc.).
     if (providerId != null) {
       final ds = _providerService?.getProvider(providerId);
-      if (ds != null) {
-        yield* _streamProvider(
-          ds: ds,
-          sessionId: sessionId,
-          prompt: userInput,
-          projectPath: projectPath,
-          requestPermission: requestPermission,
-          cancelFlag: cancelFlag,
-          settings: providerSettings,
+      if (ds == null) {
+        // Surface as a typed exception rather than silently routing CLI traffic through HTTP — the user picked CLI for a reason.
+        sLog(
+          '[SessionService] providerId=$providerId requested but no datasource registered '
+          '(providerService=${_providerService == null ? "absent" : "no-such-provider"})',
         );
-        if (historyExcludingCurrent.isEmpty && userInput.isNotEmpty) {
-          final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
-          await _session.updateSessionTitle(sessionId, shortTitle);
-        }
-        return;
+        throw ProviderUnavailableException(providerId);
       }
-      // sLog so a fall-through to the HTTP path (which uses a different transport than the user picked) is visible in release.
-      sLog(
-        '[SessionService] providerId=$providerId requested but no datasource registered '
-        '(providerService=${_providerService == null ? "absent" : "no-such-provider"}); '
-        'falling through to HTTP path',
+      yield* _streamProvider(
+        ds: ds,
+        sessionId: sessionId,
+        prompt: userInput,
+        projectPath: projectPath,
+        requestPermission: requestPermission,
+        cancelFlag: cancelFlag,
+        settings: providerSettings,
       );
+      if (historyExcludingCurrent.isEmpty && userInput.isNotEmpty) {
+        final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
+        await _session.updateSessionTitle(sessionId, shortTitle);
+      }
+      return;
     }
 
     if (mode == ChatMode.act && model.provider != AIProvider.custom) {
