@@ -8,6 +8,8 @@ import 'package:code_bench_app/data/session/models/permission_request.dart';
 import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
+import 'package:code_bench_app/data/ai/models/provider_capabilities.dart';
+import 'package:code_bench_app/features/chat/notifiers/chat_input_bar_options_provider.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/notifiers/transport_readiness_notifier.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
@@ -52,6 +54,37 @@ class _DisposalTestSessionService extends Fake implements SessionService {
     McpRemoveCallback? onMcpServerRemoved,
   }) {
     return controller.stream;
+  }
+
+  @override
+  Future<List<ChatMessage>> loadHistory(String sessionId, {int limit = 50, int offset = 0}) async => [];
+
+  @override
+  Future<void> persistMessage(String sessionId, ChatMessage message) async {}
+}
+
+/// Captures the `mode` argument passed to `sendAndStream` so tests can
+/// verify the chat notifier's mode-coerce behaviour.
+class _ModeCapturingSessionService extends Fake implements SessionService {
+  ChatMode? lastMode;
+
+  @override
+  Stream<ChatMessage> sendAndStream({
+    required String sessionId,
+    required String userInput,
+    required AIModel model,
+    String? systemPrompt,
+    ChatMode mode = ChatMode.chat,
+    ChatPermission permission = ChatPermission.fullAccess,
+    String? projectPath,
+    String? providerId,
+    bool Function() cancelFlag = _neverCancelDisposal,
+    Future<bool> Function(PermissionRequest req)? requestPermission,
+    McpStatusCallback? onMcpStatusChanged,
+    McpRemoveCallback? onMcpServerRemoved,
+  }) {
+    lastMode = mode;
+    return const Stream<ChatMessage>.empty();
   }
 
   @override
@@ -144,6 +177,81 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     // No uncaught error means the fix works.
+  });
+
+  test('sendMessage coerces stale ChatMode.act to chat when active model only supports chat', () async {
+    // Models that go through HTTP transports (Gemini, Anthropic-HTTP,
+    // OpenAI-HTTP) all advertise `supportedModes: {ChatMode.chat}`. When
+    // a session was previously on Claude in `act` mode and the user
+    // switches to such a model, the chip hides but `sessionModeProvider`
+    // keeps `act`, which used to throw `ProviderDoesNotSupportToolsException`
+    // at session_service. The notifier now coerces to chat for the send.
+    final svc = _ModeCapturingSessionService();
+    final container = ProviderContainer(
+      overrides: [
+        sessionServiceProvider.overrideWith((ref) async => svc),
+        activeSessionIdProvider.overrideWithValue('s'),
+        selectedModelProvider.overrideWithValue(AIModels.gemini25Flash),
+        activeProjectProvider.overrideWithValue(null),
+        apiKeysProvider.overrideWith(_DisposalTestFakeApiKeysNotifier.new),
+        transportReadinessProvider.overrideWithValue(const TransportReadiness.ready()),
+        chatInputBarOptionsProvider.overrideWith(
+          (ref) => const ProviderCapabilities(
+            supportsModelOverride: true,
+            supportsSystemPrompt: true,
+            supportedModes: {ChatMode.chat},
+            supportedEfforts: <ChatEffort>{},
+            supportedPermissions: <ChatPermission>{},
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(sessionModeProvider.notifier).set(ChatMode.act);
+    await container.read(chatMessagesProvider('s').future);
+
+    await container.read(chatMessagesProvider('s').notifier).sendMessage('hi');
+    await Future<void>.delayed(Duration.zero);
+
+    expect(svc.lastMode, ChatMode.chat, reason: 'stale act mode must be coerced for incompatible model');
+    expect(
+      container.read(sessionModeProvider),
+      ChatMode.act,
+      reason: 'persisted state stays untouched so toggling back to a tools-capable model restores the preference',
+    );
+  });
+
+  test('sendMessage forwards ChatMode.act unchanged when active model supports it', () async {
+    final svc = _ModeCapturingSessionService();
+    final container = ProviderContainer(
+      overrides: [
+        sessionServiceProvider.overrideWith((ref) async => svc),
+        activeSessionIdProvider.overrideWithValue('s'),
+        selectedModelProvider.overrideWithValue(AIModels.sonnet46),
+        activeProjectProvider.overrideWithValue(null),
+        apiKeysProvider.overrideWith(_DisposalTestFakeApiKeysNotifier.new),
+        transportReadinessProvider.overrideWithValue(const TransportReadiness.ready()),
+        chatInputBarOptionsProvider.overrideWith(
+          (ref) => const ProviderCapabilities(
+            supportsModelOverride: true,
+            supportsSystemPrompt: true,
+            supportedModes: {ChatMode.chat, ChatMode.act},
+            supportedEfforts: <ChatEffort>{},
+            supportedPermissions: <ChatPermission>{},
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(sessionModeProvider.notifier).set(ChatMode.act);
+    await container.read(chatMessagesProvider('s').future);
+
+    await container.read(chatMessagesProvider('s').notifier).sendMessage('hi');
+    await Future<void>.delayed(Duration.zero);
+
+    expect(svc.lastMode, ChatMode.act);
   });
 
   test('sendMessage returns AgentTransportNotReady when readiness is signedOut', () async {

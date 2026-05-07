@@ -22,6 +22,7 @@ import '../../mcp_servers/notifiers/mcp_server_status_notifier.dart';
 import '../../providers/notifiers/providers_notifier.dart';
 import 'agent_cancel_notifier.dart';
 import 'agent_permission_request_notifier.dart';
+import 'chat_input_bar_options_provider.dart';
 import 'transport_readiness_notifier.dart';
 
 part 'chat_notifier.g.dart';
@@ -154,7 +155,6 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final activeMessageIdNotifier = ref.read(activeMessageIdProvider.notifier);
     activeMessageIdNotifier.set('pending');
 
-    final mode = ref.read(sessionModeProvider);
     final permission = ref.read(sessionPermissionProvider);
     final projectPath = ref.read(activeProjectProvider)?.path;
     // Await prefs explicitly: `apiKeysProvider` is autoDispose, so when the
@@ -163,6 +163,17 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     // HTTP path even when CLI transport is selected. Always wait for storage.
     final prefs = await ref.read(apiKeysProvider.future);
     final providerId = _resolveProviderId(model, prefs);
+
+    // Mode can lag behind a model switch: a session left on `act` by Claude
+    // would still hold `act` after switching to Gemini / Anthropic-HTTP /
+    // OpenAI-HTTP, where the chip is hidden but the stored value persists.
+    // Coerce for the send only — don't touch persisted state, so toggling
+    // back to a tools-capable transport restores the user's preference.
+    // Read AFTER `apiKeysProvider` has resolved so caps reflects the current
+    // model+transport rather than a transient null.
+    final caps = ref.read(chatInputBarOptionsProvider);
+    final storedMode = ref.read(sessionModeProvider);
+    final mode = (caps != null && !caps.supportedModes.contains(storedMode)) ? ChatMode.chat : storedMode;
 
     // Belt+suspenders: catches paths that bypass the input bar (continueAgenticTurn).
     final readiness = ref.read(transportReadinessProvider);
