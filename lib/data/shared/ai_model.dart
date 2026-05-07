@@ -196,6 +196,18 @@ class AIModels {
   /// /moderation models that share the endpoint).
   static const openAiChatModelPrefixes = <String>['gpt-', 'o1', 'o3', 'o4-mini', 'codex-'];
 
+  /// Substrings that disqualify an OpenAI id from the chat picker even when
+  /// it matches one of [openAiChatModelPrefixes]. `gpt-image-1`,
+  /// `gpt-4o-audio-preview`, `gpt-realtime`, `gpt-4o-search-preview`, etc.
+  /// share the prefix but can't drive plain `/chat/completions` for coding.
+  static const openAiNonChatSubstrings = <String>['image', 'audio', 'realtime', 'transcribe', 'tts', 'search-preview'];
+
+  /// Substrings that disqualify a Gemini id from the chat picker even when
+  /// the entry's name contains `gemini`. Captures Nano Banana
+  /// (`gemini-2.5-flash-image-preview`), embeddings, TTS, live and
+  /// native-audio variants.
+  static const geminiNonChatSubstrings = <String>['image', 'embedding', 'tts', 'live', 'native-audio'];
+
   /// OpenAI reasoning families that accept the `reasoning_effort` field.
   /// Subset of [openAiChatModelPrefixes] — `gpt-4o*` is chat but not reasoning.
   static const openAiReasoningPrefixes = <String>['o1', 'o3', 'o4-mini', 'gpt-5'];
@@ -211,7 +223,11 @@ class AIModels {
   static const anthropicAdaptiveOnlyIds = <String>{'claude-opus-4-7', 'claude-opus-4-7-20251201'};
 
   /// Returns true when [modelId] looks like an OpenAI chat-capable model.
-  static bool isOpenAiChatModelId(String modelId) => openAiChatModelPrefixes.any(modelId.startsWith);
+  static bool isOpenAiChatModelId(String modelId) {
+    if (!openAiChatModelPrefixes.any(modelId.startsWith)) return false;
+    if (openAiNonChatSubstrings.any(modelId.contains)) return false;
+    return true;
+  }
 
   /// Returns true when [modelId] is an OpenAI reasoning model that honours
   /// `reasoning_effort` in the request body.

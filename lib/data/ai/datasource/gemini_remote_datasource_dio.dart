@@ -141,11 +141,24 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     try {
       final response = await _dio.get('/models?key=$apiKey');
       final data = response.data as Map<String, dynamic>;
-      final models = (data['models'] as List).where((m) => (m['name'] as String).contains('gemini')).map((m) {
-        final name = m['name'] as String;
-        final id = name.split('/').last;
-        return AIModel(id: id, provider: AIProvider.gemini, name: m['displayName'] as String? ?? id, modelId: id);
-      }).toList();
+      final models = (data['models'] as List)
+          .where((m) {
+            final name = m['name'];
+            if (name is! String || !name.contains('gemini')) return false;
+            final id = name.split('/').last;
+            if (AIModels.geminiNonChatSubstrings.any(id.contains)) return false;
+            // Real chat LLMs always advertise `generateContent`. TTS / live /
+            // embedding entries either omit it or pair it with audio-only modes.
+            final methods = m['supportedGenerationMethods'];
+            if (methods is! List || !methods.contains('generateContent')) return false;
+            return true;
+          })
+          .map((m) {
+            final name = m['name'] as String;
+            final id = name.split('/').last;
+            return AIModel(id: id, provider: AIProvider.gemini, name: m['displayName'] as String? ?? id, modelId: id);
+          })
+          .toList();
       return models;
     } on DioException catch (e) {
       dLog('[GeminiRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode}');

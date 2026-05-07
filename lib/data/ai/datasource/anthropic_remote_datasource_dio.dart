@@ -205,7 +205,7 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
       if (models.isEmpty) {
         return AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList();
       }
-      return models;
+      return dropSupersededAnthropicSnapshots(models);
     } on DioException catch (e) {
       dLog('[AnthropicRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode ?? ''}');
       return AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList();
@@ -220,4 +220,36 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
     messages.add({'role': 'user', 'content': prompt});
     return messages;
   }
+}
+
+/// Collapses Anthropic's `claude-{family}-{YYYYMMDD}` snapshots so each
+/// family is represented by its newest dated revision. Undated entries
+/// (e.g. `*-latest`) are kept verbatim. Order follows the input list — the
+/// kept entry sits at the position where its base first appeared, so the
+/// API's newest-first ordering is preserved.
+@visibleForTesting
+List<AIModel> dropSupersededAnthropicSnapshots(List<AIModel> models) {
+  final dateSuffix = RegExp(r'-(\d{8})$');
+  final result = <AIModel>[];
+  final indexByBase = <String, int>{};
+  final dateByBase = <String, int>{};
+  for (final m in models) {
+    final match = dateSuffix.firstMatch(m.modelId);
+    if (match == null) {
+      result.add(m);
+      continue;
+    }
+    final base = m.modelId.substring(0, match.start);
+    final date = int.parse(match.group(1)!);
+    final priorIdx = indexByBase[base];
+    if (priorIdx == null) {
+      indexByBase[base] = result.length;
+      dateByBase[base] = date;
+      result.add(m);
+    } else if (date > dateByBase[base]!) {
+      result[priorIdx] = m;
+      dateByBase[base] = date;
+    }
+  }
+  return result;
 }
