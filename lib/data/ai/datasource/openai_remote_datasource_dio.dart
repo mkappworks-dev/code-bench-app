@@ -107,7 +107,10 @@ class OpenAIRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
           errorBody = utf8.decode(bytes);
         } catch (_) {}
       }
-      dLog('[OpenAIDatasource] request failed: status=${e.response?.statusCode} type=${e.type} body=$errorBody');
+      dLog(
+        '[OpenAIDatasource] request failed: status=${e.response?.statusCode} '
+        'type=${e.type} body=${redactSecrets(errorBody ?? 'null')}',
+      );
       throw NetworkException('OpenAI request failed', statusCode: e.response?.statusCode, originalError: e);
     }
   }
@@ -136,14 +139,19 @@ class OpenAIRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
       );
       final response = await testDio.get(ApiConstants.openAiModelsEndpoint);
       final data = response.data as Map<String, dynamic>;
-      // Filter to chat-capable model families. Prefix list lives on
-      // `AIModels.openAiChatModelPrefixes` so it stays adjacent to the
-      // hardcoded OpenAI entries — one place to add new families.
-      final models = (data['data'] as List)
-          .map((m) => m['id'] as String)
-          .where(AIModels.isOpenAiChatModelId)
-          .map((id) => AIModel(id: id, provider: AIProvider.openai, name: id, modelId: id))
-          .toList();
+      final entries = data['data'];
+      if (entries is! List) {
+        dLog('[OpenAIRemoteDatasource] /models payload missing "data" list — using hardcoded fallback');
+        return AIModels.defaults.where((m) => m.provider == AIProvider.openai).toList();
+      }
+      final models = <AIModel>[];
+      for (final entry in entries) {
+        if (entry is! Map) continue;
+        final id = entry['id'];
+        if (id is! String || id.isEmpty) continue;
+        if (!AIModels.isOpenAiChatModelId(id)) continue;
+        models.add(AIModel(id: id, provider: AIProvider.openai, name: id, modelId: id));
+      }
       return models;
     } on DioException catch (e) {
       dLog('[OpenAIRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode}');
