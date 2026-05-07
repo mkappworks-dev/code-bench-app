@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.11.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.10.1...v0.11.0) (2026-05-07)
+
+
+### Features
+
+* **chat:** provider settings passthrough + tool-call attribution badges ([#91](https://github.com/mkappworks-dev/code-bench-app/issues/91)) ([e81e770](https://github.com/mkappworks-dev/code-bench-app/commit/e81e77088dfa049e6fbe0840f5092c30f1fe9a8a))
+* **providers:** detect CLI auth state and gate chat send proactively ([#89](https://github.com/mkappworks-dev/code-bench-app/issues/89)) ([cd3ceee](https://github.com/mkappworks-dev/code-bench-app/commit/cd3ceeeece6a6470f7a3b83df4ba3c2562a3115d))
+
 ## [0.10.1](https://github.com/mkappworks-dev/code-bench-app/compare/v0.10.0...v0.10.1) (2026-05-06)
 
 
