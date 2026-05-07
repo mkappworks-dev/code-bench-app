@@ -137,13 +137,13 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
   Future<Object?> sendMessage(String input, {String? systemPrompt}) async {
     _cancelRequested = false;
     _sendInProgress = true;
-    ref.read(agentCancelProvider.notifier).clear();
 
     final sessionId = ref.read(activeSessionIdProvider);
     if (sessionId == null) {
       _sendInProgress = false;
       throw StateError('No active session — cannot send message.');
     }
+    ref.read(agentCancelProvider.notifier).clear(sessionId);
 
     final model = ref.read(selectedModelProvider);
     final service = await ref.read(sessionServiceProvider.future);
@@ -229,7 +229,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
             permission: permission,
             projectPath: projectPath,
             providerId: providerId,
-            cancelFlag: () => cancelN.cancelled,
+            cancelFlag: () => cancelN.isCancelled(sessionId),
             requestPermission: permN.request,
             onMcpStatusChanged: mcpN.setStatus,
             onMcpServerRemoved: mcpN.remove,
@@ -248,7 +248,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
                 sink.addError(NetworkException('No response — the model may still be loading.'), StackTrace.current),
           ),
       // Flip the cooperative cancel flag from the registry so bulk cancels (e.g. delete-all-sessions) reach the underlying CLI process, not just the Dart subscription.
-      onCancel: cancelN.request,
+      onCancel: () => cancelN.request(sessionId),
       onMessage: (msg) {
         if (disposed) return;
         if (msg.sessionId != sessionId) return;
@@ -338,7 +338,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     _sendInProgress = false;
     final registry = ref.read(chatStreamServiceProvider);
     unawaited(registry.cancel(sessionId));
-    ref.read(agentCancelProvider.notifier).request();
+    ref.read(agentCancelProvider.notifier).request(sessionId);
     // Unblock any in-flight permission dialog so the agent loop can exit its
     // `await requestPermission(...)` rather than hanging until the UI is
     // manually dismissed.

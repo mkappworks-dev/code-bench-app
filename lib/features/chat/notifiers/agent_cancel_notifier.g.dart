@@ -8,20 +8,14 @@ part of 'agent_cancel_notifier.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Cooperative cancel flag read by [AgentService] at each tool boundary.
-/// Separate from the plain-text stream cancel so both can be flipped by a
-/// single stop-button press without coupling their wiring.
+/// Cooperative per-session cancel flags read by [AgentService] / [ChatStreamService] at each tool boundary; tracking by sessionId stops one chat's stop-button from cancelling concurrent chats' streams.
 
 @ProviderFor(AgentCancelNotifier)
 final agentCancelProvider = AgentCancelNotifierProvider._();
 
-/// Cooperative cancel flag read by [AgentService] at each tool boundary.
-/// Separate from the plain-text stream cancel so both can be flipped by a
-/// single stop-button press without coupling their wiring.
-final class AgentCancelNotifierProvider extends $NotifierProvider<AgentCancelNotifier, bool> {
-  /// Cooperative cancel flag read by [AgentService] at each tool boundary.
-  /// Separate from the plain-text stream cancel so both can be flipped by a
-  /// single stop-button press without coupling their wiring.
+/// Cooperative per-session cancel flags read by [AgentService] / [ChatStreamService] at each tool boundary; tracking by sessionId stops one chat's stop-button from cancelling concurrent chats' streams.
+final class AgentCancelNotifierProvider extends $NotifierProvider<AgentCancelNotifier, Set<String>> {
+  /// Cooperative per-session cancel flags read by [AgentService] / [ChatStreamService] at each tool boundary; tracking by sessionId stops one chat's stop-button from cancelling concurrent chats' streams.
   AgentCancelNotifierProvider._()
     : super(
         from: null,
@@ -41,24 +35,23 @@ final class AgentCancelNotifierProvider extends $NotifierProvider<AgentCancelNot
   AgentCancelNotifier create() => AgentCancelNotifier();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(bool value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<bool>(value));
+  Override overrideWithValue(Set<String> value) {
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<Set<String>>(value));
   }
 }
 
-String _$agentCancelNotifierHash() => r'b49ede477b869083c7a1f52de140e8c9ca618dc6';
+String _$agentCancelNotifierHash() => r'42e0ff1dc8ca568f64b32b64a07767f086a11752';
 
-/// Cooperative cancel flag read by [AgentService] at each tool boundary.
-/// Separate from the plain-text stream cancel so both can be flipped by a
-/// single stop-button press without coupling their wiring.
+/// Cooperative per-session cancel flags read by [AgentService] / [ChatStreamService] at each tool boundary; tracking by sessionId stops one chat's stop-button from cancelling concurrent chats' streams.
 
-abstract class _$AgentCancelNotifier extends $Notifier<bool> {
-  bool build();
+abstract class _$AgentCancelNotifier extends $Notifier<Set<String>> {
+  Set<String> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<bool, bool>;
-    final element = ref.element as $ClassProviderElement<AnyNotifier<bool, bool>, bool, Object?, Object?>;
+    final ref = this.ref as $Ref<Set<String>, Set<String>>;
+    final element =
+        ref.element as $ClassProviderElement<AnyNotifier<Set<String>, Set<String>>, Set<String>, Object?, Object?>;
     element.handleCreate(ref, build);
   }
 }
