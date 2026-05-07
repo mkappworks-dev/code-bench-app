@@ -10,7 +10,7 @@ import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/data/ai/models/provider_capabilities.dart';
 import 'package:code_bench_app/data/ai/models/provider_setting_drop.dart';
-import 'package:code_bench_app/features/chat/notifiers/chat_input_bar_options_provider.dart';
+import 'package:code_bench_app/features/chat/notifiers/chat_input_bar_options_notifier.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/notifiers/transport_readiness_notifier.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';

@@ -11,7 +11,7 @@ import 'package:code_bench_app/data/chat/models/transport_readiness.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:code_bench_app/data/project/models/project.dart';
-import 'package:code_bench_app/features/chat/notifiers/chat_input_bar_options_provider.dart';
+import 'package:code_bench_app/features/chat/notifiers/chat_input_bar_options_notifier.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/notifiers/transport_readiness_notifier.dart';
 import 'package:code_bench_app/features/chat/widgets/chat_input_bar.dart';

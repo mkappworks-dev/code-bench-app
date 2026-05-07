@@ -15,7 +15,7 @@ import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/agent_cancel_notifier.dart';
-import '../notifiers/chat_input_bar_options_provider.dart';
+import '../notifiers/chat_input_bar_options_notifier.dart';
 import '../notifiers/chat_notifier.dart';
 import '../../../data/shared/session_settings.dart';
 import '../notifiers/available_models_failure.dart';

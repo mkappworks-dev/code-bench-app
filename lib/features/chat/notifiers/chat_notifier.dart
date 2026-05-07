@@ -23,7 +23,7 @@ import '../../mcp_servers/notifiers/mcp_server_status_notifier.dart';
 import '../../providers/notifiers/providers_notifier.dart';
 import 'agent_cancel_notifier.dart';
 import 'agent_permission_request_notifier.dart';
-import 'chat_input_bar_options_provider.dart';
+import 'chat_input_bar_options_notifier.dart';
 import 'dropped_settings_notifier.dart';
 import 'transport_readiness_notifier.dart';
 
