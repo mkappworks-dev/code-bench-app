@@ -197,7 +197,9 @@ Map<String, dynamic> buildCodexThreadStartParams({
 AIProviderDatasource codexCliDatasourceProcess(Ref ref) {
   // TODO: read binaryPath from settings once settings model is updated
   final ds = CodexCliDatasourceProcess(binaryPath: 'codex');
-  ref.onDispose(() => unawaited(ds.dispose()));
+  ref.onDispose(
+    () => unawaited(ds.dispose().catchError((Object e) => sLog('[CodexCli] dispose failed: ${e.runtimeType}'))),
+  );
   return ds;
 }
 

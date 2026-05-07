@@ -50,7 +50,9 @@ AuthStatus parseClaudeAuthOutput(int exitCode, String stdout) {
 AIProviderDatasource claudeCliDatasourceProcess(Ref ref) {
   // TODO: read binaryPath from settings once settings model is updated
   final ds = ClaudeCliDatasourceProcess(binaryPath: 'claude');
-  ref.onDispose(() => unawaited(ds.dispose()));
+  ref.onDispose(
+    () => unawaited(ds.dispose().catchError((Object e) => sLog('[ClaudeCli] dispose failed: ${e.runtimeType}'))),
+  );
   return ds;
 }
 
@@ -109,6 +111,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
   final Map<String, Process> _processes = {};
   final Set<String> _knownSessions = {};
+  bool _disposed = false;
 
   /// Absolute path to the `claude` binary, resolved via the user's login
   /// shell during [detect]. macOS GUI launches inherit a stripped PATH that
@@ -203,6 +206,10 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   }) async {
     Process? spawned;
     try {
+      if (_disposed) {
+        controller.add(const ProviderStreamFailure(error: 'Claude Code CLI datasource disposed'));
+        return;
+      }
       controller.add(ProviderInit(provider: id, modelId: settings?.modelId));
 
       // sessionId guard — we only ever generate v4 UUIDs, but a future
@@ -299,6 +306,13 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       }
 
       _processes[sessionId] = spawned;
+      if (_disposed) {
+        // Lost the race against dispose() — kill and bail before any further wiring runs (otherwise a `bypassPermissions` child outlives the datasource).
+        spawned.kill(ProcessSignal.sigterm);
+        if (identical(_processes[sessionId], spawned)) _processes.remove(sessionId);
+        controller.add(const ProviderStreamFailure(error: 'Claude Code CLI datasource disposed'));
+        return;
+      }
 
       // EOF stdin up-front: newer CLI versions block reading stdin in `-p` mode and exit 1 after a 3s warning.
       unawaited(spawned.stdin.close());
@@ -412,6 +426,8 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
   @override
   Future<void> dispose() async {
+    if (_disposed) return;
+    _disposed = true;
     for (final p in _processes.values.toList()) {
       p.kill(ProcessSignal.sigterm);
     }
