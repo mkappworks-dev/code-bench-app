@@ -20,3 +20,15 @@ class StreamAbortedUnexpectedlyException extends AgentException {
   @override
   String toString() => 'Agent stream aborted unexpectedly: $reason';
 }
+
+/// Thrown when the user picked a CLI transport whose datasource is not
+/// registered (e.g. providerId="claude-cli" but no provider). Previously the
+/// path silently fell through to HTTP, which routed user-selected CLI traffic
+/// through API keys without any UI signal.
+class ProviderUnavailableException extends AgentException {
+  ProviderUnavailableException(this.providerId);
+  final String providerId;
+  @override
+  String toString() =>
+      'Selected provider "$providerId" is not available — try restarting the app or reselecting the transport.';
+}

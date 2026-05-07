@@ -18,7 +18,7 @@ import '../../data/session/models/chat_session.dart';
 import '../../data/session/repository/session_repository.dart';
 import '../../data/session/repository/session_repository_impl.dart';
 import '../agent/agent_service.dart';
-import '../chat/chat_stream_service.dart';
+import '../chat/chat_stream_registry_service.dart';
 import '../mcp/mcp_service.dart' show McpRemoveCallback, McpStatusCallback;
 
 part 'session_service.g.dart';
@@ -29,13 +29,13 @@ Future<SessionService> sessionService(Ref ref) async {
   final ai = await ref.watch(aiRepositoryProvider.future);
   final agent = await ref.watch(agentServiceProvider.future);
   final providerService = ref.watch(aIProviderServiceProvider.notifier);
-  final chatStreamSvc = ref.read(chatStreamServiceProvider);
+  final chatStreamRegistry = ref.read(chatStreamRegistryServiceProvider);
   return SessionService(
     session: session,
     ai: ai,
     agent: agent,
     providerService: providerService,
-    chatStreamService: chatStreamSvc,
+    chatStreamRegistry: chatStreamRegistry,
   );
 }
 
@@ -45,18 +45,18 @@ class SessionService {
     required TextStreamingRepository ai,
     required AgentService agent,
     AIProviderService? providerService,
-    ChatStreamService? chatStreamService,
+    ChatStreamRegistryService? chatStreamRegistry,
   }) : _session = session,
        _ai = ai,
        _agent = agent,
        _providerService = providerService,
-       _chatStreamService = chatStreamService;
+       _chatStreamRegistry = chatStreamRegistry;
 
   final SessionRepository _session;
   final TextStreamingRepository _ai;
   final AgentService _agent;
   final AIProviderService? _providerService;
-  final ChatStreamService? _chatStreamService;
+  final ChatStreamRegistryService? _chatStreamRegistry;
   static const _uuid = Uuid();
 
   Stream<List<ChatSession>> watchAllSessions() => _session.watchAllSessions();
@@ -88,7 +88,12 @@ class SessionService {
   Future<void> archiveSession(String sessionId) => _session.archiveSession(sessionId);
   Future<void> unarchiveSession(String sessionId) => _session.unarchiveSession(sessionId);
   Future<void> deleteAllSessionsAndMessages() async {
-    await _chatStreamService?.cancelAll();
+    try {
+      await _chatStreamRegistry?.cancelAll();
+    } catch (e, st) {
+      // Don't let a stuck cancel block the user's "delete everything" intent — log and proceed.
+      sLog('[SessionService] cancelAll during deleteAllSessionsAndMessages failed: $e\n$st');
+    }
     return _session.deleteAllSessionsAndMessages();
   }
 
@@ -167,28 +172,28 @@ class SessionService {
     // selected a named provider (claude-cli, codex, etc.).
     if (providerId != null) {
       final ds = _providerService?.getProvider(providerId);
-      if (ds != null) {
-        yield* _streamProvider(
-          ds: ds,
-          sessionId: sessionId,
-          prompt: userInput,
-          projectPath: projectPath,
-          requestPermission: requestPermission,
-          cancelFlag: cancelFlag,
-          settings: providerSettings,
+      if (ds == null) {
+        // Surface as a typed exception rather than silently routing CLI traffic through HTTP — the user picked CLI for a reason.
+        sLog(
+          '[SessionService] providerId=$providerId requested but no datasource registered '
+          '(providerService=${_providerService == null ? "absent" : "no-such-provider"})',
         );
-        if (historyExcludingCurrent.isEmpty && userInput.isNotEmpty) {
-          final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
-          await _session.updateSessionTitle(sessionId, shortTitle);
-        }
-        return;
+        throw ProviderUnavailableException(providerId);
       }
-      // sLog so a fall-through to the HTTP path (which uses a different transport than the user picked) is visible in release.
-      sLog(
-        '[SessionService] providerId=$providerId requested but no datasource registered '
-        '(providerService=${_providerService == null ? "absent" : "no-such-provider"}); '
-        'falling through to HTTP path',
+      yield* _streamProvider(
+        ds: ds,
+        sessionId: sessionId,
+        prompt: userInput,
+        projectPath: projectPath,
+        requestPermission: requestPermission,
+        cancelFlag: cancelFlag,
+        settings: providerSettings,
       );
+      if (historyExcludingCurrent.isEmpty && userInput.isNotEmpty) {
+        final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
+        await _session.updateSessionTitle(sessionId, shortTitle);
+      }
+      return;
     }
 
     if (mode == ChatMode.act && model.provider != AIProvider.custom) {
@@ -307,7 +312,7 @@ class SessionService {
       settings: settings,
     )) {
       if (cancelFlag()) {
-        ds.cancel();
+        ds.cancel(sessionId);
         interrupted = true;
         break;
       }
@@ -351,14 +356,19 @@ class SessionService {
                   PermissionRequest(toolEventId: requestId, toolName: toolName, summary: toolName, input: toolInput),
                 )
               : true;
-          ds.respondToPermissionRequest(requestId, approved: approved);
+          ds.respondToPermissionRequest(sessionId, requestId, approved: approved);
 
         case ProviderStreamDone():
           break; // Loop ends naturally.
 
         case ProviderStreamFailure(:final error):
           if (contentBuffer.isNotEmpty || toolEvents.isNotEmpty) {
-            await _session.persistMessage(sessionId, snapshot(streaming: false));
+            // Best-effort persist of the partial assistant snapshot; never let a DB error mask the original provider failure that's about to be thrown.
+            try {
+              await _session.persistMessage(sessionId, snapshot(streaming: false));
+            } catch (e, st) {
+              sLog('[SessionService] partial-content persist failed during failure path: $e\n$st');
+            }
           }
           Error.throwWithStackTrace(StreamAbortedUnexpectedlyException(error.toString()), StackTrace.current);
       }
@@ -369,18 +379,10 @@ class SessionService {
     }
 
     if (interrupted) {
-      final interruptedMsg = ChatMessage(
-        id: assistantId,
-        sessionId: sessionId,
-        role: MessageRole.interrupted,
-        content: contentBuffer.isEmpty ? '[interrupted]' : '${contentBuffer.toString()}\n[interrupted]',
-        timestamp: DateTime.now(),
-        toolEvents: List.unmodifiable(toolEvents),
-        providerId: streamProviderId,
-        modelId: streamModelId,
-      );
-      await _session.persistMessage(sessionId, interruptedMsg);
-      yield interruptedMsg;
+      // Keep role=assistant on cancel: the InterruptedBubble renderer ignores content/toolEvents, so flipping the role would visually erase the partial output the user already saw. cancelSend appends a separate interrupted marker as the visual indicator.
+      final cancelledAssistant = snapshot(streaming: false);
+      await _session.persistMessage(sessionId, cancelledAssistant);
+      yield cancelledAssistant;
       return;
     }
 

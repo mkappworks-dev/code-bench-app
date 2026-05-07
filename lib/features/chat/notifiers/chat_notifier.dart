@@ -15,7 +15,7 @@ import '../../../data/shared/session_settings.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/chat_session.dart';
 import '../../../services/ai_provider/ai_provider_service.dart';
-import '../../../services/chat/chat_stream_service.dart';
+import '../../../services/chat/chat_stream_registry_service.dart';
 import '../../../services/chat/chat_stream_state.dart';
 import '../../../services/session/session_service.dart';
 import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
@@ -111,13 +111,37 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final svc = await ref.watch(sessionServiceProvider.future);
     final history = await svc.loadHistory(sessionId);
 
-    final registry = ref.watch(chatStreamServiceProvider);
+    final registry = ref.watch(chatStreamRegistryServiceProvider);
+
+    final live = registry.liveMessagesFor(sessionId);
+    final seed = _mergeMessages(history, live);
+
+    final msgSub = registry.watchMessages(sessionId).listen((msg) {
+      if (!ref.mounted) return;
+      if (msg.sessionId != sessionId) return;
+      state = AsyncData(_upsertById(state.value ?? seed, msg));
+    });
+    ref.onDispose(msgSub.cancel);
+
     final stateSub = registry.watchState(sessionId).listen((s) {
       // `stateSub.cancel` is async; a final event can race the dispose callback.
       if (!ref.mounted) return;
       switch (s) {
         case ChatStreamFailed(:final failure):
           dLog('[ChatMessagesNotifier] stream failed for $sessionId: $failure');
+          // Surface late/replayed failures by appending an interrupted marker, so a tab remounted after the originating sendMessage's snackbar already fired still shows that the turn ended unsuccessfully.
+          final current = state.value ?? const <ChatMessage>[];
+          if (current.isEmpty || current.last.role != MessageRole.interrupted) {
+            final marker = ChatMessage(
+              id: _uuid.v4(),
+              sessionId: sessionId,
+              role: MessageRole.interrupted,
+              content: '',
+              timestamp: DateTime.now(),
+            );
+            state = AsyncData([...current, marker]);
+          }
+          ref.read(activeMessageIdProvider.notifier).set(null);
         case ChatStreamDone() || ChatStreamIdle():
           ref.read(activeMessageIdProvider.notifier).set(null);
         default:
@@ -126,7 +150,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     });
     ref.onDispose(stateSub.cancel);
 
-    return history;
+    return seed;
   }
 
   /// Sends [input] and streams the response into state.
@@ -137,13 +161,13 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
   Future<Object?> sendMessage(String input, {String? systemPrompt}) async {
     _cancelRequested = false;
     _sendInProgress = true;
-    ref.read(agentCancelProvider.notifier).clear();
 
     final sessionId = ref.read(activeSessionIdProvider);
     if (sessionId == null) {
       _sendInProgress = false;
       throw StateError('No active session — cannot send message.');
     }
+    ref.read(agentCancelProvider.notifier).clear(sessionId);
 
     final model = ref.read(selectedModelProvider);
     final service = await ref.read(sessionServiceProvider.future);
@@ -202,7 +226,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
       }
     }
 
-    final registry = ref.read(chatStreamServiceProvider);
+    final registry = ref.read(chatStreamRegistryServiceProvider);
     final completer = Completer<Object?>();
 
     var disposed = false;
@@ -229,7 +253,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
             permission: permission,
             projectPath: projectPath,
             providerId: providerId,
-            cancelFlag: () => cancelN.cancelled,
+            cancelFlag: () => cancelN.isCancelled(sessionId),
             requestPermission: permN.request,
             onMcpStatusChanged: mcpN.setStatus,
             onMcpServerRemoved: mcpN.remove,
@@ -248,7 +272,8 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
                 sink.addError(NetworkException('No response — the model may still be loading.'), StackTrace.current),
           ),
       // Flip the cooperative cancel flag from the registry so bulk cancels (e.g. delete-all-sessions) reach the underlying CLI process, not just the Dart subscription.
-      onCancel: cancelN.request,
+      onCancel: () => cancelN.request(sessionId),
+      onPersist: (msg) => service.persistMessage(sessionId, msg),
       onMessage: (msg) {
         if (disposed) return;
         if (msg.sessionId != sessionId) return;
@@ -262,15 +287,6 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
             dropsN.addAll(msg.id, pendingDrops);
             pendingDrops.clear();
           }
-        }
-        final current = state.value ?? [];
-        final idx = current.indexWhere((m) => m.id == msg.id);
-        if (idx >= 0) {
-          final updated = List<ChatMessage>.from(current);
-          updated[idx] = msg;
-          state = AsyncData(updated);
-        } else {
-          state = AsyncData([...current, msg]);
         }
       },
     );
@@ -324,6 +340,31 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     return result;
   }
 
+  List<ChatMessage> _mergeMessages(List<ChatMessage> history, List<ChatMessage> live) {
+    if (live.isEmpty) return history;
+    final liveById = <String, ChatMessage>{for (final m in live) m.id: m};
+    final result = <ChatMessage>[];
+    final seen = <String>{};
+    for (final h in history) {
+      result.add(liveById[h.id] ?? h);
+      seen.add(h.id);
+    }
+    for (final l in live) {
+      if (seen.add(l.id)) result.add(l);
+    }
+    return result;
+  }
+
+  List<ChatMessage> _upsertById(List<ChatMessage> current, ChatMessage msg) {
+    final idx = current.indexWhere((m) => m.id == msg.id);
+    if (idx >= 0) {
+      final updated = List<ChatMessage>.from(current);
+      updated[idx] = msg;
+      return updated;
+    }
+    return [...current, msg];
+  }
+
   /// Cancels the in-flight send (if any) and appends an in-memory
   /// `interrupted` marker. Persistence is fire-and-forget — failures are
   /// logged via [sLog] so they remain visible in release builds, but no UI
@@ -336,9 +377,9 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
 
     _cancelRequested = true;
     _sendInProgress = false;
-    final registry = ref.read(chatStreamServiceProvider);
+    final registry = ref.read(chatStreamRegistryServiceProvider);
     unawaited(registry.cancel(sessionId));
-    ref.read(agentCancelProvider.notifier).request();
+    ref.read(agentCancelProvider.notifier).request(sessionId);
     // Unblock any in-flight permission dialog so the agent loop can exit its
     // `await requestPermission(...)` rather than hanging until the UI is
     // manually dismissed.

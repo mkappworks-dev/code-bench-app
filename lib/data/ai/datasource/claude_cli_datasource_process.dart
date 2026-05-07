@@ -13,6 +13,7 @@ import '../util/setting_mappers.dart';
 import 'ai_provider_datasource.dart';
 import 'binary_resolver_process.dart';
 import 'claude_cli_stream_parser.dart';
+import 'process_launcher.dart';
 import 'provider_input_guards.dart';
 
 part 'claude_cli_datasource_process.g.dart';
@@ -48,7 +49,11 @@ AuthStatus parseClaudeAuthOutput(int exitCode, String stdout) {
 @riverpod
 AIProviderDatasource claudeCliDatasourceProcess(Ref ref) {
   // TODO: read binaryPath from settings once settings model is updated
-  return ClaudeCliDatasourceProcess(binaryPath: 'claude');
+  final ds = ClaudeCliDatasourceProcess(binaryPath: 'claude');
+  ref.onDispose(
+    () => unawaited(ds.dispose().catchError((Object e) => sLog('[ClaudeCli] dispose failed: ${e.runtimeType}'))),
+  );
+  return ds;
 }
 
 @visibleForTesting
@@ -97,12 +102,16 @@ const int _consecutiveParseFailureLimit = 5;
 /// Spawns the locally-installed `claude` CLI binary and streams its
 /// `--output-format stream-json` output, normalized to [ProviderRuntimeEvent].
 class ClaudeCliDatasourceProcess implements AIProviderDatasource {
-  ClaudeCliDatasourceProcess({required this.binaryPath});
+  ClaudeCliDatasourceProcess({required this.binaryPath, ProcessLauncher? processLauncher, String? resolvedPath})
+    : _processLauncher = processLauncher ?? defaultProcessLauncher,
+      _resolvedPath = resolvedPath;
 
   final String binaryPath;
+  final ProcessLauncher _processLauncher;
 
-  Process? _process;
+  final Map<String, Process> _processes = {};
   final Set<String> _knownSessions = {};
+  bool _disposed = false;
 
   /// Absolute path to the `claude` binary, resolved via the user's login
   /// shell during [detect]. macOS GUI launches inherit a stripped PATH that
@@ -197,6 +206,10 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   }) async {
     Process? spawned;
     try {
+      if (_disposed) {
+        controller.add(const ProviderStreamFailure(error: 'Claude Code CLI datasource disposed'));
+        return;
+      }
       controller.add(ProviderInit(provider: id, modelId: settings?.modelId));
 
       // sessionId guard — we only ever generate v4 UUIDs, but a future
@@ -251,7 +264,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       if (exePath == null) return;
 
       try {
-        spawned = await Process.start(
+        spawned = await _processLauncher(
           exePath,
           args,
           workingDirectory: workingDirectory,
@@ -277,7 +290,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
           if (parentEnv['SHELL'] != null) 'SHELL': parentEnv['SHELL']!,
         };
         try {
-          spawned = await Process.start(
+          spawned = await _processLauncher(
             exePath,
             args,
             workingDirectory: workingDirectory,
@@ -292,7 +305,14 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
         }
       }
 
-      _process = spawned;
+      _processes[sessionId] = spawned;
+      if (_disposed) {
+        // Lost the race against dispose() — kill and bail before any further wiring runs (otherwise a `bypassPermissions` child outlives the datasource).
+        spawned.kill(ProcessSignal.sigterm);
+        if (identical(_processes[sessionId], spawned)) _processes.remove(sessionId);
+        controller.add(const ProviderStreamFailure(error: 'Claude Code CLI datasource disposed'));
+        return;
+      }
 
       // EOF stdin up-front: newer CLI versions block reading stdin in `-p` mode and exit 1 after a 3s warning.
       unawaited(spawned.stdin.close());
@@ -323,7 +343,8 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
           final mapped = _toProviderEvent(event);
           if (event is StreamParseFailure) {
             consecutiveParseFailures++;
-            final preview = line.length > 256 ? '${line.substring(0, 256)}…' : line;
+            // Cap preview at 64 chars — redactSecrets only strips known token shapes; a 256-char window can leak prompt text or file contents the model just read.
+            final preview = line.length > 64 ? '${line.substring(0, 64)}…' : line;
             dLog(
               '[ClaudeCli] parse failure ($consecutiveParseFailures/$_consecutiveParseFailureLimit): ${event.error} — line="${redactSecrets(preview)}"',
             );
@@ -367,9 +388,9 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       dLog('[ClaudeCli] send failed: ${redactSecrets('$e')}\n$st');
       controller.add(ProviderStreamFailure(error: e));
     } finally {
-      // Only clear _process if it still points to ours — a later sendAndStream
-      // call may have already overwritten it.
-      if (identical(_process, spawned)) _process = null;
+      if (identical(_processes[sessionId], spawned)) {
+        _processes.remove(sessionId);
+      }
       await controller.close();
     }
   }
@@ -399,15 +420,22 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   }
 
   @override
-  void cancel() {
-    _process?.kill(ProcessSignal.sigterm);
-    // The controller closes via the `finally` in [_stream] when the process
-    // exits — no need to close it here, and doing so would race with a
-    // freshly-spawned turn.
+  void cancel(String sessionId) {
+    _processes[sessionId]?.kill(ProcessSignal.sigterm);
   }
 
   @override
-  void respondToPermissionRequest(String requestId, {required bool approved}) {
+  Future<void> dispose() async {
+    if (_disposed) return;
+    _disposed = true;
+    for (final p in _processes.values.toList()) {
+      p.kill(ProcessSignal.sigterm);
+    }
+    _processes.clear();
+  }
+
+  @override
+  void respondToPermissionRequest(String sessionId, String requestId, {required bool approved}) {
     // Claude Code CLI handles its own permission UI inline and never forwards prompts to the host.
   }
 

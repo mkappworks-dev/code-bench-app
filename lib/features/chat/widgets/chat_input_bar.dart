@@ -621,7 +621,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                           builder: (context, child) => Opacity(opacity: _pulseOpacity.value, child: child),
                           child: GestureDetector(
                             onTap: () {
-                              ref.read(agentCancelProvider.notifier).request();
+                              ref.read(agentCancelProvider.notifier).request(widget.sessionId);
                               ref.read(chatMessagesProvider(widget.sessionId).notifier).cancelSend();
                               _controller.text = _lastSentText;
                               _controller.selection = TextSelection.collapsed(offset: _lastSentText.length);

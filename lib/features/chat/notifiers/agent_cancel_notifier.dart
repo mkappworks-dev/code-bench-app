@@ -2,17 +2,22 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'agent_cancel_notifier.g.dart';
 
-/// Cooperative cancel flag read by [AgentService] at each tool boundary.
-/// Separate from the plain-text stream cancel so both can be flipped by a
-/// single stop-button press without coupling their wiring.
+/// Cooperative per-session cancel flags read by [AgentService] / [ChatStreamRegistryService] at each tool boundary; tracking by sessionId stops one chat's stop-button from cancelling concurrent chats' streams.
 @Riverpod(keepAlive: true)
 class AgentCancelNotifier extends _$AgentCancelNotifier {
   @override
-  bool build() => false;
+  Set<String> build() => const <String>{};
 
-  void request() => state = true;
-  void clear() => state = false;
+  void request(String sessionId) {
+    if (state.contains(sessionId)) return;
+    state = {...state, sessionId};
+  }
 
-  /// Stable accessor for closures captured by `ChatStreamService` — `ref.read` would throw after the originating notifier disposes.
-  bool get cancelled => state;
+  void clear(String sessionId) {
+    if (!state.contains(sessionId)) return;
+    state = state.where((id) => id != sessionId).toSet();
+  }
+
+  /// Stable accessor for closures captured by `ChatStreamRegistryService` — `ref.read` would throw after the originating notifier disposes.
+  bool isCancelled(String sessionId) => state.contains(sessionId);
 }
