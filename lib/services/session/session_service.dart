@@ -100,7 +100,10 @@ class SessionService {
   ({String? providerId, String? modelId}) _attribution({AIModel? model, String? cliProviderId, String? cliModelId}) {
     if (cliProviderId != null) return (providerId: cliProviderId, modelId: cliModelId);
     if (model != null) return (providerId: model.provider.name, modelId: model.modelId);
-    throw StateError('_attribution called with no model and no cliProviderId');
+    // No source of attribution — return null so the caller skips stamping
+    // rather than throwing into the SSE stream. Callers always pass at
+    // least one source today; this is defence-in-depth for future paths.
+    return (providerId: null, modelId: null);
   }
 
   Stream<ChatMessage> sendAndStream({
@@ -186,6 +189,16 @@ class SessionService {
         }
         return;
       }
+      // The caller asked for a CLI transport but the provider service is
+      // either absent (test/misconfig) or doesn't know this id. Silently
+      // re-routing to the HTTP API-key path would send the agentic context
+      // to a different transport than the user picked — sLog so this is
+      // visible in release builds.
+      sLog(
+        '[SessionService] providerId=$providerId requested but no datasource registered '
+        '(providerService=${_providerService == null ? "absent" : "no-such-provider"}); '
+        'falling through to HTTP path',
+      );
     }
 
     if (mode == ChatMode.act && model.provider != AIProvider.custom) {

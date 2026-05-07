@@ -215,6 +215,18 @@ class AppDatabase extends _$AppDatabase {
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
       sLog('[AppDatabase] migrating schema $from -> $to');
+      // Defensive downgrade guard: a hotfix rollback (or dev cycling between
+      // branches) can leave a schema-vN db on disk while the running build
+      // expects schema-v(N-1). Drift's onUpgrade only fires for `from < to`,
+      // so this branch fires for `from > to` — surface a typed error rather
+      // than letting a "column not found" SQLException bubble up.
+      if (from > to) {
+        sLog('[AppDatabase] db schema (v$from) is ahead of code (v$to) — refusing to run');
+        throw StateError(
+          'Database schema (v$from) is newer than this build (v$to). '
+          'Update the app, or remove the local db to start fresh.',
+        );
+      }
       if (from < 2) {
         await m.addColumn(chatMessages, chatMessages.providerId);
         await m.addColumn(chatMessages, chatMessages.modelId);

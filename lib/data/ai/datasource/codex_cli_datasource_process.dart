@@ -631,7 +631,7 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   }
 
   void _handleResponse(dynamic id, Map<String, dynamic> result) {
-    final completer = _pendingRequests.remove(id);
+    final completer = _pendingRequests.remove(_coerceId(id));
     if (completer != null) {
       completer.complete(result);
     } else {
@@ -639,8 +639,19 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     }
   }
 
+  /// `_pendingRequests` is `Map<int, Completer>` but the JSON decoder may
+  /// hand back a num (e.g. `1.0`) for the response id depending on how the
+  /// peer encodes it. Coerce to int defensively so the map lookup never
+  /// silently misses and hangs the request until the 30s timeout.
+  int? _coerceId(dynamic id) {
+    if (id is int) return id;
+    if (id is num) return id.toInt();
+    if (id is String) return int.tryParse(id);
+    return null;
+  }
+
   void _handleErrorResponse(dynamic id, Map<String, dynamic> error) {
-    final completer = _pendingRequests.remove(id);
+    final completer = _pendingRequests.remove(_coerceId(id));
     final message = error['message'] as String? ?? 'Unknown error';
     if (completer != null) {
       completer.completeError(Exception('Codex error: $message'));
@@ -668,12 +679,18 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
         _emitPermissionRequest(id, method, params);
 
       case 'account/chatgptAuthTokens/refresh':
-        // Auth token refresh — auto-approved here. The token never crosses
-        // the host process: codex holds and refreshes it internally; this
-        // response is a protocol-level "yes, proceed". sLog so the event
-        // is grep-able in release builds.
-        sLog('[CodexCli] auto-approving account/chatgptAuthTokens/refresh (id=$id)');
-        _respond(id, {'ok': true});
+        // Auth token refresh — auto-approved only during an active turn so
+        // a hostile or buggy app-server can't loop this server→client
+        // request before `thread/start` runs. The token never crosses the
+        // host process; codex holds and refreshes it internally. sLog so
+        // the event is grep-able in release builds.
+        if (_providerThreadId == null) {
+          sLog('[CodexCli] denying account/chatgptAuthTokens/refresh — no active turn (id=$id)');
+          _respond(id, {'ok': false});
+        } else {
+          sLog('[CodexCli] auto-approving account/chatgptAuthTokens/refresh (id=$id)');
+          _respond(id, {'ok': true});
+        }
 
       default:
         // Unknown approval-shaped method. sLog (survives release) and

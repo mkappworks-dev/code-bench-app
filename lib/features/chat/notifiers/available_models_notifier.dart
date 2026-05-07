@@ -129,10 +129,11 @@ class AvailableModelsNotifier extends _$AvailableModelsNotifier {
     ref.invalidateSelf();
     try {
       await future;
-    } catch (_) {
-      // Swallowed: storage errors are already reported via `AsyncError` on
-      // the provider. We only catch here so an unhandled rejection doesn't
-      // crash the Zone.
+    } catch (e) {
+      // Storage errors are already reported via `AsyncError` on the provider
+      // (and listened to by the picker). We only catch here so an unhandled
+      // rejection doesn't crash the Zone — but we still leave a breadcrumb.
+      dLog('[AvailableModelsNotifier.refresh] swallowed: ${e.runtimeType}');
     }
   }
 

@@ -77,6 +77,9 @@ List<String> buildClaudeCliArgs({
   // "exited 1" failures on user installs. The user's effort pick still lives
   // in the session row (and reaches the Anthropic API path via
   // `thinking.budget_tokens`), but here we let the CLI use its own default.
+  if (settings?.effort != null) {
+    dLog('[ClaudeCli] ignoring effort=${settings!.effort!.name} — Claude CLI does not accept --effort');
+  }
   return [
     '-p',
     '--output-format',
