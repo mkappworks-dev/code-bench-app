@@ -86,34 +86,43 @@ class _UserBubbleState extends ConsumerState<_UserBubble> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (showActions) ...[
-              _BubbleActionButton(icon: AppIcons.trash, tooltip: 'Delete', color: c.warning, onTap: _delete),
-              const SizedBox(width: 6),
-            ],
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-                decoration: BoxDecoration(
-                  color: c.userBubbleFill,
-                  border: Border.all(color: c.userBubbleStroke),
-                  borderRadius: BorderRadius.circular(11),
-                  boxShadow: [BoxShadow(color: c.userBubbleHighlight, blurRadius: 0, offset: const Offset(0, 1))],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (showActions) ...[
+                  _BubbleActionButton(icon: AppIcons.trash, tooltip: 'Delete', color: c.warning, onTap: _delete),
+                  const SizedBox(width: 6),
+                ],
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: c.userBubbleFill,
+                      border: Border.all(color: c.userBubbleStroke),
+                      borderRadius: BorderRadius.circular(11),
+                      boxShadow: [BoxShadow(color: c.userBubbleHighlight, blurRadius: 0, offset: const Offset(0, 1))],
+                    ),
+                    child: SelectableText(
+                      widget.message.content,
+                      style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),
+                    ),
+                  ),
                 ),
-                child: SelectableText(
-                  widget.message.content,
-                  style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+          // Drops on a user bubble means the assistant turn either failed
+          // or hasn't produced a message yet — anchor the notice here so a
+          // silent downgrade doesn't get lost when the stream errors.
+          _DroppedSettingsNotice(messageId: widget.message.id),
+        ],
       ),
     );
   }

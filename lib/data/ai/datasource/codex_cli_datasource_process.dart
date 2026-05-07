@@ -679,13 +679,17 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
         _emitPermissionRequest(id, method, params);
 
       case 'account/chatgptAuthTokens/refresh':
-        // Auth token refresh — auto-approved only during an active turn so
-        // a hostile or buggy app-server can't loop this server→client
-        // request before `thread/start` runs. The token never crosses the
-        // host process; codex holds and refreshes it internally. sLog so
-        // the event is grep-able in release builds.
-        if (_providerThreadId == null) {
-          sLog('[CodexCli] denying account/chatgptAuthTokens/refresh — no active turn (id=$id)');
+        // Auth token refresh — auto-approved once the JSON-RPC handshake
+        // has completed (i.e. `_version` is set, meaning we received the
+        // `initialize` response). Earlier than that, a hostile or buggy
+        // app-server could loop this request before any client guard runs.
+        // The token never crosses the host process; codex holds and
+        // refreshes it internally. sLog so the event is grep-able in
+        // release builds. Gating on `_version` (not `_providerThreadId`)
+        // because legitimate refreshes can happen between `initialized`
+        // and `thread/start` if the OAuth token has expired at startup.
+        if (_version == null) {
+          sLog('[CodexCli] denying account/chatgptAuthTokens/refresh — process not yet initialized (id=$id)');
           _respond(id, {'ok': false});
         } else {
           sLog('[CodexCli] auto-approving account/chatgptAuthTokens/refresh (id=$id)');
@@ -705,7 +709,11 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   }
 
   void _emitPermissionRequest(dynamic id, String method, Map<String, dynamic>? params) {
-    final requestId = id.toString();
+    // Normalize the JSON-RPC id before stringifying so num `5.0` and int `5`
+    // produce the same key — same protocol-drift hazard `_coerceId` handles
+    // for `_pendingRequests`.
+    final normalized = _coerceId(id);
+    final requestId = (normalized ?? id).toString();
 
     // Store completer so [respondToRequest] can resolve it
     final completer = Completer<Map<String, dynamic>>();

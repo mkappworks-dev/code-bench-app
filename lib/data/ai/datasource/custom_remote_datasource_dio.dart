@@ -24,12 +24,14 @@ Map<String, dynamic> buildCustomRequestBody({
   required AIModel model,
   required List<Map<String, String>> messages,
   ProviderTurnSettings? settings,
+  ProviderSettingDropSink? onSettingDropped,
 }) {
   return <String, dynamic>{
     'model': model.modelId,
     'messages': messages,
     'stream': true,
-    if (settings?.effort != null) 'reasoning_effort': mapOpenAIReasoningEffort(settings!.effort!),
+    if (settings?.effort != null)
+      'reasoning_effort': mapOpenAIReasoningEffort(settings!.effort!, onSettingDropped: onSettingDropped),
   };
 }
 
@@ -91,7 +93,12 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     ProviderSettingDropSink? onSettingDropped,
   }) {
     final messages = _buildMessages(history, prompt, systemPrompt);
-    final body = buildCustomRequestBody(model: model, messages: messages, settings: settings);
+    final body = buildCustomRequestBody(
+      model: model,
+      messages: messages,
+      settings: settings,
+      onSettingDropped: onSettingDropped,
+    );
     return _attemptStream(body, requestedEffort: settings?.effort, onSettingDropped: onSettingDropped);
   }
 

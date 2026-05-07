@@ -226,6 +226,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final mcpN = ref.read(mcpServerStatusProvider.notifier);
 
     String? streamingAssistantId;
+    String? userMessageId;
     final dropsN = ref.read(messageDroppedSettingsProvider.notifier);
 
     registry.start(
@@ -263,6 +264,9 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
       onMessage: (msg) {
         if (disposed) return;
         if (msg.sessionId != sessionId) return;
+        if (msg.role == MessageRole.user && userMessageId == null) {
+          userMessageId = msg.id;
+        }
         if (msg.role == MessageRole.assistant && streamingAssistantId == null) {
           streamingAssistantId = msg.id;
           activeMessageIdNotifier.set(msg.id);
@@ -291,6 +295,17 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
 
     // Subscribe after start() so watchState's first yield is connecting, not idle.
     late final StreamSubscription<ChatStreamState> termSub;
+    void flushPendingDropsOnTermination() {
+      if (pendingDrops.isEmpty) return;
+      final anchor = streamingAssistantId ?? userMessageId;
+      if (anchor == null) {
+        pendingDrops.clear();
+        return;
+      }
+      dropsN.addAll(anchor, pendingDrops);
+      pendingDrops.clear();
+    }
+
     termSub = registry.watchState(sessionId).listen((s) {
       if (disposed) {
         if (!completer.isCompleted) completer.complete(null);
@@ -299,12 +314,15 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
       }
       switch (s) {
         case ChatStreamDone():
+          flushPendingDropsOnTermination();
           if (!completer.isCompleted) completer.complete(null);
           termSub.cancel();
         case ChatStreamFailed(:final failure):
+          flushPendingDropsOnTermination();
           if (!completer.isCompleted) completer.complete(failure);
           termSub.cancel();
         case ChatStreamIdle():
+          flushPendingDropsOnTermination();
           if (!completer.isCompleted) completer.complete(null);
           termSub.cancel();
         default:
