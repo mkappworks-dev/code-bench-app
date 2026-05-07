@@ -11,6 +11,8 @@ import 'chat_stream_state.dart';
 
 part 'chat_stream_service.g.dart';
 
+typedef ChatMessagePersist = Future<void> Function(ChatMessage);
+
 @Riverpod(keepAlive: true)
 ChatStreamService chatStreamService(Ref ref) {
   final registry = ChatStreamService();
@@ -22,6 +24,7 @@ class ChatStreamService {
   final Map<String, _StreamHandle> _handles = {};
   final Map<String, Map<String, ChatMessage>> _liveById = {};
   final Map<String, StreamController<ChatMessage>> _msgCtrls = {};
+  final Map<String, ChatMessagePersist> _onPersist = {};
 
   static const _defaultBackoff = [Duration(milliseconds: 500), Duration(seconds: 1), Duration(seconds: 2)];
 
@@ -54,6 +57,7 @@ class ChatStreamService {
     required Stream<ChatMessage> Function() streamFactory,
     required void Function(ChatMessage) onMessage,
     void Function()? onCancel,
+    ChatMessagePersist? onPersist,
     List<Duration> backoff = _defaultBackoff,
   }) {
     if (sessionId.isEmpty) {
@@ -63,6 +67,7 @@ class ChatStreamService {
     // Block re-entry while either an active subscription or a pending retry timer exists — the timer keeps the connect-loop alive even after `cancelOnError: true` clears the subscription.
     if (handle.subscription != null || handle.retryTimer != null) return;
     _liveById[sessionId]?.clear();
+    if (onPersist != null) _onPersist[sessionId] = onPersist;
     handle.onCancel = onCancel;
     _attemptConnect(handle, streamFactory, onMessage, backoff, attempt: 1);
   }
@@ -113,6 +118,7 @@ class ChatStreamService {
         } else {
           final failure = isRetryable ? AgentFailure.networkExhausted(attempt) : _mapError(e);
           handle._emit(ChatStreamState.failed(failure));
+          unawaited(_flushBufferToPersist(handle.sessionId));
         }
       },
       onDone: () {
@@ -121,6 +127,22 @@ class ChatStreamService {
       },
       cancelOnError: true,
     );
+  }
+
+  /// Backstop persistence for the in-flight buffer when the underlying transport's terminal-handling path may not have run (e.g. consumer-side subscription cancellation mid-flight). Idempotent because [SessionService.persistMessage] upserts by message id.
+  Future<void> _flushBufferToPersist(String sessionId) async {
+    final persist = _onPersist[sessionId];
+    if (persist == null) return;
+    final bucket = _liveById[sessionId];
+    if (bucket == null || bucket.isEmpty) return;
+    final snapshot = bucket.values.toList(growable: false);
+    for (final msg in snapshot) {
+      try {
+        await persist(msg);
+      } catch (e, st) {
+        dLog('[ChatStreamService] persist failed for ${msg.id} on $sessionId: $e\n$st');
+      }
+    }
   }
 
   void _recordLive(String sessionId, ChatMessage msg) {
@@ -147,6 +169,7 @@ class ChatStreamService {
     await handle.subscription?.cancel();
     handle.subscription = null;
     handle._emit(const ChatStreamState.idle());
+    await _flushBufferToPersist(sessionId);
   }
 
   Future<void> cancelAll() async {
@@ -165,6 +188,7 @@ class ChatStreamService {
     }
     _msgCtrls.clear();
     _liveById.clear();
+    _onPersist.clear();
   }
 }
 

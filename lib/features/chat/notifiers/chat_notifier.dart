@@ -260,6 +260,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
           ),
       // Flip the cooperative cancel flag from the registry so bulk cancels (e.g. delete-all-sessions) reach the underlying CLI process, not just the Dart subscription.
       onCancel: () => cancelN.request(sessionId),
+      onPersist: (msg) => service.persistMessage(sessionId, msg),
       onMessage: (msg) {
         if (disposed) return;
         if (msg.sessionId != sessionId) return;

@@ -430,4 +430,143 @@ void main() {
       await ctrlB.close();
     });
   });
+
+  group('persistence backstop', () {
+    test('cancel(sessionId) flushes buffered messages through onPersist', () async {
+      final service = ChatStreamService();
+      addTearDown(service.dispose);
+      final ctrl = StreamController<ChatMessage>();
+      final persisted = <ChatMessage>[];
+
+      service.start(
+        sessionId: 'sid',
+        streamFactory: () => ctrl.stream,
+        onMessage: (_) {},
+        onPersist: (m) async => persisted.add(m),
+      );
+
+      final base = DateTime.now();
+      ctrl.add(ChatMessage(id: 'a', sessionId: 'sid', role: MessageRole.user, content: 'hi', timestamp: base));
+      ctrl.add(
+        ChatMessage(id: 'b', sessionId: 'sid', role: MessageRole.assistant, content: 'streaming', timestamp: base),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      await service.cancel('sid');
+
+      expect(persisted.map((m) => m.id), ['a', 'b']);
+      await ctrl.close();
+    });
+
+    test('stream failure flushes buffered messages through onPersist', () async {
+      final service = ChatStreamService();
+      addTearDown(service.dispose);
+      final ctrl = StreamController<ChatMessage>();
+      final persisted = <ChatMessage>[];
+
+      service.start(
+        sessionId: 'sid',
+        streamFactory: () => ctrl.stream,
+        onMessage: (_) {},
+        onPersist: (m) async => persisted.add(m),
+        backoff: const [],
+      );
+
+      final base = DateTime.now();
+      ctrl.add(ChatMessage(id: 'a', sessionId: 'sid', role: MessageRole.user, content: 'hi', timestamp: base));
+      ctrl.add(
+        ChatMessage(id: 'b', sessionId: 'sid', role: MessageRole.assistant, content: 'partial', timestamp: base),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      ctrl.addError(StateError('transport blew up'));
+      // Drain microtasks so unawaited flush runs.
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(persisted.map((m) => m.id), ['a', 'b']);
+      await ctrl.close();
+    });
+
+    test('cancel without onPersist is a no-op (no callback wired)', () async {
+      final service = ChatStreamService();
+      addTearDown(service.dispose);
+      final ctrl = StreamController<ChatMessage>();
+
+      service.start(sessionId: 'sid', streamFactory: () => ctrl.stream, onMessage: (_) {});
+
+      ctrl.add(
+        ChatMessage(id: 'a', sessionId: 'sid', role: MessageRole.user, content: 'hi', timestamp: DateTime.now()),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      await expectLater(service.cancel('sid'), completes);
+      await ctrl.close();
+    });
+
+    test('failed onPersist is logged but does not abort the flush of remaining messages', () async {
+      final service = ChatStreamService();
+      addTearDown(service.dispose);
+      final ctrl = StreamController<ChatMessage>();
+      final attempted = <String>[];
+
+      service.start(
+        sessionId: 'sid',
+        streamFactory: () => ctrl.stream,
+        onMessage: (_) {},
+        onPersist: (m) async {
+          attempted.add(m.id);
+          if (m.id == 'fail-me') throw StateError('drift busy');
+        },
+      );
+
+      final base = DateTime.now();
+      ctrl.add(ChatMessage(id: 'a', sessionId: 'sid', role: MessageRole.user, content: '', timestamp: base));
+      ctrl.add(ChatMessage(id: 'fail-me', sessionId: 'sid', role: MessageRole.assistant, content: '', timestamp: base));
+      ctrl.add(ChatMessage(id: 'c', sessionId: 'sid', role: MessageRole.assistant, content: '', timestamp: base));
+      await Future<void>.delayed(Duration.zero);
+
+      await service.cancel('sid');
+
+      expect(attempted, ['a', 'fail-me', 'c']);
+      await ctrl.close();
+    });
+
+    test('persist callback is scoped per sessionId', () async {
+      final service = ChatStreamService();
+      addTearDown(service.dispose);
+      final ctrlA = StreamController<ChatMessage>();
+      final ctrlB = StreamController<ChatMessage>();
+      final persistedA = <String>[];
+      final persistedB = <String>[];
+
+      service.start(
+        sessionId: 'A',
+        streamFactory: () => ctrlA.stream,
+        onMessage: (_) {},
+        onPersist: (m) async => persistedA.add(m.id),
+      );
+      service.start(
+        sessionId: 'B',
+        streamFactory: () => ctrlB.stream,
+        onMessage: (_) {},
+        onPersist: (m) async => persistedB.add(m.id),
+      );
+
+      final base = DateTime.now();
+      ctrlA.add(ChatMessage(id: 'aa', sessionId: 'A', role: MessageRole.user, content: '', timestamp: base));
+      ctrlB.add(ChatMessage(id: 'bb', sessionId: 'B', role: MessageRole.user, content: '', timestamp: base));
+      await Future<void>.delayed(Duration.zero);
+
+      await service.cancel('A');
+
+      expect(persistedA, ['aa']);
+      expect(persistedB, isEmpty);
+
+      await service.cancel('B');
+      expect(persistedB, ['bb']);
+
+      await ctrlA.close();
+      await ctrlB.close();
+    });
+  });
 }
