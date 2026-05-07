@@ -196,7 +196,9 @@ Map<String, dynamic> buildCodexThreadStartParams({
 @riverpod
 AIProviderDatasource codexCliDatasourceProcess(Ref ref) {
   // TODO: read binaryPath from settings once settings model is updated
-  return CodexCliDatasourceProcess(binaryPath: 'codex');
+  final ds = CodexCliDatasourceProcess(binaryPath: 'codex');
+  ref.onDispose(() => unawaited(ds.dispose()));
+  return ds;
 }
 
 /// Codex CLI provider; install-level concerns (detect, verifyAuth) live here, per-chat process plumbing in [CodexSessionPool].
@@ -292,6 +294,9 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   @override
   void respondToPermissionRequest(String sessionId, String requestId, {required bool approved}) =>
       _pool.respondToPermissionRequest(sessionId, requestId, approved: approved);
+
+  @override
+  Future<void> dispose() => _pool.dispose();
 
   @override
   Future<AuthStatus> verifyAuth() async {

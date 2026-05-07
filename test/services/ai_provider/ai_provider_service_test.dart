@@ -43,6 +43,9 @@ class _FakeDs implements AIProviderDatasource {
 
   @override
   void cancel(String sessionId) => throw UnimplementedError();
+
+  @override
+  Future<void> dispose() async {}
 }
 
 class _AIProviderServiceUnderTest extends AIProviderService {

@@ -45,8 +45,10 @@ class CodexSessionPool {
   // Resolved independently of CodexCliDatasourceProcess.detect()'s cache; each layer probes once and reuses its own field.
   String? _resolvedPath;
   String? _shellPath;
+  bool _disposed = false;
 
   Future<CodexSession> sessionFor(String sessionId, String workingDirectory) async {
+    if (_disposed) throw StateError('CodexSessionPool disposed');
     _evictIdle();
     final existing = _sessions[sessionId];
     if (existing != null && existing.workingDirectory == workingDirectory) {
@@ -68,13 +70,29 @@ class CodexSessionPool {
     return session;
   }
 
-  void cancel(String sessionId) => _sessions[sessionId]?.cancel();
+  void cancel(String sessionId) {
+    final session = _sessions[sessionId];
+    if (session == null) {
+      // Likely evicted between Stop click and arrival; without this log a Stop that hits an already-gone session is invisible.
+      dLog('[CodexSessionPool] cancel for unknown session $sessionId — no-op (likely evicted)');
+      return;
+    }
+    session.cancel();
+  }
 
   void respondToPermissionRequest(String sessionId, String requestId, {required bool approved}) {
-    _sessions[sessionId]?.respondToPermissionRequest(requestId, approved: approved);
+    final session = _sessions[sessionId];
+    if (session == null) {
+      // A dropped permission response leaves the user's dialog hanging silently — log so it surfaces in triage.
+      dLog('[CodexSessionPool] permission response for unknown session $sessionId — no-op (likely evicted)');
+      return;
+    }
+    session.respondToPermissionRequest(requestId, approved: approved);
   }
 
   Future<void> dispose() async {
+    if (_disposed) return;
+    _disposed = true;
     final all = _sessions.values.toList();
     _sessions.clear();
     await Future.wait(all.map((s) => s.dispose()));
@@ -85,13 +103,19 @@ class CodexSessionPool {
     final stale = <MapEntry<String, CodexSession>>[];
     for (final entry in _sessions.entries) {
       if (entry.value.isInFlight) continue;
+      // Skip sessions awaiting user permission — eviction would silently abandon the dialog.
+      if (entry.value.hasPendingApprovals) continue;
       if (now.difference(entry.value.lastActiveAt) > idleTimeout) {
         stale.add(entry);
       }
     }
     for (final entry in stale) {
       _sessions.remove(entry.key);
-      unawaited(entry.value.dispose());
+      unawaited(
+        entry.value.dispose().catchError(
+          (Object e) => dLog('[CodexSessionPool] dispose during eviction failed for ${entry.key}: $e'),
+        ),
+      );
       dLog('[CodexSessionPool] evicted idle session ${entry.key}');
     }
   }

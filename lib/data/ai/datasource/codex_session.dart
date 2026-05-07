@@ -41,11 +41,14 @@ class CodexSession {
   int _nextId = 1;
   int _consecutiveJsonParseFailures = 0;
   DateTime _lastActiveAt;
+  bool _disposed = false;
 
   DateTime get lastActiveAt => _lastActiveAt;
   bool get isInFlight => _streamController?.isClosed == false;
+  bool get hasPendingApprovals => _pendingApprovals.isNotEmpty;
 
   Stream<ProviderRuntimeEvent> sendAndStream({required String prompt, ProviderTurnSettings? settings}) {
+    if (_disposed) throw StateError('CodexSession disposed');
     _lastActiveAt = DateTime.now();
     _streamController?.close();
     // Single-subscription so ProviderInit buffers until `await for` subscribes.
@@ -71,6 +74,8 @@ class CodexSession {
   }
 
   Future<void> dispose() async {
+    if (_disposed) return;
+    _disposed = true;
     _resetTurn();
     _process?.kill();
     await _stdoutSubscription?.cancel();
@@ -123,7 +128,7 @@ class CodexSession {
 
     dLog('[CodexCli] spawning codex app-server in $workingDirectory');
 
-    _process = await _processLauncher(
+    final spawned = await _processLauncher(
       exePath,
       const ['app-server'],
       workingDirectory: workingDirectory,
@@ -131,26 +136,30 @@ class CodexSession {
       includeParentEnvironment: false,
       environment: env,
     );
+    _process = spawned;
 
     // allowMalformed so a multi-byte char split across reads doesn't kill the stream.
-    _stdoutSubscription = _process!.stdout
+    _stdoutSubscription = spawned.stdout
         .transform(const Utf8Decoder(allowMalformed: true))
         .transform(const LineSplitter())
         .listen(
           _handleLine,
           onError: (Object e) {
+            // Short-circuit late callbacks fired after dispose() or a process swap so they don't surface failures on a controller that belongs to a different lifecycle.
+            if (_disposed || !identical(_process, spawned)) return;
             dLog('[CodexCli] stdout error: ${redactSecrets('$e')}');
             _streamController?.add(ProviderStreamFailure(error: 'Codex stdout error: ${e.runtimeType}'));
             _resetProcess();
           },
           onDone: () {
+            if (_disposed || !identical(_process, spawned)) return;
             dLog('[CodexCli] app-server stdout closed');
             _streamController?.add(const ProviderStreamFailure(error: 'Codex process exited'));
             _resetProcess();
           },
         );
 
-    _stderrSubscription = _process!.stderr
+    _stderrSubscription = spawned.stderr
         .transform(const Utf8Decoder(allowMalformed: true))
         .transform(const LineSplitter())
         .listen((line) {
@@ -162,8 +171,9 @@ class CodexSession {
         });
 
     unawaited(
-      _process!.exitCode
+      spawned.exitCode
           .then((code) {
+            if (_disposed || !identical(_process, spawned)) return;
             if (code != 0) {
               dLog('[CodexCli] app-server exited with code $code\nstderr=${redactSecrets(_stderrBuffer.toString())}');
               _streamController?.add(
@@ -180,6 +190,7 @@ class CodexSession {
             _resetProcess();
           })
           .catchError((Object e) {
+            if (_disposed || !identical(_process, spawned)) return;
             dLog('[CodexCli] exitCode handler threw: ${redactSecrets('$e')}');
             _resetProcess();
           }),

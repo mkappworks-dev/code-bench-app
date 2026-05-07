@@ -49,7 +49,9 @@ AuthStatus parseClaudeAuthOutput(int exitCode, String stdout) {
 @riverpod
 AIProviderDatasource claudeCliDatasourceProcess(Ref ref) {
   // TODO: read binaryPath from settings once settings model is updated
-  return ClaudeCliDatasourceProcess(binaryPath: 'claude');
+  final ds = ClaudeCliDatasourceProcess(binaryPath: 'claude');
+  ref.onDispose(() => unawaited(ds.dispose()));
+  return ds;
 }
 
 @visibleForTesting
@@ -405,6 +407,14 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   @override
   void cancel(String sessionId) {
     _processes[sessionId]?.kill(ProcessSignal.sigterm);
+  }
+
+  @override
+  Future<void> dispose() async {
+    for (final p in _processes.values.toList()) {
+      p.kill(ProcessSignal.sigterm);
+    }
+    _processes.clear();
   }
 
   @override

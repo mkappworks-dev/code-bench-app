@@ -47,4 +47,9 @@ abstract interface class AIProviderDatasource {
   /// Returns `AuthStatus.unknown` (not a thrown exception) on probe failure
   /// — send is never blocked on a probe we couldn't run.
   Future<AuthStatus> verifyAuth();
+
+  /// Tear down child processes and resources. Called from the Riverpod
+  /// `ref.onDispose` of the datasource provider so a provider rebuild does
+  /// not orphan long-lived per-session processes.
+  Future<void> dispose();
 }

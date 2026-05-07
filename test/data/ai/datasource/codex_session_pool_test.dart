@@ -22,6 +22,9 @@ class _FakeCodexSession extends Fake implements CodexSession {
   @override
   bool isInFlight = false;
 
+  @override
+  bool hasPendingApprovals = false;
+
   bool disposed = false;
   bool cancelled = false;
   String? lastApprovalRequestId;
@@ -180,6 +183,40 @@ void main() {
 
       expect(registry['a']!.disposed, isTrue);
       expect(registry['b']!.disposed, isTrue);
+    });
+
+    test('sessionFor throws StateError after dispose', () async {
+      final registry = <String, _FakeCodexSession>{};
+      final pool = _poolWithFakeFactory(registry);
+
+      await pool.dispose();
+
+      expect(() => pool.sessionFor('a', '/p'), throwsA(isA<StateError>()));
+    });
+
+    test('dispose is idempotent', () async {
+      final registry = <String, _FakeCodexSession>{};
+      final pool = _poolWithFakeFactory(registry);
+
+      await pool.sessionFor('a', '/p');
+      await pool.dispose();
+      // Second call must not double-dispose nor throw.
+      await pool.dispose();
+    });
+  });
+
+  group('CodexSessionPool eviction (pending approvals)', () {
+    test('does NOT evict a session that still has pending approvals', () async {
+      final registry = <String, _FakeCodexSession>{};
+      final pool = _poolWithFakeFactory(registry, idleTimeout: const Duration(milliseconds: 1));
+
+      final waiting = await pool.sessionFor('approvals', '/p') as _FakeCodexSession;
+      waiting.lastActiveAt = DateTime.now().subtract(const Duration(minutes: 1));
+      waiting.hasPendingApprovals = true;
+
+      await pool.sessionFor('other', '/p');
+
+      expect(waiting.disposed, isFalse);
     });
   });
 }
