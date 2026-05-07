@@ -11,6 +11,7 @@ import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/shared/session_settings.dart';
 import '../models/provider_capabilities.dart';
+import '../models/provider_setting_drop.dart';
 import '../models/provider_turn_settings.dart';
 import '../models/stream_event.dart';
 import '../util/setting_mappers.dart';
@@ -87,13 +88,19 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     required AIModel model,
     String? systemPrompt,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) {
     final messages = _buildMessages(history, prompt, systemPrompt);
     final body = buildCustomRequestBody(model: model, messages: messages, settings: settings);
-    return _attemptStream(body);
+    return _attemptStream(body, requestedEffort: settings?.effort, onSettingDropped: onSettingDropped);
   }
 
-  Stream<String> _attemptStream(Map<String, dynamic> body, {DioException? originalError}) async* {
+  Stream<String> _attemptStream(
+    Map<String, dynamic> body, {
+    DioException? originalError,
+    ChatEffort? requestedEffort,
+    ProviderSettingDropSink? onSettingDropped,
+  }) async* {
     try {
       final response = await _dio.post(
         '/chat/completions',
@@ -133,8 +140,21 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
           body.containsKey('reasoning_effort') &&
           isUnknownFieldRejection(e.response?.statusCode, e.response?.data?.toString(), 'reasoning_effort')) {
         sLog('[CustomRemoteDatasource] endpoint rejected reasoning_effort; retrying without it');
+        if (requestedEffort != null) {
+          onSettingDropped?.call(
+            ProviderSettingDropEffort(
+              requested: requestedEffort,
+              reason: 'Custom endpoint rejected reasoning_effort — retried without it',
+            ),
+          );
+        }
         final fallback = Map<String, dynamic>.from(body)..remove('reasoning_effort');
-        yield* _attemptStream(fallback, originalError: e);
+        yield* _attemptStream(
+          fallback,
+          originalError: e,
+          requestedEffort: requestedEffort,
+          onSettingDropped: onSettingDropped,
+        );
         return;
       }
       // If we're here after a retry, surface the *first* error — that's the
@@ -229,6 +249,7 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     required List<Tool> tools,
     required AIModel model,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) {
     final body = <String, dynamic>{
       'model': model.modelId,
@@ -236,12 +257,18 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
       'messages': messages,
       'tools': tools.map((t) => t.toOpenAiToolJson()).toList(),
       'tool_choice': 'auto',
-      if (settings?.effort != null) 'reasoning_effort': mapOpenAIReasoningEffort(settings!.effort!),
+      if (settings?.effort != null)
+        'reasoning_effort': mapOpenAIReasoningEffort(settings!.effort!, onSettingDropped: onSettingDropped),
     };
-    return _attemptToolsStream(body);
+    return _attemptToolsStream(body, requestedEffort: settings?.effort, onSettingDropped: onSettingDropped);
   }
 
-  Stream<StreamEvent> _attemptToolsStream(Map<String, dynamic> body, {DioException? originalError}) async* {
+  Stream<StreamEvent> _attemptToolsStream(
+    Map<String, dynamic> body, {
+    DioException? originalError,
+    ChatEffort? requestedEffort,
+    ProviderSettingDropSink? onSettingDropped,
+  }) async* {
     try {
       final response = await _dio.post(
         '/chat/completions',
@@ -312,8 +339,21 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
           body.containsKey('reasoning_effort') &&
           isUnknownFieldRejection(e.response?.statusCode, e.response?.data?.toString(), 'reasoning_effort')) {
         sLog('[CustomRemoteDatasource] endpoint rejected reasoning_effort (tools); retrying without it');
+        if (requestedEffort != null) {
+          onSettingDropped?.call(
+            ProviderSettingDropEffort(
+              requested: requestedEffort,
+              reason: 'Custom endpoint rejected reasoning_effort — retried without it',
+            ),
+          );
+        }
         final fallback = Map<String, dynamic>.from(body)..remove('reasoning_effort');
-        yield* _attemptToolsStream(fallback, originalError: e);
+        yield* _attemptToolsStream(
+          fallback,
+          originalError: e,
+          requestedEffort: requestedEffort,
+          onSettingDropped: onSettingDropped,
+        );
         return;
       }
       final source = originalError ?? e;

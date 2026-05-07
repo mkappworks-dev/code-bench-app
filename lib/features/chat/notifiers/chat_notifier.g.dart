@@ -127,7 +127,7 @@ final class SelectedModelNotifierProvider extends $NotifierProvider<SelectedMode
   }
 }
 
-String _$selectedModelNotifierHash() => r'382cf38aee67c2ca393daaf537412b1c6dedb799';
+String _$selectedModelNotifierHash() => r'558ad12f6ca7e983bc23105b18e55941c75294d0';
 
 abstract class _$SelectedModelNotifier extends $Notifier<AIModel> {
   AIModel build();
@@ -304,7 +304,7 @@ final class ChatMessagesNotifierProvider extends $AsyncNotifierProvider<ChatMess
   }
 }
 
-String _$chatMessagesNotifierHash() => r'3bfc90f5f3c88f6810bd8f4954fd365541a50b0e';
+String _$chatMessagesNotifierHash() => r'8dff2c016749f450f817edab46229a0df4b8ea4d';
 
 final class ChatMessagesNotifierFamily extends $Family
     with

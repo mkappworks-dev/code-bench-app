@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/utils/debug_logger.dart';
+import '../../data/ai/models/provider_setting_drop.dart';
 import '../../data/ai/models/provider_turn_settings.dart';
 import '../../data/ai/models/stream_event.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
@@ -80,6 +81,7 @@ class AgentService {
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     final reqPermission = requestPermission ?? ((_) async => true);
     final Future<void> Function() teardown;
@@ -136,6 +138,7 @@ class AgentService {
             tools: tools,
             model: model,
             settings: settings,
+            onSettingDropped: onSettingDropped,
           )) {
             switch (event) {
               case StreamTextDelta(:final text):

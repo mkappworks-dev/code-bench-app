@@ -1,5 +1,6 @@
 import '../../coding_tools/models/tool.dart';
 import '../../shared/ai_model.dart';
+import '../models/provider_setting_drop.dart';
 import '../models/provider_turn_settings.dart';
 import '../models/stream_event.dart';
 
@@ -13,5 +14,6 @@ abstract interface class ToolStreamingRepository {
     required List<Tool> tools,
     required AIModel model,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   });
 }

@@ -12,6 +12,7 @@ import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/shared/session_settings.dart';
 import '../models/provider_capabilities.dart';
+import '../models/provider_setting_drop.dart';
 import '../models/provider_turn_settings.dart';
 import '../util/setting_mappers.dart';
 import 'ai_remote_datasource.dart';
@@ -22,10 +23,11 @@ Map<String, dynamic> buildOpenAiRequestBody({
   required AIModel model,
   required List<Map<String, String>> messages,
   ProviderTurnSettings? settings,
+  ProviderSettingDropSink? onSettingDropped,
 }) {
   final body = <String, dynamic>{'model': model.modelId, 'messages': messages, 'stream': true};
   if (settings?.effort != null && AIModels.isOpenAiReasoningModel(model.modelId)) {
-    body['reasoning_effort'] = mapOpenAIReasoningEffort(settings!.effort!);
+    body['reasoning_effort'] = mapOpenAIReasoningEffort(settings!.effort!, onSettingDropped: onSettingDropped);
   }
   return body;
 }
@@ -60,9 +62,15 @@ class OpenAIRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     required AIModel model,
     String? systemPrompt,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     final messages = _buildMessages(history, prompt, systemPrompt);
-    final body = buildOpenAiRequestBody(model: model, messages: messages, settings: settings);
+    final body = buildOpenAiRequestBody(
+      model: model,
+      messages: messages,
+      settings: settings,
+      onSettingDropped: onSettingDropped,
+    );
 
     try {
       final response = await _dio.post(

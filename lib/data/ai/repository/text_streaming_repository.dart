@@ -1,6 +1,7 @@
 import '../../shared/ai_model.dart';
 import '../../shared/chat_message.dart';
 import '../models/provider_capabilities.dart';
+import '../models/provider_setting_drop.dart';
 import '../models/provider_turn_settings.dart';
 
 /// Capability for repositories that stream raw text tokens.
@@ -21,5 +22,6 @@ abstract interface class TextStreamingRepository {
     required AIModel model,
     String? systemPrompt,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   });
 }

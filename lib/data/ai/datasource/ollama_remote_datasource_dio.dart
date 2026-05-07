@@ -11,6 +11,7 @@ import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/shared/session_settings.dart';
 import '../models/provider_capabilities.dart';
+import '../models/provider_setting_drop.dart';
 import '../models/provider_turn_settings.dart';
 import '../util/setting_mappers.dart';
 import 'ai_remote_datasource.dart';
@@ -45,6 +46,7 @@ class OllamaRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     required AIModel model,
     String? systemPrompt,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     final messages = _buildMessages(history, prompt, systemPrompt);
     final body = <String, dynamic>{

@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/utils/debug_logger.dart';
 import '../../data/ai/datasource/ai_provider_datasource.dart';
+import '../../data/ai/models/provider_setting_drop.dart';
 import '../ai_provider/ai_provider_service.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
 import '../../data/ai/repository/text_streaming_repository.dart';
@@ -115,6 +116,7 @@ class SessionService {
     Future<bool> Function(PermissionRequest req)? requestPermission,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     // Normalize whitespace-only system prompts to null so providers see a
     // consistent absent-vs-present signal — Anthropic's nullable spread
@@ -204,6 +206,7 @@ class SessionService {
         onMcpStatusChanged: onMcpStatusChanged,
         onMcpServerRemoved: onMcpServerRemoved,
         settings: providerSettings,
+        onSettingDropped: onSettingDropped,
       )) {
         final stamped = msg.role == MessageRole.assistant
             ? msg.copyWith(providerId: attribution.providerId, modelId: attribution.modelId)
@@ -231,6 +234,7 @@ class SessionService {
       model: model,
       systemPrompt: effectiveSystemPrompt,
       settings: providerSettings,
+      onSettingDropped: onSettingDropped,
     )) {
       buffer.write(chunk);
       yield ChatMessage(

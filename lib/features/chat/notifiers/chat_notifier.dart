@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/ai/models/auth_status.dart';
+import '../../../data/ai/models/provider_setting_drop.dart';
 import '../../../data/chat/models/agent_failure.dart';
 import '../../../data/chat/models/transport_readiness.dart';
 import '../../../data/shared/ai_model.dart';
@@ -23,6 +24,7 @@ import '../../providers/notifiers/providers_notifier.dart';
 import 'agent_cancel_notifier.dart';
 import 'agent_permission_request_notifier.dart';
 import 'chat_input_bar_options_provider.dart';
+import 'dropped_settings_notifier.dart';
 import 'transport_readiness_notifier.dart';
 
 part 'chat_notifier.g.dart';
@@ -173,7 +175,21 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     // model+transport rather than a transient null.
     final caps = ref.read(chatInputBarOptionsProvider);
     final storedMode = ref.read(sessionModeProvider);
-    final mode = (caps != null && !caps.supportedModes.contains(storedMode)) ? ChatMode.chat : storedMode;
+    final modeWasCoerced = caps != null && !caps.supportedModes.contains(storedMode);
+    final mode = modeWasCoerced ? ChatMode.chat : storedMode;
+    if (modeWasCoerced) {
+      dLog(
+        '[ChatMessagesNotifier] coerced mode $storedMode → chat — '
+        'transport supports only ${caps.supportedModes}',
+      );
+    }
+    final pendingDrops = <ProviderSettingDrop>[
+      if (modeWasCoerced)
+        ProviderSettingDropMode(
+          requested: storedMode,
+          reason: 'Selected model does not support ${storedMode.name} mode — coerced to chat',
+        ),
+    ];
 
     // Belt+suspenders: catches paths that bypass the input bar (continueAgenticTurn).
     final readiness = ref.read(transportReadinessProvider);
@@ -210,6 +226,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final mcpN = ref.read(mcpServerStatusProvider.notifier);
 
     String? streamingAssistantId;
+    final dropsN = ref.read(messageDroppedSettingsProvider.notifier);
 
     registry.start(
       sessionId: sessionId,
@@ -227,6 +244,14 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
             requestPermission: permN.request,
             onMcpStatusChanged: mcpN.setStatus,
             onMcpServerRemoved: mcpN.remove,
+            onSettingDropped: (drop) {
+              final assistantId = streamingAssistantId;
+              if (assistantId != null) {
+                dropsN.add(assistantId, drop);
+              } else {
+                pendingDrops.add(drop);
+              }
+            },
           )
           .timeout(
             const Duration(seconds: 60),
@@ -241,6 +266,10 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
         if (msg.role == MessageRole.assistant && streamingAssistantId == null) {
           streamingAssistantId = msg.id;
           activeMessageIdNotifier.set(msg.id);
+          if (pendingDrops.isNotEmpty) {
+            dropsN.addAll(msg.id, pendingDrops);
+            pendingDrops.clear();
+          }
         }
         final current = state.value ?? [];
         final idx = current.indexWhere((m) => m.id == msg.id);

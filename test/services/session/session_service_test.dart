@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/ai/models/provider_capabilities.dart';
+import 'package:code_bench_app/data/ai/models/provider_setting_drop.dart';
 import 'package:code_bench_app/data/ai/models/provider_turn_settings.dart';
 import 'package:code_bench_app/data/ai/models/stream_event.dart';
 import 'package:code_bench_app/data/ai/repository/text_streaming_repository.dart';
@@ -77,6 +78,7 @@ class _FakeAIRepo extends Fake implements TextStreamingRepository, ToolStreaming
     required AIModel model,
     String? systemPrompt,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     yield 'hello ';
     yield 'world';
@@ -97,6 +99,7 @@ class _ScriptedAI implements TextStreamingRepository, ToolStreamingRepository {
     required List<Tool> tools,
     required AIModel model,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     for (final e in rounds[_r++]) {
       yield e;
@@ -110,6 +113,7 @@ class _ScriptedAI implements TextStreamingRepository, ToolStreamingRepository {
     required AIModel model,
     String? systemPrompt,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     yield 'plain-text-path';
   }

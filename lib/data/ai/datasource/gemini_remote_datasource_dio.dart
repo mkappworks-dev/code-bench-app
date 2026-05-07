@@ -12,6 +12,7 @@ import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/shared/session_settings.dart';
 import '../models/provider_capabilities.dart';
+import '../models/provider_setting_drop.dart';
 import '../models/provider_turn_settings.dart';
 import '../util/setting_mappers.dart';
 import 'ai_remote_datasource.dart';
@@ -23,6 +24,7 @@ Map<String, dynamic> buildGeminiRequestBody({
   required List<Map<String, dynamic>> contents,
   String? systemPrompt,
   ProviderTurnSettings? settings,
+  ProviderSettingDropSink? onSettingDropped,
 }) {
   final body = <String, dynamic>{
     'contents': contents,
@@ -35,7 +37,7 @@ Map<String, dynamic> buildGeminiRequestBody({
   };
   if (settings?.effort != null && AIModels.supportsGeminiThinking(model.modelId)) {
     final thinkingConfig = AIModels.isGemini3(model.modelId)
-        ? {'thinkingLevel': mapGeminiThinkingLevel(settings!.effort!)}
+        ? {'thinkingLevel': mapGeminiThinkingLevel(settings!.effort!, onSettingDropped: onSettingDropped)}
         : {'thinkingBudget': mapGeminiThinkingBudget(settings!.effort!)};
     body['generationConfig'] = {'thinkingConfig': thinkingConfig};
   }
@@ -69,6 +71,7 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     required AIModel model,
     String? systemPrompt,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     final contents = _buildContents(history, prompt);
     final body = buildGeminiRequestBody(
@@ -76,6 +79,7 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
       contents: contents,
       systemPrompt: systemPrompt,
       settings: settings,
+      onSettingDropped: onSettingDropped,
     );
 
     try {

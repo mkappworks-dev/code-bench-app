@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:code_bench_app/data/ai/models/provider_setting_drop.dart';
 import 'package:code_bench_app/data/chat/models/transport_readiness.dart';
 import 'package:code_bench_app/data/session/models/permission_request.dart';
 import 'package:code_bench_app/data/shared/session_settings.dart';
@@ -57,6 +58,7 @@ class _FakeSessionService extends Fake implements SessionService {
     Future<bool> Function(PermissionRequest req)? requestPermission,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
+    ProviderSettingDropSink? onSettingDropped,
   }) {
     sendCalled = true;
     return controller.stream;

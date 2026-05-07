@@ -12,6 +12,7 @@ import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/shared/session_settings.dart';
 import '../models/provider_capabilities.dart';
+import '../models/provider_setting_drop.dart';
 import '../models/provider_turn_settings.dart';
 import '../util/setting_mappers.dart';
 import 'ai_remote_datasource.dart';
@@ -24,6 +25,7 @@ Map<String, dynamic> buildAnthropicRequestBody({
   required int maxTokens,
   String? systemPrompt,
   ProviderTurnSettings? settings,
+  ProviderSettingDropSink? onSettingDropped,
 }) {
   final body = <String, dynamic>{
     'model': model.modelId,
@@ -34,7 +36,12 @@ Map<String, dynamic> buildAnthropicRequestBody({
   };
   final effort = settings?.effort;
   if (effort != null) {
-    final budget = mapAnthropicThinkingBudget(effort, maxTokens: maxTokens, modelId: model.modelId);
+    final budget = mapAnthropicThinkingBudget(
+      effort,
+      maxTokens: maxTokens,
+      modelId: model.modelId,
+      onSettingDropped: onSettingDropped,
+    );
     if (budget != null) {
       body['thinking'] = {'type': 'enabled', 'budget_tokens': budget};
     }
@@ -76,6 +83,7 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
     required AIModel model,
     String? systemPrompt,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     final messages = _buildMessages(history, prompt);
     final body = buildAnthropicRequestBody(
@@ -84,6 +92,7 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
       maxTokens: 4096,
       systemPrompt: systemPrompt,
       settings: settings,
+      onSettingDropped: onSettingDropped,
     );
 
     try {

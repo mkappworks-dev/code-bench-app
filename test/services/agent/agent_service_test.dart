@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/data/ai/models/provider_setting_drop.dart';
 import 'package:code_bench_app/data/ai/models/provider_turn_settings.dart';
 import 'package:code_bench_app/data/ai/models/stream_event.dart';
 import 'package:code_bench_app/data/ai/repository/tool_streaming_repository.dart';
@@ -52,6 +53,7 @@ class _FakeAIRepo implements ToolStreamingRepository {
     required List<Tool> tools,
     required AIModel model,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     final events = scripts[_round++];
     for (final e in events) {
@@ -346,6 +348,7 @@ class _WireCapturingFakeRepo extends _FakeAIRepo {
     required List<Tool> tools,
     required AIModel model,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) {
     onWire(wireMessages);
     return super.streamMessageWithTools(wireMessages: wireMessages, tools: tools, model: model, settings: settings);
@@ -362,6 +365,7 @@ class _CapturingFakeRepo extends _FakeAIRepo {
     required List<Tool> tools,
     required AIModel model,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) {
     onSend(tools);
     return super.streamMessageWithTools(wireMessages: wireMessages, tools: tools, model: model, settings: settings);

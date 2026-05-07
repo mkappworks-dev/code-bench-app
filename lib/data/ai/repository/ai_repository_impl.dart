@@ -12,6 +12,7 @@ import '../datasource/ollama_remote_datasource_dio.dart';
 import '../datasource/openai_remote_datasource_dio.dart';
 import '../datasource/text_streaming_datasource.dart';
 import '../models/provider_capabilities.dart';
+import '../models/provider_setting_drop.dart';
 import '../models/provider_turn_settings.dart';
 import '../models/stream_event.dart';
 import 'ai_repository.dart';
@@ -58,6 +59,7 @@ class AIRepositoryImpl implements AIRepository, TextStreamingRepository, ToolStr
     required AIModel model,
     String? systemPrompt,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) {
     final src = _source(model.provider);
     final streaming = src is TextStreamingDatasource ? src as TextStreamingDatasource : null;
@@ -77,6 +79,7 @@ class AIRepositoryImpl implements AIRepository, TextStreamingRepository, ToolStr
       model: model,
       systemPrompt: systemPrompt,
       settings: settings,
+      onSettingDropped: onSettingDropped,
     );
   }
 
@@ -95,12 +98,19 @@ class AIRepositoryImpl implements AIRepository, TextStreamingRepository, ToolStr
     required List<Tool> tools,
     required AIModel model,
     ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) {
     final src = _source(model.provider);
     if (src is! CustomRemoteDatasourceDio) {
       throw UnsupportedError('streamMessageWithTools is only supported on AIProvider.custom in the MVP');
     }
-    return src.streamMessageWithTools(messages: wireMessages, tools: tools, model: model, settings: settings);
+    return src.streamMessageWithTools(
+      messages: wireMessages,
+      tools: tools,
+      model: model,
+      settings: settings,
+      onSettingDropped: onSettingDropped,
+    );
   }
 
   @override

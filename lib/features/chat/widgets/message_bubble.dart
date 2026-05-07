@@ -9,12 +9,14 @@ import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../core/utils/snackbar_helper.dart';
+import '../../../data/ai/models/provider_setting_drop.dart';
 import '../../../data/session/models/tool_event.dart';
 import '../../../data/shared/chat_message.dart';
 import '../notifiers/ask_question_notifier.dart';
 import '../notifiers/chat_messages_actions.dart';
 import '../notifiers/chat_messages_failure.dart';
 import '../notifiers/chat_notifier.dart';
+import '../notifiers/dropped_settings_notifier.dart';
 import '../../../core/constants/app_icons.dart';
 import 'ask_user_question_card.dart';
 import 'code_block_widget.dart';
@@ -253,6 +255,7 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
                     const SizedBox(height: 8),
                 ],
                 _MessageContent(message: message),
+                _DroppedSettingsNotice(messageId: message.id),
                 _AssistantActionRow(message: message, hovering: _hovering),
                 if (message.iterationCapReached) ...[
                   IterationCapBanner(messageId: message.id, sessionId: message.sessionId, isActive: capIsActive),
@@ -388,6 +391,59 @@ class _MessageContent extends StatelessWidget {
           listBullet: TextStyle(color: c.textPrimary),
         ),
         builders: {'code': CodeBlockBuilder(messageId: message.id, sessionId: message.sessionId)},
+      ),
+    );
+  }
+}
+
+class _DroppedSettingsNotice extends ConsumerWidget {
+  const _DroppedSettingsNotice({required this.messageId});
+  final String messageId;
+
+  String _label(ProviderSettingDrop drop) => switch (drop) {
+    ProviderSettingDropMode(:final requested) =>
+      '${requested.name} mode not supported on this transport — sent as chat',
+    ProviderSettingDropEffort(:final requested, :final applied) =>
+      applied != null ? 'Effort ${requested.name} → ${applied.name}' : 'Effort ${requested.name} dropped',
+    ProviderSettingDropThinkingBudget(:final requestedTokens, :final appliedTokens) =>
+      'Thinking budget clamped from $requestedTokens to $appliedTokens tokens',
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final drops = ref.watch(messageDroppedSettingsProvider)[messageId] ?? const <ProviderSettingDrop>[];
+    if (drops.isEmpty) return const SizedBox.shrink();
+    final c = AppColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        children: [
+          for (final drop in drops)
+            Tooltip(
+              message: drop.reason,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: c.panelBackground,
+                  border: Border.all(color: c.subtleBorder),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(AppIcons.warning, size: 10, color: c.textMuted),
+                    const SizedBox(width: 4),
+                    Text(
+                      _label(drop),
+                      style: TextStyle(color: c.textSecondary, fontSize: ThemeConstants.uiFontSizeSmall),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

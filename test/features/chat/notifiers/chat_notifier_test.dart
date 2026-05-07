@@ -9,6 +9,7 @@ import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/data/ai/models/provider_capabilities.dart';
+import 'package:code_bench_app/data/ai/models/provider_setting_drop.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_input_bar_options_provider.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/notifiers/transport_readiness_notifier.dart';
@@ -52,6 +53,7 @@ class _DisposalTestSessionService extends Fake implements SessionService {
     Future<bool> Function(PermissionRequest req)? requestPermission,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
+    ProviderSettingDropSink? onSettingDropped,
   }) {
     return controller.stream;
   }
@@ -82,6 +84,7 @@ class _ModeCapturingSessionService extends Fake implements SessionService {
     Future<bool> Function(PermissionRequest req)? requestPermission,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
+    ProviderSettingDropSink? onSettingDropped,
   }) {
     lastMode = mode;
     return const Stream<ChatMessage>.empty();
