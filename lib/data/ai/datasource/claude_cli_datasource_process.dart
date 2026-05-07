@@ -193,7 +193,11 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
     required String workingDirectory,
     ProviderTurnSettings? settings,
   }) {
-    final controller = StreamController<ProviderRuntimeEvent>.broadcast();
+    // Single-subscription (not broadcast): `_stream` runs synchronously up
+    // to its first `await` and emits `ProviderInit` before `sendAndStream`
+    // returns. With broadcast, that event would be dropped (no listener
+    // attached yet); single-sub buffers until `await for` subscribes.
+    final controller = StreamController<ProviderRuntimeEvent>();
     _stream(controller, prompt: prompt, sessionId: sessionId, workingDirectory: workingDirectory, settings: settings);
     return controller.stream;
   }

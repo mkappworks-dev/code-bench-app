@@ -326,7 +326,11 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     // Defensive close: a prior turn may have leaked an open controller (e.g.
     // racing cancel + completion). Closing is idempotent.
     _streamController?.close();
-    _streamController = StreamController<ProviderRuntimeEvent>.broadcast();
+    // Single-subscription (not broadcast): `_send` runs synchronously up to
+    // its first `await` and emits `ProviderInit` before `sendAndStream`
+    // returns. With broadcast, that event would be dropped (no listener
+    // attached yet); single-sub buffers until `await for` subscribes.
+    _streamController = StreamController<ProviderRuntimeEvent>();
     _send(prompt, sessionId, workingDirectory, settings);
     return _streamController!.stream;
   }
