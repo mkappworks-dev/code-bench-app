@@ -8,35 +8,17 @@ part of 'chat_input_bar_options_notifier.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Capabilities for the *currently selected* model on its active transport.
-///
-/// Function-style derived provider — no mutable state, only computes the
-/// capability surface from `selectedModelProvider` + `apiKeysProvider` and
-/// delegates the actual repository/datasource lookup to
-/// [ProviderCapabilitiesService]. Returns `null` when prefs haven't loaded —
-/// the input bar treats that as "transport unknown" and disables the strip.
+/// Capabilities for the currently selected model + transport; null while prefs haven't loaded so the input bar can disable the strip.
 
 @ProviderFor(chatInputBarOptions)
 final chatInputBarOptionsProvider = ChatInputBarOptionsProvider._();
 
-/// Capabilities for the *currently selected* model on its active transport.
-///
-/// Function-style derived provider — no mutable state, only computes the
-/// capability surface from `selectedModelProvider` + `apiKeysProvider` and
-/// delegates the actual repository/datasource lookup to
-/// [ProviderCapabilitiesService]. Returns `null` when prefs haven't loaded —
-/// the input bar treats that as "transport unknown" and disables the strip.
+/// Capabilities for the currently selected model + transport; null while prefs haven't loaded so the input bar can disable the strip.
 
 final class ChatInputBarOptionsProvider
     extends $FunctionalProvider<ProviderCapabilities?, ProviderCapabilities?, ProviderCapabilities?>
     with $Provider<ProviderCapabilities?> {
-  /// Capabilities for the *currently selected* model on its active transport.
-  ///
-  /// Function-style derived provider — no mutable state, only computes the
-  /// capability surface from `selectedModelProvider` + `apiKeysProvider` and
-  /// delegates the actual repository/datasource lookup to
-  /// [ProviderCapabilitiesService]. Returns `null` when prefs haven't loaded —
-  /// the input bar treats that as "transport unknown" and disables the strip.
+  /// Capabilities for the currently selected model + transport; null while prefs haven't loaded so the input bar can disable the strip.
   ChatInputBarOptionsProvider._()
     : super(
         from: null,
