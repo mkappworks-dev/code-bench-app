@@ -140,7 +140,8 @@ class ChatStreamRegistryService {
       try {
         await persist(msg);
       } catch (e, st) {
-        dLog('[ChatStreamRegistryService] persist failed for ${msg.id} on $sessionId: $e\n$st');
+        // sLog (survives release) — backstop persistence failure is data integrity invisible to the user.
+        sLog('[ChatStreamRegistryService] persist failed for ${msg.id} on $sessionId: $e\n$st');
       }
     }
   }

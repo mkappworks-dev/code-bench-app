@@ -129,6 +129,19 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
       switch (s) {
         case ChatStreamFailed(:final failure):
           dLog('[ChatMessagesNotifier] stream failed for $sessionId: $failure');
+          // Surface late/replayed failures by appending an interrupted marker, so a tab remounted after the originating sendMessage's snackbar already fired still shows that the turn ended unsuccessfully.
+          final current = state.value ?? const <ChatMessage>[];
+          if (current.isEmpty || current.last.role != MessageRole.interrupted) {
+            final marker = ChatMessage(
+              id: _uuid.v4(),
+              sessionId: sessionId,
+              role: MessageRole.interrupted,
+              content: '',
+              timestamp: DateTime.now(),
+            );
+            state = AsyncData([...current, marker]);
+          }
+          ref.read(activeMessageIdProvider.notifier).set(null);
         case ChatStreamDone() || ChatStreamIdle():
           ref.read(activeMessageIdProvider.notifier).set(null);
         default:
