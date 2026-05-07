@@ -137,10 +137,15 @@ class _InstantMenuRoute<T> extends PopupRoute<T> {
             // _PopupMenu route (which provides the required SemanticsRole.menu
             // ancestor). Desktop popup menus are mouse-driven, so this is fine.
             child: ExcludeSemantics(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: items,
+              // Scroll wrapper so dynamic lists (e.g. live-fetched models)
+              // don't overflow the loose screen-height constraint from
+              // [_MenuLayout]. Shrink-wraps when content fits.
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: items,
+                ),
               ),
             ),
           ),
