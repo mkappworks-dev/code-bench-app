@@ -355,24 +355,26 @@ class CodexSession {
 
     final completer = Completer<Map<String, dynamic>>();
     _pendingApprovals[requestId] = completer;
+    // Snapshot the process+thread at request time so a delayed `then`/`onError` cannot write a stale denial into a successor turn that happens to reuse this same `_process` (codex sessions don't kill the process between turns).
+    final requestProcess = _process;
+    final requestThreadId = _providerThreadId;
 
     _streamController?.add(
       ProviderPermissionRequest(requestId: requestId, toolName: _methodToToolName(method), toolInput: params ?? {}),
     );
 
-    // Guard on still-live process — a dead pipe throws asynchronously and the error would be unhandled.
     completer.future.then(
       (result) {
-        if (_process == null) {
-          sLog('[CodexCli] Approval response dropped — process gone (id=$id)');
+        if (!identical(_process, requestProcess) || _providerThreadId != requestThreadId) {
+          sLog('[CodexCli] Approval response dropped — turn changed (id=$id)');
           return;
         }
         _respond(id, result);
       },
       onError: (Object e) {
         dLog('[CodexCli] Approval error: ${redactSecrets('$e')} — denying');
-        if (_process == null) {
-          sLog('[CodexCli] Approval auto-deny dropped — process gone (id=$id)');
+        if (!identical(_process, requestProcess) || _providerThreadId != requestThreadId) {
+          sLog('[CodexCli] Approval auto-deny dropped — turn changed (id=$id)');
           return;
         }
         _respond(id, {'decision': 'denied'});
