@@ -120,5 +120,3 @@ String mapGeminiThinkingLevel(ChatEffort e, {ProviderSettingDropSink? onSettingD
     ChatEffort.max => 'high',
   };
 }
-
-bool mapOllamaThink(ChatEffort? e) => e != null;

@@ -10,33 +10,42 @@ part of 'chat_input_bar_options_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// Capabilities for the *currently selected* model on its active transport.
 ///
-/// CLI providers (claude-cli, codex) advertise capabilities via their
-/// `AIProviderDatasource`. HTTP providers route through `AIRepository` to
-/// stay one rung above the datasource layer per the dependency rule.
-/// Returns `null` when the API-keys prefs haven't loaded yet — the input
-/// bar treats that as "transport unknown" and disables the strip.
+/// Intentionally a derived `@riverpod` function, not a Notifier/Actions class
+/// — it owns no mutable state, only computes the capability surface from
+/// `selectedModelProvider` + `apiKeysProvider` + the relevant datasource.
+/// The `_provider.dart` suffix (rather than `_notifier.dart`) is what keeps
+/// the arch test from flagging the legitimate `aiRepositoryProvider` watch
+/// below — the test forbids notifier files from reading repository providers
+/// directly. Returns `null` when the API-keys prefs haven't loaded yet — the
+/// input bar treats that as "transport unknown" and disables the strip.
 
 @ProviderFor(chatInputBarOptions)
 final chatInputBarOptionsProvider = ChatInputBarOptionsProvider._();
 
 /// Capabilities for the *currently selected* model on its active transport.
 ///
-/// CLI providers (claude-cli, codex) advertise capabilities via their
-/// `AIProviderDatasource`. HTTP providers route through `AIRepository` to
-/// stay one rung above the datasource layer per the dependency rule.
-/// Returns `null` when the API-keys prefs haven't loaded yet — the input
-/// bar treats that as "transport unknown" and disables the strip.
+/// Intentionally a derived `@riverpod` function, not a Notifier/Actions class
+/// — it owns no mutable state, only computes the capability surface from
+/// `selectedModelProvider` + `apiKeysProvider` + the relevant datasource.
+/// The `_provider.dart` suffix (rather than `_notifier.dart`) is what keeps
+/// the arch test from flagging the legitimate `aiRepositoryProvider` watch
+/// below — the test forbids notifier files from reading repository providers
+/// directly. Returns `null` when the API-keys prefs haven't loaded yet — the
+/// input bar treats that as "transport unknown" and disables the strip.
 
 final class ChatInputBarOptionsProvider
     extends $FunctionalProvider<ProviderCapabilities?, ProviderCapabilities?, ProviderCapabilities?>
     with $Provider<ProviderCapabilities?> {
   /// Capabilities for the *currently selected* model on its active transport.
   ///
-  /// CLI providers (claude-cli, codex) advertise capabilities via their
-  /// `AIProviderDatasource`. HTTP providers route through `AIRepository` to
-  /// stay one rung above the datasource layer per the dependency rule.
-  /// Returns `null` when the API-keys prefs haven't loaded yet — the input
-  /// bar treats that as "transport unknown" and disables the strip.
+  /// Intentionally a derived `@riverpod` function, not a Notifier/Actions class
+  /// — it owns no mutable state, only computes the capability surface from
+  /// `selectedModelProvider` + `apiKeysProvider` + the relevant datasource.
+  /// The `_provider.dart` suffix (rather than `_notifier.dart`) is what keeps
+  /// the arch test from flagging the legitimate `aiRepositoryProvider` watch
+  /// below — the test forbids notifier files from reading repository providers
+  /// directly. Returns `null` when the API-keys prefs haven't loaded yet — the
+  /// input bar treats that as "transport unknown" and disables the strip.
   ChatInputBarOptionsProvider._()
     : super(
         from: null,

@@ -143,15 +143,4 @@ void main() {
       expect(AIModels.isAnthropicAdaptiveOnly('claude-haiku-4-5-20251001'), isFalse);
     });
   });
-
-  group('Ollama think coercion', () {
-    test('null effort returns false', () {
-      expect(mapOllamaThink(null), isFalse);
-    });
-    test('any non-null effort returns true', () {
-      for (final e in ChatEffort.values) {
-        expect(mapOllamaThink(e), isTrue);
-      }
-    });
-  });
 }

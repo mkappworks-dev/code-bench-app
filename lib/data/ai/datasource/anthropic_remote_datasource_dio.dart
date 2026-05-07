@@ -89,7 +89,11 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
     final body = buildAnthropicRequestBody(
       model: model,
       messages: messages,
-      maxTokens: 4096,
+      // 64K leaves room for ChatEffort.max's 32 768-token thinking budget
+      // *and* a meaningful response window. The previous 4 096 cap forced
+      // every effort tier (low → max) to clamp to 4 095, flattening the
+      // entire spectrum on the wire.
+      maxTokens: 64000,
       systemPrompt: systemPrompt,
       settings: settings,
       onSettingDropped: onSettingDropped,

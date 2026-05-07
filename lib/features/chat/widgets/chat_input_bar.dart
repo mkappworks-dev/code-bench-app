@@ -502,12 +502,18 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final effort = ref.watch(sessionEffortProvider);
     final permission = ref.watch(sessionPermissionProvider);
     // Capabilities for the active provider+model. `null` means transport not
-    // yet known (prefs still loading or no datasource registered) — render the
-    // chips disabled so the user can still see the picks but can't change them.
+    // yet known (prefs still loading or no datasource registered) — keep the
+    // chip hidden until we know. Once known, render the chip but disable it
+    // (with a tooltip) when the provider doesn't expose the dimension; the
+    // user can still see their persisted pick rather than have it vanish on
+    // a model switch.
     final caps = ref.watch(chatInputBarOptionsProvider);
-    final showEffort = (caps?.supportedEfforts.isNotEmpty) ?? false;
+    final transportKnown = caps != null;
+    final effortDisabled = transportKnown && caps.supportedEfforts.isEmpty;
+    final permissionDisabled = transportKnown && caps.supportedPermissions.isEmpty;
+    final showEffort = transportKnown;
     final showMode = (caps?.supportedModes.length ?? 0) > 1;
-    final showPermission = (caps?.supportedPermissions.isNotEmpty) ?? false;
+    final showPermission = transportKnown;
     final supportedEfforts = caps?.supportedEfforts.toList() ?? const <ChatEffort>[];
     final supportedModes = caps?.supportedModes.toList() ?? const <ChatMode>[];
     final supportedPermissions = caps?.supportedPermissions.toList() ?? const <ChatPermission>[];
@@ -602,6 +608,9 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                         Builder(
                           builder: (ctx) => _ControlChip(
                             label: effort.label,
+                            disabledTooltip: effortDisabled
+                                ? 'Effort not configurable for ${model.name} — provider chooses adaptively'
+                                : null,
                             onTap: () => _showDropdown(
                               ctx,
                               supportedEfforts,
@@ -635,6 +644,9 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                           builder: (ctx) => _ControlChip(
                             icon: AppIcons.lock,
                             label: permission.label,
+                            disabledTooltip: permissionDisabled
+                                ? 'Permission mode not configurable for ${model.name} on this transport'
+                                : null,
                             onTap: () => _showDropdown(
                               ctx,
                               supportedPermissions,
@@ -896,6 +908,7 @@ class _ControlChip extends StatelessWidget {
     required this.onTap,
     this.isWarning = false,
     this.isLoading = false,
+    this.disabledTooltip,
   });
   final IconData? icon;
   final String label;
@@ -903,11 +916,17 @@ class _ControlChip extends StatelessWidget {
   final bool isWarning;
   final bool isLoading;
 
+  /// When non-null the chip renders in a muted style and the tap is a no-op.
+  /// The string is shown as a tooltip explaining why — e.g. "Effort not
+  /// configurable for this model — provider chooses adaptively".
+  final String? disabledTooltip;
+
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    return InkWell(
-      onTap: onTap,
+    final disabled = disabledTooltip != null;
+    final chip = InkWell(
+      onTap: disabled ? null : onTap,
       borderRadius: BorderRadius.circular(5),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -938,5 +957,7 @@ class _ControlChip extends StatelessWidget {
         ),
       ),
     );
+    final wrapped = disabled ? Opacity(opacity: 0.5, child: chip) : chip;
+    return disabled ? Tooltip(message: disabledTooltip!, child: wrapped) : wrapped;
   }
 }

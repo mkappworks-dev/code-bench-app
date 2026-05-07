@@ -13,7 +13,6 @@ import '../../../data/shared/session_settings.dart';
 import '../models/provider_capabilities.dart';
 import '../models/provider_setting_drop.dart';
 import '../models/provider_turn_settings.dart';
-import '../util/setting_mappers.dart';
 import 'ai_remote_datasource.dart';
 import 'text_streaming_datasource.dart';
 
@@ -35,7 +34,10 @@ class OllamaRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     supportsModelOverride: true,
     supportsSystemPrompt: true,
     supportedModes: {ChatMode.chat},
-    supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
+    // Ollama's `think` flag is binary (true / false / unset). Exposing the
+    // four-tier ChatEffort here would imply granularity the wire format
+    // doesn't carry, so we surface a single tier representing "thinking on".
+    supportedEfforts: {ChatEffort.high},
     supportedPermissions: <ChatPermission>{},
   );
 
@@ -53,7 +55,7 @@ class OllamaRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
       'model': model.modelId,
       'messages': messages,
       'stream': true,
-      if (settings?.effort != null) 'think': mapOllamaThink(settings!.effort),
+      if (settings?.effort != null) 'think': true,
     };
 
     try {

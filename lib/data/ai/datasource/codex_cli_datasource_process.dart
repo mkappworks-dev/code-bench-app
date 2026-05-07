@@ -334,9 +334,12 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     required String workingDirectory,
     ProviderTurnSettings? settings,
   }) {
-    // Defensive close: a prior turn may have leaked an open controller (e.g.
-    // racing cancel + completion). Closing is idempotent.
-    _streamController?.close();
+    // A prior turn may have leaked an open controller (cancel + completion
+    // race). The previous subscriber is gone by now; close() is async but
+    // we don't await it — any unflushed buffered events are intentionally
+    // discarded along with the orphaned controller.
+    final orphan = _streamController;
+    if (orphan != null) unawaited(orphan.close());
     // Single-subscription (not broadcast): `_send` runs synchronously up to
     // its first `await` and emits `ProviderInit` before `sendAndStream`
     // returns. With broadcast, that event would be dropped (no listener
