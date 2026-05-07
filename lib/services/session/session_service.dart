@@ -369,18 +369,10 @@ class SessionService {
     }
 
     if (interrupted) {
-      final interruptedMsg = ChatMessage(
-        id: assistantId,
-        sessionId: sessionId,
-        role: MessageRole.interrupted,
-        content: contentBuffer.isEmpty ? '[interrupted]' : '${contentBuffer.toString()}\n[interrupted]',
-        timestamp: DateTime.now(),
-        toolEvents: List.unmodifiable(toolEvents),
-        providerId: streamProviderId,
-        modelId: streamModelId,
-      );
-      await _session.persistMessage(sessionId, interruptedMsg);
-      yield interruptedMsg;
+      // Keep role=assistant on cancel: the InterruptedBubble renderer ignores content/toolEvents, so flipping the role would visually erase the partial output the user already saw. cancelSend appends a separate interrupted marker as the visual indicator.
+      final cancelledAssistant = snapshot(streaming: false);
+      await _session.persistMessage(sessionId, cancelledAssistant);
+      yield cancelledAssistant;
       return;
     }
 
