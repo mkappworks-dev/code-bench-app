@@ -55,8 +55,7 @@ class CodexSession {
   Stream<ProviderRuntimeEvent> sendAndStream({required String prompt, ProviderTurnSettings? settings}) {
     _lastActiveAt = DateTime.now();
     _streamController?.close();
-    // Single-subscription so ProviderInit (added synchronously by `_send`
-    // before its first `await`) buffers until `await for` subscribes.
+    // Single-subscription so ProviderInit buffers until `await for` subscribes.
     _streamController = StreamController<ProviderRuntimeEvent>();
     _send(prompt, settings);
     return _streamController!.stream;
@@ -95,21 +94,14 @@ class CodexSession {
     try {
       _streamController?.add(ProviderInit(provider: 'codex', modelId: settings?.modelId));
 
-      // sessionId guard — Codex uses this value as `resumeThreadId` over
-      // JSON-RPC. A non-UUID value could resume a foreign thread or trip
-      // unexpected app-server behavior. We only ever generate v4 UUIDs,
-      // but a future import/restore path could leak an attacker-shaped
-      // value here.
+      // sessionId guard — a non-UUID value could resume a foreign thread or allow attacker-shaped input at the RPC boundary.
       if (!uuidV4Regex.hasMatch(sessionId)) {
         sLog('[CodexCli] rejected non-UUID sessionId at RPC boundary');
         _streamController?.add(const ProviderStreamFailure(error: 'invalid sessionId shape'));
         return;
       }
 
-      // workingDirectory guard — must be an existing absolute path that is
-      // not the filesystem root. Codex roots all tool use at `cwd`, so a
-      // stale or attacker-influenced path (e.g. `~`, `/`) would give it
-      // read/write/execute access well outside the user's project.
+      // workingDirectory guard — `/` or a stale path would give Codex tool-use access outside the project.
       if (!workingDirectory.startsWith('/') || workingDirectory == '/' || !Directory(workingDirectory).existsSync()) {
         sLog('[CodexCli] rejected workingDirectory: $workingDirectory');
         _streamController?.add(const ProviderStreamFailure(error: 'invalid workingDirectory'));
@@ -125,15 +117,10 @@ class CodexSession {
       _providerThreadId ??= await _startThread(settings?.systemPrompt);
 
       await _sendTurn(prompt, settings);
-
-      // Events stream back via notifications; [_handleNotification] drives
-      // the StreamController. We wait here until turn/completed or an error.
     } catch (e, st) {
       dLog('[CodexCli] send failed: ${redactSecrets('$e')}\n$st');
       _streamController?.add(ProviderStreamFailure(error: e));
-      // Per-turn cleanup — keep the long-lived app-server process alive so
-      // a retry can reuse it. If the process itself died, the stdout
-      // onDone / exitCode handlers will _resetProcess().
+      // _resetTurn not _resetProcess — keep the process alive; exitCode handler calls _resetProcess if it died.
       _resetTurn();
     }
   }
@@ -143,37 +130,16 @@ class CodexSession {
 
     dLog('[CodexCli] spawning codex app-server in $workingDirectory');
 
-    try {
-      _process = await _processLauncher(
-        exePath,
-        const ['app-server'],
-        workingDirectory: workingDirectory,
-        runInShell: false,
-        includeParentEnvironment: false,
-        environment: env,
-      );
-    } on ProcessException catch (e) {
-      // Cached path may be stale (brew upgrade, uninstall). The datasource
-      // layer handles re-resolution and retry; re-throw so _send surfaces it.
-      sLog('[CodexCli] start failed at $exePath: $e — invalidating cache and retrying');
-      try {
-        _process = await _processLauncher(
-          exePath,
-          const ['app-server'],
-          workingDirectory: workingDirectory,
-          runInShell: false,
-          includeParentEnvironment: false,
-          environment: env,
-        );
-      } on ProcessException catch (e2) {
-        sLog('[CodexCli] retry start also failed at $exePath: $e2');
-        throw Exception('Codex CLI is not installed or not executable');
-      }
-    }
+    _process = await _processLauncher(
+      exePath,
+      const ['app-server'],
+      workingDirectory: workingDirectory,
+      runInShell: false,
+      includeParentEnvironment: false,
+      environment: env,
+    );
 
-    // Wire stdout → JSON-RPC message handler. Use allowMalformed so a
-    // multi-byte char split across reads doesn't take the whole stream
-    // down with a UTF-8 decode error.
+    // allowMalformed so a multi-byte char split across reads doesn't kill the stream.
     _stdoutSubscription = _process!.stdout
         .transform(const Utf8Decoder(allowMalformed: true))
         .transform(const LineSplitter())
@@ -191,13 +157,10 @@ class CodexSession {
           },
         );
 
-    // Buffer stderr for diagnostics; cap so it can't grow without bound.
     _stderrSubscription = _process!.stderr
         .transform(const Utf8Decoder(allowMalformed: true))
         .transform(const LineSplitter())
         .listen((line) {
-          // dLog goes through redactSecrets so an inadvertent token echo
-          // doesn't end up in Console.app during development.
           dLog('[CodexProvider.stderr] ${redactSecrets(line)}');
           if (_stderrBuffer.length >= _stderrCap) return;
           final remaining = _stderrCap - _stderrBuffer.length;
@@ -217,8 +180,7 @@ class CodexSession {
                 ),
               );
             } else if (_providerThreadId != null) {
-              // Process exited cleanly mid-turn — surface so the caller
-              // doesn't hang waiting for turn/completed.
+              // exit 0 mid-turn — surface so the caller doesn't hang waiting for turn/completed.
               dLog('[CodexCli] app-server exited 0 unexpectedly mid-turn');
               _streamController?.add(const ProviderStreamFailure(error: 'Codex process exited unexpectedly'));
             }
@@ -351,15 +313,7 @@ class CodexSession {
         _emitPermissionRequest(id, method, params);
 
       case 'account/chatgptAuthTokens/refresh':
-        // Auth token refresh — auto-approved once the JSON-RPC handshake
-        // has completed (i.e. `_version` is set, meaning we received the
-        // `initialize` response). Earlier than that, a hostile or buggy
-        // app-server could loop this request before any client guard runs.
-        // The token never crosses the host process; codex holds and
-        // refreshes it internally. sLog so the event is grep-able in
-        // release builds. Gating on `_version` (not `_providerThreadId`)
-        // because legitimate refreshes can happen between `initialized`
-        // and `thread/start` if the OAuth token has expired at startup.
+        // Gate on `_version` (not `_providerThreadId`) — token can expire between `initialized` and `thread/start`.
         if (_version == null) {
           sLog('[CodexCli] denying account/chatgptAuthTokens/refresh — process not yet initialized (id=$id)');
           _respond(id, {'ok': false});
@@ -369,9 +323,7 @@ class CodexSession {
         }
 
       default:
-        // Unknown approval-shaped method. sLog (survives release) and
-        // surface as a stream failure so the user sees "your codex version
-        // sent a method we don't recognise" rather than a silent denial.
+        // Unknown server request — deny and surface so the user sees a "please update" error rather than a silent hang.
         sLog('[CodexCli] unknown server request: $method — denying and aborting turn');
         _respond(id, {'decision': 'denied'});
         _streamController?.add(
@@ -381,9 +333,7 @@ class CodexSession {
   }
 
   void _emitPermissionRequest(dynamic id, String method, Map<String, dynamic>? params) {
-    // Normalize the JSON-RPC id before stringifying so num `5.0` and int `5`
-    // produce the same key — same protocol-drift hazard `_coerceId` handles
-    // for `_pendingRequests`.
+    // Coerce id before stringifying — num `5.0` and int `5` must produce the same key.
     final normalized = _coerceId(id);
     final requestId = (normalized ?? id).toString();
 
@@ -394,9 +344,7 @@ class CodexSession {
       ProviderPermissionRequest(requestId: requestId, toolName: _methodToToolName(method), toolInput: params ?? {}),
     );
 
-    // When the UI resolves the approval, send the response back to Codex.
-    // Guard the response on a still-live process — a dead pipe would throw
-    // asynchronously and the error would be unhandled.
+    // Guard on still-live process — a dead pipe throws asynchronously and the error would be unhandled.
     completer.future.then(
       (result) {
         if (_process == null) {
@@ -495,8 +443,7 @@ class CodexSession {
         dLog('[CodexProvider.internal-stderr] ${redactSecrets(message)}');
 
       default:
-        // Unknown notification — sLog so post-release telemetry catches
-        // codex protocol additions we haven't wired up.
+        // Unknown notification — sLog so post-release builds catch new protocol additions.
         sLog('[CodexCli] ignoring unknown notification: $method');
     }
   }
