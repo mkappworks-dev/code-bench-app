@@ -270,4 +270,164 @@ void main() {
       expect((states.last as ChatStreamFailed).failure, isNot(isA<AgentNetworkExhausted>()));
     });
   });
+
+  group('liveMessagesFor / watchMessages', () {
+    test('liveMessagesFor returns messages in insertion order during streaming', () async {
+      final service = ChatStreamService();
+      addTearDown(service.dispose);
+      final ctrl = StreamController<ChatMessage>();
+      final received = <ChatMessage>[];
+
+      service.start(sessionId: 'sid', streamFactory: () => ctrl.stream, onMessage: received.add);
+
+      final msg1 = ChatMessage(
+        id: 'a',
+        sessionId: 'sid',
+        role: MessageRole.user,
+        content: 'hello',
+        timestamp: DateTime.now(),
+      );
+      final msg2 = ChatMessage(
+        id: 'b',
+        sessionId: 'sid',
+        role: MessageRole.assistant,
+        content: 'hi',
+        timestamp: DateTime.now(),
+      );
+      ctrl.add(msg1);
+      await Future<void>.delayed(Duration.zero);
+      ctrl.add(msg2);
+      await Future<void>.delayed(Duration.zero);
+
+      final live = service.liveMessagesFor('sid');
+      expect(live.map((m) => m.id), ['a', 'b']);
+
+      await ctrl.close();
+    });
+
+    test('liveMessagesFor replaces in place when an msg.id repeats (streaming update)', () async {
+      final service = ChatStreamService();
+      addTearDown(service.dispose);
+      final ctrl = StreamController<ChatMessage>();
+
+      service.start(sessionId: 'sid', streamFactory: () => ctrl.stream, onMessage: (_) {});
+
+      final base = DateTime.now();
+      ctrl.add(ChatMessage(id: 'a', sessionId: 'sid', role: MessageRole.assistant, content: 'pa', timestamp: base));
+      await Future<void>.delayed(Duration.zero);
+      ctrl.add(ChatMessage(id: 'a', sessionId: 'sid', role: MessageRole.assistant, content: 'parti', timestamp: base));
+      await Future<void>.delayed(Duration.zero);
+
+      final live = service.liveMessagesFor('sid');
+      expect(live, hasLength(1));
+      expect(live.first.content, 'parti');
+
+      await ctrl.close();
+    });
+
+    test('liveMessagesFor survives stream completion', () async {
+      final service = ChatStreamService();
+      addTearDown(service.dispose);
+      final ctrl = StreamController<ChatMessage>();
+
+      service.start(sessionId: 'sid', streamFactory: () => ctrl.stream, onMessage: (_) {});
+
+      ctrl.add(
+        ChatMessage(id: 'a', sessionId: 'sid', role: MessageRole.assistant, content: 'done', timestamp: DateTime.now()),
+      );
+      await ctrl.close();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(service.liveMessagesFor('sid'), hasLength(1));
+    });
+
+    test('liveMessagesFor survives manual cancel', () async {
+      final service = ChatStreamService();
+      addTearDown(service.dispose);
+      final ctrl = StreamController<ChatMessage>();
+
+      service.start(sessionId: 'sid', streamFactory: () => ctrl.stream, onMessage: (_) {});
+      ctrl.add(
+        ChatMessage(
+          id: 'a',
+          sessionId: 'sid',
+          role: MessageRole.assistant,
+          content: 'partial',
+          timestamp: DateTime.now(),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      await service.cancel('sid');
+
+      expect(service.liveMessagesFor('sid'), hasLength(1));
+      await ctrl.close();
+    });
+
+    test('start() clears the buffer for that sessionId before the new turn', () async {
+      final service = ChatStreamService();
+      addTearDown(service.dispose);
+      final ctrl1 = StreamController<ChatMessage>();
+      service.start(sessionId: 'sid', streamFactory: () => ctrl1.stream, onMessage: (_) {});
+      ctrl1.add(
+        ChatMessage(id: 'old', sessionId: 'sid', role: MessageRole.user, content: 'first', timestamp: DateTime.now()),
+      );
+      await Future<void>.delayed(Duration.zero);
+      await ctrl1.close();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(service.liveMessagesFor('sid'), hasLength(1));
+
+      final ctrl2 = StreamController<ChatMessage>();
+      service.start(sessionId: 'sid', streamFactory: () => ctrl2.stream, onMessage: (_) {});
+
+      expect(service.liveMessagesFor('sid'), isEmpty);
+
+      ctrl2.add(
+        ChatMessage(id: 'new', sessionId: 'sid', role: MessageRole.user, content: 'second', timestamp: DateTime.now()),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(service.liveMessagesFor('sid').map((m) => m.id), ['new']);
+
+      await ctrl2.close();
+    });
+
+    test('watchMessages emits subsequent messages to a subscriber attached after start()', () async {
+      final service = ChatStreamService();
+      addTearDown(service.dispose);
+      final ctrl = StreamController<ChatMessage>();
+      service.start(sessionId: 'sid', streamFactory: () => ctrl.stream, onMessage: (_) {});
+
+      final received = <String>[];
+      final sub = service.watchMessages('sid').listen((m) => received.add(m.id));
+      addTearDown(sub.cancel);
+
+      ctrl.add(
+        ChatMessage(id: 'x', sessionId: 'sid', role: MessageRole.user, content: 'hi', timestamp: DateTime.now()),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(received, ['x']);
+      await ctrl.close();
+    });
+
+    test('liveMessagesFor and watchMessages are scoped per sessionId', () async {
+      final service = ChatStreamService();
+      addTearDown(service.dispose);
+      final ctrlA = StreamController<ChatMessage>();
+      final ctrlB = StreamController<ChatMessage>();
+      service.start(sessionId: 'A', streamFactory: () => ctrlA.stream, onMessage: (_) {});
+      service.start(sessionId: 'B', streamFactory: () => ctrlB.stream, onMessage: (_) {});
+
+      ctrlA.add(ChatMessage(id: 'aa', sessionId: 'A', role: MessageRole.user, content: '', timestamp: DateTime.now()));
+      ctrlB.add(ChatMessage(id: 'bb', sessionId: 'B', role: MessageRole.user, content: '', timestamp: DateTime.now()));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(service.liveMessagesFor('A').map((m) => m.id), ['aa']);
+      expect(service.liveMessagesFor('B').map((m) => m.id), ['bb']);
+
+      await ctrlA.close();
+      await ctrlB.close();
+    });
+  });
 }

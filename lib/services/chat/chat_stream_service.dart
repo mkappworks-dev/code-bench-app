@@ -20,6 +20,8 @@ ChatStreamService chatStreamService(Ref ref) {
 
 class ChatStreamService {
   final Map<String, _StreamHandle> _handles = {};
+  final Map<String, Map<String, ChatMessage>> _liveById = {};
+  final Map<String, StreamController<ChatMessage>> _msgCtrls = {};
 
   static const _defaultBackoff = [Duration(milliseconds: 500), Duration(seconds: 1), Duration(seconds: 2)];
 
@@ -28,6 +30,23 @@ class ChatStreamService {
   Stream<ChatStreamState> watchState(String sessionId) {
     final handle = _handles.putIfAbsent(sessionId, () => _StreamHandle(sessionId));
     return handle.stateStream;
+  }
+
+  /// Snapshot of messages received during the most recent in-flight or
+  /// just-completed turn for [sessionId], in insertion order. Returned for
+  /// notifiers rebuilt mid-stream so they can paint the current state without
+  /// waiting for persistence to catch up.
+  List<ChatMessage> liveMessagesFor(String sessionId) {
+    final m = _liveById[sessionId];
+    if (m == null || m.isEmpty) return const [];
+    return List<ChatMessage>.unmodifiable(m.values);
+  }
+
+  /// Broadcast stream of every [ChatMessage] received for [sessionId]. New
+  /// subscribers see only future emissions; pair with [liveMessagesFor] to
+  /// seed the current state before subscribing.
+  Stream<ChatMessage> watchMessages(String sessionId) {
+    return _msgCtrls.putIfAbsent(sessionId, () => StreamController<ChatMessage>.broadcast()).stream;
   }
 
   void start({
@@ -43,6 +62,7 @@ class ChatStreamService {
     final handle = _handles.putIfAbsent(sessionId, () => _StreamHandle(sessionId));
     // Block re-entry while either an active subscription or a pending retry timer exists — the timer keeps the connect-loop alive even after `cancelOnError: true` clears the subscription.
     if (handle.subscription != null || handle.retryTimer != null) return;
+    _liveById[sessionId]?.clear();
     handle.onCancel = onCancel;
     _attemptConnect(handle, streamFactory, onMessage, backoff, attempt: 1);
   }
@@ -70,6 +90,7 @@ class ChatStreamService {
         if (handle.latest is! ChatStreamStreaming) {
           handle._emit(const ChatStreamState.streaming());
         }
+        _recordLive(handle.sessionId, msg);
         onMessage(msg);
       },
       onError: (Object e, StackTrace st) {
@@ -102,6 +123,13 @@ class ChatStreamService {
     );
   }
 
+  void _recordLive(String sessionId, ChatMessage msg) {
+    final bucket = _liveById.putIfAbsent(sessionId, () => <String, ChatMessage>{});
+    bucket[msg.id] = msg;
+    final ctrl = _msgCtrls[sessionId];
+    if (ctrl != null && !ctrl.isClosed) ctrl.add(msg);
+  }
+
   AgentFailure _mapError(Object e) => switch (e) {
     ProviderDoesNotSupportToolsException() => const AgentFailure.providerDoesNotSupportTools(),
     StreamAbortedUnexpectedlyException(:final reason) => AgentFailure.streamAbortedUnexpectedly(reason),
@@ -132,6 +160,11 @@ class ChatStreamService {
       await h.dispose();
     }
     _handles.clear();
+    for (final c in _msgCtrls.values) {
+      if (!c.isClosed) await c.close();
+    }
+    _msgCtrls.clear();
+    _liveById.clear();
   }
 }
 

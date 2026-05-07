@@ -112,6 +112,17 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final history = await svc.loadHistory(sessionId);
 
     final registry = ref.watch(chatStreamServiceProvider);
+
+    final live = registry.liveMessagesFor(sessionId);
+    final seed = _mergeMessages(history, live);
+
+    final msgSub = registry.watchMessages(sessionId).listen((msg) {
+      if (!ref.mounted) return;
+      if (msg.sessionId != sessionId) return;
+      state = AsyncData(_upsertById(state.value ?? seed, msg));
+    });
+    ref.onDispose(msgSub.cancel);
+
     final stateSub = registry.watchState(sessionId).listen((s) {
       // `stateSub.cancel` is async; a final event can race the dispose callback.
       if (!ref.mounted) return;
@@ -126,7 +137,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     });
     ref.onDispose(stateSub.cancel);
 
-    return history;
+    return seed;
   }
 
   /// Sends [input] and streams the response into state.
@@ -263,15 +274,6 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
             pendingDrops.clear();
           }
         }
-        final current = state.value ?? [];
-        final idx = current.indexWhere((m) => m.id == msg.id);
-        if (idx >= 0) {
-          final updated = List<ChatMessage>.from(current);
-          updated[idx] = msg;
-          state = AsyncData(updated);
-        } else {
-          state = AsyncData([...current, msg]);
-        }
       },
     );
 
@@ -322,6 +324,31 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final result = await completer.future;
     _sendInProgress = false;
     return result;
+  }
+
+  List<ChatMessage> _mergeMessages(List<ChatMessage> history, List<ChatMessage> live) {
+    if (live.isEmpty) return history;
+    final liveById = <String, ChatMessage>{for (final m in live) m.id: m};
+    final result = <ChatMessage>[];
+    final seen = <String>{};
+    for (final h in history) {
+      result.add(liveById[h.id] ?? h);
+      seen.add(h.id);
+    }
+    for (final l in live) {
+      if (seen.add(l.id)) result.add(l);
+    }
+    return result;
+  }
+
+  List<ChatMessage> _upsertById(List<ChatMessage> current, ChatMessage msg) {
+    final idx = current.indexWhere((m) => m.id == msg.id);
+    if (idx >= 0) {
+      final updated = List<ChatMessage>.from(current);
+      updated[idx] = msg;
+      return updated;
+    }
+    return [...current, msg];
   }
 
   /// Cancels the in-flight send (if any) and appends an in-memory
