@@ -2,16 +2,57 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:meta/meta.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
+import '../../../data/shared/session_settings.dart';
+import '../models/provider_capabilities.dart';
+import '../models/provider_setting_drop.dart';
+import '../models/provider_turn_settings.dart';
 import '../models/stream_event.dart';
+import '../util/setting_mappers.dart';
 import '../../coding_tools/models/tool.dart';
 import 'ai_remote_datasource.dart';
 import 'text_streaming_datasource.dart';
+
+@visibleForTesting
+Map<String, dynamic> buildCustomRequestBody({
+  required AIModel model,
+  required List<Map<String, String>> messages,
+  ProviderTurnSettings? settings,
+  ProviderSettingDropSink? onSettingDropped,
+}) {
+  return <String, dynamic>{
+    'model': model.modelId,
+    'messages': messages,
+    'stream': true,
+    if (settings?.effort != null)
+      'reasoning_effort': mapOpenAIReasoningEffort(settings!.effort!, onSettingDropped: onSettingDropped),
+  };
+}
+
+/// True when a 400 body signals the named [field] is unknown — distinct from a 400 that merely lists [field] in a validation message.
+@visibleForTesting
+bool isUnknownFieldRejection(int? status, String? body, String field) {
+  if (status != 400 || body == null || body.isEmpty) return false;
+  if (!body.contains(field)) return false;
+  final lower = body.toLowerCase();
+  const markers = [
+    'unknown',
+    'unsupported',
+    'unrecognized',
+    'unrecognised',
+    'extra_forbidden',
+    'extra fields',
+    'not allowed',
+    'no such',
+  ];
+  return markers.any(lower.contains);
+}
 
 /// OpenAI-compatible AI datasource for custom endpoints (e.g. LM Studio, LocalAI).
 class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
@@ -31,15 +72,39 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
   AIProvider get provider => AIProvider.custom;
 
   @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => const ProviderCapabilities(
+    supportsModelOverride: true,
+    supportsSystemPrompt: true,
+    supportedModes: {ChatMode.chat, ChatMode.act},
+    supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
+    supportedPermissions: {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess},
+  );
+
+  @override
   Stream<String> streamMessage({
     required List<ChatMessage> history,
     required String prompt,
     required AIModel model,
     String? systemPrompt,
-  }) async* {
+    ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
+  }) {
     final messages = _buildMessages(history, prompt, systemPrompt);
-    final body = {'model': model.modelId, 'messages': messages, 'stream': true};
+    final body = buildCustomRequestBody(
+      model: model,
+      messages: messages,
+      settings: settings,
+      onSettingDropped: onSettingDropped,
+    );
+    return _attemptStream(body, requestedEffort: settings?.effort, onSettingDropped: onSettingDropped);
+  }
 
+  Stream<String> _attemptStream(
+    Map<String, dynamic> body, {
+    DioException? originalError,
+    ChatEffort? requestedEffort,
+    ProviderSettingDropSink? onSettingDropped,
+  }) async* {
     try {
       final response = await _dio.post(
         '/chat/completions',
@@ -70,8 +135,39 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
         }
       }
     } on DioException catch (e) {
-      dLog('[CustomRemoteDatasource] streamMessage failed: ${e.type} ${e.response?.statusCode ?? ''}');
-      throw NetworkException('Custom endpoint request failed', statusCode: e.response?.statusCode, originalError: e);
+      // Self-hosted OpenAI-compatible endpoints often reject unknown keys with 400; retry once without reasoning_effort only on unknown-field rejections so unrelated 400s still surface.
+      if (originalError == null &&
+          body.containsKey('reasoning_effort') &&
+          isUnknownFieldRejection(e.response?.statusCode, e.response?.data?.toString(), 'reasoning_effort')) {
+        sLog('[CustomRemoteDatasource] endpoint rejected reasoning_effort; retrying without it');
+        if (requestedEffort != null) {
+          onSettingDropped?.call(
+            ProviderSettingDropEffort(
+              requested: requestedEffort,
+              reason: 'Custom endpoint rejected reasoning_effort — retried without it',
+            ),
+          );
+        }
+        final fallback = Map<String, dynamic>.from(body)..remove('reasoning_effort');
+        yield* _attemptStream(
+          fallback,
+          originalError: e,
+          requestedEffort: requestedEffort,
+          onSettingDropped: onSettingDropped,
+        );
+        return;
+      }
+      // After a retry, surface the first error — the retry was our own remediation.
+      final source = originalError ?? e;
+      dLog(
+        '[CustomRemoteDatasource] streamMessage failed: ${source.type} ${source.response?.statusCode ?? ''}'
+        '${originalError != null ? ' (retry also failed: ${e.type} ${e.response?.statusCode ?? ''})' : ''}',
+      );
+      throw NetworkException(
+        'Custom endpoint request failed',
+        statusCode: source.response?.statusCode,
+        originalError: source,
+      );
     }
   }
 
@@ -151,15 +247,27 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     required List<Map<String, dynamic>> messages,
     required List<Tool> tools,
     required AIModel model,
-  }) async* {
-    final body = {
+    ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
+  }) {
+    final body = <String, dynamic>{
       'model': model.modelId,
       'stream': true,
       'messages': messages,
       'tools': tools.map((t) => t.toOpenAiToolJson()).toList(),
       'tool_choice': 'auto',
+      if (settings?.effort != null)
+        'reasoning_effort': mapOpenAIReasoningEffort(settings!.effort!, onSettingDropped: onSettingDropped),
     };
+    return _attemptToolsStream(body, requestedEffort: settings?.effort, onSettingDropped: onSettingDropped);
+  }
 
+  Stream<StreamEvent> _attemptToolsStream(
+    Map<String, dynamic> body, {
+    DioException? originalError,
+    ChatEffort? requestedEffort,
+    ProviderSettingDropSink? onSettingDropped,
+  }) async* {
     try {
       final response = await _dio.post(
         '/chat/completions',
@@ -226,11 +334,36 @@ class CustomRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
         }
       }
     } on DioException catch (e) {
-      dLog('[CustomRemoteDatasource] streamMessageWithTools failed: ${e.type} ${e.response?.statusCode ?? ''}');
+      if (originalError == null &&
+          body.containsKey('reasoning_effort') &&
+          isUnknownFieldRejection(e.response?.statusCode, e.response?.data?.toString(), 'reasoning_effort')) {
+        sLog('[CustomRemoteDatasource] endpoint rejected reasoning_effort (tools); retrying without it');
+        if (requestedEffort != null) {
+          onSettingDropped?.call(
+            ProviderSettingDropEffort(
+              requested: requestedEffort,
+              reason: 'Custom endpoint rejected reasoning_effort — retried without it',
+            ),
+          );
+        }
+        final fallback = Map<String, dynamic>.from(body)..remove('reasoning_effort');
+        yield* _attemptToolsStream(
+          fallback,
+          originalError: e,
+          requestedEffort: requestedEffort,
+          onSettingDropped: onSettingDropped,
+        );
+        return;
+      }
+      final source = originalError ?? e;
+      dLog(
+        '[CustomRemoteDatasource] streamMessageWithTools failed: ${source.type} ${source.response?.statusCode ?? ''}'
+        '${originalError != null ? ' (retry also failed: ${e.type} ${e.response?.statusCode ?? ''})' : ''}',
+      );
       throw NetworkException(
         'Custom endpoint tool stream failed',
-        statusCode: e.response?.statusCode,
-        originalError: e,
+        statusCode: source.response?.statusCode,
+        originalError: source,
       );
     }
   }

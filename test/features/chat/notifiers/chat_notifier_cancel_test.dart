@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:code_bench_app/data/ai/models/provider_setting_drop.dart';
 import 'package:code_bench_app/data/chat/models/transport_readiness.dart';
 import 'package:code_bench_app/data/session/models/permission_request.dart';
-import 'package:code_bench_app/data/session/models/session_settings.dart';
+import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_messages_actions.dart';
@@ -57,6 +58,7 @@ class _FakeSessionService extends Fake implements SessionService {
     Future<bool> Function(PermissionRequest req)? requestPermission,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
+    ProviderSettingDropSink? onSettingDropped,
   }) {
     sendCalled = true;
     return controller.stream;
@@ -84,7 +86,7 @@ ProviderContainer _makeContainer(_FakeSessionService svc) {
     overrides: [
       sessionServiceProvider.overrideWith((ref) async => svc),
       activeSessionIdProvider.overrideWithValue('session-1'),
-      selectedModelProvider.overrideWithValue(AIModels.claude35Sonnet),
+      selectedModelProvider.overrideWithValue(AIModels.sonnet46),
       activeProjectProvider.overrideWithValue(null),
       apiKeysProvider.overrideWith(_FakeApiKeysNotifier.new),
       transportReadinessProvider.overrideWithValue(const TransportReadiness.ready()),

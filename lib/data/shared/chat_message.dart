@@ -37,6 +37,8 @@ abstract class ChatMessage with _$ChatMessage {
     AskUserQuestion? askQuestion,
     @Default(false) bool iterationCapReached,
     PermissionRequest? pendingPermissionRequest,
+    String? providerId,
+    String? modelId,
   }) = _ChatMessage;
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => _$ChatMessageFromJson(json);

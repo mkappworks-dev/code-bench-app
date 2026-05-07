@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/data/ai/models/provider_setting_drop.dart';
+import 'package:code_bench_app/data/ai/models/provider_turn_settings.dart';
 import 'package:code_bench_app/data/ai/models/stream_event.dart';
 import 'package:code_bench_app/data/ai/repository/tool_streaming_repository.dart';
 import 'package:code_bench_app/data/coding_tools/datasource/coding_tools_datasource_io.dart';
@@ -12,7 +14,7 @@ import 'package:code_bench_app/data/coding_tools/repository/coding_tools_denylis
 import 'package:code_bench_app/data/coding_tools/repository/coding_tools_repository_impl.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
-import 'package:code_bench_app/data/session/models/session_settings.dart';
+import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:code_bench_app/data/session/models/tool_event.dart';
 import 'package:code_bench_app/data/filesystem/datasource/filesystem_datasource_io.dart';
 import 'package:code_bench_app/data/filesystem/repository/filesystem_repository_impl.dart';
@@ -50,6 +52,8 @@ class _FakeAIRepo implements ToolStreamingRepository {
     required List<Map<String, dynamic>> wireMessages,
     required List<Tool> tools,
     required AIModel model,
+    ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     final events = scripts[_round++];
     for (final e in events) {
@@ -343,9 +347,11 @@ class _WireCapturingFakeRepo extends _FakeAIRepo {
     required List<Map<String, dynamic>> wireMessages,
     required List<Tool> tools,
     required AIModel model,
+    ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) {
     onWire(wireMessages);
-    return super.streamMessageWithTools(wireMessages: wireMessages, tools: tools, model: model);
+    return super.streamMessageWithTools(wireMessages: wireMessages, tools: tools, model: model, settings: settings);
   }
 }
 
@@ -358,8 +364,10 @@ class _CapturingFakeRepo extends _FakeAIRepo {
     required List<Map<String, dynamic>> wireMessages,
     required List<Tool> tools,
     required AIModel model,
+    ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) {
     onSend(tools);
-    return super.streamMessageWithTools(wireMessages: wireMessages, tools: tools, model: model);
+    return super.streamMessageWithTools(wireMessages: wireMessages, tools: tools, model: model, settings: settings);
   }
 }

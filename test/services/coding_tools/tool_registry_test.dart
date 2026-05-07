@@ -16,7 +16,7 @@ import 'package:code_bench_app/data/coding_tools/repository/coding_tools_denylis
 import 'package:code_bench_app/data/coding_tools/repository/coding_tools_repository_impl.dart';
 import 'package:code_bench_app/data/filesystem/datasource/filesystem_datasource_io.dart';
 import 'package:code_bench_app/data/filesystem/repository/filesystem_repository_impl.dart';
-import 'package:code_bench_app/data/session/models/session_settings.dart';
+import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
 import 'package:code_bench_app/services/coding_tools/tool_registry.dart';
 import 'package:code_bench_app/services/coding_tools/tools/list_dir_tool.dart';

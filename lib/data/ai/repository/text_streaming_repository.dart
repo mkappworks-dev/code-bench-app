@@ -1,5 +1,8 @@
 import '../../shared/ai_model.dart';
 import '../../shared/chat_message.dart';
+import '../models/provider_capabilities.dart';
+import '../models/provider_setting_drop.dart';
+import '../models/provider_turn_settings.dart';
 
 /// Capability for repositories that stream raw text tokens.
 ///
@@ -8,10 +11,15 @@ import '../../shared/chat_message.dart';
 /// provide text streaming (CLI-backed routes handled at the SessionService
 /// layer) don't have to declare a method they can't honour.
 abstract interface class TextStreamingRepository {
+  /// Capability surface for [model], or null for CLI-only providers (no HTTP datasource registered).
+  ProviderCapabilities? capabilitiesFor(AIModel model);
+
   Stream<String> streamMessage({
     required List<ChatMessage> history,
     required String prompt,
     required AIModel model,
     String? systemPrompt,
+    ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   });
 }

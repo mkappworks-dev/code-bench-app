@@ -6,11 +6,12 @@ import 'package:uuid/uuid.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/ai/models/auth_status.dart';
+import '../../../data/ai/models/provider_setting_drop.dart';
 import '../../../data/chat/models/agent_failure.dart';
 import '../../../data/chat/models/transport_readiness.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/apply/models/applied_change.dart';
-import '../../../data/session/models/session_settings.dart';
+import '../../../data/shared/session_settings.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/chat_session.dart';
 import '../../../services/ai_provider/ai_provider_service.dart';
@@ -22,6 +23,8 @@ import '../../mcp_servers/notifiers/mcp_server_status_notifier.dart';
 import '../../providers/notifiers/providers_notifier.dart';
 import 'agent_cancel_notifier.dart';
 import 'agent_permission_request_notifier.dart';
+import 'chat_input_bar_options_notifier.dart';
+import 'dropped_settings_notifier.dart';
 import 'transport_readiness_notifier.dart';
 
 part 'chat_notifier.g.dart';
@@ -49,7 +52,7 @@ class ActiveSessionIdNotifier extends _$ActiveSessionIdNotifier {
 @Riverpod(keepAlive: true)
 class SelectedModelNotifier extends _$SelectedModelNotifier {
   @override
-  AIModel build() => AIModels.claude35Sonnet;
+  AIModel build() => AIModels.sonnet46;
 
   void select(AIModel model) => state = model;
 }
@@ -80,10 +83,7 @@ class SessionPermissionNotifier extends _$SessionPermissionNotifier {
 
 const _validTransports = {'api-key', 'cli'};
 
-/// Resolves which `AIProviderDatasource` ID (in `AIProviderService`) should
-/// handle this turn, based on the active model and the persisted per-provider
-/// transport choice. Returns null when the user has selected the API-key
-/// (HTTP) path, which routes through `streamMessage` inside `SessionService`.
+/// Returns the CLI provider id when the user picked CLI transport for this provider; null routes through the HTTP path.
 String? _resolveProviderId(AIModel model, ApiKeysNotifierState? prefs) {
   if (prefs == null) return null;
   if (model.provider == AIProvider.anthropic && !_validTransports.contains(prefs.anthropicTransport)) {
@@ -154,15 +154,30 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final activeMessageIdNotifier = ref.read(activeMessageIdProvider.notifier);
     activeMessageIdNotifier.set('pending');
 
-    final mode = ref.read(sessionModeProvider);
     final permission = ref.read(sessionPermissionProvider);
     final projectPath = ref.read(activeProjectProvider)?.path;
-    // Await prefs explicitly: `apiKeysProvider` is autoDispose, so when the
-    // chat tab opens fresh (without the Providers screen being mounted) the
-    // first `.value` is null and we'd silently fall through to the legacy
-    // HTTP path even when CLI transport is selected. Always wait for storage.
+    // Await prefs: `apiKeysProvider` is autoDispose; first `.value` is null on a fresh chat tab and would silently fall through to HTTP.
     final prefs = await ref.read(apiKeysProvider.future);
     final providerId = _resolveProviderId(model, prefs);
+
+    // Coerce stale mode for the send only (don't touch persisted state) so toggling back to a tools-capable transport restores the user's preference.
+    final caps = ref.read(chatInputBarOptionsProvider);
+    final storedMode = ref.read(sessionModeProvider);
+    final modeWasCoerced = caps != null && !caps.supportedModes.contains(storedMode);
+    final mode = modeWasCoerced ? ChatMode.chat : storedMode;
+    if (modeWasCoerced) {
+      dLog(
+        '[ChatMessagesNotifier] coerced mode $storedMode → chat — '
+        'transport supports only ${caps.supportedModes}',
+      );
+    }
+    final pendingDrops = <ProviderSettingDrop>[
+      if (modeWasCoerced)
+        ProviderSettingDropMode(
+          requested: storedMode,
+          reason: 'Selected model does not support ${storedMode.name} mode — coerced to chat',
+        ),
+    ];
 
     // Belt+suspenders: catches paths that bypass the input bar (continueAgenticTurn).
     final readiness = ref.read(transportReadinessProvider);
@@ -199,6 +214,8 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final mcpN = ref.read(mcpServerStatusProvider.notifier);
 
     String? streamingAssistantId;
+    String? userMessageId;
+    final dropsN = ref.read(messageDroppedSettingsProvider.notifier);
 
     registry.start(
       sessionId: sessionId,
@@ -216,6 +233,14 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
             requestPermission: permN.request,
             onMcpStatusChanged: mcpN.setStatus,
             onMcpServerRemoved: mcpN.remove,
+            onSettingDropped: (drop) {
+              final assistantId = streamingAssistantId;
+              if (assistantId != null) {
+                dropsN.add(assistantId, drop);
+              } else {
+                pendingDrops.add(drop);
+              }
+            },
           )
           .timeout(
             const Duration(seconds: 60),
@@ -227,9 +252,16 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
       onMessage: (msg) {
         if (disposed) return;
         if (msg.sessionId != sessionId) return;
+        if (msg.role == MessageRole.user && userMessageId == null) {
+          userMessageId = msg.id;
+        }
         if (msg.role == MessageRole.assistant && streamingAssistantId == null) {
           streamingAssistantId = msg.id;
           activeMessageIdNotifier.set(msg.id);
+          if (pendingDrops.isNotEmpty) {
+            dropsN.addAll(msg.id, pendingDrops);
+            pendingDrops.clear();
+          }
         }
         final current = state.value ?? [];
         final idx = current.indexWhere((m) => m.id == msg.id);
@@ -251,6 +283,17 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
 
     // Subscribe after start() so watchState's first yield is connecting, not idle.
     late final StreamSubscription<ChatStreamState> termSub;
+    void flushPendingDropsOnTermination() {
+      if (pendingDrops.isEmpty) return;
+      final anchor = streamingAssistantId ?? userMessageId;
+      if (anchor == null) {
+        pendingDrops.clear();
+        return;
+      }
+      dropsN.addAll(anchor, pendingDrops);
+      pendingDrops.clear();
+    }
+
     termSub = registry.watchState(sessionId).listen((s) {
       if (disposed) {
         if (!completer.isCompleted) completer.complete(null);
@@ -259,12 +302,15 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
       }
       switch (s) {
         case ChatStreamDone():
+          flushPendingDropsOnTermination();
           if (!completer.isCompleted) completer.complete(null);
           termSub.cancel();
         case ChatStreamFailed(:final failure):
+          flushPendingDropsOnTermination();
           if (!completer.isCompleted) completer.complete(failure);
           termSub.cancel();
         case ChatStreamIdle():
+          flushPendingDropsOnTermination();
           if (!completer.isCompleted) completer.complete(null);
           termSub.cancel();
         default:

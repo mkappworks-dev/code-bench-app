@@ -6,13 +6,15 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/utils/debug_logger.dart';
+import '../../data/ai/models/provider_setting_drop.dart';
+import '../../data/ai/models/provider_turn_settings.dart';
 import '../../data/ai/models/stream_event.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
 import '../../data/ai/repository/tool_streaming_repository.dart';
 import '../../data/coding_tools/models/coding_tool_result.dart';
 import '../../data/coding_tools/models/tool_capability.dart';
 import '../../data/session/models/permission_request.dart';
-import '../../data/session/models/session_settings.dart';
+import '../../data/shared/session_settings.dart';
 import '../../data/session/models/tool_event.dart';
 import '../../data/shared/ai_model.dart';
 import '../../data/shared/chat_message.dart';
@@ -78,6 +80,8 @@ class AgentService {
     Future<bool> Function(PermissionRequest req)? requestPermission,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
+    ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     final reqPermission = requestPermission ?? ((_) async => true);
     final Future<void> Function() teardown;
@@ -129,7 +133,13 @@ class AgentService {
         String? finishReason;
 
         try {
-          await for (final event in _ai.streamMessageWithTools(wireMessages: wire, tools: tools, model: model)) {
+          await for (final event in _ai.streamMessageWithTools(
+            wireMessages: wire,
+            tools: tools,
+            model: model,
+            settings: settings,
+            onSettingDropped: onSettingDropped,
+          )) {
             switch (event) {
               case StreamTextDelta(:final text):
                 textBuffer.write(text);

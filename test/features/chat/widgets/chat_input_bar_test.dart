@@ -6,9 +6,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:code_bench_app/core/constants/app_icons.dart';
 import 'package:code_bench_app/core/theme/app_colors.dart';
+import 'package:code_bench_app/data/ai/models/provider_capabilities.dart';
 import 'package:code_bench_app/data/chat/models/transport_readiness.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
+import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:code_bench_app/data/project/models/project.dart';
+import 'package:code_bench_app/features/chat/notifiers/chat_input_bar_options_notifier.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/notifiers/transport_readiness_notifier.dart';
 import 'package:code_bench_app/features/chat/widgets/chat_input_bar.dart';
@@ -88,6 +91,17 @@ Widget _wrap(
       chatMessagesProvider.overrideWith2((_) => _FakeChatMessages()),
       availableModelsProvider.overrideWith(() => _FakeAvailableModels()),
       transportReadinessProvider.overrideWithValue(const TransportReadiness.ready()),
+      // Default to a capability surface that mirrors a CLI provider so the
+      // existing tests for the effort/mode/permission chips keep passing.
+      chatInputBarOptionsProvider.overrideWith(
+        (ref) => const ProviderCapabilities(
+          supportsModelOverride: true,
+          supportsSystemPrompt: true,
+          supportedModes: {ChatMode.chat, ChatMode.plan, ChatMode.act},
+          supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
+          supportedPermissions: {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess},
+        ),
+      ),
       if (activeProjectId != null) activeProjectIdProvider.overrideWith(() => _FakeActiveProjectId(activeProjectId)),
     ],
     child: MaterialApp(

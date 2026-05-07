@@ -1,19 +1,17 @@
+import '../../shared/ai_model.dart';
 import '../models/auth_status.dart';
 import '../models/detection_result.dart';
+import '../models/provider_capabilities.dart';
 import '../models/provider_runtime_event.dart';
+import '../models/provider_turn_settings.dart';
 
 export '../models/auth_status.dart';
 export '../models/detection_result.dart';
+export '../models/provider_capabilities.dart';
 export '../models/provider_runtime_event.dart';
+export '../models/provider_turn_settings.dart';
 
-/// Contract for pluggable AI provider datasources (Claude CLI, Codex, etc.).
-///
-/// Each implementation speaks its own wire protocol and normalizes output to
-/// [ProviderRuntimeEvent]s. Callers never need to know which provider is active.
-///
-/// Implementations live alongside this file with the appropriate suffix:
-///   - HTTP-based: `*_datasource_dio.dart`   (e.g. `claude_cli_datasource_dio.dart`)
-///   - Process-based: `*_datasource_process.dart` (e.g. `codex_datasource_process.dart`)
+/// Contract for pluggable AI provider datasources — each normalizes its wire protocol to [ProviderRuntimeEvent]s.
 abstract interface class AIProviderDatasource {
   /// Unique identifier (e.g. "claude-cli", "codex").
   String get id;
@@ -26,11 +24,15 @@ abstract interface class AIProviderDatasource {
   /// (not on PATH) so the UI can render the right recovery affordance.
   Future<DetectionResult> detect();
 
+  /// Capability surface for the picked [model]; HTTP providers may shrink the surface based on model id.
+  ProviderCapabilities capabilitiesFor(AIModel model);
+
   /// Send a message and stream normalized [ProviderRuntimeEvent]s.
   Stream<ProviderRuntimeEvent> sendAndStream({
     required String prompt,
     required String sessionId,
     required String workingDirectory,
+    ProviderTurnSettings? settings,
   });
 
   /// Cancel any in-flight request.

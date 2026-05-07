@@ -38,6 +38,8 @@ _ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => _ChatMessage(
   pendingPermissionRequest: json['pendingPermissionRequest'] == null
       ? null
       : PermissionRequest.fromJson(json['pendingPermissionRequest'] as Map<String, dynamic>),
+  providerId: json['providerId'] as String?,
+  modelId: json['modelId'] as String?,
 );
 
 Map<String, dynamic> _$ChatMessageToJson(_ChatMessage instance) => <String, dynamic>{
@@ -52,6 +54,8 @@ Map<String, dynamic> _$ChatMessageToJson(_ChatMessage instance) => <String, dyna
   'askQuestion': instance.askQuestion?.toJson(),
   'iterationCapReached': instance.iterationCapReached,
   'pendingPermissionRequest': instance.pendingPermissionRequest?.toJson(),
+  'providerId': instance.providerId,
+  'modelId': instance.modelId,
 };
 
 const _$MessageRoleEnumMap = {

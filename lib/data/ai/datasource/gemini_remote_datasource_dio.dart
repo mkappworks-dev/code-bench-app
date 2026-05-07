@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:meta/meta.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/errors/app_exception.dart';
@@ -9,19 +10,59 @@ import '../../../core/utils/debug_logger.dart';
 import '../../../data/_core/http/dio_factory.dart';
 import '../../../data/shared/ai_model.dart';
 import '../../../data/shared/chat_message.dart';
+import '../../../data/shared/session_settings.dart';
+import '../models/provider_capabilities.dart';
+import '../models/provider_setting_drop.dart';
+import '../models/provider_turn_settings.dart';
+import '../util/setting_mappers.dart';
 import 'ai_remote_datasource.dart';
 import 'text_streaming_datasource.dart';
 
+@visibleForTesting
+Map<String, dynamic> buildGeminiRequestBody({
+  required AIModel model,
+  required List<Map<String, dynamic>> contents,
+  String? systemPrompt,
+  ProviderTurnSettings? settings,
+  ProviderSettingDropSink? onSettingDropped,
+}) {
+  final body = <String, dynamic>{
+    'contents': contents,
+    if (systemPrompt != null)
+      'system_instruction': {
+        'parts': [
+          {'text': systemPrompt},
+        ],
+      },
+  };
+  if (settings?.effort != null && AIModels.supportsGeminiThinking(model.modelId)) {
+    final thinkingConfig = AIModels.isGemini3(model.modelId)
+        ? {'thinkingLevel': mapGeminiThinkingLevel(settings!.effort!, onSettingDropped: onSettingDropped)}
+        : {'thinkingBudget': mapGeminiThinkingBudget(settings!.effort!)};
+    body['generationConfig'] = {'thinkingConfig': thinkingConfig};
+  }
+  return body;
+}
+
 class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingDatasource {
   GeminiRemoteDatasourceDio(String apiKey)
-    : _apiKey = apiKey,
-      _dio = DioFactory.create(baseUrl: ApiConstants.geminiBaseUrl);
+    : _dio = DioFactory.create(baseUrl: ApiConstants.geminiBaseUrl, headers: {'x-goog-api-key': apiKey});
 
-  final String _apiKey;
   final Dio _dio;
 
   @override
   AIProvider get provider => AIProvider.gemini;
+
+  @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => ProviderCapabilities(
+    supportsModelOverride: true,
+    supportsSystemPrompt: true,
+    supportedModes: const {ChatMode.chat},
+    supportedEfforts: AIModels.supportsGeminiThinking(model.modelId)
+        ? const {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max}
+        : const <ChatEffort>{},
+    supportedPermissions: const <ChatPermission>{},
+  );
 
   @override
   Stream<String> streamMessage({
@@ -29,21 +70,22 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
     required String prompt,
     required AIModel model,
     String? systemPrompt,
+    ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     final contents = _buildContents(history, prompt);
-    final body = <String, dynamic>{
-      'contents': contents,
-      if (systemPrompt != null)
-        'system_instruction': {
-          'parts': [
-            {'text': systemPrompt},
-          ],
-        },
-    };
+    final body = buildGeminiRequestBody(
+      model: model,
+      contents: contents,
+      systemPrompt: systemPrompt,
+      settings: settings,
+      onSettingDropped: onSettingDropped,
+    );
 
     try {
+      final encodedModelId = Uri.encodeComponent(model.modelId);
       final response = await _dio.post(
-        '/models/${model.modelId}:streamGenerateContent?key=$_apiKey&alt=sse',
+        '/models/$encodedModelId:streamGenerateContent?alt=sse',
         data: body,
         options: Options(responseType: ResponseType.stream),
       );
@@ -81,7 +123,10 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
           errorBody = utf8.decode(bytes);
         } catch (_) {}
       }
-      dLog('[GeminiDatasource] request failed: status=${e.response?.statusCode} type=${e.type} body=$errorBody');
+      dLog(
+        '[GeminiDatasource] request failed: status=${e.response?.statusCode} '
+        'type=${e.type} body=${redactSecrets(errorBody ?? 'null')}',
+      );
       throw NetworkException('Gemini request failed', statusCode: e.response?.statusCode, originalError: e);
     }
   }
@@ -89,7 +134,8 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
   @override
   Future<bool> testConnection(AIModel model, String apiKey) async {
     try {
-      await _dio.get('/models?key=$apiKey');
+      final testDio = DioFactory.create(baseUrl: ApiConstants.geminiBaseUrl, headers: {'x-goog-api-key': apiKey});
+      await testDio.get('/models');
       return true;
     } on DioException catch (e) {
       dLog('[GeminiRemoteDatasource] testConnection failed: ${e.type} ${e.response?.statusCode}');
@@ -100,17 +146,43 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
   @override
   Future<List<AIModel>> fetchAvailableModels(String apiKey) async {
     try {
-      final response = await _dio.get('/models?key=$apiKey');
-      final data = response.data as Map<String, dynamic>;
-      final models = (data['models'] as List).where((m) => (m['name'] as String).contains('gemini')).map((m) {
-        final name = m['name'] as String;
+      final testDio = DioFactory.create(baseUrl: ApiConstants.geminiBaseUrl, headers: {'x-goog-api-key': apiKey});
+      final response = await testDio.get('/models');
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        throw const ParseException('Gemini /models payload is not a JSON object');
+      }
+      final entries = data['models'];
+      if (entries is! List) {
+        throw const ParseException('Gemini /models response is missing the "models" list');
+      }
+      final models = <AIModel>[];
+      for (final entry in entries) {
+        if (entry is! Map) continue;
+        final name = entry['name'];
+        if (name is! String || !name.contains('gemini')) continue;
         final id = name.split('/').last;
-        return AIModel(id: id, provider: AIProvider.gemini, name: m['displayName'] as String? ?? id, modelId: id);
-      }).toList();
+        if (id.isEmpty || AIModels.geminiNonChatSubstrings.any(id.contains)) continue;
+        final methods = entry['supportedGenerationMethods'];
+        if (methods is! List || !methods.contains('generateContent')) continue;
+        final displayName = entry['displayName'];
+        models.add(
+          AIModel(
+            id: id,
+            provider: AIProvider.gemini,
+            name: (displayName is String && displayName.isNotEmpty) ? displayName : id,
+            modelId: id,
+          ),
+        );
+      }
       return models;
     } on DioException catch (e) {
-      dLog('[GeminiRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode}');
-      return AIModels.defaults.where((m) => m.provider == AIProvider.gemini).toList();
+      final status = e.response?.statusCode;
+      dLog('[GeminiRemoteDatasource] fetchAvailableModels failed: ${e.type} ${status ?? ''}');
+      if (status == 401 || status == 403) {
+        throw AuthException('Gemini rejected the API key', originalError: e);
+      }
+      throw NetworkException('Gemini request failed', statusCode: status, originalError: e);
     }
   }
 

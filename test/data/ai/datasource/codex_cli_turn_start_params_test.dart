@@ -1,4 +1,5 @@
 import 'package:code_bench_app/data/ai/datasource/codex_cli_datasource_process.dart';
+import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -34,6 +35,38 @@ void main() {
       final input = params['input'] as List<dynamic>;
       expect(input, hasLength(1));
       expect((input.first as Map<String, dynamic>)['text'], '');
+    });
+
+    test('forwards modelId verbatim — picker is the gate', () {
+      // The OpenAI section of the picker is fed by Codex's `model/list` RPC
+      // when transport=cli, so any id reaching here is already valid for the
+      // active account. No client-side allowlist.
+      final params = buildCodexTurnStartParams('thread-1', 'hi', modelId: 'gpt-5.5');
+      expect(params['model'], 'gpt-5.5');
+    });
+
+    test('omits model when it is null (let Codex pick the account default)', () {
+      final params = buildCodexTurnStartParams('thread-1', 'hi');
+      expect(params.containsKey('model'), isFalse);
+    });
+
+    test('includes effort when provided', () {
+      final params = buildCodexTurnStartParams('t', 'p', effort: ChatEffort.max);
+      expect(params['effort'], 'xhigh');
+    });
+
+    test('includes sandboxPolicy + approvalPolicy when permission provided', () {
+      final params = buildCodexTurnStartParams('t', 'p', permission: ChatPermission.fullAccess);
+      expect(params['sandboxPolicy'], {'type': 'dangerFullAccess'});
+      expect(params['approvalPolicy'], 'never');
+    });
+
+    test('omits all optional fields when nothing is provided', () {
+      final params = buildCodexTurnStartParams('t', 'p');
+      expect(params.containsKey('model'), isFalse);
+      expect(params.containsKey('effort'), isFalse);
+      expect(params.containsKey('sandboxPolicy'), isFalse);
+      expect(params.containsKey('approvalPolicy'), isFalse);
     });
   });
 }

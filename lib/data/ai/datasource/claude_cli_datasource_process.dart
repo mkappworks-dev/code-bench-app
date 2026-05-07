@@ -6,7 +6,10 @@ import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
+import '../../shared/ai_model.dart';
+import '../../shared/session_settings.dart';
 import '../models/stream_event.dart';
+import '../util/setting_mappers.dart';
 import 'ai_provider_datasource.dart';
 import 'binary_resolver_process.dart';
 import 'claude_cli_stream_parser.dart';
@@ -48,18 +51,51 @@ AIProviderDatasource claudeCliDatasourceProcess(Ref ref) {
   return ClaudeCliDatasourceProcess(binaryPath: 'claude');
 }
 
+@visibleForTesting
+List<String> buildClaudeCliArgs({
+  required String sessionId,
+  required String prompt,
+  required bool isFirstTurn,
+  ProviderTurnSettings? settings,
+}) {
+  // Defensive flag-shape guard at the argv boundary in case a future BYO-modelId path lands a `--`-prefixed string.
+  var modelId = settings?.modelId;
+  if (modelId != null && modelId.startsWith('-')) {
+    sLog('[ClaudeCli] rejected flag-shaped modelId at argv boundary');
+    modelId = null;
+  }
+  final systemPrompt = settings?.systemPrompt;
+  final permissionMode = mapClaudePermissionMode(
+    mode: settings?.mode ?? ChatMode.chat,
+    permission: settings?.permission ?? ChatPermission.fullAccess,
+  );
+
+  // `--effort` is not forwarded — older Claude CLI versions reject it and exit 1.
+  if (settings?.effort != null) {
+    dLog('[ClaudeCli] ignoring effort=${settings!.effort!.name} — Claude CLI does not accept --effort');
+  }
+  return [
+    '-p',
+    '--output-format',
+    'stream-json',
+    '--include-partial-messages',
+    '--verbose',
+    if (modelId != null) ...['--model', modelId],
+    if (systemPrompt != null && systemPrompt.isNotEmpty) ...['--append-system-prompt', systemPrompt],
+    '--permission-mode',
+    permissionMode,
+    if (isFirstTurn) ...['--session-id', sessionId] else ...['--resume', sessionId],
+    '--',
+    prompt,
+  ];
+}
+
 /// Abort after N consecutive parse failures — a healthy stream produces
 /// occasional unknown frames but never a sustained run of malformed lines.
 const int _consecutiveParseFailureLimit = 5;
 
 /// Spawns the locally-installed `claude` CLI binary and streams its
 /// `--output-format stream-json` output, normalized to [ProviderRuntimeEvent].
-///
-/// First turn for a session uses `--session-id <id>`; subsequent turns reuse
-/// the session via `--resume <id>`. The CLI itself runs under
-/// `--permission-mode bypassPermissions` so Code Bench's permission rules do
-/// not gate its tool use — the user is warned via the chat permission card
-/// before delegation begins.
 class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   ClaudeCliDatasourceProcess({required this.binaryPath});
 
@@ -130,13 +166,25 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   }
 
   @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => const ProviderCapabilities(
+    supportsModelOverride: true,
+    supportsSystemPrompt: true,
+    supportedModes: {ChatMode.chat, ChatMode.plan, ChatMode.act},
+    // Empty: hides the effort chip since `--effort` is not forwarded (see buildClaudeCliArgs).
+    supportedEfforts: <ChatEffort>{},
+    supportedPermissions: {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess},
+  );
+
+  @override
   Stream<ProviderRuntimeEvent> sendAndStream({
     required String prompt,
     required String sessionId,
     required String workingDirectory,
+    ProviderTurnSettings? settings,
   }) {
-    final controller = StreamController<ProviderRuntimeEvent>.broadcast();
-    _stream(controller, prompt: prompt, sessionId: sessionId, workingDirectory: workingDirectory);
+    // Single-subscription buffers `ProviderInit` until `await for` subscribes; broadcast would drop it.
+    final controller = StreamController<ProviderRuntimeEvent>();
+    _stream(controller, prompt: prompt, sessionId: sessionId, workingDirectory: workingDirectory, settings: settings);
     return controller.stream;
   }
 
@@ -145,10 +193,11 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
     required String prompt,
     required String sessionId,
     required String workingDirectory,
+    ProviderTurnSettings? settings,
   }) async {
     Process? spawned;
     try {
-      controller.add(ProviderInit(provider: id));
+      controller.add(ProviderInit(provider: id, modelId: settings?.modelId));
 
       // sessionId guard — we only ever generate v4 UUIDs, but a future
       // import/restore path could leak an attacker-shaped value into argv.
@@ -170,21 +219,14 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       }
 
       final isFirstTurn = !_knownSessions.contains(sessionId);
-      final args = <String>[
-        '-p',
-        '--output-format',
-        'stream-json',
-        '--include-partial-messages',
-        '--permission-mode',
-        'bypassPermissions',
-        '--verbose',
-        if (isFirstTurn) ...['--session-id', sessionId] else ...['--resume', sessionId],
-        // `--` ends Claude Code's option parsing; the prompt after it is
-        // always treated positionally, so a `-`-prefixed prompt cannot
-        // become a flag.
-        '--',
-        prompt,
-      ];
+      // `--` ends Claude Code's option parsing; the prompt after it is always
+      // treated positionally, so a `-`-prefixed prompt cannot become a flag.
+      final args = buildClaudeCliArgs(
+        sessionId: sessionId,
+        prompt: prompt,
+        isFirstTurn: isFirstTurn,
+        settings: settings,
+      );
 
       // Minimal env — inheriting parent's full env would leak
       // ANTHROPIC_API_KEY / GITHUB_TOKEN / AWS_* into the CLI's child
@@ -251,6 +293,9 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       }
 
       _process = spawned;
+
+      // EOF stdin up-front: newer CLI versions block reading stdin in `-p` mode and exit 1 after a 3s warning.
+      unawaited(spawned.stdin.close());
 
       // Cap stderr so a chatty crash can't balloon memory.
       const stderrCap = 64 * 1024;
@@ -363,8 +408,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
   @override
   void respondToPermissionRequest(String requestId, {required bool approved}) {
-    // Claude Code CLI runs with --permission-mode bypassPermissions, so it
-    // never sends permission requests back to the host.
+    // Claude Code CLI handles its own permission UI inline and never forwards prompts to the host.
   }
 
   @override

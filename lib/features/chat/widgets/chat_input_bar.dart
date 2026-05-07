@@ -15,8 +15,9 @@ import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/agent_cancel_notifier.dart';
+import '../notifiers/chat_input_bar_options_notifier.dart';
 import '../notifiers/chat_notifier.dart';
-import '../../../data/session/models/session_settings.dart';
+import '../../../data/shared/session_settings.dart';
 import '../notifiers/available_models_failure.dart';
 import '../notifiers/available_models_notifier.dart';
 import '../notifiers/session_settings_actions.dart';
@@ -28,23 +29,9 @@ import '../../../features/project_actions/notifiers/ide_launch_actions.dart';
 import '../notifiers/chat_session_streaming.dart';
 import '../notifiers/transport_readiness_notifier.dart';
 
-/// Private in-memory store of per-session chat-input drafts.
-///
-/// Not a Riverpod provider because nothing in the tree needs to observe it —
-/// the drafts are only read/written by ChatInputBar itself in response to
-/// session switches. Using a plain module-level map sidesteps Riverpod's
-/// "can't modify provider during build" guard (which fires in
-/// `didUpdateWidget`) and the "ref unsafe after unmount" check (in
-/// `dispose`), both of which are triggered by this widget's lifecycle.
-///
-/// Survives switching between chats within a single app run but is not
-/// persisted across restarts. Empty entries are evicted so the map doesn't
-/// grow with stale keys.
+/// In-memory drafts keyed by sessionId — module-level (not Riverpod) to sidestep "modify provider during build" and "ref unsafe after unmount" guards triggered by this widget's lifecycle.
 final Map<String, String> _sessionDrafts = <String, String>{};
 
-/// Resets `_sessionDrafts` so one widget test can't leak its draft into the
-/// next. Intended only for `setUp` in widget tests — production code should
-/// never call this.
 @visibleForTesting
 void clearSessionDraftsForTesting() => _sessionDrafts.clear();
 
@@ -56,15 +43,9 @@ class ChatInputBar extends ConsumerStatefulWidget {
   ConsumerState<ChatInputBar> createState() => _ChatInputBarState();
 }
 
-/// Hard cap on how many models the picker will render per provider. A
-/// misconfigured Custom endpoint returning thousands of entries would
-/// otherwise build that many `PopupMenuItem`s in a `Column`.
+/// Caps a misconfigured Custom endpoint that returns thousands of entries.
 const int _maxModelsPerProvider = 200;
 
-/// Sealed choice type for the model picker. Replaces the previous
-/// `PopupMenuItem<AIModel>` sentinel pattern: refresh-as-model smuggled the
-/// control action through the value channel, which was brittle (depends on
-/// reference identity of a sentinel value).
 sealed class _ModelPickerChoice {
   const _ModelPickerChoice();
 }
@@ -158,21 +139,11 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     }
   }
 
-  /// Defense-in-depth check run at send time: the freezed `status` field only
-  /// reflects state at the last Drift stream re-emission, so we hit the
-  /// filesystem directly here as the source of truth. On any drift between
-  /// the cached status and the filesystem — either direction — kicks off a
-  /// targeted refresh so the sidebar tile + send button catch up:
-  ///
-  ///  - cached `available` but folder just vanished → block + heal to missing
-  ///  - cached `missing` but folder was restored by the user out-of-band →
-  ///    allow send + heal back to available
+  /// Filesystem is source of truth — `project.status` is a Drift-cached snapshot that can be stale either direction. On drift, fire-and-forget a refresh so the sidebar/send-button catch up.
   bool _isProjectAvailable(Project project) {
     final existsOnDisk = ref.read(projectSidebarActionsProvider.notifier).projectExistsOnDisk(project.path);
     final cachedAsAvailable = project.status == ProjectStatus.available;
     if (existsOnDisk != cachedAsAvailable) {
-      // The notifier logs its own failures; swallow here so this background
-      // refresh never surfaces as an uncaught exception.
       unawaited(
         ref.read(projectSidebarActionsProvider.notifier).refreshProjectStatus(project.id).catchError((Object _) {}),
       );
@@ -187,14 +158,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
   Future<void> _send() async {
     if (_isSending || _isStreaming) return;
 
-    // Check project availability BEFORE the empty-text bailout so that a
-    // tap on the disabled send button (which routes through this method)
-    // still surfaces the "folder missing" snackbar — otherwise the user
-    // gets a silent no-op and no explanation of why sending is blocked.
-    //
-    // The gate defers entirely to the filesystem via `_isProjectAvailable`;
-    // `project.status` is only read for rendering (button dim, hint text),
-    // never for blocking, because it can be stale in either direction.
+    // Check availability BEFORE the empty-text bailout so a tap on the disabled send button still surfaces the "folder missing" snackbar.
     final project = ref.read(activeProjectProvider);
     if (project == null) {
       showErrorSnackBar(context, 'No active project.');
@@ -334,6 +298,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final allModels = result?.models ?? AIModels.defaults;
     final failures = result?.failures ?? const <AIProvider, ModelProviderFailure>{};
 
+    // No transport-aware filter here — `availableModelsProvider` already gates the OpenAI section on Codex's `model/list` for cli transport.
     final grouped = <AIProvider, List<AIModel>>{};
     for (final m in allModels) {
       grouped.putIfAbsent(m.provider, () => []).add(m);
@@ -496,6 +461,17 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
     final mode = ref.watch(sessionModeProvider);
     final effort = ref.watch(sessionEffortProvider);
     final permission = ref.watch(sessionPermissionProvider);
+    // null caps == transport not yet known; chips hidden until known, then disabled (with tooltip) for unsupported dimensions.
+    final caps = ref.watch(chatInputBarOptionsProvider);
+    final transportKnown = caps != null;
+    final effortDisabled = transportKnown && caps.supportedEfforts.isEmpty;
+    final permissionDisabled = transportKnown && caps.supportedPermissions.isEmpty;
+    final showEffort = transportKnown;
+    final showMode = (caps?.supportedModes.length ?? 0) > 1;
+    final showPermission = transportKnown;
+    final supportedEfforts = caps?.supportedEfforts.toList() ?? const <ChatEffort>[];
+    final supportedModes = caps?.supportedModes.toList() ?? const <ChatMode>[];
+    final supportedPermissions = caps?.supportedPermissions.toList() ?? const <ChatPermission>[];
     // Re-render whenever the active project or its status changes so the
     // send button + Enter key disable the moment the folder goes missing
     // (e.g. app-resume refresh, write-button guard, or ApplyService catch).
@@ -582,48 +558,62 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> with SingleTickerPr
                           onTap: () => _showModelPicker(ctx),
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      Builder(
-                        builder: (ctx) => _ControlChip(
-                          label: effort.label,
-                          onTap: () => _showDropdown(
-                            ctx,
-                            ChatEffort.values,
-                            effort,
-                            (e) => e.label,
-                            (e) => ref.read(sessionSettingsActionsProvider.notifier).updateEffort(widget.sessionId, e),
+                      if (showEffort) ...[
+                        const SizedBox(width: 4),
+                        Builder(
+                          builder: (ctx) => _ControlChip(
+                            label: effort.label,
+                            disabledTooltip: effortDisabled
+                                ? 'Effort not configurable for ${model.name} — provider chooses adaptively'
+                                : null,
+                            onTap: () => _showDropdown(
+                              ctx,
+                              supportedEfforts,
+                              effort,
+                              (e) => e.label,
+                              (e) =>
+                                  ref.read(sessionSettingsActionsProvider.notifier).updateEffort(widget.sessionId, e),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Builder(
-                        builder: (ctx) => _ControlChip(
-                          icon: AppIcons.chat,
-                          label: mode.label,
-                          onTap: () => _showDropdown(
-                            ctx,
-                            ChatMode.values,
-                            mode,
-                            (m) => m.label,
-                            (m) => ref.read(sessionSettingsActionsProvider.notifier).updateMode(widget.sessionId, m),
+                      ],
+                      if (showMode) ...[
+                        const SizedBox(width: 4),
+                        Builder(
+                          builder: (ctx) => _ControlChip(
+                            icon: AppIcons.chat,
+                            label: mode.label,
+                            onTap: () => _showDropdown(
+                              ctx,
+                              supportedModes,
+                              mode,
+                              (m) => m.label,
+                              (m) => ref.read(sessionSettingsActionsProvider.notifier).updateMode(widget.sessionId, m),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Builder(
-                        builder: (ctx) => _ControlChip(
-                          icon: AppIcons.lock,
-                          label: permission.label,
-                          onTap: () => _showDropdown(
-                            ctx,
-                            ChatPermission.values,
-                            permission,
-                            (p) => p.label,
-                            (p) =>
-                                ref.read(sessionSettingsActionsProvider.notifier).updatePermission(widget.sessionId, p),
+                      ],
+                      if (showPermission) ...[
+                        const SizedBox(width: 4),
+                        Builder(
+                          builder: (ctx) => _ControlChip(
+                            icon: AppIcons.lock,
+                            label: permission.label,
+                            disabledTooltip: permissionDisabled
+                                ? 'Permission mode not configurable for ${model.name} on this transport'
+                                : null,
+                            onTap: () => _showDropdown(
+                              ctx,
+                              supportedPermissions,
+                              permission,
+                              (p) => p.label,
+                              (p) => ref
+                                  .read(sessionSettingsActionsProvider.notifier)
+                                  .updatePermission(widget.sessionId, p),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                       const Spacer(),
                       if (isSending)
                         AnimatedBuilder(
@@ -873,6 +863,7 @@ class _ControlChip extends StatelessWidget {
     required this.onTap,
     this.isWarning = false,
     this.isLoading = false,
+    this.disabledTooltip,
   });
   final IconData? icon;
   final String label;
@@ -880,11 +871,15 @@ class _ControlChip extends StatelessWidget {
   final bool isWarning;
   final bool isLoading;
 
+  /// When non-null the chip is muted, taps no-op, and this string renders as a tooltip explaining why.
+  final String? disabledTooltip;
+
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    return InkWell(
-      onTap: onTap,
+    final disabled = disabledTooltip != null;
+    final chip = InkWell(
+      onTap: disabled ? null : onTap,
       borderRadius: BorderRadius.circular(5),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -915,5 +910,7 @@ class _ControlChip extends StatelessWidget {
         ),
       ),
     );
+    final wrapped = disabled ? Opacity(opacity: 0.5, child: chip) : chip;
+    return disabled ? Tooltip(message: disabledTooltip!, child: wrapped) : wrapped;
   }
 }

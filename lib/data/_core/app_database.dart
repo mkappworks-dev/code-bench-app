@@ -3,6 +3,8 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../core/utils/debug_logger.dart';
+
 part 'app_database.g.dart';
 
 @DataClassName('ChatSessionRow')
@@ -35,6 +37,8 @@ class ChatMessages extends Table {
   TextColumn get codeBlocksJson => text().withDefault(const Constant('[]'))();
   TextColumn get toolEventsJson => text().withDefault(const Constant('[]'))();
   DateTimeColumn get timestamp => dateTime()();
+  TextColumn get providerId => text().nullable()();
+  TextColumn get modelId => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -204,7 +208,30 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      sLog('[AppDatabase] migrating schema $from -> $to');
+      if (from < 2) {
+        await m.addColumn(chatMessages, chatMessages.providerId);
+        await m.addColumn(chatMessages, chatMessages.modelId);
+      }
+    },
+    // Downgrade guard: Drift skips onUpgrade when the on-disk schema is newer than the build, which would crash later with "column not found".
+    beforeOpen: (details) async {
+      final stored = details.versionBefore;
+      if (stored != null && stored > details.versionNow) {
+        sLog('[AppDatabase] db schema (v$stored) is ahead of code (v${details.versionNow}) — refusing to run');
+        throw StateError(
+          'Database schema (v$stored) is newer than this build (v${details.versionNow}). '
+          'Update the app, or remove the local db to start fresh.',
+        );
+      }
+    },
+  );
 }
 
 QueryExecutor _openConnection() {

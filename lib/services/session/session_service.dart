@@ -5,11 +5,12 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/utils/debug_logger.dart';
 import '../../data/ai/datasource/ai_provider_datasource.dart';
+import '../../data/ai/models/provider_setting_drop.dart';
 import '../ai_provider/ai_provider_service.dart';
 import '../../data/ai/repository/ai_repository_impl.dart';
 import '../../data/ai/repository/text_streaming_repository.dart';
 import '../../data/session/models/permission_request.dart';
-import '../../data/session/models/session_settings.dart';
+import '../../data/shared/session_settings.dart';
 import '../../data/session/models/tool_event.dart';
 import '../../data/shared/ai_model.dart';
 import '../../data/shared/chat_message.dart';
@@ -96,6 +97,12 @@ class SessionService {
   Future<void> persistMessage(String sessionId, ChatMessage message) => _session.persistMessage(sessionId, message);
   Future<List<ChatSession>> getSessionsByProject(String projectId) => _session.getSessionsByProject(projectId);
 
+  ({String? providerId, String? modelId}) _attribution({AIModel? model, String? cliProviderId, String? cliModelId}) {
+    if (cliProviderId != null) return (providerId: cliProviderId, modelId: cliModelId);
+    if (model != null) return (providerId: model.provider.name, modelId: model.modelId);
+    return (providerId: null, modelId: null);
+  }
+
   Stream<ChatMessage> sendAndStream({
     required String sessionId,
     required String userInput,
@@ -109,7 +116,11 @@ class SessionService {
     Future<bool> Function(PermissionRequest req)? requestPermission,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
+    // Whitespace-only system prompts → null so Anthropic's nullable spread doesn't send `"system":""`.
+    final effectiveSystemPrompt = (systemPrompt == null || systemPrompt.trim().isEmpty) ? null : systemPrompt;
+
     String? persistedUserMsgId;
     if (userInput.isNotEmpty) {
       final userMsg = ChatMessage(
@@ -133,22 +144,30 @@ class SessionService {
         .where((m) => m.id != persistedUserMsgId && m.role != MessageRole.interrupted)
         .toList();
 
+    // The session row holds `effort` as a string; coerce to enum before bundling.
+    final session = await _session.getSession(sessionId);
+    ChatEffort? sessionEffort;
+    if (session?.effort != null) {
+      for (final e in ChatEffort.values) {
+        if (e.name == session!.effort) {
+          sessionEffort = e;
+          break;
+        }
+      }
+    }
+    final providerSettings = ProviderTurnSettings(
+      modelId: model.modelId,
+      systemPrompt: effectiveSystemPrompt,
+      mode: mode,
+      effort: sessionEffort,
+      permission: permission,
+    );
+
     // Provider transport: route through AIProviderDatasource when the user has
     // selected a named provider (claude-cli, codex, etc.).
     if (providerId != null) {
       final ds = _providerService?.getProvider(providerId);
       if (ds != null) {
-        // CLI providers run with their own permission model
-        // (`bypassPermissions` for Claude, codex's own approval flow). The
-        // user's act/permission picks in the chat UI don't apply on this
-        // path — log so the override is visible in dev builds. The chat
-        // permission card warns the user before a CLI turn begins.
-        if (mode == ChatMode.act || permission != ChatPermission.fullAccess) {
-          dLog(
-            '[SessionService] CLI provider $providerId — '
-            'mode=$mode and permission=$permission ignored; CLI manages its own permissions',
-          );
-        }
         yield* _streamProvider(
           ds: ds,
           sessionId: sessionId,
@@ -156,6 +175,7 @@ class SessionService {
           projectPath: projectPath,
           requestPermission: requestPermission,
           cancelFlag: cancelFlag,
+          settings: providerSettings,
         );
         if (historyExcludingCurrent.isEmpty && userInput.isNotEmpty) {
           final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
@@ -163,6 +183,12 @@ class SessionService {
         }
         return;
       }
+      // sLog so a fall-through to the HTTP path (which uses a different transport than the user picked) is visible in release.
+      sLog(
+        '[SessionService] providerId=$providerId requested but no datasource registered '
+        '(providerService=${_providerService == null ? "absent" : "no-such-provider"}); '
+        'falling through to HTTP path',
+      );
     }
 
     if (mode == ChatMode.act && model.provider != AIProvider.custom) {
@@ -170,6 +196,7 @@ class SessionService {
     }
 
     if (mode == ChatMode.act && model.provider == AIProvider.custom && projectPath != null) {
+      final attribution = _attribution(model: model);
       await for (final msg in _agent.runAgenticTurn(
         sessionId: sessionId,
         history: historyExcludingCurrent,
@@ -181,11 +208,16 @@ class SessionService {
         requestPermission: requestPermission,
         onMcpStatusChanged: onMcpStatusChanged,
         onMcpServerRemoved: onMcpServerRemoved,
+        settings: providerSettings,
+        onSettingDropped: onSettingDropped,
       )) {
-        if (!msg.isStreaming) {
-          await _session.persistMessage(sessionId, msg);
+        final stamped = msg.role == MessageRole.assistant
+            ? msg.copyWith(providerId: attribution.providerId, modelId: attribution.modelId)
+            : msg;
+        if (!stamped.isStreaming) {
+          await _session.persistMessage(sessionId, stamped);
         }
-        yield msg;
+        yield stamped;
       }
       if (historyExcludingCurrent.isEmpty && userInput.isNotEmpty) {
         final shortTitle = userInput.length > 50 ? '${userInput.substring(0, 47)}...' : userInput;
@@ -197,12 +229,15 @@ class SessionService {
     // Plain text path (unchanged).
     final assistantId = _uuid.v4();
     final buffer = StringBuffer();
+    final plainAttribution = _attribution(model: model);
 
     await for (final chunk in _ai.streamMessage(
       history: historyExcludingCurrent,
       prompt: userInput,
       model: model,
-      systemPrompt: systemPrompt,
+      systemPrompt: effectiveSystemPrompt,
+      settings: providerSettings,
+      onSettingDropped: onSettingDropped,
     )) {
       buffer.write(chunk);
       yield ChatMessage(
@@ -212,6 +247,8 @@ class SessionService {
         content: buffer.toString(),
         timestamp: DateTime.now(),
         isStreaming: true,
+        providerId: plainAttribution.providerId,
+        modelId: plainAttribution.modelId,
       );
     }
 
@@ -221,6 +258,8 @@ class SessionService {
       role: MessageRole.assistant,
       content: buffer.toString(),
       timestamp: DateTime.now(),
+      providerId: plainAttribution.providerId,
+      modelId: plainAttribution.modelId,
     );
     await _session.persistMessage(sessionId, finalMsg);
     yield finalMsg;
@@ -238,10 +277,15 @@ class SessionService {
     required String? projectPath,
     required Future<bool> Function(PermissionRequest req)? requestPermission,
     required bool Function() cancelFlag,
+    ProviderTurnSettings? settings,
   }) async* {
     final assistantId = _uuid.v4();
     final contentBuffer = StringBuffer();
     final toolEvents = <ToolEvent>[];
+    // Pre-stamp so badges still render if the transport crashes before ProviderInit; ProviderInit overrides on arrival.
+    String streamProviderId = ds.id;
+    String? streamModelId = settings?.modelId;
+    var sawProviderInit = false;
 
     ChatMessage snapshot({bool streaming = true}) => ChatMessage(
       id: assistantId,
@@ -251,6 +295,8 @@ class SessionService {
       timestamp: DateTime.now(),
       isStreaming: streaming,
       toolEvents: List.unmodifiable(toolEvents),
+      providerId: streamProviderId,
+      modelId: streamModelId,
     );
 
     var interrupted = false;
@@ -258,6 +304,7 @@ class SessionService {
       prompt: prompt,
       sessionId: sessionId,
       workingDirectory: projectPath ?? Directory.current.path,
+      settings: settings,
     )) {
       if (cancelFlag()) {
         ds.cancel();
@@ -266,8 +313,11 @@ class SessionService {
       }
 
       switch (event) {
-        case ProviderInit(:final provider):
-          dLog('[SessionService] provider $provider started');
+        case ProviderInit(:final provider, :final modelId):
+          streamProviderId = provider;
+          streamModelId = modelId ?? streamModelId;
+          sawProviderInit = true;
+          dLog('[SessionService] provider $provider started (model=$modelId)');
 
         case ProviderTextDelta(:final text):
           contentBuffer.write(text);
@@ -314,6 +364,10 @@ class SessionService {
       }
     }
 
+    if (!sawProviderInit) {
+      dLog('[SessionService] provider ${ds.id} stream ended without ProviderInit (using fallback attribution)');
+    }
+
     if (interrupted) {
       final interruptedMsg = ChatMessage(
         id: assistantId,
@@ -322,6 +376,8 @@ class SessionService {
         content: contentBuffer.isEmpty ? '[interrupted]' : '${contentBuffer.toString()}\n[interrupted]',
         timestamp: DateTime.now(),
         toolEvents: List.unmodifiable(toolEvents),
+        providerId: streamProviderId,
+        modelId: streamModelId,
       );
       await _session.persistMessage(sessionId, interruptedMsg);
       yield interruptedMsg;

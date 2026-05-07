@@ -5,7 +5,11 @@ import 'dart:io';
 import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
+import '../../shared/ai_model.dart';
+import '../../shared/session_settings.dart';
+import '../util/setting_mappers.dart';
 import 'ai_provider_datasource.dart';
 import 'binary_resolver_process.dart';
 import 'provider_input_guards.dart';
@@ -42,12 +46,149 @@ AuthStatus parseCodexAuthOutput(int exitCode, String output) {
 }
 
 @visibleForTesting
-Map<String, dynamic> buildCodexTurnStartParams(String threadId, String prompt) {
+Map<String, dynamic> buildCodexTurnStartParams(
+  String threadId,
+  String prompt, {
+  String? modelId,
+  ChatEffort? effort,
+  ChatPermission? permission,
+}) {
   return {
     'threadId': threadId,
     'input': [
       {'type': 'text', 'text': prompt},
     ],
+    'model': ?modelId,
+    if (effort != null) 'effort': mapCodexEffort(effort),
+    if (permission != null) 'sandboxPolicy': mapCodexSandboxPolicy(permission),
+    if (permission != null) 'approvalPolicy': mapCodexApprovalPolicy(permission),
+  };
+}
+
+/// Parses a `model/list` JSON-RPC result into [AIModel]s, dropping hidden entries.
+@visibleForTesting
+List<AIModel> parseCodexModelList(Map<String, dynamic> result) {
+  final data = result['data'];
+  if (data is! List) return const [];
+  final models = <AIModel>[];
+  var nonHiddenEntries = 0;
+  for (final entry in data) {
+    if (entry is! Map) continue;
+    if (entry['hidden'] == true) continue;
+    nonHiddenEntries++;
+    final id = entry['id'];
+    final modelId = entry['model'];
+    final displayName = entry['displayName'];
+    if (id is! String || id.isEmpty) continue;
+    if (modelId is! String || modelId.isEmpty) continue;
+    models.add(
+      AIModel(
+        id: id,
+        provider: AIProvider.openai,
+        name: (displayName is String && displayName.isNotEmpty) ? displayName : id,
+        modelId: modelId,
+      ),
+    );
+  }
+  if (nonHiddenEntries > 0 && models.isEmpty) {
+    throw const ParseException(
+      'Codex model/list returned entries but none had a parseable id+model — schema may have changed',
+    );
+  }
+  return models;
+}
+
+/// Queries `model/list` from a short-lived `codex app-server`, isolated from the long-lived turn-streaming process so refresh can't disturb in-flight chats.
+Future<List<AIModel>> fetchCodexAvailableModels({String binaryPath = 'codex'}) async {
+  final resolution = await resolveBinary(binaryPath);
+  final String exePath;
+  final String? loginShellPath;
+  switch (resolution) {
+    case BinaryFound(:final path, :final shellPath):
+      exePath = path;
+      loginShellPath = shellPath;
+    case BinaryNotFound():
+      throw NetworkException('Codex CLI is not installed or not on PATH');
+    case BinaryProbeFailed(:final reason):
+      throw NetworkException('Could not probe Codex CLI: $reason');
+  }
+
+  final parentEnv = Platform.environment;
+  final env = <String, String>{
+    if (parentEnv['HOME'] != null) 'HOME': parentEnv['HOME']!,
+    'PATH': loginShellPath ?? parentEnv['PATH'] ?? '/usr/bin:/bin:/usr/sbin:/sbin',
+    if (parentEnv['USER'] != null) 'USER': parentEnv['USER']!,
+    if (parentEnv['CODEX_HOME'] != null) 'CODEX_HOME': parentEnv['CODEX_HOME']!,
+  };
+
+  Process? proc;
+  StreamSubscription<String>? sub;
+  try {
+    proc = await Process.start(
+      exePath,
+      ['app-server'],
+      runInShell: false,
+      includeParentEnvironment: false,
+      environment: env,
+    );
+
+    final pending = <int, Completer<Map<String, dynamic>>>{};
+    sub = proc.stdout.transform(const Utf8Decoder(allowMalformed: true)).transform(const LineSplitter()).listen((line) {
+      if (line.trim().isEmpty) return;
+      try {
+        final json = jsonDecode(line) as Map<String, dynamic>;
+        final rawId = json['id'];
+        final id = rawId is int ? rawId : (rawId is num ? rawId.toInt() : null);
+        if (id != null) {
+          final c = pending.remove(id);
+          if (c != null && !c.isCompleted) {
+            if (json['error'] != null) {
+              c.completeError(Exception('codex error: ${json['error']}'));
+            } else {
+              c.complete((json['result'] as Map<String, dynamic>?) ?? <String, dynamic>{});
+            }
+          }
+        }
+      } catch (e) {
+        dLog('[CodexCli] model/list frame parse failure: ${e.runtimeType}');
+      }
+    });
+
+    Future<Map<String, dynamic>> rpc(int id, String method, Map<String, dynamic> params) {
+      final c = Completer<Map<String, dynamic>>();
+      pending[id] = c;
+      proc!.stdin.writeln(jsonEncode({'jsonrpc': '2.0', 'id': id, 'method': method, 'params': params}));
+      return c.future.timeout(const Duration(seconds: 10));
+    }
+
+    void notify(String method, [Map<String, dynamic>? params]) {
+      proc!.stdin.writeln(jsonEncode({'jsonrpc': '2.0', 'method': method, 'params': ?params}));
+    }
+
+    await rpc(1, 'initialize', {
+      'clientInfo': {'name': 'code_bench', 'title': 'Code Bench', 'version': '1.0.0'},
+      'capabilities': {'experimentalApi': true},
+    });
+    notify('initialized');
+    final result = await rpc(2, 'model/list', {'includeHidden': false});
+    return parseCodexModelList(result);
+  } finally {
+    await sub?.cancel();
+    proc?.kill();
+  }
+}
+
+@visibleForTesting
+Map<String, dynamic> buildCodexThreadStartParams({
+  required String workingDirectory,
+  required String sessionId,
+  String? developerInstructions,
+}) {
+  return {
+    'cwd': workingDirectory,
+    if (sessionId.isNotEmpty) 'resumeThreadId': sessionId,
+    if (developerInstructions != null && developerInstructions.isNotEmpty)
+      'developerInstructions': developerInstructions,
   };
 }
 
@@ -167,22 +308,33 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   }
 
   @override
+  ProviderCapabilities capabilitiesFor(AIModel model) => const ProviderCapabilities(
+    supportsModelOverride: true,
+    supportsSystemPrompt: true,
+    supportedModes: {ChatMode.chat, ChatMode.act},
+    supportedEfforts: {ChatEffort.low, ChatEffort.medium, ChatEffort.high, ChatEffort.max},
+    supportedPermissions: {ChatPermission.readOnly, ChatPermission.askBefore, ChatPermission.fullAccess},
+  );
+
+  @override
   Stream<ProviderRuntimeEvent> sendAndStream({
     required String prompt,
     required String sessionId,
     required String workingDirectory,
+    ProviderTurnSettings? settings,
   }) {
-    // Defensive close: a prior turn may have leaked an open controller (e.g.
-    // racing cancel + completion). Closing is idempotent.
-    _streamController?.close();
-    _streamController = StreamController<ProviderRuntimeEvent>.broadcast();
-    _send(prompt, sessionId, workingDirectory);
+    // Drop any orphan controller from a cancel + completion race; its subscriber is already gone.
+    final orphan = _streamController;
+    if (orphan != null) unawaited(orphan.close());
+    // Single-subscription buffers `ProviderInit` until `await for` subscribes; broadcast would drop it.
+    _streamController = StreamController<ProviderRuntimeEvent>();
+    _send(prompt, sessionId, workingDirectory, settings);
     return _streamController!.stream;
   }
 
-  Future<void> _send(String prompt, String sessionId, String workingDirectory) async {
+  Future<void> _send(String prompt, String sessionId, String workingDirectory, ProviderTurnSettings? settings) async {
     try {
-      _streamController?.add(ProviderInit(provider: id));
+      _streamController?.add(ProviderInit(provider: id, modelId: settings?.modelId));
 
       // sessionId guard — Codex uses this value as `resumeThreadId` over
       // JSON-RPC. A non-UUID value could resume a foreign thread or trip
@@ -214,10 +366,10 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
       }
 
       // Start or resume a Codex thread
-      _providerThreadId ??= await _startThread(sessionId, workingDirectory);
+      _providerThreadId ??= await _startThread(sessionId, workingDirectory, settings?.systemPrompt);
 
       // Send the user's turn
-      await _sendTurn(prompt);
+      await _sendTurn(prompt, settings);
 
       // Events stream back via notifications; [_handleNotification] drives
       // the StreamController. We wait here until turn/completed or an error.
@@ -462,7 +614,7 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   }
 
   void _handleResponse(dynamic id, Map<String, dynamic> result) {
-    final completer = _pendingRequests.remove(id);
+    final completer = _pendingRequests.remove(_coerceId(id));
     if (completer != null) {
       completer.complete(result);
     } else {
@@ -470,8 +622,19 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     }
   }
 
+  /// `_pendingRequests` is `Map<int, Completer>` but the JSON decoder may
+  /// hand back a num (e.g. `1.0`) for the response id depending on how the
+  /// peer encodes it. Coerce to int defensively so the map lookup never
+  /// silently misses and hangs the request until the 30s timeout.
+  int? _coerceId(dynamic id) {
+    if (id is int) return id;
+    if (id is num) return id.toInt();
+    if (id is String) return int.tryParse(id);
+    return null;
+  }
+
   void _handleErrorResponse(dynamic id, Map<String, dynamic> error) {
-    final completer = _pendingRequests.remove(id);
+    final completer = _pendingRequests.remove(_coerceId(id));
     final message = error['message'] as String? ?? 'Unknown error';
     if (completer != null) {
       completer.completeError(Exception('Codex error: $message'));
@@ -499,12 +662,22 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
         _emitPermissionRequest(id, method, params);
 
       case 'account/chatgptAuthTokens/refresh':
-        // Auth token refresh — auto-approved here. The token never crosses
-        // the host process: codex holds and refreshes it internally; this
-        // response is a protocol-level "yes, proceed". sLog so the event
-        // is grep-able in release builds.
-        sLog('[CodexCli] auto-approving account/chatgptAuthTokens/refresh (id=$id)');
-        _respond(id, {'ok': true});
+        // Auth token refresh — auto-approved once the JSON-RPC handshake
+        // has completed (i.e. `_version` is set, meaning we received the
+        // `initialize` response). Earlier than that, a hostile or buggy
+        // app-server could loop this request before any client guard runs.
+        // The token never crosses the host process; codex holds and
+        // refreshes it internally. sLog so the event is grep-able in
+        // release builds. Gating on `_version` (not `_providerThreadId`)
+        // because legitimate refreshes can happen between `initialized`
+        // and `thread/start` if the OAuth token has expired at startup.
+        if (_version == null) {
+          sLog('[CodexCli] denying account/chatgptAuthTokens/refresh — process not yet initialized (id=$id)');
+          _respond(id, {'ok': false});
+        } else {
+          sLog('[CodexCli] auto-approving account/chatgptAuthTokens/refresh (id=$id)');
+          _respond(id, {'ok': true});
+        }
 
       default:
         // Unknown approval-shaped method. sLog (survives release) and
@@ -519,7 +692,11 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
   }
 
   void _emitPermissionRequest(dynamic id, String method, Map<String, dynamic>? params) {
-    final requestId = id.toString();
+    // Normalize the JSON-RPC id before stringifying so num `5.0` and int `5`
+    // produce the same key — same protocol-drift hazard `_coerceId` handles
+    // for `_pendingRequests`.
+    final normalized = _coerceId(id);
+    final requestId = (normalized ?? id).toString();
 
     // Store completer so [respondToRequest] can resolve it
     final completer = Completer<Map<String, dynamic>>();
@@ -656,12 +833,15 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     _notify('initialized');
   }
 
-  Future<String> _startThread(String sessionId, String workingDirectory) async {
-    final result = await _request('thread/start', {
-      'cwd': workingDirectory,
-      // Use sessionId as a resume cursor if available
-      if (sessionId.isNotEmpty) 'resumeThreadId': sessionId,
-    });
+  Future<String> _startThread(String sessionId, String workingDirectory, String? developerInstructions) async {
+    final result = await _request(
+      'thread/start',
+      buildCodexThreadStartParams(
+        workingDirectory: workingDirectory,
+        sessionId: sessionId,
+        developerInstructions: developerInstructions,
+      ),
+    );
     final threadId = result['thread']?['id'] as String?;
     if (threadId == null) {
       dLog('[CodexCli] thread/start response missing thread.id: $result');
@@ -671,8 +851,17 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
     return threadId;
   }
 
-  Future<void> _sendTurn(String prompt) async {
-    await _request('turn/start', buildCodexTurnStartParams(_providerThreadId!, prompt));
+  Future<void> _sendTurn(String prompt, ProviderTurnSettings? settings) async {
+    await _request(
+      'turn/start',
+      buildCodexTurnStartParams(
+        _providerThreadId!,
+        prompt,
+        modelId: settings?.modelId,
+        effort: settings?.effort,
+        permission: settings?.permission,
+      ),
+    );
     dLog('[CodexCli] Turn started');
   }
 

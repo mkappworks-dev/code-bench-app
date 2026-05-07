@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/data/ai/models/provider_capabilities.dart';
+import 'package:code_bench_app/data/ai/models/provider_setting_drop.dart';
+import 'package:code_bench_app/data/ai/models/provider_turn_settings.dart';
 import 'package:code_bench_app/data/ai/models/stream_event.dart';
 import 'package:code_bench_app/data/ai/repository/text_streaming_repository.dart';
 import 'package:code_bench_app/data/ai/repository/tool_streaming_repository.dart';
@@ -15,7 +18,8 @@ import 'package:code_bench_app/data/coding_tools/repository/coding_tools_reposit
 import 'package:code_bench_app/data/filesystem/datasource/filesystem_datasource_io.dart';
 import 'package:code_bench_app/data/filesystem/repository/filesystem_repository_impl.dart';
 import 'package:code_bench_app/data/apply/repository/apply_repository_impl.dart';
-import 'package:code_bench_app/data/session/models/session_settings.dart';
+import 'package:code_bench_app/data/shared/session_settings.dart';
+import 'package:code_bench_app/data/session/models/chat_session.dart';
 import 'package:code_bench_app/data/session/repository/session_repository.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
@@ -58,15 +62,23 @@ class _FakeSessionRepo extends Fake implements SessionRepository {
 
   @override
   Future<void> deleteAllSessionsAndMessages() async {}
+
+  @override
+  Future<ChatSession?> getSession(String sessionId) async => null;
 }
 
 class _FakeAIRepo extends Fake implements TextStreamingRepository, ToolStreamingRepository {
+  @override
+  ProviderCapabilities? capabilitiesFor(AIModel model) => null;
+
   @override
   Stream<String> streamMessage({
     required List<ChatMessage> history,
     required String prompt,
     required AIModel model,
     String? systemPrompt,
+    ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     yield 'hello ';
     yield 'world';
@@ -79,10 +91,15 @@ class _ScriptedAI implements TextStreamingRepository, ToolStreamingRepository {
   int _r = 0;
 
   @override
+  ProviderCapabilities? capabilitiesFor(AIModel model) => null;
+
+  @override
   Stream<StreamEvent> streamMessageWithTools({
     required List<Map<String, dynamic>> wireMessages,
     required List<Tool> tools,
     required AIModel model,
+    ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     for (final e in rounds[_r++]) {
       yield e;
@@ -95,6 +112,8 @@ class _ScriptedAI implements TextStreamingRepository, ToolStreamingRepository {
     required String prompt,
     required AIModel model,
     String? systemPrompt,
+    ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     yield 'plain-text-path';
   }

@@ -10,7 +10,7 @@ import '../../data/coding_tools/models/tool_capability.dart';
 import '../../data/coding_tools/models/tool_context.dart';
 import '../../data/coding_tools/repository/coding_tools_denylist_repository.dart';
 import '../../data/coding_tools/repository/coding_tools_denylist_repository_impl.dart';
-import '../../data/session/models/session_settings.dart';
+import '../../data/shared/session_settings.dart';
 import 'tools/bash_tool.dart';
 import 'tools/glob_tool.dart';
 import 'tools/grep_tool.dart';

@@ -64,4 +64,58 @@ void main() {
       expect(parseOpenAiToolSseLine(': keep-alive', <int, String>{}), isNull);
     });
   });
+
+  group('isUnknownFieldRejection', () {
+    test('non-400 status never matches', () {
+      expect(isUnknownFieldRejection(401, 'unknown field reasoning_effort', 'reasoning_effort'), isFalse);
+      expect(isUnknownFieldRejection(500, 'unsupported reasoning_effort', 'reasoning_effort'), isFalse);
+      expect(isUnknownFieldRejection(null, 'unknown reasoning_effort', 'reasoning_effort'), isFalse);
+    });
+
+    test('null/empty body never matches', () {
+      expect(isUnknownFieldRejection(400, null, 'reasoning_effort'), isFalse);
+      expect(isUnknownFieldRejection(400, '', 'reasoning_effort'), isFalse);
+    });
+
+    test('body must contain the field name', () {
+      expect(isUnknownFieldRejection(400, 'unknown field thinking_budget', 'reasoning_effort'), isFalse);
+    });
+
+    test('matches vLLM-style unknown-field rejection', () {
+      expect(isUnknownFieldRejection(400, '{"error":"unknown field reasoning_effort"}', 'reasoning_effort'), isTrue);
+    });
+
+    test('matches Pydantic-style extra_forbidden', () {
+      expect(
+        isUnknownFieldRejection(
+          400,
+          '[{"loc":["body","reasoning_effort"],"type":"extra_forbidden"}]',
+          'reasoning_effort',
+        ),
+        isTrue,
+      );
+    });
+
+    test('matches "unrecognized parameter" wording', () {
+      expect(isUnknownFieldRejection(400, 'unrecognized parameter reasoning_effort', 'reasoning_effort'), isTrue);
+    });
+
+    test('does NOT match a 400 that merely names the field (oversize context)', () {
+      expect(
+        isUnknownFieldRejection(
+          400,
+          'context length exceeded; fields used: model, messages, reasoning_effort',
+          'reasoning_effort',
+        ),
+        isFalse,
+      );
+    });
+
+    test('does NOT match auth-scope 400 mentioning the field', () {
+      expect(
+        isUnknownFieldRejection(400, 'API key does not have access to reasoning_effort', 'reasoning_effort'),
+        isFalse,
+      );
+    });
+  });
 }

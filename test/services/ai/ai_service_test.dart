@@ -1,4 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:code_bench_app/data/ai/models/provider_capabilities.dart';
+import 'package:code_bench_app/data/ai/models/provider_setting_drop.dart';
+import 'package:code_bench_app/data/ai/models/provider_turn_settings.dart';
 import 'package:code_bench_app/data/ai/repository/ai_repository.dart';
 import 'package:code_bench_app/data/ai/repository/text_streaming_repository.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
@@ -7,11 +10,16 @@ import 'package:code_bench_app/services/ai/ai_service.dart';
 
 class _FakeAIRepo extends Fake implements AIRepository, TextStreamingRepository {
   @override
+  ProviderCapabilities? capabilitiesFor(AIModel model) => null;
+
+  @override
   Stream<String> streamMessage({
     required List<ChatMessage> history,
     required String prompt,
     required AIModel model,
     String? systemPrompt,
+    ProviderTurnSettings? settings,
+    ProviderSettingDropSink? onSettingDropped,
   }) async* {
     yield 'chunk1 ';
     yield 'chunk2';

@@ -77,15 +77,28 @@ void main() {
       expect(violations, isEmpty, reason: 'Widgets importing services/datasources directly:\n${violations.join('\n')}');
     });
 
-    // ── Notifier → Repository direct access rule ────────────────────────────
+    // ── Repository provider access rule ──────────────────────────────────────
     //
-    // Notifiers must call services, not repositories directly.
-    test('notifiers do not read repository providers directly', () {
-      final notifierFiles = _dartFiles('lib/')
-          .where((p) => p.contains('/notifiers/') && (p.endsWith('_actions.dart') || p.endsWith('_notifier.dart')))
-          .toList();
+    // Repository providers are the entry point to the data layer. The arch
+    // chain is Widgets → Notifiers → Services → Repositories — only the
+    // Service layer (and the repositories themselves) may read repository
+    // providers. Anything else must route through a service.
+    //
+    // Detection is content-based, not filename-based: an earlier version of
+    // this test gated by `_notifier.dart` / `_actions.dart` suffixes, which a
+    // contributor could trivially bypass by renaming the file (e.g. to
+    // `*_provider.dart`). Now any file in lib/ outside the allowed roots is
+    // checked, regardless of name.
+    test('only services and data layer may read repository providers', () {
+      final candidateFiles = _dartFiles('lib/').where((p) {
+        if (p.endsWith('.g.dart') || p.endsWith('.freezed.dart')) return false;
+        if (p.startsWith('lib/services/')) return false;
+        if (p.startsWith('lib/data/')) return false;
+        if (p.startsWith('lib/core/')) return false;
+        return true;
+      }).toList();
       final violations = <String>[];
-      for (final file in notifierFiles) {
+      for (final file in candidateFiles) {
         final content = File(file).readAsStringSync();
         final hasRepoRead =
             RegExp(r'ref\.read\(\w*[Rr]epository[Pp]rovider').hasMatch(content) ||
@@ -98,7 +111,8 @@ void main() {
         violations,
         isEmpty,
         reason:
-            'Notifiers reading repository providers directly (use a service):\n'
+            'Files outside lib/services/ and lib/data/ reading repository '
+            'providers directly (must route through a service):\n'
             '${violations.join('\n')}',
       );
     });

@@ -751,8 +751,36 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _providerIdMeta = const VerificationMeta('providerId');
   @override
-  List<GeneratedColumn> get $columns => [id, sessionId, role, content, codeBlocksJson, toolEventsJson, timestamp];
+  late final GeneratedColumn<String> providerId = GeneratedColumn<String>(
+    'provider_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _modelIdMeta = const VerificationMeta('modelId');
+  @override
+  late final GeneratedColumn<String> modelId = GeneratedColumn<String>(
+    'model_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sessionId,
+    role,
+    content,
+    codeBlocksJson,
+    toolEventsJson,
+    timestamp,
+    providerId,
+    modelId,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -799,6 +827,12 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
     } else if (isInserting) {
       context.missing(_timestampMeta);
     }
+    if (data.containsKey('provider_id')) {
+      context.handle(_providerIdMeta, providerId.isAcceptableOrUnknown(data['provider_id']!, _providerIdMeta));
+    }
+    if (data.containsKey('model_id')) {
+      context.handle(_modelIdMeta, modelId.isAcceptableOrUnknown(data['model_id']!, _modelIdMeta));
+    }
     return context;
   }
 
@@ -821,6 +855,8 @@ class $ChatMessagesTable extends ChatMessages with TableInfo<$ChatMessagesTable,
         data['${effectivePrefix}tool_events_json'],
       )!,
       timestamp: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}timestamp'])!,
+      providerId: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}provider_id']),
+      modelId: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}model_id']),
     );
   }
 
@@ -838,6 +874,8 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
   final String codeBlocksJson;
   final String toolEventsJson;
   final DateTime timestamp;
+  final String? providerId;
+  final String? modelId;
   const ChatMessageRow({
     required this.id,
     required this.sessionId,
@@ -846,6 +884,8 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
     required this.codeBlocksJson,
     required this.toolEventsJson,
     required this.timestamp,
+    this.providerId,
+    this.modelId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -857,6 +897,12 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
     map['code_blocks_json'] = Variable<String>(codeBlocksJson);
     map['tool_events_json'] = Variable<String>(toolEventsJson);
     map['timestamp'] = Variable<DateTime>(timestamp);
+    if (!nullToAbsent || providerId != null) {
+      map['provider_id'] = Variable<String>(providerId);
+    }
+    if (!nullToAbsent || modelId != null) {
+      map['model_id'] = Variable<String>(modelId);
+    }
     return map;
   }
 
@@ -869,6 +915,8 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
       codeBlocksJson: Value(codeBlocksJson),
       toolEventsJson: Value(toolEventsJson),
       timestamp: Value(timestamp),
+      providerId: providerId == null && nullToAbsent ? const Value.absent() : Value(providerId),
+      modelId: modelId == null && nullToAbsent ? const Value.absent() : Value(modelId),
     );
   }
 
@@ -882,6 +930,8 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
       codeBlocksJson: serializer.fromJson<String>(json['codeBlocksJson']),
       toolEventsJson: serializer.fromJson<String>(json['toolEventsJson']),
       timestamp: serializer.fromJson<DateTime>(json['timestamp']),
+      providerId: serializer.fromJson<String?>(json['providerId']),
+      modelId: serializer.fromJson<String?>(json['modelId']),
     );
   }
   @override
@@ -895,6 +945,8 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
       'codeBlocksJson': serializer.toJson<String>(codeBlocksJson),
       'toolEventsJson': serializer.toJson<String>(toolEventsJson),
       'timestamp': serializer.toJson<DateTime>(timestamp),
+      'providerId': serializer.toJson<String?>(providerId),
+      'modelId': serializer.toJson<String?>(modelId),
     };
   }
 
@@ -906,6 +958,8 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
     String? codeBlocksJson,
     String? toolEventsJson,
     DateTime? timestamp,
+    Value<String?> providerId = const Value.absent(),
+    Value<String?> modelId = const Value.absent(),
   }) => ChatMessageRow(
     id: id ?? this.id,
     sessionId: sessionId ?? this.sessionId,
@@ -914,6 +968,8 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
     codeBlocksJson: codeBlocksJson ?? this.codeBlocksJson,
     toolEventsJson: toolEventsJson ?? this.toolEventsJson,
     timestamp: timestamp ?? this.timestamp,
+    providerId: providerId.present ? providerId.value : this.providerId,
+    modelId: modelId.present ? modelId.value : this.modelId,
   );
   ChatMessageRow copyWithCompanion(ChatMessagesCompanion data) {
     return ChatMessageRow(
@@ -924,6 +980,8 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
       codeBlocksJson: data.codeBlocksJson.present ? data.codeBlocksJson.value : this.codeBlocksJson,
       toolEventsJson: data.toolEventsJson.present ? data.toolEventsJson.value : this.toolEventsJson,
       timestamp: data.timestamp.present ? data.timestamp.value : this.timestamp,
+      providerId: data.providerId.present ? data.providerId.value : this.providerId,
+      modelId: data.modelId.present ? data.modelId.value : this.modelId,
     );
   }
 
@@ -936,13 +994,16 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
           ..write('content: $content, ')
           ..write('codeBlocksJson: $codeBlocksJson, ')
           ..write('toolEventsJson: $toolEventsJson, ')
-          ..write('timestamp: $timestamp')
+          ..write('timestamp: $timestamp, ')
+          ..write('providerId: $providerId, ')
+          ..write('modelId: $modelId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, sessionId, role, content, codeBlocksJson, toolEventsJson, timestamp);
+  int get hashCode =>
+      Object.hash(id, sessionId, role, content, codeBlocksJson, toolEventsJson, timestamp, providerId, modelId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -953,7 +1014,9 @@ class ChatMessageRow extends DataClass implements Insertable<ChatMessageRow> {
           other.content == this.content &&
           other.codeBlocksJson == this.codeBlocksJson &&
           other.toolEventsJson == this.toolEventsJson &&
-          other.timestamp == this.timestamp);
+          other.timestamp == this.timestamp &&
+          other.providerId == this.providerId &&
+          other.modelId == this.modelId);
 }
 
 class ChatMessagesCompanion extends UpdateCompanion<ChatMessageRow> {
@@ -964,6 +1027,8 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessageRow> {
   final Value<String> codeBlocksJson;
   final Value<String> toolEventsJson;
   final Value<DateTime> timestamp;
+  final Value<String?> providerId;
+  final Value<String?> modelId;
   final Value<int> rowid;
   const ChatMessagesCompanion({
     this.id = const Value.absent(),
@@ -973,6 +1038,8 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessageRow> {
     this.codeBlocksJson = const Value.absent(),
     this.toolEventsJson = const Value.absent(),
     this.timestamp = const Value.absent(),
+    this.providerId = const Value.absent(),
+    this.modelId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ChatMessagesCompanion.insert({
@@ -983,6 +1050,8 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessageRow> {
     this.codeBlocksJson = const Value.absent(),
     this.toolEventsJson = const Value.absent(),
     required DateTime timestamp,
+    this.providerId = const Value.absent(),
+    this.modelId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        sessionId = Value(sessionId),
@@ -997,6 +1066,8 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessageRow> {
     Expression<String>? codeBlocksJson,
     Expression<String>? toolEventsJson,
     Expression<DateTime>? timestamp,
+    Expression<String>? providerId,
+    Expression<String>? modelId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1007,6 +1078,8 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessageRow> {
       if (codeBlocksJson != null) 'code_blocks_json': codeBlocksJson,
       if (toolEventsJson != null) 'tool_events_json': toolEventsJson,
       if (timestamp != null) 'timestamp': timestamp,
+      if (providerId != null) 'provider_id': providerId,
+      if (modelId != null) 'model_id': modelId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1019,6 +1092,8 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessageRow> {
     Value<String>? codeBlocksJson,
     Value<String>? toolEventsJson,
     Value<DateTime>? timestamp,
+    Value<String?>? providerId,
+    Value<String?>? modelId,
     Value<int>? rowid,
   }) {
     return ChatMessagesCompanion(
@@ -1029,6 +1104,8 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessageRow> {
       codeBlocksJson: codeBlocksJson ?? this.codeBlocksJson,
       toolEventsJson: toolEventsJson ?? this.toolEventsJson,
       timestamp: timestamp ?? this.timestamp,
+      providerId: providerId ?? this.providerId,
+      modelId: modelId ?? this.modelId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1057,6 +1134,12 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessageRow> {
     if (timestamp.present) {
       map['timestamp'] = Variable<DateTime>(timestamp.value);
     }
+    if (providerId.present) {
+      map['provider_id'] = Variable<String>(providerId.value);
+    }
+    if (modelId.present) {
+      map['model_id'] = Variable<String>(modelId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1073,6 +1156,8 @@ class ChatMessagesCompanion extends UpdateCompanion<ChatMessageRow> {
           ..write('codeBlocksJson: $codeBlocksJson, ')
           ..write('toolEventsJson: $toolEventsJson, ')
           ..write('timestamp: $timestamp, ')
+          ..write('providerId: $providerId, ')
+          ..write('modelId: $modelId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2259,6 +2344,8 @@ typedef $$ChatMessagesTableCreateCompanionBuilder =
       Value<String> codeBlocksJson,
       Value<String> toolEventsJson,
       required DateTime timestamp,
+      Value<String?> providerId,
+      Value<String?> modelId,
       Value<int> rowid,
     });
 typedef $$ChatMessagesTableUpdateCompanionBuilder =
@@ -2270,6 +2357,8 @@ typedef $$ChatMessagesTableUpdateCompanionBuilder =
       Value<String> codeBlocksJson,
       Value<String> toolEventsJson,
       Value<DateTime> timestamp,
+      Value<String?> providerId,
+      Value<String?> modelId,
       Value<int> rowid,
     });
 
@@ -2316,6 +2405,12 @@ class $$ChatMessagesTableFilterComposer extends Composer<_$AppDatabase, $ChatMes
   ColumnFilters<DateTime> get timestamp =>
       $composableBuilder(column: $table.timestamp, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get providerId =>
+      $composableBuilder(column: $table.providerId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get modelId =>
+      $composableBuilder(column: $table.modelId, builder: (column) => ColumnFilters(column));
+
   $$ChatSessionsTableFilterComposer get sessionId {
     final $$ChatSessionsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -2360,6 +2455,12 @@ class $$ChatMessagesTableOrderingComposer extends Composer<_$AppDatabase, $ChatM
   ColumnOrderings<DateTime> get timestamp =>
       $composableBuilder(column: $table.timestamp, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get providerId =>
+      $composableBuilder(column: $table.providerId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get modelId =>
+      $composableBuilder(column: $table.modelId, builder: (column) => ColumnOrderings(column));
+
   $$ChatSessionsTableOrderingComposer get sessionId {
     final $$ChatSessionsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -2400,6 +2501,10 @@ class $$ChatMessagesTableAnnotationComposer extends Composer<_$AppDatabase, $Cha
       $composableBuilder(column: $table.toolEventsJson, builder: (column) => column);
 
   GeneratedColumn<DateTime> get timestamp => $composableBuilder(column: $table.timestamp, builder: (column) => column);
+
+  GeneratedColumn<String> get providerId => $composableBuilder(column: $table.providerId, builder: (column) => column);
+
+  GeneratedColumn<String> get modelId => $composableBuilder(column: $table.modelId, builder: (column) => column);
 
   $$ChatSessionsTableAnnotationComposer get sessionId {
     final $$ChatSessionsTableAnnotationComposer composer = $composerBuilder(
@@ -2452,6 +2557,8 @@ class $$ChatMessagesTableTableManager
                 Value<String> codeBlocksJson = const Value.absent(),
                 Value<String> toolEventsJson = const Value.absent(),
                 Value<DateTime> timestamp = const Value.absent(),
+                Value<String?> providerId = const Value.absent(),
+                Value<String?> modelId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChatMessagesCompanion(
                 id: id,
@@ -2461,6 +2568,8 @@ class $$ChatMessagesTableTableManager
                 codeBlocksJson: codeBlocksJson,
                 toolEventsJson: toolEventsJson,
                 timestamp: timestamp,
+                providerId: providerId,
+                modelId: modelId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2472,6 +2581,8 @@ class $$ChatMessagesTableTableManager
                 Value<String> codeBlocksJson = const Value.absent(),
                 Value<String> toolEventsJson = const Value.absent(),
                 required DateTime timestamp,
+                Value<String?> providerId = const Value.absent(),
+                Value<String?> modelId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChatMessagesCompanion.insert(
                 id: id,
@@ -2481,6 +2592,8 @@ class $$ChatMessagesTableTableManager
                 codeBlocksJson: codeBlocksJson,
                 toolEventsJson: toolEventsJson,
                 timestamp: timestamp,
+                providerId: providerId,
+                modelId: modelId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) =>
