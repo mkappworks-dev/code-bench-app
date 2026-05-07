@@ -15,7 +15,7 @@ import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/notifiers/transport_readiness_notifier.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import 'package:code_bench_app/features/providers/notifiers/providers_notifier.dart';
-import 'package:code_bench_app/services/chat/chat_stream_service.dart';
+import 'package:code_bench_app/services/chat/chat_stream_registry_service.dart';
 import 'package:code_bench_app/services/chat/chat_stream_state.dart';
 import 'package:code_bench_app/services/mcp/mcp_service.dart' show McpRemoveCallback, McpStatusCallback;
 import 'package:code_bench_app/services/session/session_service.dart';
@@ -126,7 +126,7 @@ void main() {
   test('two sessions can stream concurrently', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final registry = container.read(chatStreamServiceProvider);
+    final registry = container.read(chatStreamRegistryServiceProvider);
 
     final aSrc = StreamController<ChatMessage>();
     final bSrc = StreamController<ChatMessage>();

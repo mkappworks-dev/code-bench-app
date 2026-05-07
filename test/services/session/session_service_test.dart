@@ -25,7 +25,7 @@ import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/services/agent/agent_service.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
-import 'package:code_bench_app/services/chat/chat_stream_service.dart';
+import 'package:code_bench_app/services/chat/chat_stream_registry_service.dart';
 import 'package:code_bench_app/services/chat/chat_stream_state.dart';
 import 'package:code_bench_app/services/coding_tools/tool_registry.dart';
 import 'package:code_bench_app/services/coding_tools/tools/list_dir_tool.dart';
@@ -196,20 +196,20 @@ void main() {
   test('deleteAllSessionsAndMessages cancels active streams first', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final chatSvc = container.read(chatStreamServiceProvider);
+    final chatRegistry = container.read(chatStreamRegistryServiceProvider);
 
     final src = StreamController<ChatMessage>();
-    chatSvc.start(sessionId: 's', streamFactory: () => src.stream, onMessage: (_) {});
+    chatRegistry.start(sessionId: 's', streamFactory: () => src.stream, onMessage: (_) {});
     await Future<void>.delayed(Duration.zero);
-    expect(chatSvc.latestState('s'), isA<ChatStreamConnecting>());
+    expect(chatRegistry.latestState('s'), isA<ChatStreamConnecting>());
 
     final svc = SessionService(
       session: _FakeSessionRepo(),
       ai: _FakeAIRepo(),
       agent: _buildAgent(ai: _FakeAIRepo()),
-      chatStreamService: chatSvc,
+      chatStreamRegistry: chatRegistry,
     );
     await svc.deleteAllSessionsAndMessages();
-    expect(chatSvc.latestState('s'), isA<ChatStreamIdle>());
+    expect(chatRegistry.latestState('s'), isA<ChatStreamIdle>());
   });
 }

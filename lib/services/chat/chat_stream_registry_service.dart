@@ -9,18 +9,18 @@ import '../../data/shared/chat_message.dart';
 import '../agent/agent_exceptions.dart';
 import 'chat_stream_state.dart';
 
-part 'chat_stream_service.g.dart';
+part 'chat_stream_registry_service.g.dart';
 
 typedef ChatMessagePersist = Future<void> Function(ChatMessage);
 
 @Riverpod(keepAlive: true)
-ChatStreamService chatStreamService(Ref ref) {
-  final registry = ChatStreamService();
+ChatStreamRegistryService chatStreamRegistryService(Ref ref) {
+  final registry = ChatStreamRegistryService();
   ref.onDispose(registry.dispose);
   return registry;
 }
 
-class ChatStreamService {
+class ChatStreamRegistryService {
   final Map<String, _StreamHandle> _handles = {};
   final Map<String, Map<String, ChatMessage>> _liveById = {};
   final Map<String, StreamController<ChatMessage>> _msgCtrls = {};
@@ -86,7 +86,7 @@ class ChatStreamService {
       (msg) {
         if (msg.sessionId != handle.sessionId) {
           dLog(
-            '[ChatStreamService] dropped cross-session chunk: '
+            '[ChatStreamRegistryService] dropped cross-session chunk: '
             'expected=${handle.sessionId} got=${msg.sessionId}',
           );
           return;
@@ -140,7 +140,7 @@ class ChatStreamService {
       try {
         await persist(msg);
       } catch (e, st) {
-        dLog('[ChatStreamService] persist failed for ${msg.id} on $sessionId: $e\n$st');
+        dLog('[ChatStreamRegistryService] persist failed for ${msg.id} on $sessionId: $e\n$st');
       }
     }
   }

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:code_bench_app/core/errors/app_exception.dart';
 import 'package:code_bench_app/data/chat/models/agent_failure.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
-import 'package:code_bench_app/services/chat/chat_stream_service.dart';
+import 'package:code_bench_app/services/chat/chat_stream_registry_service.dart';
 import 'package:code_bench_app/services/chat/chat_stream_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,14 +20,14 @@ void main() {
   test('latestState returns idle for unknown sessions', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final registry = container.read(chatStreamServiceProvider);
+    final registry = container.read(chatStreamRegistryServiceProvider);
     expect(registry.latestState('unknown'), isA<ChatStreamIdle>());
   });
 
   test('watchState emits the current state immediately', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final registry = container.read(chatStreamServiceProvider);
+    final registry = container.read(chatStreamRegistryServiceProvider);
     final first = await registry.watchState('s').first;
     expect(first, isA<ChatStreamIdle>());
   });
@@ -36,7 +36,7 @@ void main() {
     test('start emits connecting → streaming → done as chunks arrive', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamServiceProvider);
+      final registry = container.read(chatStreamRegistryServiceProvider);
 
       final source = StreamController<ChatMessage>();
       final states = <ChatStreamState>[];
@@ -62,7 +62,7 @@ void main() {
     test('start drops chunks whose sessionId does not match', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamServiceProvider);
+      final registry = container.read(chatStreamRegistryServiceProvider);
       final source = StreamController<ChatMessage>();
       final messages = <ChatMessage>[];
 
@@ -81,7 +81,7 @@ void main() {
     test('cancel invokes the onCancel callback supplied to start', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamServiceProvider);
+      final registry = container.read(chatStreamRegistryServiceProvider);
       final source = StreamController<ChatMessage>();
       var cancelled = 0;
       registry.start(
@@ -99,7 +99,7 @@ void main() {
     test('cancelAll invokes onCancel for every active session', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamServiceProvider);
+      final registry = container.read(chatStreamRegistryServiceProvider);
       final s1 = StreamController<ChatMessage>();
       final s2 = StreamController<ChatMessage>();
       var cancelledA = 0;
@@ -116,7 +116,7 @@ void main() {
     test('cancel stops the subscription and emits idle', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamServiceProvider);
+      final registry = container.read(chatStreamRegistryServiceProvider);
       final source = StreamController<ChatMessage>();
       final states = <ChatStreamState>[];
       registry.watchState('s').listen(states.add);
@@ -137,7 +137,7 @@ void main() {
     test('cancelAll stops every active session', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamServiceProvider);
+      final registry = container.read(chatStreamRegistryServiceProvider);
       final s1 = StreamController<ChatMessage>();
       final s2 = StreamController<ChatMessage>();
       registry.start(sessionId: 'a', streamFactory: () => s1.stream, onMessage: (_) {});
@@ -154,7 +154,7 @@ void main() {
     test('retries on NetworkException before any chunk arrives', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamServiceProvider);
+      final registry = container.read(chatStreamRegistryServiceProvider);
 
       var calls = 0;
       Stream<ChatMessage> factory() async* {
@@ -185,7 +185,7 @@ void main() {
     test('after retries are exhausted, emits failed(networkExhausted)', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamServiceProvider);
+      final registry = container.read(chatStreamRegistryServiceProvider);
 
       Stream<ChatMessage> factory() async* {
         throw NetworkException('still flaky');
@@ -209,7 +209,7 @@ void main() {
     test('cancel during retry-backoff lets a fresh start attach a new listener', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamServiceProvider);
+      final registry = container.read(chatStreamRegistryServiceProvider);
 
       var firstFactoryCalls = 0;
       Stream<ChatMessage> firstFactory() async* {
@@ -246,7 +246,7 @@ void main() {
     test('errors after first chunk arrives are NOT retried', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final registry = container.read(chatStreamServiceProvider);
+      final registry = container.read(chatStreamRegistryServiceProvider);
 
       var calls = 0;
       Stream<ChatMessage> factory() async* {
@@ -273,7 +273,7 @@ void main() {
 
   group('liveMessagesFor / watchMessages', () {
     test('liveMessagesFor returns messages in insertion order during streaming', () async {
-      final service = ChatStreamService();
+      final service = ChatStreamRegistryService();
       addTearDown(service.dispose);
       final ctrl = StreamController<ChatMessage>();
       final received = <ChatMessage>[];
@@ -306,7 +306,7 @@ void main() {
     });
 
     test('liveMessagesFor replaces in place when an msg.id repeats (streaming update)', () async {
-      final service = ChatStreamService();
+      final service = ChatStreamRegistryService();
       addTearDown(service.dispose);
       final ctrl = StreamController<ChatMessage>();
 
@@ -326,7 +326,7 @@ void main() {
     });
 
     test('liveMessagesFor survives stream completion', () async {
-      final service = ChatStreamService();
+      final service = ChatStreamRegistryService();
       addTearDown(service.dispose);
       final ctrl = StreamController<ChatMessage>();
 
@@ -342,7 +342,7 @@ void main() {
     });
 
     test('liveMessagesFor survives manual cancel', () async {
-      final service = ChatStreamService();
+      final service = ChatStreamRegistryService();
       addTearDown(service.dispose);
       final ctrl = StreamController<ChatMessage>();
 
@@ -365,7 +365,7 @@ void main() {
     });
 
     test('start() clears the buffer for that sessionId before the new turn', () async {
-      final service = ChatStreamService();
+      final service = ChatStreamRegistryService();
       addTearDown(service.dispose);
       final ctrl1 = StreamController<ChatMessage>();
       service.start(sessionId: 'sid', streamFactory: () => ctrl1.stream, onMessage: (_) {});
@@ -393,7 +393,7 @@ void main() {
     });
 
     test('watchMessages emits subsequent messages to a subscriber attached after start()', () async {
-      final service = ChatStreamService();
+      final service = ChatStreamRegistryService();
       addTearDown(service.dispose);
       final ctrl = StreamController<ChatMessage>();
       service.start(sessionId: 'sid', streamFactory: () => ctrl.stream, onMessage: (_) {});
@@ -412,7 +412,7 @@ void main() {
     });
 
     test('liveMessagesFor and watchMessages are scoped per sessionId', () async {
-      final service = ChatStreamService();
+      final service = ChatStreamRegistryService();
       addTearDown(service.dispose);
       final ctrlA = StreamController<ChatMessage>();
       final ctrlB = StreamController<ChatMessage>();
@@ -433,7 +433,7 @@ void main() {
 
   group('persistence backstop', () {
     test('cancel(sessionId) flushes buffered messages through onPersist', () async {
-      final service = ChatStreamService();
+      final service = ChatStreamRegistryService();
       addTearDown(service.dispose);
       final ctrl = StreamController<ChatMessage>();
       final persisted = <ChatMessage>[];
@@ -459,7 +459,7 @@ void main() {
     });
 
     test('stream failure flushes buffered messages through onPersist', () async {
-      final service = ChatStreamService();
+      final service = ChatStreamRegistryService();
       addTearDown(service.dispose);
       final ctrl = StreamController<ChatMessage>();
       final persisted = <ChatMessage>[];
@@ -488,7 +488,7 @@ void main() {
     });
 
     test('cancel without onPersist is a no-op (no callback wired)', () async {
-      final service = ChatStreamService();
+      final service = ChatStreamRegistryService();
       addTearDown(service.dispose);
       final ctrl = StreamController<ChatMessage>();
 
@@ -504,7 +504,7 @@ void main() {
     });
 
     test('failed onPersist is logged but does not abort the flush of remaining messages', () async {
-      final service = ChatStreamService();
+      final service = ChatStreamRegistryService();
       addTearDown(service.dispose);
       final ctrl = StreamController<ChatMessage>();
       final attempted = <String>[];
@@ -532,7 +532,7 @@ void main() {
     });
 
     test('persist callback is scoped per sessionId', () async {
-      final service = ChatStreamService();
+      final service = ChatStreamRegistryService();
       addTearDown(service.dispose);
       final ctrlA = StreamController<ChatMessage>();
       final ctrlB = StreamController<ChatMessage>();

@@ -18,7 +18,7 @@ import '../../data/session/models/chat_session.dart';
 import '../../data/session/repository/session_repository.dart';
 import '../../data/session/repository/session_repository_impl.dart';
 import '../agent/agent_service.dart';
-import '../chat/chat_stream_service.dart';
+import '../chat/chat_stream_registry_service.dart';
 import '../mcp/mcp_service.dart' show McpRemoveCallback, McpStatusCallback;
 
 part 'session_service.g.dart';
@@ -29,13 +29,13 @@ Future<SessionService> sessionService(Ref ref) async {
   final ai = await ref.watch(aiRepositoryProvider.future);
   final agent = await ref.watch(agentServiceProvider.future);
   final providerService = ref.watch(aIProviderServiceProvider.notifier);
-  final chatStreamSvc = ref.read(chatStreamServiceProvider);
+  final chatStreamRegistry = ref.read(chatStreamRegistryServiceProvider);
   return SessionService(
     session: session,
     ai: ai,
     agent: agent,
     providerService: providerService,
-    chatStreamService: chatStreamSvc,
+    chatStreamRegistry: chatStreamRegistry,
   );
 }
 
@@ -45,18 +45,18 @@ class SessionService {
     required TextStreamingRepository ai,
     required AgentService agent,
     AIProviderService? providerService,
-    ChatStreamService? chatStreamService,
+    ChatStreamRegistryService? chatStreamRegistry,
   }) : _session = session,
        _ai = ai,
        _agent = agent,
        _providerService = providerService,
-       _chatStreamService = chatStreamService;
+       _chatStreamRegistry = chatStreamRegistry;
 
   final SessionRepository _session;
   final TextStreamingRepository _ai;
   final AgentService _agent;
   final AIProviderService? _providerService;
-  final ChatStreamService? _chatStreamService;
+  final ChatStreamRegistryService? _chatStreamRegistry;
   static const _uuid = Uuid();
 
   Stream<List<ChatSession>> watchAllSessions() => _session.watchAllSessions();
@@ -88,7 +88,7 @@ class SessionService {
   Future<void> archiveSession(String sessionId) => _session.archiveSession(sessionId);
   Future<void> unarchiveSession(String sessionId) => _session.unarchiveSession(sessionId);
   Future<void> deleteAllSessionsAndMessages() async {
-    await _chatStreamService?.cancelAll();
+    await _chatStreamRegistry?.cancelAll();
     return _session.deleteAllSessionsAndMessages();
   }
 

@@ -15,7 +15,7 @@ import '../../../data/shared/session_settings.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../../data/session/models/chat_session.dart';
 import '../../../services/ai_provider/ai_provider_service.dart';
-import '../../../services/chat/chat_stream_service.dart';
+import '../../../services/chat/chat_stream_registry_service.dart';
 import '../../../services/chat/chat_stream_state.dart';
 import '../../../services/session/session_service.dart';
 import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
@@ -111,7 +111,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     final svc = await ref.watch(sessionServiceProvider.future);
     final history = await svc.loadHistory(sessionId);
 
-    final registry = ref.watch(chatStreamServiceProvider);
+    final registry = ref.watch(chatStreamRegistryServiceProvider);
 
     final live = registry.liveMessagesFor(sessionId);
     final seed = _mergeMessages(history, live);
@@ -213,7 +213,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
       }
     }
 
-    final registry = ref.read(chatStreamServiceProvider);
+    final registry = ref.read(chatStreamRegistryServiceProvider);
     final completer = Completer<Object?>();
 
     var disposed = false;
@@ -364,7 +364,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
 
     _cancelRequested = true;
     _sendInProgress = false;
-    final registry = ref.read(chatStreamServiceProvider);
+    final registry = ref.read(chatStreamRegistryServiceProvider);
     unawaited(registry.cancel(sessionId));
     ref.read(agentCancelProvider.notifier).request(sessionId);
     // Unblock any in-flight permission dialog so the agent loop can exit its
