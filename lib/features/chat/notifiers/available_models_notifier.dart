@@ -139,6 +139,7 @@ class AvailableModelsNotifier extends _$AvailableModelsNotifier {
   ModelProviderFailure _classify(AIProvider provider, Object e) => switch (e) {
     AuthException() => ModelProviderFailure.auth(provider),
     NetworkException() => ModelProviderFailure.unreachable(provider),
+    TimeoutException() => ModelProviderFailure.unreachable(provider),
     ParseException(:final message) => ModelProviderFailure.malformedResponse(provider, message),
     _ => ModelProviderFailure.unknown(provider, e),
   };

@@ -185,13 +185,11 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
       final response = await _dio.get('/models');
       final data = response.data;
       if (data is! Map<String, dynamic>) {
-        dLog('[AnthropicRemoteDatasource] /v1/models payload not a JSON object — using hardcoded fallback');
-        return AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList();
+        throw const ParseException('Anthropic /v1/models payload is not a JSON object');
       }
       final list = data['data'];
       if (list is! List) {
-        dLog('[AnthropicRemoteDatasource] /v1/models missing "data" list — using hardcoded fallback');
-        return AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList();
+        throw const ParseException('Anthropic /v1/models response is missing the "data" list');
       }
       final models = <AIModel>[];
       for (final entry in list) {
@@ -209,15 +207,17 @@ class AnthropicRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingD
           ),
         );
       }
-      // Empty list from a 200 OK is unusual but possible — fall back rather
-      // than render an empty section.
-      if (models.isEmpty) {
-        return AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList();
+      if (list.isNotEmpty && models.isEmpty) {
+        throw const ParseException('Anthropic /v1/models returned entries but none were parseable');
       }
       return dropSupersededAnthropicSnapshots(models);
     } on DioException catch (e) {
-      dLog('[AnthropicRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode ?? ''}');
-      return AIModels.defaults.where((m) => m.provider == AIProvider.anthropic).toList();
+      final status = e.response?.statusCode;
+      dLog('[AnthropicRemoteDatasource] fetchAvailableModels failed: ${e.type} ${status ?? ''}');
+      if (status == 401 || status == 403) {
+        throw AuthException('Anthropic rejected the API key', originalError: e);
+      }
+      throw NetworkException('Anthropic request failed', statusCode: status, originalError: e);
     }
   }
 

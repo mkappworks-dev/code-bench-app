@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../shared/ai_model.dart';
 import '../../shared/session_settings.dart';
@@ -76,9 +77,11 @@ List<AIModel> parseCodexModelList(Map<String, dynamic> result) {
   final data = result['data'];
   if (data is! List) return const [];
   final models = <AIModel>[];
+  var nonHiddenEntries = 0;
   for (final entry in data) {
     if (entry is! Map) continue;
     if (entry['hidden'] == true) continue;
+    nonHiddenEntries++;
     final id = entry['id'];
     final modelId = entry['model'];
     final displayName = entry['displayName'];
@@ -91,6 +94,11 @@ List<AIModel> parseCodexModelList(Map<String, dynamic> result) {
         name: (displayName is String && displayName.isNotEmpty) ? displayName : id,
         modelId: modelId,
       ),
+    );
+  }
+  if (nonHiddenEntries > 0 && models.isEmpty) {
+    throw const ParseException(
+      'Codex model/list returned entries but none had a parseable id+model — schema may have changed',
     );
   }
   return models;
@@ -111,9 +119,9 @@ Future<List<AIModel>> fetchCodexAvailableModels({String binaryPath = 'codex'}) a
       exePath = path;
       loginShellPath = shellPath;
     case BinaryNotFound():
-      throw Exception('Codex CLI is not installed or not on PATH');
+      throw NetworkException('Codex CLI is not installed or not on PATH');
     case BinaryProbeFailed(:final reason):
-      throw Exception('Could not probe Codex CLI: $reason');
+      throw NetworkException('Could not probe Codex CLI: $reason');
   }
 
   final parentEnv = Platform.environment;
@@ -140,8 +148,9 @@ Future<List<AIModel>> fetchCodexAvailableModels({String binaryPath = 'codex'}) a
       if (line.trim().isEmpty) return;
       try {
         final json = jsonDecode(line) as Map<String, dynamic>;
-        final id = json['id'];
-        if (id is int) {
+        final rawId = json['id'];
+        final id = rawId is int ? rawId : (rawId is num ? rawId.toInt() : null);
+        if (id != null) {
           final c = pending.remove(id);
           if (c != null && !c.isCompleted) {
             if (json['error'] != null) {
@@ -151,7 +160,9 @@ Future<List<AIModel>> fetchCodexAvailableModels({String binaryPath = 'codex'}) a
             }
           }
         }
-      } catch (_) {}
+      } catch (e) {
+        dLog('[CodexCli] model/list frame parse failure: ${e.runtimeType}');
+      }
     });
 
     Future<Map<String, dynamic>> rpc(int id, String method, Map<String, dynamic> params) {

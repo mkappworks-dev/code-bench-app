@@ -146,11 +146,13 @@ class OpenAIRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
         headers: {'Authorization': 'Bearer $apiKey'},
       );
       final response = await testDio.get(ApiConstants.openAiModelsEndpoint);
-      final data = response.data as Map<String, dynamic>;
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        throw const ParseException('OpenAI /models payload is not a JSON object');
+      }
       final entries = data['data'];
       if (entries is! List) {
-        dLog('[OpenAIRemoteDatasource] /models payload missing "data" list — using hardcoded fallback');
-        return AIModels.defaults.where((m) => m.provider == AIProvider.openai).toList();
+        throw const ParseException('OpenAI /models response is missing the "data" list');
       }
       final models = <AIModel>[];
       for (final entry in entries) {
@@ -162,8 +164,12 @@ class OpenAIRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
       }
       return models;
     } on DioException catch (e) {
-      dLog('[OpenAIRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode}');
-      return AIModels.defaults.where((m) => m.provider == AIProvider.openai).toList();
+      final status = e.response?.statusCode;
+      dLog('[OpenAIRemoteDatasource] fetchAvailableModels failed: ${e.type} ${status ?? ''}');
+      if (status == 401 || status == 403) {
+        throw AuthException('OpenAI rejected the API key', originalError: e);
+      }
+      throw NetworkException('OpenAI request failed', statusCode: status, originalError: e);
     }
   }
 

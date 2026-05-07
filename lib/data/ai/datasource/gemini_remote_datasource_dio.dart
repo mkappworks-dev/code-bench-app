@@ -150,13 +150,11 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
       final response = await testDio.get('/models');
       final data = response.data;
       if (data is! Map<String, dynamic>) {
-        dLog('[GeminiRemoteDatasource] /models payload not a JSON object — using hardcoded fallback');
-        return AIModels.defaults.where((m) => m.provider == AIProvider.gemini).toList();
+        throw const ParseException('Gemini /models payload is not a JSON object');
       }
       final entries = data['models'];
       if (entries is! List) {
-        dLog('[GeminiRemoteDatasource] /models payload missing "models" list — using hardcoded fallback');
-        return AIModels.defaults.where((m) => m.provider == AIProvider.gemini).toList();
+        throw const ParseException('Gemini /models response is missing the "models" list');
       }
       final models = <AIModel>[];
       for (final entry in entries) {
@@ -179,8 +177,12 @@ class GeminiRemoteDatasourceDio implements AIRemoteDatasource, TextStreamingData
       }
       return models;
     } on DioException catch (e) {
-      dLog('[GeminiRemoteDatasource] fetchAvailableModels failed: ${e.type} ${e.response?.statusCode}');
-      return AIModels.defaults.where((m) => m.provider == AIProvider.gemini).toList();
+      final status = e.response?.statusCode;
+      dLog('[GeminiRemoteDatasource] fetchAvailableModels failed: ${e.type} ${status ?? ''}');
+      if (status == 401 || status == 403) {
+        throw AuthException('Gemini rejected the API key', originalError: e);
+      }
+      throw NetworkException('Gemini request failed', statusCode: status, originalError: e);
     }
   }
 
