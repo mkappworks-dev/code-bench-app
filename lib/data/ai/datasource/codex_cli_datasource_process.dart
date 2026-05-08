@@ -298,6 +298,9 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
       _pool.respondToPermissionRequest(sessionId, requestId, approved: approved);
 
   @override
+  void respondToUserInputRequest(String sessionId, String requestId, {required String response}) {}
+
+  @override
   Future<void> dispose() => _pool.dispose();
 
   @override

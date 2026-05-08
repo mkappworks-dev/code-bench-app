@@ -44,6 +44,11 @@ abstract interface class AIProviderDatasource {
   /// interactive approval.
   void respondToPermissionRequest(String sessionId, String requestId, {required bool approved});
 
+  /// Respond to an agent-initiated user-input request emitted as a
+  /// [ProviderUserInputRequest]. Datasources that don't surface user-input
+  /// requests should override with a no-op.
+  void respondToUserInputRequest(String sessionId, String requestId, {required String response});
+
   /// Returns `AuthStatus.unknown` (not a thrown exception) on probe failure
   /// — send is never blocked on a probe we couldn't run.
   Future<AuthStatus> verifyAuth();

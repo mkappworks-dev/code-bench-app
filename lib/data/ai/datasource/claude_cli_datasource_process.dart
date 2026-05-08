@@ -440,6 +440,9 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   }
 
   @override
+  void respondToUserInputRequest(String sessionId, String requestId, {required String response}) {}
+
+  @override
   Future<AuthStatus> verifyAuth() async {
     if (_resolvedPath == null) {
       sLog('[ClaudeCli] verifyAuth skipped — binary not yet resolved');
