@@ -144,6 +144,8 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.brandOpenAI,
     required this.brandGemini,
     required this.brandOllama,
+    required this.diffAdd,
+    required this.diffDel,
   });
 
   final Color background;
@@ -277,6 +279,8 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color brandOpenAI;
   final Color brandGemini;
   final Color brandOllama;
+  final Color diffAdd;
+  final Color diffDel;
 
   CodeHighlightTheme get jsonHighlightTheme {
     final isDark = ThemeData.estimateBrightnessForColor(background) == Brightness.dark;
@@ -421,6 +425,8 @@ class AppColors extends ThemeExtension<AppColors> {
     brandOpenAI: Color(0xFF10A37F),
     brandGemini: Color(0xFF4285F4),
     brandOllama: Color(0xFF9D9D9D),
+    diffAdd: Color(0xFFAAD94C),
+    diffDel: Color(0xFFF07178),
   );
 
   static const AppColors light = AppColors(
@@ -555,6 +561,8 @@ class AppColors extends ThemeExtension<AppColors> {
     brandOpenAI: Color(0xFF10A37F),
     brandGemini: Color(0xFF4285F4),
     brandOllama: Color(0xFF5C6474),
+    diffAdd: Color(0xFFAAD94C),
+    diffDel: Color(0xFFF07178),
   );
 
   @override
@@ -690,6 +698,8 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? brandOpenAI,
     Color? brandGemini,
     Color? brandOllama,
+    Color? diffAdd,
+    Color? diffDel,
   }) => AppColors(
     background: background ?? this.background,
     sidebarBackground: sidebarBackground ?? this.sidebarBackground,
@@ -822,6 +832,8 @@ class AppColors extends ThemeExtension<AppColors> {
     brandOpenAI: brandOpenAI ?? this.brandOpenAI,
     brandGemini: brandGemini ?? this.brandGemini,
     brandOllama: brandOllama ?? this.brandOllama,
+    diffAdd: diffAdd ?? this.diffAdd,
+    diffDel: diffDel ?? this.diffDel,
   );
 
   @override
@@ -959,6 +971,8 @@ class AppColors extends ThemeExtension<AppColors> {
       brandOpenAI: Color.lerp(brandOpenAI, other.brandOpenAI, t)!,
       brandGemini: Color.lerp(brandGemini, other.brandGemini, t)!,
       brandOllama: Color.lerp(brandOllama, other.brandOllama, t)!,
+      diffAdd: Color.lerp(diffAdd, other.diffAdd, t)!,
+      diffDel: Color.lerp(diffDel, other.diffDel, t)!,
     );
   }
 }

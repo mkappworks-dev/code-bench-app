@@ -40,13 +40,13 @@ class _DiffLine extends StatelessWidget {
     Color textColor;
 
     if (isAdd) {
-      rowBg = const Color(0xFFAAD94C).withValues(alpha: 0.08);
-      markerColor = const Color(0xFFAAD94C);
-      textColor = const Color(0xFFAAD94C);
+      rowBg = c.diffAdd.withValues(alpha: 0.08);
+      markerColor = c.diffAdd;
+      textColor = c.diffAdd;
     } else if (isDel) {
-      rowBg = const Color(0xFFF07178).withValues(alpha: 0.08);
-      markerColor = const Color(0xFFF07178);
-      textColor = const Color(0xFFF07178);
+      rowBg = c.diffDel.withValues(alpha: 0.08);
+      markerColor = c.diffDel;
+      textColor = c.diffDel;
     } else if (isHunk) {
       rowBg = c.info.withValues(alpha: 0.06);
       markerColor = c.info;

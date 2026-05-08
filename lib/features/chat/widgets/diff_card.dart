@@ -101,7 +101,7 @@ class _DiffHead extends StatelessWidget {
           Text(
             '+$additions',
             style: TextStyle(
-              color: const Color(0xFFAAD94C),
+              color: c.diffAdd,
               fontSize: ThemeConstants.uiFontSizeLabel,
               fontWeight: FontWeight.w600,
               fontFamily: ThemeConstants.editorFontFamily,
@@ -116,7 +116,7 @@ class _DiffHead extends StatelessWidget {
           Text(
             '−$deletions',
             style: TextStyle(
-              color: const Color(0xFFF07178),
+              color: c.diffDel,
               fontSize: ThemeConstants.uiFontSizeLabel,
               fontWeight: FontWeight.w600,
               fontFamily: ThemeConstants.editorFontFamily,
