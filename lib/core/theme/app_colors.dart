@@ -140,6 +140,10 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.switchTrackUnselected,
     required this.switchTrackOutline,
     required this.jsonEditorBg,
+    required this.brandAnthropic,
+    required this.brandOpenAI,
+    required this.brandGemini,
+    required this.brandOllama,
   });
 
   final Color background;
@@ -269,6 +273,10 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color switchTrackUnselected;
   final Color switchTrackOutline;
   final Color jsonEditorBg;
+  final Color brandAnthropic;
+  final Color brandOpenAI;
+  final Color brandGemini;
+  final Color brandOllama;
 
   CodeHighlightTheme get jsonHighlightTheme {
     final isDark = ThemeData.estimateBrightnessForColor(background) == Brightness.dark;
@@ -409,6 +417,10 @@ class AppColors extends ThemeExtension<AppColors> {
     switchTrackUnselected: Color(0x1FFFFFFF),
     switchTrackOutline: Color(0x2EFFFFFF),
     jsonEditorBg: Color(0xFF0D1117),
+    brandAnthropic: Color(0xFFD97757),
+    brandOpenAI: Color(0xFF10A37F),
+    brandGemini: Color(0xFF4285F4),
+    brandOllama: Color(0xFF9D9D9D),
   );
 
   static const AppColors light = AppColors(
@@ -539,6 +551,10 @@ class AppColors extends ThemeExtension<AppColors> {
     switchTrackUnselected: Color(0xFF8C96A0),
     switchTrackOutline: Color(0xFF7A8490),
     jsonEditorBg: Color(0xFFF5F5F5),
+    brandAnthropic: Color(0xFFD97757),
+    brandOpenAI: Color(0xFF10A37F),
+    brandGemini: Color(0xFF4285F4),
+    brandOllama: Color(0xFF5C6474),
   );
 
   @override
@@ -670,6 +686,10 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? switchTrackUnselected,
     Color? switchTrackOutline,
     Color? jsonEditorBg,
+    Color? brandAnthropic,
+    Color? brandOpenAI,
+    Color? brandGemini,
+    Color? brandOllama,
   }) => AppColors(
     background: background ?? this.background,
     sidebarBackground: sidebarBackground ?? this.sidebarBackground,
@@ -798,6 +818,10 @@ class AppColors extends ThemeExtension<AppColors> {
     switchTrackUnselected: switchTrackUnselected ?? this.switchTrackUnselected,
     switchTrackOutline: switchTrackOutline ?? this.switchTrackOutline,
     jsonEditorBg: jsonEditorBg ?? this.jsonEditorBg,
+    brandAnthropic: brandAnthropic ?? this.brandAnthropic,
+    brandOpenAI: brandOpenAI ?? this.brandOpenAI,
+    brandGemini: brandGemini ?? this.brandGemini,
+    brandOllama: brandOllama ?? this.brandOllama,
   );
 
   @override
@@ -931,6 +955,10 @@ class AppColors extends ThemeExtension<AppColors> {
       switchTrackUnselected: Color.lerp(switchTrackUnselected, other.switchTrackUnselected, t)!,
       switchTrackOutline: Color.lerp(switchTrackOutline, other.switchTrackOutline, t)!,
       jsonEditorBg: Color.lerp(jsonEditorBg, other.jsonEditorBg, t)!,
+      brandAnthropic: Color.lerp(brandAnthropic, other.brandAnthropic, t)!,
+      brandOpenAI: Color.lerp(brandOpenAI, other.brandOpenAI, t)!,
+      brandGemini: Color.lerp(brandGemini, other.brandGemini, t)!,
+      brandOllama: Color.lerp(brandOllama, other.brandOllama, t)!,
     );
   }
 }
