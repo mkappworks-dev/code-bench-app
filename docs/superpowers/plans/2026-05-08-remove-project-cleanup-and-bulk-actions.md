@@ -515,12 +515,14 @@ git commit -m "feat(sidebar): bulk archive and delete sessions per project"
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../data/project/models/project.dart';
+import '../../chat/notifiers/chat_notifier.dart';
 import '../notifiers/project_sidebar_actions.dart';
 import '../notifiers/project_sidebar_failure.dart';
 
@@ -548,8 +550,10 @@ class _ArchiveAllConversationsDialogState extends ConsumerState<ArchiveAllConver
     try {
       await ref.read(projectSidebarActionsProvider.notifier).archiveAllSessionsForProject(widget.project.id);
       if (!mounted) return;
-      if (!ref.read(projectSidebarActionsProvider).hasError) {
-        Navigator.of(context).pop(true);
+      if (ref.read(projectSidebarActionsProvider).hasError) return;
+      Navigator.of(context).pop(true);
+      if (ref.read(activeSessionIdProvider) == null && context.mounted) {
+        context.go('/chat');
       }
     } finally {
       if (mounted) setState(() => _submitting = false);

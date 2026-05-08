@@ -128,7 +128,7 @@ Both dialogs follow the [remove_project_dialog.dart](../../../lib/features/proje
 
 `delete_all_conversations_dialog` reads the count via `projectSidebarActionsProvider.notifier.fetchSessionCount(projectId)` — same pattern as `remove_project_dialog` does for its message.
 
-**[remove_project_dialog.dart](../../../lib/features/project_sidebar/widgets/remove_project_dialog.dart):** after success, also call `context.go('/')` so the URL doesn't linger on a deleted session. Same logic in the new `delete_all_conversations_dialog` when the active session was among those deleted (use `context.go('/')` if `ref.read(activeSessionIdProvider) == null` after the action).
+**[remove_project_dialog.dart](../../../lib/features/project_sidebar/widgets/remove_project_dialog.dart):** after success, also call `context.go('/chat')` so the URL doesn't linger on a deleted session. Same logic in both new dialogs (`archive_all_conversations_dialog` and `delete_all_conversations_dialog`) when the active session was in scope: navigate to `/chat` if `ref.read(activeSessionIdProvider) == null` after the action. This matches the existing `_runSessionMutation` flow at [project_sidebar.dart:87-98](../../../lib/features/project_sidebar/project_sidebar.dart#L87-L98), which routes to `/chat` whenever the active session is mutated by single-archive or single-delete.
 
 **[project_tile.dart](../../../lib/features/project_sidebar/widgets/project_tile.dart):** plumb new `onArchiveAll` / `onDeleteAll` callbacks through `ProjectContextMenu.handleAction`.
 
@@ -144,7 +144,7 @@ Remove project (active project)
         → ProjectService.removeProject(id)
         → clear activeSessionIdProvider + activeProjectIdProvider
     → Navigator.pop(true)
-    → context.go('/')
+    → context.go('/chat')
 
 Archive all (project tile)
   ArchiveAllConversationsDialog.submit
@@ -152,6 +152,7 @@ Archive all (project tile)
         → for each active session: SessionService.archiveSession
         → if active session was among them: clear activeSessionIdProvider
     → Navigator.pop(true)
+    → if activeSessionId is now null: context.go('/chat')
 
 Delete all (project tile)
   DeleteAllConversationsDialog.submit
@@ -159,7 +160,7 @@ Delete all (project tile)
         → for each active session: SessionService.deleteSession
         → if active session was among them: clear activeSessionIdProvider
     → Navigator.pop(true)
-    → if activeSessionId is now null: context.go('/')
+    → if activeSessionId is now null: context.go('/chat')
 ```
 
 ## Error handling
