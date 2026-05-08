@@ -197,8 +197,6 @@ class _AssistantBubble extends ConsumerStatefulWidget {
 }
 
 class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
-  bool _hovering = false;
-
   /// Formats the answer map produced by [AskUserQuestionCard] into a
   /// plain user-message string and re-posts it via [chatMessagesProvider].
   Future<void> _submitAnswer(Map<String, dynamic> answer) async {
@@ -220,88 +218,79 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
         ? (ref.watch(chatMessagesProvider(message.sessionId)).value ?? const <ChatMessage>[])
         : const <ChatMessage>[];
     final capIsActive = message.iterationCapReached && allMessages.isNotEmpty && allMessages.last.id == message.id;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 2,
-            margin: const EdgeInsets.only(top: 3, bottom: 3),
-            color: AppColors.of(context).borderColor,
-          ),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (message.isStreaming) const StreamingDot(),
-                if (message.isStreaming || message.toolEvents.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  WorkLogSection(sessionId: message.sessionId, messageId: message.id),
-                ],
-                if (message.toolEvents.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  for (final event in message.toolEvents)
-                    Padding(
-                      key: ValueKey('tool-row-${event.id}'),
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: ToolCallRow(
-                        event: event,
-                        providerId: message.providerId,
-                        providerLabel: providerLabelFor(message.providerId),
-                        modelLabel: message.modelId,
-                      ),
-                    ),
-                  if (message.isStreaming &&
-                      !message.toolEvents.any((e) => e.status == ToolStatus.running) &&
-                      message.content.isEmpty) ...[
-                    const SizedBox(height: 8),
-                    const _SkeletonLines(),
-                  ] else if (message.content.isNotEmpty)
-                    const SizedBox(height: 8),
-                ],
-                _MessageContent(message: message),
-                _DroppedSettingsNotice(messageId: message.id),
-                _AssistantActionRow(message: message, hovering: _hovering),
-                if (message.iterationCapReached) ...[
-                  IterationCapBanner(messageId: message.id, sessionId: message.sessionId, isActive: capIsActive),
-                ],
-                if (message.pendingPermissionRequest != null) ...[
-                  PermissionRequestCard(request: message.pendingPermissionRequest!),
-                ],
-                if (message.askQuestion != null) ...[
-                  const SizedBox(height: 8),
-                  AskUserQuestionCard(
-                    question: message.askQuestion!,
-                    sessionId: message.sessionId,
-                    onSubmit: _submitAnswer,
-                    onBack: message.askQuestion!.stepIndex > 0
-                        ? () => ref
-                              .read(askQuestionProvider.notifier)
-                              .setAnswer(
-                                sessionId: message.sessionId,
-                                stepIndex: message.askQuestion!.stepIndex,
-                                selectedOption: null,
-                                freeText: null,
-                              )
-                        : null,
-                  ),
-                ],
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(width: 2, margin: const EdgeInsets.only(top: 3, bottom: 3), color: AppColors.of(context).borderColor),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (message.isStreaming) const StreamingDot(),
+              if (message.isStreaming || message.toolEvents.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                WorkLogSection(sessionId: message.sessionId, messageId: message.id),
               ],
-            ),
+              if (message.toolEvents.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                for (final event in message.toolEvents)
+                  Padding(
+                    key: ValueKey('tool-row-${event.id}'),
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: ToolCallRow(
+                      event: event,
+                      providerId: message.providerId,
+                      providerLabel: providerLabelFor(message.providerId),
+                      modelLabel: message.modelId,
+                    ),
+                  ),
+                if (message.isStreaming &&
+                    !message.toolEvents.any((e) => e.status == ToolStatus.running) &&
+                    message.content.isEmpty) ...[
+                  const SizedBox(height: 8),
+                  const _SkeletonLines(),
+                ] else if (message.content.isNotEmpty)
+                  const SizedBox(height: 8),
+              ],
+              _MessageContent(message: message),
+              _DroppedSettingsNotice(messageId: message.id),
+              _AssistantActionRow(message: message),
+              if (message.iterationCapReached) ...[
+                IterationCapBanner(messageId: message.id, sessionId: message.sessionId, isActive: capIsActive),
+              ],
+              if (message.pendingPermissionRequest != null) ...[
+                PermissionRequestCard(request: message.pendingPermissionRequest!),
+              ],
+              if (message.askQuestion != null) ...[
+                const SizedBox(height: 8),
+                AskUserQuestionCard(
+                  question: message.askQuestion!,
+                  sessionId: message.sessionId,
+                  onSubmit: _submitAnswer,
+                  onBack: message.askQuestion!.stepIndex > 0
+                      ? () => ref
+                            .read(askQuestionProvider.notifier)
+                            .setAnswer(
+                              sessionId: message.sessionId,
+                              stepIndex: message.askQuestion!.stepIndex,
+                              selectedOption: null,
+                              freeText: null,
+                            )
+                      : null,
+                ),
+              ],
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
 class _AssistantActionRow extends StatefulWidget {
-  const _AssistantActionRow({required this.message, required this.hovering});
+  const _AssistantActionRow({required this.message});
   final ChatMessage message;
-  final bool hovering;
 
   @override
   State<_AssistantActionRow> createState() => _AssistantActionRowState();
@@ -344,19 +333,15 @@ class _AssistantActionRowState extends State<_AssistantActionRow> {
     final iconColor = _copied ? c.success : c.textMuted;
     return Padding(
       padding: const EdgeInsets.only(top: 4, bottom: 4),
-      child: AnimatedOpacity(
-        opacity: widget.hovering ? 1.0 : 0.4,
-        duration: const Duration(milliseconds: 150),
-        child: Tooltip(
-          message: 'Copy as markdown',
-          child: IconButton(
-            icon: Icon(icon, size: 14, color: iconColor),
-            onPressed: _copy,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-            visualDensity: VisualDensity.compact,
-            splashRadius: 14,
-          ),
+      child: Tooltip(
+        message: 'Copy as markdown',
+        child: IconButton(
+          icon: Icon(icon, size: 14, color: iconColor),
+          onPressed: _copy,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+          visualDensity: VisualDensity.compact,
+          splashRadius: 14,
         ),
       ),
     );
