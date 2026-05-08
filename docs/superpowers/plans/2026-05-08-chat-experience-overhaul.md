@@ -497,7 +497,7 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
     }
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, _) {
+      builder: (context, _) {
         final t = Curves.easeInOut.transform(_ctrl.value);
         return Container(
           width: 7,
@@ -1293,7 +1293,7 @@ class _ToolPhasePillState extends State<ToolPhasePill> with SingleTickerProvider
         children: [
           AnimatedBuilder(
             animation: _ctrl,
-            builder: (_, _) {
+            builder: (context, _) {
               final t = Curves.easeInOut.transform(_ctrl.value);
               return Container(
                 width: 5,
@@ -1755,13 +1755,94 @@ Expected: All pass.
 
 - [ ] **Step 6: Render in MessageBubble; delete the dialog stub**
 
-In `lib/features/chat/widgets/message_bubble.dart`, locate the existing block that referenced `showApplyCodeDialog` (search via `grep -n "showApplyCode\|apply_code_dialog" lib/features/chat`). Replace the `showApplyCodeDialog(...)` invocation with an inline `ApplyDiffCard` rendered in the bubble for each `CodeBlock` in `message.codeBlocks`. Wire `onApply` to:
+First, find the active-project provider name:
+
+```bash
+grep -rn "activeProject\|currentProject" lib/features/ lib/data/ --include="*.dart" | grep "@riverpod\|Provider" | head -10
+```
+
+Note the provider name (e.g. `activeProjectProvider`) and the model fields for `id` and `path` (e.g. `project.id`, `project.path`). Substitute those below.
+
+In `lib/features/chat/widgets/message_bubble.dart`, locate the existing block that referenced `showApplyCodeDialog` (search via `grep -n "showApplyCode\|apply_code_dialog" lib/features/chat`). Replace it with:
 
 ```dart
-onApply: () => ref.read(codeApplyActionsProvider.notifier).apply(
-  codeBlock: codeBlock,
-  messageId: message.id,
-),
+for (final codeBlock in message.codeBlocks)
+  if (codeBlock.filename != null)
+    _ApplyCardLoader(codeBlock: codeBlock, message: message),
+```
+
+Add the private `_ApplyCardLoader` widget at the bottom of `message_bubble.dart`. It loads the current file content asynchronously (needed for `oldPreview`) and tracks apply state per card independently, avoiding the single-slot `codeApplyActionsProvider` ambiguity when multiple blocks are visible:
+
+```dart
+class _ApplyCardLoader extends ConsumerStatefulWidget {
+  const _ApplyCardLoader({required this.codeBlock, required this.message});
+  final CodeBlock codeBlock;
+  final ChatMessage message;
+
+  @override
+  ConsumerState<_ApplyCardLoader> createState() => _ApplyCardLoaderState();
+}
+
+class _ApplyCardLoaderState extends ConsumerState<_ApplyCardLoader> {
+  String _oldPreview = '';
+  ApplyCardState _cardState = ApplyCardState.ready;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOldContent();
+  }
+
+  Future<void> _loadOldContent() async {
+    // Substitute the correct active-project provider name found above.
+    final project = ref.read(activeProjectProvider);
+    if (project == null) return;
+    final content = await ref
+        .read(codeApplyActionsProvider.notifier)
+        .readFileContent(widget.codeBlock.filename!, project.path);
+    if (mounted) setState(() => _oldPreview = content ?? '');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final project = ref.watch(activeProjectProvider);
+    if (project == null) return const SizedBox.shrink();
+    final newCode = widget.codeBlock.code;
+    return ApplyDiffCard(
+      filename: widget.codeBlock.filename!,
+      language: widget.codeBlock.language ?? '',
+      newCode: newCode,
+      oldPreview: _oldPreview,
+      additions: newCode.split('\n').where((l) => l.isNotEmpty).length,
+      deletions: _oldPreview.split('\n').where((l) => l.isNotEmpty).length,
+      state: _cardState,
+      errorMessage: _errorMessage,
+      onApply: () async {
+        final actions = ref.read(codeApplyActionsProvider.notifier);
+        await actions.applyChange(
+          projectId: project.id,
+          filePath: widget.codeBlock.filename!,
+          projectPath: project.path,
+          newContent: newCode,
+          sessionId: widget.message.sessionId,
+          messageId: widget.message.id,
+        );
+        if (!mounted) return;
+        // Inline hasError check per CLAUDE.md shared-provider exception.
+        final s = ref.read(codeApplyActionsProvider);
+        setState(() {
+          _cardState = s.hasError ? ApplyCardState.failed : ApplyCardState.applied;
+          _errorMessage = s.hasError ? s.error?.runtimeType.toString() : null;
+        });
+      },
+      onReDiff: () {
+        setState(() { _cardState = ApplyCardState.ready; _errorMessage = null; });
+        _loadOldContent();
+      },
+    );
+  }
+}
 ```
 
 Use `codeApplyActionsProvider`'s state (`AsyncValue.hasValue` → applied; `AsyncValue.hasError` → failed; otherwise ready) to derive the `ApplyCardState`.
@@ -2298,7 +2379,33 @@ Add the import:
 import 'agent_user_input_request_notifier.dart';
 ```
 
-- [ ] **Step 2: Render the card in the message bubble**
+- [ ] **Step 2: Add `isLastInSession` parameter to `MessageBubble`**
+
+The question card must only appear on the last bubble in the session — not on every historical bubble. `message.isStreaming` is the wrong guard because the stream pauses while awaiting the answer, so `isStreaming` may already be false when the card needs to be visible.
+
+Add a `isLastInSession` bool constructor parameter to the bubble widget (search for the `MessageBubble` or equivalent class that renders a single assistant turn):
+
+```dart
+const MessageBubble({
+  super.key,
+  required this.message,
+  this.isLastInSession = false,   // add this
+  // ... existing params
+});
+final bool isLastInSession;
+```
+
+In the message list widget that builds each bubble, pass:
+
+```dart
+MessageBubble(
+  message: messages[index],
+  isLastInSession: index == messages.length - 1,
+  // ... existing args
+)
+```
+
+- [ ] **Step 3: Render the card in the message bubble**
 
 In `lib/features/chat/widgets/message_bubble.dart`, near the existing `if (message.askQuestion != null)` block, add a sibling that watches the new provider:
 
@@ -2307,8 +2414,7 @@ Consumer(
   builder: (context, ref, _) {
     final req = ref.watch(agentUserInputRequestProvider);
     if (req == null) return const SizedBox.shrink();
-    // Only show on the most recent assistant bubble.
-    if (!message.isStreaming) return const SizedBox.shrink();
+    if (!isLastInSession) return const SizedBox.shrink();
     final asWizard = AskUserQuestion(
       question: req.prompt,
       options: req.choices ?? const <String>[],
@@ -2335,7 +2441,7 @@ Add the import:
 import '../notifiers/agent_user_input_request_notifier.dart';
 ```
 
-- [ ] **Step 3: Format, analyze, test, commit**
+- [ ] **Step 4: Format, analyze, test, commit**
 
 ```bash
 dart format lib/features/chat/notifiers/chat_notifier.dart lib/features/chat/widgets/message_bubble.dart
