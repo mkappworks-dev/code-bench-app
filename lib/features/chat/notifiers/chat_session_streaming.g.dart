@@ -12,19 +12,16 @@ part of 'chat_session_streaming.dart';
 @ProviderFor(chatSessionStreaming)
 final chatSessionStreamingProvider = ChatSessionStreamingFamily._();
 
-final class ChatSessionStreamingProvider
-    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+final class ChatSessionStreamingProvider extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
     with $FutureModifier<bool>, $StreamProvider<bool> {
-  ChatSessionStreamingProvider._({
-    required ChatSessionStreamingFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'chatSessionStreamingProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+  ChatSessionStreamingProvider._({required ChatSessionStreamingFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'chatSessionStreamingProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$chatSessionStreamingHash();
@@ -38,8 +35,7 @@ final class ChatSessionStreamingProvider
 
   @$internal
   @override
-  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
 
   @override
   Stream<bool> create(Ref ref) {
@@ -58,11 +54,9 @@ final class ChatSessionStreamingProvider
   }
 }
 
-String _$chatSessionStreamingHash() =>
-    r'd1f6bbea9d49a7b1bd932bc4ad98e64c7e276653';
+String _$chatSessionStreamingHash() => r'd1f6bbea9d49a7b1bd932bc4ad98e64c7e276653';
 
-final class ChatSessionStreamingFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<bool>, String> {
+final class ChatSessionStreamingFamily extends $Family with $FunctionalFamilyOverride<Stream<bool>, String> {
   ChatSessionStreamingFamily._()
     : super(
         retry: null,
@@ -82,19 +76,16 @@ final class ChatSessionStreamingFamily extends $Family
 @ProviderFor(chatSessionFailed)
 final chatSessionFailedProvider = ChatSessionFailedFamily._();
 
-final class ChatSessionFailedProvider
-    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+final class ChatSessionFailedProvider extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
     with $FutureModifier<bool>, $StreamProvider<bool> {
-  ChatSessionFailedProvider._({
-    required ChatSessionFailedFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'chatSessionFailedProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+  ChatSessionFailedProvider._({required ChatSessionFailedFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'chatSessionFailedProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$chatSessionFailedHash();
@@ -108,8 +99,7 @@ final class ChatSessionFailedProvider
 
   @$internal
   @override
-  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
 
   @override
   Stream<bool> create(Ref ref) {
@@ -130,8 +120,7 @@ final class ChatSessionFailedProvider
 
 String _$chatSessionFailedHash() => r'f31ffef0fd16b2d50ac384aa4ae4db93dfe79b75';
 
-final class ChatSessionFailedFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<bool>, String> {
+final class ChatSessionFailedFamily extends $Family with $FunctionalFamilyOverride<Stream<bool>, String> {
   ChatSessionFailedFamily._()
     : super(
         retry: null,
@@ -141,8 +130,7 @@ final class ChatSessionFailedFamily extends $Family
         isAutoDispose: true,
       );
 
-  ChatSessionFailedProvider call(String sessionId) =>
-      ChatSessionFailedProvider._(argument: sessionId, from: this);
+  ChatSessionFailedProvider call(String sessionId) => ChatSessionFailedProvider._(argument: sessionId, from: this);
 
   @override
   String toString() => r'chatSessionFailedProvider';
@@ -157,21 +145,18 @@ final chatSessionAwaitingProvider = ChatSessionAwaitingFamily._();
 /// Whether the session is waiting for user input (permission or question).
 /// Derived entirely from in-memory registry data — no SQLite load.
 
-final class ChatSessionAwaitingProvider
-    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+final class ChatSessionAwaitingProvider extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
     with $FutureModifier<bool>, $StreamProvider<bool> {
   /// Whether the session is waiting for user input (permission or question).
   /// Derived entirely from in-memory registry data — no SQLite load.
-  ChatSessionAwaitingProvider._({
-    required ChatSessionAwaitingFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'chatSessionAwaitingProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+  ChatSessionAwaitingProvider._({required ChatSessionAwaitingFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'chatSessionAwaitingProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$chatSessionAwaitingHash();
@@ -185,8 +170,7 @@ final class ChatSessionAwaitingProvider
 
   @$internal
   @override
-  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
 
   @override
   Stream<bool> create(Ref ref) {
@@ -205,14 +189,12 @@ final class ChatSessionAwaitingProvider
   }
 }
 
-String _$chatSessionAwaitingHash() =>
-    r'b179f7359483ce1d87788e4860ff12151b544ded';
+String _$chatSessionAwaitingHash() => r'3256aac0c4609729005ab22add4f2a361ff0ef9f';
 
 /// Whether the session is waiting for user input (permission or question).
 /// Derived entirely from in-memory registry data — no SQLite load.
 
-final class ChatSessionAwaitingFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<bool>, String> {
+final class ChatSessionAwaitingFamily extends $Family with $FunctionalFamilyOverride<Stream<bool>, String> {
   ChatSessionAwaitingFamily._()
     : super(
         retry: null,
@@ -225,8 +207,7 @@ final class ChatSessionAwaitingFamily extends $Family
   /// Whether the session is waiting for user input (permission or question).
   /// Derived entirely from in-memory registry data — no SQLite load.
 
-  ChatSessionAwaitingProvider call(String sessionId) =>
-      ChatSessionAwaitingProvider._(argument: sessionId, from: this);
+  ChatSessionAwaitingProvider call(String sessionId) => ChatSessionAwaitingProvider._(argument: sessionId, from: this);
 
   @override
   String toString() => r'chatSessionAwaitingProvider';
