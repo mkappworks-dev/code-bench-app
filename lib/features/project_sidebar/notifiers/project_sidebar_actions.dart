@@ -111,9 +111,7 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     state = await AsyncValue.guard(() async {
       try {
         sLog('[ProjectSidebarActions] removeProject id=$id deleteSessions=$deleteSessions');
-        // Clear active pointers before any DB write — if the cascade fails
-        // partway, the chat view must not be left mounted on a session whose
-        // row may already be gone.
+        // Clear active pointers before the cascade so a partial failure can't leave the chat view on a now-deleted session.
         if (ref.read(activeProjectIdProvider) == id) {
           ref.read(activeSessionIdProvider.notifier).set(null);
           ref.read(activeProjectIdProvider.notifier).set(null);
@@ -218,9 +216,6 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     });
   }
 
-  /// Archives every active session for [projectId] in a single DB transaction.
-  /// Archived sessions for the project are unaffected. Clears the active
-  /// session id when the active session is among the archived ones.
   Future<void> archiveAllSessionsForProject(String projectId) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
@@ -237,9 +232,6 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     });
   }
 
-  /// Permanently deletes every active session for [projectId] in a single DB
-  /// transaction. Archived sessions are unaffected. Clears the active session
-  /// id when the active session is among the deleted ones.
   Future<void> deleteAllSessionsForProject(String projectId) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {

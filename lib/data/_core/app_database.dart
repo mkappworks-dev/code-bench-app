@@ -169,9 +169,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
     });
   }
 
-  /// Archives every active session for [projectId] in a single transaction so
-  /// a mid-call failure leaves no half-archived state. Returns the IDs that
-  /// were archived (callers use these to clear active-session pointers).
+  /// Atomically archives every active session for [projectId]; returns the archived ids.
   Future<List<String>> archiveActiveSessionsByProject(String projectId) async {
     return transaction(() async {
       final ids = await ((select(
@@ -185,9 +183,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
     });
   }
 
-  /// Permanently deletes every active session for [projectId] (and their
-  /// messages) in a single transaction. Archived sessions are left untouched.
-  /// Returns the IDs that were deleted.
+  /// Atomically deletes every active session (and their messages) for [projectId]; returns the deleted ids. Archived sessions are untouched.
   Future<List<String>> deleteActiveSessionsByProject(String projectId) async {
     return transaction(() async {
       final ids = await ((select(
