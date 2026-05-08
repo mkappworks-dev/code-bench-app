@@ -4,22 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/core/theme/app_colors.dart';
 import 'package:code_bench_app/data/session/models/chat_session.dart';
-import 'package:code_bench_app/data/shared/chat_message.dart';
-import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_session_streaming.dart';
 import 'package:code_bench_app/features/project_sidebar/widgets/conversation_tile.dart';
-
-class _IdleChatMessages extends ChatMessagesNotifier {
-  @override
-  Future<List<ChatMessage>> build(String sessionId) async => const [];
-}
 
 Widget _wrap(Widget child, String sessionId) {
   return ProviderScope(
     overrides: [
       chatSessionStreamingProvider(sessionId).overrideWith((_) => Stream.value(false)),
       chatSessionFailedProvider(sessionId).overrideWith((_) => Stream.value(false)),
-      chatMessagesProvider(sessionId).overrideWith(() => _IdleChatMessages()),
+      chatSessionAwaitingProvider(sessionId).overrideWith((_) => Stream.value(false)),
     ],
     child: MaterialApp(
       theme: ThemeData(extensions: [AppColors.dark]),

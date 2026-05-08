@@ -10,7 +10,6 @@ import '../../../core/utils/relative_time.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../data/session/models/chat_session.dart';
 import '../../chat/notifiers/chat_session_streaming.dart';
-import '../../chat/notifiers/chat_notifier.dart';
 import '../../chat/utils/session_status_for.dart';
 import '../../chat/widgets/session_status_dot.dart';
 
@@ -130,14 +129,11 @@ class ConversationTile extends ConsumerWidget {
     final c = AppColors.of(context);
     final isStreaming = ref.watch(chatSessionStreamingProvider(session.sessionId)).value ?? false;
     final isFailed = ref.watch(chatSessionFailedProvider(session.sessionId)).value ?? false;
-    final messages = ref.watch(chatMessagesProvider(session.sessionId)).value;
-    final lastMsg = messages?.lastOrNull;
-    final hasPendingPermission = lastMsg?.pendingPermissionRequest != null;
-    final hasPendingQuestion = lastMsg?.askQuestion != null;
+    final isAwaiting = ref.watch(chatSessionAwaitingProvider(session.sessionId)).value ?? false;
     final status = sessionStatusFor(
       isStreaming: isStreaming,
-      hasPendingPermission: hasPendingPermission,
-      hasPendingQuestion: hasPendingQuestion,
+      hasPendingPermission: isAwaiting,
+      hasPendingQuestion: false,
       lastTurnFailed: isFailed,
     );
     return GestureDetector(
