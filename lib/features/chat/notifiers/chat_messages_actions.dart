@@ -54,6 +54,59 @@ class ChatMessagesActions extends _$ChatMessagesActions {
     });
   }
 
+  /// Deletes the assistant message [messageId] along with trailing
+  /// `interrupted` markers, then re-sends the preceding user message so the
+  /// model generates a fresh response.
+  ///
+  /// Falls back to a plain delete when no preceding user message is found.
+  Future<void> retryAssistantMessage(String sessionId, String messageId) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        final service = await ref.read(sessionServiceProvider.future);
+        final messages = ref.read(chatMessagesProvider(sessionId)).value ?? const <ChatMessage>[];
+        final msgIdx = messages.indexWhere((m) => m.id == messageId);
+        final trailing = msgIdx >= 0
+            ? messages.skip(msgIdx + 1).takeWhile((m) => m.role == MessageRole.interrupted).toList()
+            : const <ChatMessage>[];
+        final ids = [messageId, ...trailing.map((m) => m.id)];
+        await service.deleteMessages(sessionId, ids);
+        ref.read(chatMessagesProvider(sessionId).notifier).removeFromState(ids);
+        final precedingUser = msgIdx > 0
+            ? messages.take(msgIdx).toList().lastWhere((m) => m.role == MessageRole.user, orElse: () => messages[0])
+            : null;
+        if (precedingUser != null && precedingUser.role == MessageRole.user) {
+          await ref.read(chatMessagesProvider(sessionId).notifier).sendMessage(precedingUser.content);
+        }
+      } catch (e, st) {
+        dLog('[ChatMessagesActions] retryAssistantMessage failed: ${e.runtimeType}');
+        Error.throwWithStackTrace(_asFailure(e, () => const ChatMessagesFailure.retryFailed()), st);
+      }
+    });
+  }
+
+  /// Deletes the assistant message [messageId] along with any trailing
+  /// `interrupted` markers.
+  Future<void> deleteAssistantMessage(String sessionId, String messageId) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        final service = await ref.read(sessionServiceProvider.future);
+        final messages = ref.read(chatMessagesProvider(sessionId)).value ?? const <ChatMessage>[];
+        final msgIdx = messages.indexWhere((m) => m.id == messageId);
+        final trailing = msgIdx >= 0
+            ? messages.skip(msgIdx + 1).takeWhile((m) => m.role == MessageRole.interrupted).toList()
+            : const <ChatMessage>[];
+        final ids = [messageId, ...trailing.map((m) => m.id)];
+        await service.deleteMessages(sessionId, ids);
+        ref.read(chatMessagesProvider(sessionId).notifier).removeFromState(ids);
+      } catch (e, st) {
+        dLog('[ChatMessagesActions] deleteAssistantMessage failed: ${e.runtimeType}');
+        Error.throwWithStackTrace(_asFailure(e, () => const ChatMessagesFailure.deleteFailed()), st);
+      }
+    });
+  }
+
   /// Loads the page of older messages at [offset] and prepends them to
   /// [sessionId]'s in-memory list.
   Future<void> loadMore(String sessionId, int offset) async {

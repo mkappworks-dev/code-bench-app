@@ -288,15 +288,15 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
   }
 }
 
-class _AssistantActionRow extends StatefulWidget {
+class _AssistantActionRow extends ConsumerStatefulWidget {
   const _AssistantActionRow({required this.message});
   final ChatMessage message;
 
   @override
-  State<_AssistantActionRow> createState() => _AssistantActionRowState();
+  ConsumerState<_AssistantActionRow> createState() => _AssistantActionRowState();
 }
 
-class _AssistantActionRowState extends State<_AssistantActionRow> {
+class _AssistantActionRowState extends ConsumerState<_AssistantActionRow> {
   bool _copied = false;
   Timer? _resetTimer;
 
@@ -323,26 +323,77 @@ class _AssistantActionRowState extends State<_AssistantActionRow> {
     }
   }
 
+  Future<void> _retry() async {
+    await ref
+        .read(chatMessagesActionsProvider.notifier)
+        .retryAssistantMessage(widget.message.sessionId, widget.message.id);
+    if (!mounted) return;
+    final s = ref.read(chatMessagesActionsProvider);
+    if (s.hasError && s.error is ChatMessagesFailure) {
+      showErrorSnackBar(context, 'Failed to retry message.');
+    }
+  }
+
+  Future<void> _delete() async {
+    await ref
+        .read(chatMessagesActionsProvider.notifier)
+        .deleteAssistantMessage(widget.message.sessionId, widget.message.id);
+    if (!mounted) return;
+    final s = ref.read(chatMessagesActionsProvider);
+    if (s.hasError && s.error is ChatMessagesFailure) {
+      showErrorSnackBar(context, 'Failed to delete message.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.message.isStreaming || widget.message.content.trim().isEmpty) {
       return const SizedBox.shrink();
     }
     final c = AppColors.of(context);
-    final icon = _copied ? AppIcons.check : AppIcons.copy;
-    final iconColor = _copied ? c.success : c.textMuted;
+    final copyIcon = _copied ? AppIcons.check : AppIcons.copy;
+    final copyColor = _copied ? c.success : c.textMuted;
     return Padding(
       padding: const EdgeInsets.only(top: 4, bottom: 4),
-      child: Tooltip(
-        message: 'Copy as markdown',
-        child: IconButton(
-          icon: Icon(icon, size: 14, color: iconColor),
-          onPressed: _copy,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-          visualDensity: VisualDensity.compact,
-          splashRadius: 14,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Tooltip(
+            message: 'Copy as markdown',
+            child: IconButton(
+              icon: Icon(copyIcon, size: ThemeConstants.iconSizeSmall, color: copyColor),
+              onPressed: _copy,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              visualDensity: VisualDensity.compact,
+              splashRadius: 14,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Tooltip(
+            message: 'Retry',
+            child: IconButton(
+              icon: Icon(AppIcons.refresh, size: ThemeConstants.iconSizeSmall, color: c.textMuted),
+              onPressed: _retry,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              visualDensity: VisualDensity.compact,
+              splashRadius: 14,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Tooltip(
+            message: 'Delete',
+            child: IconButton(
+              icon: Icon(AppIcons.trash, size: ThemeConstants.iconSizeSmall, color: c.textMuted),
+              onPressed: _delete,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              visualDensity: VisualDensity.compact,
+              splashRadius: 14,
+            ),
+          ),
+        ],
       ),
     );
   }
