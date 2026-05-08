@@ -258,10 +258,10 @@ class _ErrorBanner extends StatelessWidget {
 String _buildDiffText(String oldPreview, String newCode) {
   final buffer = StringBuffer();
   for (final line in oldPreview.split('\n')) {
-    if (line.isNotEmpty) buffer.writeln('-$line');
+    buffer.writeln('-$line');
   }
   for (final line in newCode.split('\n')) {
-    if (line.isNotEmpty) buffer.writeln('+$line');
+    buffer.writeln('+$line');
   }
   return buffer.toString();
 }
