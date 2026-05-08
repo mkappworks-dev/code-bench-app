@@ -21,6 +21,7 @@ import '../notifiers/code_diff_provider.dart';
 import '../notifiers/project_file_scan_actions.dart';
 import '../notifiers/project_file_scan_failure.dart';
 import '../utils/code_fence_parser.dart';
+import 'diff_card.dart';
 
 class CodeBlockBuilder extends MarkdownElementBuilder {
   CodeBlockBuilder({required this.messageId, required this.sessionId});
@@ -58,6 +59,9 @@ class CodeBlockBuilder extends MarkdownElementBuilder {
     }
 
     final (language, filename) = parseCodeFenceInfo(fullInfo);
+    if (language == 'diff') {
+      return DiffCard(rawDiff: code);
+    }
     return _CodeBlockWidget(
       code: code,
       language: language,
