@@ -7,10 +7,14 @@ import 'package:code_bench_app/data/session/models/chat_session.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
 import 'package:code_bench_app/services/project/project_service.dart';
 import 'package:code_bench_app/services/session/session_service.dart';
+import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_actions.dart';
 import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_failure.dart';
+import 'package:code_bench_app/features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 
 class _FakeSessionService extends Fake implements SessionService {
+  final List<String> deleteSessionsByProjectCalls = [];
+
   @override
   Future<String> createSession({required AIModel model, String? title, String? projectId}) async => 'fake-session';
 
@@ -19,6 +23,14 @@ class _FakeSessionService extends Fake implements SessionService {
 
   @override
   Future<void> deleteSession(String sessionId) async {}
+
+  @override
+  Future<void> archiveSession(String sessionId) async {}
+
+  @override
+  Future<void> deleteSessionsByProject(String projectId) async {
+    deleteSessionsByProjectCalls.add(projectId);
+  }
 }
 
 class _FakeProjectService extends Fake implements ProjectService {
@@ -61,15 +73,16 @@ class _FakeProjectService extends Fake implements ProjectService {
   Future<void> deleteAllProjects() => throw UnimplementedError();
 }
 
-ProviderContainer _makeContainer(_FakeProjectService fakeService) {
+({ProviderContainer container, _FakeSessionService sessions}) _makeContainer(_FakeProjectService fakeService) {
+  final fakeSessions = _FakeSessionService();
   final c = ProviderContainer(
     overrides: [
       projectServiceProvider.overrideWithValue(fakeService),
-      sessionServiceProvider.overrideWith((ref) async => _FakeSessionService()),
+      sessionServiceProvider.overrideWith((ref) async => fakeSessions),
     ],
   );
   addTearDown(c.dispose);
-  return c;
+  return (container: c, sessions: fakeSessions);
 }
 
 void main() {
@@ -81,7 +94,7 @@ void main() {
 
   group('addExistingFolder', () {
     test('happy path — state becomes AsyncData', () async {
-      final c = _makeContainer(fakeService);
+      final c = _makeContainer(fakeService).container;
       await c.read(projectSidebarActionsProvider.notifier).addExistingFolder('/some/path');
       expect(c.read(projectSidebarActionsProvider), isA<AsyncData<void>>());
     });
@@ -89,7 +102,7 @@ void main() {
     test('DuplicateProjectPathException → ProjectSidebarDuplicatePath', () async {
       fakeService.throwOnAdd(DuplicateProjectPathException('/some/path'));
 
-      final c = _makeContainer(fakeService);
+      final c = _makeContainer(fakeService).container;
       await c.read(projectSidebarActionsProvider.notifier).addExistingFolder('/some/path');
 
       expect(c.read(projectSidebarActionsProvider).error, isA<ProjectSidebarDuplicatePath>());
@@ -98,7 +111,7 @@ void main() {
     test('ArgumentError → ProjectSidebarInvalidPath', () async {
       fakeService.throwOnAdd(ArgumentError('Directory does not exist: /bad/path'));
 
-      final c = _makeContainer(fakeService);
+      final c = _makeContainer(fakeService).container;
       await c.read(projectSidebarActionsProvider.notifier).addExistingFolder('/bad/path');
 
       expect(c.read(projectSidebarActionsProvider).error, isA<ProjectSidebarInvalidPath>());
@@ -107,7 +120,7 @@ void main() {
 
   group('removeProject', () {
     test('happy path — state becomes AsyncData', () async {
-      final c = _makeContainer(fakeService);
+      final c = _makeContainer(fakeService).container;
       await c.read(projectSidebarActionsProvider.notifier).removeProject('id-1');
       expect(c.read(projectSidebarActionsProvider), isA<AsyncData<void>>());
     });
@@ -115,10 +128,38 @@ void main() {
     test('exception → ProjectSidebarUnknownError', () async {
       fakeService.throwOnRemove(Exception('storage boom'));
 
-      final c = _makeContainer(fakeService);
+      final c = _makeContainer(fakeService).container;
       await c.read(projectSidebarActionsProvider.notifier).removeProject('id-1');
 
       expect(c.read(projectSidebarActionsProvider).error, isA<ProjectSidebarUnknownError>());
+    });
+
+    test('deleteSessions=true → calls deleteSessionsByProject', () async {
+      final harness = _makeContainer(fakeService);
+      await harness.container.read(projectSidebarActionsProvider.notifier).removeProject('id-1', deleteSessions: true);
+      expect(harness.sessions.deleteSessionsByProjectCalls, ['id-1']);
+    });
+
+    test('removing active project clears active session and project', () async {
+      final harness = _makeContainer(fakeService);
+      harness.container.read(activeProjectIdProvider.notifier).set('id-1');
+      harness.container.read(activeSessionIdProvider.notifier).set('s1');
+
+      await harness.container.read(projectSidebarActionsProvider.notifier).removeProject('id-1');
+
+      expect(harness.container.read(activeProjectIdProvider), isNull);
+      expect(harness.container.read(activeSessionIdProvider), isNull);
+    });
+
+    test('removing non-active project leaves active state intact', () async {
+      final harness = _makeContainer(fakeService);
+      harness.container.read(activeProjectIdProvider.notifier).set('id-active');
+      harness.container.read(activeSessionIdProvider.notifier).set('s-active');
+
+      await harness.container.read(projectSidebarActionsProvider.notifier).removeProject('id-other');
+
+      expect(harness.container.read(activeProjectIdProvider), 'id-active');
+      expect(harness.container.read(activeSessionIdProvider), 's-active');
     });
   });
 }
