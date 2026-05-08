@@ -28,36 +28,28 @@ class RemoveProjectDialog extends ConsumerStatefulWidget {
 }
 
 class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
-  bool _submitting = false;
   late final Future<({int active, int archived})> _countsFuture = ref
       .read(projectSidebarActionsProvider.notifier)
       .fetchSessionCounts(widget.project.id);
 
   Future<void> _submit() async {
-    setState(() => _submitting = true);
-    try {
-      await ref.read(projectSidebarActionsProvider.notifier).removeProject(widget.project.id, deleteSessions: true);
-      if (!mounted) return;
-      if (ref.read(projectSidebarActionsProvider).hasError) return;
-      Navigator.of(context).pop(true);
-      if (ref.read(activeSessionIdProvider) == null && context.mounted) {
-        context.go('/chat');
-      }
-    } finally {
-      if (mounted) setState(() => _submitting = false);
+    final priorActiveSessionId = ref.read(activeSessionIdProvider);
+    await ref.read(projectSidebarActionsProvider.notifier).removeProject(widget.project.id, deleteSessions: true);
+    if (!mounted) return;
+    final actionState = ref.read(projectSidebarActionsProvider);
+    if (actionState.hasError && actionState.error is ProjectSidebarFailure) {
+      AppSnackBar.show(context, 'Failed to remove project — please try again.', type: AppSnackBarType.error);
+      return;
+    }
+    Navigator.of(context).pop(true);
+    if (priorActiveSessionId != null && ref.read(activeSessionIdProvider) == null && context.mounted) {
+      context.go('/chat');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(projectSidebarActionsProvider, (_, next) {
-      if (!_submitting) return;
-      if (next is! AsyncError || !mounted) return;
-      final failure = next.error;
-      if (failure is! ProjectSidebarFailure) return;
-      AppSnackBar.show(context, 'Failed to remove project — please try again.', type: AppSnackBarType.error);
-    });
-
+    final isSubmitting = ref.watch(projectSidebarActionsProvider).isLoading;
     final isMissing = widget.project.status == ProjectStatus.missing;
     return AppDialog(
       icon: AppIcons.trash,
@@ -102,10 +94,10 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
         },
       ),
       actions: [
-        AppDialogAction.cancel(onPressed: _submitting ? () {} : () => Navigator.of(context).pop(false)),
+        AppDialogAction.cancel(onPressed: isSubmitting ? () {} : () => Navigator.of(context).pop(false)),
         AppDialogAction.destructive(
-          label: _submitting ? 'Removing…' : 'Remove',
-          onPressed: _submitting ? () {} : _submit,
+          label: isSubmitting ? 'Removing…' : 'Remove',
+          onPressed: isSubmitting ? () {} : _submit,
         ),
       ],
     );

@@ -29,6 +29,10 @@ class SessionRepositoryImpl implements SessionRepository {
   Stream<List<ChatSession>> watchArchivedSessions() => _ds.watchArchivedSessions();
 
   @override
+  Stream<List<ChatSession>> watchArchivedSessionsByProject(String projectId) =>
+      _ds.watchArchivedSessionsByProject(projectId);
+
+  @override
   Future<ChatSession?> getSession(String sessionId) => _ds.getSession(sessionId);
 
   @override
@@ -85,4 +89,11 @@ class SessionRepositoryImpl implements SessionRepository {
 
   @override
   Future<void> deleteSessionsByProject(String projectId) => _ds.deleteSessionsByProject(projectId);
+
+  @override
+  Future<List<String>> archiveActiveSessionsByProject(String projectId) =>
+      _ds.archiveActiveSessionsByProject(projectId);
+
+  @override
+  Future<List<String>> deleteActiveSessionsByProject(String projectId) => _ds.deleteActiveSessionsByProject(projectId);
 }

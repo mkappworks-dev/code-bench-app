@@ -6,6 +6,7 @@ abstract interface class SessionRepository {
   Stream<List<ChatSession>> watchAllSessions();
   Stream<List<ChatSession>> watchSessionsByProject(String projectId);
   Stream<List<ChatSession>> watchArchivedSessions();
+  Stream<List<ChatSession>> watchArchivedSessionsByProject(String projectId);
   Future<ChatSession?> getSession(String sessionId);
   Future<String> createSession({required AIModel model, String? title, String? projectId});
   Future<void> updateSessionTitle(String sessionId, String title);
@@ -32,4 +33,13 @@ abstract interface class SessionRepository {
   /// Deletes every session for [projectId] — archived AND active — and their
   /// messages in one transaction. Used during project removal.
   Future<void> deleteSessionsByProject(String projectId);
+
+  /// Archives every active session for [projectId] in one transaction.
+  /// Returns the IDs of the sessions that were archived.
+  Future<List<String>> archiveActiveSessionsByProject(String projectId);
+
+  /// Permanently deletes every active session for [projectId] (and their
+  /// messages) in one transaction. Returns the IDs of the sessions that were
+  /// deleted. Archived sessions are left untouched.
+  Future<List<String>> deleteActiveSessionsByProject(String projectId);
 }
