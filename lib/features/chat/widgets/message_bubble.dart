@@ -249,6 +249,7 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
                       padding: const EdgeInsets.only(bottom: 4),
                       child: ToolCallRow(
                         event: event,
+                        providerId: message.providerId,
                         providerLabel: providerLabelFor(message.providerId),
                         modelLabel: message.modelId,
                       ),

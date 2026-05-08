@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/brand_color_for.dart';
 import '../../../data/session/models/tool_event.dart';
 
 /// A compact, expandable card that renders a single agent tool-use event
@@ -8,8 +9,9 @@ import '../../../data/session/models/tool_event.dart';
 /// argument, status, duration, and token counts. Expanding reveals the full
 /// input map and (truncated) output.
 class ToolCallRow extends StatefulWidget {
-  const ToolCallRow({super.key, required this.event, this.providerLabel, this.modelLabel});
+  const ToolCallRow({super.key, required this.event, this.providerId, this.providerLabel, this.modelLabel});
   final ToolEvent event;
+  final String? providerId;
   final String? providerLabel;
   final String? modelLabel;
 
@@ -86,11 +88,15 @@ class _ToolCallRowState extends State<ToolCallRow> {
                 ),
                 if (widget.providerLabel != null) ...[
                   const SizedBox(width: 8),
-                  _BadgeChip(label: widget.providerLabel!, color: c.accent),
+                  _BadgeChip(
+                    label: widget.providerLabel!,
+                    color: brandColorFor(widget.providerId, c),
+                    style: _BadgeStyle.brand,
+                  ),
                 ],
                 if (widget.modelLabel != null) ...[
                   const SizedBox(width: 4),
-                  _BadgeChip(label: widget.modelLabel!, color: c.accent),
+                  _BadgeChip(label: widget.modelLabel!, color: c.textSecondary, style: _BadgeStyle.neutral),
                 ],
                 if (arg.isNotEmpty) ...[
                   const SizedBox(width: 6),
@@ -214,21 +220,47 @@ class _ToolCallRowState extends State<ToolCallRow> {
   }
 }
 
+enum _BadgeStyle { brand, neutral }
+
 class _BadgeChip extends StatelessWidget {
-  const _BadgeChip({required this.label, required this.color});
+  const _BadgeChip({required this.label, required this.color, required this.style});
   final String label;
   final Color color;
+  final _BadgeStyle style;
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    if (style == _BadgeStyle.brand) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(color: color.withValues(alpha: 0.35), width: 0.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 5),
+            Text(label, style: TextStyle(fontSize: 10, color: color, letterSpacing: 0.3)),
+          ],
+        ),
+      );
+    }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
+        color: c.chipFill,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: c.chipStroke, width: 0.5),
       ),
-      child: Text(label, style: TextStyle(fontSize: 10, color: color, letterSpacing: 0.3)),
+      child: Text(label, style: TextStyle(fontSize: 10, color: c.textSecondary, letterSpacing: 0.3)),
     );
   }
 }
