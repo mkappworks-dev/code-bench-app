@@ -567,6 +567,7 @@ class _ApplyCardLoaderState extends ConsumerState<_ApplyCardLoader> {
   ApplyCardState _cardState = ApplyCardState.ready;
   String? _errorMessage;
   String _oldPreview = '';
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -575,12 +576,14 @@ class _ApplyCardLoaderState extends ConsumerState<_ApplyCardLoader> {
   }
 
   Future<void> _loadOldContent() async {
+    final generation = ++_loadGeneration;
     final project = ref.read(activeProjectProvider);
     final filename = widget.codeBlock.filename;
     if (project == null || filename == null) return;
     final content = await ref.read(codeApplyActionsProvider.notifier).readFileContent(filename, project.path);
-    if (!mounted) return;
-    setState(() => _oldPreview = content ?? '');
+    if (mounted && _loadGeneration == generation) {
+      setState(() => _oldPreview = content ?? '');
+    }
   }
 
   Future<void> _apply() async {
