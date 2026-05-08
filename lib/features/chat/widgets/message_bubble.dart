@@ -18,6 +18,7 @@ import '../notifiers/chat_messages_failure.dart';
 import '../notifiers/chat_notifier.dart';
 import '../notifiers/dropped_settings_notifier.dart';
 import '../../../core/constants/app_icons.dart';
+import '../utils/tool_phase_classifier.dart';
 import 'ask_user_question_card.dart';
 import 'code_block_widget.dart';
 import 'iteration_cap_banner.dart';
@@ -25,6 +26,7 @@ import 'permission_request_card.dart';
 import 'provider_label.dart';
 import 'streaming_dot.dart';
 import 'tool_call_row.dart';
+import 'tool_phase_pill.dart';
 import 'work_log_section.dart';
 
 export 'code_block_widget.dart' show CodeBlockBuilder;
@@ -254,6 +256,14 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
                   const SizedBox(height: 8),
               ],
               _MessageContent(message: message),
+              if (message.isStreaming) ...[
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: [for (final p in _activePhases(message)) ToolPhasePill(phase: p.phase, label: p.label)],
+                ),
+              ],
               _DroppedSettingsNotice(messageId: message.id),
               _AssistantActionRow(message: message),
               if (message.iterationCapReached) ...[
@@ -537,3 +547,30 @@ class _SkeletonLinesState extends State<_SkeletonLines> with SingleTickerProvide
     ),
   );
 }
+
+List<({PhaseClass phase, String label})> _activePhases(ChatMessage m) {
+  if (!m.isStreaming) return const [];
+  final out = <({PhaseClass phase, String label})>[];
+  final running = m.toolEvents.where((e) => e.status == ToolStatus.running).toList();
+  for (final e in running) {
+    out.add((phase: classifyTool(e.toolName, null), label: _phaseLabelFor(e)));
+  }
+  if (running.isEmpty) {
+    out.add((phase: PhaseClass.think, label: 'thinking'));
+  }
+  return out;
+}
+
+String _phaseLabelFor(ToolEvent e) {
+  return switch (e.toolName.toLowerCase()) {
+    'bash' => 'running ${_truncate(e.input["command"]?.toString() ?? "command", 24)}',
+    'web_fetch' || 'webfetch' => 'fetching url',
+    'read' || 'read_file' => 'reading ${_truncate(e.filePath ?? "file", 32)}',
+    'write' || 'write_file' || 'edit' || 'str_replace' => 'editing ${_truncate(e.filePath ?? "file", 32)}',
+    'glob' => 'finding files',
+    'grep' => 'searching',
+    _ => 'running ${e.toolName}',
+  };
+}
+
+String _truncate(String s, int n) => s.length <= n ? s : '${s.substring(0, n)}…';
