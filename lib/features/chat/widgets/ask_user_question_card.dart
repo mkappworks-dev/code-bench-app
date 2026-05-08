@@ -112,7 +112,11 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
           ],
           Text(
             widget.question.question,
-            style: TextStyle(color: c.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              color: c.textPrimary,
+              fontSize: ThemeConstants.editorFontSize,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 12),
           if (widget.question.options.isNotEmpty)
@@ -131,11 +135,11 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'Or describe your own approach…',
-                hintStyle: TextStyle(color: c.mutedFg, fontSize: 11),
+                hintStyle: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
                 isDense: true,
                 border: const OutlineInputBorder(),
               ),
-              style: TextStyle(color: c.textPrimary, fontSize: 12),
+              style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
               maxLines: 3,
               minLines: 1,
             ),
@@ -206,11 +210,19 @@ class _StepHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '${currentStep + 1} / $totalSteps',
-          style: TextStyle(color: c.textMuted, fontSize: 9, letterSpacing: 1, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: c.textMuted,
+            fontSize: ThemeConstants.uiFontSizeBadge,
+            letterSpacing: 1,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const Spacer(),
         if (sectionLabel != null)
-          Text(sectionLabel!, style: TextStyle(color: c.dimFg, fontSize: 9, letterSpacing: 0.5)),
+          Text(
+            sectionLabel!,
+            style: TextStyle(color: c.dimFg, fontSize: ThemeConstants.uiFontSizeBadge, letterSpacing: 0.5),
+          ),
       ],
     );
   }
@@ -252,7 +264,7 @@ class _OptionRow extends StatelessWidget {
                   '${index + 1}',
                   style: TextStyle(
                     color: isSelected ? Colors.white : c.dimFg,
-                    fontSize: 10,
+                    fontSize: ThemeConstants.uiFontSizeLabel,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -260,7 +272,13 @@ class _OptionRow extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(label, style: TextStyle(color: isSelected ? c.textPrimary : c.textSecondary, fontSize: 12)),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? c.textPrimary : c.textSecondary,
+                  fontSize: ThemeConstants.uiFontSize,
+                ),
+              ),
             ),
           ],
         ),
