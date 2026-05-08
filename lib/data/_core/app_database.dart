@@ -147,6 +147,21 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
       await delete(chatSessions).go();
     });
   }
+
+  /// Deletes every session belonging to [projectId] (archived AND active) and
+  /// their messages, in a single transaction so a mid-call failure leaves no
+  /// orphans. Used by `removeProject` to fully clean up before the project row
+  /// itself is dropped.
+  Future<void> deleteSessionsByProject(String projectId) async {
+    await transaction(() async {
+      final ids = await ((select(
+        chatSessions,
+      )..where((t) => t.projectId.equals(projectId))).map((row) => row.sessionId)).get();
+      if (ids.isEmpty) return;
+      await (delete(chatMessages)..where((t) => t.sessionId.isIn(ids))).go();
+      await (delete(chatSessions)..where((t) => t.projectId.equals(projectId))).go();
+    });
+  }
 }
 
 @DriftAccessor(tables: [WorkspaceProjects])

@@ -101,6 +101,7 @@ class SessionService {
       _session.loadHistory(sessionId, limit: limit, offset: offset);
   Future<void> persistMessage(String sessionId, ChatMessage message) => _session.persistMessage(sessionId, message);
   Future<List<ChatSession>> getSessionsByProject(String projectId) => _session.getSessionsByProject(projectId);
+  Future<void> deleteSessionsByProject(String projectId) => _session.deleteSessionsByProject(projectId);
 
   ({String? providerId, String? modelId}) _attribution({AIModel? model, String? cliProviderId, String? cliModelId}) {
     if (cliProviderId != null) return (providerId: cliProviderId, modelId: cliModelId);

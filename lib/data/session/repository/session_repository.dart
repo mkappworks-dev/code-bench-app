@@ -28,4 +28,8 @@ abstract interface class SessionRepository {
 
   /// One-shot fetch of all non-archived sessions for [projectId].
   Future<List<ChatSession>> getSessionsByProject(String projectId);
+
+  /// Deletes every session for [projectId] — archived AND active — and their
+  /// messages in one transaction. Used during project removal.
+  Future<void> deleteSessionsByProject(String projectId);
 }

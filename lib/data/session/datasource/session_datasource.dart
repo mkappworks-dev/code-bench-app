@@ -20,6 +20,7 @@ abstract interface class SessionDatasource {
   Future<void> archiveSession(String sessionId);
   Future<void> unarchiveSession(String sessionId);
   Future<void> deleteAllSessionsAndMessages();
+  Future<void> deleteSessionsByProject(String projectId);
   Future<List<msg.ChatMessage>> loadHistory(String sessionId, {int limit, int offset});
   Future<void> persistMessage(String sessionId, msg.ChatMessage message);
   Future<void> deleteMessage(String sessionId, String messageId);

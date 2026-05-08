@@ -82,4 +82,7 @@ class SessionRepositoryImpl implements SessionRepository {
 
   @override
   Future<List<ChatSession>> getSessionsByProject(String projectId) => watchSessionsByProject(projectId).first;
+
+  @override
+  Future<void> deleteSessionsByProject(String projectId) => _ds.deleteSessionsByProject(projectId);
 }

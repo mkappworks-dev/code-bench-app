@@ -115,6 +115,9 @@ class SessionDatasourceDrift implements SessionDatasource {
   Future<void> deleteAllSessionsAndMessages() => _db.sessionDao.deleteAllSessionsAndMessages();
 
   @override
+  Future<void> deleteSessionsByProject(String projectId) => _db.sessionDao.deleteSessionsByProject(projectId);
+
+  @override
   Future<List<msg.ChatMessage>> loadHistory(String sessionId, {int limit = 50, int offset = 0}) async {
     final rows = await _db.sessionDao.getMessages(sessionId, limit: limit, offset: offset);
     return rows.map(_messageFromRow).toList();
