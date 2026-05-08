@@ -1,0 +1,82 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/app_snack_bar.dart';
+import '../../../data/project/models/project.dart';
+import '../../chat/notifiers/chat_notifier.dart';
+import '../notifiers/project_sidebar_actions.dart';
+import '../notifiers/project_sidebar_failure.dart';
+
+class ArchiveAllConversationsDialog extends ConsumerStatefulWidget {
+  const ArchiveAllConversationsDialog({super.key, required this.project});
+
+  final Project project;
+
+  static Future<bool?> show(BuildContext context, Project project) {
+    return showDialog<bool>(
+      context: context,
+      builder: (_) => ArchiveAllConversationsDialog(project: project),
+    );
+  }
+
+  @override
+  ConsumerState<ArchiveAllConversationsDialog> createState() => _ArchiveAllConversationsDialogState();
+}
+
+class _ArchiveAllConversationsDialogState extends ConsumerState<ArchiveAllConversationsDialog> {
+  bool _submitting = false;
+
+  Future<void> _submit() async {
+    setState(() => _submitting = true);
+    try {
+      await ref.read(projectSidebarActionsProvider.notifier).archiveAllSessionsForProject(widget.project.id);
+      if (!mounted) return;
+      if (ref.read(projectSidebarActionsProvider).hasError) return;
+      Navigator.of(context).pop(true);
+      if (ref.read(activeSessionIdProvider) == null && context.mounted) {
+        context.go('/chat');
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(projectSidebarActionsProvider, (_, next) {
+      if (!_submitting) return;
+      if (next is! AsyncError || !mounted) return;
+      final failure = next.error;
+      if (failure is! ProjectSidebarFailure) return;
+      AppSnackBar.show(context, 'Failed to archive conversations — please try again.', type: AppSnackBarType.error);
+    });
+
+    return AppDialog(
+      icon: AppIcons.archive,
+      iconType: AppDialogIconType.teal,
+      title: 'Archive all conversations for "${widget.project.name}"?',
+      maxWidth: 480,
+      content: Builder(
+        builder: (context) {
+          final c = AppColors.of(context);
+          return Text(
+            'All active conversations for this project will be moved to the archive. '
+            'You can restore them from the archive at any time.',
+            style: TextStyle(color: c.mutedFg, fontSize: 11),
+          );
+        },
+      ),
+      actions: [
+        AppDialogAction.cancel(onPressed: _submitting ? () {} : () => Navigator.of(context).pop(false)),
+        AppDialogAction.primary(
+          label: _submitting ? 'Archiving…' : 'Archive all',
+          onPressed: _submitting ? null : _submit,
+        ),
+      ],
+    );
+  }
+}
