@@ -13,8 +13,7 @@ class AgentUserInputRequestNotifier extends _$AgentUserInputRequestNotifier {
   @override
   ProviderUserInputRequest? build() => null;
 
-  /// Stores the request and returns a future that resolves when the user
-  /// answers (string) or cancels (null).
+  /// Returns a future that resolves with the answer string, or null on cancel.
   Future<String?> requestAndAwait(ProviderUserInputRequest req) {
     _pending?.complete(null); // implicitly cancel any prior pending
     _pending = Completer<String?>();
