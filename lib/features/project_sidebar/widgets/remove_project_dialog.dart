@@ -29,6 +29,9 @@ class RemoveProjectDialog extends ConsumerStatefulWidget {
 
 class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
   bool _submitting = false;
+  late final Future<({int active, int archived})> _countsFuture = ref
+      .read(projectSidebarActionsProvider.notifier)
+      .fetchSessionCounts(widget.project.id);
 
   Future<void> _submit() async {
     setState(() => _submitting = true);
@@ -64,13 +67,37 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
       content: Builder(
         builder: (context) {
           final c = AppColors.of(context);
-          return Text(
-            isMissing
-                ? 'This project folder is already missing from disk. '
-                      'Removing it will delete the entry and all linked conversations from Code Bench.'
-                : 'This will remove the project and all linked conversations from Code Bench. '
-                      'The folder on disk will NOT be deleted.',
-            style: TextStyle(color: c.mutedFg, fontSize: 11),
+          if (isMissing) {
+            return Text(
+              'This project folder is already missing from disk. '
+              'Removing it will delete the entry and all linked conversations from Code Bench.',
+              style: TextStyle(color: c.mutedFg, fontSize: 11),
+            );
+          }
+          return FutureBuilder<({int active, int archived})>(
+            future: _countsFuture,
+            builder: (_, snap) {
+              final counts = snap.data;
+              final String sessionLine;
+              if (counts == null) {
+                sessionLine = 'All linked conversations will be permanently deleted.';
+              } else if (counts.active == 0 && counts.archived == 0) {
+                sessionLine = 'This project has no conversations.';
+              } else {
+                final parts = <String>[];
+                if (counts.active > 0) {
+                  parts.add('${counts.active} active ${counts.active == 1 ? 'conversation' : 'conversations'}');
+                }
+                if (counts.archived > 0) {
+                  parts.add('${counts.archived} archived ${counts.archived == 1 ? 'conversation' : 'conversations'}');
+                }
+                sessionLine = '${parts.join(' and ')} will be permanently deleted.';
+              }
+              return Text(
+                '$sessionLine The folder on disk will NOT be deleted.',
+                style: TextStyle(color: c.mutedFg, fontSize: 11),
+              );
+            },
           );
         },
       ),

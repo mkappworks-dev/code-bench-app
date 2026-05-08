@@ -302,6 +302,19 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     }
   }
 
+  Future<({int active, int archived})> fetchSessionCounts(String projectId) async {
+    try {
+      final svc = await _sessions;
+      final active = await svc.getSessionsByProject(projectId);
+      final allArchived = await svc.watchArchivedSessions().first;
+      final archived = allArchived.where((s) => s.projectId == projectId).length;
+      return (active: active.length, archived: archived);
+    } catch (e) {
+      dLog('[ProjectSidebarActions] fetchSessionCounts failed: $e');
+      return (active: 0, archived: 0);
+    }
+  }
+
   Future<List<ChatSession>> getSessionsByProject(String projectId) async {
     state = const AsyncLoading();
     late List<ChatSession> sessions;
