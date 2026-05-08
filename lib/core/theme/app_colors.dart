@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:re_highlight/languages/json.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
+import 'package:re_highlight/styles/tokyo-night-light.dart';
+import 'package:re_highlight/styles/tokyo-night-dark.dart';
 
 /// All colour tokens for Code Bench.
 ///
@@ -282,7 +282,7 @@ class AppColors extends ThemeExtension<AppColors> {
     final isDark = ThemeData.estimateBrightnessForColor(background) == Brightness.dark;
     return CodeHighlightTheme(
       languages: {'json': CodeHighlightThemeMode(mode: langJson)},
-      theme: isDark ? atomOneDarkTheme : atomOneLightTheme,
+      theme: isDark ? tokyoNightDarkTheme : tokyoNightLightTheme,
     );
   }
 
@@ -315,7 +315,7 @@ class AppColors extends ThemeExtension<AppColors> {
     info: Color(0xFF4FC1FF),
     userMessageBg: Color(0xFF1E1E1E),
     assistantMessageBg: Color(0xFF141414),
-    codeBlockBg: Color(0xFF0D1117),
+    codeBlockBg: Color(0xFF0B0E14),
     syntaxKeyword: Color(0xFF569CD6),
     syntaxString: Color(0xFFCE9178),
     syntaxComment: Color(0xFF6A9955),
@@ -416,7 +416,7 @@ class AppColors extends ThemeExtension<AppColors> {
     scrimColor: Color(0x99000000),
     switchTrackUnselected: Color(0x1FFFFFFF),
     switchTrackOutline: Color(0x2EFFFFFF),
-    jsonEditorBg: Color(0xFF0D1117),
+    jsonEditorBg: Color(0xFF0B0E14),
     brandAnthropic: Color(0xFFD97757),
     brandOpenAI: Color(0xFF10A37F),
     brandGemini: Color(0xFF4285F4),
@@ -450,7 +450,7 @@ class AppColors extends ThemeExtension<AppColors> {
     info: Color(0xFF4FC1FF),
     userMessageBg: Color(0xFF1E1E1E),
     assistantMessageBg: Color(0xFF141414),
-    codeBlockBg: Color(0xFF0D1117),
+    codeBlockBg: Color(0xFFFAFAFA),
     syntaxKeyword: Color(0xFF569CD6),
     syntaxString: Color(0xFFCE9178),
     syntaxComment: Color(0xFF6A9955),
@@ -550,7 +550,7 @@ class AppColors extends ThemeExtension<AppColors> {
     scrimColor: Color(0x33000000),
     switchTrackUnselected: Color(0xFF8C96A0),
     switchTrackOutline: Color(0xFF7A8490),
-    jsonEditorBg: Color(0xFFF5F5F5),
+    jsonEditorBg: Color(0xFFFAFAFA),
     brandAnthropic: Color(0xFFD97757),
     brandOpenAI: Color(0xFF10A37F),
     brandGemini: Color(0xFF4285F4),
