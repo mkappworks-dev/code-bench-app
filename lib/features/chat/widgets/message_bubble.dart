@@ -12,13 +12,17 @@ import '../../../core/utils/snackbar_helper.dart';
 import '../../../data/ai/models/provider_setting_drop.dart';
 import '../../../data/session/models/tool_event.dart';
 import '../../../data/shared/chat_message.dart';
+import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/ask_question_notifier.dart';
 import '../notifiers/chat_messages_actions.dart';
 import '../notifiers/chat_messages_failure.dart';
 import '../notifiers/chat_notifier.dart';
+import '../notifiers/code_apply_actions.dart';
+import '../notifiers/code_apply_failure.dart';
 import '../notifiers/dropped_settings_notifier.dart';
 import '../../../core/constants/app_icons.dart';
 import '../utils/tool_phase_classifier.dart';
+import 'apply_diff_card.dart';
 import 'ask_user_question_card.dart';
 import 'code_block_widget.dart';
 import 'iteration_cap_banner.dart';
@@ -546,6 +550,105 @@ class _SkeletonLinesState extends State<_SkeletonLines> with SingleTickerProvide
       decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
     ),
   );
+}
+
+class _ApplyCardLoader extends ConsumerStatefulWidget {
+  const _ApplyCardLoader({required this.codeBlock, required this.sessionId, required this.messageId});
+
+  final CodeBlock codeBlock;
+  final String sessionId;
+  final String messageId;
+
+  @override
+  ConsumerState<_ApplyCardLoader> createState() => _ApplyCardLoaderState();
+}
+
+class _ApplyCardLoaderState extends ConsumerState<_ApplyCardLoader> {
+  ApplyCardState _cardState = ApplyCardState.ready;
+  String? _errorMessage;
+  String _oldPreview = '';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadOldContent());
+  }
+
+  Future<void> _loadOldContent() async {
+    final project = ref.read(activeProjectProvider);
+    final filename = widget.codeBlock.filename;
+    if (project == null || filename == null) return;
+    final content = await ref.read(codeApplyActionsProvider.notifier).readFileContent(filename, project.path);
+    if (!mounted) return;
+    setState(() => _oldPreview = content ?? '');
+  }
+
+  Future<void> _apply() async {
+    final project = ref.read(activeProjectProvider);
+    final filename = widget.codeBlock.filename;
+    if (project == null || filename == null) return;
+
+    await ref
+        .read(codeApplyActionsProvider.notifier)
+        .applyChange(
+          projectId: project.id,
+          filePath: filename,
+          projectPath: project.path,
+          newContent: widget.codeBlock.code,
+          sessionId: widget.sessionId,
+          messageId: widget.messageId,
+        );
+    if (!mounted) return;
+    final applyState = ref.read(codeApplyActionsProvider);
+    if (applyState.hasError) {
+      final failure = applyState.error;
+      final message = failure is CodeApplyFailure
+          ? switch (failure) {
+              CodeApplyProjectMissing() => 'Project folder is missing.',
+              CodeApplyOutsideProject() => 'File is outside the current project.',
+              CodeApplyDiskWrite(:final message) => 'Disk write failed: $message',
+              CodeApplyTooLarge(:final bytes) => 'Content too large ($bytes bytes).',
+              CodeApplyGitRevert() => 'Git revert failed.',
+              CodeApplyContentChanged() => 'File was modified externally.',
+              CodeApplyUnknownError() => 'Unable to apply change.',
+            }
+          : 'Unable to apply change.';
+      setState(() {
+        _cardState = ApplyCardState.failed;
+        _errorMessage = message;
+      });
+    } else {
+      setState(() => _cardState = ApplyCardState.applied);
+    }
+  }
+
+  void _reDiff() {
+    setState(() {
+      _cardState = ApplyCardState.ready;
+      _errorMessage = null;
+    });
+    _loadOldContent();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final block = widget.codeBlock;
+    final oldLines = _oldPreview.split('\n').where((l) => l.isNotEmpty).length;
+    final newLines = block.code.split('\n').where((l) => l.isNotEmpty).length;
+
+    return ApplyDiffCard(
+      filename: block.filename ?? '',
+      language: block.language ?? 'plaintext',
+      newCode: block.code,
+      oldPreview: _oldPreview,
+      additions: newLines,
+      deletions: oldLines,
+      state: _cardState,
+      errorMessage: _errorMessage,
+      onApply: _cardState == ApplyCardState.ready ? _apply : null,
+      onReDiff: _cardState == ApplyCardState.failed ? _reDiff : null,
+    );
+  }
 }
 
 List<({PhaseClass phase, String label})> _activePhases(ChatMessage m) {
