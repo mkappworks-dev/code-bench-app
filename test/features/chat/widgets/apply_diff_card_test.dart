@@ -1,5 +1,6 @@
 import 'package:code_bench_app/core/theme/app_theme.dart';
 import 'package:code_bench_app/features/chat/widgets/apply_diff_card.dart';
+import 'package:code_bench_app/features/chat/widgets/diff_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,6 +29,7 @@ void main() {
     );
     expect(find.text('Apply'), findsOneWidget);
     expect(find.text('chat_notifier.dart'), findsOneWidget);
+    expect(find.byType(DiffBody), findsOneWidget);
   });
 
   testWidgets('applied state shows applied pill, no Apply button', (tester) async {

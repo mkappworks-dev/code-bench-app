@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
+import 'diff_body.dart';
 
 enum ApplyCardState { ready, applied, failed }
 
@@ -41,7 +42,6 @@ class ApplyDiffCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = AppColors.of(context);
     final isFailed = state == ApplyCardState.failed;
-    final isApplied = state == ApplyCardState.applied;
 
     final accentColor = isFailed ? c.error : c.borderColor;
 
@@ -66,7 +66,11 @@ class ApplyDiffCard extends ConsumerWidget {
             onOpenInEditor: onOpenInEditor,
           ),
           if (isFailed && errorMessage != null) _ErrorBanner(message: errorMessage!),
-          if (!isFailed) _Body(oldPreview: oldPreview, newCode: newCode, applied: isApplied),
+          if (!isFailed)
+            Opacity(
+              opacity: state == ApplyCardState.applied ? 0.75 : 1.0,
+              child: DiffBody(diffText: _buildDiffText(oldPreview, newCode)),
+            ),
         ],
       ),
     );
@@ -251,63 +255,13 @@ class _ErrorBanner extends StatelessWidget {
   }
 }
 
-class _Body extends StatelessWidget {
-  const _Body({required this.oldPreview, required this.newCode, required this.applied});
-  final String oldPreview;
-  final String newCode;
-  final bool applied;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    final lines = <Widget>[];
-
-    for (final line in oldPreview.split('\n')) {
-      if (line.isEmpty) continue;
-      lines.add(
-        Container(
-          color: c.diffDeletionBg,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
-          child: Text(
-            '- $line',
-            style: TextStyle(
-              fontFamily: ThemeConstants.editorFontFamily,
-              fontSize: ThemeConstants.uiFontSizeSmall,
-              color: c.diffDel,
-              height: 1.5,
-            ),
-          ),
-        ),
-      );
-    }
-
-    for (final line in newCode.split('\n')) {
-      if (line.isEmpty) continue;
-      lines.add(
-        Container(
-          color: c.diffAdditionBg,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
-          child: Text(
-            '+ $line',
-            style: TextStyle(
-              fontFamily: ThemeConstants.editorFontFamily,
-              fontSize: ThemeConstants.uiFontSizeSmall,
-              color: c.diffAdd,
-              height: 1.5,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Opacity(
-      opacity: applied ? 0.75 : 1.0,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 200),
-        child: SingleChildScrollView(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: lines),
-        ),
-      ),
-    );
+String _buildDiffText(String oldPreview, String newCode) {
+  final buffer = StringBuffer();
+  for (final line in oldPreview.split('\n')) {
+    if (line.isNotEmpty) buffer.writeln('-$line');
   }
+  for (final line in newCode.split('\n')) {
+    if (line.isNotEmpty) buffer.writeln('+$line');
+  }
+  return buffer.toString();
 }
