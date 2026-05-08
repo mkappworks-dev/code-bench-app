@@ -103,19 +103,21 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
   }
 
   /// Removes the project from Code Bench. If [deleteSessions] is true, all
-  /// conversations linked to the project are deleted first.
+  /// sessions linked to the project (archived AND active) are deleted first.
+  /// When the active project is being removed, also clears the active session
+  /// and project ids so the chat view falls back to its empty state.
   Future<void> removeProject(String id, {bool deleteSessions = false}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
         if (deleteSessions) {
-          final repo = await _sessions;
-          final sessions = await repo.getSessionsByProject(id);
-          for (final s in sessions) {
-            await repo.deleteSession(s.sessionId);
-          }
+          await (await _sessions).deleteSessionsByProject(id);
         }
         await _projects.removeProject(id);
+        if (ref.read(activeProjectIdProvider) == id) {
+          ref.read(activeSessionIdProvider.notifier).set(null);
+          ref.read(activeProjectIdProvider.notifier).set(null);
+        }
       } catch (e, st) {
         dLog('[ProjectSidebarActions] removeProject failed: $e');
         Error.throwWithStackTrace(_asFailure(e), st);
