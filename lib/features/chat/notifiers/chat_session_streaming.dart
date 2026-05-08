@@ -12,3 +12,9 @@ Stream<bool> chatSessionStreaming(Ref ref, String sessionId) {
       .watchState(sessionId)
       .map((s) => s is ChatStreamConnecting || s is ChatStreamStreaming || s is ChatStreamRetrying);
 }
+
+@riverpod
+Stream<bool> chatSessionFailed(Ref ref, String sessionId) {
+  final svc = ref.watch(chatStreamRegistryServiceProvider);
+  return svc.watchState(sessionId).map((s) => s is ChatStreamFailed);
+}

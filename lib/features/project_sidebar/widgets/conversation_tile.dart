@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
@@ -8,8 +9,12 @@ import '../../../core/utils/instant_menu.dart';
 import '../../../core/utils/relative_time.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../data/session/models/chat_session.dart';
+import '../../chat/notifiers/chat_session_streaming.dart';
+import '../../chat/notifiers/chat_notifier.dart';
+import '../../chat/utils/session_status_for.dart';
+import '../../chat/widgets/session_status_dot.dart';
 
-class ConversationTile extends StatelessWidget {
+class ConversationTile extends ConsumerWidget {
   const ConversationTile({
     super.key,
     required this.session,
@@ -27,7 +32,7 @@ class ConversationTile extends StatelessWidget {
   final VoidCallback? onArchive;
   final VoidCallback? onDelete;
 
-  Future<void> _showContextMenu(BuildContext context, Offset globalPosition) async {
+  Future<void> _showContextMenu(BuildContext context, WidgetRef ref, Offset globalPosition) async {
     final c = AppColors.of(context);
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final action = await showInstantMenu<String>(
@@ -121,10 +126,22 @@ class ConversationTile extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = AppColors.of(context);
+    final isStreaming = ref.watch(chatSessionStreamingProvider(session.sessionId)).value ?? false;
+    final isFailed = ref.watch(chatSessionFailedProvider(session.sessionId)).value ?? false;
+    final messages = ref.watch(chatMessagesProvider(session.sessionId)).value;
+    final lastMsg = messages?.lastOrNull;
+    final hasPendingPermission = lastMsg?.pendingPermissionRequest != null;
+    final hasPendingQuestion = lastMsg?.askQuestion != null;
+    final status = sessionStatusFor(
+      isStreaming: isStreaming,
+      hasPendingPermission: hasPendingPermission,
+      hasPendingQuestion: hasPendingQuestion,
+      lastTurnFailed: isFailed,
+    );
     return GestureDetector(
-      onSecondaryTapUp: (details) => unawaited(_showContextMenu(context, details.globalPosition)),
+      onSecondaryTapUp: (details) => unawaited(_showContextMenu(context, ref, details.globalPosition)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(5),
@@ -133,14 +150,8 @@ class ConversationTile extends StatelessWidget {
           decoration: BoxDecoration(color: isActive ? c.accentTintMid : null, borderRadius: BorderRadius.circular(5)),
           child: Row(
             children: [
-              // Status dot
-              Container(
-                width: 5,
-                height: 5,
-                decoration: BoxDecoration(color: isActive ? c.accent : Colors.transparent, shape: BoxShape.circle),
-              ),
+              SessionStatusDot(status: status),
               const SizedBox(width: 6),
-              // Title
               Expanded(
                 child: Text(
                   session.title,
@@ -151,7 +162,6 @@ class ConversationTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              // Time
               Text(
                 session.updatedAt.relativeTimeCompact,
                 style: TextStyle(color: c.faintFg, fontSize: ThemeConstants.uiFontSizeBadge),
