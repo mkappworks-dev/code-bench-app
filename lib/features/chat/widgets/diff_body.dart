@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 
 class DiffBody extends StatelessWidget {
@@ -72,7 +73,12 @@ class _DiffLine extends StatelessWidget {
             width: 14,
             child: Text(
               marker,
-              style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, color: markerColor, height: 1.5),
+              style: TextStyle(
+                fontFamily: ThemeConstants.editorFontFamily,
+                fontSize: ThemeConstants.uiFontSizeSmall,
+                color: markerColor,
+                height: 1.5,
+              ),
               textAlign: TextAlign.center,
             ),
           ),
@@ -80,7 +86,12 @@ class _DiffLine extends StatelessWidget {
           Expanded(
             child: Text(
               content,
-              style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, color: textColor, height: 1.5),
+              style: TextStyle(
+                fontFamily: ThemeConstants.editorFontFamily,
+                fontSize: ThemeConstants.uiFontSizeSmall,
+                color: textColor,
+                height: 1.5,
+              ),
             ),
           ),
         ],

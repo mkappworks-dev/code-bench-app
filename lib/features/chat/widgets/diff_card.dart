@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import 'diff_body.dart';
 
@@ -89,28 +90,36 @@ class _DiffHead extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             filename,
-            style: TextStyle(color: c.accent, fontSize: 11, fontWeight: FontWeight.w600, fontFamily: 'monospace'),
+            style: TextStyle(
+              color: c.accent,
+              fontSize: ThemeConstants.uiFontSizeSmall,
+              fontWeight: FontWeight.w600,
+              fontFamily: ThemeConstants.editorFontFamily,
+            ),
           ),
           const SizedBox(width: 8),
           Text(
             '+$additions',
-            style: const TextStyle(
-              color: Color(0xFFAAD94C),
-              fontSize: 10,
+            style: TextStyle(
+              color: const Color(0xFFAAD94C),
+              fontSize: ThemeConstants.uiFontSizeLabel,
               fontWeight: FontWeight.w600,
-              fontFamily: 'monospace',
+              fontFamily: ThemeConstants.editorFontFamily,
             ),
           ),
           const SizedBox(width: 4),
-          Text('·', style: TextStyle(color: c.textMuted, fontSize: 10)),
+          Text(
+            '·',
+            style: TextStyle(color: c.textMuted, fontSize: ThemeConstants.uiFontSizeLabel),
+          ),
           const SizedBox(width: 4),
           Text(
             '−$deletions',
-            style: const TextStyle(
-              color: Color(0xFFF07178),
-              fontSize: 10,
+            style: TextStyle(
+              color: const Color(0xFFF07178),
+              fontSize: ThemeConstants.uiFontSizeLabel,
               fontWeight: FontWeight.w600,
-              fontFamily: 'monospace',
+              fontFamily: ThemeConstants.editorFontFamily,
             ),
           ),
         ],
