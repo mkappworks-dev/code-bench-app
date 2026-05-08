@@ -214,6 +214,53 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     });
   }
 
+  /// Archives every active session for [projectId]. Mirrors [archiveSession]
+  /// for the active-id reset: if the currently active session is among the
+  /// affected ones, the active session id is cleared. Archived sessions for
+  /// the project are unaffected.
+  Future<void> archiveAllSessionsForProject(String projectId) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        final svc = await _sessions;
+        final sessions = await svc.getSessionsByProject(projectId);
+        final activeId = ref.read(activeSessionIdProvider);
+        for (final s in sessions) {
+          await svc.archiveSession(s.sessionId);
+        }
+        if (activeId != null && sessions.any((s) => s.sessionId == activeId)) {
+          ref.read(activeSessionIdProvider.notifier).set(null);
+        }
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] archiveAllSessionsForProject failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+
+  /// Permanently deletes every active session for [projectId]. Archived
+  /// sessions are unaffected. Clears the active session id when the active
+  /// session is among the deleted ones.
+  Future<void> deleteAllSessionsForProject(String projectId) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        final svc = await _sessions;
+        final sessions = await svc.getSessionsByProject(projectId);
+        final activeId = ref.read(activeSessionIdProvider);
+        for (final s in sessions) {
+          await svc.deleteSession(s.sessionId);
+        }
+        if (activeId != null && sessions.any((s) => s.sessionId == activeId)) {
+          ref.read(activeSessionIdProvider.notifier).set(null);
+        }
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] deleteAllSessionsForProject failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+
   Future<void> deleteSession(String id) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {

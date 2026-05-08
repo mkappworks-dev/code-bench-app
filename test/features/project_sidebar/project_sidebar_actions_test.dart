@@ -14,18 +14,25 @@ import 'package:code_bench_app/features/project_sidebar/notifiers/project_sideba
 
 class _FakeSessionService extends Fake implements SessionService {
   final List<String> deleteSessionsByProjectCalls = [];
+  final List<String> archiveCalls = [];
+  final List<String> deleteCalls = [];
+  final Map<String, List<ChatSession>> sessionsByProject = {};
 
   @override
   Future<String> createSession({required AIModel model, String? title, String? projectId}) async => 'fake-session';
 
   @override
-  Future<List<ChatSession>> getSessionsByProject(String projectId) async => const [];
+  Future<List<ChatSession>> getSessionsByProject(String projectId) async => sessionsByProject[projectId] ?? const [];
 
   @override
-  Future<void> deleteSession(String sessionId) async {}
+  Future<void> deleteSession(String sessionId) async {
+    deleteCalls.add(sessionId);
+  }
 
   @override
-  Future<void> archiveSession(String sessionId) async {}
+  Future<void> archiveSession(String sessionId) async {
+    archiveCalls.add(sessionId);
+  }
 
   @override
   Future<void> deleteSessionsByProject(String projectId) async {
@@ -160,6 +167,60 @@ void main() {
 
       expect(harness.container.read(activeProjectIdProvider), 'id-active');
       expect(harness.container.read(activeSessionIdProvider), 's-active');
+    });
+  });
+
+  group('bulk session actions', () {
+    ChatSession session(String id, {String project = 'p1'}) => ChatSession(
+      sessionId: id,
+      title: id,
+      modelId: 'm',
+      providerId: 'p',
+      projectId: project,
+      createdAt: DateTime(2024),
+      updatedAt: DateTime(2024),
+    );
+
+    test('archiveAllSessionsForProject — archives every session and clears active id when included', () async {
+      final harness = _makeContainer(fakeService);
+      harness.sessions.sessionsByProject['p1'] = [session('s1'), session('s2')];
+      harness.container.read(activeSessionIdProvider.notifier).set('s2');
+
+      await harness.container.read(projectSidebarActionsProvider.notifier).archiveAllSessionsForProject('p1');
+
+      expect(harness.sessions.archiveCalls, ['s1', 's2']);
+      expect(harness.container.read(activeSessionIdProvider), isNull);
+    });
+
+    test('archiveAllSessionsForProject — leaves unrelated active session intact', () async {
+      final harness = _makeContainer(fakeService);
+      harness.sessions.sessionsByProject['p1'] = [session('s1')];
+      harness.container.read(activeSessionIdProvider.notifier).set('elsewhere');
+
+      await harness.container.read(projectSidebarActionsProvider.notifier).archiveAllSessionsForProject('p1');
+
+      expect(harness.sessions.archiveCalls, ['s1']);
+      expect(harness.container.read(activeSessionIdProvider), 'elsewhere');
+    });
+
+    test('deleteAllSessionsForProject — deletes every session and clears active id when included', () async {
+      final harness = _makeContainer(fakeService);
+      harness.sessions.sessionsByProject['p1'] = [session('s1'), session('s2')];
+      harness.container.read(activeSessionIdProvider.notifier).set('s1');
+
+      await harness.container.read(projectSidebarActionsProvider.notifier).deleteAllSessionsForProject('p1');
+
+      expect(harness.sessions.deleteCalls, ['s1', 's2']);
+      expect(harness.container.read(activeSessionIdProvider), isNull);
+    });
+
+    test('deleteAllSessionsForProject — empty session list short-circuits', () async {
+      final harness = _makeContainer(fakeService);
+
+      await harness.container.read(projectSidebarActionsProvider.notifier).deleteAllSessionsForProject('p1');
+
+      expect(harness.sessions.deleteCalls, isEmpty);
+      expect(harness.container.read(projectSidebarActionsProvider), isA<AsyncData<void>>());
     });
   });
 }
