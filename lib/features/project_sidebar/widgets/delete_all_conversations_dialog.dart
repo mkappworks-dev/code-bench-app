@@ -97,7 +97,7 @@ class _DeleteAllConversationsDialogState extends ConsumerState<DeleteAllConversa
       ),
       actions: [
         if (_count == 0) ...[
-          AppDialogAction.primary(label: 'Close', onPressed: () => Navigator.of(context).pop(false)),
+          AppDialogAction.cancel(label: 'Close', onPressed: () => Navigator.of(context).pop(false)),
         ] else ...[
           AppDialogAction.cancel(onPressed: _submitting ? () {} : () => Navigator.of(context).pop(false)),
           AppDialogAction.destructive(
