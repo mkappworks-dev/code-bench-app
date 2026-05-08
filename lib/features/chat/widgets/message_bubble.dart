@@ -569,7 +569,7 @@ String _phaseLabelFor(ToolEvent e) {
     'write' || 'write_file' || 'edit' || 'str_replace' => 'editing ${_truncate(e.filePath ?? "file", 32)}',
     'glob' => 'finding files',
     'grep' => 'searching',
-    _ => 'running ${e.toolName}',
+    _ => 'running ${e.toolName.toLowerCase()}',
   };
 }
 
