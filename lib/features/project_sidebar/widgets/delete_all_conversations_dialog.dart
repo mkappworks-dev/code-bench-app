@@ -78,13 +78,19 @@ class _DeleteAllConversationsDialogState extends ConsumerState<DeleteAllConversa
           return FutureBuilder<int>(
             future: _countFuture,
             builder: (_, snap) {
-              final count = snap.data ?? 0;
-              final phrase = count == 1 ? '1 active conversation' : '$count active conversations';
-              return Text(
-                'This will permanently delete $phrase for this project. '
-                'Archived conversations are unaffected.',
-                style: TextStyle(color: c.mutedFg, fontSize: 11),
-              );
+              final count = snap.data;
+              final String message;
+              if (count == null) {
+                message = 'Loading conversations…';
+              } else if (count == 0) {
+                message = 'There are no active conversations to delete for this project.';
+              } else {
+                final phrase = count == 1 ? '1 active conversation' : '$count active conversations';
+                message =
+                    'This will permanently delete $phrase for this project. '
+                    'Archived conversations are unaffected.';
+              }
+              return Text(message, style: TextStyle(color: c.mutedFg, fontSize: 11));
             },
           );
         },
