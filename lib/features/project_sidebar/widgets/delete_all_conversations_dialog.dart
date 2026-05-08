@@ -29,9 +29,18 @@ class DeleteAllConversationsDialog extends ConsumerStatefulWidget {
 
 class _DeleteAllConversationsDialogState extends ConsumerState<DeleteAllConversationsDialog> {
   bool _submitting = false;
+  int? _count;
   late final Future<int> _countFuture = ref
       .read(projectSidebarActionsProvider.notifier)
       .fetchSessionCount(widget.project.id);
+
+  @override
+  void initState() {
+    super.initState();
+    _countFuture.then((c) {
+      if (mounted) setState(() => _count = c);
+    });
+  }
 
   Future<void> _submit() async {
     setState(() => _submitting = true);
@@ -81,11 +90,15 @@ class _DeleteAllConversationsDialogState extends ConsumerState<DeleteAllConversa
         },
       ),
       actions: [
-        AppDialogAction.cancel(onPressed: _submitting ? () {} : () => Navigator.of(context).pop(false)),
-        AppDialogAction.destructive(
-          label: _submitting ? 'Deleting…' : 'Delete all',
-          onPressed: _submitting ? () {} : _submit,
-        ),
+        if (_count == 0) ...[
+          AppDialogAction.primary(label: 'Close', onPressed: () => Navigator.of(context).pop(false)),
+        ] else ...[
+          AppDialogAction.cancel(onPressed: _submitting ? () {} : () => Navigator.of(context).pop(false)),
+          AppDialogAction.destructive(
+            label: _submitting ? 'Deleting…' : 'Delete all',
+            onPressed: _submitting ? () {} : _submit,
+          ),
+        ],
       ],
     );
   }
