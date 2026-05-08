@@ -358,6 +358,9 @@ class SessionService {
               : true;
           ds.respondToPermissionRequest(sessionId, requestId, approved: approved);
 
+        case ProviderUserInputRequest():
+          break; // Surfaced to the UI layer; response routed back by the notifier.
+
         case ProviderStreamDone():
           break; // Loop ends naturally.
 

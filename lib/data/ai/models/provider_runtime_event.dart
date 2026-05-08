@@ -65,3 +65,15 @@ class ProviderStreamFailure extends ProviderRuntimeEvent {
   final Object error;
   final String? details;
 }
+
+/// Agent-initiated request for typed user input (not a yes/no approval).
+/// UI shows a question card with [prompt], optional [choices], and a
+/// free-text fallback. The reply travels back through
+/// `respondToUserInputRequest({response: <answer>})`.
+class ProviderUserInputRequest extends ProviderRuntimeEvent {
+  const ProviderUserInputRequest({required this.requestId, required this.prompt, this.choices, this.defaultValue});
+  final String requestId;
+  final String prompt;
+  final List<String>? choices;
+  final String? defaultValue;
+}
