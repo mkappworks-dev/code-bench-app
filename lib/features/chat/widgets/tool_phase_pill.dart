@@ -13,6 +13,7 @@ class ToolPhasePill extends StatefulWidget {
 }
 
 class _ToolPhasePillState extends State<ToolPhasePill> with SingleTickerProviderStateMixin {
+  // only rendered while a tool is active; always pulsing by design
   late final AnimationController _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
     ..repeat(reverse: true);
 
