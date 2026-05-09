@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_snack_bar.dart';
 import '../../../data/project/models/project.dart';
+import '../../chat/notifiers/chat_notifier.dart';
 import '../notifiers/project_sidebar_actions.dart';
 import '../notifiers/project_sidebar_failure.dart';
 
@@ -26,31 +28,28 @@ class RemoveProjectDialog extends ConsumerStatefulWidget {
 }
 
 class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
-  bool _submitting = false;
+  late final Future<({int active, int archived})> _countsFuture = ref
+      .read(projectSidebarActionsProvider.notifier)
+      .fetchSessionCounts(widget.project.id);
 
   Future<void> _submit() async {
-    setState(() => _submitting = true);
-    try {
-      await ref.read(projectSidebarActionsProvider.notifier).removeProject(widget.project.id, deleteSessions: true);
-      if (!mounted) return;
-      if (!ref.read(projectSidebarActionsProvider).hasError) {
-        Navigator.of(context).pop(true);
-      }
-    } finally {
-      if (mounted) setState(() => _submitting = false);
+    final priorActiveSessionId = ref.read(activeSessionIdProvider);
+    await ref.read(projectSidebarActionsProvider.notifier).removeProject(widget.project.id, deleteSessions: true);
+    if (!mounted) return;
+    final actionState = ref.read(projectSidebarActionsProvider);
+    if (actionState.hasError && actionState.error is ProjectSidebarFailure) {
+      AppSnackBar.show(context, 'Failed to remove project — please try again.', type: AppSnackBarType.error);
+      return;
+    }
+    Navigator.of(context).pop(true);
+    if (priorActiveSessionId != null && ref.read(activeSessionIdProvider) == null && context.mounted) {
+      context.go('/chat');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(projectSidebarActionsProvider, (_, next) {
-      if (!_submitting) return;
-      if (next is! AsyncError || !mounted) return;
-      final failure = next.error;
-      if (failure is! ProjectSidebarFailure) return;
-      AppSnackBar.show(context, 'Failed to remove project — please try again.', type: AppSnackBarType.error);
-    });
-
+    final isSubmitting = ref.watch(projectSidebarActionsProvider).isLoading;
     final isMissing = widget.project.status == ProjectStatus.missing;
     return AppDialog(
       icon: AppIcons.trash,
@@ -60,21 +59,45 @@ class _RemoveProjectDialogState extends ConsumerState<RemoveProjectDialog> {
       content: Builder(
         builder: (context) {
           final c = AppColors.of(context);
-          return Text(
-            isMissing
-                ? 'This project folder is already missing from disk. '
-                      'Removing it will delete the entry and all linked conversations from Code Bench.'
-                : 'This will remove the project and all linked conversations from Code Bench. '
-                      'The folder on disk will NOT be deleted.',
-            style: TextStyle(color: c.mutedFg, fontSize: 11),
+          if (isMissing) {
+            return Text(
+              'This project folder is already missing from disk. '
+              'Removing it will delete the entry and all linked conversations from Code Bench.',
+              style: TextStyle(color: c.mutedFg, fontSize: 11),
+            );
+          }
+          return FutureBuilder<({int active, int archived})>(
+            future: _countsFuture,
+            builder: (_, snap) {
+              final counts = snap.data;
+              final String sessionLine;
+              if (counts == null) {
+                sessionLine = 'All linked conversations will be permanently deleted.';
+              } else if (counts.active == 0 && counts.archived == 0) {
+                sessionLine = 'This project has no conversations.';
+              } else {
+                final parts = <String>[];
+                if (counts.active > 0) {
+                  parts.add('${counts.active} active ${counts.active == 1 ? 'conversation' : 'conversations'}');
+                }
+                if (counts.archived > 0) {
+                  parts.add('${counts.archived} archived ${counts.archived == 1 ? 'conversation' : 'conversations'}');
+                }
+                sessionLine = '${parts.join(' and ')} will be permanently deleted.';
+              }
+              return Text(
+                '$sessionLine The folder on disk will NOT be deleted.',
+                style: TextStyle(color: c.mutedFg, fontSize: 11),
+              );
+            },
           );
         },
       ),
       actions: [
-        AppDialogAction.cancel(onPressed: _submitting ? () {} : () => Navigator.of(context).pop(false)),
+        AppDialogAction.cancel(onPressed: isSubmitting ? () {} : () => Navigator.of(context).pop(false)),
         AppDialogAction.destructive(
-          label: _submitting ? 'Removing…' : 'Remove',
-          onPressed: _submitting ? () {} : _submit,
+          label: isSubmitting ? 'Removing…' : 'Remove',
+          onPressed: isSubmitting ? () {} : _submit,
         ),
       ],
     );

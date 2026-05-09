@@ -131,6 +131,12 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
             ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
           .watch();
 
+  Stream<List<ChatSessionRow>> watchArchivedSessionsByProject(String projectId) =>
+      (select(chatSessions)
+            ..where((t) => t.projectId.equals(projectId) & t.isArchived.equals(true))
+            ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+          .watch();
+
   Future<void> archiveSession(String id) => (update(
     chatSessions,
   )..where((t) => t.sessionId.equals(id))).write(const ChatSessionsCompanion(isArchived: Value(true)));
@@ -145,6 +151,48 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
     await transaction(() async {
       await delete(chatMessages).go();
       await delete(chatSessions).go();
+    });
+  }
+
+  /// Deletes every session belonging to [projectId] (archived AND active) and
+  /// their messages, in a single transaction so a mid-call failure leaves no
+  /// orphans. Used by `removeProject` to fully clean up before the project row
+  /// itself is dropped.
+  Future<void> deleteSessionsByProject(String projectId) async {
+    await transaction(() async {
+      final ids = await ((select(
+        chatSessions,
+      )..where((t) => t.projectId.equals(projectId))).map((row) => row.sessionId)).get();
+      if (ids.isEmpty) return;
+      await (delete(chatMessages)..where((t) => t.sessionId.isIn(ids))).go();
+      await (delete(chatSessions)..where((t) => t.projectId.equals(projectId))).go();
+    });
+  }
+
+  /// Atomically archives every active session for [projectId]; returns the archived ids.
+  Future<List<String>> archiveActiveSessionsByProject(String projectId) async {
+    return transaction(() async {
+      final ids = await ((select(
+        chatSessions,
+      )..where((t) => t.projectId.equals(projectId) & t.isArchived.equals(false))).map((row) => row.sessionId)).get();
+      if (ids.isEmpty) return ids;
+      await (update(
+        chatSessions,
+      )..where((t) => t.sessionId.isIn(ids))).write(const ChatSessionsCompanion(isArchived: Value(true)));
+      return ids;
+    });
+  }
+
+  /// Atomically deletes every active session (and their messages) for [projectId]; returns the deleted ids. Archived sessions are untouched.
+  Future<List<String>> deleteActiveSessionsByProject(String projectId) async {
+    return transaction(() async {
+      final ids = await ((select(
+        chatSessions,
+      )..where((t) => t.projectId.equals(projectId) & t.isArchived.equals(false))).map((row) => row.sessionId)).get();
+      if (ids.isEmpty) return ids;
+      await (delete(chatMessages)..where((t) => t.sessionId.isIn(ids))).go();
+      await (delete(chatSessions)..where((t) => t.sessionId.isIn(ids))).go();
+      return ids;
     });
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/instant_menu.dart';
 import '../../../core/widgets/app_snack_bar.dart';
@@ -36,6 +37,9 @@ class ProjectContextMenu {
           const PopupMenuDivider(),
           _buildItem('new_conversation', 'New conversation', Icons.add, c),
           const PopupMenuDivider(),
+          _buildItem('archive_all', 'Archive all conversations', AppIcons.archive, c),
+          _buildDangerItem('delete_all', 'Delete all conversations', c, icon: Icons.delete_sweep),
+          const PopupMenuDivider(),
         ] else ...[
           _buildItem('copy_path', 'Copy path', Icons.copy_outlined, c),
           const PopupMenuDivider(),
@@ -61,13 +65,18 @@ class ProjectContextMenu {
     );
   }
 
-  static PopupMenuItem<String> _buildDangerItem(String value, String label, AppColors c) {
+  static PopupMenuItem<String> _buildDangerItem(
+    String value,
+    String label,
+    AppColors c, {
+    IconData icon = Icons.close,
+  }) {
     return PopupMenuItem<String>(
       value: value,
       height: 32,
       child: Row(
         children: [
-          Icon(Icons.close, size: 14, color: c.error),
+          Icon(icon, size: 14, color: c.error),
           const SizedBox(width: 8),
           Text(label, style: TextStyle(color: c.error, fontSize: 11)),
         ],
@@ -82,6 +91,8 @@ class ProjectContextMenu {
     required BuildContext context,
     required Function(String) onRemove,
     required Function(String) onNewConversation,
+    required Function(String) onArchiveAll,
+    required Function(String) onDeleteAll,
     Function(String)? onRelocate,
   }) async {
     switch (action) {
@@ -111,6 +122,10 @@ class ProjectContextMenu {
         onNewConversation(projectId);
       case 'relocate':
         onRelocate?.call(projectId);
+      case 'archive_all':
+        onArchiveAll(projectId);
+      case 'delete_all':
+        onDeleteAll(projectId);
       case 'remove':
         onRemove(projectId);
     }

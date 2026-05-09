@@ -27,6 +27,8 @@ class ProjectTile extends ConsumerStatefulWidget {
     required this.onArchive,
     required this.onDelete,
     required this.onRelocate,
+    required this.onArchiveAll,
+    required this.onDeleteAll,
   });
 
   final Project project;
@@ -40,6 +42,8 @@ class ProjectTile extends ConsumerStatefulWidget {
   final ValueChanged<String> onArchive;
   final ValueChanged<String> onDelete;
   final ValueChanged<String> onRelocate;
+  final ValueChanged<String> onArchiveAll;
+  final ValueChanged<String> onDeleteAll;
 
   @override
   ConsumerState<ProjectTile> createState() => _ProjectTileState();
@@ -85,6 +89,8 @@ class _ProjectTileState extends ConsumerState<ProjectTile> {
                 onRemove: widget.onRemove,
                 onNewConversation: widget.onNewConversation,
                 onRelocate: widget.onRelocate,
+                onArchiveAll: widget.onArchiveAll,
+                onDeleteAll: widget.onDeleteAll,
               );
             }
           },
