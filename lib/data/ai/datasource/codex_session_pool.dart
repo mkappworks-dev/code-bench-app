@@ -91,7 +91,12 @@ class CodexSessionPool {
   }
 
   void respondToUserInputRequest(String sessionId, String requestId, {required String response}) {
-    _sessions[sessionId]?.respondToUserInputRequest(requestId, response: response);
+    final session = _sessions[sessionId];
+    if (session == null) {
+      dLog('[CodexSessionPool] user-input response for unknown session $sessionId — no-op (likely evicted)');
+      return;
+    }
+    session.respondToUserInputRequest(requestId, response: response);
   }
 
   Future<void> dispose() async {

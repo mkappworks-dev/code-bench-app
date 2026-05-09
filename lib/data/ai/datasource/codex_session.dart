@@ -420,6 +420,11 @@ class CodexSession {
       },
       onError: (Object e) {
         sLog('[CodexCli] User-input response failed: ${e.runtimeType}');
+        if (!identical(_process, requestProcess) || _providerThreadId != requestThreadId) {
+          sLog('[CodexCli] User-input auto-response dropped — turn changed (id=$id)');
+          return;
+        }
+        _respond(id, {'response': ''});
       },
     );
   }
