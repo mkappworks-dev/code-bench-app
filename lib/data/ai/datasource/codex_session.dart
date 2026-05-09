@@ -78,6 +78,15 @@ class CodexSession {
     completer.complete({'decision': approved ? 'approved' : 'denied'});
   }
 
+  void respondToUserInputRequest(String requestId, {required String response}) {
+    final completer = _pendingApprovals.remove(requestId);
+    if (completer == null) {
+      dLog('[CodexCli] No pending user-input request for $requestId');
+      return;
+    }
+    completer.complete({'response': response});
+  }
+
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
@@ -326,7 +335,7 @@ class CodexSession {
         _emitPermissionRequest(id, method, params);
 
       case 'item/tool/requestUserInput':
-        _emitPermissionRequest(id, method, params);
+        _emitUserInputRequest(id, params);
 
       case 'account/chatgptAuthTokens/refresh':
         // Gate on `_version` (not `_providerThreadId`) — token can expire between `initialized` and `thread/start`.
@@ -378,6 +387,39 @@ class CodexSession {
           return;
         }
         _respond(id, {'decision': 'denied'});
+      },
+    );
+  }
+
+  void _emitUserInputRequest(dynamic id, Map<String, dynamic>? params) {
+    final normalized = _coerceId(id);
+    final requestId = (normalized ?? id).toString();
+
+    final prompt = (params?['prompt'] ?? params?['message'] ?? '') as String;
+    final rawChoices = params?['choices'] ?? params?['options'];
+    final choices = rawChoices is List ? rawChoices.whereType<String>().toList() : null;
+    final defaultValue = params?['default_response'] as String?;
+
+    final completer = Completer<Map<String, dynamic>>();
+    _pendingApprovals[requestId] = completer;
+    // Snapshot process+thread so a delayed response cannot write into a successor turn.
+    final requestProcess = _process;
+    final requestThreadId = _providerThreadId;
+
+    _streamController?.add(
+      ProviderUserInputRequest(requestId: requestId, prompt: prompt, choices: choices, defaultValue: defaultValue),
+    );
+
+    completer.future.then(
+      (result) {
+        if (!identical(_process, requestProcess) || _providerThreadId != requestThreadId) {
+          sLog('[CodexCli] User-input response dropped — turn changed (id=$id)');
+          return;
+        }
+        _respond(id, result);
+      },
+      onError: (Object e) {
+        sLog('[CodexCli] User-input response failed: ${e.runtimeType}');
       },
     );
   }

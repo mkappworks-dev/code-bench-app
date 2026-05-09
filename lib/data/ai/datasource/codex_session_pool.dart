@@ -90,6 +90,10 @@ class CodexSessionPool {
     session.respondToPermissionRequest(requestId, approved: approved);
   }
 
+  void respondToUserInputRequest(String sessionId, String requestId, {required String response}) {
+    _sessions[sessionId]?.respondToUserInputRequest(requestId, response: response);
+  }
+
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
