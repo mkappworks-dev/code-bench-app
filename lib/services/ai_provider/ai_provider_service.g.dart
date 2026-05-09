@@ -20,7 +20,12 @@ final aIProviderServiceProvider = AIProviderServiceProvider._();
 ///
 /// State is a map of provider ID → [AIProviderDatasource] instance. Use [getProvider]
 /// to get a specific provider, or [listWithStatus] for the full status list.
-final class AIProviderServiceProvider extends $NotifierProvider<AIProviderService, Map<String, AIProviderDatasource>> {
+final class AIProviderServiceProvider
+    extends
+        $NotifierProvider<
+          AIProviderService,
+          Map<String, AIProviderDatasource>
+        > {
   /// Service that manages all available AI providers and their status.
   ///
   /// State is a map of provider ID → [AIProviderDatasource] instance. Use [getProvider]
@@ -47,28 +52,39 @@ final class AIProviderServiceProvider extends $NotifierProvider<AIProviderServic
   Override overrideWithValue(Map<String, AIProviderDatasource> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<Map<String, AIProviderDatasource>>(value),
+      providerOverride: $SyncValueProvider<Map<String, AIProviderDatasource>>(
+        value,
+      ),
     );
   }
 }
 
-String _$aIProviderServiceHash() => r'f6bc10884224ac6b90b193a5b3017a3f39d3d137';
+String _$aIProviderServiceHash() => r'363298e99352d3dac849d274de2c91a89139a0a4';
 
 /// Service that manages all available AI providers and their status.
 ///
 /// State is a map of provider ID → [AIProviderDatasource] instance. Use [getProvider]
 /// to get a specific provider, or [listWithStatus] for the full status list.
 
-abstract class _$AIProviderService extends $Notifier<Map<String, AIProviderDatasource>> {
+abstract class _$AIProviderService
+    extends $Notifier<Map<String, AIProviderDatasource>> {
   Map<String, AIProviderDatasource> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<Map<String, AIProviderDatasource>, Map<String, AIProviderDatasource>>;
+    final ref =
+        this.ref
+            as $Ref<
+              Map<String, AIProviderDatasource>,
+              Map<String, AIProviderDatasource>
+            >;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<Map<String, AIProviderDatasource>, Map<String, AIProviderDatasource>>,
+              AnyNotifier<
+                Map<String, AIProviderDatasource>,
+                Map<String, AIProviderDatasource>
+              >,
               Map<String, AIProviderDatasource>,
               Object?,
               Object?

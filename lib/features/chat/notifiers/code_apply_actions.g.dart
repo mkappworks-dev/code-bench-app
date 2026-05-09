@@ -30,7 +30,8 @@ final codeApplyActionsProvider = CodeApplyActionsProvider._();
 /// On [ProjectMissingException], [applyChange] also triggers a project-status
 /// refresh so the sidebar reflects the missing state without the widget needing
 /// to know about [ProjectSidebarActions].
-final class CodeApplyActionsProvider extends $AsyncNotifierProvider<CodeApplyActions, void> {
+final class CodeApplyActionsProvider
+    extends $AsyncNotifierProvider<CodeApplyActions, void> {
   /// Command notifier for code-apply and revert operations.
   ///
   /// Widgets never reach [ApplyService] directly — they call methods here.
@@ -78,7 +79,13 @@ abstract class _$CodeApplyActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

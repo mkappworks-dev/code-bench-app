@@ -16,7 +16,8 @@ final createPrActionsProvider = CreatePrActionsProvider._();
 
 /// SECURITY: Only log `e.runtimeType` — `$e` can invoke DioException.toString()
 /// which serialises the Authorization header and leaks the PAT.
-final class CreatePrActionsProvider extends $AsyncNotifierProvider<CreatePrActions, void> {
+final class CreatePrActionsProvider
+    extends $AsyncNotifierProvider<CreatePrActions, void> {
   /// SECURITY: Only log `e.runtimeType` — `$e` can invoke DioException.toString()
   /// which serialises the Authorization header and leaks the PAT.
   CreatePrActionsProvider._()
@@ -50,7 +51,13 @@ abstract class _$CreatePrActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

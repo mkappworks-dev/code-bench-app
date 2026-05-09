@@ -10,10 +10,16 @@ part of 'provider_capabilities_service.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(providerCapabilitiesService)
-final providerCapabilitiesServiceProvider = ProviderCapabilitiesServiceProvider._();
+final providerCapabilitiesServiceProvider =
+    ProviderCapabilitiesServiceProvider._();
 
 final class ProviderCapabilitiesServiceProvider
-    extends $FunctionalProvider<ProviderCapabilitiesService, ProviderCapabilitiesService, ProviderCapabilitiesService>
+    extends
+        $FunctionalProvider<
+          ProviderCapabilitiesService,
+          ProviderCapabilitiesService,
+          ProviderCapabilitiesService
+        >
     with $Provider<ProviderCapabilitiesService> {
   ProviderCapabilitiesServiceProvider._()
     : super(
@@ -31,7 +37,9 @@ final class ProviderCapabilitiesServiceProvider
 
   @$internal
   @override
-  $ProviderElement<ProviderCapabilitiesService> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<ProviderCapabilitiesService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   ProviderCapabilitiesService create(Ref ref) {
@@ -40,8 +48,12 @@ final class ProviderCapabilitiesServiceProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ProviderCapabilitiesService value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ProviderCapabilitiesService>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProviderCapabilitiesService>(value),
+    );
   }
 }
 
-String _$providerCapabilitiesServiceHash() => r'2812b406611739d23011f8d2f2af870f798a4925';
+String _$providerCapabilitiesServiceHash() =>
+    r'2812b406611739d23011f8d2f2af870f798a4925';

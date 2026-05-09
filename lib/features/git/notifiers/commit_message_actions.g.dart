@@ -16,7 +16,8 @@ final commitMessageActionsProvider = CommitMessageActionsProvider._();
 
 /// AI commit-message generator. Always returns a usable string — falls back to
 /// `'chore: update files'` so the commit flow is never blocked by a network error.
-final class CommitMessageActionsProvider extends $AsyncNotifierProvider<CommitMessageActions, void> {
+final class CommitMessageActionsProvider
+    extends $AsyncNotifierProvider<CommitMessageActions, void> {
   /// AI commit-message generator. Always returns a usable string — falls back to
   /// `'chore: update files'` so the commit flow is never blocked by a network error.
   CommitMessageActionsProvider._()
@@ -38,7 +39,8 @@ final class CommitMessageActionsProvider extends $AsyncNotifierProvider<CommitMe
   CommitMessageActions create() => CommitMessageActions();
 }
 
-String _$commitMessageActionsHash() => r'24e5c931afc14cac9d8753dbb30674acc28e0440';
+String _$commitMessageActionsHash() =>
+    r'24e5c931afc14cac9d8753dbb30674acc28e0440';
 
 /// AI commit-message generator. Always returns a usable string — falls back to
 /// `'chore: update files'` so the commit flow is never blocked by a network error.
@@ -50,7 +52,13 @@ abstract class _$CommitMessageActions extends $AsyncNotifier<void> {
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
     final element =
-        ref.element as $ClassProviderElement<AnyNotifier<AsyncValue<void>, void>, AsyncValue<void>, Object?, Object?>;
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

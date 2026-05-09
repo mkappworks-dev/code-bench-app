@@ -20,7 +20,12 @@ final transportReadinessProvider = TransportReadinessProvider._();
 /// catches real signed-out cases.
 
 final class TransportReadinessProvider
-    extends $FunctionalProvider<TransportReadiness, TransportReadiness, TransportReadiness>
+    extends
+        $FunctionalProvider<
+          TransportReadiness,
+          TransportReadiness,
+          TransportReadiness
+        >
     with $Provider<TransportReadiness> {
   /// CLI auth `unknown` maps to [TransportReadiness.ready] — never block send on
   /// a probe we couldn't run; the fresh pre-send probe in [ChatMessagesNotifier]
@@ -41,7 +46,9 @@ final class TransportReadinessProvider
 
   @$internal
   @override
-  $ProviderElement<TransportReadiness> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<TransportReadiness> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   TransportReadiness create(Ref ref) {
@@ -50,8 +57,12 @@ final class TransportReadinessProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(TransportReadiness value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<TransportReadiness>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<TransportReadiness>(value),
+    );
   }
 }
 
-String _$transportReadinessHash() => r'518452ad63ea27e57ff878c4205d03bbb9a6f23b';
+String _$transportReadinessHash() =>
+    r'518452ad63ea27e57ff878c4205d03bbb9a6f23b';
