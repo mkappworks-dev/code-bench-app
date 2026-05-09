@@ -35,8 +35,6 @@ class _FakeApiKeysNotifier extends ApiKeysNotifier {
 
 bool _neverCancel() => false;
 
-// ── Fake SessionService ───────────────────────────────────────────────────────
-
 class _FakeSessionService extends Fake implements SessionService {
   final StreamController<ChatMessage> controller = StreamController();
   bool sendCalled = false;
@@ -57,7 +55,7 @@ class _FakeSessionService extends Fake implements SessionService {
     String? providerId,
     bool Function() cancelFlag = _neverCancel,
     Future<bool> Function(PermissionRequest req)? requestPermission,
-    Future<String?> Function(ProviderUserInputRequest req)? requestUserInput,
+    Future<void> Function(ProviderUserInputRequest req)? requestUserInput,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
     ProviderSettingDropSink? onSettingDropped,
@@ -81,8 +79,6 @@ class _FakeSessionService extends Fake implements SessionService {
   Future<List<ChatMessage>> loadHistory(String sessionId, {int limit = 50, int offset = 0}) async => [];
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 ProviderContainer _makeContainer(_FakeSessionService svc) {
   return ProviderContainer(
     overrides: [
@@ -95,8 +91,6 @@ ProviderContainer _makeContainer(_FakeSessionService svc) {
     ],
   );
 }
-
-// ── Tests ─────────────────────────────────────────────────────────────────────
 
 void main() {
   group('ChatMessagesNotifier.cancelSend', () {

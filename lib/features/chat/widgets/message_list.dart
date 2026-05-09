@@ -101,7 +101,12 @@ class _MessageListState extends ConsumerState<MessageList> {
             final msg = messages[messages.length - 1 - index];
             final effectiveLastIdx = messages.lastIndexWhere((m) => m.role != MessageRole.interrupted);
             final isLast = effectiveLastIdx >= 0 && index == messages.length - 1 - effectiveLastIdx;
-            return MessageBubble(message: msg, sessionId: widget.sessionId, isLast: isLast, key: ValueKey(msg.id));
+            return MessageBubble(
+              message: msg,
+              sessionId: widget.sessionId,
+              isLastInSession: isLast,
+              key: ValueKey(msg.id),
+            );
           },
         );
       },

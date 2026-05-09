@@ -59,6 +59,10 @@ class SessionService {
   final ChatStreamRegistryService? _chatStreamRegistry;
   static const _uuid = Uuid();
 
+  void respondToUserInputRequest(String sessionId, String requestId, {required String response}) {
+    _providerService?.respondToUserInputRequest(sessionId, requestId, response: response);
+  }
+
   Stream<List<ChatSession>> watchAllSessions() => _session.watchAllSessions();
   Stream<List<ChatSession>> watchSessionsByProject(String projectId) => _session.watchSessionsByProject(projectId);
   Stream<List<ChatSession>> watchArchivedSessions() => _session.watchArchivedSessions();
@@ -119,7 +123,7 @@ class SessionService {
     String? projectPath,
     String? providerId,
     Future<bool> Function(PermissionRequest req)? requestPermission,
-    Future<String?> Function(ProviderUserInputRequest req)? requestUserInput,
+    Future<void> Function(ProviderUserInputRequest req)? requestUserInput,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
     ProviderSettingDropSink? onSettingDropped,
@@ -284,7 +288,7 @@ class SessionService {
     required String? projectPath,
     required Future<bool> Function(PermissionRequest req)? requestPermission,
     required bool Function() cancelFlag,
-    Future<String?> Function(ProviderUserInputRequest req)? requestUserInput,
+    Future<void> Function(ProviderUserInputRequest req)? requestUserInput,
     ProviderTurnSettings? settings,
   }) async* {
     final assistantId = _uuid.v4();
@@ -362,10 +366,7 @@ class SessionService {
           ds.respondToPermissionRequest(sessionId, requestId, approved: approved);
 
         case final ProviderUserInputRequest req when requestUserInput != null:
-          final response = await requestUserInput(req);
-          if (response != null) {
-            ds.respondToUserInputRequest(sessionId, req.requestId, response: response);
-          }
+          await requestUserInput(req);
 
         case ProviderUserInputRequest():
           break; // No callback registered; leave the agent loop unblocked.

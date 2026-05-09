@@ -32,6 +32,12 @@ class AIProviderService extends _$AIProviderService {
   /// List all registered provider IDs.
   List<String> listProviderIds() => state.keys.toList();
 
+  void respondToUserInputRequest(String sessionId, String requestId, {required String response}) {
+    for (final ds in state.values) {
+      ds.respondToUserInputRequest(sessionId, requestId, response: response);
+    }
+  }
+
   /// Detailed availability status for a single provider.
   ///
   /// Distinguishes three underlying detection states from the datasource

@@ -40,20 +40,20 @@ export '../utils/code_fence_parser.dart' show parseCodeFenceInfo;
 export 'streaming_dot.dart' show StreamingDot;
 
 class MessageBubble extends StatelessWidget {
-  const MessageBubble({super.key, required this.message, required this.sessionId, this.isLast = false});
+  const MessageBubble({super.key, required this.message, required this.sessionId, this.isLastInSession = false});
 
   final ChatMessage message;
   final String sessionId;
-  final bool isLast;
+  final bool isLastInSession;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: switch (message.role) {
-        MessageRole.user => _UserBubble(message: message, sessionId: sessionId, isLast: isLast),
+        MessageRole.user => _UserBubble(message: message, sessionId: sessionId, isLast: isLastInSession),
         MessageRole.interrupted => const _InterruptedBubble(),
-        _ => _AssistantBubble(message: message, isLast: isLast),
+        _ => _AssistantBubble(message: message, isLast: isLastInSession),
       },
     );
   }
@@ -206,8 +206,6 @@ class _AssistantBubble extends ConsumerStatefulWidget {
 }
 
 class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
-  /// Formats the answer map produced by [AskUserQuestionCard] into a
-  /// plain user-message string and re-posts it via [chatMessagesProvider].
   Future<void> _submitAnswer(Map<String, dynamic> answer) async {
     final parts = <String>[];
     final selected = answer['selectedOption'];

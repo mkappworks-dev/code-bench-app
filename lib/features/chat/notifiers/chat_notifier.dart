@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/ai/models/auth_status.dart';
+import '../../../data/ai/models/provider_runtime_event.dart';
 import '../../../data/ai/models/provider_setting_drop.dart';
 import '../../../data/chat/models/agent_failure.dart';
 import '../../../data/chat/models/transport_readiness.dart';
@@ -236,7 +237,6 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     // Capture stable notifier instances; the registry outlives this notifier and `ref` would throw post-dispose.
     final cancelN = ref.read(agentCancelProvider.notifier);
     final permN = ref.read(agentPermissionRequestProvider.notifier);
-    final inputN = ref.read(agentUserInputRequestProvider.notifier);
     final mcpN = ref.read(mcpServerStatusProvider.notifier);
 
     String? streamingAssistantId;
@@ -257,7 +257,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
             providerId: providerId,
             cancelFlag: () => cancelN.isCancelled(sessionId),
             requestPermission: permN.request,
-            requestUserInput: inputN.requestAndAwait,
+            requestUserInput: _handleUserInputRequest,
             onMcpStatusChanged: mcpN.setStatus,
             onMcpServerRemoved: mcpN.remove,
             onSettingDropped: (drop) {
@@ -368,11 +368,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     return [...current, msg];
   }
 
-  /// Cancels the in-flight send (if any) and appends an in-memory
-  /// `interrupted` marker. Persistence is fire-and-forget — failures are
-  /// logged via [sLog] so they remain visible in release builds, but no UI
-  /// error is surfaced (the badge is already on screen; only its survival
-  /// across app restarts is at risk).
+  /// Interrupted-marker persistence is fire-and-forget — badge is already on screen; only survival across restarts is at risk.
   void cancelSend() {
     if (!_sendInProgress) return;
     final sessionId = ref.read(activeSessionIdProvider);
@@ -400,6 +396,19 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     );
     state = AsyncData([...current, marker]);
     unawaited(_persistInterrupted(sessionId, marker));
+  }
+
+  Future<void> _handleUserInputRequest(ProviderUserInputRequest req) async {
+    final n = ref.read(agentUserInputRequestProvider.notifier);
+    final response = await n.requestAndAwait(req);
+    if (response == null) {
+      cancelSend();
+      return;
+    }
+    final session = ref.read(activeSessionIdProvider);
+    if (session == null) return;
+    final svc = await ref.read(sessionServiceProvider.future);
+    svc.respondToUserInputRequest(session, req.requestId, response: response);
   }
 
   Future<void> _persistInterrupted(String sessionId, ChatMessage marker) async {
