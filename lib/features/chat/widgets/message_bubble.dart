@@ -73,10 +73,7 @@ class _UserBubble extends ConsumerStatefulWidget {
 class _UserBubbleState extends ConsumerState<_UserBubble> {
   bool _hovered = false;
 
-  /// Inline-checked delete (per CLAUDE.md Rule 2 exception): N user bubbles can
-  /// share the `chatMessagesActionsProvider`, so a `ref.listen` fires once per
-  /// instance and would yield N snackbars. Awaiting the action and reading
-  /// `hasError` inline keeps a single snackbar for the bubble that triggered it.
+  /// Shared provider: inline-checked to avoid N ref.listen snackbars (one per bubble instance) for the same error.
   Future<void> _delete() async {
     await ref.read(chatMessagesActionsProvider.notifier).deleteMessage(widget.sessionId, widget.message.id);
     if (!mounted) return;

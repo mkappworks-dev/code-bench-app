@@ -155,11 +155,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     return seed;
   }
 
-  /// Sends [input] and streams the response into state.
-  ///
-  /// Returns `null` on success, or the caught error object on failure.
-  /// The caller (widget) checks the return value to show a snackbar without
-  /// needing a try-catch around a notifier call.
+  /// Returns null on success or the caught error on failure — callers check the return value instead of wrapping in try-catch.
   Future<Object?> sendMessage(String input, {String? systemPrompt}) async {
     _cancelRequested = false;
     _sendInProgress = true;
