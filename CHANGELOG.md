@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.11.0...v0.12.0) (2026-05-09)
+
+
+### Features
+
+* **sidebar:** remove-project cleanup & per-project bulk actions ([#93](https://github.com/mkappworks-dev/code-bench-app/issues/93)) ([36c4c5a](https://github.com/mkappworks-dev/code-bench-app/commit/36c4c5a4dea29c3da5b1558c8560b200c2ac95ac))
+
 ## [0.11.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.10.1...v0.11.0) (2026-05-07)
 
 
