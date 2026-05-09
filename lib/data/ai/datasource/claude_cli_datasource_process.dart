@@ -111,7 +111,11 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
   final Map<String, Process> _processes = {};
   final Set<String> _knownSessions = {};
+  final Map<String, String> _pendingNames = {};
+  final Map<String, _PendingAUQ> _pendingAskUserQuestions = {};
   bool _disposed = false;
+
+  bool _isAskUserQuestion(String? name) => name == 'AskUserQuestion' || name == 'ask_user_question';
 
   /// Absolute path to the `claude` binary, resolved via the user's login
   /// shell during [detect]. macOS GUI launches inherit a stripped PATH that
@@ -340,7 +344,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
             consecutiveParseFailures = 0;
             continue;
           }
-          final mapped = _toProviderEvent(event);
+          final mapped = _toProviderEvent(event, sessionId);
           if (event is StreamParseFailure) {
             consecutiveParseFailures++;
             // Cap preview at 64 chars — redactSecrets only strips known token shapes; a 256-char window can leak prompt text or file contents the model just read.
@@ -398,13 +402,13 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   /// Maps a parser-emitted [StreamEvent] into the canonical
   /// [ProviderRuntimeEvent]. Returns null for events that have no equivalent
   /// (e.g. tool results — they roll into ToolUseComplete on the receiving side).
-  ProviderRuntimeEvent? _toProviderEvent(StreamEvent event) {
+  ProviderRuntimeEvent? _toProviderEvent(StreamEvent event, String sessionId) {
     return switch (event) {
       TextDelta(:final text) => ProviderTextDelta(text: text),
       ThinkingDelta(:final text) => ProviderThinkingDelta(thinking: text),
-      ToolUseStart(:final id, :final name) => ProviderToolUseStart(toolId: id, toolName: name),
+      ToolUseStart(:final id, :final name) => _onToolUseStart(id: id, name: name),
       ToolUseInputDelta(:final id, :final partialJson) => ProviderToolInputDelta(toolId: id, partialJson: partialJson),
-      ToolUseComplete(:final id, :final input) => ProviderToolUseComplete(toolId: id, input: input),
+      ToolUseComplete(:final id, :final input) => _onToolUseComplete(id: id, input: input, sessionId: sessionId),
       ToolResult() => null,
       StreamDone() => const ProviderStreamDone(),
       StreamError(:final failure) => ProviderStreamFailure(error: failure),
@@ -417,6 +421,27 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       StreamToolCallEnd() ||
       StreamFinish() => null,
     };
+  }
+
+  ProviderRuntimeEvent? _onToolUseStart({required String id, required String name}) {
+    _pendingNames[id] = name;
+    if (_isAskUserQuestion(name)) return null;
+    return ProviderToolUseStart(toolId: id, toolName: name);
+  }
+
+  ProviderRuntimeEvent _onToolUseComplete({
+    required String id,
+    required Map<String, dynamic> input,
+    required String sessionId,
+  }) {
+    if (_isAskUserQuestion(_pendingNames.remove(id))) {
+      final prompt = (input['question'] ?? '') as String;
+      final rawChoices = input['options'];
+      final choices = rawChoices is List ? rawChoices.whereType<String>().toList() : null;
+      _pendingAskUserQuestions[sessionId] = _PendingAUQ(toolUseId: id, sessionId: sessionId);
+      return ProviderUserInputRequest(requestId: id, prompt: prompt, choices: choices);
+    }
+    return ProviderToolUseComplete(toolId: id, input: input);
   }
 
   @override
@@ -440,7 +465,23 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   }
 
   @override
-  void respondToUserInputRequest(String sessionId, String requestId, {required String response}) {}
+  void respondToUserInputRequest(String sessionId, String requestId, {required String response}) {
+    final pending = _pendingAskUserQuestions.remove(sessionId);
+    if (pending == null || pending.toolUseId != requestId) {
+      dLog('[ClaudeCli] No pending AskUserQuestion for session $sessionId / request $requestId');
+      return;
+    }
+    final payload = jsonEncode({
+      'type': 'user',
+      'message': {
+        'role': 'user',
+        'content': [
+          {'type': 'tool_result', 'tool_use_id': requestId, 'content': response},
+        ],
+      },
+    });
+    _processes[sessionId]?.stdin.writeln(payload);
+  }
 
   @override
   Future<AuthStatus> verifyAuth() async {
@@ -493,4 +534,10 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
         return null;
     }
   }
+}
+
+class _PendingAUQ {
+  _PendingAUQ({required this.toolUseId, required this.sessionId});
+  final String toolUseId;
+  final String sessionId;
 }
