@@ -13,11 +13,7 @@ part of 'agent_user_input_request_notifier.dart';
 final agentUserInputRequestProvider = AgentUserInputRequestNotifierProvider._();
 
 final class AgentUserInputRequestNotifierProvider
-    extends
-        $NotifierProvider<
-          AgentUserInputRequestNotifier,
-          ProviderUserInputRequest?
-        > {
+    extends $NotifierProvider<AgentUserInputRequestNotifier, ProviderUserInputRequest?> {
   AgentUserInputRequestNotifierProvider._()
     : super(
         from: null,
@@ -38,24 +34,18 @@ final class AgentUserInputRequestNotifierProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ProviderUserInputRequest? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ProviderUserInputRequest?>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ProviderUserInputRequest?>(value));
   }
 }
 
-String _$agentUserInputRequestNotifierHash() =>
-    r'afb01b081c32f77bc848de5ddff0ec7859549258';
+String _$agentUserInputRequestNotifierHash() => r'afb01b081c32f77bc848de5ddff0ec7859549258';
 
-abstract class _$AgentUserInputRequestNotifier
-    extends $Notifier<ProviderUserInputRequest?> {
+abstract class _$AgentUserInputRequestNotifier extends $Notifier<ProviderUserInputRequest?> {
   ProviderUserInputRequest? build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref =
-        this.ref as $Ref<ProviderUserInputRequest?, ProviderUserInputRequest?>;
+    final ref = this.ref as $Ref<ProviderUserInputRequest?, ProviderUserInputRequest?>;
     final element =
         ref.element
             as $ClassProviderElement<

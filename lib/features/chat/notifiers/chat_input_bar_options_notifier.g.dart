@@ -16,12 +16,7 @@ final chatInputBarOptionsProvider = ChatInputBarOptionsProvider._();
 /// Capabilities for the currently selected model + transport; null while prefs haven't loaded so the input bar can disable the strip.
 
 final class ChatInputBarOptionsProvider
-    extends
-        $FunctionalProvider<
-          ProviderCapabilities?,
-          ProviderCapabilities?,
-          ProviderCapabilities?
-        >
+    extends $FunctionalProvider<ProviderCapabilities?, ProviderCapabilities?, ProviderCapabilities?>
     with $Provider<ProviderCapabilities?> {
   /// Capabilities for the currently selected model + transport; null while prefs haven't loaded so the input bar can disable the strip.
   ChatInputBarOptionsProvider._()
@@ -40,9 +35,7 @@ final class ChatInputBarOptionsProvider
 
   @$internal
   @override
-  $ProviderElement<ProviderCapabilities?> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<ProviderCapabilities?> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   ProviderCapabilities? create(Ref ref) {
@@ -51,12 +44,8 @@ final class ChatInputBarOptionsProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ProviderCapabilities? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ProviderCapabilities?>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ProviderCapabilities?>(value));
   }
 }
 
-String _$chatInputBarOptionsHash() =>
-    r'4032a70dbe9287705669d574362db21610dcdc7c';
+String _$chatInputBarOptionsHash() => r'4032a70dbe9287705669d574362db21610dcdc7c';

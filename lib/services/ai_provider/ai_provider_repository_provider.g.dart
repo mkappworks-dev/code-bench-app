@@ -13,12 +13,7 @@ part of 'ai_provider_repository_provider.dart';
 final aiProviderRepositoryProvider = AiProviderRepositoryProvider._();
 
 final class AiProviderRepositoryProvider
-    extends
-        $FunctionalProvider<
-          AIProviderRepository,
-          AIProviderRepository,
-          AIProviderRepository
-        >
+    extends $FunctionalProvider<AIProviderRepository, AIProviderRepository, AIProviderRepository>
     with $Provider<AIProviderRepository> {
   AiProviderRepositoryProvider._()
     : super(
@@ -36,9 +31,7 @@ final class AiProviderRepositoryProvider
 
   @$internal
   @override
-  $ProviderElement<AIProviderRepository> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<AIProviderRepository> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   AIProviderRepository create(Ref ref) {
@@ -47,12 +40,8 @@ final class AiProviderRepositoryProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(AIProviderRepository value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<AIProviderRepository>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<AIProviderRepository>(value));
   }
 }
 
-String _$aiProviderRepositoryHash() =>
-    r'e973746794f4af71676071c20b486335db93cadb';
+String _$aiProviderRepositoryHash() => r'e973746794f4af71676071c20b486335db93cadb';
