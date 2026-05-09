@@ -103,17 +103,21 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
   }
 
   /// Removes the project from Code Bench. If [deleteSessions] is true, all
-  /// conversations linked to the project are deleted first.
+  /// sessions linked to the project (archived AND active) are deleted first.
+  /// When the active project is being removed, also clears the active session
+  /// and project ids so the chat view falls back to its empty state.
   Future<void> removeProject(String id, {bool deleteSessions = false}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       try {
+        sLog('[ProjectSidebarActions] removeProject id=$id deleteSessions=$deleteSessions');
+        // Clear active pointers before the cascade so a partial failure can't leave the chat view on a now-deleted session.
+        if (ref.read(activeProjectIdProvider) == id) {
+          ref.read(activeSessionIdProvider.notifier).set(null);
+          ref.read(activeProjectIdProvider.notifier).set(null);
+        }
         if (deleteSessions) {
-          final repo = await _sessions;
-          final sessions = await repo.getSessionsByProject(id);
-          for (final s in sessions) {
-            await repo.deleteSession(s.sessionId);
-          }
+          await (await _sessions).deleteSessionsByProject(id);
         }
         await _projects.removeProject(id);
       } catch (e, st) {
@@ -212,6 +216,39 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     });
   }
 
+  Future<void> archiveAllSessionsForProject(String projectId) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        final activeId = ref.read(activeSessionIdProvider);
+        final archived = await (await _sessions).archiveActiveSessionsByProject(projectId);
+        if (activeId != null && archived.contains(activeId)) {
+          ref.read(activeSessionIdProvider.notifier).set(null);
+        }
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] archiveAllSessionsForProject failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+
+  Future<void> deleteAllSessionsForProject(String projectId) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      try {
+        sLog('[ProjectSidebarActions] deleteAllSessionsForProject projectId=$projectId');
+        final activeId = ref.read(activeSessionIdProvider);
+        final deleted = await (await _sessions).deleteActiveSessionsByProject(projectId);
+        if (activeId != null && deleted.contains(activeId)) {
+          ref.read(activeSessionIdProvider.notifier).set(null);
+        }
+      } catch (e, st) {
+        dLog('[ProjectSidebarActions] deleteAllSessionsForProject failed: $e');
+        Error.throwWithStackTrace(_asFailure(e), st);
+      }
+    });
+  }
+
   Future<void> deleteSession(String id) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
@@ -239,17 +276,30 @@ class ProjectSidebarActions extends _$ProjectSidebarActions {
     });
   }
 
-  /// Non-throwing read of the session count for [projectId]. Returns 0 on any
-  /// error so widgets can show "did not load" UI without needing try/catch.
-  /// Widgets that need this count (e.g. RemoveProjectDialog) rely on the
-  /// safe default — a failed query simply hides the cascade-delete option.
+  /// Non-throwing read of the active session count for [projectId]. Returns 0
+  /// on any error so widgets can show "did not load" UI without needing
+  /// try/catch. Widgets that need this count (e.g. DeleteAllConversationsDialog)
+  /// rely on the safe default — a failed query simply hides the cascade
+  /// option.
   Future<int> fetchSessionCount(String projectId) async {
     try {
       final sessions = await (await _sessions).getSessionsByProject(projectId);
       return sessions.length;
-    } catch (e) {
-      dLog('[ProjectSidebarActions] fetchSessionCount failed: $e');
+    } catch (e, st) {
+      dLog('[ProjectSidebarActions] fetchSessionCount failed: $e\n$st');
       return 0;
+    }
+  }
+
+  Future<({int active, int archived})> fetchSessionCounts(String projectId) async {
+    try {
+      final svc = await _sessions;
+      final active = await svc.getSessionsByProject(projectId);
+      final archived = await svc.watchArchivedSessionsByProject(projectId).first;
+      return (active: active.length, archived: archived.length);
+    } catch (e, st) {
+      dLog('[ProjectSidebarActions] fetchSessionCounts failed: $e\n$st');
+      return (active: 0, archived: 0);
     }
   }
 

@@ -62,6 +62,8 @@ class SessionService {
   Stream<List<ChatSession>> watchAllSessions() => _session.watchAllSessions();
   Stream<List<ChatSession>> watchSessionsByProject(String projectId) => _session.watchSessionsByProject(projectId);
   Stream<List<ChatSession>> watchArchivedSessions() => _session.watchArchivedSessions();
+  Stream<List<ChatSession>> watchArchivedSessionsByProject(String projectId) =>
+      _session.watchArchivedSessionsByProject(projectId);
   Future<ChatSession?> getSession(String sessionId) => _session.getSession(sessionId);
   Future<String> createSession({required AIModel model, String? title, String? projectId}) =>
       _session.createSession(model: model, title: title, projectId: projectId);
@@ -101,6 +103,11 @@ class SessionService {
       _session.loadHistory(sessionId, limit: limit, offset: offset);
   Future<void> persistMessage(String sessionId, ChatMessage message) => _session.persistMessage(sessionId, message);
   Future<List<ChatSession>> getSessionsByProject(String projectId) => _session.getSessionsByProject(projectId);
+  Future<void> deleteSessionsByProject(String projectId) => _session.deleteSessionsByProject(projectId);
+  Future<List<String>> archiveActiveSessionsByProject(String projectId) =>
+      _session.archiveActiveSessionsByProject(projectId);
+  Future<List<String>> deleteActiveSessionsByProject(String projectId) =>
+      _session.deleteActiveSessionsByProject(projectId);
 
   ({String? providerId, String? modelId}) _attribution({AIModel? model, String? cliProviderId, String? cliModelId}) {
     if (cliProviderId != null) return (providerId: cliProviderId, modelId: cliModelId);

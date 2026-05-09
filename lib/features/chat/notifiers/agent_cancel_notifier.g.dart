@@ -8,14 +8,14 @@ part of 'agent_cancel_notifier.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Cooperative per-session cancel flags read by [AgentService] / [ChatStreamService] at each tool boundary; tracking by sessionId stops one chat's stop-button from cancelling concurrent chats' streams.
+/// Cooperative per-session cancel flags read by [AgentService] / [ChatStreamRegistryService] at each tool boundary; tracking by sessionId stops one chat's stop-button from cancelling concurrent chats' streams.
 
 @ProviderFor(AgentCancelNotifier)
 final agentCancelProvider = AgentCancelNotifierProvider._();
 
-/// Cooperative per-session cancel flags read by [AgentService] / [ChatStreamService] at each tool boundary; tracking by sessionId stops one chat's stop-button from cancelling concurrent chats' streams.
+/// Cooperative per-session cancel flags read by [AgentService] / [ChatStreamRegistryService] at each tool boundary; tracking by sessionId stops one chat's stop-button from cancelling concurrent chats' streams.
 final class AgentCancelNotifierProvider extends $NotifierProvider<AgentCancelNotifier, Set<String>> {
-  /// Cooperative per-session cancel flags read by [AgentService] / [ChatStreamService] at each tool boundary; tracking by sessionId stops one chat's stop-button from cancelling concurrent chats' streams.
+  /// Cooperative per-session cancel flags read by [AgentService] / [ChatStreamRegistryService] at each tool boundary; tracking by sessionId stops one chat's stop-button from cancelling concurrent chats' streams.
   AgentCancelNotifierProvider._()
     : super(
         from: null,
@@ -42,7 +42,7 @@ final class AgentCancelNotifierProvider extends $NotifierProvider<AgentCancelNot
 
 String _$agentCancelNotifierHash() => r'42e0ff1dc8ca568f64b32b64a07767f086a11752';
 
-/// Cooperative per-session cancel flags read by [AgentService] / [ChatStreamService] at each tool boundary; tracking by sessionId stops one chat's stop-button from cancelling concurrent chats' streams.
+/// Cooperative per-session cancel flags read by [AgentService] / [ChatStreamRegistryService] at each tool boundary; tracking by sessionId stops one chat's stop-button from cancelling concurrent chats' streams.
 
 abstract class _$AgentCancelNotifier extends $Notifier<Set<String>> {
   Set<String> build();

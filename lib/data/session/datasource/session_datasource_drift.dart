@@ -38,6 +38,11 @@ class SessionDatasourceDrift implements SessionDatasource {
   }
 
   @override
+  Stream<List<ChatSession>> watchArchivedSessionsByProject(String projectId) {
+    return _db.sessionDao.watchArchivedSessionsByProject(projectId).map((rows) => rows.map(_sessionFromRow).toList());
+  }
+
+  @override
   Future<ChatSession?> getSession(String sessionId) async {
     final row = await _db.sessionDao.getSession(sessionId);
     return row != null ? _sessionFromRow(row) : null;
@@ -113,6 +118,26 @@ class SessionDatasourceDrift implements SessionDatasource {
 
   @override
   Future<void> deleteAllSessionsAndMessages() => _db.sessionDao.deleteAllSessionsAndMessages();
+
+  @override
+  Future<void> deleteSessionsByProject(String projectId) async {
+    dLog('[SessionDatasourceDrift] deleteSessionsByProject projectId=$projectId');
+    await _db.sessionDao.deleteSessionsByProject(projectId);
+  }
+
+  @override
+  Future<List<String>> archiveActiveSessionsByProject(String projectId) async {
+    final ids = await _db.sessionDao.archiveActiveSessionsByProject(projectId);
+    dLog('[SessionDatasourceDrift] archiveActiveSessionsByProject projectId=$projectId archived=${ids.length}');
+    return ids;
+  }
+
+  @override
+  Future<List<String>> deleteActiveSessionsByProject(String projectId) async {
+    final ids = await _db.sessionDao.deleteActiveSessionsByProject(projectId);
+    dLog('[SessionDatasourceDrift] deleteActiveSessionsByProject projectId=$projectId deleted=${ids.length}');
+    return ids;
+  }
 
   @override
   Future<List<msg.ChatMessage>> loadHistory(String sessionId, {int limit = 50, int offset = 0}) async {

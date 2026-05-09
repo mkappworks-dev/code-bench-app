@@ -8,15 +8,15 @@ part of 'mcp_server_status_notifier.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// `keepAlive` so a captured instance survives the chat tab unmount while `ChatStreamService` is still emitting updates.
+/// `keepAlive` so a captured instance survives the chat tab unmount while `ChatStreamRegistryService` is still emitting updates.
 
 @ProviderFor(McpServerStatusNotifier)
 final mcpServerStatusProvider = McpServerStatusNotifierProvider._();
 
-/// `keepAlive` so a captured instance survives the chat tab unmount while `ChatStreamService` is still emitting updates.
+/// `keepAlive` so a captured instance survives the chat tab unmount while `ChatStreamRegistryService` is still emitting updates.
 final class McpServerStatusNotifierProvider
     extends $NotifierProvider<McpServerStatusNotifier, Map<String, McpServerStatus>> {
-  /// `keepAlive` so a captured instance survives the chat tab unmount while `ChatStreamService` is still emitting updates.
+  /// `keepAlive` so a captured instance survives the chat tab unmount while `ChatStreamRegistryService` is still emitting updates.
   McpServerStatusNotifierProvider._()
     : super(
         from: null,
@@ -43,7 +43,7 @@ final class McpServerStatusNotifierProvider
 
 String _$mcpServerStatusNotifierHash() => r'52287402abd0c1e91b66f3f27e01bd0ba30eee07';
 
-/// `keepAlive` so a captured instance survives the chat tab unmount while `ChatStreamService` is still emitting updates.
+/// `keepAlive` so a captured instance survives the chat tab unmount while `ChatStreamRegistryService` is still emitting updates.
 
 abstract class _$McpServerStatusNotifier extends $Notifier<Map<String, McpServerStatus>> {
   Map<String, McpServerStatus> build();

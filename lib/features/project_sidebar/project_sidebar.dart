@@ -15,6 +15,8 @@ import '../chat/notifiers/chat_notifier.dart';
 import 'notifiers/project_sidebar_actions.dart';
 import 'notifiers/project_sidebar_failure.dart';
 import 'notifiers/project_sidebar_notifier.dart';
+import 'widgets/archive_all_conversations_dialog.dart';
+import 'widgets/delete_all_conversations_dialog.dart';
 import 'widgets/project_tile.dart';
 import 'widgets/relocate_project_dialog.dart';
 import 'widgets/remove_project_dialog.dart';
@@ -239,6 +241,14 @@ class _ProjectSidebarState extends ConsumerState<ProjectSidebar> with WidgetsBin
                             sessionId: sessionId,
                           ),
                         ),
+                        onArchiveAll: (id) async {
+                          final p = projects.firstWhere((p) => p.id == id);
+                          await ArchiveAllConversationsDialog.show(context, p);
+                        },
+                        onDeleteAll: (id) async {
+                          final p = projects.firstWhere((p) => p.id == id);
+                          await DeleteAllConversationsDialog.show(context, p);
+                        },
                       ),
                     );
                   },
