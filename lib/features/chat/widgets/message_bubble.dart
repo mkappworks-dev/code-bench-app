@@ -10,9 +10,11 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../data/ai/models/provider_setting_drop.dart';
+import '../../../data/session/models/ask_user_question.dart';
 import '../../../data/session/models/tool_event.dart';
 import '../../../data/shared/chat_message.dart';
 import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
+import '../notifiers/agent_user_input_request_notifier.dart';
 import '../notifiers/ask_question_notifier.dart';
 import '../notifiers/chat_messages_actions.dart';
 import '../notifiers/chat_messages_failure.dart';
@@ -51,7 +53,7 @@ class MessageBubble extends StatelessWidget {
       child: switch (message.role) {
         MessageRole.user => _UserBubble(message: message, sessionId: sessionId, isLast: isLast),
         MessageRole.interrupted => const _InterruptedBubble(),
-        _ => _AssistantBubble(message: message),
+        _ => _AssistantBubble(message: message, isLast: isLast),
       },
     );
   }
@@ -195,8 +197,9 @@ class _InterruptedBubble extends StatelessWidget {
 }
 
 class _AssistantBubble extends ConsumerStatefulWidget {
-  const _AssistantBubble({required this.message});
+  const _AssistantBubble({required this.message, required this.isLast});
   final ChatMessage message;
+  final bool isLast;
 
   @override
   ConsumerState<_AssistantBubble> createState() => _AssistantBubbleState();
@@ -294,6 +297,31 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
                       : null,
                 ),
               ],
+              Consumer(
+                builder: (context, ref, _) {
+                  final req = ref.watch(agentUserInputRequestProvider);
+                  if (req == null || !widget.isLast) return const SizedBox.shrink();
+                  final asWizard = AskUserQuestion(
+                    question: req.prompt,
+                    options: req.choices ?? const <String>[],
+                    allowFreeText: true,
+                    stepIndex: 0,
+                    totalSteps: 1,
+                  );
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: AskUserQuestionCard(
+                      question: asWizard,
+                      sessionId: message.sessionId,
+                      agentMode: true,
+                      onSubmit: (answer) async {
+                        final text = (answer['freeText'] as String?) ?? (answer['selectedOption'] as String?) ?? '';
+                        ref.read(agentUserInputRequestProvider.notifier).submit(text);
+                      },
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ),

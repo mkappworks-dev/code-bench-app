@@ -23,6 +23,7 @@ import '../../mcp_servers/notifiers/mcp_server_status_notifier.dart';
 import '../../providers/notifiers/providers_notifier.dart';
 import 'agent_cancel_notifier.dart';
 import 'agent_permission_request_notifier.dart';
+import 'agent_user_input_request_notifier.dart';
 import 'chat_input_bar_options_notifier.dart';
 import 'dropped_settings_notifier.dart';
 import 'transport_readiness_notifier.dart';
@@ -235,6 +236,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     // Capture stable notifier instances; the registry outlives this notifier and `ref` would throw post-dispose.
     final cancelN = ref.read(agentCancelProvider.notifier);
     final permN = ref.read(agentPermissionRequestProvider.notifier);
+    final inputN = ref.read(agentUserInputRequestProvider.notifier);
     final mcpN = ref.read(mcpServerStatusProvider.notifier);
 
     String? streamingAssistantId;
@@ -255,6 +257,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
             providerId: providerId,
             cancelFlag: () => cancelN.isCancelled(sessionId),
             requestPermission: permN.request,
+            requestUserInput: inputN.requestAndAwait,
             onMcpStatusChanged: mcpN.setStatus,
             onMcpServerRemoved: mcpN.remove,
             onSettingDropped: (drop) {
@@ -384,6 +387,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     // `await requestPermission(...)` rather than hanging until the UI is
     // manually dismissed.
     ref.read(agentPermissionRequestProvider.notifier).cancel();
+    ref.read(agentUserInputRequestProvider.notifier).cancel();
     ref.read(activeMessageIdProvider.notifier).set(null);
 
     final current = state.value ?? _preSendMessages;

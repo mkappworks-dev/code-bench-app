@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:code_bench_app/data/ai/models/provider_setting_drop.dart';
 import 'package:code_bench_app/data/chat/models/transport_readiness.dart';
+import 'package:code_bench_app/data/ai/models/provider_runtime_event.dart';
 import 'package:code_bench_app/data/session/models/permission_request.dart';
 import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
@@ -56,6 +57,7 @@ class _FakeSessionService extends Fake implements SessionService {
     String? providerId,
     bool Function() cancelFlag = _neverCancel,
     Future<bool> Function(PermissionRequest req)? requestPermission,
+    Future<String?> Function(ProviderUserInputRequest req)? requestUserInput,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
     ProviderSettingDropSink? onSettingDropped,

@@ -119,6 +119,7 @@ class SessionService {
     String? projectPath,
     String? providerId,
     Future<bool> Function(PermissionRequest req)? requestPermission,
+    Future<String?> Function(ProviderUserInputRequest req)? requestUserInput,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
     ProviderSettingDropSink? onSettingDropped,
@@ -186,6 +187,7 @@ class SessionService {
         prompt: userInput,
         projectPath: projectPath,
         requestPermission: requestPermission,
+        requestUserInput: requestUserInput,
         cancelFlag: cancelFlag,
         settings: providerSettings,
       );
@@ -282,6 +284,7 @@ class SessionService {
     required String? projectPath,
     required Future<bool> Function(PermissionRequest req)? requestPermission,
     required bool Function() cancelFlag,
+    Future<String?> Function(ProviderUserInputRequest req)? requestUserInput,
     ProviderTurnSettings? settings,
   }) async* {
     final assistantId = _uuid.v4();
@@ -358,8 +361,14 @@ class SessionService {
               : true;
           ds.respondToPermissionRequest(sessionId, requestId, approved: approved);
 
+        case final ProviderUserInputRequest req when requestUserInput != null:
+          final response = await requestUserInput(req);
+          if (response != null) {
+            ds.respondToUserInputRequest(sessionId, req.requestId, response: response);
+          }
+
         case ProviderUserInputRequest():
-          break; // Surfaced to the UI layer; response routed back by the notifier.
+          break; // No callback registered; leave the agent loop unblocked.
 
         case ProviderStreamDone():
           break; // Loop ends naturally.
