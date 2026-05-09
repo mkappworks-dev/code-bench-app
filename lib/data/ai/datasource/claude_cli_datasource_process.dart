@@ -466,11 +466,12 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
   @override
   void respondToUserInputRequest(String sessionId, String requestId, {required String response}) {
-    final pending = _pendingAskUserQuestions.remove(sessionId);
+    final pending = _pendingAskUserQuestions[sessionId];
     if (pending == null || pending.toolUseId != requestId) {
       dLog('[ClaudeCli] No pending AskUserQuestion for session $sessionId / request $requestId');
       return;
     }
+    _pendingAskUserQuestions.remove(sessionId);
     final payload = jsonEncode({
       'type': 'user',
       'message': {
