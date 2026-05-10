@@ -1,5 +1,3 @@
-// test/services/coding_tools/tool_registry_test.dart
-
 import 'dart:io';
 
 import 'package:code_bench_app/data/_core/preferences/coding_tools_preferences.dart';
@@ -18,7 +16,7 @@ import 'package:code_bench_app/data/filesystem/datasource/filesystem_datasource_
 import 'package:code_bench_app/data/filesystem/repository/filesystem_repository_impl.dart';
 import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
-import 'package:code_bench_app/services/coding_tools/tool_registry.dart';
+import 'package:code_bench_app/services/coding_tools/tool_registry_service.dart';
 import 'package:code_bench_app/services/coding_tools/tools/list_dir_tool.dart';
 import 'package:code_bench_app/services/coding_tools/tools/read_file_tool.dart';
 import 'package:code_bench_app/services/coding_tools/tools/str_replace_tool.dart';
@@ -84,11 +82,11 @@ class _ThrowingDenylistRepo implements CodingToolsDenylistRepository {
   Future<void> restoreAllDefaults() async {}
 }
 
-ToolRegistry _newRegistry({required Directory projectDir, CodingToolsDenylistRepository? denylistRepo}) {
+ToolRegistryService _newRegistry({required Directory projectDir, CodingToolsDenylistRepository? denylistRepo}) {
   final applyRepo = ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()));
   final applySvc = ApplyService(repo: applyRepo);
   final codingRepo = CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo());
-  return ToolRegistry(
+  return ToolRegistryService(
     builtIns: [
       ReadFileTool(repo: codingRepo),
       ListDirTool(repo: codingRepo),
@@ -253,7 +251,7 @@ void main() {
   group('execute — denylist load failure', () {
     test('returns error result instead of throwing', () async {
       final codingRepo = CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo());
-      final registry = ToolRegistry(
+      final registry = ToolRegistryService(
         builtIns: [ReadFileTool(repo: codingRepo)],
         denylistRepo: _ThrowingDenylistRepo(),
       );

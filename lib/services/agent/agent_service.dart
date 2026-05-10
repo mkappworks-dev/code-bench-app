@@ -18,7 +18,7 @@ import '../../data/shared/session_settings.dart';
 import '../../data/session/models/tool_event.dart';
 import '../../data/shared/ai_model.dart';
 import '../../data/shared/chat_message.dart';
-import '../coding_tools/tool_registry.dart';
+import '../coding_tools/tool_registry_service.dart';
 import '../mcp/mcp_service.dart';
 import 'agent_exceptions.dart';
 
@@ -43,7 +43,7 @@ const int _kMaxIterations = 10;
 @Riverpod(keepAlive: true)
 Future<AgentService> agentService(Ref ref) async {
   final ai = await ref.watch(aiRepositoryProvider.future);
-  final registry = ref.watch(toolRegistryProvider);
+  final registry = ref.watch(toolRegistryServiceProvider);
   final mcpSvc = ref.watch(mcpServiceProvider);
   return AgentService(ai: ai, registry: registry, mcpService: mcpSvc);
 }
@@ -54,7 +54,7 @@ Future<AgentService> agentService(Ref ref) async {
 class AgentService {
   AgentService({
     required ToolStreamingRepository ai,
-    required ToolRegistry registry,
+    required ToolRegistryService registry,
     McpService? mcpService,
     String Function()? idGen,
   }) : _ai = ai,
@@ -63,7 +63,7 @@ class AgentService {
        _idGen = idGen ?? (() => const Uuid().v4());
 
   final ToolStreamingRepository _ai;
-  final ToolRegistry _registry;
+  final ToolRegistryService _registry;
   final McpService? _mcpService;
   final String Function() _idGen;
 

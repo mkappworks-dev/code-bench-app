@@ -8,44 +8,14 @@ part of 'chat_messages_actions.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Command notifier for message-list mutations that can fail and need a
-/// stable, observable error surface (typed `AsyncError` carrying a
-/// [ChatMessagesFailure]).
-///
-/// Send/cancel stay on [ChatMessagesNotifier] because they own streaming
-/// state. Delete and load-more live here so widgets can `ref.listen` for
-/// failures without being entangled with the streaming `AsyncValue`.
-///
-/// Single global slot (no family): only one session is active at a time, and
-/// we want one snackbar per failed operation regardless of how many bubbles
-/// are on screen.
+/// Command notifier for delete / retry / load-more — the message-list mutations that need an observable error surface independent of the streaming `AsyncValue` on [ChatMessagesNotifier]. Single global slot so a duplicated snackbar across many bubble instances can't fire.
 
 @ProviderFor(ChatMessagesActions)
 final chatMessagesActionsProvider = ChatMessagesActionsProvider._();
 
-/// Command notifier for message-list mutations that can fail and need a
-/// stable, observable error surface (typed `AsyncError` carrying a
-/// [ChatMessagesFailure]).
-///
-/// Send/cancel stay on [ChatMessagesNotifier] because they own streaming
-/// state. Delete and load-more live here so widgets can `ref.listen` for
-/// failures without being entangled with the streaming `AsyncValue`.
-///
-/// Single global slot (no family): only one session is active at a time, and
-/// we want one snackbar per failed operation regardless of how many bubbles
-/// are on screen.
+/// Command notifier for delete / retry / load-more — the message-list mutations that need an observable error surface independent of the streaming `AsyncValue` on [ChatMessagesNotifier]. Single global slot so a duplicated snackbar across many bubble instances can't fire.
 final class ChatMessagesActionsProvider extends $AsyncNotifierProvider<ChatMessagesActions, void> {
-  /// Command notifier for message-list mutations that can fail and need a
-  /// stable, observable error surface (typed `AsyncError` carrying a
-  /// [ChatMessagesFailure]).
-  ///
-  /// Send/cancel stay on [ChatMessagesNotifier] because they own streaming
-  /// state. Delete and load-more live here so widgets can `ref.listen` for
-  /// failures without being entangled with the streaming `AsyncValue`.
-  ///
-  /// Single global slot (no family): only one session is active at a time, and
-  /// we want one snackbar per failed operation regardless of how many bubbles
-  /// are on screen.
+  /// Command notifier for delete / retry / load-more — the message-list mutations that need an observable error surface independent of the streaming `AsyncValue` on [ChatMessagesNotifier]. Single global slot so a duplicated snackbar across many bubble instances can't fire.
   ChatMessagesActionsProvider._()
     : super(
         from: null,
@@ -65,19 +35,9 @@ final class ChatMessagesActionsProvider extends $AsyncNotifierProvider<ChatMessa
   ChatMessagesActions create() => ChatMessagesActions();
 }
 
-String _$chatMessagesActionsHash() => r'2afc9499f01f947b34dd450104066fc339b5015c';
+String _$chatMessagesActionsHash() => r'238bbb89565ae4f805c1cc3b0331279495c333eb';
 
-/// Command notifier for message-list mutations that can fail and need a
-/// stable, observable error surface (typed `AsyncError` carrying a
-/// [ChatMessagesFailure]).
-///
-/// Send/cancel stay on [ChatMessagesNotifier] because they own streaming
-/// state. Delete and load-more live here so widgets can `ref.listen` for
-/// failures without being entangled with the streaming `AsyncValue`.
-///
-/// Single global slot (no family): only one session is active at a time, and
-/// we want one snackbar per failed operation regardless of how many bubbles
-/// are on screen.
+/// Command notifier for delete / retry / load-more — the message-list mutations that need an observable error surface independent of the streaming `AsyncValue` on [ChatMessagesNotifier]. Single global slot so a duplicated snackbar across many bubble instances can't fire.
 
 abstract class _$ChatMessagesActions extends $AsyncNotifier<void> {
   FutureOr<void> build();

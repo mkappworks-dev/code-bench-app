@@ -69,11 +69,22 @@ class ProviderStreamFailure extends ProviderRuntimeEvent {
 /// Agent-initiated request for typed user input (not a yes/no approval).
 /// UI shows a question card with [prompt], optional [choices], and a
 /// free-text fallback. The reply travels back through
-/// `respondToUserInputRequest({response: <answer>})`.
+/// `respondToUserInputRequest({response: <answer>})`. [providerId] and
+/// [sessionId] are stamped so the response can be routed to the originating
+/// datasource without broadcast (avoids cross-provider spillover).
 class ProviderUserInputRequest extends ProviderRuntimeEvent {
-  const ProviderUserInputRequest({required this.requestId, required this.prompt, this.choices, this.defaultValue});
+  const ProviderUserInputRequest({
+    required this.requestId,
+    required this.prompt,
+    required this.providerId,
+    required this.sessionId,
+    this.choices,
+    this.defaultValue,
+  });
   final String requestId;
   final String prompt;
+  final String providerId;
+  final String sessionId;
   final List<String>? choices;
   final String? defaultValue;
 }

@@ -327,21 +327,31 @@ void main() {
   });
 
   group('ApplyService.readFileContent', () {
-    test('returns content when file exists', () async {
+    test('returns FileReadContent when file exists', () async {
       final repo = FakeApplyRepository();
       repo.setReadContent('file content');
       final service = makeService(repo: repo);
 
       final result = await service.readFileContent('/tmp/file.dart', '/tmp');
-      expect(result, 'file content');
+      expect(result, isA<FileReadContent>());
+      expect((result as FileReadContent).text, 'file content');
     });
 
-    test('returns null when file not found', () async {
-      final repo = FakeApplyRepository(); // readFile returns null
+    test('returns FileReadNotFound when file not found', () async {
+      final repo = FakeApplyRepository();
       final service = makeService(repo: repo);
 
       final result = await service.readFileContent('/tmp/missing.dart', '/tmp');
-      expect(result, isNull);
+      expect(result, isA<FileReadNotFound>());
+    });
+
+    test('returns FileReadError when underlying read throws', () async {
+      final repo = FakeApplyRepository();
+      repo.setReadThrowsApplyDiskException();
+      final service = makeService(repo: repo);
+
+      final result = await service.readFileContent('/tmp/blocked.dart', '/tmp');
+      expect(result, isA<FileReadError>());
     });
   });
 
@@ -417,7 +427,7 @@ void main() {
       expect(result, isNull);
     });
 
-    test('rethrows ApplyDiskException (unlike readFileContent which swallows it)', () async {
+    test('rethrows ApplyDiskException (whereas readFileContent maps it to FileReadError)', () async {
       final repo = FakeApplyRepository();
       repo.setReadThrowsApplyDiskException();
       final service = makeService(repo: repo);

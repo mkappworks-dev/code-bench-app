@@ -167,7 +167,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
         includeParentEnvironment: probeEnv == null,
       ).timeout(const Duration(seconds: 5));
     } catch (e) {
-      sLog('[ClaudeCli] --version probe failed: $e');
+      sLog('[ClaudeCli] --version probe failed: ${redactSecrets('$e')}');
       return DetectionResult.unhealthy('--version failed: ${e.runtimeType}');
     }
     if (versionResult.exitCode != 0) {
@@ -226,10 +226,9 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
       // workingDirectory guard — must be an existing absolute path that is
       // not the filesystem root. The CLI runs with bypassPermissions so a
-      // stale or attacker-influenced path (e.g. `~`, `/`) would give it
-      // full home-directory tool access.
-      final wdDir = Directory(workingDirectory);
-      if (!workingDirectory.startsWith('/') || workingDirectory == '/' || !wdDir.existsSync()) {
+      // stale or attacker-influenced path (e.g. `~`, `/`, `C:\`) would give
+      // it full home-directory tool access.
+      if (!isAcceptableWorkingDirectory(workingDirectory) || !Directory(workingDirectory).existsSync()) {
         sLog('[ClaudeCli] rejected workingDirectory: $workingDirectory');
         controller.add(const ProviderStreamFailure(error: 'invalid workingDirectory'));
         return;
@@ -318,8 +317,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
         return;
       }
 
-      // EOF stdin up-front: newer CLI versions block reading stdin in `-p` mode and exit 1 after a 3s warning.
-      unawaited(spawned.stdin.close());
+      // Keep stdin open for the duration of the turn so AskUserQuestion replies can be written via `respondToUserInputRequest`. Closed in finally once the stream ends.
 
       // Cap stderr so a chatty crash can't balloon memory.
       const stderrCap = 64 * 1024;
@@ -395,6 +393,10 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       if (identical(_processes[sessionId], spawned)) {
         _processes.remove(sessionId);
       }
+      _pendingAskUserQuestions.remove(sessionId);
+      if (spawned != null) {
+        unawaited(spawned.stdin.close().catchError((Object _) {}));
+      }
       await controller.close();
     }
   }
@@ -435,11 +437,18 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
     required String sessionId,
   }) {
     if (_isAskUserQuestion(_pendingNames.remove(id))) {
-      final prompt = (input['question'] ?? '') as String;
+      final question = input['question'];
+      final prompt = question is String ? question : '';
       final rawChoices = input['options'];
       final choices = rawChoices is List ? rawChoices.whereType<String>().toList() : null;
       _pendingAskUserQuestions[sessionId] = _PendingAUQ(toolUseId: id, sessionId: sessionId);
-      return ProviderUserInputRequest(requestId: id, prompt: prompt, choices: choices);
+      return ProviderUserInputRequest(
+        requestId: id,
+        prompt: prompt,
+        providerId: this.id,
+        sessionId: sessionId,
+        choices: choices,
+      );
     }
     return ProviderToolUseComplete(toolId: id, input: input);
   }
@@ -465,11 +474,17 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   }
 
   @override
-  void respondToUserInputRequest(String sessionId, String requestId, {required String response}) {
+  bool respondToUserInputRequest(String sessionId, String requestId, {required String response}) {
     final pending = _pendingAskUserQuestions[sessionId];
     if (pending == null || pending.toolUseId != requestId) {
       dLog('[ClaudeCli] No pending AskUserQuestion for session $sessionId / request $requestId');
-      return;
+      return false;
+    }
+    final process = _processes[sessionId];
+    if (process == null) {
+      sLog('[ClaudeCli] AUQ response dropped — process gone for session $sessionId');
+      _pendingAskUserQuestions.remove(sessionId);
+      return false;
     }
     _pendingAskUserQuestions.remove(sessionId);
     final payload = jsonEncode({
@@ -481,7 +496,13 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
         ],
       },
     });
-    _processes[sessionId]?.stdin.writeln(payload);
+    try {
+      process.stdin.writeln(payload);
+      return true;
+    } on StateError catch (e) {
+      sLog('[ClaudeCli] AUQ stdin write failed (closed): ${e.message}');
+      return false;
+    }
   }
 
   @override

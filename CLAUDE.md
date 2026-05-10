@@ -84,7 +84,7 @@ Strictly one-directional: **Widgets → Notifiers → Services → Repositories 
 | Notifier file placement     | `*_notifier.dart`, `*_actions.dart`, `*_failure.dart` all live in `{feature}/notifiers/` | `features/chat/notifiers/chat_notifier.dart`                    |
 | `ref.invalidate` in widgets | **forbidden** — route through a notifier method instead                                  | `refreshGitState()`, `refreshArchivedSessions()`                |
 
-> **Named exception:** `ToolRegistry` (`lib/services/coding_tools/tool_registry.dart`) is intentionally not named `ToolRegistryService` — the only approved deviation from the `Service` suffix rule.
+> **Named exception:** `aiProviderRepositoryProvider` (`lib/services/ai_provider/ai_provider_repository_provider.dart`) lives in `lib/services/` rather than next to its impl (`lib/data/ai/repository/ai_provider_repository_impl.dart`), because `lib/data` cannot import `lib/services` and the impl needs the per-provider datasource map injected via constructor.
 
 The Riverpod generator strips the `Notifier` suffix when producing the provider variable name (`class ActiveSessionIdNotifier` → `activeSessionIdProvider`). The `Actions` suffix is kept (`class GitActions` → `gitActionsProvider`).
 

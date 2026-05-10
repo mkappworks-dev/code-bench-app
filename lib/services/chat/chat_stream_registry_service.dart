@@ -185,6 +185,17 @@ class ChatStreamRegistryService {
     }
   }
 
+  /// Pushes an externally-detected failure onto the session's state stream so
+  /// listeners surface it the same way as in-band stream errors. Used when a
+  /// downstream side-channel op (e.g. an AUQ response that no datasource
+  /// accepted) needs to abort the turn without an exception travelling
+  /// through `streamFactory`.
+  void reportFailure(String sessionId, String reason) {
+    final handle = _handles[sessionId];
+    if (handle == null) return;
+    handle._emit(ChatStreamState.failed(AgentFailure.streamAbortedUnexpectedly(reason)));
+  }
+
   Future<void> dispose() async {
     for (final h in _handles.values) {
       await h.dispose();

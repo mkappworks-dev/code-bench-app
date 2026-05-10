@@ -379,7 +379,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     // `await requestPermission(...)` rather than hanging until the UI is
     // manually dismissed.
     ref.read(agentPermissionRequestProvider.notifier).cancel();
-    ref.read(agentUserInputRequestProvider.notifier).cancel();
+    ref.read(agentUserInputRequestProvider(sessionId).notifier).cancel();
     ref.read(activeMessageIdProvider.notifier).set(null);
 
     final current = state.value ?? _preSendMessages;
@@ -395,16 +395,36 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
   }
 
   Future<void> _handleUserInputRequest(ProviderUserInputRequest req) async {
-    final n = ref.read(agentUserInputRequestProvider.notifier);
-    final response = await n.requestAndAwait(req);
-    if (response == null) {
-      cancelSend();
-      return;
+    final originatingSessionId = req.sessionId;
+    final n = ref.read(agentUserInputRequestProvider(originatingSessionId).notifier);
+    final result = await n.requestAndAwait(req);
+    switch (result) {
+      case AgentUserInputPreempted():
+        dLog('[ChatMessagesNotifier] AUQ preempted for sessionId=$originatingSessionId requestId=${req.requestId}');
+        return;
+      case AgentUserInputCancelled():
+        cancelSend();
+        return;
+      case AgentUserInputAnswer(:final text):
+        final svc = await ref.read(sessionServiceProvider.future);
+        final delivered = svc.respondToUserInputRequest(
+          req.providerId,
+          originatingSessionId,
+          req.requestId,
+          response: text,
+        );
+        if (!delivered) {
+          sLog(
+            '[ChatMessagesNotifier] AUQ response not delivered (provider=${req.providerId}, sessionId=$originatingSessionId, requestId=${req.requestId}) — surfacing failure on registry',
+          );
+          ref
+              .read(chatStreamRegistryServiceProvider)
+              .reportFailure(
+                originatingSessionId,
+                'Agent question response could not be delivered to ${req.providerId}',
+              );
+        }
     }
-    final session = ref.read(activeSessionIdProvider);
-    if (session == null) return;
-    final svc = await ref.read(sessionServiceProvider.future);
-    svc.respondToUserInputRequest(session, req.requestId, response: response);
   }
 
   Future<void> _persistInterrupted(String sessionId, ChatMessage marker) async {

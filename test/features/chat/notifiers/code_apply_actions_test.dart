@@ -48,11 +48,14 @@ class _FakeApplyService extends Fake implements ApplyService {
   }
 
   @override
-  Future<String?> readFileContent(String filePath, String projectPath) async {
+  Future<FileReadResult> readFileContent(String filePath, String projectPath) async {
     try {
-      return await File(filePath).readAsString();
-    } on IOException {
-      return null;
+      return FileReadResult.content(await File(filePath).readAsString());
+    } on PathNotFoundException {
+      return const FileReadResult.notFound();
+    } on FileSystemException catch (e) {
+      // Tests use real I/O; "directory does not exist" surfaces as FileSystemException too.
+      return e.osError?.errorCode == 2 ? const FileReadResult.notFound() : FileReadResult.error(e.message);
     }
   }
 
@@ -284,24 +287,25 @@ void main() {
   // ── readFileContent ─────────────────────────────────────────────────────────
 
   group('readFileContent', () {
-    test('returns file content on success', () async {
+    test('returns FileReadContent on success', () async {
       final dir = await Directory.systemTemp.createTemp();
       addTearDown(() => dir.delete(recursive: true));
       final file = File('${dir.path}/test.dart')..writeAsStringSync('hello');
 
       final c = makeContainer();
-      final content = await c.read(codeApplyActionsProvider.notifier).readFileContent(file.path, dir.path);
-      expect(content, equals('hello'));
+      final result = await c.read(codeApplyActionsProvider.notifier).readFileContent(file.path, dir.path);
+      expect(result, isA<FileReadContent>());
+      expect((result as FileReadContent).text, equals('hello'));
     });
 
-    test('returns null for missing file', () async {
+    test('returns FileReadNotFound for missing file', () async {
       final dir = await Directory.systemTemp.createTemp();
       addTearDown(() => dir.delete(recursive: true));
       final c = makeContainer();
-      final content = await c
+      final result = await c
           .read(codeApplyActionsProvider.notifier)
           .readFileContent('${dir.path}/nonexistent.dart', dir.path);
-      expect(content, isNull);
+      expect(result, isA<FileReadNotFound>());
     });
   });
 }

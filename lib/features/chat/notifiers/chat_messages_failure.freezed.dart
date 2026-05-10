@@ -55,14 +55,14 @@ extension ChatMessagesFailurePatterns on ChatMessagesFailure {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ChatMessagesDeleteFailed value)?  deleteFailed,TResult Function( ChatMessagesRetryFailed value)?  retryFailed,TResult Function( ChatMessagesLoadMoreFailed value)?  loadMoreFailed,TResult Function( ChatMessagesUnknownError value)?  unknown,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ChatMessagesDeleteUserFailed value)?  deleteUserFailed,TResult Function( ChatMessagesDeleteAssistantFailed value)?  deleteAssistantFailed,TResult Function( ChatMessagesRetryFailed value)?  retryFailed,TResult Function( ChatMessagesLoadMoreFailed value)?  loadMoreFailed,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case ChatMessagesDeleteFailed() when deleteFailed != null:
-return deleteFailed(_that);case ChatMessagesRetryFailed() when retryFailed != null:
+case ChatMessagesDeleteUserFailed() when deleteUserFailed != null:
+return deleteUserFailed(_that);case ChatMessagesDeleteAssistantFailed() when deleteAssistantFailed != null:
+return deleteAssistantFailed(_that);case ChatMessagesRetryFailed() when retryFailed != null:
 return retryFailed(_that);case ChatMessagesLoadMoreFailed() when loadMoreFailed != null:
-return loadMoreFailed(_that);case ChatMessagesUnknownError() when unknown != null:
-return unknown(_that);case _:
+return loadMoreFailed(_that);case _:
   return orElse();
 
 }
@@ -80,14 +80,14 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ChatMessagesDeleteFailed value)  deleteFailed,required TResult Function( ChatMessagesRetryFailed value)  retryFailed,required TResult Function( ChatMessagesLoadMoreFailed value)  loadMoreFailed,required TResult Function( ChatMessagesUnknownError value)  unknown,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ChatMessagesDeleteUserFailed value)  deleteUserFailed,required TResult Function( ChatMessagesDeleteAssistantFailed value)  deleteAssistantFailed,required TResult Function( ChatMessagesRetryFailed value)  retryFailed,required TResult Function( ChatMessagesLoadMoreFailed value)  loadMoreFailed,}){
 final _that = this;
 switch (_that) {
-case ChatMessagesDeleteFailed():
-return deleteFailed(_that);case ChatMessagesRetryFailed():
+case ChatMessagesDeleteUserFailed():
+return deleteUserFailed(_that);case ChatMessagesDeleteAssistantFailed():
+return deleteAssistantFailed(_that);case ChatMessagesRetryFailed():
 return retryFailed(_that);case ChatMessagesLoadMoreFailed():
-return loadMoreFailed(_that);case ChatMessagesUnknownError():
-return unknown(_that);}
+return loadMoreFailed(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -101,14 +101,14 @@ return unknown(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ChatMessagesDeleteFailed value)?  deleteFailed,TResult? Function( ChatMessagesRetryFailed value)?  retryFailed,TResult? Function( ChatMessagesLoadMoreFailed value)?  loadMoreFailed,TResult? Function( ChatMessagesUnknownError value)?  unknown,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ChatMessagesDeleteUserFailed value)?  deleteUserFailed,TResult? Function( ChatMessagesDeleteAssistantFailed value)?  deleteAssistantFailed,TResult? Function( ChatMessagesRetryFailed value)?  retryFailed,TResult? Function( ChatMessagesLoadMoreFailed value)?  loadMoreFailed,}){
 final _that = this;
 switch (_that) {
-case ChatMessagesDeleteFailed() when deleteFailed != null:
-return deleteFailed(_that);case ChatMessagesRetryFailed() when retryFailed != null:
+case ChatMessagesDeleteUserFailed() when deleteUserFailed != null:
+return deleteUserFailed(_that);case ChatMessagesDeleteAssistantFailed() when deleteAssistantFailed != null:
+return deleteAssistantFailed(_that);case ChatMessagesRetryFailed() when retryFailed != null:
 return retryFailed(_that);case ChatMessagesLoadMoreFailed() when loadMoreFailed != null:
-return loadMoreFailed(_that);case ChatMessagesUnknownError() when unknown != null:
-return unknown(_that);case _:
+return loadMoreFailed(_that);case _:
   return null;
 
 }
@@ -125,13 +125,13 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  deleteFailed,TResult Function()?  retryFailed,TResult Function()?  loadMoreFailed,TResult Function( Object error)?  unknown,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  deleteUserFailed,TResult Function()?  deleteAssistantFailed,TResult Function()?  retryFailed,TResult Function()?  loadMoreFailed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case ChatMessagesDeleteFailed() when deleteFailed != null:
-return deleteFailed();case ChatMessagesRetryFailed() when retryFailed != null:
+case ChatMessagesDeleteUserFailed() when deleteUserFailed != null:
+return deleteUserFailed();case ChatMessagesDeleteAssistantFailed() when deleteAssistantFailed != null:
+return deleteAssistantFailed();case ChatMessagesRetryFailed() when retryFailed != null:
 return retryFailed();case ChatMessagesLoadMoreFailed() when loadMoreFailed != null:
-return loadMoreFailed();case ChatMessagesUnknownError() when unknown != null:
-return unknown(_that.error);case _:
+return loadMoreFailed();case _:
   return orElse();
 
 }
@@ -149,13 +149,13 @@ return unknown(_that.error);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  deleteFailed,required TResult Function()  retryFailed,required TResult Function()  loadMoreFailed,required TResult Function( Object error)  unknown,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  deleteUserFailed,required TResult Function()  deleteAssistantFailed,required TResult Function()  retryFailed,required TResult Function()  loadMoreFailed,}) {final _that = this;
 switch (_that) {
-case ChatMessagesDeleteFailed():
-return deleteFailed();case ChatMessagesRetryFailed():
+case ChatMessagesDeleteUserFailed():
+return deleteUserFailed();case ChatMessagesDeleteAssistantFailed():
+return deleteAssistantFailed();case ChatMessagesRetryFailed():
 return retryFailed();case ChatMessagesLoadMoreFailed():
-return loadMoreFailed();case ChatMessagesUnknownError():
-return unknown(_that.error);}
+return loadMoreFailed();}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -169,13 +169,13 @@ return unknown(_that.error);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  deleteFailed,TResult? Function()?  retryFailed,TResult? Function()?  loadMoreFailed,TResult? Function( Object error)?  unknown,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  deleteUserFailed,TResult? Function()?  deleteAssistantFailed,TResult? Function()?  retryFailed,TResult? Function()?  loadMoreFailed,}) {final _that = this;
 switch (_that) {
-case ChatMessagesDeleteFailed() when deleteFailed != null:
-return deleteFailed();case ChatMessagesRetryFailed() when retryFailed != null:
+case ChatMessagesDeleteUserFailed() when deleteUserFailed != null:
+return deleteUserFailed();case ChatMessagesDeleteAssistantFailed() when deleteAssistantFailed != null:
+return deleteAssistantFailed();case ChatMessagesRetryFailed() when retryFailed != null:
 return retryFailed();case ChatMessagesLoadMoreFailed() when loadMoreFailed != null:
-return loadMoreFailed();case ChatMessagesUnknownError() when unknown != null:
-return unknown(_that.error);case _:
+return loadMoreFailed();case _:
   return null;
 
 }
@@ -186,8 +186,8 @@ return unknown(_that.error);case _:
 /// @nodoc
 
 
-class ChatMessagesDeleteFailed implements ChatMessagesFailure {
-  const ChatMessagesDeleteFailed();
+class ChatMessagesDeleteUserFailed implements ChatMessagesFailure {
+  const ChatMessagesDeleteUserFailed();
   
 
 
@@ -197,7 +197,7 @@ class ChatMessagesDeleteFailed implements ChatMessagesFailure {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessagesDeleteFailed);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessagesDeleteUserFailed);
 }
 
 
@@ -206,7 +206,39 @@ int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'ChatMessagesFailure.deleteFailed()';
+  return 'ChatMessagesFailure.deleteUserFailed()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ChatMessagesDeleteAssistantFailed implements ChatMessagesFailure {
+  const ChatMessagesDeleteAssistantFailed();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessagesDeleteAssistantFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'ChatMessagesFailure.deleteAssistantFailed()';
 }
 
 
@@ -278,70 +310,5 @@ String toString() {
 
 
 
-
-/// @nodoc
-
-
-class ChatMessagesUnknownError implements ChatMessagesFailure {
-  const ChatMessagesUnknownError(this.error);
-  
-
- final  Object error;
-
-/// Create a copy of ChatMessagesFailure
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$ChatMessagesUnknownErrorCopyWith<ChatMessagesUnknownError> get copyWith => _$ChatMessagesUnknownErrorCopyWithImpl<ChatMessagesUnknownError>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessagesUnknownError&&const DeepCollectionEquality().equals(other.error, error));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(error));
-
-@override
-String toString() {
-  return 'ChatMessagesFailure.unknown(error: $error)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $ChatMessagesUnknownErrorCopyWith<$Res> implements $ChatMessagesFailureCopyWith<$Res> {
-  factory $ChatMessagesUnknownErrorCopyWith(ChatMessagesUnknownError value, $Res Function(ChatMessagesUnknownError) _then) = _$ChatMessagesUnknownErrorCopyWithImpl;
-@useResult
-$Res call({
- Object error
-});
-
-
-
-
-}
-/// @nodoc
-class _$ChatMessagesUnknownErrorCopyWithImpl<$Res>
-    implements $ChatMessagesUnknownErrorCopyWith<$Res> {
-  _$ChatMessagesUnknownErrorCopyWithImpl(this._self, this._then);
-
-  final ChatMessagesUnknownError _self;
-  final $Res Function(ChatMessagesUnknownError) _then;
-
-/// Create a copy of ChatMessagesFailure
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? error = null,}) {
-  return _then(ChatMessagesUnknownError(
-null == error ? _self.error : error ,
-  ));
-}
-
-
-}
 
 // dart format on

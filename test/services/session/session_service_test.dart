@@ -27,7 +27,7 @@ import 'package:code_bench_app/services/agent/agent_service.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
 import 'package:code_bench_app/services/chat/chat_stream_registry_service.dart';
 import 'package:code_bench_app/services/chat/chat_stream_state.dart';
-import 'package:code_bench_app/services/coding_tools/tool_registry.dart';
+import 'package:code_bench_app/services/coding_tools/tool_registry_service.dart';
 import 'package:code_bench_app/services/coding_tools/tools/list_dir_tool.dart';
 import 'package:code_bench_app/services/coding_tools/tools/read_file_tool.dart';
 import 'package:code_bench_app/services/coding_tools/tools/str_replace_tool.dart';
@@ -123,7 +123,7 @@ AgentService _buildAgent({required ToolStreamingRepository ai}) {
   final repo = CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo());
   final applyRepo = ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()));
   final applySvc = ApplyService(repo: applyRepo);
-  final registry = ToolRegistry(
+  final registry = ToolRegistryService(
     builtIns: [
       ReadFileTool(repo: repo),
       ListDirTool(repo: repo),

@@ -1,3 +1,4 @@
+import '../../../core/utils/debug_logger.dart';
 import '../datasource/ai_provider_datasource.dart';
 import 'ai_provider_repository.dart';
 
@@ -14,9 +15,12 @@ class AIProviderRepositoryImpl implements AIProviderRepository {
   }
 
   @override
-  void respondToUserInputRequest(String sessionId, String requestId, {required String response}) {
-    for (final ds in _datasources.values) {
-      ds.respondToUserInputRequest(sessionId, requestId, response: response);
+  bool respondToUserInputRequest(String providerId, String sessionId, String requestId, {required String response}) {
+    final ds = _datasources[providerId];
+    if (ds == null) {
+      sLog('[AIProviderRepository] respondToUserInputRequest: unknown providerId $providerId');
+      return false;
     }
+    return ds.respondToUserInputRequest(sessionId, requestId, response: response);
   }
 }

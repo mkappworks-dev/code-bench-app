@@ -13,8 +13,7 @@ class ApplyDiffCard extends ConsumerWidget {
     super.key,
     required this.filename,
     required this.language,
-    required this.newCode,
-    required this.oldPreview,
+    required this.diffText,
     required this.additions,
     required this.deletions,
     required this.state,
@@ -27,8 +26,7 @@ class ApplyDiffCard extends ConsumerWidget {
 
   final String filename;
   final String language;
-  final String newCode;
-  final String oldPreview;
+  final String diffText;
   final int additions;
   final int deletions;
   final ApplyCardState state;
@@ -69,7 +67,7 @@ class ApplyDiffCard extends ConsumerWidget {
           if (!isFailed)
             Opacity(
               opacity: state == ApplyCardState.applied ? 0.75 : 1.0,
-              child: DiffBody(diffText: _buildDiffText(oldPreview, newCode)),
+              child: DiffBody(diffText: diffText),
             ),
         ],
       ),
@@ -253,15 +251,4 @@ class _ErrorBanner extends StatelessWidget {
       ),
     );
   }
-}
-
-String _buildDiffText(String oldPreview, String newCode) {
-  final buffer = StringBuffer();
-  for (final line in oldPreview.split('\n')) {
-    buffer.writeln('-$line');
-  }
-  for (final line in newCode.split('\n')) {
-    buffer.writeln('+$line');
-  }
-  return buffer.toString();
 }

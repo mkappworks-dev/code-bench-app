@@ -59,8 +59,13 @@ class SessionService {
   final ChatStreamRegistryService? _chatStreamRegistry;
   static const _uuid = Uuid();
 
-  void respondToUserInputRequest(String sessionId, String requestId, {required String response}) {
-    _providerService?.respondToUserInputRequest(sessionId, requestId, response: response);
+  bool respondToUserInputRequest(String providerId, String sessionId, String requestId, {required String response}) {
+    final svc = _providerService;
+    if (svc == null) {
+      sLog('[SessionService] respondToUserInputRequest: providerService not available');
+      return false;
+    }
+    return svc.respondToUserInputRequest(providerId, sessionId, requestId, response: response);
   }
 
   Stream<List<ChatSession>> watchAllSessions() => _session.watchAllSessions();
@@ -375,8 +380,16 @@ class SessionService {
         case final ProviderUserInputRequest req when requestUserInput != null:
           await requestUserInput(req);
 
-        case ProviderUserInputRequest():
-          break; // No callback registered; leave the agent loop unblocked.
+        case final ProviderUserInputRequest req:
+          // No UI callback wired up — the agent loop would otherwise hang waiting on a tool_result that nobody can deliver. Auto-decline with an empty response and surface a typed failure so the turn terminates visibly.
+          sLog(
+            '[SessionService] auto-declining ProviderUserInputRequest — no requestUserInput callback (provider=${req.providerId}, sessionId=${req.sessionId}, requestId=${req.requestId})',
+          );
+          ds.respondToUserInputRequest(sessionId, req.requestId, response: '');
+          Error.throwWithStackTrace(
+            StreamAbortedUnexpectedlyException('Provider asked for user input but no callback is wired in this turn'),
+            StackTrace.current,
+          );
 
         case ProviderStreamDone():
           break; // Loop ends naturally.

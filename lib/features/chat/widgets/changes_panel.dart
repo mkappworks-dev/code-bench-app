@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/apply/models/applied_change.dart';
+import '../../../data/apply/models/file_read_result.dart';
 import '../../../data/project/models/project.dart';
 import '../../../features/project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../../git/notifiers/git_actions.dart';
@@ -151,19 +152,30 @@ class _ChangeEntryState extends ConsumerState<_ChangeEntry> {
     }
 
     // File was modified out-of-band — show conflict merge view.
-    final currentContent = await ref
+    final readResult = await ref
         .read(codeApplyActionsProvider.notifier)
         .readFileContent(widget.change.filePath, project.path);
     if (!mounted) return;
-    if (currentContent == null) {
-      // Refuse to open the merge view on an unreadable file — accepting the
-      // merge would overwrite the real file with an empty / placeholder body.
-      AppSnackBar.show(
-        context,
-        'Could not read current file contents — try again after resolving file access.',
-        type: AppSnackBarType.error,
-      );
-      return;
+    final String currentContent;
+    switch (readResult) {
+      case FileReadContent(:final text):
+        currentContent = text;
+      case FileReadNotFound():
+        // File deleted out-of-band; accepting revert is still valid (it'll restore the original snapshot), but the merge view has nothing to merge against.
+        AppSnackBar.show(
+          context,
+          'Current file is missing — revert will recreate it from the original snapshot.',
+          type: AppSnackBarType.error,
+        );
+        return;
+      case FileReadError():
+        // Refuse to open the merge view on an unreadable file — accepting the merge would overwrite the real file with an empty / placeholder body.
+        AppSnackBar.show(
+          context,
+          'Could not read current file contents — try again after resolving file access.',
+          type: AppSnackBarType.error,
+        );
+        return;
     }
 
     final isGit = ref.read(gitActionsProvider.notifier).isGitRepo(project.path);

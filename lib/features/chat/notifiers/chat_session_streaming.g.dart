@@ -189,7 +189,7 @@ final class ChatSessionAwaitingProvider extends $FunctionalProvider<AsyncValue<b
   }
 }
 
-String _$chatSessionAwaitingHash() => r'3256aac0c4609729005ab22add4f2a361ff0ef9f';
+String _$chatSessionAwaitingHash() => r'b486dc54befee991dcd48258647831af5b837c45';
 
 /// Whether the session is waiting for user input (permission or question).
 /// Derived entirely from in-memory registry data — no SQLite load.

@@ -10,17 +10,7 @@ import 'chat_notifier.dart';
 
 part 'chat_messages_actions.g.dart';
 
-/// Command notifier for message-list mutations that can fail and need a
-/// stable, observable error surface (typed `AsyncError` carrying a
-/// [ChatMessagesFailure]).
-///
-/// Send/cancel stay on [ChatMessagesNotifier] because they own streaming
-/// state. Delete and load-more live here so widgets can `ref.listen` for
-/// failures without being entangled with the streaming `AsyncValue`.
-///
-/// Single global slot (no family): only one session is active at a time, and
-/// we want one snackbar per failed operation regardless of how many bubbles
-/// are on screen.
+/// Command notifier for delete / retry / load-more — the message-list mutations that need an observable error surface independent of the streaming `AsyncValue` on [ChatMessagesNotifier]. Single global slot so a duplicated snackbar across many bubble instances can't fire.
 @Riverpod(keepAlive: true)
 class ChatMessagesActions extends _$ChatMessagesActions {
   @override
@@ -49,7 +39,7 @@ class ChatMessagesActions extends _$ChatMessagesActions {
         ref.read(chatMessagesProvider(sessionId).notifier).removeFromState(ids);
       } catch (e, st) {
         dLog('[ChatMessagesActions] deleteMessage failed: $e');
-        Error.throwWithStackTrace(_asFailure(e, () => const ChatMessagesFailure.deleteFailed()), st);
+        Error.throwWithStackTrace(_asFailure(e, () => const ChatMessagesFailure.deleteUserFailed()), st);
       }
     });
   }
@@ -76,7 +66,12 @@ class ChatMessagesActions extends _$ChatMessagesActions {
             ? messages.take(msgIdx).toList().lastWhere((m) => m.role == MessageRole.user, orElse: () => messages[0])
             : null;
         if (precedingUser != null && precedingUser.role == MessageRole.user) {
-          await ref.read(chatMessagesProvider(sessionId).notifier).sendMessage(precedingUser.content);
+          // sendMessage returns the caught error rather than throwing — discarding it would let a transport-not-ready / signed-out replay silently succeed in the UI even though no new assistant message was produced.
+          final sendErr = await ref.read(chatMessagesProvider(sessionId).notifier).sendMessage(precedingUser.content);
+          if (sendErr != null) {
+            dLog('[ChatMessagesActions] retry resend failed: $sendErr');
+            throw const ChatMessagesFailure.retryFailed();
+          }
         }
       } catch (e, st) {
         dLog('[ChatMessagesActions] retryAssistantMessage failed: ${e.runtimeType}');
@@ -102,7 +97,7 @@ class ChatMessagesActions extends _$ChatMessagesActions {
         ref.read(chatMessagesProvider(sessionId).notifier).removeFromState(ids);
       } catch (e, st) {
         dLog('[ChatMessagesActions] deleteAssistantMessage failed: ${e.runtimeType}');
-        Error.throwWithStackTrace(_asFailure(e, () => const ChatMessagesFailure.deleteFailed()), st);
+        Error.throwWithStackTrace(_asFailure(e, () => const ChatMessagesFailure.deleteAssistantFailed()), st);
       }
     });
   }

@@ -19,8 +19,7 @@ void main() {
         const ApplyDiffCard(
           filename: 'chat_notifier.dart',
           language: 'dart',
-          newCode: 'final x = 1;\n',
-          oldPreview: 'final x = 0;\n',
+          diffText: '-final x = 0;\n+final x = 1;\n',
           additions: 1,
           deletions: 1,
           state: ApplyCardState.ready,
@@ -38,8 +37,7 @@ void main() {
         const ApplyDiffCard(
           filename: 'chat_notifier.dart',
           language: 'dart',
-          newCode: 'final x = 1;\n',
-          oldPreview: 'final x = 0;\n',
+          diffText: '-final x = 0;\n+final x = 1;\n',
           additions: 1,
           deletions: 1,
           state: ApplyCardState.applied,
@@ -56,8 +54,7 @@ void main() {
         const ApplyDiffCard(
           filename: 'chat_notifier.dart',
           language: 'dart',
-          newCode: 'final x = 1;\n',
-          oldPreview: 'final x = 0;\n',
+          diffText: '-final x = 0;\n+final x = 1;\n',
           additions: 1,
           deletions: 1,
           state: ApplyCardState.failed,

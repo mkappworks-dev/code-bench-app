@@ -21,6 +21,12 @@ typedef CodexSessionFactory =
 /// returns a fixed path; production wires through `resolveBinary`.
 typedef ExePathResolver = Future<String> Function();
 
+/// Default upper bound on concurrent codex sessions. Each entry owns a
+/// dedicated `app-server` child process holding stdio/RAM/FDs; without a cap
+/// a script that opens many chat sessions with unanswered AUQ/permission
+/// prompts can exhaust the per-process FD limit and starve other tools.
+const int kCodexSessionPoolDefaultMaxSessions = 16;
+
 /// Owns a per-`sessionId` map of live `CodexSession`s. Lazy idle eviction
 /// runs at the top of every [sessionFor] call so abandoned chats reclaim
 /// memory without a `Timer.periodic` to manage.
@@ -28,6 +34,7 @@ class CodexSessionPool {
   CodexSessionPool({
     required this.binaryPath,
     this.idleTimeout = const Duration(minutes: 10),
+    this.maxSessions = kCodexSessionPoolDefaultMaxSessions,
     ProcessLauncher? processLauncher,
     CodexSessionFactory? sessionFactory,
     ExePathResolver? exePathResolver,
@@ -37,6 +44,7 @@ class CodexSessionPool {
 
   final String binaryPath;
   final Duration idleTimeout;
+  final int maxSessions;
   final ProcessLauncher _processLauncher;
   final CodexSessionFactory _sessionFactory;
   final ExePathResolver? _exePathResolver;
@@ -59,6 +67,9 @@ class CodexSessionPool {
       _sessions.remove(sessionId);
       await existing.dispose();
     }
+    if (_sessions.length >= maxSessions) {
+      await _forceEvictOldest();
+    }
     final session = _sessionFactory(
       sessionId: sessionId,
       workingDirectory: workingDirectory,
@@ -68,6 +79,25 @@ class CodexSessionPool {
     );
     _sessions[sessionId] = session;
     return session;
+  }
+
+  Future<void> _forceEvictOldest() async {
+    String? oldestId;
+    DateTime oldestAt = DateTime.now();
+    for (final entry in _sessions.entries) {
+      if (entry.value.isInFlight) continue;
+      if (entry.value.lastActiveAt.isBefore(oldestAt)) {
+        oldestAt = entry.value.lastActiveAt;
+        oldestId = entry.key;
+      }
+    }
+    // No idle candidate means every session is in-flight; refuse rather than killing an active turn.
+    if (oldestId == null) {
+      throw StateError('CodexSessionPool at capacity ($maxSessions) and no idle session to evict');
+    }
+    final victim = _sessions.remove(oldestId)!;
+    sLog('[CodexSessionPool] cap reached — force-evicting oldest idle session $oldestId');
+    await victim.dispose();
   }
 
   void cancel(String sessionId) {
@@ -90,13 +120,13 @@ class CodexSessionPool {
     session.respondToPermissionRequest(requestId, approved: approved);
   }
 
-  void respondToUserInputRequest(String sessionId, String requestId, {required String response}) {
+  bool respondToUserInputRequest(String sessionId, String requestId, {required String response}) {
     final session = _sessions[sessionId];
     if (session == null) {
       dLog('[CodexSessionPool] user-input response for unknown session $sessionId — no-op (likely evicted)');
-      return;
+      return false;
     }
-    session.respondToUserInputRequest(requestId, response: response);
+    return session.respondToUserInputRequest(requestId, response: response);
   }
 
   Future<void> dispose() async {

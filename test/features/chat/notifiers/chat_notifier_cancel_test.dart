@@ -190,7 +190,7 @@ void main() {
       final actionState = container.read(chatMessagesActionsProvider);
       expect(actionState.hasError, isTrue);
       expect(actionState.error, isA<ChatMessagesFailure>());
-      expect(actionState.error, isA<ChatMessagesDeleteFailed>());
+      expect(actionState.error, isA<ChatMessagesDeleteUserFailed>());
     });
   });
 }

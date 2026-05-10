@@ -265,7 +265,7 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
       final out = (result.stdout as String).trim();
       return DetectionResult.installed(out.isEmpty ? 'unknown' : out);
     } catch (e) {
-      sLog('[CodexCli] --version probe failed: $e');
+      sLog('[CodexCli] --version probe failed: ${redactSecrets('$e')}');
       return DetectionResult.unhealthy('--version failed: ${e.runtimeType}');
     }
   }
@@ -298,7 +298,7 @@ class CodexCliDatasourceProcess implements AIProviderDatasource {
       _pool.respondToPermissionRequest(sessionId, requestId, approved: approved);
 
   @override
-  void respondToUserInputRequest(String sessionId, String requestId, {required String response}) =>
+  bool respondToUserInputRequest(String sessionId, String requestId, {required String response}) =>
       _pool.respondToUserInputRequest(sessionId, requestId, response: response);
 
   @override

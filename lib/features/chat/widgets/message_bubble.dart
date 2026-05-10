@@ -13,6 +13,7 @@ import '../../../data/ai/models/provider_setting_drop.dart';
 import '../../../data/session/models/ask_user_question.dart';
 import '../../../data/session/models/tool_event.dart';
 import '../../../data/shared/chat_message.dart';
+import '../../../data/apply/models/file_read_result.dart';
 import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
 import '../notifiers/agent_user_input_request_notifier.dart';
 import '../notifiers/ask_question_notifier.dart';
@@ -23,6 +24,7 @@ import '../notifiers/code_apply_actions.dart';
 import '../notifiers/code_apply_failure.dart';
 import '../notifiers/dropped_settings_notifier.dart';
 import '../../../core/constants/app_icons.dart';
+import '../utils/compute_line_diff.dart';
 import '../utils/tool_phase_classifier.dart';
 import 'apply_diff_card.dart';
 import 'ask_user_question_card.dart';
@@ -294,7 +296,7 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
               ],
               Consumer(
                 builder: (context, ref, _) {
-                  final req = ref.watch(agentUserInputRequestProvider);
+                  final req = ref.watch(agentUserInputRequestProvider(message.sessionId));
                   if (req == null || !widget.isLast) return const SizedBox.shrink();
                   final asWizard = AskUserQuestion(
                     question: req.prompt,
@@ -311,7 +313,7 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
                       agentMode: true,
                       onSubmit: (answer) async {
                         final text = (answer['freeText'] as String?) ?? (answer['selectedOption'] as String?) ?? '';
-                        ref.read(agentUserInputRequestProvider.notifier).submit(text);
+                        ref.read(agentUserInputRequestProvider(message.sessionId).notifier).submit(text);
                       },
                     ),
                   );
@@ -603,9 +605,25 @@ class _ApplyCardLoaderState extends ConsumerState<_ApplyCardLoader> {
     final project = ref.read(activeProjectProvider);
     final filename = widget.codeBlock.filename;
     if (project == null || filename == null) return;
-    final content = await ref.read(codeApplyActionsProvider.notifier).readFileContent(filename, project.path);
-    if (mounted && _loadGeneration == generation) {
-      setState(() => _oldPreview = content ?? '');
+    final result = await ref.read(codeApplyActionsProvider.notifier).readFileContent(filename, project.path);
+    if (!mounted || _loadGeneration != generation) return;
+    switch (result) {
+      case FileReadContent(:final text):
+        setState(() {
+          _oldPreview = text;
+          if (_cardState == ApplyCardState.failed && _errorMessage == 'Could not read existing file.') {
+            _cardState = ApplyCardState.ready;
+            _errorMessage = null;
+          }
+        });
+      case FileReadNotFound():
+        setState(() => _oldPreview = '');
+      case FileReadError():
+        setState(() {
+          _oldPreview = '';
+          _cardState = ApplyCardState.failed;
+          _errorMessage = 'Could not read existing file.';
+        });
     }
   }
 
@@ -628,17 +646,22 @@ class _ApplyCardLoaderState extends ConsumerState<_ApplyCardLoader> {
     final applyState = ref.read(codeApplyActionsProvider);
     if (applyState.hasError) {
       final failure = applyState.error;
-      final message = failure is CodeApplyFailure
-          ? switch (failure) {
-              CodeApplyProjectMissing() => 'Project folder is missing.',
-              CodeApplyOutsideProject() => 'File is outside the current project.',
-              CodeApplyDiskWrite(:final message) => 'Disk write failed: $message',
-              CodeApplyTooLarge(:final bytes) => 'Content too large ($bytes bytes).',
-              CodeApplyGitRevert() => 'Git revert failed.',
-              CodeApplyContentChanged() => 'File was modified externally.',
-              CodeApplyUnknownError() => 'Unable to apply change.',
-            }
-          : 'Unable to apply change.';
+      final String message;
+      if (failure is CodeApplyFailure) {
+        message = switch (failure) {
+          CodeApplyProjectMissing() => 'Project folder is missing.',
+          CodeApplyOutsideProject() => 'File is outside the current project.',
+          CodeApplyDiskWrite(:final message) => 'Disk write failed: $message',
+          CodeApplyTooLarge(:final bytes) => 'Content too large ($bytes bytes).',
+          CodeApplyGitRevert() => 'Git revert failed.',
+          CodeApplyContentChanged() => 'File was modified externally.',
+          CodeApplyUnknownError() => 'Unable to apply change.',
+        };
+      } else {
+        // Rule-2 violation upstream: a method on CodeApplyActions threw something other than CodeApplyFailure. Loud breadcrumb so we catch the missing _asFailure mapping in triage rather than shipping a generic snackbar.
+        dLog('[_ApplyCardLoader] non-CodeApplyFailure error type ${failure.runtimeType}: $failure');
+        message = 'Unable to apply change.';
+      }
       setState(() {
         _cardState = ApplyCardState.failed;
         _errorMessage = message;
@@ -659,16 +682,14 @@ class _ApplyCardLoaderState extends ConsumerState<_ApplyCardLoader> {
   @override
   Widget build(BuildContext context) {
     final block = widget.codeBlock;
-    final oldLines = _oldPreview.split('\n').where((l) => l.isNotEmpty).length;
-    final newLines = block.code.split('\n').where((l) => l.isNotEmpty).length;
+    final lineDiff = computeLineDiff(_oldPreview, block.code);
 
     return ApplyDiffCard(
       filename: block.filename ?? '',
       language: block.language ?? 'plaintext',
-      newCode: block.code,
-      oldPreview: _oldPreview,
-      additions: newLines,
-      deletions: oldLines,
+      diffText: lineDiff.toUnifiedText(),
+      additions: lineDiff.additions,
+      deletions: lineDiff.deletions,
       state: _cardState,
       errorMessage: _errorMessage,
       onApply: _cardState == ApplyCardState.ready ? _apply : null,

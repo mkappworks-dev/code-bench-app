@@ -20,7 +20,7 @@ import 'package:code_bench_app/data/filesystem/datasource/filesystem_datasource_
 import 'package:code_bench_app/data/filesystem/repository/filesystem_repository_impl.dart';
 import 'package:code_bench_app/data/apply/repository/apply_repository_impl.dart';
 import 'package:code_bench_app/services/apply/apply_service.dart';
-import 'package:code_bench_app/services/coding_tools/tool_registry.dart';
+import 'package:code_bench_app/services/coding_tools/tool_registry_service.dart';
 import 'package:code_bench_app/services/coding_tools/tools/list_dir_tool.dart';
 import 'package:code_bench_app/services/coding_tools/tools/read_file_tool.dart';
 import 'package:code_bench_app/services/coding_tools/tools/str_replace_tool.dart';
@@ -64,7 +64,7 @@ class _FakeAIRepo implements ToolStreamingRepository {
 
 void main() {
   late Directory projectDir;
-  late ToolRegistry registry;
+  late ToolRegistryService registry;
 
   setUp(() async {
     projectDir = await Directory.systemTemp.createTemp('agent_svc_');
@@ -72,7 +72,7 @@ void main() {
     final repo = CodingToolsRepositoryImpl(datasource: CodingToolsDatasourceIo());
     final applyRepo = ApplyRepositoryImpl(fs: FilesystemRepositoryImpl(FilesystemDatasourceIo()));
     final applySvc = ApplyService(repo: applyRepo);
-    registry = ToolRegistry(
+    registry = ToolRegistryService(
       builtIns: [
         ReadFileTool(repo: repo),
         ListDirTool(repo: repo),
