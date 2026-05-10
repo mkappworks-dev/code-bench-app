@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'ai_provider_repository_provider.dart';
+part of 'ai_provider_repository_impl.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -44,4 +44,4 @@ final class AiProviderRepositoryProvider
   }
 }
 
-String _$aiProviderRepositoryHash() => r'e973746794f4af71676071c20b486335db93cadb';
+String _$aiProviderRepositoryHash() => r'd889c651720d3afd529916a323d6b6691e66c7b3';
