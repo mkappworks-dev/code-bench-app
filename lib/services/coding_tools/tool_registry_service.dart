@@ -20,10 +20,10 @@ import 'tools/str_replace_tool.dart';
 import 'tools/web_fetch_tool.dart';
 import 'tools/write_file_tool.dart';
 
-part 'tool_registry.g.dart';
+part 'tool_registry_service.g.dart';
 
 @Riverpod(keepAlive: true)
-ToolRegistry toolRegistry(Ref ref) => ToolRegistry(
+ToolRegistryService toolRegistryService(Ref ref) => ToolRegistryService(
   builtIns: [
     ref.watch(readFileToolProvider),
     ref.watch(listDirToolProvider),
@@ -38,8 +38,8 @@ ToolRegistry toolRegistry(Ref ref) => ToolRegistry(
 );
 
 /// Central registry of all tools the agent loop may call; built-ins plus runtime tools added via [register] (the MCP seam).
-class ToolRegistry {
-  ToolRegistry({required List<Tool> builtIns, required CodingToolsDenylistRepository denylistRepo})
+class ToolRegistryService {
+  ToolRegistryService({required List<Tool> builtIns, required CodingToolsDenylistRepository denylistRepo})
     : _tools = [...builtIns],
       _denylistRepo = denylistRepo;
 
@@ -80,7 +80,7 @@ class ToolRegistry {
     if (tool == null) return CodingToolResult.error('Unknown tool "$name"');
 
     final started = DateTime.now();
-    dLog('[ToolRegistry] $name start');
+    dLog('[ToolRegistryService] $name start');
     try {
       final effective = await _loadEffectiveDenylist();
       final ctx = ToolContext(
@@ -92,11 +92,11 @@ class ToolRegistry {
       );
       return await tool.execute(ctx);
     } catch (e, st) {
-      dLog('[ToolRegistry] $name crashed: ${e.runtimeType} $e\n$st');
+      dLog('[ToolRegistryService] $name crashed: ${e.runtimeType} $e\n$st');
       return CodingToolResult.error('Tool "$name" encountered an internal error.');
     } finally {
       final ms = DateTime.now().difference(started).inMilliseconds;
-      dLog('[ToolRegistry] $name done in ${ms}ms');
+      dLog('[ToolRegistryService] $name done in ${ms}ms');
     }
   }
 
@@ -110,8 +110,8 @@ class ToolRegistry {
   /// Adds a tool at runtime. Phase-1 seam for Phase 7 MCP integration.
   /// Throws [StateError] if a tool with that name already exists.
   ///
-  /// NOTE: mutation is not reactive. Watchers of toolRegistryProvider do
-  /// not rebuild on register/unregister. AgentService reads the registry
+  /// NOTE: mutation is not reactive. Watchers of toolRegistryServiceProvider
+  /// do not rebuild on register/unregister. AgentService reads the registry
   /// at the start of each turn so this is safe today. If Phase 7 needs
   /// reactive propagation, convert this class to a Notifier shape then.
   void register(Tool t) {

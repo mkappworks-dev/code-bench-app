@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../data/ai/models/auth_status.dart';
+import '../../../data/ai/models/provider_runtime_event.dart';
 import '../../../data/ai/models/provider_setting_drop.dart';
 import '../../../data/chat/models/agent_failure.dart';
 import '../../../data/chat/models/transport_readiness.dart';
@@ -23,6 +24,7 @@ import '../../mcp_servers/notifiers/mcp_server_status_notifier.dart';
 import '../../providers/notifiers/providers_notifier.dart';
 import 'agent_cancel_notifier.dart';
 import 'agent_permission_request_notifier.dart';
+import 'agent_user_input_request_notifier.dart';
 import 'chat_input_bar_options_notifier.dart';
 import 'dropped_settings_notifier.dart';
 import 'transport_readiness_notifier.dart';
@@ -153,11 +155,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     return seed;
   }
 
-  /// Sends [input] and streams the response into state.
-  ///
-  /// Returns `null` on success, or the caught error object on failure.
-  /// The caller (widget) checks the return value to show a snackbar without
-  /// needing a try-catch around a notifier call.
+  /// Returns null on success or the caught error on failure — callers check the return value instead of wrapping in try-catch.
   Future<Object?> sendMessage(String input, {String? systemPrompt}) async {
     _cancelRequested = false;
     _sendInProgress = true;
@@ -255,6 +253,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
             providerId: providerId,
             cancelFlag: () => cancelN.isCancelled(sessionId),
             requestPermission: permN.request,
+            requestUserInput: _handleUserInputRequest,
             onMcpStatusChanged: mcpN.setStatus,
             onMcpServerRemoved: mcpN.remove,
             onSettingDropped: (drop) {
@@ -365,11 +364,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     return [...current, msg];
   }
 
-  /// Cancels the in-flight send (if any) and appends an in-memory
-  /// `interrupted` marker. Persistence is fire-and-forget — failures are
-  /// logged via [sLog] so they remain visible in release builds, but no UI
-  /// error is surfaced (the badge is already on screen; only its survival
-  /// across app restarts is at risk).
+  /// Interrupted-marker persistence is fire-and-forget — badge is already on screen; only survival across restarts is at risk.
   void cancelSend() {
     if (!_sendInProgress) return;
     final sessionId = ref.read(activeSessionIdProvider);
@@ -384,6 +379,7 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     // `await requestPermission(...)` rather than hanging until the UI is
     // manually dismissed.
     ref.read(agentPermissionRequestProvider.notifier).cancel();
+    ref.read(agentUserInputRequestProvider(sessionId).notifier).cancel();
     ref.read(activeMessageIdProvider.notifier).set(null);
 
     final current = state.value ?? _preSendMessages;
@@ -396,6 +392,39 @@ class ChatMessagesNotifier extends _$ChatMessagesNotifier {
     );
     state = AsyncData([...current, marker]);
     unawaited(_persistInterrupted(sessionId, marker));
+  }
+
+  Future<void> _handleUserInputRequest(ProviderUserInputRequest req) async {
+    final originatingSessionId = req.sessionId;
+    final n = ref.read(agentUserInputRequestProvider(originatingSessionId).notifier);
+    final result = await n.requestAndAwait(req);
+    switch (result) {
+      case AgentUserInputPreempted():
+        dLog('[ChatMessagesNotifier] AUQ preempted for sessionId=$originatingSessionId requestId=${req.requestId}');
+        return;
+      case AgentUserInputCancelled():
+        cancelSend();
+        return;
+      case AgentUserInputAnswer(:final text):
+        final svc = await ref.read(sessionServiceProvider.future);
+        final delivered = svc.respondToUserInputRequest(
+          req.providerId,
+          originatingSessionId,
+          req.requestId,
+          response: text,
+        );
+        if (!delivered) {
+          sLog(
+            '[ChatMessagesNotifier] AUQ response not delivered (provider=${req.providerId}, sessionId=$originatingSessionId, requestId=${req.requestId}) — surfacing failure on registry',
+          );
+          ref
+              .read(chatStreamRegistryServiceProvider)
+              .reportFailure(
+                originatingSessionId,
+                'Agent question response could not be delivered to ${req.providerId}',
+              );
+        }
+    }
   }
 
   Future<void> _persistInterrupted(String sessionId, ChatMessage marker) async {

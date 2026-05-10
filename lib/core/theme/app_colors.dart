@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:re_highlight/languages/json.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
+
+import 'ayu_highlight_themes.dart';
 
 /// All colour tokens for Code Bench.
 ///
@@ -140,6 +140,12 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.switchTrackUnselected,
     required this.switchTrackOutline,
     required this.jsonEditorBg,
+    required this.brandAnthropic,
+    required this.brandOpenAI,
+    required this.brandGemini,
+    required this.brandOllama,
+    required this.diffAdd,
+    required this.diffDel,
   });
 
   final Color background;
@@ -269,12 +275,18 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color switchTrackUnselected;
   final Color switchTrackOutline;
   final Color jsonEditorBg;
+  final Color brandAnthropic;
+  final Color brandOpenAI;
+  final Color brandGemini;
+  final Color brandOllama;
+  final Color diffAdd;
+  final Color diffDel;
 
   CodeHighlightTheme get jsonHighlightTheme {
     final isDark = ThemeData.estimateBrightnessForColor(background) == Brightness.dark;
     return CodeHighlightTheme(
       languages: {'json': CodeHighlightThemeMode(mode: langJson)},
-      theme: isDark ? atomOneDarkTheme : atomOneLightTheme,
+      theme: isDark ? ayuDarkTheme : ayuLightTheme,
     );
   }
 
@@ -307,7 +319,7 @@ class AppColors extends ThemeExtension<AppColors> {
     info: Color(0xFF4FC1FF),
     userMessageBg: Color(0xFF1E1E1E),
     assistantMessageBg: Color(0xFF141414),
-    codeBlockBg: Color(0xFF0D1117),
+    codeBlockBg: Color(0xFF0E0E0E),
     syntaxKeyword: Color(0xFF569CD6),
     syntaxString: Color(0xFFCE9178),
     syntaxComment: Color(0xFF6A9955),
@@ -393,9 +405,9 @@ class AppColors extends ThemeExtension<AppColors> {
     accentBorderTeal: Color(0x4D4EC9B0),
     accentBorderAmber: Color(0x4DE8A228),
     sendGlow: Color(0x664EC9B0),
-    inlineCodeFill: Color(0xCC0D1117),
-    inlineCodeStroke: Color(0x0FFFFFFF),
-    inlineCodeText: Color(0xFFCE9178),
+    inlineCodeFill: Color(0x14FFB454),
+    inlineCodeStroke: Color(0x33FFB454),
+    inlineCodeText: Color(0xFFFFB454),
     dialogFill: Color(0xEB121212),
     dialogBorder: Color(0x0FFFFFFF),
     dialogHighlight: Color(0x0FFFFFFF),
@@ -408,7 +420,13 @@ class AppColors extends ThemeExtension<AppColors> {
     scrimColor: Color(0x99000000),
     switchTrackUnselected: Color(0x1FFFFFFF),
     switchTrackOutline: Color(0x2EFFFFFF),
-    jsonEditorBg: Color(0xFF0D1117),
+    jsonEditorBg: Color(0xFF0B0E14),
+    brandAnthropic: Color(0xFFD97757),
+    brandOpenAI: Color(0xFF10A37F),
+    brandGemini: Color(0xFF4285F4),
+    brandOllama: Color(0xFF9D9D9D),
+    diffAdd: Color(0xFFAAD94C),
+    diffDel: Color(0xFFF07178),
   );
 
   static const AppColors light = AppColors(
@@ -438,7 +456,7 @@ class AppColors extends ThemeExtension<AppColors> {
     info: Color(0xFF4FC1FF),
     userMessageBg: Color(0xFF1E1E1E),
     assistantMessageBg: Color(0xFF141414),
-    codeBlockBg: Color(0xFF0D1117),
+    codeBlockBg: Color(0xFFFAFAFA),
     syntaxKeyword: Color(0xFF569CD6),
     syntaxString: Color(0xFFCE9178),
     syntaxComment: Color(0xFF6A9955),
@@ -523,9 +541,9 @@ class AppColors extends ThemeExtension<AppColors> {
     accentBorderTeal: Color(0x4D4EC9B0),
     accentBorderAmber: Color(0x4DE8A228),
     sendGlow: Color(0x664EC9B0),
-    inlineCodeFill: Color(0x1F4EC9B0),
-    inlineCodeStroke: Color(0x334EC9B0),
-    inlineCodeText: Color(0xFF2A7A6E),
+    inlineCodeFill: Color(0x14F2AE49),
+    inlineCodeStroke: Color(0x33F2AE49),
+    inlineCodeText: Color(0xFFB8761D),
     dialogFill: Color(0xE0FFFFFF),
     dialogBorder: Color(0xF2FFFFFF),
     dialogHighlight: Color(0xFFFFFFFF),
@@ -538,7 +556,13 @@ class AppColors extends ThemeExtension<AppColors> {
     scrimColor: Color(0x33000000),
     switchTrackUnselected: Color(0xFF8C96A0),
     switchTrackOutline: Color(0xFF7A8490),
-    jsonEditorBg: Color(0xFFF5F5F5),
+    jsonEditorBg: Color(0xFFFAFAFA),
+    brandAnthropic: Color(0xFFD97757),
+    brandOpenAI: Color(0xFF10A37F),
+    brandGemini: Color(0xFF4285F4),
+    brandOllama: Color(0xFF5C6474),
+    diffAdd: Color(0xFFAAD94C),
+    diffDel: Color(0xFFF07178),
   );
 
   @override
@@ -670,6 +694,12 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? switchTrackUnselected,
     Color? switchTrackOutline,
     Color? jsonEditorBg,
+    Color? brandAnthropic,
+    Color? brandOpenAI,
+    Color? brandGemini,
+    Color? brandOllama,
+    Color? diffAdd,
+    Color? diffDel,
   }) => AppColors(
     background: background ?? this.background,
     sidebarBackground: sidebarBackground ?? this.sidebarBackground,
@@ -798,6 +828,12 @@ class AppColors extends ThemeExtension<AppColors> {
     switchTrackUnselected: switchTrackUnselected ?? this.switchTrackUnselected,
     switchTrackOutline: switchTrackOutline ?? this.switchTrackOutline,
     jsonEditorBg: jsonEditorBg ?? this.jsonEditorBg,
+    brandAnthropic: brandAnthropic ?? this.brandAnthropic,
+    brandOpenAI: brandOpenAI ?? this.brandOpenAI,
+    brandGemini: brandGemini ?? this.brandGemini,
+    brandOllama: brandOllama ?? this.brandOllama,
+    diffAdd: diffAdd ?? this.diffAdd,
+    diffDel: diffDel ?? this.diffDel,
   );
 
   @override
@@ -931,6 +967,12 @@ class AppColors extends ThemeExtension<AppColors> {
       switchTrackUnselected: Color.lerp(switchTrackUnselected, other.switchTrackUnselected, t)!,
       switchTrackOutline: Color.lerp(switchTrackOutline, other.switchTrackOutline, t)!,
       jsonEditorBg: Color.lerp(jsonEditorBg, other.jsonEditorBg, t)!,
+      brandAnthropic: Color.lerp(brandAnthropic, other.brandAnthropic, t)!,
+      brandOpenAI: Color.lerp(brandOpenAI, other.brandOpenAI, t)!,
+      brandGemini: Color.lerp(brandGemini, other.brandGemini, t)!,
+      brandOllama: Color.lerp(brandOllama, other.brandOllama, t)!,
+      diffAdd: Color.lerp(diffAdd, other.diffAdd, t)!,
+      diffDel: Color.lerp(diffDel, other.diffDel, t)!,
     );
   }
 }

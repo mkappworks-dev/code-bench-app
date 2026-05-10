@@ -11,7 +11,7 @@ import '../../data/mcp/models/mcp_server_config.dart';
 import '../../data/mcp/models/mcp_server_status.dart';
 import '../../data/mcp/repository/mcp_repository.dart';
 import '../../data/mcp/repository/mcp_repository_impl.dart';
-import '../../services/coding_tools/tool_registry.dart';
+import '../../services/coding_tools/tool_registry_service.dart';
 import 'mcp_client_session.dart';
 import 'mcp_tool.dart';
 
@@ -62,7 +62,7 @@ class McpService {
   Future<void> delete(String id) => _repository.delete(id);
 
   Future<Future<void> Function()> startSession({
-    required ToolRegistry registry,
+    required ToolRegistryService registry,
     required String sessionId,
     McpStatusCallback? onStatusChanged,
     McpRemoveCallback? onServerRemoved,

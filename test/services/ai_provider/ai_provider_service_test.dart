@@ -42,6 +42,9 @@ class _FakeDs implements AIProviderDatasource {
       throw UnimplementedError();
 
   @override
+  bool respondToUserInputRequest(String sessionId, String requestId, {required String response}) => false;
+
+  @override
   void cancel(String sessionId) => throw UnimplementedError();
 
   @override

@@ -44,6 +44,12 @@ abstract interface class AIProviderDatasource {
   /// interactive approval.
   void respondToPermissionRequest(String sessionId, String requestId, {required bool approved});
 
+  /// Respond to an agent-initiated user-input request emitted as a
+  /// [ProviderUserInputRequest]. Returns `true` if the response was
+  /// delivered to a pending request, `false` if no matching request was
+  /// found (process gone, request expired, datasource doesn't surface AUQ).
+  bool respondToUserInputRequest(String sessionId, String requestId, {required String response});
+
   /// Returns `AuthStatus.unknown` (not a thrown exception) on probe failure
   /// — send is never blocked on a probe we couldn't run.
   Future<AuthStatus> verifyAuth();

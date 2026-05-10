@@ -72,3 +72,143 @@ final class ChatSessionStreamingFamily extends $Family with $FunctionalFamilyOve
   @override
   String toString() => r'chatSessionStreamingProvider';
 }
+
+@ProviderFor(chatSessionFailed)
+final chatSessionFailedProvider = ChatSessionFailedFamily._();
+
+final class ChatSessionFailedProvider extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  ChatSessionFailedProvider._({required ChatSessionFailedFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'chatSessionFailedProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$chatSessionFailedHash();
+
+  @override
+  String toString() {
+    return r'chatSessionFailedProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    final argument = this.argument as String;
+    return chatSessionFailed(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ChatSessionFailedProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$chatSessionFailedHash() => r'f31ffef0fd16b2d50ac384aa4ae4db93dfe79b75';
+
+final class ChatSessionFailedFamily extends $Family with $FunctionalFamilyOverride<Stream<bool>, String> {
+  ChatSessionFailedFamily._()
+    : super(
+        retry: null,
+        name: r'chatSessionFailedProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ChatSessionFailedProvider call(String sessionId) => ChatSessionFailedProvider._(argument: sessionId, from: this);
+
+  @override
+  String toString() => r'chatSessionFailedProvider';
+}
+
+/// Whether the session is waiting for user input (permission or question).
+/// Derived entirely from in-memory registry data — no SQLite load.
+
+@ProviderFor(chatSessionAwaiting)
+final chatSessionAwaitingProvider = ChatSessionAwaitingFamily._();
+
+/// Whether the session is waiting for user input (permission or question).
+/// Derived entirely from in-memory registry data — no SQLite load.
+
+final class ChatSessionAwaitingProvider extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  /// Whether the session is waiting for user input (permission or question).
+  /// Derived entirely from in-memory registry data — no SQLite load.
+  ChatSessionAwaitingProvider._({required ChatSessionAwaitingFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'chatSessionAwaitingProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$chatSessionAwaitingHash();
+
+  @override
+  String toString() {
+    return r'chatSessionAwaitingProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    final argument = this.argument as String;
+    return chatSessionAwaiting(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ChatSessionAwaitingProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$chatSessionAwaitingHash() => r'b486dc54befee991dcd48258647831af5b837c45';
+
+/// Whether the session is waiting for user input (permission or question).
+/// Derived entirely from in-memory registry data — no SQLite load.
+
+final class ChatSessionAwaitingFamily extends $Family with $FunctionalFamilyOverride<Stream<bool>, String> {
+  ChatSessionAwaitingFamily._()
+    : super(
+        retry: null,
+        name: r'chatSessionAwaitingProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Whether the session is waiting for user input (permission or question).
+  /// Derived entirely from in-memory registry data — no SQLite load.
+
+  ChatSessionAwaitingProvider call(String sessionId) => ChatSessionAwaitingProvider._(argument: sessionId, from: this);
+
+  @override
+  String toString() => r'chatSessionAwaitingProvider';
+}

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:code_bench_app/data/chat/models/agent_failure.dart';
 import 'package:code_bench_app/data/chat/models/transport_readiness.dart';
+import 'package:code_bench_app/data/ai/models/provider_runtime_event.dart';
 import 'package:code_bench_app/data/session/models/permission_request.dart';
 import 'package:code_bench_app/data/shared/session_settings.dart';
 import 'package:code_bench_app/data/shared/ai_model.dart';
@@ -51,6 +52,7 @@ class _DisposalTestSessionService extends Fake implements SessionService {
     String? providerId,
     bool Function() cancelFlag = _neverCancelDisposal,
     Future<bool> Function(PermissionRequest req)? requestPermission,
+    Future<void> Function(ProviderUserInputRequest req)? requestUserInput,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
     ProviderSettingDropSink? onSettingDropped,
@@ -82,6 +84,7 @@ class _ModeCapturingSessionService extends Fake implements SessionService {
     String? providerId,
     bool Function() cancelFlag = _neverCancelDisposal,
     Future<bool> Function(PermissionRequest req)? requestPermission,
+    Future<void> Function(ProviderUserInputRequest req)? requestUserInput,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
     ProviderSettingDropSink? onSettingDropped,

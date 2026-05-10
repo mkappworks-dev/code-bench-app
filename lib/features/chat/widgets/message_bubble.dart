@@ -4,48 +4,57 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/debug_logger.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../data/ai/models/provider_setting_drop.dart';
+import '../../../data/session/models/ask_user_question.dart';
 import '../../../data/session/models/tool_event.dart';
 import '../../../data/shared/chat_message.dart';
+import '../../../data/apply/models/file_read_result.dart';
+import '../../project_sidebar/notifiers/project_sidebar_notifier.dart';
+import '../notifiers/agent_user_input_request_notifier.dart';
 import '../notifiers/ask_question_notifier.dart';
 import '../notifiers/chat_messages_actions.dart';
 import '../notifiers/chat_messages_failure.dart';
 import '../notifiers/chat_notifier.dart';
+import '../notifiers/code_apply_actions.dart';
+import '../notifiers/code_apply_failure.dart';
 import '../notifiers/dropped_settings_notifier.dart';
 import '../../../core/constants/app_icons.dart';
+import '../utils/compute_line_diff.dart';
+import '../utils/tool_phase_classifier.dart';
+import 'apply_diff_card.dart';
 import 'ask_user_question_card.dart';
-import 'code_block_widget.dart';
+import 'chat_markdown_style.dart';
 import 'iteration_cap_banner.dart';
 import 'permission_request_card.dart';
 import 'provider_label.dart';
-import 'streaming_dot.dart';
 import 'tool_call_row.dart';
+import 'tool_phase_pill.dart';
 import 'work_log_section.dart';
 
 export 'code_block_widget.dart' show CodeBlockBuilder;
 export '../utils/code_fence_parser.dart' show parseCodeFenceInfo;
-export 'streaming_dot.dart' show StreamingDot;
 
 class MessageBubble extends StatelessWidget {
-  const MessageBubble({super.key, required this.message, required this.sessionId, this.isLast = false});
+  const MessageBubble({super.key, required this.message, required this.sessionId, this.isLastInSession = false});
 
   final ChatMessage message;
   final String sessionId;
-  final bool isLast;
+  final bool isLastInSession;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: switch (message.role) {
-        MessageRole.user => _UserBubble(message: message, sessionId: sessionId, isLast: isLast),
+        MessageRole.user => _UserBubble(message: message, sessionId: sessionId, isLast: isLastInSession),
         MessageRole.interrupted => const _InterruptedBubble(),
-        _ => _AssistantBubble(message: message),
+        _ => _AssistantBubble(message: message, isLast: isLastInSession),
       },
     );
   }
@@ -65,10 +74,7 @@ class _UserBubble extends ConsumerStatefulWidget {
 class _UserBubbleState extends ConsumerState<_UserBubble> {
   bool _hovered = false;
 
-  /// Inline-checked delete (per CLAUDE.md Rule 2 exception): N user bubbles can
-  /// share the `chatMessagesActionsProvider`, so a `ref.listen` fires once per
-  /// instance and would yield N snackbars. Awaiting the action and reading
-  /// `hasError` inline keeps a single snackbar for the bubble that triggered it.
+  /// Shared provider: inline-checked to avoid N ref.listen snackbars (one per bubble instance) for the same error.
   Future<void> _delete() async {
     await ref.read(chatMessagesActionsProvider.notifier).deleteMessage(widget.sessionId, widget.message.id);
     if (!mounted) return;
@@ -89,33 +95,35 @@ class _UserBubbleState extends ConsumerState<_UserBubble> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (showActions) ...[
-                  _BubbleActionButton(icon: AppIcons.trash, tooltip: 'Delete', color: c.warning, onTap: _delete),
-                  const SizedBox(width: 6),
-                ],
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-                    decoration: BoxDecoration(
-                      color: c.userBubbleFill,
-                      border: Border.all(color: c.userBubbleStroke),
-                      borderRadius: BorderRadius.circular(11),
-                      boxShadow: [BoxShadow(color: c.userBubbleHighlight, blurRadius: 0, offset: const Offset(0, 1))],
-                    ),
-                    child: SelectableText(
-                      widget.message.content,
-                      style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),
+          LayoutBuilder(
+            builder: (context, constraints) => Align(
+              alignment: Alignment.centerRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (showActions) ...[
+                    _BubbleActionButton(icon: AppIcons.trash, tooltip: 'Delete', color: c.warning, onTap: _delete),
+                    const SizedBox(width: 6),
+                  ],
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.82),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: c.userBubbleFill,
+                        border: Border.all(color: c.userBubbleStroke),
+                        borderRadius: BorderRadius.circular(11),
+                        boxShadow: [BoxShadow(color: c.userBubbleHighlight, blurRadius: 0, offset: const Offset(0, 1))],
+                      ),
+                      child: SelectableText(
+                        widget.message.content,
+                        style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           // Anchor here so a silent downgrade isn't lost when the assistant turn fails before producing a message.
@@ -189,18 +197,15 @@ class _InterruptedBubble extends StatelessWidget {
 }
 
 class _AssistantBubble extends ConsumerStatefulWidget {
-  const _AssistantBubble({required this.message});
+  const _AssistantBubble({required this.message, required this.isLast});
   final ChatMessage message;
+  final bool isLast;
 
   @override
   ConsumerState<_AssistantBubble> createState() => _AssistantBubbleState();
 }
 
 class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
-  bool _hovering = false;
-
-  /// Formats the answer map produced by [AskUserQuestionCard] into a
-  /// plain user-message string and re-posts it via [chatMessagesProvider].
   Future<void> _submitAnswer(Map<String, dynamic> answer) async {
     final parts = <String>[];
     final selected = answer['selectedOption'];
@@ -220,93 +225,117 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
         ? (ref.watch(chatMessagesProvider(message.sessionId)).value ?? const <ChatMessage>[])
         : const <ChatMessage>[];
     final capIsActive = message.iterationCapReached && allMessages.isNotEmpty && allMessages.last.id == message.id;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 2,
-            margin: const EdgeInsets.only(top: 3, bottom: 3),
-            color: AppColors.of(context).borderColor,
-          ),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (message.isStreaming) const StreamingDot(),
-                if (message.isStreaming || message.toolEvents.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  WorkLogSection(sessionId: message.sessionId, messageId: message.id),
-                ],
-                if (message.toolEvents.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  for (final event in message.toolEvents)
-                    Padding(
-                      key: ValueKey('tool-row-${event.id}'),
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: ToolCallRow(
-                        event: event,
-                        providerLabel: providerLabelFor(message.providerId),
-                        modelLabel: message.modelId,
-                      ),
-                    ),
-                  if (message.isStreaming &&
-                      !message.toolEvents.any((e) => e.status == ToolStatus.running) &&
-                      message.content.isEmpty) ...[
-                    const SizedBox(height: 8),
-                    const _SkeletonLines(),
-                  ] else if (message.content.isNotEmpty)
-                    const SizedBox(height: 8),
-                ],
-                _MessageContent(message: message),
-                _DroppedSettingsNotice(messageId: message.id),
-                _AssistantActionRow(message: message, hovering: _hovering),
-                if (message.iterationCapReached) ...[
-                  IterationCapBanner(messageId: message.id, sessionId: message.sessionId, isActive: capIsActive),
-                ],
-                if (message.pendingPermissionRequest != null) ...[
-                  PermissionRequestCard(request: message.pendingPermissionRequest!),
-                ],
-                if (message.askQuestion != null) ...[
-                  const SizedBox(height: 8),
-                  AskUserQuestionCard(
-                    question: message.askQuestion!,
-                    sessionId: message.sessionId,
-                    onSubmit: _submitAnswer,
-                    onBack: message.askQuestion!.stepIndex > 0
-                        ? () => ref
-                              .read(askQuestionProvider.notifier)
-                              .setAnswer(
-                                sessionId: message.sessionId,
-                                stepIndex: message.askQuestion!.stepIndex,
-                                selectedOption: null,
-                                freeText: null,
-                              )
-                        : null,
-                  ),
-                ],
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(width: 2, margin: const EdgeInsets.only(top: 3, bottom: 3), color: AppColors.of(context).borderColor),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (message.isStreaming || message.toolEvents.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                WorkLogSection(sessionId: message.sessionId, messageId: message.id),
               ],
-            ),
+              if (message.toolEvents.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                for (final event in message.toolEvents)
+                  Padding(
+                    key: ValueKey('tool-row-${event.id}'),
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: ToolCallRow(
+                      event: event,
+                      providerId: message.providerId,
+                      providerLabel: providerLabelFor(message.providerId),
+                      modelLabel: message.modelId,
+                    ),
+                  ),
+                if (message.isStreaming &&
+                    !message.toolEvents.any((e) => e.status == ToolStatus.running) &&
+                    message.content.isEmpty) ...[
+                  const SizedBox(height: 8),
+                  const _SkeletonLines(),
+                ] else if (message.content.isNotEmpty)
+                  const SizedBox(height: 8),
+              ],
+              _MessageContent(message: message),
+              if (message.isStreaming) ...[
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: [for (final p in _activePhases(message)) ToolPhasePill(phase: p.phase, label: p.label)],
+                ),
+              ],
+              _DroppedSettingsNotice(messageId: message.id),
+              _AssistantActionRow(message: message),
+              if (message.iterationCapReached) ...[
+                IterationCapBanner(messageId: message.id, sessionId: message.sessionId, isActive: capIsActive),
+              ],
+              if (message.pendingPermissionRequest != null) ...[
+                PermissionRequestCard(request: message.pendingPermissionRequest!),
+              ],
+              if (message.askQuestion != null) ...[
+                const SizedBox(height: 8),
+                AskUserQuestionCard(
+                  question: message.askQuestion!,
+                  sessionId: message.sessionId,
+                  onSubmit: _submitAnswer,
+                  onBack: message.askQuestion!.stepIndex > 0
+                      ? () => ref
+                            .read(askQuestionProvider.notifier)
+                            .setAnswer(
+                              sessionId: message.sessionId,
+                              stepIndex: message.askQuestion!.stepIndex,
+                              selectedOption: null,
+                              freeText: null,
+                            )
+                      : null,
+                ),
+              ],
+              Consumer(
+                builder: (context, ref, _) {
+                  final req = ref.watch(agentUserInputRequestProvider(message.sessionId));
+                  if (req == null || !widget.isLast) return const SizedBox.shrink();
+                  final asWizard = AskUserQuestion(
+                    question: req.prompt,
+                    options: req.choices ?? const <String>[],
+                    allowFreeText: true,
+                    stepIndex: 0,
+                    totalSteps: 1,
+                  );
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: AskUserQuestionCard(
+                      question: asWizard,
+                      sessionId: message.sessionId,
+                      agentMode: true,
+                      onSubmit: (answer) async {
+                        final text = (answer['freeText'] as String?) ?? (answer['selectedOption'] as String?) ?? '';
+                        ref.read(agentUserInputRequestProvider(message.sessionId).notifier).submit(text);
+                      },
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-class _AssistantActionRow extends StatefulWidget {
-  const _AssistantActionRow({required this.message, required this.hovering});
+class _AssistantActionRow extends ConsumerStatefulWidget {
+  const _AssistantActionRow({required this.message});
   final ChatMessage message;
-  final bool hovering;
 
   @override
-  State<_AssistantActionRow> createState() => _AssistantActionRowState();
+  ConsumerState<_AssistantActionRow> createState() => _AssistantActionRowState();
 }
 
-class _AssistantActionRowState extends State<_AssistantActionRow> {
+class _AssistantActionRowState extends ConsumerState<_AssistantActionRow> {
   bool _copied = false;
   Timer? _resetTimer;
 
@@ -333,32 +362,122 @@ class _AssistantActionRowState extends State<_AssistantActionRow> {
     }
   }
 
+  Future<void> _retry() async {
+    await ref
+        .read(chatMessagesActionsProvider.notifier)
+        .retryAssistantMessage(widget.message.sessionId, widget.message.id);
+    if (!mounted) return;
+    final s = ref.read(chatMessagesActionsProvider);
+    if (s.hasError && s.error is ChatMessagesFailure) {
+      showErrorSnackBar(context, 'Failed to retry message.');
+    }
+  }
+
+  Future<void> _delete() async {
+    await ref
+        .read(chatMessagesActionsProvider.notifier)
+        .deleteAssistantMessage(widget.message.sessionId, widget.message.id);
+    if (!mounted) return;
+    final s = ref.read(chatMessagesActionsProvider);
+    if (s.hasError && s.error is ChatMessagesFailure) {
+      showErrorSnackBar(context, 'Failed to delete message.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.message.isStreaming || widget.message.content.trim().isEmpty) {
       return const SizedBox.shrink();
     }
     final c = AppColors.of(context);
-    final icon = _copied ? AppIcons.check : AppIcons.copy;
-    final iconColor = _copied ? c.success : c.textMuted;
+    final copyIcon = _copied ? AppIcons.check : AppIcons.copy;
+    final copyColor = _copied ? c.success : c.textMuted;
     return Padding(
       padding: const EdgeInsets.only(top: 4, bottom: 4),
-      child: AnimatedOpacity(
-        opacity: widget.hovering ? 1.0 : 0.4,
-        duration: const Duration(milliseconds: 150),
-        child: Tooltip(
-          message: 'Copy as markdown',
-          child: IconButton(
-            icon: Icon(icon, size: 14, color: iconColor),
-            onPressed: _copy,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-            visualDensity: VisualDensity.compact,
-            splashRadius: 14,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Tooltip(
+            message: 'Copy as markdown',
+            child: IconButton(
+              icon: Icon(copyIcon, size: ThemeConstants.iconSizeSmall, color: copyColor),
+              onPressed: _copy,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              visualDensity: VisualDensity.compact,
+              splashRadius: 14,
+            ),
           ),
-        ),
+          const SizedBox(width: 4),
+          Tooltip(
+            message: 'Retry',
+            child: IconButton(
+              icon: Icon(AppIcons.refresh, size: ThemeConstants.iconSizeSmall, color: c.textMuted),
+              onPressed: _retry,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              visualDensity: VisualDensity.compact,
+              splashRadius: 14,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Tooltip(
+            message: 'Delete',
+            child: IconButton(
+              icon: Icon(AppIcons.trash, size: ThemeConstants.iconSizeSmall, color: c.textMuted),
+              onPressed: _delete,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              visualDensity: VisualDensity.compact,
+              splashRadius: 14,
+            ),
+          ),
+        ],
       ),
     );
+  }
+}
+
+// GFM autolinks require a domain with at least one period, so `localhost` is never auto-linked.
+// Pre-process by converting localhost:PORT (with or without http(s)://) into explicit markdown
+// link syntax [url](url) so the renderer emits a clickable <a> without relying on GFM autolinks.
+// Lookbehind excludes positions already inside link URLs `(`, link text `[`, code `` ` ``, or `://`.
+final _localhostRe = RegExp(r'(?<![(\[`<:])(?:(https?)://)?localhost:(\d+)((?:/[^\s)\]`]*)?)', caseSensitive: false);
+
+// Existing `[...](...)` link pass-through pattern. Anything matched by this is treated as already
+// linkified — we copy it through verbatim so a `localhost:PORT` already in either the link text or
+// URL doesn't get nested into a second wrapper.
+final _markdownLinkRe = RegExp(r'\[[^\]]*\]\([^)]*\)');
+
+@visibleForTesting
+String linkifyLocalhost(String content) {
+  final out = StringBuffer();
+  var lastEnd = 0;
+  for (final m in _markdownLinkRe.allMatches(content)) {
+    out.write(_linkifyBare(content.substring(lastEnd, m.start)));
+    out.write(m[0]);
+    lastEnd = m.end;
+  }
+  out.write(_linkifyBare(content.substring(lastEnd)));
+  return out.toString();
+}
+
+String _linkifyBare(String chunk) => chunk.replaceAllMapped(_localhostRe, (m) {
+  final scheme = m[1] ?? 'http';
+  final port = m[2]!;
+  final path = m[3] ?? '';
+  final url = '$scheme://localhost:$port$path';
+  return '[$url]($url)';
+});
+
+Future<void> _openLink(String? href) async {
+  if (href == null) return;
+  final uri = Uri.tryParse(href);
+  if (uri == null) return;
+  try {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (e) {
+    dLog('[MessageBubble] launchUrl failed: ${e.runtimeType}');
   }
 }
 
@@ -377,27 +496,10 @@ class _MessageContent extends StatelessWidget {
     }
     return SelectionArea(
       child: MarkdownBody(
-        data: message.content,
-        styleSheet: MarkdownStyleSheet(
-          p: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.65),
-          code: TextStyle(
-            fontFamily: ThemeConstants.editorFontFamily,
-            backgroundColor: c.inlineCodeFill,
-            color: c.inlineCodeText,
-            fontSize: ThemeConstants.uiFontSizeSmall,
-          ),
-          codeblockDecoration: BoxDecoration(
-            color: c.codeBlockBg,
-            border: Border.all(color: c.subtleBorder),
-            borderRadius: BorderRadius.circular(7),
-          ),
-          h1: TextStyle(color: c.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
-          h2: TextStyle(color: c.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
-          h3: TextStyle(color: c.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
-          blockquote: TextStyle(color: c.textSecondary),
-          listBullet: TextStyle(color: c.textPrimary),
-        ),
-        builders: {'code': CodeBlockBuilder(messageId: message.id, sessionId: message.sessionId)},
+        data: linkifyLocalhost(message.content),
+        onTapLink: (text, href, title) => _openLink(href),
+        styleSheet: buildChatMarkdownStyleSheet(context),
+        builders: buildChatMarkdownBuilders(context: context, messageId: message.id, sessionId: message.sessionId),
       ),
     );
   }
@@ -500,3 +602,151 @@ class _SkeletonLinesState extends State<_SkeletonLines> with SingleTickerProvide
     ),
   );
 }
+
+class _ApplyCardLoader extends ConsumerStatefulWidget {
+  const _ApplyCardLoader({required this.codeBlock, required this.sessionId, required this.messageId});
+
+  final CodeBlock codeBlock;
+  final String sessionId;
+  final String messageId;
+
+  @override
+  ConsumerState<_ApplyCardLoader> createState() => _ApplyCardLoaderState();
+}
+
+class _ApplyCardLoaderState extends ConsumerState<_ApplyCardLoader> {
+  ApplyCardState _cardState = ApplyCardState.ready;
+  String? _errorMessage;
+  String _oldPreview = '';
+  int _loadGeneration = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadOldContent());
+  }
+
+  Future<void> _loadOldContent() async {
+    final generation = ++_loadGeneration;
+    final project = ref.read(activeProjectProvider);
+    final filename = widget.codeBlock.filename;
+    if (project == null || filename == null) return;
+    final result = await ref.read(codeApplyActionsProvider.notifier).readFileContent(filename, project.path);
+    if (!mounted || _loadGeneration != generation) return;
+    switch (result) {
+      case FileReadContent(:final text):
+        setState(() {
+          _oldPreview = text;
+          if (_cardState == ApplyCardState.failed && _errorMessage == 'Could not read existing file.') {
+            _cardState = ApplyCardState.ready;
+            _errorMessage = null;
+          }
+        });
+      case FileReadNotFound():
+        setState(() => _oldPreview = '');
+      case FileReadError():
+        setState(() {
+          _oldPreview = '';
+          _cardState = ApplyCardState.failed;
+          _errorMessage = 'Could not read existing file.';
+        });
+    }
+  }
+
+  Future<void> _apply() async {
+    final project = ref.read(activeProjectProvider);
+    final filename = widget.codeBlock.filename;
+    if (project == null || filename == null) return;
+
+    await ref
+        .read(codeApplyActionsProvider.notifier)
+        .applyChange(
+          projectId: project.id,
+          filePath: filename,
+          projectPath: project.path,
+          newContent: widget.codeBlock.code,
+          sessionId: widget.sessionId,
+          messageId: widget.messageId,
+        );
+    if (!mounted) return;
+    final applyState = ref.read(codeApplyActionsProvider);
+    if (applyState.hasError) {
+      final failure = applyState.error;
+      final String message;
+      if (failure is CodeApplyFailure) {
+        message = switch (failure) {
+          CodeApplyProjectMissing() => 'Project folder is missing.',
+          CodeApplyOutsideProject() => 'File is outside the current project.',
+          CodeApplyDiskWrite(:final message) => 'Disk write failed: $message',
+          CodeApplyTooLarge(:final bytes) => 'Content too large ($bytes bytes).',
+          CodeApplyGitRevert() => 'Git revert failed.',
+          CodeApplyContentChanged() => 'File was modified externally.',
+          CodeApplyUnknownError() => 'Unable to apply change.',
+        };
+      } else {
+        // Rule-2 violation upstream: a method on CodeApplyActions threw something other than CodeApplyFailure. Loud breadcrumb so we catch the missing _asFailure mapping in triage rather than shipping a generic snackbar.
+        dLog('[_ApplyCardLoader] non-CodeApplyFailure error type ${failure.runtimeType}: $failure');
+        message = 'Unable to apply change.';
+      }
+      setState(() {
+        _cardState = ApplyCardState.failed;
+        _errorMessage = message;
+      });
+    } else {
+      setState(() => _cardState = ApplyCardState.applied);
+    }
+  }
+
+  void _reDiff() {
+    setState(() {
+      _cardState = ApplyCardState.ready;
+      _errorMessage = null;
+    });
+    _loadOldContent();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final block = widget.codeBlock;
+    final lineDiff = computeLineDiff(_oldPreview, block.code);
+
+    return ApplyDiffCard(
+      filename: block.filename ?? '',
+      language: block.language ?? 'plaintext',
+      diffText: lineDiff.toUnifiedText(),
+      additions: lineDiff.additions,
+      deletions: lineDiff.deletions,
+      state: _cardState,
+      errorMessage: _errorMessage,
+      onApply: _cardState == ApplyCardState.ready ? _apply : null,
+      onReDiff: _cardState == ApplyCardState.failed ? _reDiff : null,
+    );
+  }
+}
+
+List<({PhaseClass phase, String label})> _activePhases(ChatMessage m) {
+  if (!m.isStreaming) return const [];
+  final out = <({PhaseClass phase, String label})>[];
+  final running = m.toolEvents.where((e) => e.status == ToolStatus.running).toList();
+  for (final e in running) {
+    out.add((phase: classifyTool(e.toolName, null), label: _phaseLabelFor(e)));
+  }
+  if (running.isEmpty) {
+    out.add((phase: PhaseClass.think, label: 'thinking'));
+  }
+  return out;
+}
+
+String _phaseLabelFor(ToolEvent e) {
+  return switch (e.toolName.toLowerCase()) {
+    'bash' => 'running ${_truncate(e.input["command"]?.toString() ?? "command", 24)}',
+    'web_fetch' || 'webfetch' => 'fetching url',
+    'read' || 'read_file' => 'reading ${_truncate(e.filePath ?? "file", 32)}',
+    'write' || 'write_file' || 'edit' || 'str_replace' => 'editing ${_truncate(e.filePath ?? "file", 32)}',
+    'glob' => 'finding files',
+    'grep' => 'searching',
+    _ => 'running ${e.toolName.toLowerCase()}',
+  };
+}
+
+String _truncate(String s, int n) => s.length <= n ? s : '${s.substring(0, n)}…';

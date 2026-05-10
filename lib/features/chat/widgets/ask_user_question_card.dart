@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/session/models/ask_user_question.dart';
 import '../notifiers/ask_question_notifier.dart';
@@ -14,12 +15,14 @@ class AskUserQuestionCard extends ConsumerStatefulWidget {
     required this.sessionId,
     required this.onSubmit,
     this.onBack,
+    this.agentMode = false,
   });
 
   final AskUserQuestion question;
   final String sessionId;
   final Future<void> Function(Map<String, dynamic>) onSubmit;
   final VoidCallback? onBack;
+  final bool agentMode;
 
   @override
   ConsumerState<AskUserQuestionCard> createState() => _AskUserQuestionCardState();
@@ -74,25 +77,46 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final infoColor = widget.agentMode ? c.info : c.blueAccent;
+    final cardBg = widget.agentMode ? c.info.withValues(alpha: 0.06) : c.questionCardBg;
+    final cardBorder = widget.agentMode ? c.info.withValues(alpha: 0.4) : c.selectionBorder;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: c.questionCardBg,
+        color: cardBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: c.selectionBorder),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _StepHeader(
-            currentStep: widget.question.stepIndex,
-            totalSteps: widget.question.totalSteps,
-            sectionLabel: widget.question.sectionLabel,
-          ),
-          const SizedBox(height: 12),
+          if (widget.agentMode) ...[
+            Text(
+              'Question from agent',
+              style: TextStyle(
+                color: infoColor,
+                fontSize: ThemeConstants.uiFontSizeLabel,
+                letterSpacing: 1.2,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (!widget.agentMode && widget.question.totalSteps > 1) ...[
+            _StepHeader(
+              currentStep: widget.question.stepIndex,
+              totalSteps: widget.question.totalSteps,
+              sectionLabel: widget.question.sectionLabel,
+            ),
+            const SizedBox(height: 12),
+          ],
           Text(
             widget.question.question,
-            style: TextStyle(color: c.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              color: c.textPrimary,
+              fontSize: ThemeConstants.editorFontSize,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 12),
           if (widget.question.options.isNotEmpty)
@@ -111,11 +135,11 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'Or describe your own approach…',
-                hintStyle: TextStyle(color: c.mutedFg, fontSize: 11),
+                hintStyle: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
                 isDense: true,
                 border: const OutlineInputBorder(),
               ),
-              style: TextStyle(color: c.textPrimary, fontSize: 12),
+              style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize),
               maxLines: 3,
               minLines: 1,
             ),
@@ -123,36 +147,26 @@ class _AskUserQuestionCardState extends ConsumerState<AskUserQuestionCard> {
           const SizedBox(height: 14),
           Row(
             children: [
-              // "Clear answer" rather than "Back": the handler only
-              // clears the stored answer for the current step so the
-              // user can re-answer — it does NOT rewind the chat to a
-              // previous question. Real rewind is tracked for a future
-              // edit-and-fork on user messages (Pattern B).
-              TextButton(
-                onPressed: widget.question.stepIndex > 0 ? widget.onBack : null,
-                child: const Text('Clear answer', style: TextStyle(fontSize: 11)),
-              ),
-              const Spacer(),
-              if (!_isLastStep)
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: c.blueAccent,
-                    foregroundColor: c.onAccent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                  ),
-                  onPressed: _canSubmit ? _handleSubmit : null,
-                  child: const Text('Next →', style: TextStyle(fontSize: 11)),
+              if (!widget.agentMode)
+                TextButton(
+                  onPressed: widget.question.stepIndex > 0 ? widget.onBack : null,
+                  child: const Text('Clear answer', style: TextStyle(fontSize: ThemeConstants.uiFontSizeSmall)),
                 )
               else
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: c.blueAccent,
-                    foregroundColor: c.onAccent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                  ),
-                  onPressed: _canSubmit ? _handleSubmit : null,
-                  child: const Text('Submit', style: TextStyle(fontSize: 11)),
+                const SizedBox.shrink(),
+              const Spacer(),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: infoColor,
+                  foregroundColor: c.onAccent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                 ),
+                onPressed: _canSubmit ? _handleSubmit : null,
+                child: Text(
+                  widget.agentMode || _isLastStep ? 'Submit' : 'Next →',
+                  style: const TextStyle(fontSize: ThemeConstants.uiFontSizeSmall),
+                ),
+              ),
             ],
           ),
         ],
@@ -196,11 +210,19 @@ class _StepHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '${currentStep + 1} / $totalSteps',
-          style: TextStyle(color: c.textMuted, fontSize: 9, letterSpacing: 1, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: c.textMuted,
+            fontSize: ThemeConstants.uiFontSizeBadge,
+            letterSpacing: 1,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const Spacer(),
         if (sectionLabel != null)
-          Text(sectionLabel!, style: TextStyle(color: c.dimFg, fontSize: 9, letterSpacing: 0.5)),
+          Text(
+            sectionLabel!,
+            style: TextStyle(color: c.dimFg, fontSize: ThemeConstants.uiFontSizeBadge, letterSpacing: 0.5),
+          ),
       ],
     );
   }
@@ -242,7 +264,7 @@ class _OptionRow extends StatelessWidget {
                   '${index + 1}',
                   style: TextStyle(
                     color: isSelected ? Colors.white : c.dimFg,
-                    fontSize: 10,
+                    fontSize: ThemeConstants.uiFontSizeLabel,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -250,7 +272,13 @@ class _OptionRow extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(label, style: TextStyle(color: isSelected ? c.textPrimary : c.textSecondary, fontSize: 12)),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? c.textPrimary : c.textSecondary,
+                  fontSize: ThemeConstants.uiFontSize,
+                ),
+              ),
             ),
           ],
         ),

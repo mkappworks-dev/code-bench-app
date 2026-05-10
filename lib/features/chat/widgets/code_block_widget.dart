@@ -2,7 +2,8 @@ import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_highlight/flutter_highlight.dart';
-import 'package:flutter_highlight/themes/vs2015.dart';
+
+import '../../../core/theme/ayu_highlight_themes.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -21,11 +22,32 @@ import '../notifiers/code_diff_provider.dart';
 import '../notifiers/project_file_scan_actions.dart';
 import '../notifiers/project_file_scan_failure.dart';
 import '../utils/code_fence_parser.dart';
+import 'diff_card.dart';
+import 'markdown_doc_panel.dart';
+
+({int added, int removed}) _diffLineStats(List<Diff> diffs) {
+  var added = 0;
+  var removed = 0;
+  for (final d in diffs) {
+    final raw = d.text;
+    if (raw.isEmpty) continue;
+    final trimmed = raw.endsWith('\n') ? raw.substring(0, raw.length - 1) : raw;
+    if (trimmed.isEmpty) continue;
+    final lines = trimmed.split('\n').length;
+    if (d.operation == DIFF_INSERT) {
+      added += lines;
+    } else if (d.operation == DIFF_DELETE) {
+      removed += lines;
+    }
+  }
+  return (added: added, removed: removed);
+}
 
 class CodeBlockBuilder extends MarkdownElementBuilder {
-  CodeBlockBuilder({required this.messageId, required this.sessionId});
+  CodeBlockBuilder({required this.messageId, required this.sessionId, this.routeMarkdownToDocPanel = true});
   final String messageId;
   final String sessionId;
+  final bool routeMarkdownToDocPanel;
 
   @override
   Widget? visitElementAfterWithContext(
@@ -58,6 +80,12 @@ class CodeBlockBuilder extends MarkdownElementBuilder {
     }
 
     final (language, filename) = parseCodeFenceInfo(fullInfo);
+    if (language == 'diff') {
+      return DiffCard(rawDiff: code);
+    }
+    if (routeMarkdownToDocPanel && language == 'markdown') {
+      return MarkdownDocPanel(rawSource: code, filename: filename, messageId: messageId, sessionId: sessionId);
+    }
     return _CodeBlockWidget(
       code: code,
       language: language,
@@ -169,7 +197,8 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
         codeDiffProvider(absolutePath: absolutePath, projectPath: project.path, newContent: widget.code),
       );
     }
-    final bool diffLoaded = diffAsync?.asData?.value != null;
+    final DiffResult? diffResult = diffAsync?.asData?.value;
+    final bool diffLoaded = diffResult != null;
 
     final c = AppColors.of(context);
     return Container(
@@ -182,7 +211,7 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildHeader(diffLoaded),
+          _buildHeader(diffLoaded, diffResult),
           if (_showingPicker)
             _FilePickerPanel(
               project: project,
@@ -215,27 +244,15 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
               ),
             }
           else
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: HighlightView(
-                widget.code,
-                language: widget.language,
-                theme: vs2015Theme,
-                padding: const EdgeInsets.all(12),
-                textStyle: const TextStyle(
-                  fontFamily: ThemeConstants.editorFontFamily,
-                  fontSize: ThemeConstants.editorFontSize,
-                  height: 1.5,
-                ),
-              ),
-            ),
+            _GutteredHighlight(code: widget.code, language: widget.language),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(bool diffLoaded) {
+  Widget _buildHeader(bool diffLoaded, DiffResult? diffResult) {
     final c = AppColors.of(context);
+    final stats = diffResult == null ? null : _diffLineStats(diffResult.diffs);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -266,6 +283,29 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
             ),
           ] else
             const Spacer(),
+          if (stats != null) ...[
+            Text(
+              '+${stats.added}',
+              style: TextStyle(
+                color: c.diffAdd,
+                fontSize: ThemeConstants.uiFontSizeSmall,
+                fontFamily: ThemeConstants.editorFontFamily,
+              ),
+            ),
+            Text(
+              ' · ',
+              style: TextStyle(color: c.mutedFg, fontSize: ThemeConstants.uiFontSizeSmall),
+            ),
+            Text(
+              '−${stats.removed}',
+              style: TextStyle(
+                color: c.diffDel,
+                fontSize: ThemeConstants.uiFontSizeSmall,
+                fontFamily: ThemeConstants.editorFontFamily,
+              ),
+            ),
+            const SizedBox(width: 12),
+          ],
           if (_effectiveFilename != null && !_diffRequested && !_showingPicker)
             _HeaderButton(label: 'Diff', icon: AppIcons.gitDiff, onTap: () => setState(() => _diffRequested = true)),
           if (_effectiveFilename == null && !_showingPicker)
@@ -325,57 +365,121 @@ class _CodeBlockWidgetState extends ConsumerState<_CodeBlockWidget> {
   }
 
   Widget _buildPlainContent(String content) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: HighlightView(
-        content,
-        language: widget.language,
-        theme: vs2015Theme,
-        padding: const EdgeInsets.all(12),
-        textStyle: const TextStyle(
-          fontFamily: ThemeConstants.editorFontFamily,
-          fontSize: ThemeConstants.editorFontSize,
-          height: 1.5,
-        ),
-      ),
-    );
+    return _GutteredHighlight(code: content, language: widget.language);
   }
 
   Widget _buildDiffContent(List<Diff> diffs) {
-    final c = AppColors.of(context);
+    final lines = <({int op, String text})>[];
+    for (final d in diffs) {
+      final raw = d.text;
+      if (raw.isEmpty) continue;
+      final trimmed = raw.endsWith('\n') ? raw.substring(0, raw.length - 1) : raw;
+      for (final line in trimmed.split('\n')) {
+        lines.add((op: d.operation, text: line));
+      }
+    }
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: diffs.map((diff) {
-            final bg = diff.operation == DIFF_INSERT
-                ? c.diffAdditionBg
-                : diff.operation == DIFF_DELETE
-                ? c.diffDeletionBg
-                : Colors.transparent;
-            final prefix = diff.operation == DIFF_INSERT
-                ? '+'
-                : diff.operation == DIFF_DELETE
-                ? '−'
-                : ' ';
-            return Container(
-              color: bg,
-              child: Text(
-                (diff.text.endsWith('\n') ? diff.text.substring(0, diff.text.length - 1) : diff.text)
-                    .split('\n')
-                    .map((line) => '$prefix $line')
-                    .join('\n'),
-                style: TextStyle(
-                  fontFamily: ThemeConstants.editorFontFamily,
-                  fontSize: ThemeConstants.editorFontSize,
-                  color: c.textPrimary,
-                  height: 1.5,
-                ),
+          children: lines.map((l) => _DiffRow(op: l.op, text: l.text)).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class _GutteredHighlight extends StatelessWidget {
+  const _GutteredHighlight({required this.code, required this.language});
+  final String code;
+  final String language;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final trimmed = code.endsWith('\n') ? code.substring(0, code.length - 1) : code;
+    final lineCount = trimmed.isEmpty ? 1 : trimmed.split('\n').length;
+    const textStyle = TextStyle(
+      fontFamily: ThemeConstants.editorFontFamily,
+      fontSize: ThemeConstants.editorFontSize,
+      height: 1.5,
+    );
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 12, 8, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                for (var i = 1; i <= lineCount; i++)
+                  Text('$i', style: textStyle.copyWith(color: c.editorGutterForeground)),
+              ],
+            ),
+          ),
+          Container(width: 1, color: c.subtleBorder),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: HighlightView(
+                code,
+                language: language,
+                theme: Theme.of(context).brightness == Brightness.dark ? ayuDarkTheme : ayuLightTheme,
+                padding: const EdgeInsets.all(12),
+                textStyle: textStyle,
               ),
-            );
-          }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DiffRow extends StatefulWidget {
+  const _DiffRow({required this.op, required this.text});
+  final int op;
+  final String text;
+
+  @override
+  State<_DiffRow> createState() => _DiffRowState();
+}
+
+class _DiffRowState extends State<_DiffRow> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final baseBg = widget.op == DIFF_INSERT
+        ? c.diffAdditionBg
+        : widget.op == DIFF_DELETE
+        ? c.diffDeletionBg
+        : Colors.transparent;
+    final hoverOverlay = Theme.of(context).brightness == Brightness.dark
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.black.withValues(alpha: 0.03);
+    final prefix = widget.op == DIFF_INSERT
+        ? '+'
+        : widget.op == DIFF_DELETE
+        ? '−'
+        : ' ';
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: Container(
+        color: _hover ? Color.alphaBlend(hoverOverlay, baseBg) : baseBg,
+        child: Text(
+          '$prefix ${widget.text}',
+          style: TextStyle(
+            fontFamily: ThemeConstants.editorFontFamily,
+            fontSize: ThemeConstants.editorFontSize,
+            color: c.textPrimary,
+            height: 1.5,
+          ),
         ),
       ),
     );

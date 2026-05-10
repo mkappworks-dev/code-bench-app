@@ -66,7 +66,18 @@ class CodexSession {
     if (_providerThreadId != null && _process != null) {
       _notify('turn/interrupt', {'threadId': _providerThreadId});
     }
+    final cancelledProcess = _process;
     _resetTurn();
+    // If the app-server stalls on `turn/interrupt` (held tool call, frozen model RPC), escalate to SIGTERM. Without this a stuck Stop button leaves the child process alive holding stdio/RAM until idle eviction (10 min) or a follow-up turn replaces it — and CodexSessionPool is now bounded, so orphan processes can starve new sessions.
+    if (cancelledProcess != null) {
+      Timer(const Duration(seconds: 2), () {
+        if (_disposed) return;
+        if (!identical(_process, cancelledProcess)) return;
+        if (isInFlight) return;
+        sLog('[CodexCli] cancel grace expired — sending SIGTERM to app-server');
+        cancelledProcess.kill(ProcessSignal.sigterm);
+      });
+    }
   }
 
   void respondToPermissionRequest(String requestId, {required bool approved}) {
@@ -76,6 +87,16 @@ class CodexSession {
       return;
     }
     completer.complete({'decision': approved ? 'approved' : 'denied'});
+  }
+
+  bool respondToUserInputRequest(String requestId, {required String response}) {
+    final completer = _pendingApprovals.remove(requestId);
+    if (completer == null) {
+      dLog('[CodexCli] No pending user-input request for $requestId');
+      return false;
+    }
+    completer.complete({'response': response});
+    return true;
   }
 
   Future<void> dispose() async {
@@ -106,8 +127,8 @@ class CodexSession {
         return;
       }
 
-      // workingDirectory guard — `/` or a stale path would give Codex tool-use access outside the project.
-      if (!workingDirectory.startsWith('/') || workingDirectory == '/' || !Directory(workingDirectory).existsSync()) {
+      // workingDirectory guard — root paths or stale paths would give Codex tool-use access outside the project. Cross-platform: rejects POSIX `/`, Windows `C:\`, relative paths.
+      if (!isAcceptableWorkingDirectory(workingDirectory) || !Directory(workingDirectory).existsSync()) {
         sLog('[CodexCli] rejected workingDirectory: $workingDirectory');
         controller.add(const ProviderStreamFailure(error: 'invalid workingDirectory'));
         return;
@@ -326,7 +347,7 @@ class CodexSession {
         _emitPermissionRequest(id, method, params);
 
       case 'item/tool/requestUserInput':
-        _emitPermissionRequest(id, method, params);
+        _emitUserInputRequest(id, params);
 
       case 'account/chatgptAuthTokens/refresh':
         // Gate on `_version` (not `_providerThreadId`) — token can expire between `initialized` and `thread/start`.
@@ -378,6 +399,60 @@ class CodexSession {
           return;
         }
         _respond(id, {'decision': 'denied'});
+      },
+    );
+  }
+
+  void _emitUserInputRequest(dynamic id, Map<String, dynamic>? params) {
+    final normalized = _coerceId(id);
+    final requestId = (normalized ?? id).toString();
+
+    final rawPrompt = params?['prompt'] ?? params?['message'];
+    String prompt;
+    if (rawPrompt is String) {
+      prompt = rawPrompt;
+    } else if (rawPrompt == null) {
+      prompt = '';
+    } else {
+      sLog('[CodexCli] _emitUserInputRequest received non-string prompt shape: ${rawPrompt.runtimeType}');
+      prompt = '';
+    }
+    final rawChoices = params?['choices'] ?? params?['options'];
+    final choices = rawChoices is List ? rawChoices.whereType<String>().toList() : null;
+    final defaultValue = params?['default_response'] as String?;
+
+    final completer = Completer<Map<String, dynamic>>();
+    _pendingApprovals[requestId] = completer;
+    // Snapshot process+thread so a delayed response cannot write into a successor turn.
+    final requestProcess = _process;
+    final requestThreadId = _providerThreadId;
+
+    _streamController?.add(
+      ProviderUserInputRequest(
+        requestId: requestId,
+        prompt: prompt,
+        providerId: 'codex',
+        sessionId: sessionId,
+        choices: choices,
+        defaultValue: defaultValue,
+      ),
+    );
+
+    completer.future.then(
+      (result) {
+        if (!identical(_process, requestProcess) || _providerThreadId != requestThreadId) {
+          sLog('[CodexCli] User-input response dropped — turn changed (id=$id)');
+          return;
+        }
+        _respond(id, result);
+      },
+      onError: (Object e) {
+        sLog('[CodexCli] User-input response failed: ${e.runtimeType}');
+        if (!identical(_process, requestProcess) || _providerThreadId != requestThreadId) {
+          sLog('[CodexCli] User-input auto-response dropped — turn changed (id=$id)');
+          return;
+        }
+        _respond(id, {'response': ''});
       },
     );
   }
@@ -469,7 +544,9 @@ class CodexSession {
   void _writeStdin(String message) {
     final stdin = _process?.stdin;
     if (stdin == null) {
-      dLog('[CodexCli] write skipped — process is gone');
+      // sLog (survives release) — when the process has already gone, an outgoing message (turn/start, AUQ response, permission decision) silently vanishes; without a release-survivable log the only sign is a hung turn.
+      sLog('[CodexCli] write skipped — process is gone (message lost)');
+      _streamController?.add(const ProviderStreamFailure(error: 'Codex process exited before message could be sent'));
       return;
     }
     try {

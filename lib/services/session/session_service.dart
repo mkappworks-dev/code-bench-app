@@ -59,6 +59,15 @@ class SessionService {
   final ChatStreamRegistryService? _chatStreamRegistry;
   static const _uuid = Uuid();
 
+  bool respondToUserInputRequest(String providerId, String sessionId, String requestId, {required String response}) {
+    final svc = _providerService;
+    if (svc == null) {
+      sLog('[SessionService] respondToUserInputRequest: providerService not available');
+      return false;
+    }
+    return svc.respondToUserInputRequest(providerId, sessionId, requestId, response: response);
+  }
+
   Stream<List<ChatSession>> watchAllSessions() => _session.watchAllSessions();
   Stream<List<ChatSession>> watchSessionsByProject(String projectId) => _session.watchSessionsByProject(projectId);
   Stream<List<ChatSession>> watchArchivedSessions() => _session.watchArchivedSessions();
@@ -126,6 +135,7 @@ class SessionService {
     String? projectPath,
     String? providerId,
     Future<bool> Function(PermissionRequest req)? requestPermission,
+    Future<void> Function(ProviderUserInputRequest req)? requestUserInput,
     McpStatusCallback? onMcpStatusChanged,
     McpRemoveCallback? onMcpServerRemoved,
     ProviderSettingDropSink? onSettingDropped,
@@ -193,6 +203,7 @@ class SessionService {
         prompt: userInput,
         projectPath: projectPath,
         requestPermission: requestPermission,
+        requestUserInput: requestUserInput,
         cancelFlag: cancelFlag,
         settings: providerSettings,
       );
@@ -289,6 +300,7 @@ class SessionService {
     required String? projectPath,
     required Future<bool> Function(PermissionRequest req)? requestPermission,
     required bool Function() cancelFlag,
+    Future<void> Function(ProviderUserInputRequest req)? requestUserInput,
     ProviderTurnSettings? settings,
   }) async* {
     final assistantId = _uuid.v4();
@@ -358,12 +370,30 @@ class SessionService {
           }
 
         case ProviderPermissionRequest(:final requestId, :final toolName, :final toolInput):
-          final approved = requestPermission != null
-              ? await requestPermission(
-                  PermissionRequest(toolEventId: requestId, toolName: toolName, summary: toolName, input: toolInput),
-                )
-              : true;
+          final req = PermissionRequest(
+            toolEventId: requestId,
+            toolName: toolName,
+            summary: toolName,
+            input: toolInput,
+          );
+          yield snapshot().copyWith(pendingPermissionRequest: req);
+          final approved = requestPermission != null ? await requestPermission(req) : true;
+          yield snapshot();
           ds.respondToPermissionRequest(sessionId, requestId, approved: approved);
+
+        case final ProviderUserInputRequest req when requestUserInput != null:
+          await requestUserInput(req);
+
+        case final ProviderUserInputRequest req:
+          // No UI callback wired up — the agent loop would otherwise hang waiting on a tool_result that nobody can deliver. Auto-decline with an empty response and surface a typed failure so the turn terminates visibly.
+          sLog(
+            '[SessionService] auto-declining ProviderUserInputRequest — no requestUserInput callback (provider=${req.providerId}, sessionId=${req.sessionId}, requestId=${req.requestId})',
+          );
+          ds.respondToUserInputRequest(sessionId, req.requestId, response: '');
+          Error.throwWithStackTrace(
+            StreamAbortedUnexpectedlyException('Provider asked for user input but no callback is wired in this turn'),
+            StackTrace.current,
+          );
 
         case ProviderStreamDone():
           break; // Loop ends naturally.

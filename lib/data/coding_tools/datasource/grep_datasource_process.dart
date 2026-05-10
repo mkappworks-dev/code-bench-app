@@ -11,7 +11,7 @@ import 'grep_datasource.dart';
 /// Grep backend that shells out to ripgrep (`rg`). Selected when `rg` is
 /// available at startup (see RipgrepAvailabilityDatasource). Uses `--json`
 /// output for structured parsing. [CodingToolsDiskException] is thrown if
-/// rg disappears mid-session — ToolRegistry crash-catch surfaces it as an
+/// rg disappears mid-session — ToolRegistryService crash-catch surfaces it as an
 /// error result.
 class GrepDatasourceProcess implements GrepDatasource {
   @override

@@ -5,7 +5,7 @@ import 'package:code_bench_app/data/coding_tools/repository/coding_tools_denylis
 import 'package:code_bench_app/data/mcp/datasource/mcp_transport_datasource.dart';
 import 'package:code_bench_app/data/mcp/models/mcp_server_config.dart';
 import 'package:code_bench_app/data/mcp/repository/mcp_repository.dart';
-import 'package:code_bench_app/services/coding_tools/tool_registry.dart';
+import 'package:code_bench_app/services/coding_tools/tool_registry_service.dart';
 import 'package:code_bench_app/services/mcp/mcp_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -115,7 +115,7 @@ class _EmptyDenylistRepo implements CodingToolsDenylistRepository {
 void main() {
   group('McpService.startSession()', () {
     test('registers one McpTool per discovered server tool', () async {
-      final registry = ToolRegistry(builtIns: [], denylistRepo: _EmptyDenylistRepo());
+      final registry = ToolRegistryService(builtIns: [], denylistRepo: _EmptyDenylistRepo());
       final statuses = <String, McpServerStatus>{};
 
       final svc = McpService(
@@ -139,7 +139,7 @@ void main() {
     });
 
     test('skips a server on startup error without failing the session', () async {
-      final registry = ToolRegistry(builtIns: [], denylistRepo: _EmptyDenylistRepo());
+      final registry = ToolRegistryService(builtIns: [], denylistRepo: _EmptyDenylistRepo());
 
       final svc = McpService(
         repository: _FakeRepo([
@@ -154,7 +154,7 @@ void main() {
     });
 
     test('calls onStatusChanged(stopped) and onServerRemoved even when teardown throws', () async {
-      final registry = ToolRegistry(builtIns: [], denylistRepo: _EmptyDenylistRepo());
+      final registry = ToolRegistryService(builtIns: [], denylistRepo: _EmptyDenylistRepo());
       final statuses = <String, McpServerStatus>{};
       final removedIds = <String>[];
 

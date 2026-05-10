@@ -8,9 +8,11 @@ import '../../core/utils/debug_logger.dart';
 import '../../data/apply/repository/apply_repository.dart';
 import '../../data/apply/repository/apply_repository_impl.dart';
 import '../../data/apply/models/applied_change.dart';
+import '../../data/apply/models/file_read_result.dart';
 import 'apply_exceptions.dart';
 
 export 'apply_exceptions.dart';
+export '../../data/apply/models/file_read_result.dart';
 
 part 'apply_service.g.dart';
 
@@ -98,15 +100,19 @@ class ApplyService {
     }
   }
 
-  /// Returns current on-disk content of [filePath] for the conflict-merge
-  /// view. Returns `null` if the file cannot be read.
-  Future<String?> readFileContent(String filePath, String projectPath) async {
+  /// Returns current on-disk content of [filePath]. Distinguishes
+  /// "file not present yet" (legitimate new-file apply) from "could not read"
+  /// (permission denied, IO failure) so the UI can render an error state on
+  /// the latter instead of silently treating it as a clean creation.
+  Future<FileReadResult> readFileContent(String filePath, String projectPath) async {
     ApplyRepository.assertWithinProject(filePath, projectPath);
     try {
-      return await _repo.readFile(filePath);
+      final content = await _repo.readFile(filePath);
+      if (content == null) return const FileReadResult.notFound();
+      return FileReadResult.content(content);
     } on ApplyDiskException catch (e) {
       dLog('[ApplyService] readFileContent failed: $e');
-      return null;
+      return FileReadResult.error(e.toString());
     }
   }
 

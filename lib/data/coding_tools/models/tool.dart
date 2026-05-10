@@ -4,7 +4,7 @@ import 'tool_context.dart';
 
 /// A single tool the agent loop may call. Concrete implementations live
 /// in `lib/services/coding_tools/tools/`; each holds its own dependencies
-/// via constructor injection and is registered into [ToolRegistry]
+/// via constructor injection and is registered into [ToolRegistryService]
 /// through a Riverpod provider.
 abstract class Tool {
   String get name;

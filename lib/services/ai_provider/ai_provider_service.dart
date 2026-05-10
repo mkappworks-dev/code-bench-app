@@ -32,6 +32,15 @@ class AIProviderService extends _$AIProviderService {
   /// List all registered provider IDs.
   List<String> listProviderIds() => state.keys.toList();
 
+  bool respondToUserInputRequest(String providerId, String sessionId, String requestId, {required String response}) {
+    final ds = state[providerId];
+    if (ds == null) {
+      sLog('[AIProviderService] respondToUserInputRequest: unknown providerId $providerId');
+      return false;
+    }
+    return ds.respondToUserInputRequest(sessionId, requestId, response: response);
+  }
+
   /// Detailed availability status for a single provider.
   ///
   /// Distinguishes three underlying detection states from the datasource

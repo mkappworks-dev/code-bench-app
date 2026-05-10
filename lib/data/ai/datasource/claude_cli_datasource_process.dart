@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
+import '../../_core/preferences/claude_session_preferences.dart';
 import '../../shared/ai_model.dart';
 import '../../shared/session_settings.dart';
 import '../models/stream_event.dart';
@@ -102,16 +103,33 @@ const int _consecutiveParseFailureLimit = 5;
 /// Spawns the locally-installed `claude` CLI binary and streams its
 /// `--output-format stream-json` output, normalized to [ProviderRuntimeEvent].
 class ClaudeCliDatasourceProcess implements AIProviderDatasource {
-  ClaudeCliDatasourceProcess({required this.binaryPath, ProcessLauncher? processLauncher, String? resolvedPath})
-    : _processLauncher = processLauncher ?? defaultProcessLauncher,
-      _resolvedPath = resolvedPath;
+  ClaudeCliDatasourceProcess({
+    required this.binaryPath,
+    ProcessLauncher? processLauncher,
+    String? resolvedPath,
+    ClaudeSessionPreferences? sessionPrefs,
+  }) : _processLauncher = processLauncher ?? defaultProcessLauncher,
+       _resolvedPath = resolvedPath,
+       _sessionPrefs = sessionPrefs ?? ClaudeSessionPreferences();
 
   final String binaryPath;
   final ProcessLauncher _processLauncher;
+  final ClaudeSessionPreferences _sessionPrefs;
+
+  // Resolved once per datasource lifetime; guards against concurrent loads.
+  Future<void>? _sessionLoadFuture;
 
   final Map<String, Process> _processes = {};
   final Set<String> _knownSessions = {};
+  final Map<String, String> _pendingNames = {};
+  final Map<String, _PendingAUQ> _pendingAskUserQuestions = {};
   bool _disposed = false;
+
+  Future<void> _ensureSessionsLoaded() {
+    return _sessionLoadFuture ??= _sessionPrefs.getKnownSessions().then(_knownSessions.addAll);
+  }
+
+  bool _isAskUserQuestion(String? name) => name == 'AskUserQuestion' || name == 'ask_user_question';
 
   /// Absolute path to the `claude` binary, resolved via the user's login
   /// shell during [detect]. macOS GUI launches inherit a stripped PATH that
@@ -163,7 +181,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
         includeParentEnvironment: probeEnv == null,
       ).timeout(const Duration(seconds: 5));
     } catch (e) {
-      sLog('[ClaudeCli] --version probe failed: $e');
+      sLog('[ClaudeCli] --version probe failed: ${redactSecrets('$e')}');
       return DetectionResult.unhealthy('--version failed: ${e.runtimeType}');
     }
     if (versionResult.exitCode != 0) {
@@ -222,15 +240,15 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
       // workingDirectory guard — must be an existing absolute path that is
       // not the filesystem root. The CLI runs with bypassPermissions so a
-      // stale or attacker-influenced path (e.g. `~`, `/`) would give it
-      // full home-directory tool access.
-      final wdDir = Directory(workingDirectory);
-      if (!workingDirectory.startsWith('/') || workingDirectory == '/' || !wdDir.existsSync()) {
+      // stale or attacker-influenced path (e.g. `~`, `/`, `C:\`) would give
+      // it full home-directory tool access.
+      if (!isAcceptableWorkingDirectory(workingDirectory) || !Directory(workingDirectory).existsSync()) {
         sLog('[ClaudeCli] rejected workingDirectory: $workingDirectory');
         controller.add(const ProviderStreamFailure(error: 'invalid workingDirectory'));
         return;
       }
 
+      await _ensureSessionsLoaded();
       final isFirstTurn = !_knownSessions.contains(sessionId);
       // `--` ends Claude Code's option parsing; the prompt after it is always
       // treated positionally, so a `-`-prefixed prompt cannot become a flag.
@@ -314,8 +332,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
         return;
       }
 
-      // EOF stdin up-front: newer CLI versions block reading stdin in `-p` mode and exit 1 after a 3s warning.
-      unawaited(spawned.stdin.close());
+      // Keep stdin open for the duration of the turn so AskUserQuestion replies can be written via `respondToUserInputRequest`. Closed in finally once the stream ends.
 
       // Cap stderr so a chatty crash can't balloon memory.
       const stderrCap = 64 * 1024;
@@ -340,7 +357,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
             consecutiveParseFailures = 0;
             continue;
           }
-          final mapped = _toProviderEvent(event);
+          final mapped = _toProviderEvent(event, sessionId);
           if (event is StreamParseFailure) {
             consecutiveParseFailures++;
             // Cap preview at 64 chars — redactSecrets only strips known token shapes; a 256-char window can leak prompt text or file contents the model just read.
@@ -363,6 +380,11 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
           if (!sessionCommitted) {
             _knownSessions.add(sessionId);
             sessionCommitted = true;
+            unawaited(
+              _sessionPrefs
+                  .addKnownSession(sessionId)
+                  .catchError((Object e) => dLog('[ClaudeCli] session persist failed: ${e.runtimeType}')),
+            );
           }
           if (mapped == null) continue;
           if (mapped is ProviderStreamDone) sawDone = true;
@@ -391,6 +413,10 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       if (identical(_processes[sessionId], spawned)) {
         _processes.remove(sessionId);
       }
+      _pendingAskUserQuestions.remove(sessionId);
+      if (spawned != null) {
+        unawaited(spawned.stdin.close().catchError((Object _) {}));
+      }
       await controller.close();
     }
   }
@@ -398,13 +424,13 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
   /// Maps a parser-emitted [StreamEvent] into the canonical
   /// [ProviderRuntimeEvent]. Returns null for events that have no equivalent
   /// (e.g. tool results — they roll into ToolUseComplete on the receiving side).
-  ProviderRuntimeEvent? _toProviderEvent(StreamEvent event) {
+  ProviderRuntimeEvent? _toProviderEvent(StreamEvent event, String sessionId) {
     return switch (event) {
       TextDelta(:final text) => ProviderTextDelta(text: text),
       ThinkingDelta(:final text) => ProviderThinkingDelta(thinking: text),
-      ToolUseStart(:final id, :final name) => ProviderToolUseStart(toolId: id, toolName: name),
+      ToolUseStart(:final id, :final name) => _onToolUseStart(id: id, name: name),
       ToolUseInputDelta(:final id, :final partialJson) => ProviderToolInputDelta(toolId: id, partialJson: partialJson),
-      ToolUseComplete(:final id, :final input) => ProviderToolUseComplete(toolId: id, input: input),
+      ToolUseComplete(:final id, :final input) => _onToolUseComplete(id: id, input: input, sessionId: sessionId),
       ToolResult() => null,
       StreamDone() => const ProviderStreamDone(),
       StreamError(:final failure) => ProviderStreamFailure(error: failure),
@@ -417,6 +443,34 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
       StreamToolCallEnd() ||
       StreamFinish() => null,
     };
+  }
+
+  ProviderRuntimeEvent? _onToolUseStart({required String id, required String name}) {
+    _pendingNames[id] = name;
+    if (_isAskUserQuestion(name)) return null;
+    return ProviderToolUseStart(toolId: id, toolName: name);
+  }
+
+  ProviderRuntimeEvent _onToolUseComplete({
+    required String id,
+    required Map<String, dynamic> input,
+    required String sessionId,
+  }) {
+    if (_isAskUserQuestion(_pendingNames.remove(id))) {
+      final question = input['question'];
+      final prompt = question is String ? question : '';
+      final rawChoices = input['options'];
+      final choices = rawChoices is List ? rawChoices.whereType<String>().toList() : null;
+      _pendingAskUserQuestions[sessionId] = _PendingAUQ(toolUseId: id, sessionId: sessionId);
+      return ProviderUserInputRequest(
+        requestId: id,
+        prompt: prompt,
+        providerId: this.id,
+        sessionId: sessionId,
+        choices: choices,
+      );
+    }
+    return ProviderToolUseComplete(toolId: id, input: input);
   }
 
   @override
@@ -436,7 +490,39 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
   @override
   void respondToPermissionRequest(String sessionId, String requestId, {required bool approved}) {
-    // Claude Code CLI handles its own permission UI inline and never forwards prompts to the host.
+    // Claude Code CLI handles its own permission UI when --permission-prompt-tool is not set.
+  }
+
+  @override
+  bool respondToUserInputRequest(String sessionId, String requestId, {required String response}) {
+    final pending = _pendingAskUserQuestions[sessionId];
+    if (pending == null || pending.toolUseId != requestId) {
+      dLog('[ClaudeCli] No pending AskUserQuestion for session $sessionId / request $requestId');
+      return false;
+    }
+    final process = _processes[sessionId];
+    if (process == null) {
+      sLog('[ClaudeCli] AUQ response dropped — process gone for session $sessionId');
+      _pendingAskUserQuestions.remove(sessionId);
+      return false;
+    }
+    _pendingAskUserQuestions.remove(sessionId);
+    final payload = jsonEncode({
+      'type': 'user',
+      'message': {
+        'role': 'user',
+        'content': [
+          {'type': 'tool_result', 'tool_use_id': requestId, 'content': response},
+        ],
+      },
+    });
+    try {
+      process.stdin.writeln(payload);
+      return true;
+    } on StateError catch (e) {
+      sLog('[ClaudeCli] AUQ stdin write failed (closed): ${e.message}');
+      return false;
+    }
   }
 
   @override
@@ -490,4 +576,10 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
         return null;
     }
   }
+}
+
+class _PendingAUQ {
+  _PendingAUQ({required this.toolUseId, required this.sessionId});
+  final String toolUseId;
+  final String sessionId;
 }

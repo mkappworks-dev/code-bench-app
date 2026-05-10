@@ -80,7 +80,7 @@ class CodeApplyActions extends _$CodeApplyActions {
     });
   }
 
-  Future<String?> readFileContent(String filePath, String projectPath) =>
+  Future<FileReadResult> readFileContent(String filePath, String projectPath) =>
       ref.read(applyServiceProvider).readFileContent(filePath, projectPath);
 
   /// Checks whether [filePath] has been modified since [storedChecksum] was
