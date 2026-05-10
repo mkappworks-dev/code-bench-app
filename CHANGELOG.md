@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.12.0...v0.13.0) (2026-05-10)
+
+
+### Features
+
+* **chat:** chat experience overhaul — badges, status dots, Ayu code, phase pills, apply-diff card, agent question card ([#94](https://github.com/mkappworks-dev/code-bench-app/issues/94)) ([072664c](https://github.com/mkappworks-dev/code-bench-app/commit/072664cbeb4bf8efb23284c64a1ef85995ae003d))
+
 ## [0.12.0](https://github.com/mkappworks-dev/code-bench-app/compare/v0.11.0...v0.12.0) (2026-05-09)
 
 
