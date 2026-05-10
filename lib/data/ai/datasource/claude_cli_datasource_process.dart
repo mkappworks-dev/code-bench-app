@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/debug_logger.dart';
+import '../../_core/preferences/claude_session_preferences.dart';
 import '../../shared/ai_model.dart';
 import '../../shared/session_settings.dart';
 import '../models/stream_event.dart';
@@ -102,18 +103,31 @@ const int _consecutiveParseFailureLimit = 5;
 /// Spawns the locally-installed `claude` CLI binary and streams its
 /// `--output-format stream-json` output, normalized to [ProviderRuntimeEvent].
 class ClaudeCliDatasourceProcess implements AIProviderDatasource {
-  ClaudeCliDatasourceProcess({required this.binaryPath, ProcessLauncher? processLauncher, String? resolvedPath})
-    : _processLauncher = processLauncher ?? defaultProcessLauncher,
-      _resolvedPath = resolvedPath;
+  ClaudeCliDatasourceProcess({
+    required this.binaryPath,
+    ProcessLauncher? processLauncher,
+    String? resolvedPath,
+    ClaudeSessionPreferences? sessionPrefs,
+  }) : _processLauncher = processLauncher ?? defaultProcessLauncher,
+       _resolvedPath = resolvedPath,
+       _sessionPrefs = sessionPrefs ?? ClaudeSessionPreferences();
 
   final String binaryPath;
   final ProcessLauncher _processLauncher;
+  final ClaudeSessionPreferences _sessionPrefs;
+
+  // Resolved once per datasource lifetime; guards against concurrent loads.
+  Future<void>? _sessionLoadFuture;
 
   final Map<String, Process> _processes = {};
   final Set<String> _knownSessions = {};
   final Map<String, String> _pendingNames = {};
   final Map<String, _PendingAUQ> _pendingAskUserQuestions = {};
   bool _disposed = false;
+
+  Future<void> _ensureSessionsLoaded() {
+    return _sessionLoadFuture ??= _sessionPrefs.getKnownSessions().then(_knownSessions.addAll);
+  }
 
   bool _isAskUserQuestion(String? name) => name == 'AskUserQuestion' || name == 'ask_user_question';
 
@@ -234,6 +248,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
         return;
       }
 
+      await _ensureSessionsLoaded();
       final isFirstTurn = !_knownSessions.contains(sessionId);
       // `--` ends Claude Code's option parsing; the prompt after it is always
       // treated positionally, so a `-`-prefixed prompt cannot become a flag.
@@ -365,6 +380,11 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
           if (!sessionCommitted) {
             _knownSessions.add(sessionId);
             sessionCommitted = true;
+            unawaited(
+              _sessionPrefs
+                  .addKnownSession(sessionId)
+                  .catchError((Object e) => dLog('[ClaudeCli] session persist failed: ${e.runtimeType}')),
+            );
           }
           if (mapped == null) continue;
           if (mapped is ProviderStreamDone) sawDone = true;
