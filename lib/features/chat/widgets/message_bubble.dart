@@ -30,18 +30,16 @@ import '../utils/compute_line_diff.dart';
 import '../utils/tool_phase_classifier.dart';
 import 'apply_diff_card.dart';
 import 'ask_user_question_card.dart';
-import 'code_block_widget.dart';
+import 'chat_markdown_style.dart';
 import 'iteration_cap_banner.dart';
 import 'permission_request_card.dart';
 import 'provider_label.dart';
-import 'streaming_dot.dart';
 import 'tool_call_row.dart';
 import 'tool_phase_pill.dart';
 import 'work_log_section.dart';
 
 export 'code_block_widget.dart' show CodeBlockBuilder;
 export '../utils/code_fence_parser.dart' show parseCodeFenceInfo;
-export 'streaming_dot.dart' show StreamingDot;
 
 class MessageBubble extends StatelessWidget {
   const MessageBubble({super.key, required this.message, required this.sessionId, this.isLastInSession = false});
@@ -237,7 +235,6 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (message.isStreaming) const StreamingDot(),
               if (message.isStreaming || message.toolEvents.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 WorkLogSection(sessionId: message.sessionId, messageId: message.id),
@@ -446,13 +443,27 @@ class _AssistantActionRowState extends ConsumerState<_AssistantActionRow> {
 // Pre-process by converting localhost:PORT (with or without http(s)://) into explicit markdown
 // link syntax [url](url) so the renderer emits a clickable <a> without relying on GFM autolinks.
 // Lookbehind excludes positions already inside link URLs `(`, link text `[`, code `` ` ``, or `://`.
-final _localhostRe = RegExp(
-  r'(?<![(\[`<:])(?:(https?)://)?localhost:(\d+)((?:/[^\s)\]`]*)?)',
-  caseSensitive: false,
-);
+final _localhostRe = RegExp(r'(?<![(\[`<:])(?:(https?)://)?localhost:(\d+)((?:/[^\s)\]`]*)?)', caseSensitive: false);
+
+// Existing `[...](...)` link pass-through pattern. Anything matched by this is treated as already
+// linkified — we copy it through verbatim so a `localhost:PORT` already in either the link text or
+// URL doesn't get nested into a second wrapper.
+final _markdownLinkRe = RegExp(r'\[[^\]]*\]\([^)]*\)');
 
 @visibleForTesting
-String linkifyLocalhost(String content) => content.replaceAllMapped(_localhostRe, (m) {
+String linkifyLocalhost(String content) {
+  final out = StringBuffer();
+  var lastEnd = 0;
+  for (final m in _markdownLinkRe.allMatches(content)) {
+    out.write(_linkifyBare(content.substring(lastEnd, m.start)));
+    out.write(m[0]);
+    lastEnd = m.end;
+  }
+  out.write(_linkifyBare(content.substring(lastEnd)));
+  return out.toString();
+}
+
+String _linkifyBare(String chunk) => chunk.replaceAllMapped(_localhostRe, (m) {
   final scheme = m[1] ?? 'http';
   final port = m[2]!;
   final path = m[3] ?? '';
@@ -488,26 +499,8 @@ class _MessageContent extends StatelessWidget {
       child: MarkdownBody(
         data: linkifyLocalhost(message.content),
         onTapLink: (text, href, title) => _openLink(href),
-        styleSheet: MarkdownStyleSheet(
-          p: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.65),
-          code: TextStyle(
-            fontFamily: ThemeConstants.editorFontFamily,
-            backgroundColor: c.inlineCodeFill,
-            color: c.inlineCodeText,
-            fontSize: ThemeConstants.uiFontSizeSmall,
-          ),
-          codeblockDecoration: BoxDecoration(
-            color: c.codeBlockBg,
-            border: Border.all(color: c.subtleBorder),
-            borderRadius: BorderRadius.circular(7),
-          ),
-          h1: TextStyle(color: c.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
-          h2: TextStyle(color: c.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
-          h3: TextStyle(color: c.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
-          blockquote: TextStyle(color: c.textSecondary),
-          listBullet: TextStyle(color: c.textPrimary),
-        ),
-        builders: {'code': CodeBlockBuilder(messageId: message.id, sessionId: message.sessionId)},
+        styleSheet: buildChatMarkdownStyleSheet(context),
+        builders: buildChatMarkdownBuilders(context: context, messageId: message.id, sessionId: message.sessionId),
       ),
     );
   }

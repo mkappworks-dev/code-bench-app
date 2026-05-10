@@ -7,7 +7,7 @@ import 'package:code_bench_app/core/theme/app_colors.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/widgets/message_bubble.dart'
-    show MessageBubble, StreamingDot, parseCodeFenceInfo, linkifyLocalhost;
+    show MessageBubble, parseCodeFenceInfo, linkifyLocalhost;
 
 // Stubs chatMessagesProvider so mounting a streaming MessageBubble doesn't
 // boot the real drift database (WorkLogSection watches this provider).
@@ -56,9 +56,6 @@ void main() {
     await tester.pumpWidget(
       _wrap(MessageBubble(message: _msg(MessageRole.assistant, streaming: true), sessionId: 'sid')),
     );
-    // StreamingDot owns a periodic Timer; `pumpAndSettle` would never resolve
-    // and `pump()` triggers an unowned-Timer assertion at teardown. The single
-    // pumpWidget frame is enough to assert the icon is absent.
     expect(find.byIcon(AppIcons.copy), findsNothing);
   });
 
@@ -129,12 +126,11 @@ void main() {
     expect(find.text('Assistant'), findsNothing);
   });
 
-  testWidgets('streaming shows pulsing dot, not CircularProgressIndicator', (tester) async {
+  testWidgets('streaming does not show CircularProgressIndicator', (tester) async {
     await tester.pumpWidget(
       _wrap(MessageBubble(message: _msg(MessageRole.assistant, streaming: true), sessionId: 'sid')),
     );
     expect(find.byType(CircularProgressIndicator), findsNothing);
-    expect(find.byType(StreamingDot), findsOneWidget);
   });
 
   testWidgets('assistant code block renders without crash', (tester) async {
