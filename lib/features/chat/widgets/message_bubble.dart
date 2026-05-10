@@ -96,33 +96,35 @@ class _UserBubbleState extends ConsumerState<_UserBubble> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (showActions) ...[
-                  _BubbleActionButton(icon: AppIcons.trash, tooltip: 'Delete', color: c.warning, onTap: _delete),
-                  const SizedBox(width: 6),
-                ],
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-                    decoration: BoxDecoration(
-                      color: c.userBubbleFill,
-                      border: Border.all(color: c.userBubbleStroke),
-                      borderRadius: BorderRadius.circular(11),
-                      boxShadow: [BoxShadow(color: c.userBubbleHighlight, blurRadius: 0, offset: const Offset(0, 1))],
-                    ),
-                    child: SelectableText(
-                      widget.message.content,
-                      style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),
+          LayoutBuilder(
+            builder: (context, constraints) => Align(
+              alignment: Alignment.centerRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (showActions) ...[
+                    _BubbleActionButton(icon: AppIcons.trash, tooltip: 'Delete', color: c.warning, onTap: _delete),
+                    const SizedBox(width: 6),
+                  ],
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.82),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: c.userBubbleFill,
+                        border: Border.all(color: c.userBubbleStroke),
+                        borderRadius: BorderRadius.circular(11),
+                        boxShadow: [BoxShadow(color: c.userBubbleHighlight, blurRadius: 0, offset: const Offset(0, 1))],
+                      ),
+                      child: SelectableText(
+                        widget.message.content,
+                        style: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.5),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           // Anchor here so a silent downgrade isn't lost when the assistant turn fails before producing a message.
