@@ -490,7 +490,7 @@ class ClaudeCliDatasourceProcess implements AIProviderDatasource {
 
   @override
   void respondToPermissionRequest(String sessionId, String requestId, {required bool approved}) {
-    // Claude Code CLI handles its own permission UI inline and never forwards prompts to the host.
+    // Claude Code CLI handles its own permission UI when --permission-prompt-tool is not set.
   }
 
   @override

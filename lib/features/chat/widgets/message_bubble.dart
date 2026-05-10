@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:meta/meta.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/theme_constants.dart';
 import '../../../core/theme/app_colors.dart';
@@ -440,6 +442,35 @@ class _AssistantActionRowState extends ConsumerState<_AssistantActionRow> {
   }
 }
 
+// GFM autolinks require a domain with at least one period, so `localhost` is never auto-linked.
+// Pre-process by converting localhost:PORT (with or without http(s)://) into explicit markdown
+// link syntax [url](url) so the renderer emits a clickable <a> without relying on GFM autolinks.
+// Lookbehind excludes positions already inside link URLs `(`, link text `[`, code `` ` ``, or `://`.
+final _localhostRe = RegExp(
+  r'(?<![(\[`<:])(?:(https?)://)?localhost:(\d+)((?:/[^\s)\]`]*)?)',
+  caseSensitive: false,
+);
+
+@visibleForTesting
+String linkifyLocalhost(String content) => content.replaceAllMapped(_localhostRe, (m) {
+  final scheme = m[1] ?? 'http';
+  final port = m[2]!;
+  final path = m[3] ?? '';
+  final url = '$scheme://localhost:$port$path';
+  return '[$url]($url)';
+});
+
+Future<void> _openLink(String? href) async {
+  if (href == null) return;
+  final uri = Uri.tryParse(href);
+  if (uri == null) return;
+  try {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (e) {
+    dLog('[MessageBubble] launchUrl failed: ${e.runtimeType}');
+  }
+}
+
 class _MessageContent extends StatelessWidget {
   const _MessageContent({required this.message});
   final ChatMessage message;
@@ -455,7 +486,8 @@ class _MessageContent extends StatelessWidget {
     }
     return SelectionArea(
       child: MarkdownBody(
-        data: message.content,
+        data: linkifyLocalhost(message.content),
+        onTapLink: (text, href, title) => _openLink(href),
         styleSheet: MarkdownStyleSheet(
           p: TextStyle(color: c.textPrimary, fontSize: ThemeConstants.uiFontSize, height: 1.65),
           code: TextStyle(

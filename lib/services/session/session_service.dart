@@ -370,11 +370,15 @@ class SessionService {
           }
 
         case ProviderPermissionRequest(:final requestId, :final toolName, :final toolInput):
-          final approved = requestPermission != null
-              ? await requestPermission(
-                  PermissionRequest(toolEventId: requestId, toolName: toolName, summary: toolName, input: toolInput),
-                )
-              : true;
+          final req = PermissionRequest(
+            toolEventId: requestId,
+            toolName: toolName,
+            summary: toolName,
+            input: toolInput,
+          );
+          yield snapshot().copyWith(pendingPermissionRequest: req);
+          final approved = requestPermission != null ? await requestPermission(req) : true;
+          yield snapshot();
           ds.respondToPermissionRequest(sessionId, requestId, approved: approved);
 
         case final ProviderUserInputRequest req when requestUserInput != null:

@@ -7,7 +7,7 @@ import 'package:code_bench_app/core/theme/app_colors.dart';
 import 'package:code_bench_app/data/shared/chat_message.dart';
 import 'package:code_bench_app/features/chat/notifiers/chat_notifier.dart';
 import 'package:code_bench_app/features/chat/widgets/message_bubble.dart'
-    show MessageBubble, StreamingDot, parseCodeFenceInfo;
+    show MessageBubble, StreamingDot, parseCodeFenceInfo, linkifyLocalhost;
 
 // Stubs chatMessagesProvider so mounting a streaming MessageBubble doesn't
 // boot the real drift database (WorkLogSection watches this provider).
@@ -191,6 +191,56 @@ void main() {
     expect(find.text('No active project.'), findsOneWidget);
     expect(find.textContaining('Exception:'), findsNothing);
     expect(find.textContaining('Instance of'), findsNothing);
+  });
+
+  group('linkifyLocalhost', () {
+    test('bare localhost:PORT becomes markdown link', () {
+      expect(
+        linkifyLocalhost('Visit localhost:3000 for docs'),
+        'Visit [http://localhost:3000](http://localhost:3000) for docs',
+      );
+    });
+
+    test('http://localhost:PORT becomes markdown link', () {
+      expect(
+        linkifyLocalhost('Open http://localhost:60517 now'),
+        'Open [http://localhost:60517](http://localhost:60517) now',
+      );
+    });
+
+    test('https://localhost:PORT preserves https scheme', () {
+      expect(
+        linkifyLocalhost('See https://localhost:8443/path'),
+        'See [https://localhost:8443/path](https://localhost:8443/path)',
+      );
+    });
+
+    test('localhost:PORT/path is included in link', () {
+      expect(
+        linkifyLocalhost('localhost:3000/api/health'),
+        '[http://localhost:3000/api/health](http://localhost:3000/api/health)',
+      );
+    });
+
+    test('URL already in markdown link is not re-wrapped', () {
+      const input = '[localhost:3000](http://localhost:3000)';
+      expect(linkifyLocalhost(input), input);
+    });
+
+    test('URL already in markdown link text is not re-wrapped', () {
+      const input = '[open localhost:3000](http://localhost:3000)';
+      expect(linkifyLocalhost(input), input);
+    });
+
+    test('localhost in inline code is not linked', () {
+      const input = 'run `localhost:8080` to test';
+      expect(linkifyLocalhost(input), input);
+    });
+
+    test('non-localhost content is untouched', () {
+      const input = 'Visit https://example.com for info';
+      expect(linkifyLocalhost(input), input);
+    });
   });
 
   group('parseCodeFenceInfo', () {
