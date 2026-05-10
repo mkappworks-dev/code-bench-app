@@ -29,6 +29,7 @@ abstract final class AppIcons {
   static const IconData lock = LucideIcons.lock;
 
   static const IconData code = LucideIcons.code;
+  static const IconData document = LucideIcons.fileText;
   static const IconData folder = LucideIcons.folder;
   static const IconData folderOpen = LucideIcons.folderOpen;
   static const IconData terminal = LucideIcons.terminal;

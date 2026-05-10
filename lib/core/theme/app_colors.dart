@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:re_highlight/languages/json.dart';
-import 'package:re_highlight/styles/tokyo-night-light.dart';
-import 'package:re_highlight/styles/tokyo-night-dark.dart';
+
+import 'ayu_highlight_themes.dart';
 
 /// All colour tokens for Code Bench.
 ///
@@ -286,7 +286,7 @@ class AppColors extends ThemeExtension<AppColors> {
     final isDark = ThemeData.estimateBrightnessForColor(background) == Brightness.dark;
     return CodeHighlightTheme(
       languages: {'json': CodeHighlightThemeMode(mode: langJson)},
-      theme: isDark ? tokyoNightDarkTheme : tokyoNightLightTheme,
+      theme: isDark ? ayuDarkTheme : ayuLightTheme,
     );
   }
 
@@ -319,7 +319,7 @@ class AppColors extends ThemeExtension<AppColors> {
     info: Color(0xFF4FC1FF),
     userMessageBg: Color(0xFF1E1E1E),
     assistantMessageBg: Color(0xFF141414),
-    codeBlockBg: Color(0xFF0B0E14),
+    codeBlockBg: Color(0xFF0E0E0E),
     syntaxKeyword: Color(0xFF569CD6),
     syntaxString: Color(0xFFCE9178),
     syntaxComment: Color(0xFF6A9955),
@@ -405,9 +405,9 @@ class AppColors extends ThemeExtension<AppColors> {
     accentBorderTeal: Color(0x4D4EC9B0),
     accentBorderAmber: Color(0x4DE8A228),
     sendGlow: Color(0x664EC9B0),
-    inlineCodeFill: Color(0xCC0D1117),
-    inlineCodeStroke: Color(0x0FFFFFFF),
-    inlineCodeText: Color(0xFFCE9178),
+    inlineCodeFill: Color(0x14FFB454),
+    inlineCodeStroke: Color(0x33FFB454),
+    inlineCodeText: Color(0xFFFFB454),
     dialogFill: Color(0xEB121212),
     dialogBorder: Color(0x0FFFFFFF),
     dialogHighlight: Color(0x0FFFFFFF),
@@ -541,9 +541,9 @@ class AppColors extends ThemeExtension<AppColors> {
     accentBorderTeal: Color(0x4D4EC9B0),
     accentBorderAmber: Color(0x4DE8A228),
     sendGlow: Color(0x664EC9B0),
-    inlineCodeFill: Color(0x1F4EC9B0),
-    inlineCodeStroke: Color(0x334EC9B0),
-    inlineCodeText: Color(0xFF2A7A6E),
+    inlineCodeFill: Color(0x14F2AE49),
+    inlineCodeStroke: Color(0x33F2AE49),
+    inlineCodeText: Color(0xFFB8761D),
     dialogFill: Color(0xE0FFFFFF),
     dialogBorder: Color(0xF2FFFFFF),
     dialogHighlight: Color(0xFFFFFFFF),

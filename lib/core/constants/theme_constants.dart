@@ -15,4 +15,8 @@ class ThemeConstants {
   static const double uiFontSizeLabel = 10;
   static const double uiFontSizeBadge = 9;
   static const double uiFontSizeLarge = 15;
+
+  static const double markdownH1FontSize = 18;
+  static const double markdownH2FontSize = 16;
+  static const double markdownH3FontSize = 14;
 }
