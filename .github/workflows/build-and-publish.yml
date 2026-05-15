@@ -346,7 +346,7 @@ jobs:
       #   artifacts/CodeBench-linux.tar.gz
       - name: Upload release artifacts (manual)
         if: inputs.release_id == ''
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           tag_name: ${{ inputs.tag }}
           files: |
